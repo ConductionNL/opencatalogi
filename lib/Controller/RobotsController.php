@@ -24,8 +24,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Http\TextResponse;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\AppFramework\Controller;
@@ -103,9 +103,30 @@ class RobotsController extends Controller {
 			);
 		}
 
+		$catalogs = $this->sitemapCatalogs(configuration: $settings['configuration']);
+		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
+
+		// A crawler that honours robots may fetch the sitemaps and the documents
+		// they list; every line ends in a real line break (REQ-WIH-001).
+		$text = "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n";
+		foreach ($catalogs as $catalog) {
+			$text .= $this->sitemapLines(catalog: $catalog, baseUrl: $baseUrl);
+		}
+
+		return new TextResponse(text: $text);
+	}//end index()
+
+	/**
+	 * The catalogues that publish a Woo sitemap, as the public group may read them.
+	 *
+	 * @param array<string, mixed> $configuration The app configuration with the catalog register and schema.
+	 *
+	 * @return array<int, object> The catalogues.
+	 */
+	private function sitemapCatalogs(array $configuration): array {
 		$searchQuery = [];
-		$searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
-		$searchQuery['@self']['schema'] = $settings['configuration']['catalog_schema'];
+		$searchQuery['@self']['register'] = $configuration['catalog_register'];
+		$searchQuery['@self']['schema'] = $configuration['catalog_schema'];
 		// Only catalogues that publish a Woo sitemap (REQ-WIH-001).
 		$searchQuery['hasWooSitemap'] = true;
 
@@ -119,28 +140,32 @@ class RobotsController extends Controller {
 
 		// Visibility governed by RBAC on the search above (_rbac: true) — robots.txt
 		// references only catalogs the public group may read.
-		$catalogs = ($catalogResult['results'] ?? []);
+		return ($catalogResult['results'] ?? []);
+	}//end sitemapCatalogs()
 
-		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
-
-		// A crawler that honours robots may fetch the sitemaps and the documents
-		// they list; every line ends in a real line break (REQ-WIH-001).
-		$text = "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n";
-		foreach ($catalogs as $catalog) {
-			$slug = $catalog->getSlug();
-			if (is_string($slug) === false || $slug === '' || $this->publishesWoo(catalog: $catalog) === false) {
-				continue;
-			}
-
-			// One line per category the registry serves, so a category an operator
-			// added as data is crawled without a code change (REQ-WIC-001).
-			foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
-				$text .= "Sitemap: $baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode\n";
-			}
+	/**
+	 * The sitemap lines of one catalogue, empty when it has no slug or no Woo sitemap.
+	 *
+	 * @param object $catalog The catalogue.
+	 * @param string $baseUrl The base URL without a trailing slash.
+	 *
+	 * @return string One line per category the registry serves.
+	 */
+	private function sitemapLines(object $catalog, string $baseUrl): string {
+		$slug = $catalog->getSlug();
+		if (is_string($slug) === false || $slug === '' || $this->publishesWoo(catalog: $catalog) === false) {
+			return '';
 		}
 
-		return new TextResponse(text: $text);
-	}//end index()
+		// One line per category the registry serves, so a category an operator
+		// added as data is crawled without a code change (REQ-WIC-001).
+		$lines = '';
+		foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
+			$lines .= "Sitemap: $baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode\n";
+		}
+
+		return $lines;
+	}//end sitemapLines()
 
 	/**
 	 * Whether a catalogue publishes a Woo sitemap.
@@ -159,7 +184,6 @@ class RobotsController extends Controller {
 		}
 
 		return (($data['hasWooSitemap'] ?? false) === true);
-
 	}//end publishesWoo()
 
 	/**

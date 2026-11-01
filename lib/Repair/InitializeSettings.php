@@ -105,6 +105,22 @@ class InitializeSettings implements IRepairStep {
 		$output->info('Loading OpenCatalogi configuration...');
 		$output->advance(1);
 
+		$this->importConfiguration(output: $output);
+		$this->verifyOutcome(output: $output);
+
+		$output->advance(1);
+		$output->finishProgress();
+
+	}//end run()
+
+	/**
+	 * Import the app's registers, schemas and objects, reporting a failure without throwing.
+	 *
+	 * @param IOutput $output Repair output.
+	 *
+	 * @return void
+	 */
+	private function importConfiguration(IOutput $output): void {
 		try {
 			// Get the settings service and load configuration.
 			// The import is idempotent.
@@ -128,6 +144,16 @@ class InitializeSettings implements IRepairStep {
 			);
 		}//end try
 
+	}//end importConfiguration()
+
+	/**
+	 * Warn loudly when the import left the app without register configuration.
+	 *
+	 * @param IOutput $output Repair output.
+	 *
+	 * @return void
+	 */
+	private function verifyOutcome(IOutput $output): void {
 		// VERIFY THE OUTCOME. THE STEP RUNNING IS NOT THE OUTCOME.
 		//
 		// This app shipped a whole release cycle in which the configuration was
@@ -160,10 +186,7 @@ class InitializeSettings implements IRepairStep {
 			);
 		}
 
-		$output->advance(1);
-		$output->finishProgress();
-
-	}//end run()
+	}//end verifyOutcome()
 
 
 	/**

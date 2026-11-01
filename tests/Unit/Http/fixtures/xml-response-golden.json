@@ -49,5 +49,12 @@
     },
     "deep": {
         "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <l1>\n    <l2>\n      <l3>\n        <l4 x=\"y\">diep</l4>\n      </l3>\n    </l2>\n  </l1>\n</r>\n"
+    },
+    "text null": {
+        "error": "DOMException",
+        "message": "Invalid Character Error"
+    },
+    "attribute keys as ints": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r a=\"x\" b=\"2.5\">\n  <c>0</c>\n</r>\n"
     }
 }

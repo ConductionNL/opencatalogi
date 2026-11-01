@@ -91,6 +91,17 @@ class CatalogiService implements CatalogiServiceInterface {
 	];
 
 	/**
+	 * Request config keys index() copies into the search query, with the query key each one becomes.
+	 */
+	private const INDEX_PAGING_PARAMETERS = [
+		'limit' => '_limit',
+		'offset' => '_offset',
+		'page' => '_page',
+		'queries' => '_queries',
+		'order' => '_order',
+	];
+
+	/**
 	 * The cached object service instance.
 	 *
 	 * @var object|null
@@ -253,58 +264,112 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @throws NotFoundExceptionInterface
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	public function computeRewrittenRegistersAndSchemas(array $object): array {
 		$modified = [];
 
-		if (isset($object['registers']) === true && is_array($object['registers']) === true) {
-			$rewrittenRegisters = array_map(
-				function ($register) {
-					if ($this->isNumericId(value: $register) === true) {
-						return $register;
-					}
-
-					try {
-						return $this->getRegisterMapper()->find($register)->getId();
-					} catch (NotFoundException $e) {
-						throw new RuntimeException('Register ' . $register . ' not found.');
-					}
-				},
-				$object['registers']
-			);
-
-			if ($rewrittenRegisters !== $object['registers']) {
-				$modified['registers'] = $rewrittenRegisters;
-			}
+		$registers = $this->rewrittenIds(
+			values: ($object['registers'] ?? null),
+			resolve: fn (mixed $register): mixed => $this->registerIdOf(register: $register)
+		);
+		if ($registers !== null) {
+			$modified['registers'] = $registers;
 		}
 
-		if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
-			$schemaLookup = $this->schemaLookupFor(registers: ($modified['registers'] ?? ($object['registers'] ?? [])));
-			$rewrittenSchemas = array_map(
-				function ($schema) use ($schemaLookup) {
-					if ($this->isNumericId(value: $schema) === true) {
-						return $schema;
-					}
-
-					$schemaId = $schemaLookup((string)$schema);
-					if ($schemaId === null) {
-						throw new RuntimeException('Schema ' . $schema . ' not found.');
-					}
-
-					return $schemaId;
-				},
-				$object['schemas']
-			);
-
-			if ($rewrittenSchemas !== $object['schemas']) {
-				$modified['schemas'] = $rewrittenSchemas;
-			}
+		$schemas = $this->rewrittenSchemaIds(object: $object, modified: $modified);
+		if ($schemas !== null) {
+			$modified['schemas'] = $schemas;
 		}
 
 		return $modified;
 	}//end computeRewrittenRegistersAndSchemas()
+
+	/**
+	 * Resolve every value of a register or schema list, and report the list only when it changed.
+	 *
+	 * @param mixed $values The list from the catalogue payload, or anything else.
+	 * @param callable $resolve Maps one value to its id; throws when it cannot.
+	 *
+	 * @return array<int|string, mixed>|null The rewritten list, or null when the
+	 *                                       value is not a list or nothing changed.
+	 */
+	private function rewrittenIds(mixed $values, callable $resolve): ?array {
+		if (is_array($values) === false) {
+			return null;
+		}
+
+		$rewritten = array_map($resolve, $values);
+		if ($rewritten === $values) {
+			return null;
+		}
+
+		return $rewritten;
+	}//end rewrittenIds()
+
+	/**
+	 * Rewrite the payload's schema list, scoped to the registers after their own rewrite.
+	 *
+	 * @param array<string, mixed> $object The catalogue payload.
+	 * @param array<string, mixed> $modified The keys rewritten so far (`registers` when it changed).
+	 *
+	 * @return array<int|string, mixed>|null The rewritten schemas, or null when unchanged or absent.
+	 */
+	private function rewrittenSchemaIds(array $object, array $modified): ?array {
+		if (isset($object['schemas']) === false || is_array($object['schemas']) === false) {
+			return null;
+		}
+
+		$schemaLookup = $this->schemaLookupFor(registers: ($modified['registers'] ?? ($object['registers'] ?? [])));
+
+		return $this->rewrittenIds(
+			values: $object['schemas'],
+			resolve: fn (mixed $schema): mixed => $this->schemaIdOf(schema: $schema, lookup: $schemaLookup)
+		);
+	}//end rewrittenSchemaIds()
+
+	/**
+	 * Resolve one register slug or id to its id.
+	 *
+	 * @param mixed $register A register id or slug.
+	 *
+	 * @return mixed The value itself when it is already an id, otherwise the register's id.
+	 *
+	 * @throws \RuntimeException When no register has that slug.
+	 */
+	private function registerIdOf(mixed $register): mixed {
+		if ($this->isNumericId(value: $register) === true) {
+			return $register;
+		}
+
+		try {
+			return $this->getRegisterMapper()->find($register)->getId();
+		} catch (NotFoundException $e) {
+			throw new RuntimeException('Register ' . $register . ' not found.');
+		}
+	}//end registerIdOf()
+
+	/**
+	 * Resolve one schema slug or id to its id through the catalogue's schema lookup.
+	 *
+	 * @param mixed $schema A schema id or slug.
+	 * @param callable $lookup Slug to schema id, null when not found (see schemaLookupFor()).
+	 *
+	 * @return mixed The value itself when it is already an id, otherwise the schema's id.
+	 *
+	 * @throws \RuntimeException When the lookup finds no schema for the slug.
+	 */
+	private function schemaIdOf(mixed $schema, callable $lookup): mixed {
+		if ($this->isNumericId(value: $schema) === true) {
+			return $schema;
+		}
+
+		$schemaId = $lookup((string)$schema);
+		if ($schemaId === null) {
+			throw new RuntimeException('Schema ' . $schema . ' not found.');
+		}
+
+		return $schemaId;
+	}//end schemaIdOf()
 
 	/**
 	 * Build the schema slug lookup for one catalogue.
@@ -414,8 +479,6 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @return array<string, array<string>> Array containing available registers and schemas
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess)
-	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogFilters(null|string|int $catalogId = null): array {
@@ -448,42 +511,15 @@ class CatalogiService implements CatalogiServiceInterface {
 		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
 		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
 		if ($schema === '' || $register === '') {
-			$this->logger->error(
-				'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
-				[
-					'schema' => $schema,
-					'register' => $register,
-				]
-			);
-			$this->availableRegisters = [];
-			$this->availableSchemas = [];
-			return [
-				'registers' => [],
-				'schemas' => [],
-			];
-		}
-
-		// Setup the base query for searchObjects.
-		$query = [
-			'@self' => [
-				'register' => $register,
-				'schema' => $schema,
-			],
-		];
-
-		// If a specific catalog ID is provided, add it as a filter.
-		// UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
-		// on the object's own 'slug' field.
-		if ($catalogId !== null) {
-			$query['slug'] = (string)$catalogId;
-			if (Uuid::isValid((string)$catalogId) === true) {
-				unset($query['slug']);
-				$query['@self']['uuid'] = $catalogId;
-			}
+			return $this->refusedCatalogFilters(scope: ['schema' => $schema, 'register' => $register]);
 		}
 
 		// Get catalogs using searchObjects (handles deleted field correctly).
-		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
+		$catalogs = $this->getObjectService()->searchObjects(
+			query: $this->catalogFiltersQuery(scope: ['schema' => $schema, 'register' => $register], catalogId: $catalogId),
+			_rbac: false,
+			_multitenancy: false
+		);
 
 		// Remove duplicate values and assign to class properties.
 		// SCH-PFTS-CAT-002 (WOO-581): this scope serves `#[PublicPage]`
@@ -501,6 +537,62 @@ class CatalogiService implements CatalogiServiceInterface {
 		];
 
 	}//end getCatalogFilters()
+
+	/**
+	 * Refuse to derive a catalogue scope: log it and leave the scope empty.
+	 *
+	 * @param array{schema: string, register: string} $scope The configured catalog schema and register, one of them empty.
+	 *
+	 * @return array{registers: array, schemas: array} The empty scope.
+	 */
+	private function refusedCatalogFilters(array $scope): array {
+		$this->logger->error(
+			'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
+			[
+				'schema' => $scope['schema'],
+				'register' => $scope['register'],
+			]
+		);
+		$this->availableRegisters = [];
+		$this->availableSchemas = [];
+		return [
+			'registers' => [],
+			'schemas' => [],
+		];
+	}//end refusedCatalogFilters()
+
+	/**
+	 * The catalog search behind getCatalogFilters().
+	 *
+	 * A UUID is matched on `@self.uuid`; any other id (such as a slug) on the
+	 * catalog's own `slug` field.
+	 *
+	 * @param array{schema: string, register: string} $scope The configured catalog schema and register.
+	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
+	 *
+	 * @return array The query.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) Uuid::isValid() is a pure check on the id.
+	 */
+	private function catalogFiltersQuery(array $scope, null|string|int $catalogId): array {
+		$query = [
+			'@self' => [
+				'register' => $scope['register'],
+				'schema' => $scope['schema'],
+			],
+		];
+		if ($catalogId === null) {
+			return $query;
+		}
+
+		if (Uuid::isValid((string)$catalogId) === true) {
+			$query['@self']['uuid'] = $catalogId;
+			return $query;
+		}
+
+		$query['slug'] = (string)$catalogId;
+		return $query;
+	}//end catalogFiltersQuery()
 
 	/**
 	 * Collect the unique values of one array-valued property across catalogs.
@@ -550,65 +642,99 @@ class CatalogiService implements CatalogiServiceInterface {
 	/**
 	 * Helper method to get configuration array from the current request.
 	 *
-	 * @param string|null $register Optional register identifier
-	 * @param string|null $schema Optional schema identifier
-	 * @param array|null $ids Optional array of specific IDs to filter
-	 *
 	 * @return array Configuration array with limit, offset, page,
 	 *               filters, sort, search, extend, fields, unset,
-	 *               queries, ids.
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
+	 *               queries, ids (always null).
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
-	private function getConfig(?string $register = null, ?string $schema = null, ?array $ids = null): array {
+	private function getConfig(): array {
 		$params = $this->request->getParams();
 
 		unset($params['id']);
 		unset($params['_route']);
 
-		// Extract and normalize parameters.
-		$limit = (int)($params['limit'] ?? $params['_limit'] ?? 20);
-		$offset = null;
-		if (isset($params['offset']) === true) {
-			$offset = (int)$params['offset'];
-		} elseif (isset($params['_offset']) === true) {
-			$offset = (int)$params['_offset'];
-		}
+		return array_merge($this->pagingOptions(params: $params), $this->requestOptions(params: $params));
 
-		$page = null;
-		if (isset($params['page']) === true) {
-			$page = (int)$params['page'];
-		} elseif (isset($params['_page']) === true) {
-			$page = (int)$params['_page'];
-		}
+	}//end getConfig()
+
+	/**
+	 * The paging part of the request config: limit, offset and page.
+	 *
+	 * @param array<string, mixed> $params The request parameters.
+	 *
+	 * @return array{limit: int, offset: int|null, page: int|null} The paging options.
+	 */
+	private function pagingOptions(array $params): array {
+		$limit = (int)($params['limit'] ?? $params['_limit'] ?? 20);
+		$offset = $this->intParam(params: $params, name: 'offset');
+		$page = $this->intParam(params: $params, name: 'page');
 
 		// If we have a page but no offset, calculate the offset.
 		if ($page !== null && $offset === null) {
 			$offset = (($page - 1) * $limit);
 		}
 
-		$queries = ($params['queries'] ?? $params['_queries'] ?? []);
-		if (is_string($queries) === true) {
-			$queries = [$queries];
-		}
-
 		return [
 			'limit' => $limit,
 			'offset' => $offset,
 			'page' => $page,
+		];
+	}//end pagingOptions()
+
+	/**
+	 * The non-paging part of the request config: filters, sort, search and the field options.
+	 *
+	 * @param array<string, mixed> $params The request parameters, without `id` and `_route`.
+	 *
+	 * @return array<string, mixed> The options, in the order getConfig() returns them.
+	 */
+	private function requestOptions(array $params): array {
+		return [
 			'filters' => $params,
 			'sort' => ($params['order'] ?? $params['_order'] ?? []),
 			'search' => ($params['_search'] ?? null),
 			'extend' => ($params['extend'] ?? $params['_extend'] ?? null),
 			'fields' => ($params['fields'] ?? $params['_fields'] ?? null),
 			'unset' => ($params['unset'] ?? $params['_unset'] ?? null),
-			'queries' => $queries,
-			'ids' => $ids,
+			'queries' => $this->queriesParam(params: $params),
+			'ids' => null,
 		];
+	}//end requestOptions()
 
-	}//end getConfig()
+	/**
+	 * Read the `queries` request parameter, turning a single query text into a list.
+	 *
+	 * @param array<string, mixed> $params The request parameters.
+	 *
+	 * @return mixed The queries; an empty list when none are given.
+	 */
+	private function queriesParam(array $params): mixed {
+		$queries = ($params['queries'] ?? $params['_queries'] ?? []);
+		if (is_string($queries) === true) {
+			return [$queries];
+		}
+
+		return $queries;
+	}//end queriesParam()
+
+	/**
+	 * Read an integer request parameter under its plain name or its underscored alias.
+	 *
+	 * @param array<string, mixed> $params The request parameters.
+	 * @param string               $name   The plain name, such as `offset`.
+	 *
+	 * @return int|null The value of the plain name when set, else of `_<name>`, else null.
+	 */
+	private function intParam(array $params, string $name): ?int {
+		foreach ([$name, '_' . $name] as $key) {
+			if (isset($params[$key]) === true) {
+				return (int)$params[$key];
+			}
+		}
+
+		return null;
+	}//end intParam()
 
 	/**
 	 * Get a catalog by its slug from cache or database.
@@ -839,13 +965,8 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	public function index(null|string|int $catalogId = null): JSONResponse {
 		// Get config and fetch objects.
@@ -864,95 +985,98 @@ class CatalogiService implements CatalogiServiceInterface {
 
 		$objectService = $this->getObjectService();
 
-		// Copy the request filters FIRST and strip every register/schema key from them,
-		// then write the (guarded) scope. The loop used to run after the scope and to
-		// skip only `register` / `schema`, so `?@self[register]=R&@self[schema]=S`
-		// replaced the whole `@self` block and an anonymous caller read any schema on
-		// the instance (WOO-581 review). Non-scope `@self` filters survive the strip.
-		$query = [];
-		if (empty($config['filters']) === false) {
-			foreach ($config['filters'] as $key => $value) {
-				$query[$key] = $value;
-			}
-		}
-
-		// Scope for magic mapper routing. Both scopes are non-empty here (see the
-		// fail-closed above). writeScope() keeps the schema a list unless the scope is
-		// one schema in one register (WOO-581 review rounds 3 and 4).
-		$query = CallerScope::strip(query: $query);
-		$query = CallerScope::writeScope(query: $query, registers: $context['registers'], schemas: $context['schemas']);
-
-		// Add special parameters.
-		if (isset($config['limit']) === true) {
-			$query['_limit'] = $config['limit'];
-		}
-
-		if (isset($config['offset']) === true) {
-			$query['_offset'] = $config['offset'];
-		}
-
-		if (isset($config['page']) === true) {
-			$query['_page'] = $config['page'];
-		}
-
-		if (isset($config['queries']) === true) {
-			$query['_queries'] = $config['queries'];
-		}
-
-		if (isset($config['order']) === true) {
-			$query['_order'] = $config['order'];
-		}
-
 		// Use searchObjectsPaginated which handles pagination internally. RBAC governs
 		// visibility (_rbac: true); _multitenancy: false so cross-org public reads resolve.
 		// The catalog schema's conditional public-read rule (published <= $now) already
 		// gates published-vs-draft for anonymous callers — no extra filtering needed.
 		$result = $objectService->searchObjectsPaginated(
-			query: $query,
+			query: $this->buildIndexQuery(config: $config, context: $context),
 			_rbac: true,
 			_multitenancy: false
 		);
 
-		// Authenticated-read-parity (CAT-AUTH-001): OpenRegister RBAC already decided
-		// (via _rbac: true above) that this caller may read every object in $result;
-		// this only governs how much `@self` metadata the envelope carries. Anonymous
-		// callers keep today's minimal envelope; authenticated callers see the full
-		// `@self` metadata OR already lets them read.
-		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
-
-		// Filter out unwanted properties from the @self array in each object.
-		$filteredResults = array_map(
-			function ($object) use ($isAnonymous) {
-				// The OR SOLR backend returns array shapes (not ObjectEntity instances)
-				// from searchObjectsPaginated; the magic-mapper backend returns entities.
-				// Guard so we do not fatal with "Call to a member function jsonSerialize()
-				// on array" under SOLR (#736), mirroring the dual-shape handling already
-				// present in CatalogiController/PublicationsController::index.
-				if (is_array($object) === true) {
-					$objectArray = $object;
-				} else {
-					$objectArray = $object->jsonSerialize();
-				}
-
-				if ($isAnonymous === true
-					&& isset($objectArray['@self']) === true
-					&& is_array($objectArray['@self']) === true
-				) {
-					// Remove unwanted properties from the @self array.
-					$objectArray['@self'] = array_diff_key(
-						$objectArray['@self'],
-						array_flip(self::UNWANTED_SELF_PROPERTIES)
-					);
-				}
-
-				return $objectArray;
-			},
-			$result['results']
-		);
-
-		$result['results'] = $filteredResults;
+		$result['results'] = $this->envelopeResults(results: $result['results']);
 
 		// Return paginated results.
 		return new JSONResponse($result);
 	}//end index()
+
+	/**
+	 * Build the search query for index() from the request config and the catalogue scope.
+	 *
+	 * The request filters are stripped of every register/schema key BEFORE the
+	 * guarded scope is written, so `?@self[register]=R&@self[schema]=S` can never
+	 * replace that scope (WOO-581 review). Non-scope `@self` filters survive the strip.
+	 *
+	 * Both scopes must be non-empty: index() fails closed before calling this.
+	 * writeScope() keeps the schema a list unless the scope is one schema in one
+	 * register (WOO-581 review rounds 3 and 4).
+	 *
+	 * @param array<string, mixed>        $config  The request config from getConfig().
+	 * @param array<string, array<mixed>> $context The catalogue scope from getCatalogFilters().
+	 *
+	 * @return array<string, mixed> The query for searchObjectsPaginated().
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope is a set of pure functions over the query (WOO-581)
+	 */
+	private function buildIndexQuery(array $config, array $context): array {
+		$query = CallerScope::strip(query: $config['filters']);
+		$query = CallerScope::writeScope(query: $query, registers: $context['registers'], schemas: $context['schemas']);
+
+		foreach (self::INDEX_PAGING_PARAMETERS as $configKey => $queryKey) {
+			if (isset($config[$configKey]) === true) {
+				$query[$queryKey] = $config[$configKey];
+			}
+		}
+
+		return $query;
+	}//end buildIndexQuery()
+
+	/**
+	 * Shape every search result into the envelope index() returns.
+	 *
+	 * Authenticated-read-parity (CAT-AUTH-001): OpenRegister RBAC already decided
+	 * (via _rbac: true) that this caller may read every object in the results;
+	 * this only governs how much `@self` metadata the envelope carries. Anonymous
+	 * callers keep the minimal envelope; authenticated callers see the full
+	 * `@self` metadata OR already lets them read.
+	 *
+	 * @param array<int, mixed> $results The search results, entities or arrays.
+	 *
+	 * @return array<int, array<string, mixed>> The result rows as arrays.
+	 */
+	private function envelopeResults(array $results): array {
+		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+
+		return array_map(
+			fn ($object): array => $this->envelopeOf(object: $object, isAnonymous: $isAnonymous),
+			$results
+		);
+	}//end envelopeResults()
+
+	/**
+	 * Turn one search result into an array, without the hidden `@self` keys for anonymous callers.
+	 *
+	 * The OR SOLR backend returns array shapes (not ObjectEntity instances) from
+	 * searchObjectsPaginated; the magic-mapper backend returns entities. Both are
+	 * accepted so SOLR does not fatal with "Call to a member function jsonSerialize()
+	 * on array" (#736).
+	 *
+	 * @param mixed $object      One search result.
+	 * @param bool  $isAnonymous Whether the caller has no session user.
+	 *
+	 * @return array<string, mixed> The result as an array.
+	 */
+	private function envelopeOf(mixed $object, bool $isAnonymous): array {
+		$objectArray = $object;
+		if (is_array($object) === false) {
+			$objectArray = $object->jsonSerialize();
+		}
+
+		if ($isAnonymous === true && isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {
+			$objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip(self::UNWANTED_SELF_PROPERTIES));
+		}
+
+		return $objectArray;
+	}//end envelopeOf()
 }//end class

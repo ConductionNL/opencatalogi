@@ -488,7 +488,7 @@ class PublicationService implements PublicationServiceInterface {
 		}
 
 		if ($catalogId !== null) {
-			$catalogs = [$this->getObjectService()->find($catalogId)];
+			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
 		}
 
 		// Remove duplicate values and assign to class properties.
@@ -511,6 +511,37 @@ class PublicationService implements PublicationServiceInterface {
 
 		return $result;
 	}//end getCatalogFilters()
+
+	/**
+	 * Find one catalog, but only when it lives in the configured catalog register and schema.
+	 *
+	 * OpenRegister's find() falls back to a cross-table lookup for a UUID it cannot
+	 * place in the given schema, so the hint alone does not bound the result: the
+	 * found object's own register and schema are checked as well.
+	 *
+	 * @param string|integer $catalogId The catalog id, UUID or slug.
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 *
+	 * @return array<int, \OCA\OpenRegister\Db\ObjectEntity> The catalog, or an empty list when it is not a catalog.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function findCatalogInScope(string|int $catalogId, array $scope): array {
+		$catalog = $this->getObjectService()->find(
+			id: $catalogId,
+			register: $scope['register'],
+			schema: $scope['schema']
+		);
+
+		if ($catalog === null
+			|| (string)$catalog->getRegister() !== $scope['register']
+			|| (string)$catalog->getSchema() !== $scope['schema']
+		) {
+			return [];
+		}
+
+		return [$catalog];
+	}//end findCatalogInScope()
 
 	/**
 	 * Get the list of available registers.
@@ -2469,63 +2500,24 @@ class PublicationService implements PublicationServiceInterface {
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	private function getLocalCatalogs(): array {
-		// Return cached result if available.
 		if ($this->cachedLocalCatalogs !== null) {
 			return $this->cachedLocalCatalogs;
 		}
 
 		try {
-			// Get catalog configuration from settings.
-			$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-			$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-			if (empty($catalogSchema) === true || empty($catalogRegister) === true) {
+			$query = $this->localCatalogQuery();
+			if ($query === null) {
 				return [];
 			}
 
-			// Setup query for finding catalogs.
-			$query = [
-				'@self' => [
-					'schema' => $catalogSchema,
-					'register' => $catalogRegister,
-				],
-			];
-
-			// Get all catalogs using ObjectService.
-			$objectService = $this->getObjectService();
-			$catalogs = $objectService->searchObjects($query);
-
-			// Convert catalog objects to arrays and filter for public use.
 			$catalogArray = [];
-			foreach ($catalogs as $catalog) {
-				$catalogData = $catalog;
-				if ($catalog instanceof \OCP\AppFramework\Db\Entity) {
-					$catalogData = $catalog->jsonSerialize();
-				}
-
-				// Extract the relevant catalog information. `slug` is
-				// authoritative for URL routing on both sides of the federation
-				// (see FederationSearch.onResultClick: `#/publications/<slug>/<id>`)
-				// — omitting it breaks click-through on any peer consuming this
-				// response because the client falls back to the peer app-root
-				// rather than the specific publication detail page (WOO-522).
-				$catalogInfo = [
-					'id' => ($catalogData['id'] ?? ''),
-					'slug' => ($catalogData['slug'] ?? $catalogData['@self']['slug'] ?? ''),
-					'title' => ($catalogData['title'] ?? 'Local Catalog'),
-					'summary' => ($catalogData['summary'] ?? 'Local catalog instance'),
-					'description' => $catalogData['description'] ?? null,
-					'organization' => $catalogData['organization'] ?? null,
-					'listed' => $catalogData['listed'] ?? false,
-				];
-
-				// Only include non-empty catalog info.
+			foreach ($this->getObjectService()->searchObjects($query) as $catalog) {
+				$catalogInfo = $this->localCatalogInfo(catalog: $catalog);
 				if (empty($catalogInfo['id']) === false) {
 					$catalogArray[] = $catalogInfo;
 				}
-			}//end foreach
+			}
 
-			// Cache the result before returning.
 			$this->cachedLocalCatalogs = $catalogArray;
 			return $catalogArray;
 		} catch (\Exception $e) {
@@ -2535,6 +2527,54 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end getLocalCatalogs()
+
+	/**
+	 * The search query for this instance's catalogs.
+	 *
+	 * @return array|null The query, or null when the catalog schema or register is not configured.
+	 */
+	private function localCatalogQuery(): ?array {
+		$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+		if (empty($catalogSchema) === true || empty($catalogRegister) === true) {
+			return null;
+		}
+
+		return [
+			'@self' => [
+				'schema' => $catalogSchema,
+				'register' => $catalogRegister,
+			],
+		];
+	}//end localCatalogQuery()
+
+	/**
+	 * The public summary of one local catalog.
+	 *
+	 * `slug` is authoritative for URL routing on both sides of the federation
+	 * (see FederationSearch.onResultClick: `#/publications/<slug>/<id>`); a peer
+	 * without it falls back to the app root instead of the publication (WOO-522).
+	 *
+	 * @param mixed $catalog The catalog entity or its data.
+	 *
+	 * @return array The catalog's id, slug, title, summary, description, organization and listed flag.
+	 */
+	private function localCatalogInfo(mixed $catalog): array {
+		$catalogData = $catalog;
+		if ($catalog instanceof \OCP\AppFramework\Db\Entity) {
+			$catalogData = $catalog->jsonSerialize();
+		}
+
+		return [
+			'id' => ($catalogData['id'] ?? ''),
+			'slug' => ($catalogData['slug'] ?? $catalogData['@self']['slug'] ?? ''),
+			'title' => ($catalogData['title'] ?? 'Local Catalog'),
+			'summary' => ($catalogData['summary'] ?? 'Local catalog instance'),
+			'description' => $catalogData['description'] ?? null,
+			'organization' => $catalogData['organization'] ?? null,
+			'listed' => $catalogData['listed'] ?? false,
+		];
+	}//end localCatalogInfo()
 
 	/**
 	 * Simple merge function for facets data from multiple sources.
@@ -2886,78 +2926,53 @@ class PublicationService implements PublicationServiceInterface {
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getFederatedUsed(string $id, array $queryParams = []): array {
-		// Check if aggregation is enabled (default: true, unless explicitly set to false).
-		$aggregate = ($queryParams['_aggregate'] ?? 'true');
-		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-		// Get local results first.
-		$localResponse = $this->used(id: $id);
-		$localData = json_decode($localResponse->render(), true);
-
-		// If aggregation is disabled, return only local results.
-		if ($shouldAggregate === false) {
-			return [
-				'success' => true,
-				'data' => $localData,
-				'status' => 200,
-			];
+		$localData = json_decode($this->used(id: $id)->render(), true);
+		if ($this->aggregationRequested(queryParams: $queryParams) === false) {
+			return $this->successResult(data: $localData);
 		}
 
 		try {
-			// Get optional Guzzle configuration from query parameters.
-			$guzzleConfig = [];
-
-			// Allow timeout configuration via query parameter.
-			if (isset($queryParams['timeout']) === true) {
-				$timeout = (int)$queryParams['timeout'];
-				if ($timeout > 0 && $timeout <= 120) {
-					// Max 2 minutes.
-					$guzzleConfig['timeout'] = $timeout;
-				}
-			}
-
-			// Allow connect timeout configuration via query parameter.
-			if (isset($queryParams['connect_timeout']) === true) {
-				$connectTimeout = (int)$queryParams['connect_timeout'];
-				if ($connectTimeout > 0 && $connectTimeout <= 30) {
-					// Max 30 seconds.
-					$guzzleConfig['connect_timeout'] = $connectTimeout;
-				}
-			}
-
-			// Pass through current query parameters (DirectoryService will handle _aggregate and _extend).
-			$guzzleConfig['query_params'] = $queryParams;
-
-			// Get federated results from directory service.
-			$federatedResults = $this->directoryService->getUsed($id, $guzzleConfig);
-
-			// Merge local and federated results.
-			$mergedResults = [
-				'results' => array_merge(
-					($localData['results'] ?? []),
-					($federatedResults['results'] ?? [])
-				),
-				'sources' => array_merge(
-					['local' => 'Local OpenCatalogi instance'],
-					($federatedResults['sources'] ?? [])
-				),
-			];
-
-			return [
-				'success' => true,
-				'data' => $mergedResults,
-				'status' => 200,
-			];
+			$federatedResults = $this->directoryService->getUsed($id, $this->federationRequestConfig(queryParams: $queryParams));
 		} catch (\Exception $e) {
 			// If federation fails, return local results.
-			return [
-				'success' => true,
-				'data' => $localData,
-				'status' => 200,
-			];
-		}//end try
+			return $this->successResult(data: $localData);
+		}
+
+		return $this->successResult(
+			data: [
+				'results' => array_merge(($localData['results'] ?? []), ($federatedResults['results'] ?? [])),
+				'sources' => array_merge(['local' => 'Local OpenCatalogi instance'], ($federatedResults['sources'] ?? [])),
+			]
+		);
 
 	}//end getFederatedUsed()
+
+	/**
+	 * Whether the query asks for federated results: `_aggregate` is on unless it is `false` or `0`.
+	 *
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return bool True when peers should be asked too.
+	 */
+	private function aggregationRequested(array $queryParams): bool {
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		return $aggregate !== 'false' && $aggregate !== '0';
+	}//end aggregationRequested()
+
+	/**
+	 * The successful result shape of a federated lookup.
+	 *
+	 * @param mixed $data The response data.
+	 *
+	 * @return array The result with status 200.
+	 */
+	private function successResult(mixed $data): array {
+		return [
+			'success' => true,
+			'data' => $data,
+			'status' => 200,
+		];
+	}//end successResult()
 
 	/**
 	 * Get publications that this publication uses with federation support

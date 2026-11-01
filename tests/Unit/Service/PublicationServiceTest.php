@@ -364,15 +364,105 @@ class PublicationServiceTest extends TestCase {
 			'registers' => ['reg-specific'],
 			'schemas' => ['sch-specific'],
 		]);
+		$catalog->setRegister('register-1');
+		$catalog->setSchema('schema-1');
 
 		// searchObjects returns all, but find returns the specific one
 		$objectService->method('searchObjects')->willReturn([]);
-		$objectService->method('find')->with('catalog-42')->willReturn($catalog);
+		$objectService->expects($this->once())->method('find')
+			->with('catalog-42', [], false, 'register-1', 'schema-1')
+			->willReturn($catalog);
 
 		$result = $this->service->getCatalogFilters('catalog-42');
 
 		$this->assertSame(['reg-specific'], $result['registers']);
 		$this->assertSame(['sch-specific'], $result['schemas']);
+	}
+
+	/**
+	 * An object outside the catalog register or schema does not act as a catalog.
+	 *
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public static function provideObjectsOutsideTheCatalogSchema(): array {
+		return [
+			'other schema' => ['register-1', 'schema-2'],
+			'other register' => ['register-2', 'schema-1'],
+			'other register and schema' => ['register-2', 'schema-2'],
+		];
+	}
+
+	/**
+	 * @dataProvider provideObjectsOutsideTheCatalogSchema
+	 */
+	public function testGetCatalogFiltersIgnoresAnObjectOutsideTheCatalogSchema(string $register, string $schema): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$other = $this->createSerializableObject([
+			'registers' => ['reg-other'],
+			'schemas' => ['sch-other'],
+		]);
+		$other->setRegister($register);
+		$other->setSchema($schema);
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn($other);
+
+		$result = $this->service->getCatalogFilters('not-a-catalog');
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $result);
+		$this->assertSame([], $this->service->getAvailableRegisters());
+		$this->assertSame([], $this->service->getAvailableSchemas());
+	}
+
+	public function testGetCatalogFiltersIsEmptyWhenTheCatalogIsNotFound(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn(null);
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $this->service->getCatalogFilters('missing'));
+	}
+
+	public function testIndexWithAnObjectOutsideTheCatalogSchemaFindsNothing(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$other = $this->createSerializableObject([
+			'registers' => ['reg-other'],
+			'schemas' => ['sch-other'],
+		]);
+		$other->setRegister('register-9');
+		$other->setSchema('schema-9');
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn($other);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$this->request->method('getParams')->willReturn([]);
+
+		$response = $this->service->index('not-a-catalog');
+		$this->assertSame(['results' => [], 'facets' => [], 'total' => 0], $response->getData());
 	}
 
 	public function testGetCatalogFiltersCachesResults(): void {
@@ -504,6 +594,8 @@ class PublicationServiceTest extends TestCase {
 			'registers' => ['reg-1'],
 			'schemas' => ['sch-1'],
 		]);
+		$catalog->setRegister('register-1');
+		$catalog->setSchema('schema-1');
 		$objectService->method('searchObjects')->willReturn([]);
 		$objectService->method('find')
 			->willReturn($catalog);
