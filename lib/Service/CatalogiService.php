@@ -550,65 +550,99 @@ class CatalogiService implements CatalogiServiceInterface {
 	/**
 	 * Helper method to get configuration array from the current request.
 	 *
-	 * @param string|null $register Optional register identifier
-	 * @param string|null $schema Optional schema identifier
-	 * @param array|null $ids Optional array of specific IDs to filter
-	 *
 	 * @return array Configuration array with limit, offset, page,
 	 *               filters, sort, search, extend, fields, unset,
-	 *               queries, ids.
-	 *
-	 * @SuppressWarnings(PHPMD.UnusedFormalParameter) parameters reserved for future filter use.
+	 *               queries, ids (always null).
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
-	private function getConfig(?string $register = null, ?string $schema = null, ?array $ids = null): array {
+	private function getConfig(): array {
 		$params = $this->request->getParams();
 
 		unset($params['id']);
 		unset($params['_route']);
 
-		// Extract and normalize parameters.
-		$limit = (int)($params['limit'] ?? $params['_limit'] ?? 20);
-		$offset = null;
-		if (isset($params['offset']) === true) {
-			$offset = (int)$params['offset'];
-		} elseif (isset($params['_offset']) === true) {
-			$offset = (int)$params['_offset'];
-		}
+		return array_merge($this->pagingOptions(params: $params), $this->requestOptions(params: $params));
 
-		$page = null;
-		if (isset($params['page']) === true) {
-			$page = (int)$params['page'];
-		} elseif (isset($params['_page']) === true) {
-			$page = (int)$params['_page'];
-		}
+	}//end getConfig()
+
+	/**
+	 * The paging part of the request config: limit, offset and page.
+	 *
+	 * @param array<string, mixed> $params The request parameters.
+	 *
+	 * @return array{limit: int, offset: int|null, page: int|null} The paging options.
+	 */
+	private function pagingOptions(array $params): array {
+		$limit = (int)($params['limit'] ?? $params['_limit'] ?? 20);
+		$offset = $this->intParam(params: $params, name: 'offset');
+		$page = $this->intParam(params: $params, name: 'page');
 
 		// If we have a page but no offset, calculate the offset.
 		if ($page !== null && $offset === null) {
 			$offset = (($page - 1) * $limit);
 		}
 
-		$queries = ($params['queries'] ?? $params['_queries'] ?? []);
-		if (is_string($queries) === true) {
-			$queries = [$queries];
-		}
-
 		return [
 			'limit' => $limit,
 			'offset' => $offset,
 			'page' => $page,
+		];
+	}//end pagingOptions()
+
+	/**
+	 * The non-paging part of the request config: filters, sort, search and the field options.
+	 *
+	 * @param array<string, mixed> $params The request parameters, without `id` and `_route`.
+	 *
+	 * @return array<string, mixed> The options, in the order getConfig() returns them.
+	 */
+	private function requestOptions(array $params): array {
+		return [
 			'filters' => $params,
 			'sort' => ($params['order'] ?? $params['_order'] ?? []),
 			'search' => ($params['_search'] ?? null),
 			'extend' => ($params['extend'] ?? $params['_extend'] ?? null),
 			'fields' => ($params['fields'] ?? $params['_fields'] ?? null),
 			'unset' => ($params['unset'] ?? $params['_unset'] ?? null),
-			'queries' => $queries,
-			'ids' => $ids,
+			'queries' => $this->queriesParam(params: $params),
+			'ids' => null,
 		];
+	}//end requestOptions()
 
-	}//end getConfig()
+	/**
+	 * Read the `queries` request parameter, turning a single query text into a list.
+	 *
+	 * @param array<string, mixed> $params The request parameters.
+	 *
+	 * @return mixed The queries; an empty list when none are given.
+	 */
+	private function queriesParam(array $params): mixed {
+		$queries = ($params['queries'] ?? $params['_queries'] ?? []);
+		if (is_string($queries) === true) {
+			return [$queries];
+		}
+
+		return $queries;
+	}//end queriesParam()
+
+	/**
+	 * Read an integer request parameter under its plain name or its underscored alias.
+	 *
+	 * @param array<string, mixed> $params The request parameters.
+	 * @param string               $name   The plain name, such as `offset`.
+	 *
+	 * @return int|null The value of the plain name when set, else of `_<name>`, else null.
+	 */
+	private function intParam(array $params, string $name): ?int {
+		foreach ([$name, '_' . $name] as $key) {
+			if (isset($params[$key]) === true) {
+				return (int)$params[$key];
+			}
+		}
+
+		return null;
+	}//end intParam()
 
 	/**
 	 * Get a catalog by its slug from cache or database.
