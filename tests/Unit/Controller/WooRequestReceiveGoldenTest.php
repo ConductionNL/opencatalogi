@@ -65,7 +65,7 @@ class WooRequestReceiveGoldenTest extends TestCase {
 
 		return [
 			'received and armed' => [['params' => $form]],
-			'a forged receivedBy and actor are ignored' => [['params' => $form + ['receivedBy' => 'mallory', 'actor' => 'mallory', 'channel' => 'post']]],
+			'a forged receivedBy and actor are ignored' => [['params' => $form + ['receivedBy' => 'mallory', 'actor' => 'mallory', 'userId' => 'mallory', 'channel' => 'post']]],
 			'not logged in' => [['user' => false, 'params' => $form]],
 			'refused' => [['fail' => 'refuse', 'params' => $form]],
 			'first save fails' => [['fail' => 'save1', 'params' => $form]],
