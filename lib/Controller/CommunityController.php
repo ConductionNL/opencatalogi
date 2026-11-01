@@ -41,8 +41,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface;
 use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
-use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
@@ -92,7 +92,7 @@ class CommunityController extends Controller {
 	 * @param MarkupRenderServiceInterface $markupService The markup renderer.
 	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
 	 * @param CatalogiServiceInterface $catalogi The catalogues, by slug.
-	 * @param PublicationQueryServiceInterface $queryService The anonymous catalogue read.
+	 * @param CatalogueFeedReaderInterface $feedReader The feed's anonymous catalogue read.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -108,7 +108,7 @@ class CommunityController extends Controller {
 		private readonly MarkupRenderServiceInterface $markupService,
 		private readonly ServiceCatalogueServiceInterface $objects,
 		private readonly CatalogiServiceInterface $catalogi,
-		private readonly PublicationQueryServiceInterface $queryService,
+		private readonly CatalogueFeedReaderInterface $feedReader,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -273,9 +273,9 @@ class CommunityController extends Controller {
 		$catalogId = (string)($catalog['id'] ?? ($catalog['@self']['id'] ?? ''));
 
 		try {
-			$read = $this->queryService->readCatalogueAsAnonymous(
+			$read = $this->feedReader->read(
 				catalog: $catalog,
-				queryParams: ['_limit' => self::FEED_SIZE, '_order' => ['@self.updated' => 'desc']],
+				limit: self::FEED_SIZE,
 				objectService: $this->objects->getObjectService()
 			);
 			$records = [];

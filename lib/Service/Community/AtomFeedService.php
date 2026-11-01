@@ -61,7 +61,7 @@ class AtomFeedService implements AtomFeedServiceInterface {
 	 *
 	 * The records are what an anonymous reader may read inside the catalogue:
 	 * OpenRegister applied the publication schema's own read rules before they
-	 * reached this method (PublicationQueryService::readCatalogueAsAnonymous()),
+	 * reached this method (CatalogueFeedReader::read()),
 	 * so a draft is absent because no public rule admits it. This method only
 	 * shapes entries and drops notices outside their period.
 	 *

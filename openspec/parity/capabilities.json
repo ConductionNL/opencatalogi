@@ -4686,7 +4686,7 @@
 			"built": {
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "GET /api/feeds/{catalogSlug} @PublicPage (appinfo/routes.php); CommunityController::feed reads the catalogue through PublicationQueryService::readCatalogueAsAnonymous (the publication schema's read rules, inside runAsAnonymous, for every caller, decision 138) and only the notices of the catalogue's own boards (AtomFeedService::noticesOfCatalogue); tests CommunityControllerTest::testTheFeedCarriesWhatAnAnonymousReaderMayReadInTheCatalogue, PublicationQueryServiceTest::testThePublicationSchemaKeepsADraftFromAnAnonymousReader",
+				"evidence": "GET /api/feeds/{catalogSlug} @PublicPage (appinfo/routes.php); CommunityController::feed reads the catalogue through CatalogueFeedReader::read (the publication schema's read rules, inside runAsAnonymous, for every caller, decision 138) and only the notices of the catalogue's own boards (AtomFeedService::noticesOfCatalogue); tests CommunityControllerTest::testTheFeedCarriesWhatAnAnonymousReaderMayReadInTheCatalogue, CatalogueFeedReaderTest::testThePublicationSchemaKeepsADraftFromAnAnonymousReader",
 				"change": "the-public-and-community-surface"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public, Atom). Nothing links to it",

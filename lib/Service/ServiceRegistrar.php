@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\CatalogueFeedReaderInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
@@ -77,6 +78,7 @@ use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
+use OCA\OpenCatalogi\Service\Community\CatalogueFeedReader;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
@@ -169,6 +171,7 @@ class ServiceRegistrar {
 		InspectionServiceInterface::class => InspectionService::class,
 		StatusPageServiceInterface::class => StatusPageService::class,
 		AtomFeedServiceInterface::class => AtomFeedService::class,
+		CatalogueFeedReaderInterface::class => CatalogueFeedReader::class,
 		InformationRequestIntakeInterface::class => WooRequestIntake::class,
 		PublicationStateServiceInterface::class => PublicationStateService::class,
 		CollectionShareServiceInterface::class => CollectionShareService::class,

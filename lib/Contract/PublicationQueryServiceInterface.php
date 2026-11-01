@@ -161,24 +161,6 @@ interface PublicationQueryServiceInterface {
 	public function applySchemaScopeReadRuleGuard(array $schemaIds): array;
 
 	/**
-	 * Read one catalogue the way an anonymous reader reads it, for every caller.
-	 *
-	 * @param array  $catalog       The catalogue (keys: schemas, registers).
-	 * @param array  $queryParams   Paging and ordering for the read; scope keys are stripped.
-	 * @param object $objectService OpenRegister ObjectService.
-	 *
-	 * @return array The OpenRegister result envelope (`results`, `total`).
-	 *
-	 * @psalm-param   array<string, mixed> $catalog
-	 * @psalm-param   array<string, mixed> $queryParams
-	 * @phpstan-param array<string, mixed> $catalog
-	 * @phpstan-param array<string, mixed> $queryParams
-	 *
-	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
-	 */
-	public function readCatalogueAsAnonymous(array $catalog, array $queryParams, object $objectService): array;
-
-	/**
 	 * Apply the SCH-PFTS-CAT-002 read-rule guard to the ROWS of a relation result.
 	 *
 	 * `/api/{catalogSlug}/{id}/uses` and `/used` guard their root object, then hand

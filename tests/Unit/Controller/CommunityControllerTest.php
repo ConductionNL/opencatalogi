@@ -27,6 +27,7 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Controller\CommunityController;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
+use OCA\OpenCatalogi\Service\Community\CatalogueFeedReader;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\CatalogiService;
@@ -43,6 +44,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Unit tests for CommunityController.
@@ -137,7 +139,10 @@ class CommunityControllerTest extends TestCase {
 			new MarkupRenderService(),
 			$this->objects,
 			$this->catalogi,
-			new PublicationQueryService(container: $this->container)
+			new CatalogueFeedReader(
+				new PublicationQueryService(container: $this->container),
+				$this->createMock(LoggerInterface::class)
+			)
 		);
 
 	}//end setUp()
