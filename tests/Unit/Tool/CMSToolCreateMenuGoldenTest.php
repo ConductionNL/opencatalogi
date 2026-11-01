@@ -54,6 +54,7 @@ class CMSToolCreateMenuGoldenTest extends TestCase {
 		return [
 			'session user owns the menu' => [['params' => ['title' => 'Main', 'items' => $items]]],
 			'a forged owner is ignored' => [['params' => ['title' => 'Main', 'items' => $items, 'owner' => 'mallory', 'organisation' => 'other']]],
+			'a forged userId is ignored' => [['params' => ['title' => 'Main', 'items' => $items, 'userId' => 'mallory']]],
 			'agent user without a session' => [['session' => null, 'params' => ['title' => 'Main', 'items' => $items]]],
 			'no agent, no session' => [['session' => null, 'agent' => false, 'params' => ['title' => 'Main', 'items' => $items]]],
 			'agent never set' => [['agent' => 'unset', 'params' => ['title' => 'Main', 'items' => $items]]],

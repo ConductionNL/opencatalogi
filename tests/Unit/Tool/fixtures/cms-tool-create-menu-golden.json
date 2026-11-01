@@ -419,5 +419,48 @@
             "code": 400
         },
         "saved": []
+    },
+    "a forged userId is ignored": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": "session-user",
+                    "organisation": "org-1"
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
     }
 }
