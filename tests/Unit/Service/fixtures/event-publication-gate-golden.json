@@ -1,0 +1,549 @@
+{
+    "testAttachmentsMatchTheRecording by id": {
+        "result": {
+            "published": 4,
+            "skipped": 1,
+            "errors": [
+                "Failed to create share link for file missing.txt",
+                "Failed to create share link for file gone.txt",
+                "Failed to create share link for file empty.txt",
+                "Failed to publish file boom.txt: share refused",
+                "Failed to create share link for file unknown"
+            ]
+        },
+        "calls": [
+            {
+                "ObjectService::find": {
+                    "id": 2
+                }
+            },
+            {
+                "FileMapper::getFilesForObject": {
+                    "object": "OCA\\OpenRegister\\Db\\ObjectEntity"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/doc.pdf"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/missing.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/gone.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/empty.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/boom.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/anonymous.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/missing-anonymous.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/zero.txt"
+                }
+            }
+        ]
+    },
+    "testAttachmentsMatchTheRecording by uuid": {
+        "result": {
+            "published": 4,
+            "skipped": 1,
+            "errors": [
+                "Failed to create share link for file missing.txt",
+                "Failed to create share link for file gone.txt",
+                "Failed to create share link for file empty.txt",
+                "Failed to publish file boom.txt: share refused",
+                "Failed to create share link for file unknown"
+            ]
+        },
+        "calls": [
+            {
+                "ObjectService::find": {
+                    "id": "u-1"
+                }
+            },
+            {
+                "FileMapper::getFilesForObject": {
+                    "object": "OCA\\OpenRegister\\Db\\ObjectEntity"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/doc.pdf"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/missing.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/gone.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/empty.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/boom.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/anonymous.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/missing-anonymous.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/zero.txt"
+                }
+            }
+        ]
+    },
+    "testAttachmentsMatchTheRecording file listing fails": {
+        "result": {
+            "published": 0,
+            "skipped": 0,
+            "errors": [
+                "Failed to access file service: files unreadable"
+            ]
+        },
+        "calls": [
+            {
+                "ObjectService::find": {
+                    "id": "u-1"
+                }
+            },
+            {
+                "FileMapper::getFilesForObject": {
+                    "object": "OCA\\OpenRegister\\Db\\ObjectEntity"
+                }
+            }
+        ]
+    },
+    "testAttachmentsMatchTheRecording lookup fails": {
+        "result": {
+            "published": 0,
+            "skipped": 0,
+            "errors": [
+                "Failed to access file service: lookup failed"
+            ]
+        },
+        "calls": [
+            {
+                "ObjectService::find": {
+                    "id": "find-throws"
+                }
+            }
+        ]
+    },
+    "testAttachmentsMatchTheRecording no files": {
+        "result": {
+            "published": 0,
+            "skipped": 0,
+            "errors": []
+        },
+        "calls": [
+            {
+                "ObjectService::find": {
+                    "id": "u-1"
+                }
+            },
+            {
+                "FileMapper::getFilesForObject": {
+                    "object": "OCA\\OpenRegister\\Db\\ObjectEntity"
+                }
+            }
+        ]
+    },
+    "testAttachmentsMatchTheRecording null uuid falls back to id": {
+        "result": {
+            "published": 4,
+            "skipped": 1,
+            "errors": [
+                "Failed to create share link for file missing.txt",
+                "Failed to create share link for file gone.txt",
+                "Failed to create share link for file empty.txt",
+                "Failed to publish file boom.txt: share refused",
+                "Failed to create share link for file unknown"
+            ]
+        },
+        "calls": [
+            {
+                "ObjectService::find": {
+                    "id": 3
+                }
+            },
+            {
+                "FileMapper::getFilesForObject": {
+                    "object": "OCA\\OpenRegister\\Db\\ObjectEntity"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/doc.pdf"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/missing.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/gone.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/empty.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/boom.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/anonymous.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/missing-anonymous.txt"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/"
+                }
+            },
+            {
+                "FileService::createShareLink": {
+                    "path": "/OpenRegister/files/zero.txt"
+                }
+            }
+        ]
+    },
+    "testAttachmentsMatchTheRecording object not found": {
+        "result": {
+            "published": 0,
+            "skipped": 0,
+            "errors": []
+        },
+        "calls": [
+            {
+                "ObjectService::find": {
+                    "id": "no-entity"
+                }
+            }
+        ]
+    },
+    "testAttachmentsMatchTheRecording openregister absent": {
+        "result": {
+            "published": 0,
+            "skipped": 0,
+            "errors": [
+                "Failed to access file service: OpenRegister file service is not available."
+            ]
+        },
+        "calls": []
+    },
+    "testGateMatchesTheRecording catalog scope as text": {
+        "result": true,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording catalog without scope": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording in a catalog": {
+        "result": true,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording integer scope": {
+        "result": true,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording no catalog register setting": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            }
+        ]
+    },
+    "testGateMatchesTheRecording no catalog schema setting": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            }
+        ]
+    },
+    "testGateMatchesTheRecording no catalogs": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording no configuration": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            }
+        ]
+    },
+    "testGateMatchesTheRecording no register": {
+        "result": false,
+        "calls": []
+    },
+    "testGateMatchesTheRecording no schema": {
+        "result": false,
+        "calls": []
+    },
+    "testGateMatchesTheRecording no self": {
+        "result": false,
+        "calls": []
+    },
+    "testGateMatchesTheRecording null schema": {
+        "result": false,
+        "calls": []
+    },
+    "testGateMatchesTheRecording openregister absent": {
+        "result": false,
+        "calls": [
+            {
+                "LoggerInterface::error": {
+                    "message": "OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: OpenRegister object service is not available.",
+                    "context": [
+                        "exception"
+                    ]
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording register only in the catalog": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording schema only in the catalog": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording scope with a suffix": {
+        "result": true,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording search fails": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            },
+            {
+                "LoggerInterface::error": {
+                    "message": "OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: search down",
+                    "context": [
+                        "exception"
+                    ]
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording second catalog matches": {
+        "result": true,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "cat-r",
+                            "schema": "cat-s"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "testGateMatchesTheRecording settings fail": {
+        "result": false,
+        "calls": [
+            {
+                "SettingsService::getSettings": []
+            },
+            {
+                "LoggerInterface::error": {
+                    "message": "OpenCatalogi shouldAutoPublishObject: Error checking auto-publish criteria: settings unreadable",
+                    "context": [
+                        "exception"
+                    ]
+                }
+            }
+        ]
+    }
+}
