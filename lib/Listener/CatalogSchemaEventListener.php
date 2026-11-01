@@ -81,23 +81,7 @@ class CatalogSchemaEventListener implements IEventListener {
 		}
 
 		try {
-			$objectEntity = $this->getEntityFromEvent(event: $event);
-			if ($objectEntity === null) {
-				return;
-			}
-
-			$catalogSchema = $this->appConfig->getValueString('opencatalogi', 'catalog_schema', '');
-			$catalogRegister = $this->appConfig->getValueString('opencatalogi', 'catalog_register', '');
-
-			if ($objectEntity->getSchema() !== $catalogSchema
-				|| $objectEntity->getRegister() !== $catalogRegister
-			) {
-				return;
-			}
-
-			$object = $objectEntity->getObject() ?? [];
-			$modified = $this->catalogiService->computeRewrittenRegistersAndSchemas($object);
-
+			$modified = $this->catalogRewrites(event: $event);
 			if ($modified === []) {
 				return;
 			}
@@ -116,6 +100,39 @@ class CatalogSchemaEventListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The rewritten registers and schemas of the catalog an event saves.
+	 *
+	 * @param Event $event The pre-save event.
+	 *
+	 * @return array<string, mixed> The keys to rewrite, or none when the object is no catalog.
+	 */
+	private function catalogRewrites(Event $event): array {
+		$objectEntity = $this->getEntityFromEvent(event: $event);
+		if ($objectEntity === null || $this->isCatalog(objectEntity: $objectEntity) === false) {
+			return [];
+		}
+
+		return $this->catalogiService->computeRewrittenRegistersAndSchemas($objectEntity->getObject() ?? []);
+
+	}//end catalogRewrites()
+
+	/**
+	 * Whether an object lives in the configured catalog schema and register.
+	 *
+	 * @param ObjectEntity $objectEntity The object.
+	 *
+	 * @return bool
+	 */
+	private function isCatalog(ObjectEntity $objectEntity): bool {
+		$catalogSchema = $this->appConfig->getValueString('opencatalogi', 'catalog_schema', '');
+		$catalogRegister = $this->appConfig->getValueString('opencatalogi', 'catalog_register', '');
+
+		return $objectEntity->getSchema() === $catalogSchema
+			&& $objectEntity->getRegister() === $catalogRegister;
+
+	}//end isCatalog()
 
 	/**
 	 * Pull the catalog entity out of either supported pre-save event.
