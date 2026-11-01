@@ -147,7 +147,13 @@ class PortalAccountRemovedListener implements IEventListener {
 			return null;
 		}
 
-		return $this->subjectRefOf(newData: $newData, oldData: $oldData);
+		$subjectRef = $this->subjectRefOf(newData: $newData, oldData: $oldData);
+		if ($subjectRef === '') {
+			$this->logger->warning('OpenCatalogi: a portal account removal did not keep its subject; nothing was deleted');
+			return null;
+		}
+
+		return $subjectRef;
 
 	}//end removedAccountOwner()
 
@@ -165,17 +171,18 @@ class PortalAccountRemovedListener implements IEventListener {
 	}//end isRemoval()
 
 	/**
-	 * The account's subjectRef, from after the update or else from before it.
+	 * The account's stored subjectRef, when the update leaves it unchanged.
 	 *
 	 * @param array<string, mixed> $newData The account after the update.
 	 * @param array<string, mixed> $oldData The account before it.
 	 *
-	 * @return string The subjectRef, empty when neither has one.
+	 * @return string The subjectRef, empty when there is none or the update changes it.
 	 */
 	private function subjectRefOf(array $newData, array $oldData): string {
-		$subjectRef = (string)($newData['subjectRef'] ?? '');
-		if ($subjectRef === '') {
-			$subjectRef = (string)($oldData['subjectRef'] ?? '');
+		$subjectRef = (string)($oldData['subjectRef'] ?? '');
+		$newSubject = (string)($newData['subjectRef'] ?? '');
+		if ($newSubject !== '' && $newSubject !== $subjectRef) {
+			return '';
 		}
 
 		return $subjectRef;

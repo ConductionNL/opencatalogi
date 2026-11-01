@@ -70,7 +70,7 @@ class PortalAccountRemovedGoldenTest extends TestCase {
 			'subjectRef only on the old object' => [['events' => [[$account(['status' => 'removed']), $account(['subjectRef' => 'subject-old', 'status' => 'active'])]]]],
 			'subjectRef empty on the new object' => [['events' => [[$account(['subjectRef' => '', 'status' => 'removed']), $account(['subjectRef' => 'subject-old', 'status' => 'active'])]]]],
 			'an owner field next to subjectRef' => [['events' => [[$account(['subjectRef' => 'subject-1', 'owner' => 'subject-x', 'status' => 'removed']), $account($active)]]]],
-			'subjectRef differs, new wins' => [['events' => [[$account(['subjectRef' => 'subject-new', 'status' => 'removed']), $account(['subjectRef' => 'subject-old', 'status' => 'active'])]]]],
+			'subjectRef differs, nothing deleted' => [['events' => [[$account(['subjectRef' => 'subject-new', 'status' => 'removed']), $account(['subjectRef' => 'subject-old', 'status' => 'active'])]]]],
 			'subjectRef nowhere' => [['events' => [[$account(['status' => 'removed']), $account(['status' => 'active'])]]]],
 			'subjectRef an int' => [['events' => [[$account(['subjectRef' => 5, 'status' => 'removed']), $account($active)]]]],
 			'another schema' => [['events' => [[['7', '42', $removed], $account($active)]]]],
