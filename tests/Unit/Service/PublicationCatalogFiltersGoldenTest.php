@@ -8,7 +8,8 @@
  * stored catalogs, and compares every result, the stored scope after each call
  * and every collaborator call (by parameter name) with the recording. The
  * sequence shows what the per-id cache keeps. The schema-scope read rule
- * guard is scripted to drop `s-private`.
+ * guard is scripted to drop `s-private`. A found catalog carries the register
+ * and schema it was asked for, except `elsewhere`, which sits in another schema.
  *
  * Re-record (only when behaviour is meant to change) with
  * `GOLDEN_RECORD=1 vendor/bin/phpunit -c phpunit-unit.xml tests/Unit/Service/PublicationCatalogFiltersGoldenTest.php`.
@@ -87,6 +88,8 @@ class PublicationCatalogFiltersGoldenTest extends TestCase {
 			'scope after a refusal' => [['catalogs' => $catalogs, 'ids' => [null, 'c1'], 'refuseFrom' => 1]],
 			'search fails' => [['catalogs' => 'throw', 'ids' => [null]]],
 			'find fails' => [['catalogs' => $catalogs, 'ids' => ['missing']]],
+			'find returns nothing' => [['catalogs' => $catalogs, 'ids' => ['gone']]],
+			'catalog outside the scope' => [['catalogs' => $catalogs, 'ids' => ['elsewhere', null]]],
 			'openregister absent' => [['catalogs' => $catalogs, 'apps' => [], 'ids' => [null]]],
 		];
 
@@ -213,17 +216,28 @@ class PublicationCatalogFiltersGoldenTest extends TestCase {
 			}
 		);
 		$objectService->method('find')->willReturnCallback(
-			function (...$args): ObjectEntity {
+			function (...$args): ?ObjectEntity {
 				$this->record(method: 'find', args: $args);
 				if ($args[0] === 'missing') {
 					throw new \RuntimeException('not found');
 				}
 
+				if ($args[0] === 'gone') {
+					return null;
+				}
+
 				$entity = $this->getMockBuilder(className: ObjectEntity::class)
 					->disableOriginalConstructor()
-					->onlyMethods(['jsonSerialize'])
+					->onlyMethods(['jsonSerialize', 'getRegister', 'getSchema'])
 					->getMock();
 				$entity->method('jsonSerialize')->willReturn(['registers' => ['r-' . $args[0]], 'schemas' => ['s9', 's-private']]);
+				$entity->method('getRegister')->willReturn(($args[3] ?? null));
+				$schema = ($args[4] ?? null);
+				if ($args[0] === 'elsewhere') {
+					$schema = 'other-schema';
+				}
+
+				$entity->method('getSchema')->willReturn($schema);
 				return $entity;
 			}
 		);

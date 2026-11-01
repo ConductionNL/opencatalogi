@@ -111,6 +111,17 @@ class DirectoryService implements DirectoryServiceInterface {
 	];
 
 	/**
+	 * The per-catalog harvest endpoints: the catalog flag that enables one, the
+	 * listing field that advertises it and its path under the catalog.
+	 *
+	 * @var array<string, array{0: string, 1: string}>
+	 */
+	private const HARVEST_ENDPOINTS = [
+		'hasDcat' => ['dcatEndpoint', 'dcat'],
+		'hasOoapi' => ['ooapiEndpoint', 'ooapi/v5'],
+	];
+
+	/**
 	 * Cached unique directories to avoid repeated database queries.
 	 *
 	 * @var array|null
@@ -216,49 +227,53 @@ class DirectoryService implements DirectoryServiceInterface {
 			$this->uniqueDirectories[] = $defaultDirectory;
 		}
 
-		$uniqueDirectoryUrls = $this->uniqueDirectories;
-
 		$results = [
-			'total_directories' => count($uniqueDirectoryUrls),
+			'total_directories' => count($this->uniqueDirectories),
 			'synced_directories' => 0,
 			'failed_directories' => 0,
 			'errors' => [],
 		];
 
-		// Create promises for async directory synchronization.
-		$syncPromises = [];
-		foreach ($uniqueDirectoryUrls as $directoryUrl) {
-			$syncPromises[] = new Promise(
-				function ($resolve) use ($directoryUrl) {
-					try {
-						$syncResult = $this->syncDirectory(directoryUrl: $directoryUrl);
-
-						// Directory sync completed successfully.
-						$resolve(
-							[
-								'success' => true,
-								'directory' => $directoryUrl,
-								'result' => $syncResult,
-							]
-						);
-					} catch (\Exception $e) {
-						// Removed redundant logging (error handled silently).
-						$resolve(
-							[
-								'success' => false,
-								'directory' => $directoryUrl,
-								'error' => $e->getMessage(),
-							]
-						);
-					}//end try
-				}
-			);
-		}//end foreach
-
 		// Execute all directory sync promises concurrently.
-		$syncResults = \React\Async\await(\React\Promise\all($syncPromises));
+		$syncPromises = array_map(
+			fn (string $directoryUrl): Promise => $this->directorySyncPromise(directoryUrl: $directoryUrl),
+			$this->uniqueDirectories
+		);
+		$results = $this->tallyDirectorySyncs(results: $results, syncResults: \React\Async\await(\React\Promise\all($syncPromises)));
 
-		// Process results.
+		$this->connectionReporter?->reportDirectorySync(results: $results);
+
+		return $results;
+	}//end doCronSync()
+
+	/**
+	 * A promise that syncs one directory and resolves to its outcome; a failure resolves too.
+	 *
+	 * @param string $directoryUrl The directory to sync.
+	 *
+	 * @return Promise Resolves to `success` and `directory`, plus `result` or `error`.
+	 */
+	private function directorySyncPromise(string $directoryUrl): Promise {
+		return new Promise(
+			function ($resolve) use ($directoryUrl) {
+				try {
+					$resolve(['success' => true, 'directory' => $directoryUrl, 'result' => $this->syncDirectory(directoryUrl: $directoryUrl)]);
+				} catch (\Exception $e) {
+					$resolve(['success' => false, 'directory' => $directoryUrl, 'error' => $e->getMessage()]);
+				}
+			}
+		);
+	}//end directorySyncPromise()
+
+	/**
+	 * Count the synced and failed directories, and collect the failures.
+	 *
+	 * @param array $results The cron sync results so far.
+	 * @param array $syncResults The outcome of each directory sync.
+	 *
+	 * @return array The results with the counts and errors added.
+	 */
+	private function tallyDirectorySyncs(array $results, array $syncResults): array {
 		foreach ($syncResults as $syncResult) {
 			if ($syncResult['success'] === true) {
 				$results['synced_directories']++;
@@ -272,10 +287,8 @@ class DirectoryService implements DirectoryServiceInterface {
 			];
 		}
 
-		$this->connectionReporter?->reportDirectorySync(results: $results);
-
 		return $results;
-	}//end doCronSync()
+	}//end tallyDirectorySyncs()
 
 	/**
 	 * Get unique directory URLs from stored listings
@@ -293,7 +306,6 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @psalm-suppress InvalidArgument
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
@@ -312,66 +324,10 @@ class DirectoryService implements DirectoryServiceInterface {
 		// Get ObjectService from container..
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		// Get listing configuration.
-		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
-		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
-
-		// Removed redundant logging.
-		$uniqueDirectoryUrls = [];
-
-		// Get listings if configuration is available.
-		if (empty($listingSchema) === false && empty($listingRegister) === false) {
-			try {
-				$query = [
-					'@self' => [
-						'register' => $listingRegister,
-						'schema' => $listingSchema,
-					],
-				];
-
-				// Directory data is public by design — listings/catalogs have authorization.read=["public"].
-				// RBAC is disabled so public directory discovery works without user context (see ADR-002).
-				// Multitenancy is NOT bypassed: each tenant sees only its own listing objects.
-				// Cross-instance federation uses the explicit URL-based remote-fetch path instead.
-				$listings = $objectService->searchObjects($query, _rbac: false);
-
-				// Build unique directory URLs using URL as key to automatically handle duplicates.
-				foreach ($listings as $listing) {
-					$listingData = $listing->jsonSerialize();
-					$objectData = ($listingData['object'] ?? $listingData);
-
-					$available = ($objectData['integrationLevel'] ?? null) === 'search';
-					$default = $objectData['default'] ?? false;
-
-					// Removed redundant logging.
-					// Apply post-query filtering for nested object properties.
-					if ($availableOnly === true && $available === false) {
-						// Skip unavailable listings.
-						continue;
-					}
-
-					if ($defaultOnly === true && $default === false) {
-						// Skip non-default listings.
-						continue;
-					}
-
-					// Check for publications URL in the object data.
-					// This method historically returns publications URLs — every caller that
-					// fetches publications (PublicationService::getPublications, getUsed,
-					// getPublication, the aggregated federation search) treats each returned
-					// URL as a publications endpoint. The BFS sync flow uses the sibling
-					// method getKnownDirectoryUrls() below to walk `directory` URLs instead.
-					if (isset($objectData['publications']) === true && empty($objectData['publications']) === false) {
-						$uniqueDirectoryUrls[$objectData['publications']] = $objectData['publications'];
-					}
-				}//end foreach
-			} catch (\Exception $e) {
-				// Removed redundant logging.
-			}//end try
-		}//end if
-
-		// Return just the unique URLs as an indexed array.
-		$result = array_values($uniqueDirectoryUrls);
+		$result = $this->publicationsUrls(
+			objectService: $objectService,
+			flags: ['available' => $availableOnly, 'default' => $defaultOnly]
+		);
 
 		// Cache the result with current timestamp.
 		$this->cachedUniqueDirs = $result;
@@ -379,6 +335,82 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		return $result;
 	}//end getUniqueDirectories()
+
+	/**
+	 * The unique publications URLs of the stored listings that pass the filters.
+	 *
+	 * Every caller treats each returned URL as a publications endpoint;
+	 * getKnownDirectoryUrls() returns the peers' directory URLs instead.
+	 *
+	 * @param mixed                                $objectService The OpenRegister object service.
+	 * @param array{available: bool, default: bool} $flags         Which filters apply.
+	 *
+	 * @return array<int, mixed> The URLs, in the order they were first found.
+	 */
+	private function publicationsUrls(mixed $objectService, array $flags): array {
+		$urls = [];
+		foreach ($this->storedListingObjects(objectService: $objectService) as $objectData) {
+			if ($this->isSelectedListing(objectData: $objectData, flags: $flags) === true
+				&& empty($objectData['publications']) === false
+			) {
+				$urls[$objectData['publications']] = $objectData['publications'];
+			}
+		}
+
+		return array_values($urls);
+	}//end publicationsUrls()
+
+	/**
+	 * The object data of every stored listing, for getUniqueDirectories().
+	 *
+	 * Directory data is public by design: listings and catalogs have
+	 * authorization.read=["public"]. RBAC is disabled so public directory
+	 * discovery works without user context (see ADR-002). Multitenancy is NOT
+	 * bypassed: each tenant sees only its own listing objects. Cross-instance
+	 * federation uses the explicit URL-based remote-fetch path instead.
+	 *
+	 * @param mixed $objectService The OpenRegister object service.
+	 *
+	 * @return array<int, mixed> The listings' object data; empty when the listing
+	 *                           register or schema is not configured. A failing
+	 *                           search or serialisation ends the list early.
+	 */
+	private function storedListingObjects(mixed $objectService): array {
+		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		if (empty($listingSchema) === true || empty($listingRegister) === true) {
+			return [];
+		}
+
+		$objects = [];
+		try {
+			$query = ['@self' => ['register' => $listingRegister, 'schema' => $listingSchema]];
+			foreach ($objectService->searchObjects($query, _rbac: false) as $listing) {
+				$listingData = $listing->jsonSerialize();
+				$objects[] = ($listingData['object'] ?? $listingData);
+			}
+		} catch (\Exception $e) {
+			// A listing store that cannot be read yields what was read so far.
+		}
+
+		return $objects;
+	}//end storedListingObjects()
+
+	/**
+	 * Whether a stored listing passes the available-only and default-only filters.
+	 *
+	 * @param mixed                                $objectData The listing's object data.
+	 * @param array{available: bool, default: bool} $flags     Which filters apply.
+	 *
+	 * @return bool True when no applying filter rejects the listing.
+	 */
+	private function isSelectedListing(mixed $objectData, array $flags): bool {
+		if ($flags['available'] === true && ($objectData['integrationLevel'] ?? null) !== 'search') {
+			return false;
+		}
+
+		return $flags['default'] === false || ($objectData['default'] ?? false) !== false;
+	}//end isSelectedListing()
 
 	/**
 	 * Get the set of known peer `/api/directory` URLs to sync with.
@@ -409,8 +441,26 @@ class DirectoryService implements DirectoryServiceInterface {
 			throw new RuntimeException('OpenRegister service is not available.');
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$urls = [];
+		foreach ($this->knownListings(objectService: $this->container->get('OCA\OpenRegister\Service\ObjectService')) as $listing) {
+			$dir = $this->peerDirectoryUrl(listing: $listing);
+			if ($dir !== null) {
+				$urls[$dir] = $dir;
+			}
+		}
 
+		return array_values($urls);
+	}//end getKnownDirectoryUrls()
+
+	/**
+	 * The stored listings, searched without RBAC, for getKnownDirectoryUrls().
+	 *
+	 * @param mixed $objectService The OpenRegister object service.
+	 *
+	 * @return mixed The listings; empty when the listing register or schema is
+	 *               not configured or the search fails.
+	 */
+	private function knownListings(mixed $objectService): mixed {
 		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
 		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 		if (empty($listingSchema) === true || empty($listingRegister) === true) {
@@ -418,7 +468,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		try {
-			$listings = $objectService->searchObjects(
+			return $objectService->searchObjects(
 				query: [
 					'@self' => [
 						'register' => $listingRegister,
@@ -430,32 +480,31 @@ class DirectoryService implements DirectoryServiceInterface {
 		} catch (\Throwable $e) {
 			return [];
 		}
+	}//end knownListings()
 
-		$urls = [];
-		foreach ($listings as $listing) {
-			$listingData = $listing->jsonSerialize();
-			$objectData = ($listingData['object'] ?? $listingData);
+	/**
+	 * The peer `/api/directory` URL a stored listing names, if it is one to sync with.
+	 *
+	 * @param mixed $listing The stored listing.
+	 *
+	 * @return string|null The URL, or null when it is empty, not an `/api/directory`
+	 *                     endpoint, or this instance itself (so cron does not sync
+	 *                     our own directory back to us).
+	 */
+	private function peerDirectoryUrl(mixed $listing): ?string {
+		$listingData = $listing->jsonSerialize();
+		$objectData = ($listingData['object'] ?? $listingData);
 
-			$dir = ($objectData['directory'] ?? null);
-			if (empty($dir) === true) {
-				continue;
-			}
+		$dir = ($objectData['directory'] ?? null);
+		if (empty($dir) === true
+			|| strpos($dir, '/api/directory') === false
+			|| $this->isSelfInstance(url: $dir) === true
+		) {
+			return null;
+		}
 
-			// Only real /api/directory endpoints belong in the sync set.
-			if (strpos($dir, '/api/directory') === false) {
-				continue;
-			}
-
-			// Skip self so cron doesn't sync our own /api/directory back to us.
-			if ($this->isSelfInstance(url: $dir) === true) {
-				continue;
-			}
-
-			$urls[$dir] = $dir;
-		}//end foreach
-
-		return array_values($urls);
-	}//end getKnownDirectoryUrls()
+		return $dir;
+	}//end peerDirectoryUrl()
 
 	/**
 	 * Synchronize a specific directory (asynchronous)
@@ -2646,43 +2695,73 @@ class DirectoryService implements DirectoryServiceInterface {
 				$this->directoryQuery(scope: ['schema' => $listingSchema, 'register' => $listingRegister], requestParams: $requestParams)
 			);
 
-			// Get our directory URL to identify locally-created listings.
-			$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
-				$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-			);
-
 			// BFS-discovery opt-in: sync-code passes `?include-federated=1` so peers
-			// can transitively learn about each other's known directories. Public
-			// consumers (search UI, browsers) get the default filtered view — only
-			// catalogs that originate from THIS instance — to preserve the historical
-			// "no cross-broadcast" contract.
-			$includeFederated = filter_var(
-				($requestParams['include-federated'] ?? false),
-				FILTER_VALIDATE_BOOLEAN
+			// can transitively learn about each other's known directories.
+			return $this->servedListings(
+				listingResult: $listingResult,
+				includeFederated: filter_var(($requestParams['include-federated'] ?? false), FILTER_VALIDATE_BOOLEAN)
 			);
-
-			$listings = [];
-			foreach ($listingResult as $object) {
-				$listingData = $object;
-				if ($object instanceof \OCP\AppFramework\Db\Entity) {
-					$listingData = $object->jsonSerialize();
-				}
-
-				if ($includeFederated === false
-					&& $this->isFromOtherDirectory(listingData: $listingData, ourDirectoryUrl: $ourDirectoryUrl) === true
-				) {
-					continue;
-				}
-
-				$listings[] = $this->filterListingProperties(listing: $listingData);
-			}
-
-			return $listings;
 		} catch (\Exception $e) {
 			return [];
 		}//end try
 
 	}//end directoryListings()
+
+	/**
+	 * The stored listings this instance serves, without their internal properties.
+	 *
+	 * Public consumers (search UI, browsers) get only the listings that originate
+	 * from THIS instance, which preserves the historical "no cross-broadcast"
+	 * contract; `includeFederated` also serves the listings learnt from peers.
+	 *
+	 * @param mixed $listingResult The stored listing entities or their data.
+	 * @param bool $includeFederated Whether listings of other directories are served too.
+	 *
+	 * @return array<int, array<string, mixed>> The served listings.
+	 */
+	private function servedListings(mixed $listingResult, bool $includeFederated): array {
+		$ourDirectoryUrl = $this->localRouteUrl(route: 'opencatalogi.directory.index');
+
+		$listings = [];
+		foreach ($listingResult as $object) {
+			$listingData = $this->entityData(object: $object);
+			if ($includeFederated === false
+				&& $this->isFromOtherDirectory(listingData: $listingData, ourDirectoryUrl: $ourDirectoryUrl) === true
+			) {
+				continue;
+			}
+
+			$listings[] = $this->filterListingProperties(listing: $listingData);
+		}
+
+		return $listings;
+	}//end servedListings()
+
+	/**
+	 * The serialised data of an entity; any other value as it is.
+	 *
+	 * @param mixed $object The entity or its data.
+	 *
+	 * @return mixed The data.
+	 */
+	private function entityData(mixed $object): mixed {
+		if ($object instanceof \OCP\AppFramework\Db\Entity) {
+			return $object->jsonSerialize();
+		}
+
+		return $object;
+	}//end entityData()
+
+	/**
+	 * The absolute URL of one of this app's routes.
+	 *
+	 * @param string $route The route name.
+	 *
+	 * @return string The absolute URL.
+	 */
+	private function localRouteUrl(string $route): string {
+		return $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute($route));
+	}//end localRouteUrl()
 
 	/**
 	 * Whether a listing was synced from another directory.
@@ -2787,78 +2866,72 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function convertCatalogToListing($catalogObject): array {
-		// Extract catalog data.
-		$catalogData = $catalogObject;
-		if ($catalogObject instanceof \OCP\AppFramework\Db\Entity) {
-			$catalogData = $catalogObject->jsonSerialize();
-		}
-
+		$catalogData = $this->entityData(object: $catalogObject);
 		$catalog = ($catalogData['object'] ?? $catalogData);
 
-		// Get our directory URL for the listing.
-		$directoryUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-		);
+		// The publications URL is the federation endpoint (publications.index requires a catalogSlug).
+		$endpoints = [
+			'directory' => $this->localRouteUrl(route: 'opencatalogi.directory.index'),
+			'search' => $this->localRouteUrl(route: 'opencatalogi.search.index'),
+			'publications' => $this->localRouteUrl(route: 'opencatalogi.federation.publications'),
+			'version' => $this->appManager->getAppInfo('opencatalogi')['version'],
+			// Publication date from catalog, default to now for public visibility.
+			'published' => ($catalog['published'] ?? (new DateTime())->format('c')),
+		];
 
-		// Get our search and publications URLs.
-		// Use federation endpoint (not publications.index which requires catalogSlug).
-		$searchUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.search.index')
-		);
-		$publicationsUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.federation.publications')
-		);
-
-		// Create listing object from catalog - only core API fields.
 		$catalogId = ($catalog['id'] ?? $catalogData['id'] ?? '');
-		$listing = [
-			// Required fields for listing.
+		$listing = array_merge($this->catalogListingFields(catalog: $catalog, catalogId: $catalogId), $endpoints);
+
+		return array_merge($listing, $this->catalogHarvestEndpoints(catalog: $catalog));
+	}//end convertCatalogToListing()
+
+	/**
+	 * The core API fields a listing takes from its catalog.
+	 *
+	 * @param mixed $catalog The catalog data.
+	 * @param mixed $catalogId The catalog id, used as the listing id too.
+	 *
+	 * @return array<string, mixed> The fields, in listing order.
+	 */
+	private function catalogListingFields(mixed $catalog, mixed $catalogId): array {
+		return [
 			'id' => $catalogId,
 			'catalog' => $catalogId,
 			'catalogusId' => $catalogId,
 			'title' => ($catalog['title'] ?? 'Unknown Catalog'),
 			'summary' => ($catalog['summary'] ?? $catalog['description'] ?? 'Local catalog'),
 			'status' => ($catalog['status'] ?? 'development'),
-
-			// Optional fields from catalog.
 			'description' => $catalog['description'] ?? null,
 			'organization' => $catalog['organization'] ?? null,
 			'schemas' => ($catalog['schemas'] ?? []),
-
-			// Directory-specific fields.
-			'directory' => $directoryUrl,
-			'search' => $searchUrl,
-			'publications' => $publicationsUrl,
-			'version' => $this->appManager->getAppInfo('opencatalogi')['version'],
-
-			// Publication date from catalog, default to now for public visibility.
-			'published' => ($catalog['published'] ?? (new DateTime())->format('c')),
 		];
+	}//end catalogListingFields()
 
-		// Federation discovery (DCAT-009): advertise the per-catalog DCAT harvest endpoint
-		// when the catalog is DCAT-enabled, so remote instances and aggregators learn where
-		// to harvest. Disabled catalogs carry no dcatEndpoint. Extends the existing directory
-		// machinery with one field — no new broadcast channel or cron (FED-OR-001/002).
-		$hasDcat = filter_var(($catalog['hasDcat'] ?? false), FILTER_VALIDATE_BOOLEAN);
+	/**
+	 * The per-catalog harvest endpoints a listing advertises.
+	 *
+	 * Federation discovery: a catalog with a slug advertises its DCAT harvest
+	 * endpoint when DCAT is enabled (DCAT-009) and its OOAPI 5.0 base endpoint
+	 * when OOAPI publication is enabled (OOAPI-009), so remote instances and the
+	 * national directory learn where to harvest. No new broadcast channel or cron
+	 * (FED-OR-001/002).
+	 *
+	 * @param mixed $catalog The catalog data.
+	 *
+	 * @return array<string, string> `dcatEndpoint` and/or `ooapiEndpoint`, when enabled.
+	 */
+	private function catalogHarvestEndpoints(mixed $catalog): array {
 		$catalogSlug = ($catalog['slug'] ?? '');
-		if ($hasDcat === true && $catalogSlug !== '') {
-			$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
-			$listing['dcatEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/dcat";
+		$endpoints = [];
+		foreach (self::HARVEST_ENDPOINTS as $flag => [$field, $path]) {
+			if (filter_var(($catalog[$flag] ?? false), FILTER_VALIDATE_BOOLEAN) === true && $catalogSlug !== '') {
+				$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+				$endpoints[$field] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/$path";
+			}
 		}
 
-		// Federation discovery (OOAPI-009): advertise the per-catalog OOAPI 5.0 base
-		// endpoint when the catalog has OOAPI publication enabled, so remote instances
-		// and the national directory discover where to reach an institution's course
-		// catalog. Rides the same listing-projection helper as dcatEndpoint above — no
-		// new broadcast channel or cron (FED-OR-001/002).
-		$hasOoapi = filter_var(($catalog['hasOoapi'] ?? false), FILTER_VALIDATE_BOOLEAN);
-		if ($hasOoapi === true && $catalogSlug !== '') {
-			$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
-			$listing['ooapiEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/ooapi/v5";
-		}
-
-		return $listing;
-	}//end convertCatalogToListing()
+		return $endpoints;
+	}//end catalogHarvestEndpoints()
 
 	/**
 	 * Filter listing object to remove properties not meant for external API
