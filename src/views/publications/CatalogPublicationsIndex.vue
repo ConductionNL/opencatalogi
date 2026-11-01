@@ -465,16 +465,27 @@ export default {
 		},
 
 		/**
-		 * Whether a row is a publication, by its own `@self` register and schema.
+		 * Whether a row is a publication, by its own `@self` register and
+		 * schema matching the app-wide default pair. A row of any other pair
+		 * is a different object type (e.g. stackiq's `module`/`connection`
+		 * objects in the Applicatielandschap catalog, or a rule schema) — not
+		 * a publication, regardless of whether this catalog also holds the
+		 * default pair. No signal in the data model marks a schema as "a
+		 * publication" independent of that one global pair; broadening this to
+		 * "every schema in a catalog without the default pair" was tried and
+		 * reverted after it misrouted that real, shipped stackiq catalog.
 		 *
 		 * @param {object} row The row.
-		 * @return {boolean} True for a publication row.
+		 * @return {boolean} True for a row of the app-wide default publication pair.
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
 		isPublicationRow(row) {
 			const self = row?.['@self'] || {}
 			const [register] = normaliseIdList([self.register])
 			const [schema] = normaliseIdList([self.schema])
+			if (register === undefined || schema === undefined) {
+				return false
+			}
 			return this.isPublicationPair({ register, schema })
 		},
 
@@ -512,8 +523,9 @@ export default {
 		},
 
 		/**
-		 * Where a row opens: a publication on its detail page in this catalog,
-		 * an object of another schema on the generic detail page for its pair.
+		 * Where a row opens: a publication of the app-wide default pair on its
+		 * detail page, an object of any other pair on the generic detail page
+		 * for its pair.
 		 *
 		 * @param {object} row The row.
 		 * @return {object|null} The router location, or null for a row without an id, register or schema.
@@ -579,7 +591,8 @@ export default {
 		},
 
 		/**
-		 * The View action: every row opens on its detail page.
+		 * The View action: a publication opens its detail page, a row of another
+		 * schema, which has none, opens in CnIndexPage's form for its own schema.
 		 *
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
