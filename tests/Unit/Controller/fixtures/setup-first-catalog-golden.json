@@ -1,0 +1,1016 @@
+{
+    "public default": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": true,
+                        "status": "development",
+                        "registers": [
+                            "5"
+                        ],
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "private with groups": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "default_catalog_groups"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": false,
+                        "status": "development",
+                        "staffAccess": {
+                            "restricted": true,
+                            "readGroups": [
+                                "a",
+                                "b"
+                            ],
+                            "editGroups": [
+                                "a",
+                                "b"
+                            ]
+                        },
+                        "registers": [
+                            "5"
+                        ],
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "private without groups": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "default_catalog_groups"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": false,
+                        "status": "development",
+                        "staffAccess": {
+                            "restricted": true,
+                            "readGroups": [],
+                            "editGroups": []
+                        },
+                        "registers": [
+                            "5"
+                        ],
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "internal scope": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": false,
+                        "status": "development",
+                        "registers": [
+                            "5"
+                        ],
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "no publication register": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": true,
+                        "status": "development",
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "no publication schema": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": true,
+                        "status": "development",
+                        "registers": [
+                            "5"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "already completed": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "You already have a catalog."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "older completion": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": true,
+                        "status": "development",
+                        "registers": [
+                            "5"
+                        ],
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "a catalog exists": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "You already have a catalog."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "search answers no list": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": true,
+                        "status": "development",
+                        "registers": [
+                            "5"
+                        ],
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "search throws": {
+        "status": 200,
+        "data": {
+            "success": true,
+            "message": "Your first catalog was created."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": true,
+                        "status": "development",
+                        "registers": [
+                            "5"
+                        ],
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "write": [
+                    "onboarding_completed_version",
+                    "3"
+                ]
+            }
+        ]
+    },
+    "openregister missing": {
+        "status": 200,
+        "data": {
+            "success": false,
+            "message": "OpenRegister is not available."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            }
+        ]
+    },
+    "no catalog register": {
+        "status": 200,
+        "data": {
+            "success": false,
+            "message": "Configure the catalog register and schema first."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            }
+        ]
+    },
+    "no catalog schema": {
+        "status": 200,
+        "data": {
+            "success": false,
+            "message": "Configure the catalog register and schema first."
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            }
+        ]
+    },
+    "save throws": {
+        "status": 200,
+        "data": {
+            "success": false,
+            "message": "save broke"
+        },
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            },
+            {
+                "read": "publication_register"
+            },
+            {
+                "read": "publication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "title": "My first catalog",
+                        "summary": "Your first OpenCatalogi catalog \u2014 add publications to start sharing them openly.",
+                        "description": "Created during first-time setup. Rename it and adjust its access to suit your organisation.",
+                        "listed": true,
+                        "status": "development",
+                        "registers": [
+                            "5"
+                        ],
+                        "schemas": [
+                            "6"
+                        ]
+                    },
+                    [],
+                    "1",
+                    "2",
+                    null,
+                    false,
+                    false,
+                    false,
+                    null,
+                    null
+                ]
+            },
+            {
+                "error": "Setup create-first-catalog failed: save broke",
+                "context": {
+                    "app": "opencatalogi"
+                }
+            }
+        ]
+    }
+}
