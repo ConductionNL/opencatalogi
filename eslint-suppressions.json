@@ -412,7 +412,7 @@
       "count": 1
     },
     "@typescript-eslint/no-unused-vars": {
-      "count": 12
+      "count": 10
     },
     "jsdoc/require-param-type": {
       "count": 15
@@ -421,7 +421,7 @@
       "count": 4
     },
     "no-empty": {
-      "count": 8
+      "count": 7
     },
     "vue/custom-event-name-casing": {
       "count": 8
@@ -821,7 +821,7 @@
   },
   "src/store/modules/object.js": {
     "no-console": {
-      "count": 21
+      "count": 16
     },
     "no-unused-vars": {
       "count": 10
@@ -832,7 +832,7 @@
   },
   "src/store/modules/search.js": {
     "no-console": {
-      "count": 8
+      "count": 5
     }
   },
   "src/store/modules/search.spec.ts": {

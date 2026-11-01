@@ -554,9 +554,6 @@ class PublicationsController extends Controller {
 	 *
 	 * @return JSONResponse JSON response containing publications, pagination info, and optionally facets
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
 	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalog.
 	 *
 	 * @spec openspec/specs/publications/spec.md
@@ -566,9 +563,7 @@ class PublicationsController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(string $catalogSlug): JSONResponse {
 		try {
-			// Get the catalog from cache or database.
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-
 			if ($catalog === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
 			}
@@ -583,136 +578,183 @@ class PublicationsController extends Controller {
 			// query builder and the object lookups.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
-			// Every schema in this catalog was dropped by the guard above, or the
-			// catalog names registers or schemas of which none is an id, so there is
-			// nothing an anonymous caller may read here. Answer the empty envelope
-			// rather than falling through: `buildCatalogSearchQuery()` only sets
-			// `_schemas` when the list is non-empty, and an unset scope means OpenRegister
-			// searches every magic table — the opposite of what the guard just decided.
+			// No schema left means nothing an anonymous caller may read here. An
+			// unset scope would make OpenRegister search every magic table, so the
+			// empty envelope is answered instead of falling through.
 			if (CatalogScopeIds::forCatalog(catalog: $catalog)['schemas'] === []) {
-				$this->logger->warning(
-					'[PublicationsController::index] Empty catalog scope after the read-rule guard — returning an empty envelope',
-					['catalogSlug' => $catalogSlug]
-				);
-
-				$response = new JSONResponse(
-					[
-						'results' => [],
-						'total' => 0,
-						'@catalog' => [
-							'slug' => $catalogSlug,
-							'title' => ($catalog['title'] ?? ''),
-							'schemas' => [],
-							'registers' => ($catalog['registers'] ?? []),
-						],
-					],
-					200
-				);
-				$this->addCorsHeaders(response: $response);
-
-				return $this->cacheableForCaller(response: $response);
+				return $this->emptyCatalogEnvelope(catalog: $catalog, catalogSlug: $catalogSlug);
 			}
 
-			// Get ObjectService directly bypassing PublicationService overhead.
-			$objectService = $this->getObjectService();
-
-			// Sanitise extend before passing to the query builder so that anonymous
-			// callers cannot traverse to unrelated objects via arbitrary extend targets.
-			$requestParams = $this->request->getParams();
-			if (empty($requestParams['extend']) === false || empty($requestParams['_extend']) === false) {
-				$rawExtend = ($requestParams['extend'] ?? $requestParams['_extend'] ?? []);
-				if (is_string($rawExtend) === true) {
-					$rawExtend = array_map('trim', explode(',', $rawExtend));
-				} elseif (is_array($rawExtend) === false) {
-					$rawExtend = [$rawExtend];
-				}
-
-				$safeExtend = $this->sanitizePublicExtend(extend: $rawExtend);
-				unset($requestParams['extend'], $requestParams['_extend']);
-				$requestParams['_extend'] = $safeExtend;
-			}
-
-			// Build the catalog-scoped search query via the query service.
-			$searchQuery = $this->queryService->buildCatalogSearchQuery(
-				catalog: $catalog,
-				queryParams: $requestParams,
-				objectService: $objectService
-			);
-
-			// DIRECT ObjectService call with catalog filtering.
-			// Set rbac=true to enable schema authorization.
-			// Set multi=false for public access.
-			$result = $objectService->searchObjectsPaginated(
-				query: $searchQuery,
-				_rbac: true,
-				_multitenancy: false
-			);
-
-			// Visibility is governed by OpenRegister RBAC: the publication schema grants the
-			// public group read only when publicationDate <= $now, applied by the search
-			// above (_rbac: true). No extra published filtering — anonymous callers see only
-			// live publications, authenticated callers see per their group rights.
-			// Strip empty values from results unless _empty=true is set.
-			$includeEmpty = filter_var(
-				value: $this->request->getParam(key: '_empty', default: false),
-				filter: FILTER_VALIDATE_BOOLEAN
-			);
-			if ($includeEmpty === false && isset($result['results']) === true && is_array($result['results']) === true) {
-				$result['results'] = array_map(
-					callback: function ($item) {
-						// Serialize ObjectEntity instances to arrays before stripping empty values.
-						if (is_array($item) === false
-							&& method_exists(object_or_class: $item, method: 'jsonSerialize') === true
-						) {
-							$item = $item->jsonSerialize();
-						}
-
-						if (is_array($item) === true) {
-							return $this->queryService->stripEmptyValues(data: $item);
-						}
-
-						return $item;
-					},
-					array: $result['results']
-				);
-			}
-
-			// Add catalog information to the response.
-			$result['@catalog'] = [
-				'slug' => $catalogSlug,
-				'title' => ($catalog['title'] ?? ''),
-				'schemas' => ($catalog['schemas'] ?? []),
-				'registers' => ($catalog['registers'] ?? []),
-			];
-
-			// Enrich @self with resolved schema and register objects for frontend enrichment.
-			$resolved = $this->queryService->resolveSchemaAndRegisterObjects($catalog);
-			$result['@self']['schemas'] = $resolved['schemas'];
-			$result['@self']['registers'] = $resolved['registers'];
-
-			// Add CORS headers for public API access.
-			$response = new JSONResponse($result, 200);
-			$this->addCorsHeaders(response: $response);
-
-			return $this->cacheableForCaller(response: $response);
+			return $this->catalogPublications(catalog: $catalog, catalogSlug: $catalogSlug);
 		} catch (\Exception $e) {
 			// Public endpoint — log exception details server-side only and return a
 			// generic error body to the caller (#735); never leak raw $e->getMessage().
 			$this->logger->error(
 				'[PublicationsController::index] Failed to retrieve publications',
-				[
-					'catalogSlug' => $catalogSlug,
-					'error' => $e->getMessage(),
-					'trace' => $e->getTraceAsString(),
-				]
+				['catalogSlug' => $catalogSlug, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]
 			);
-			return new JSONResponse(
-				['error' => $this->l10n->t('Internal server error')],
-				500
-			);
+			return new JSONResponse(['error' => $this->l10n->t('Internal server error')], 500);
 		}//end try
 
 	}//end index()
+
+	/**
+	 * The empty list answer for a catalogue whose read-rule guard left no schema.
+	 *
+	 * @param array<string, mixed> $catalog The guarded catalogue.
+	 * @param string $catalogSlug The slug from the URL.
+	 *
+	 * @return JSONResponse The empty envelope, with CORS and cache headers.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function emptyCatalogEnvelope(array $catalog, string $catalogSlug): JSONResponse {
+		$this->logger->warning(
+			'[PublicationsController::index] Empty catalog scope after the read-rule guard — returning an empty envelope',
+			['catalogSlug' => $catalogSlug]
+		);
+
+		$about = $this->catalogAbout(catalog: $catalog, catalogSlug: $catalogSlug);
+		$about['schemas'] = [];
+		$response = new JSONResponse(['results' => [], 'total' => 0, '@catalog' => $about], 200);
+		$this->addCorsHeaders(response: $response);
+
+		return $this->cacheableForCaller(response: $response);
+
+	}//end emptyCatalogEnvelope()
+
+	/**
+	 * The `@catalog` block of a list answer: slug, title, schemas and registers.
+	 *
+	 * @param array<string, mixed> $catalog The guarded catalogue.
+	 * @param string $catalogSlug The slug from the URL.
+	 *
+	 * @return array<string, mixed> The block.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function catalogAbout(array $catalog, string $catalogSlug): array {
+		return [
+			'slug' => $catalogSlug,
+			'title' => ($catalog['title'] ?? ''),
+			'schemas' => ($catalog['schemas'] ?? []),
+			'registers' => ($catalog['registers'] ?? []),
+		];
+
+	}//end catalogAbout()
+
+	/**
+	 * Search a catalogue's publications under the caller's read rules and answer the page.
+	 *
+	 * Visibility is governed by OpenRegister RBAC (`_rbac: true`): the
+	 * publication schema grants the public group read only when
+	 * publicationDate <= now, so anonymous callers see only live publications.
+	 *
+	 * @param array<string, mixed> $catalog The guarded catalogue.
+	 * @param string $catalogSlug The slug from the URL.
+	 *
+	 * @return JSONResponse The page, with the catalogue, its resolved schemas and registers, CORS and cache headers.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function catalogPublications(array $catalog, string $catalogSlug): JSONResponse {
+		$objectService = $this->getObjectService();
+		$searchQuery = $this->queryService->buildCatalogSearchQuery(
+			catalog: $catalog,
+			queryParams: $this->publicListParams(),
+			objectService: $objectService
+		);
+		$result = $this->withoutEmptyValues(
+			result: $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false)
+		);
+
+		$result['@catalog'] = $this->catalogAbout(catalog: $catalog, catalogSlug: $catalogSlug);
+		$resolved = $this->queryService->resolveSchemaAndRegisterObjects($catalog);
+		$result['@self']['schemas'] = $resolved['schemas'];
+		$result['@self']['registers'] = $resolved['registers'];
+
+		$response = new JSONResponse($result, 200);
+		$this->addCorsHeaders(response: $response);
+
+		return $this->cacheableForCaller(response: $response);
+
+	}//end catalogPublications()
+
+	/**
+	 * The request parameters of a list read, with any extend narrowed to the public allowlist.
+	 *
+	 * Anonymous callers cannot traverse to unrelated objects through arbitrary
+	 * extend targets (#732): a given `extend` or `_extend` is replaced by the
+	 * sanitised `_extend`.
+	 *
+	 * @return array<string, mixed> The parameters for the query builder.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function publicListParams(): array {
+		$requestParams = $this->request->getParams();
+		if (empty($requestParams['extend']) === true && empty($requestParams['_extend']) === true) {
+			return $requestParams;
+		}
+
+		$safeExtend = $this->publicExtendFromRequest();
+		unset($requestParams['extend'], $requestParams['_extend']);
+		$requestParams['_extend'] = $safeExtend;
+
+		return $requestParams;
+
+	}//end publicListParams()
+
+	/**
+	 * A search page with empty values stripped from each result, unless `_empty=true` asks to keep them.
+	 *
+	 * @param array<string, mixed> $result The search page.
+	 *
+	 * @return array<string, mixed> The page.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function withoutEmptyValues(array $result): array {
+		$includeEmpty = filter_var(
+			value: $this->request->getParam(key: '_empty', default: false),
+			filter: FILTER_VALIDATE_BOOLEAN
+		);
+		if ($includeEmpty === true || is_array($result['results'] ?? null) === false) {
+			return $result;
+		}
+
+		$result['results'] = array_map(
+			callback: fn ($item) => $this->withoutEmptyItemValues(item: $item),
+			array: $result['results']
+		);
+
+		return $result;
+
+	}//end withoutEmptyValues()
+
+	/**
+	 * One search result as an array without empty values; anything else unchanged.
+	 *
+	 * An entity is serialised before its empty values are stripped.
+	 *
+	 * @param mixed $item The result.
+	 *
+	 * @return mixed The stripped result.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function withoutEmptyItemValues(mixed $item): mixed {
+		if (is_array($item) === false && method_exists(object_or_class: $item, method: 'jsonSerialize') === true) {
+			$item = $item->jsonSerialize();
+		}
+
+		if (is_array($item) === true) {
+			return $this->queryService->stripEmptyValues(data: $item);
+		}
+
+		return $item;
+
+	}//end withoutEmptyItemValues()
 
 	/**
 	 * Retrieve a specific publication by its ID with catalog validation.

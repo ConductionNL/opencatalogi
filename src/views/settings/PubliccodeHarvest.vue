@@ -141,6 +141,7 @@ import CheckCircle from 'vue-material-design-icons/CheckCircle.vue'
 import CloseCircle from 'vue-material-design-icons/CloseCircle.vue'
 import InformationOutline from 'vue-material-design-icons/InformationOutline.vue'
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
+import { lastRunLabel as harvestLastRunLabel } from '../../services/harvestRunLabel.js'
 
 const BASE = '/apps/opencatalogi/api/settings/publiccode-harvest'
 
@@ -254,46 +255,7 @@ export default {
 
 		/** @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi */
 		lastRunLabel() {
-			const run = this.status.lastRun
-			if (!run) {
-				return this.t('opencatalogi', 'The harvest has not run yet.')
-			}
-			const started = run.started ? new Date(run.started).toLocaleString() : ''
-			if (run.status === 'suspended' && run.resumeAt) {
-				return this.t(
-					'opencatalogi',
-					'Last run started {started}. It waits for the GitHub rate limit and goes on at {resume}.',
-					{ started, resume: new Date(run.resumeAt).toLocaleString() },
-				)
-			}
-			// The end node stops the run on purpose once every shard has written,
-			// so a clean stop without an error is a finished harvest.
-			const finished =
-				run.status === 'completed'
-				|| (run.status === 'stopped' && !run.error)
-			if (run.status === 'failed' || (run.status === 'stopped' && !finished)) {
-				return this.t(
-					'opencatalogi',
-					'Last run started {started} and stopped: {error}',
-					{ started, error: run.error ?? '' },
-				)
-			}
-			if (finished) {
-				return this.t(
-					'opencatalogi',
-					'Last run started {started} and finished.',
-					{
-						started,
-					},
-				)
-			}
-			return this.t(
-				'opencatalogi',
-				'Last run started {started} and is still running.',
-				{
-					started,
-				},
-			)
+			return harvestLastRunLabel(this.status.lastRun)
 		},
 	},
 
