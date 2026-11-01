@@ -450,13 +450,8 @@ class PublicationService implements PublicationServiceInterface {
 			$cacheKey = (string)$catalogId;
 		}
 
-		// Return cached result if available.
 		if (isset($this->cachedCatalogFilters[$cacheKey]) === true) {
-			// Restore class properties from cache.
-			$cached = $this->cachedCatalogFilters[$cacheKey];
-			$this->availableRegisters = $cached['availableRegisters'];
-			$this->availableSchemas = $cached['availableSchemas'];
-			return $cached['result'];
+			return $this->restoredCatalogFilters(cached: $this->cachedCatalogFilters[$cacheKey]);
 		}
 
 		// FAIL CLOSED on an unconfigured catalog scope. See resolveCatalogScope().
@@ -470,26 +465,7 @@ class PublicationService implements PublicationServiceInterface {
 			];
 		}
 
-		// Setup the config array for searchObjects.
-		$query = [
-			'@self' => [
-				'register' => $scope['register'],
-				'schema' => $scope['schema'],
-			],
-		];
-
-		// Get all catalogs using searchObjects. Its declared return type is
-		// `array|int` — it yields an int when the query asks for a count. This query
-		// does not, but narrow explicitly so a count-shaped result can never reach
-		// the foreach below as a non-iterable.
-		$catalogs = $this->getObjectService()->searchObjects($query);
-		if (is_array($catalogs) === false) {
-			$catalogs = [];
-		}
-
-		if ($catalogId !== null) {
-			$catalogs = [$this->getObjectService()->find($catalogId)];
-		}
+		$catalogs = $this->scopeCatalogs(scope: $scope, catalogId: $catalogId);
 
 		// Remove duplicate values and assign to class properties.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
@@ -511,6 +487,51 @@ class PublicationService implements PublicationServiceInterface {
 
 		return $result;
 	}//end getCatalogFilters()
+
+	/**
+	 * Restore the scope properties from a cached lookup and return its result.
+	 *
+	 * @param array $cached The cached `result`, `availableRegisters` and `availableSchemas`.
+	 *
+	 * @return array The cached result.
+	 */
+	private function restoredCatalogFilters(array $cached): array {
+		$this->availableRegisters = $cached['availableRegisters'];
+		$this->availableSchemas = $cached['availableSchemas'];
+		return $cached['result'];
+	}//end restoredCatalogFilters()
+
+	/**
+	 * The catalogs that make up the scope: all catalogs in the configured
+	 * register and schema, or only the given catalog.
+	 *
+	 * The search runs even when a catalog id is given. Its declared return type is
+	 * `array|int` (an int for a count query); a count-shaped result reads as no catalogs.
+	 *
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
+	 *
+	 * @return array The catalog objects.
+	 */
+	private function scopeCatalogs(array $scope, null|string|int $catalogId): array {
+		$catalogs = $this->getObjectService()->searchObjects(
+			[
+				'@self' => [
+					'register' => $scope['register'],
+					'schema' => $scope['schema'],
+				],
+			]
+		);
+		if (is_array($catalogs) === false) {
+			$catalogs = [];
+		}
+
+		if ($catalogId !== null) {
+			$catalogs = [$this->getObjectService()->find($catalogId)];
+		}
+
+		return $catalogs;
+	}//end scopeCatalogs()
 
 	/**
 	 * Get the list of available registers.
