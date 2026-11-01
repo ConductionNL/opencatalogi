@@ -311,5 +311,28 @@
         {
             "info": "WOO-536 read-rule backfill: 0 schema(s) updated, 0 skipped (no Dutch keys, already correct or customised)"
         }
+    ],
+    "more read shapes": [
+        {
+            "info": "WOO-536: schema 'publication' (id 21) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 22) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 23) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 24) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 25) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 26) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536 read-rule backfill: 0 schema(s) updated, 6 skipped (no Dutch keys, already correct or customised)"
+        }
     ]
 }

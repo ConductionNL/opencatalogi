@@ -363,47 +363,61 @@ class WOO536RepairReadRules implements IRepairStep
         // rule means admin has customised, and any two-rule shape (post-fix)
         // will have exactly two conditional public rules.
         $conditionalCount = 0;
-        $matchedShape    = false;
         foreach ($read as $element) {
             if (is_string($element) === true) {
                 // Simple element like "authenticated" or "public" — allowed.
                 continue;
             }
 
-            if (is_array($element) === false) {
+            if (is_array($element) === false || $this->isOldPublicRule(rule: $element) === false) {
                 return false;
             }
 
             $conditionalCount++;
-            if (($element['group'] ?? null) !== 'public') {
-                return false;
-            }
-
-            $match = ($element['match'] ?? []);
-            if (is_array($match) === false) {
-                return false;
-            }
-
-            // Old shape: exactly one match key, `publicationDate: { $lte: $now }`.
-            if (count($match) !== 1 || isset($match['publicationDate']) === false) {
-                return false;
-            }
-
-            $publicationDate = $match['publicationDate'];
-            if (is_array($publicationDate) === false
-                || count($publicationDate) !== 1
-                || ($publicationDate['$lte'] ?? null) !== '$now'
-            ) {
-                return false;
-            }
-
-            $matchedShape = true;
-        }//end foreach
+        }
 
         // Exactly one conditional public rule with the old-shape match => needs upgrade.
-        return $matchedShape === true && $conditionalCount === 1;
+        return $conditionalCount === 1;
 
     }//end isSingleRuleShape()
+
+    /**
+     * Whether a conditional rule is the old public rule: group `public` and
+     * exactly one match key, `publicationDate: { $lte: $now }`.
+     *
+     * @param array $rule The conditional rule.
+     *
+     * @return bool
+     */
+    private function isOldPublicRule(array $rule): bool
+    {
+        if (($rule['group'] ?? null) !== 'public') {
+            return false;
+        }
+
+        $match = ($rule['match'] ?? []);
+        if (is_array($match) === false || count($match) !== 1 || isset($match['publicationDate']) === false) {
+            return false;
+        }
+
+        return $this->isLteNow(condition: $match['publicationDate']);
+
+    }//end isOldPublicRule()
+
+    /**
+     * Whether a condition is exactly `{ $lte: $now }`.
+     *
+     * @param mixed $condition The condition.
+     *
+     * @return bool
+     */
+    private function isLteNow(mixed $condition): bool
+    {
+        return is_array($condition) === true
+            && count($condition) === 1
+            && ($condition['$lte'] ?? null) === '$now';
+
+    }//end isLteNow()
 
     /**
      * Build the two-rule shape while preserving any non-conditional
