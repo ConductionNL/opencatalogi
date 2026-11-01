@@ -236,6 +236,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\CatalogueFeedReaderInterface",
+        "OCA\\OpenCatalogi\\Service\\Community\\CatalogueFeedReader"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\InformationRequestIntakeInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestIntake"
     ],
