@@ -83,6 +83,7 @@ class DirectoryUniqueGoldenTest extends TestCase {
 			'serialise fails halfway' => [['listings' => [$listings[0], $listings[1], ['throws', []], $listings[3]], 'calls' => [[false, false]]]],
 			'search fails' => [['listings' => $listings, 'calls' => [[false, false]], 'searchFails' => true]],
 			'openregister absent' => [['listings' => $listings, 'calls' => [[false, false]], 'apps' => []]],
+			'publications and directory' => [['listings' => [['flat', ['publications' => 'https://a/api/publications', 'directory' => 'https://a/api/directory']]], 'calls' => [[false, false]]]],
 		];
 
 	}//end worlds()

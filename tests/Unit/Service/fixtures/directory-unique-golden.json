@@ -206,5 +206,26 @@
             }
         ],
         "searches": []
+    },
+    "publications and directory": {
+        "results": [
+            {
+                "result": [
+                    "https://a/api/publications"
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
     }
 }
