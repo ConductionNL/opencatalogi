@@ -11,8 +11,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 0,
                     "items": [
@@ -30,16 +30,9 @@
                     "owner": "session-user",
                     "organisation": "org-1"
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     },
     "a forged owner is ignored": {
@@ -54,8 +47,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 0,
                     "items": [
@@ -73,16 +66,9 @@
                     "owner": "session-user",
                     "organisation": "org-1"
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     },
     "agent user without a session": {
@@ -97,8 +83,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 0,
                     "items": [
@@ -116,16 +102,9 @@
                     "owner": "agent-user",
                     "organisation": "org-1"
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     },
     "no agent, no session": {
@@ -140,8 +119,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 0,
                     "items": [
@@ -159,16 +138,9 @@
                     "owner": null,
                     "organisation": null
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     },
     "agent never set": {
@@ -183,8 +155,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 0,
                     "items": [
@@ -202,16 +174,9 @@
                     "owner": null,
                     "organisation": null
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     },
     "position, groups, hideBeforeLogin": {
@@ -226,8 +191,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 3,
                     "items": [
@@ -249,16 +214,9 @@
                     ],
                     "hideBeforeLogin": true
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     },
     "groups not a list": {
@@ -273,8 +231,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 0,
                     "items": [
@@ -293,16 +251,9 @@
                     "organisation": "org-1",
                     "hideBeforeLogin": false
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     },
     "hideBeforeLogin null": {
@@ -317,8 +268,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 0,
                     "items": [
@@ -336,16 +287,9 @@
                     "owner": "session-user",
                     "organisation": "org-1"
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     },
     "no title": {
@@ -432,8 +376,8 @@
             }
         },
         "saved": [
-            [
-                {
+            {
+                "object": {
                     "title": "Main",
                     "position": 0,
                     "items": [
@@ -451,16 +395,9 @@
                     "owner": "session-user",
                     "organisation": "org-1"
                 },
-                [],
-                "publication",
-                "menu",
-                null,
-                true,
-                true,
-                false,
-                null,
-                null
-            ]
+                "register": "publication",
+                "schema": "menu"
+            }
         ]
     }
 }
