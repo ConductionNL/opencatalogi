@@ -50,31 +50,59 @@ export class Attachment implements TAttachment {
 
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	private hydrate(data: TAttachment) {
+		this.hydrateText(data)
+		this.hydrateFile(data)
+		this.hydrateMeta(data)
+	}
+
+	/**
+	 * Fill the id, texts, labels and status.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateText(data: TAttachment) {
 		this.id = data.id?.toString() || ''
 		this.reference = data.reference || ''
 		this.title = data.title || ''
 		this.summary = data.summary || ''
 		this.description = data.description || ''
 		this.labels = data.labels || []
+		this.status = (data.status as TStatus) || 'Concept'
+	}
+
+	/**
+	 * Fill the file location, type, size and version.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateFile(data: TAttachment) {
 		this.accessUrl = data.accessUrl || ''
 		this.downloadUrl = data.downloadUrl || ''
-		this.status = (data.status as TStatus) || 'Concept'
 		this.type = data.type || ''
 		this.extension = data.extension || ''
 		this.size = data.size || ''
+		this.versionOf = data.versionOf || ''
+		this.hash = data.hash || ''
+	}
+
+	/**
+	 * Fill anonymization, language, dates and license. An array where an object belongs counts as missing.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateMeta(data: TAttachment) {
 		this.anonymization = (!Array.isArray(data.anonymization)
 			&& data.anonymization) || {
 			anonymized: false,
 			results: '',
 		}
-
 		this.language = (!Array.isArray(data.language) && data.language) || {
 			code: '',
 			level: '',
 		}
-
-		this.versionOf = data.versionOf || ''
-		this.hash = data.hash || ''
 		this.published = data.published || null
 		this.modified = data.modified || ''
 		this.license = data.license || ''
