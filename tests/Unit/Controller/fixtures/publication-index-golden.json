@@ -219,7 +219,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     [],
                     true
                 ]
@@ -248,7 +259,18 @@
                 }
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -318,7 +340,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     {
                         "_empty": "true"
                     },
@@ -339,7 +372,18 @@
                 "multitenancy": false
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -401,7 +445,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     [],
                     true
                 ]
@@ -418,7 +473,18 @@
                 "multitenancy": false
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -480,7 +546,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     [],
                     true
                 ]
@@ -497,7 +574,18 @@
                 "multitenancy": false
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -568,7 +656,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     {
                         "q": "x",
                         "_extend": [
@@ -607,7 +706,18 @@
                 }
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -678,7 +788,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     {
                         "q": "x",
                         "_extend": [
@@ -717,7 +838,18 @@
                 }
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -788,7 +920,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     {
                         "_extend": [
                             "@self.b"
@@ -825,7 +968,18 @@
                 }
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -896,7 +1050,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     {
                         "_extend": []
                     },
@@ -929,7 +1094,18 @@
                 }
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -1000,7 +1176,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     {
                         "extend": "",
                         "_extend": []
@@ -1035,7 +1222,18 @@
                 }
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -1104,7 +1302,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     [],
                     true
                 ]
@@ -1133,7 +1342,18 @@
                 }
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -1174,7 +1394,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     [],
                     true
                 ]
@@ -1203,7 +1434,18 @@
                 }
             },
             {
-                "resolve": "woo"
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
             },
             {
                 "get": "OCP\\IUserSession"
@@ -1273,7 +1515,18 @@
             },
             {
                 "build": [
-                    "woo",
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
                     [],
                     true
                 ]
@@ -1295,6 +1548,258 @@
                     "catalogSlug": "woo",
                     "error": "secret detail"
                 }
+            }
+        ]
+    },
+    "guard narrows the schemas": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    1
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"0ada5685fd1db1d0ff97fabbca535cf62d4f5787\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "schemas": [
+                        1,
+                        2
+                    ],
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "guarded": true
+                    },
+                    [],
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        1
+                    ],
+                    "params": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "schemas": [
+                        1
+                    ],
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "a catalogue in the request is not the scope": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    {
+                        "catalog": {
+                            "schemas": [
+                                99
+                            ]
+                        }
+                    },
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": {
+                        "catalog": {
+                            "schemas": [
+                                99
+                            ]
+                        }
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
             }
         ]
     }

@@ -83,6 +83,8 @@ class PublicationIndexGoldenTest extends TestCase {
 			'no schemas' => [['catalog' => ['slug' => 'woo', 'title' => 'Woo', 'registers' => [1], 'schemas' => []]]],
 			'schemas named by slug only' => [['catalog' => ['slug' => 'woo', 'registers' => [1], 'schemas' => ['besluit']]]],
 			'guard drops every schema' => [['catalog' => $scoped, 'guardDrops' => true]],
+			'guard narrows the schemas' => [['catalog' => ['schemas' => [1, 2]] + $scoped, 'guardNarrows' => true, 'result' => $rows]],
+			'a catalogue in the request is not the scope' => [['catalog' => $scoped, 'params' => ['catalog' => ['schemas' => [99]]], 'result' => $rows]],
 			'plain list' => [['catalog' => $scoped, 'result' => $rows]],
 			'keeps empty values' => [['catalog' => $scoped, 'params' => ['_empty' => 'true'], 'result' => $rows]],
 			'no results key' => [['catalog' => $scoped, 'result' => ['total' => 0]]],
@@ -202,12 +204,16 @@ class PublicationIndexGoldenTest extends TestCase {
 					$catalog['schemas'] = [];
 				}
 
+				if (($case['guardNarrows'] ?? false) === true) {
+					$catalog['schemas'] = [1];
+				}
+
 				return $catalog + ['guarded' => true];
 			}
 		);
 		$queries->method('buildCatalogSearchQuery')->willReturnCallback(
 			function (array $catalog, array $queryParams, object $objectService): array {
-				$this->log[] = ['build' => [$catalog['slug'], $queryParams, get_class($objectService) !== '']];
+				$this->log[] = ['build' => [$catalog, $queryParams, get_class($objectService) !== '']];
 				return ['_schemas' => $catalog['schemas'], 'params' => $queryParams];
 			}
 		);
@@ -219,7 +225,7 @@ class PublicationIndexGoldenTest extends TestCase {
 		);
 		$queries->method('resolveSchemaAndRegisterObjects')->willReturnCallback(
 			function (array $catalog): array {
-				$this->log[] = ['resolve' => $catalog['slug']];
+				$this->log[] = ['resolve' => $catalog];
 				return ['schemas' => ['s'], 'registers' => ['r']];
 			}
 		);
