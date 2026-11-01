@@ -1,0 +1,1123 @@
+{
+    "served": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Last-Modified": "Sun, 01 Nov 2026 10:00:00 GMT",
+            "ETag": "\"abc\"",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "served on page 3": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Last-Modified": "Sun, 01 Nov 2026 10:00:00 GMT",
+            "ETag": "\"abc\"",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    3
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "a page below one": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Last-Modified": "Sun, 01 Nov 2026 10:00:00 GMT",
+            "ETag": "\"abc\"",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "turtle": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Last-Modified": "Sun, 01 Nov 2026 10:00:00 GMT",
+            "ETag": "\"abc\"",
+            "Content-Type": "text/turtle; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "turtle"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "turtle:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "no caching metadata": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "unsupported format": {
+        "status": 406,
+        "class": "OCP\\AppFramework\\Http\\JSONResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            }
+        ],
+        "data": {
+            "error": "Unsupported serialization format",
+            "supported": [
+                "jsonld",
+                "turtle",
+                "rdfxml"
+            ]
+        }
+    },
+    "unknown catalog": {
+        "status": 404,
+        "class": "OCP\\AppFramework\\Http\\JSONResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            }
+        ],
+        "data": {
+            "error": "Catalog not found"
+        }
+    },
+    "harvesting disabled": {
+        "status": 404,
+        "class": "OCP\\AppFramework\\Http\\JSONResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            }
+        ],
+        "data": {
+            "error": "DCAT harvesting is not enabled for this catalog"
+        }
+    },
+    "etag matches": {
+        "status": 304,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Last-Modified": "Sun, 01 Nov 2026 10:00:00 GMT",
+            "ETag": "\"abc\"",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            }
+        ],
+        "body": ""
+    },
+    "etag differs": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Last-Modified": "Sun, 01 Nov 2026 10:00:00 GMT",
+            "ETag": "\"abc\"",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "no etag but a conditional request": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Last-Modified": "x",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "an empty conditional request against an empty etag": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "the guard throws": {
+        "status": 500,
+        "class": "OCP\\AppFramework\\Http\\JSONResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "error": [
+                    "[DcatController::catalog] Failed to build catalog DCAT document",
+                    {
+                        "catalogSlug": "woo",
+                        "error": "guard failed"
+                    }
+                ]
+            }
+        ],
+        "data": {
+            "error": "Internal server error"
+        }
+    },
+    "the build throws": {
+        "status": 500,
+        "class": "OCP\\AppFramework\\Http\\JSONResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "error": [
+                    "[DcatController::catalog] Failed to build catalog DCAT document",
+                    {
+                        "catalogSlug": "woo",
+                        "error": "build failed"
+                    }
+                ]
+            }
+        ],
+        "data": {
+            "error": "Internal server error"
+        }
+    },
+    "from an allowed origin": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Last-Modified": "Sun, 01 Nov 2026 10:00:00 GMT",
+            "ETag": "\"abc\"",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    },
+    "a blank conditional request against an empty etag": {
+        "status": 200,
+        "class": "OCA\\OpenCatalogi\\Http\\DcatResponse",
+        "headers": {
+            "X-Request-Id": "test-request-id",
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "Content-Type": "application/ld+json; charset=utf-8"
+        },
+        "calls": [
+            {
+                "getParam": "format"
+            },
+            {
+                "getHeader": "Accept"
+            },
+            {
+                "negotiate": [
+                    null,
+                    ""
+                ]
+            },
+            {
+                "getCatalogBySlug": "woo"
+            },
+            {
+                "isDcatEnabled": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "applyCatalogReadRuleGuard": {
+                    "id": "c-1",
+                    "schemas": [
+                        1,
+                        2
+                    ]
+                }
+            },
+            {
+                "getParam": "page"
+            },
+            {
+                "buildCatalogDocument": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "id": "c-1"
+                    },
+                    "woo",
+                    1
+                ]
+            },
+            {
+                "getHeader": "If-None-Match"
+            },
+            {
+                "serialize": [
+                    {
+                        "@type": "dcat:Catalog"
+                    },
+                    "jsonld"
+                ]
+            },
+            {
+                "getHeader": "Origin"
+            }
+        ],
+        "body": "jsonld:{\"@type\":\"dcat:Catalog\"}"
+    }
+}

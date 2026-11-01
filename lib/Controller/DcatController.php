@@ -160,12 +160,9 @@ class DcatController extends Controller {
 			}
 
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			if ($catalog === null) {
-				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
-			}
-
-			if ($this->dcatService->isDcatEnabled($catalog) === false) {
-				return new JSONResponse(['error' => $this->l10n->t('DCAT harvesting is not enabled for this catalog')], 404);
+			$refusal = $this->harvestRefusal(catalog: $catalog);
+			if ($refusal !== null) {
+				return $refusal;
 			}
 
 			// SCH-PFTS-CAT-002 (WOO-581): an anonymous harvester must not reach a
@@ -177,19 +174,7 @@ class DcatController extends Controller {
 			$page = max(1, (int)$this->request->getParam('page', 1));
 			$document = $this->dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: $page);
 
-			// Conditional GET — return 304 when the harvester's ETag still matches.
-			$ifNoneMatch = $this->request->getHeader('If-None-Match');
-			$etag = ($document['_meta']['etag'] ?? '');
-			if ($ifNoneMatch !== '' && $etag !== '' && trim($ifNoneMatch) === $etag) {
-				return new DcatResponse(
-					body: '',
-					contentType: DcatSerializerInterface::FORMATS[$format],
-					status: 304,
-					headers: $this->cachingHeaders(document: $document)
-				);
-			}
-
-			return $this->respond(document: $document, format: $format);
+			return $this->catalogResponse(document: $document, format: $format);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'[DcatController::catalog] Failed to build catalog DCAT document',
@@ -199,6 +184,63 @@ class DcatController extends Controller {
 		}//end try
 
 	}//end catalog()
+
+	/**
+	 * Why a catalog cannot be harvested, or null when it can.
+	 *
+	 * @param array<string, mixed>|null $catalog The catalog, or null when the slug is unknown.
+	 *
+	 * @return JSONResponse|null 404 for an unknown catalog or one without DCAT harvesting.
+	 */
+	private function harvestRefusal(?array $catalog): ?JSONResponse {
+		if ($catalog === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		}
+
+		if ($this->dcatService->isDcatEnabled($catalog) === false) {
+			return new JSONResponse(['error' => $this->l10n->t('DCAT harvesting is not enabled for this catalog')], 404);
+		}
+
+		return null;
+
+	}//end harvestRefusal()
+
+	/**
+	 * Answer a catalog document, or 304 when the harvester's ETag still matches.
+	 *
+	 * @param array<string, mixed> $document The DCAT document with its `_meta`.
+	 * @param string $format The negotiated format.
+	 *
+	 * @return DcatResponse The feed or the empty 304.
+	 */
+	private function catalogResponse(array $document, string $format): DcatResponse {
+		if ($this->etagStillMatches(document: $document) === true) {
+			return new DcatResponse(
+				body: '',
+				contentType: DcatSerializerInterface::FORMATS[$format],
+				status: 304,
+				headers: $this->cachingHeaders(document: $document)
+			);
+		}
+
+		return $this->respond(document: $document, format: $format);
+
+	}//end catalogResponse()
+
+	/**
+	 * Whether the request's If-None-Match names the document's ETag (conditional GET).
+	 *
+	 * @param array<string, mixed> $document The DCAT document with its `_meta`.
+	 *
+	 * @return bool
+	 */
+	private function etagStillMatches(array $document): bool {
+		$ifNoneMatch = $this->request->getHeader('If-None-Match');
+		$etag = ($document['_meta']['etag'] ?? '');
+
+		return $ifNoneMatch !== '' && $etag !== '' && trim($ifNoneMatch) === $etag;
+
+	}//end etagStillMatches()
 
 	/**
 	 * Validate a catalog's DCAT feed against the DCAT-AP-NL mandatory-property checklist.
