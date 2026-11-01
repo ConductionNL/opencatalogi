@@ -117,17 +117,16 @@ function appendFacetCategory(
 }
 
 /**
- * GET the federation publications search for the given params.
+ * GET a federation publications endpoint and parse its JSON body.
  *
- * @param searchParams The query
+ * @param suffix The path and query after `/api/federation/publications`
  * @return The parsed body
+ * @throws {Error} When the response is not ok
  * @spec openspec/specs/search/spec.md
  */
-async function fetchFederationSearch(
-	searchParams: URLSearchParams,
-): Promise<SearchResponse> {
+async function getFederationJson(suffix: string) {
 	const response = await fetch(
-		`/index.php/apps/opencatalogi/api/federation/publications?${searchParams.toString()}`,
+		`/index.php/apps/opencatalogi/api/federation/publications${suffix}`,
 		{
 			method: 'GET',
 			headers: {
@@ -141,6 +140,19 @@ async function fetchFederationSearch(
 	}
 
 	return response.json()
+}
+
+/**
+ * GET the federation publications search for the given params.
+ *
+ * @param searchParams The query
+ * @return The parsed body
+ * @spec openspec/specs/search/spec.md
+ */
+async function fetchFederationSearch(
+	searchParams: URLSearchParams,
+): Promise<SearchResponse> {
+	return getFederationJson(`?${searchParams.toString()}`)
 }
 
 interface SearchState {
@@ -510,21 +522,7 @@ export const useSearchStore = defineStore('search', {
 				)
 
 				// Make API call to Federation endpoint for facetable discovery
-				const response = await fetch(
-					`/index.php/apps/opencatalogi/api/federation/publications?${searchParams.toString()}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					},
-				)
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				const data = await response.json()
+				const data = await fetchFederationSearch(searchParams)
 
 				// Update facetable fields
 				this.facetable = data.facetable || {}
@@ -868,21 +866,7 @@ export const useSearchStore = defineStore('search', {
 		 */
 		async getPublication(publicationId: string) {
 			try {
-				const response = await fetch(
-					`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					},
-				)
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				const data = await response.json()
+				const data = await getFederationJson(`/${publicationId}`)
 				console.log('Publication fetched:', data)
 				return data
 			} catch (error) {
@@ -910,21 +894,9 @@ export const useSearchStore = defineStore('search', {
 				const searchParams = new URLSearchParams(
 					params as Record<string, string>,
 				)
-				const response = await fetch(
-					`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}/uses?${searchParams.toString()}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					},
+				const data = await getFederationJson(
+					`/${publicationId}/uses?${searchParams.toString()}`,
 				)
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				const data = await response.json()
 				console.log('Publication uses fetched:', data)
 				return data
 			} catch (error) {
@@ -952,21 +924,9 @@ export const useSearchStore = defineStore('search', {
 				const searchParams = new URLSearchParams(
 					params as Record<string, string>,
 				)
-				const response = await fetch(
-					`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}/used?${searchParams.toString()}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					},
+				const data = await getFederationJson(
+					`/${publicationId}/used?${searchParams.toString()}`,
 				)
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				const data = await response.json()
 				console.log('Publication used by fetched:', data)
 				return data
 			} catch (error) {
@@ -983,16 +943,7 @@ export const useSearchStore = defineStore('search', {
 			this.searchTerm = ''
 			this.filters = {}
 			this.ordering = {}
-			this.searchResults = []
-			this.pagination = {
-				page: 1,
-				pages: 1,
-				total: 0,
-				limit: 20,
-				offset: 0,
-			}
-			this.facets = {}
-			this.facetable = {}
+			this.resetSearchResults()
 			this.activeFacets = {}
 			this.error = null
 			this.selectedPublications = []
