@@ -227,49 +227,53 @@ class DirectoryService implements DirectoryServiceInterface {
 			$this->uniqueDirectories[] = $defaultDirectory;
 		}
 
-		$uniqueDirectoryUrls = $this->uniqueDirectories;
-
 		$results = [
-			'total_directories' => count($uniqueDirectoryUrls),
+			'total_directories' => count($this->uniqueDirectories),
 			'synced_directories' => 0,
 			'failed_directories' => 0,
 			'errors' => [],
 		];
 
-		// Create promises for async directory synchronization.
-		$syncPromises = [];
-		foreach ($uniqueDirectoryUrls as $directoryUrl) {
-			$syncPromises[] = new Promise(
-				function ($resolve) use ($directoryUrl) {
-					try {
-						$syncResult = $this->syncDirectory(directoryUrl: $directoryUrl);
-
-						// Directory sync completed successfully.
-						$resolve(
-							[
-								'success' => true,
-								'directory' => $directoryUrl,
-								'result' => $syncResult,
-							]
-						);
-					} catch (\Exception $e) {
-						// Removed redundant logging (error handled silently).
-						$resolve(
-							[
-								'success' => false,
-								'directory' => $directoryUrl,
-								'error' => $e->getMessage(),
-							]
-						);
-					}//end try
-				}
-			);
-		}//end foreach
-
 		// Execute all directory sync promises concurrently.
-		$syncResults = \React\Async\await(\React\Promise\all($syncPromises));
+		$syncPromises = array_map(
+			fn (string $directoryUrl): Promise => $this->directorySyncPromise(directoryUrl: $directoryUrl),
+			$this->uniqueDirectories
+		);
+		$results = $this->tallyDirectorySyncs(results: $results, syncResults: \React\Async\await(\React\Promise\all($syncPromises)));
 
-		// Process results.
+		$this->connectionReporter?->reportDirectorySync(results: $results);
+
+		return $results;
+	}//end doCronSync()
+
+	/**
+	 * A promise that syncs one directory and resolves to its outcome; a failure resolves too.
+	 *
+	 * @param string $directoryUrl The directory to sync.
+	 *
+	 * @return Promise Resolves to `success` and `directory`, plus `result` or `error`.
+	 */
+	private function directorySyncPromise(string $directoryUrl): Promise {
+		return new Promise(
+			function ($resolve) use ($directoryUrl) {
+				try {
+					$resolve(['success' => true, 'directory' => $directoryUrl, 'result' => $this->syncDirectory(directoryUrl: $directoryUrl)]);
+				} catch (\Exception $e) {
+					$resolve(['success' => false, 'directory' => $directoryUrl, 'error' => $e->getMessage()]);
+				}
+			}
+		);
+	}//end directorySyncPromise()
+
+	/**
+	 * Count the synced and failed directories, and collect the failures.
+	 *
+	 * @param array $results The cron sync results so far.
+	 * @param array $syncResults The outcome of each directory sync.
+	 *
+	 * @return array The results with the counts and errors added.
+	 */
+	private function tallyDirectorySyncs(array $results, array $syncResults): array {
 		foreach ($syncResults as $syncResult) {
 			if ($syncResult['success'] === true) {
 				$results['synced_directories']++;
@@ -283,10 +287,8 @@ class DirectoryService implements DirectoryServiceInterface {
 			];
 		}
 
-		$this->connectionReporter?->reportDirectorySync(results: $results);
-
 		return $results;
-	}//end doCronSync()
+	}//end tallyDirectorySyncs()
 
 	/**
 	 * Get unique directory URLs from stored listings
@@ -439,8 +441,26 @@ class DirectoryService implements DirectoryServiceInterface {
 			throw new RuntimeException('OpenRegister service is not available.');
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$urls = [];
+		foreach ($this->knownListings(objectService: $this->container->get('OCA\OpenRegister\Service\ObjectService')) as $listing) {
+			$dir = $this->peerDirectoryUrl(listing: $listing);
+			if ($dir !== null) {
+				$urls[$dir] = $dir;
+			}
+		}
 
+		return array_values($urls);
+	}//end getKnownDirectoryUrls()
+
+	/**
+	 * The stored listings, searched without RBAC, for getKnownDirectoryUrls().
+	 *
+	 * @param mixed $objectService The OpenRegister object service.
+	 *
+	 * @return mixed The listings; empty when the listing register or schema is
+	 *               not configured or the search fails.
+	 */
+	private function knownListings(mixed $objectService): mixed {
 		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
 		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 		if (empty($listingSchema) === true || empty($listingRegister) === true) {
@@ -448,7 +468,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		try {
-			$listings = $objectService->searchObjects(
+			return $objectService->searchObjects(
 				query: [
 					'@self' => [
 						'register' => $listingRegister,
@@ -460,32 +480,31 @@ class DirectoryService implements DirectoryServiceInterface {
 		} catch (\Throwable $e) {
 			return [];
 		}
+	}//end knownListings()
 
-		$urls = [];
-		foreach ($listings as $listing) {
-			$listingData = $listing->jsonSerialize();
-			$objectData = ($listingData['object'] ?? $listingData);
+	/**
+	 * The peer `/api/directory` URL a stored listing names, if it is one to sync with.
+	 *
+	 * @param mixed $listing The stored listing.
+	 *
+	 * @return string|null The URL, or null when it is empty, not an `/api/directory`
+	 *                     endpoint, or this instance itself (so cron does not sync
+	 *                     our own directory back to us).
+	 */
+	private function peerDirectoryUrl(mixed $listing): ?string {
+		$listingData = $listing->jsonSerialize();
+		$objectData = ($listingData['object'] ?? $listingData);
 
-			$dir = ($objectData['directory'] ?? null);
-			if (empty($dir) === true) {
-				continue;
-			}
+		$dir = ($objectData['directory'] ?? null);
+		if (empty($dir) === true
+			|| strpos($dir, '/api/directory') === false
+			|| $this->isSelfInstance(url: $dir) === true
+		) {
+			return null;
+		}
 
-			// Only real /api/directory endpoints belong in the sync set.
-			if (strpos($dir, '/api/directory') === false) {
-				continue;
-			}
-
-			// Skip self so cron doesn't sync our own /api/directory back to us.
-			if ($this->isSelfInstance(url: $dir) === true) {
-				continue;
-			}
-
-			$urls[$dir] = $dir;
-		}//end foreach
-
-		return array_values($urls);
-	}//end getKnownDirectoryUrls()
+		return $dir;
+	}//end peerDirectoryUrl()
 
 	/**
 	 * Synchronize a specific directory (asynchronous)
