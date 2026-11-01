@@ -1,0 +1,402 @@
+{
+    "another event": [],
+    "no old object": [],
+    "removed now": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-1"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 3
+            }
+        ]
+    ],
+    "already removed": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "still active": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "new without status": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "old without status": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-1"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 3
+            }
+        ]
+    ],
+    "status removed in capitals": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "subjectRef only on the old object": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-old"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 1
+            }
+        ]
+    ],
+    "subjectRef empty on the new object": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-old"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 1
+            }
+        ]
+    ],
+    "subjectRef differs, new wins": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-new"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 1
+            }
+        ]
+    ],
+    "subjectRef nowhere": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            ""
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 1
+            }
+        ]
+    ],
+    "subjectRef an int": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "5"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 1
+            }
+        ]
+    ],
+    "another schema": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "another register": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "slugs as register and schema": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "debug",
+            "OpenCatalogi: no register slugs",
+            {
+                "reason": "no OCA\\OpenRegister\\Db\\RegisterMapper"
+            }
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "debug",
+            "OpenCatalogi: no schema slugs",
+            {
+                "reason": "no OCA\\OpenRegister\\Db\\SchemaMapper"
+            }
+        ],
+        [
+            "removeEverythingOf",
+            "subject-1"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 3
+            }
+        ]
+    ],
+    "ids without mappers": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "debug",
+            "OpenCatalogi: no register slugs",
+            {
+                "reason": "no OCA\\OpenRegister\\Db\\RegisterMapper"
+            }
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "debug",
+            "OpenCatalogi: no schema slugs",
+            {
+                "reason": "no OCA\\OpenRegister\\Db\\SchemaMapper"
+            }
+        ]
+    ],
+    "empty slug in the map": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "int slug in the map": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "register mapper only": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "debug",
+            "OpenCatalogi: no schema slugs",
+            {
+                "reason": "no OCA\\OpenRegister\\Db\\SchemaMapper"
+            }
+        ],
+        [
+            "removeEverythingOf",
+            "subject-1"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 3
+            }
+        ]
+    ],
+    "register empty": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ]
+    ],
+    "removal fails": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-1"
+        ],
+        [
+            "warning",
+            "OpenCatalogi: could not clean up after a removed portal account; the removal itself stands",
+            {
+                "reason": "store down"
+            }
+        ]
+    ],
+    "two removals, maps read once": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-1"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 3
+            }
+        ],
+        [
+            "removeEverythingOf",
+            "subject-2"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 1
+            }
+        ]
+    ],
+    "empty slug for a slug value": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-1"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 3
+            }
+        ]
+    ]
+}
