@@ -43,6 +43,7 @@ use RuntimeException;
  * Golden test for the depublication actions.
  *
  * @covers \OCA\OpenCatalogi\Controller\DepublicationController
+ * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 class DepublicationGoldenTest extends TestCase {
 
@@ -108,7 +109,12 @@ class DepublicationGoldenTest extends TestCase {
 			$response = $controller->acknowledgeWithdrawal();
 		}
 
-		$actual = ['status' => $response->getStatus(), 'data' => $response->getData(), 'log' => $this->log];
+		$data = $response->getData();
+		if (isset($data['detail']) === true) {
+			$data['detail'] = str_replace(dirname(__DIR__, 3) . '/', '', (string)$data['detail']);
+		}
+
+		$actual = ['status' => $response->getStatus(), 'data' => $data, 'log' => $this->log];
 
 		$recorded = [];
 		if (file_exists(self::FIXTURE) === true) {

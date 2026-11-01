@@ -428,7 +428,7 @@
         "status": 503,
         "data": {
             "error": "register_not_configured",
-            "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/l59-wt3/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+            "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
         },
         "log": [
             {
