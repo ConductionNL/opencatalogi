@@ -2,6 +2,7 @@ import type { ZodSafeParseResult } from 'zod'
 import type { TAttachment } from './attachment.types'
 
 import { z } from 'zod'
+import { languageSchema } from '../languageSchema.js'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
@@ -104,23 +105,7 @@ export class Attachment implements TAttachment {
 				anonymized: z.boolean().or(z.enum(['true', 'false'])), // because the backend turns booleans into strings for some stupid reason
 				results: z.string().max(2500, 'kan niet langer dan 2500 zijn'),
 			}),
-			language: z.object({
-				// this regex checks if the code has either 2 or 3 characters per group, and the -aaa after the first is optional
-				code: z
-					.string()
-					.regex(
-						/^([a-z]{2,3})(-[a-z]{2,3})?$/g,
-						'is niet een geldige ISO 639-1 code (e.g. en-us)',
-					)
-					.or(z.literal('')),
-				level: z
-					.string()
-					.regex(
-						/^(A|B|C)(1|2)$/g,
-						'is niet een geldige CEFRL level (e.g. A1)',
-					)
-					.or(z.literal('')),
-			}),
+			language: languageSchema(),
 			versionOf: z.string(),
 			published: z
 				.string()
@@ -129,10 +114,6 @@ export class Attachment implements TAttachment {
 			license: z.string(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

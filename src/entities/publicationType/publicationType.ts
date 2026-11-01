@@ -220,10 +220,6 @@ export class PublicationType implements TPublicationType {
 			source: z.string().url('is niet een url').or(z.literal('')),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }
