@@ -149,10 +149,6 @@ export class Catalogi implements TCatalogi {
 				.optional(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }
