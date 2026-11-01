@@ -93,21 +93,119 @@ class StatsControllerTest extends TestCase {
 		);
 	}//end setUp()
 
-	private function withReadableObject(bool $readable): void {
-		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+	/**
+	 * An ObjectService double that behaves like OpenRegister's searchObjects.
+	 *
+	 * It finds an object only when the query names its own register, schema and
+	 * uuid together, with RBAC on, and the caller may read it. A uuid-only query,
+	 * or one in another register or schema, finds nothing, as in OpenRegister.
+	 *
+	 * @param array<int, string> $readable The uuids the caller may read.
+	 */
+	private function objectService(array $readable): ObjectService|MockObject {
+		$homes = [
+			'pub-1' => '31/7',
+			'pub-secret' => '31/7',
+			'pub-elsewhere' => '99/99',
+			'cat-public' => '31/1115',
+			'cat-secret' => '31/1115',
+		];
 		$os = $this->createMock(ObjectService::class);
-		$os->method('searchObjects')->willReturn($readable ? [['id' => 'x']] : []);
-		$this->container->method('get')
-			->with('OCA\OpenRegister\Service\ObjectService')
-			->willReturn($os);
-	}//end withReadableObject()
+		$os->method('searchObjects')->willReturnCallback(
+			function (array $query = [], bool $_rbac = true, bool $_multitenancy = true) use ($readable, $homes): array {
+				$self = ($query['@self'] ?? []);
+				if (empty($self['register']) === true || empty($self['schema']) === true || empty($self['uuid']) === true) {
+					return [];
+				}
+
+				$uuid = $self['uuid'];
+				if (($homes[$uuid] ?? null) !== $self['register'] . '/' . $self['schema']) {
+					return [];
+				}
+
+				if ($_rbac !== true || in_array($uuid, $readable, true) === false) {
+					return [];
+				}
+
+				return [['id' => $uuid]];
+			}
+		);
+		return $os;
+	}//end objectService()
+
+	/**
+	 * Wire OpenRegister and the container for the guard.
+	 *
+	 * The configured catalogs span registers 30 and 31 and schemas 6 and 7, so
+	 * `pub-1` (31/7) is in scope and `pub-elsewhere` (99/99) is not.
+	 *
+	 * @param array<int, string>   $readable The uuids the caller may read.
+	 * @param array<string, mixed> $extra    Further container entries.
+	 */
+	private function wire(array $readable, array $extra = []): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->catalogi->method('getCatalogFilters')->willReturn(['registers' => ['30', 31], 'schemas' => [6, '7']]);
+
+		$services = $extra + [
+			'OCA\OpenRegister\Service\ObjectService' => $this->objectService(readable: $readable),
+		];
+		$this->container->method('get')->willReturnCallback(
+			function (string $id) use ($services) {
+				if (array_key_exists($id, $services) === false) {
+					throw new \RuntimeException('unexpected: ' . $id);
+				}
+
+				return $services[$id];
+			}
+		);
+	}//end wire()
+
+	/**
+	 * Make the slug lookup resolve to the catalog with this uuid.
+	 */
+	private function resolveCatalog(string $id): void {
+		$this->catalogi->method('getCatalogBySlug')->willReturn(
+			[
+				'id' => $id,
+				'slug' => 'woo',
+				'hasDcat' => true,
+				'@self' => ['id' => $id, 'register' => '31', 'schema' => '1115'],
+			]
+		);
+	}//end resolveCatalog()
+
+	/**
+	 * A controller whose request carries forged identity and target parameters.
+	 */
+	private function controllerWithForgedRequest(): StatsController {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			fn (string $k, $d = null) => match ($k) {
+				'userId', 'requestedBy', 'owner' => 'admin',
+				'id', 'catalog' => 'cat-public',
+				'register', 'schema' => '99',
+				default => $d,
+			}
+		);
+		return new StatsController(
+			'opencatalogi',
+			$request,
+			$this->usage,
+			$this->catalogi,
+			$this->appManager,
+			$this->container,
+			$this->l10n,
+			$this->userSession,
+			$this->logger,
+		);
+	}//end controllerWithForgedRequest()
 
 	// ──────────────────────────────────────────────────────────
 	// Per-publication stats authorization (ANA-004 / no-IDOR)
 	// ──────────────────────────────────────────────────────────
 
 	public function testPublicationStatsAuthorizedReturnsData(): void {
-		$this->withReadableObject(true);
+		$this->wire(readable: ['pub-1']);
 		$this->usage->method('getPublicationStats')->willReturn(
 			['views' => 120, 'downloads' => 40, 'series' => [], 'countingStart' => '2026-05-01']
 		);
@@ -123,12 +221,37 @@ class StatsControllerTest extends TestCase {
 
 	public function testPublicationStatsDeniedForUnauthorizedUser(): void {
 		// Object not readable under the caller's RBAC → 403, no stats (no IDOR).
-		$this->withReadableObject(false);
+		$this->wire(readable: ['pub-1']);
 		$this->usage->expects($this->never())->method('getPublicationStats');
 
 		$resp = $this->controller->publication('pub-secret');
 		$this->assertSame(403, $resp->getStatus());
 	}//end testPublicationStatsDeniedForUnauthorizedUser()
+
+	public function testPublicationStatsDeniedOutsideTheCatalogScope(): void {
+		$this->wire(readable: ['pub-elsewhere']);
+		$this->usage->expects($this->never())->method('getPublicationStats');
+
+		$resp = $this->controller->publication('pub-elsewhere');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testPublicationStatsDeniedOutsideTheCatalogScope()
+
+	public function testPublicationStatsIgnoresAForgedRegisterAndSchema(): void {
+		$this->wire(readable: ['pub-elsewhere']);
+		$this->usage->expects($this->never())->method('getPublicationStats');
+
+		$resp = $this->controllerWithForgedRequest()->publication('pub-elsewhere');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testPublicationStatsIgnoresAForgedRegisterAndSchema()
+
+	public function testPublicationStatsDeniedWhenTheScopeLookupFails(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->catalogi->method('getCatalogFilters')->willThrowException(new \RuntimeException('config gone'));
+		$this->usage->expects($this->never())->method('getPublicationStats');
+
+		$resp = $this->controller->publication('pub-1');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testPublicationStatsDeniedWhenTheScopeLookupFails()
 
 	public function testPublicationStatsDeniedWhenOpenRegisterMissing(): void {
 		$this->appManager->method('getInstalledApps')->willReturn([]);
@@ -141,7 +264,8 @@ class StatsControllerTest extends TestCase {
 	// ──────────────────────────────────────────────────────────
 
 	public function testCatalogStatsReturnsRollup(): void {
-		$this->catalogi->method('getCatalogBySlug')->willReturn(['slug' => 'woo']);
+		$this->resolveCatalog(id: 'cat-public');
+		$this->wire(readable: ['cat-public']);
 		$this->usage->method('getCatalogStats')->willReturn(
 			[
 				'views' => 200,
@@ -172,6 +296,79 @@ class StatsControllerTest extends TestCase {
 		$this->assertSame('a', $data['topViewed'][0]['publication']);
 		$this->assertSame('2026-01-01', $data['countingStart']);
 	}//end testCatalogStatsReturnsRollup()
+
+	public function testCatalogStatsDeniedWhenCallerCannotReadCatalog(): void {
+		$this->resolveCatalog(id: 'cat-secret');
+		$this->wire(readable: ['cat-public']);
+		$this->usage->expects($this->never())->method('getCatalogStats');
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controller->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsDeniedWhenCallerCannotReadCatalog()
+
+	public function testCatalogStatsIgnoresForgedIdentityParameters(): void {
+		$this->resolveCatalog(id: 'cat-secret');
+		$this->wire(readable: ['cat-public']);
+		$this->usage->expects($this->never())->method('getCatalogStats');
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controllerWithForgedRequest()->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsIgnoresForgedIdentityParameters()
+
+	public function testCatalogStatsReadsTheCatalogInItsOwnRegisterAndSchema(): void {
+		$this->resolveCatalog(id: 'cat-public');
+		$this->wire(readable: ['cat-public']);
+		$this->usage->method('getCatalogStats')->willReturn(['views' => 1, 'downloads' => 0, 'topViewed' => [], 'topDownloaded' => []]);
+		$this->usage->method('aggregateSeries')->willReturn(['views' => 1, 'downloads' => 0, 'series' => [], 'countingStart' => null]);
+
+		$resp = $this->controllerWithForgedRequest()->catalog('woo');
+		$this->assertSame(200, $resp->getStatus());
+	}//end testCatalogStatsReadsTheCatalogInItsOwnRegisterAndSchema()
+
+	public function testCatalogStatsDeniedWhenTheReadThrows(): void {
+		$this->resolveCatalog(id: 'cat-public');
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$os = $this->createMock(ObjectService::class);
+		$os->method('searchObjects')->willThrowException(new \RuntimeException('db gone'));
+		$this->container->method('get')->willReturn($os);
+		$this->usage->expects($this->never())->method('getCatalogStats');
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controller->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsDeniedWhenTheReadThrows()
+
+	public function testCatalogStatsDeniedWhenTheContainerThrows(): void {
+		$this->resolveCatalog(id: 'cat-public');
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willThrowException(new \RuntimeException('no service'));
+		$this->usage->expects($this->never())->method('getCatalogStats');
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controller->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsDeniedWhenTheContainerThrows()
+
+	public function testCatalogStatsDeniedForCatalogWithoutRegisterAndSchema(): void {
+		$this->catalogi->method('getCatalogBySlug')->willReturn(['id' => 'cat-public', 'slug' => 'woo']);
+		$this->wire(readable: ['cat-public']);
+		$this->usage->expects($this->never())->method('getCatalogStats');
+
+		$resp = $this->controller->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsDeniedForCatalogWithoutRegisterAndSchema()
+
+	public function testCatalogStatsDeniedForCatalogWithoutId(): void {
+		$this->catalogi->method('getCatalogBySlug')->willReturn(['slug' => 'woo']);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->expects($this->never())->method('get');
+		$this->usage->expects($this->never())->method('getCatalogStats');
+
+		$resp = $this->controller->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsDeniedForCatalogWithoutId()
 
 	public function testCatalogStatsUnknownCatalog(): void {
 		$this->catalogi->method('getCatalogBySlug')->willReturn(null);
@@ -264,8 +461,28 @@ class StatsControllerTest extends TestCase {
 	// CSV export (ANA-007)
 	// ──────────────────────────────────────────────────────────
 
+	public function testExportDeniedWhenCallerCannotReadCatalog(): void {
+		$this->resolveCatalog(id: 'cat-secret');
+		$this->wire(readable: ['cat-public']);
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controller->export('woo');
+		$this->assertInstanceOf(JSONResponse::class, $resp);
+		$this->assertSame(403, $resp->getStatus());
+	}//end testExportDeniedWhenCallerCannotReadCatalog()
+
+	public function testExportIgnoresForgedIdentityParameters(): void {
+		$this->resolveCatalog(id: 'cat-secret');
+		$this->wire(readable: ['cat-public']);
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controllerWithForgedRequest()->export('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testExportIgnoresForgedIdentityParameters()
+
 	public function testExportProducesCsvDownload(): void {
-		$this->catalogi->method('getCatalogBySlug')->willReturn(['slug' => 'woo']);
+		$this->resolveCatalog(id: 'cat-public');
+		$this->wire(readable: ['cat-public']);
 		$this->usage->method('getCountersForCatalog')->willReturn(
 			[
 				['publication' => 'a', 'category' => 'Besluiten', 'published' => '2026-01-01', 'kind' => 'view', 'count' => 5],
@@ -324,8 +541,16 @@ class StatsControllerTest extends TestCase {
 		$this->assertSame(403, $response->getStatus());
 	}//end testQualityRejectsAnonymous()
 
+	public function testQualityDeniedWhenCallerCannotReadCatalog(): void {
+		$this->resolveCatalog(id: 'cat-secret');
+		$this->wire(readable: ['cat-public']);
+
+		$response = $this->controllerWithForgedRequest()->quality('woo');
+		$this->assertSame(403, $response->getStatus());
+	}//end testQualityDeniedWhenCallerCannotReadCatalog()
+
 	public function testQualityReturnsRollup(): void {
-		$this->catalogi->method('getCatalogBySlug')->willReturn(['hasDcat' => true]);
+		$this->resolveCatalog(id: 'cat-public');
 
 		$dcat = $this->createMock(\OCA\OpenCatalogi\Service\DcatService::class);
 		$dcat->method('buildCatalogDocument')->willReturn(
@@ -340,18 +565,12 @@ class StatsControllerTest extends TestCase {
 
 		$quality = new \OCA\OpenCatalogi\Service\QualityService($this->createConfiguredMock(\OCP\IAppConfig::class, []));
 
-		$this->container->method('get')->willReturnCallback(
-			function (string $id) use ($dcat, $quality) {
-				if ($id === \OCA\OpenCatalogi\Contract\DcatServiceInterface::class) {
-					return $dcat;
-				}
-
-				if ($id === \OCA\OpenCatalogi\Contract\QualityServiceInterface::class) {
-					return $quality;
-				}
-
-				throw new \RuntimeException('unexpected: ' . $id);
-			}
+		$this->wire(
+			readable: ['cat-public'],
+			extra: [
+				\OCA\OpenCatalogi\Contract\DcatServiceInterface::class => $dcat,
+				\OCA\OpenCatalogi\Contract\QualityServiceInterface::class => $quality,
+			]
 		);
 
 		$response = $this->controller->quality('woo');

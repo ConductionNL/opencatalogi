@@ -131,10 +131,6 @@ export class Organization implements TOrganization {
 			image: z.string(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

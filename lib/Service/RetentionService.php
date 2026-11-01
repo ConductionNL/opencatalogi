@@ -48,6 +48,8 @@ use RuntimeException;
  * Drives the publication retention lifecycle.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.ExcessiveClassLength) Lifecycle steps are split into small documented
+ *   private methods; the docblocks of those steps push the class past the line threshold.
  *
  * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
@@ -309,72 +311,169 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function applyDefaults(array $publication, string $catalogSlug): array {
-		$defaults = $this->getRetentionDefaults();
-		$catalogDefaults = ($defaults[$catalogSlug] ?? []);
-		if (is_array($catalogDefaults) === false) {
-			return $publication;
-		}
-
-		$decisionTable = $this->policyTable->fromDefaults(catalogDefaults: $catalogDefaults);
+		$decisionTable = $this->catalogDecisionTable(catalogSlug: $catalogSlug);
 		if ($decisionTable === null) {
-			// Nothing configured for this catalog.
 			return $publication;
 		}
 
+		$outputs = $this->evaluateDefaults(decisionTable: $decisionTable, category: (string)($publication['retentionCategory'] ?? ''));
+		if ($outputs === null) {
+			return $publication;
+		}
+
+		return $this->withComputedExpiry(publication: self::withDefaultOutputs(publication: $publication, outputs: $outputs));
+	}//end applyDefaults()
+
+	/**
+	 * The catalog's retention defaults as a FIRST-policy decision table.
+	 *
+	 * @param string $catalogSlug The catalog slug.
+	 *
+	 * @return array<string, mixed>|null The decision table, or null when nothing usable is configured.
+	 *
+	 * @spec exclude Internal table step of applyDefaults().
+	 */
+	private function catalogDecisionTable(string $catalogSlug): ?array {
+		$catalogDefaults = ($this->getRetentionDefaults()[$catalogSlug] ?? []);
+		if (is_array($catalogDefaults) === false) {
+			return null;
+		}
+
+		return $this->policyTable->fromDefaults(catalogDefaults: $catalogDefaults);
+	}//end catalogDecisionTable()
+
+	/**
+	 * The winning row's outputs for a category, from OpenRegister's evaluator.
+	 *
+	 * No matching row, an unavailable evaluator or a failed evaluation all mean
+	 * no defaults; only the failure is logged.
+	 *
+	 * @param array<string, mixed> $decisionTable The decision table.
+	 * @param string $category The publication's retention category.
+	 *
+	 * @return array<string, mixed>|null The outputs, or null for no defaults.
+	 *
+	 * @spec exclude Internal evaluation step of applyDefaults().
+	 */
+	private function evaluateDefaults(array $decisionTable, string $category): ?array {
+		$evaluation = $this->evaluation(decisionTable: $decisionTable, category: $category);
+		if ($evaluation === null) {
+			return null;
+		}
+
+		$outputs = ($evaluation['result']['outputs'] ?? []);
+		if (is_array($outputs) === false) {
+			return null;
+		}
+
+		return $outputs;
+	}//end evaluateDefaults()
+
+	/**
+	 * Evaluate the decision table for a category.
+	 *
+	 * @param array<string, mixed> $decisionTable The decision table.
+	 * @param string $category The publication's retention category.
+	 *
+	 * @return array{result: mixed}|null The evaluator's answer under `result`, or null when it is unavailable or fails.
+	 *
+	 * @spec exclude Internal evaluation step of evaluateDefaults().
+	 */
+	private function evaluation(array $decisionTable, string $category): ?array {
 		$evaluator = $this->getDecisionTableEvaluator();
 		if ($evaluator === null) {
-			// Already warned in the resolver; degrade to "no defaults configured".
-			return $publication;
+			return null;
 		}
 
-		$category = (string)($publication['retentionCategory'] ?? '');
 		try {
-			$result = $evaluator->evaluate($decisionTable, ['category' => $category]);
+			return ['result' => $evaluator->evaluate($decisionTable, ['category' => $category])];
 		} catch (\Throwable $e) {
-			if (method_exists($e, 'getErrorCode') === true && $e->getErrorCode() === 'no_rule_matched') {
-				// Expected: no row for this category and no fallback configured.
-				return $publication;
-			}
+			$this->logEvaluationFailure(error: $e);
+			return null;
+		}
+	}//end evaluation()
 
-			$this->logger->warning('[RetentionService] retention decision-table evaluation failed: ' . $e->getMessage());
-			return $publication;
+	/**
+	 * Log a failed evaluation; no matching row is expected and not logged.
+	 *
+	 * @param \Throwable $error The evaluator's error.
+	 *
+	 * @return void
+	 *
+	 * @spec exclude Internal logging step of evaluation().
+	 */
+	private function logEvaluationFailure(\Throwable $error): void {
+		if (method_exists($error, 'getErrorCode') === true && $error->getErrorCode() === 'no_rule_matched') {
+			return;
 		}
 
-		$outputs = ($result['outputs'] ?? []);
-		if (is_array($outputs) === false) {
-			return $publication;
-		}
+		$this->logger->warning('[RetentionService] retention decision-table evaluation failed: ' . $error->getMessage());
+	}//end logEvaluationFailure()
 
-		// Only fill empties — never overwrite an officer's choice. Null outputs
-		// mean the winning row does not configure that key; skip them.
+	/**
+	 * Fill the empty retention term and action from the winning row.
+	 *
+	 * An officer's choice is never overwritten; a null output means the row
+	 * does not configure that key, and an unknown action is ignored.
+	 *
+	 * @param array<string, mixed> $publication The publication object data.
+	 * @param array<string, mixed> $outputs The winning row's outputs.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @spec exclude Internal fill step of applyDefaults().
+	 */
+	private static function withDefaultOutputs(array $publication, array $outputs): array {
 		if (empty($publication['retentionTermMonths']) === true && isset($outputs['termMonths']) === true) {
 			$publication['retentionTermMonths'] = (int)$outputs['termMonths'];
 		}
 
-		if (empty($publication['retentionAction']) === true && isset($outputs['action']) === true
-			&& in_array($outputs['action'], self::ACTIONS, true) === true
-		) {
+		if (empty($publication['retentionAction']) === true && self::hasKnownAction(outputs: $outputs) === true) {
 			$publication['retentionAction'] = (string)$outputs['action'];
 		}
 
-		// Recompute expiry from publication date + term when not manually held.
-		if (empty($publication['retentionExpiresAt']) === true) {
-			$termMonths = null;
-			if (isset($publication['retentionTermMonths']) === true) {
-				$termMonths = (int)$publication['retentionTermMonths'];
-			}
+		return $publication;
+	}//end withDefaultOutputs()
 
-			$computed = $this->computeExpiry(
-				publicationDate: ($publication['publicationDate'] ?? null),
-				termMonths: $termMonths
-			);
-			if ($computed !== null) {
-				$publication['retentionExpiresAt'] = $computed;
-			}
+	/**
+	 * Whether the winning row names one of the known retention actions.
+	 *
+	 * @param array<string, mixed> $outputs The winning row's outputs.
+	 *
+	 * @return boolean True for a known action.
+	 *
+	 * @spec exclude Internal check of withDefaultOutputs().
+	 */
+	private static function hasKnownAction(array $outputs): bool {
+		return isset($outputs['action']) === true && in_array($outputs['action'], self::ACTIONS, true) === true;
+	}//end hasKnownAction()
+
+	/**
+	 * Recompute the expiry from the publication date and term, unless it is held.
+	 *
+	 * @param array<string, mixed> $publication The publication object data.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @spec exclude Internal expiry step of applyDefaults().
+	 */
+	private function withComputedExpiry(array $publication): array {
+		if (empty($publication['retentionExpiresAt']) === false) {
+			return $publication;
+		}
+
+		$termMonths = null;
+		if (isset($publication['retentionTermMonths']) === true) {
+			$termMonths = (int)$publication['retentionTermMonths'];
+		}
+
+		$computed = $this->computeExpiry(publicationDate: ($publication['publicationDate'] ?? null), termMonths: $termMonths);
+		if ($computed !== null) {
+			$publication['retentionExpiresAt'] = $computed;
 		}
 
 		return $publication;
-	}//end applyDefaults()
+	}//end withComputedExpiry()
 
 	/**
 	 * Stamp retention defaults onto a publication at publication time (RET-004).
@@ -680,60 +779,150 @@ class RetentionService implements RetentionServiceInterface {
 	public function getQueueSummary(): array {
 		$summary = ['expiringSoon' => 0, 'reviewRequired' => 0, 'archived' => 0];
 
-		$objectService = $this->getObjectService();
-		$register = $this->getRegister();
-		$schema = $this->getSchema();
-		if ($objectService === null || $register === null || $schema === null) {
-			return $summary;
-		}
-
 		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		$windowEnd = $now->add(new DateInterval('P' . $this->getWarningWindowDays() . 'D'));
-
-		try {
-			$result = $objectService->searchObjectsPaginated(
-				query: [
-					'@self' => ['register' => $register, 'schema' => $schema],
-					'retentionExpiresAt' => ['$lte' => $windowEnd->format(DateTimeInterface::ATOM)],
-					'_limit' => 1000,
-				],
-				_rbac: true,
-				_multitenancy: false
-			);
-			$objects = ($result['results'] ?? []);
-		} catch (\Throwable $e) {
-			$this->logger->warning('[RetentionService] queue summary failed: ' . $e->getMessage());
-			return $summary;
+		foreach (($this->queueObjects(now: $now) ?? []) as $object) {
+			$bucket = $this->queueBucket(data: $this->plainArray(object: $object), now: $now);
+			if ($bucket !== null) {
+				$summary[$bucket]++;
+			}
 		}
-
-		foreach ($objects as $object) {
-			$data = $this->plainArray(object: $object);
-			$status = (string)($data['status'] ?? '');
-			if ($status === 'archived') {
-				$summary['archived']++;
-				continue;
-			}
-
-			$expiresAt = ($data['retentionExpiresAt'] ?? null);
-			if ($expiresAt === null || $expiresAt === '') {
-				continue;
-			}
-
-			try {
-				$expiry = new DateTimeImmutable((string)$expiresAt);
-			} catch (\Throwable $e) {
-				continue;
-			}
-
-			if ($expiry <= $now && (string)($data['retentionAction'] ?? 'review') === 'review') {
-				$summary['reviewRequired']++;
-			} elseif ($expiry > $now) {
-				$summary['expiringSoon']++;
-			}
-		}//end foreach
 
 		return $summary;
 	}//end getQueueSummary()
+
+	/**
+	 * The publications whose retention term ends within the warning window.
+	 *
+	 * @param DateTimeImmutable $now The moment of the summary.
+	 *
+	 * @return array|null The objects, or null when OpenRegister or the scope is missing or the search fails.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+	 */
+	private function queueObjects(DateTimeImmutable $now): ?array {
+		$objectService = $this->getObjectService();
+		$scope = $this->publicationScope();
+		if ($objectService === null || $scope === null) {
+			return null;
+		}
+
+		$query = $this->queueQuery(scope: $scope, now: $now);
+
+		try {
+			$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[RetentionService] queue summary failed: ' . $e->getMessage());
+			return null;
+		}
+
+		return ($result['results'] ?? []);
+	}//end queueObjects()
+
+	/**
+	 * The search for publications whose term ends within the warning window.
+	 *
+	 * @param array $scope The publication register and schema.
+	 * @param DateTimeImmutable $now The moment of the summary.
+	 *
+	 * @return array<string, mixed> The query.
+	 *
+	 * @spec exclude Internal query step of queueObjects().
+	 */
+	private function queueQuery(array $scope, DateTimeImmutable $now): array {
+		$windowEnd = $now->add(new DateInterval('P' . $this->getWarningWindowDays() . 'D'));
+
+		return [
+			'@self' => $scope,
+			'retentionExpiresAt' => ['$lte' => $windowEnd->format(DateTimeInterface::ATOM)],
+			'_limit' => 1000,
+		];
+	}//end queueQuery()
+
+	/**
+	 * The configured publication register and schema, or null when either is unset.
+	 *
+	 * @return array{register: string, schema: string}|null The scope.
+	 *
+	 * @spec exclude Internal scope step of queueObjects().
+	 */
+	private function publicationScope(): ?array {
+		$register = $this->getRegister();
+		$schema = $this->getSchema();
+		if ($register === null || $schema === null) {
+			return null;
+		}
+
+		return ['register' => $register, 'schema' => $schema];
+	}//end publicationScope()
+
+	/**
+	 * The summary count a publication adds to, or null for none.
+	 *
+	 * An archived publication counts as archived; an expired one with the
+	 * review action needs review; one that has not expired yet is expiring soon.
+	 *
+	 * @param array $data The publication.
+	 * @param DateTimeImmutable $now The moment of the summary.
+	 *
+	 * @return string|null The summary key.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
+	 */
+	private function queueBucket(array $data, DateTimeImmutable $now): ?string {
+		if ((string)($data['status'] ?? '') === 'archived') {
+			return 'archived';
+		}
+
+		$expiry = $this->retentionExpiry(data: $data);
+		if ($expiry === null) {
+			return null;
+		}
+
+		if ($expiry > $now) {
+			return 'expiringSoon';
+		}
+
+		return self::reviewBucket(data: $data);
+	}//end queueBucket()
+
+	/**
+	 * The review-required key for an expired publication whose action is review, the default.
+	 *
+	 * @param array $data The publication.
+	 *
+	 * @return string|null The summary key, or null for another action.
+	 *
+	 * @spec exclude Internal check of queueBucket().
+	 */
+	private static function reviewBucket(array $data): ?string {
+		if ((string)($data['retentionAction'] ?? 'review') === 'review') {
+			return 'reviewRequired';
+		}
+
+		return null;
+	}//end reviewBucket()
+
+	/**
+	 * A publication's retention expiry, or null when it is unset or unreadable.
+	 *
+	 * @param array $data The publication.
+	 *
+	 * @return DateTimeImmutable|null The expiry.
+	 *
+	 * @spec exclude Internal parse step of queueBucket().
+	 */
+	private function retentionExpiry(array $data): ?DateTimeImmutable {
+		$expiresAt = ($data['retentionExpiresAt'] ?? null);
+		if ($expiresAt === null || $expiresAt === '') {
+			return null;
+		}
+
+		try {
+			return new DateTimeImmutable((string)$expiresAt);
+		} catch (\Throwable $e) {
+			return null;
+		}
+	}//end retentionExpiry()
 
 	/**
 	 * Record a human disposal/extension decision (who/when/basis/rationale).

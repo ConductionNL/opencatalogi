@@ -1,0 +1,466 @@
+{
+    "session user owns the menu": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": "session-user",
+                    "organisation": "org-1"
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "a forged owner is ignored": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": "session-user",
+                    "organisation": "org-1"
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "agent user without a session": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": "agent-user",
+                    "organisation": "org-1"
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "no agent, no session": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": null,
+                    "organisation": null
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "agent never set": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": null,
+                    "organisation": null
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "position, groups, hideBeforeLogin": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 3,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 3,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": "session-user",
+                    "organisation": "org-1",
+                    "groups": [
+                        "a"
+                    ],
+                    "hideBeforeLogin": true
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "groups not a list": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": "session-user",
+                    "organisation": "org-1",
+                    "hideBeforeLogin": false
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "hideBeforeLogin null": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": "session-user",
+                    "organisation": "org-1"
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    },
+    "no title": {
+        "answer": {
+            "success": false,
+            "error": "Menu title is required",
+            "code": 400
+        },
+        "saved": []
+    },
+    "empty title": {
+        "answer": {
+            "success": false,
+            "error": "Menu title is required",
+            "code": 400
+        },
+        "saved": []
+    },
+    "no items": {
+        "answer": {
+            "success": false,
+            "error": "Menu must have at least one item. Please provide an items array.",
+            "code": 400
+        },
+        "saved": []
+    },
+    "items empty": {
+        "answer": {
+            "success": false,
+            "error": "Menu must have at least one item. Please provide an items array.",
+            "code": 400
+        },
+        "saved": []
+    },
+    "items not a list": {
+        "answer": {
+            "success": false,
+            "error": "Menu must have at least one item. Please provide an items array.",
+            "code": 400
+        },
+        "saved": []
+    },
+    "item without order": {
+        "answer": {
+            "success": false,
+            "error": "Menu item 0 is missing 'order' field",
+            "code": 400
+        },
+        "saved": []
+    },
+    "item with order as text zero": {
+        "answer": {
+            "success": false,
+            "error": "Menu item 0 is missing 'order' field",
+            "code": 400
+        },
+        "saved": []
+    },
+    "second item without name": {
+        "answer": {
+            "success": false,
+            "error": "Menu item 1 is missing 'name' field",
+            "code": 400
+        },
+        "saved": []
+    },
+    "item without link": {
+        "answer": {
+            "success": false,
+            "error": "Menu item first is missing 'link' field",
+            "code": 400
+        },
+        "saved": []
+    },
+    "a forged userId is ignored": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "menu-1",
+                "title": "Main",
+                "position": 0,
+                "itemCount": 2
+            }
+        },
+        "saved": [
+            [
+                {
+                    "title": "Main",
+                    "position": 0,
+                    "items": [
+                        {
+                            "order": 0,
+                            "name": "Home",
+                            "link": "/"
+                        },
+                        {
+                            "order": 2,
+                            "name": "Over",
+                            "link": "/over"
+                        }
+                    ],
+                    "owner": "session-user",
+                    "organisation": "org-1"
+                },
+                [],
+                "publication",
+                "menu",
+                null,
+                true,
+                true,
+                false,
+                null,
+                null
+            ]
+        ]
+    }
+}
