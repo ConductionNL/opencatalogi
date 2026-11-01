@@ -36,7 +36,7 @@
     ],
     [
         "alias",
-        "OCA\\OpenCatalogi\\Contract\\WooServiceInterface",
+        "OCA\\OpenCatalogi\\Contract\\TransparencyWorkflowServiceInterface",
         "OCA\\OpenCatalogi\\Service\\WooService"
     ],
     [
@@ -56,7 +56,7 @@
     ],
     [
         "alias",
-        "OCA\\OpenCatalogi\\Contract\\WooReadinessServiceInterface",
+        "OCA\\OpenCatalogi\\Contract\\HarvesterReadinessServiceInterface",
         "OCA\\OpenCatalogi\\Service\\WooReadinessService"
     ],
     [
@@ -156,7 +156,7 @@
     ],
     [
         "alias",
-        "OCA\\OpenCatalogi\\Contract\\WooCategoryRegistryInterface",
+        "OCA\\OpenCatalogi\\Contract\\InformationCategoryRegistryInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooCategoryRegistry"
     ],
     [
@@ -166,7 +166,7 @@
     ],
     [
         "alias",
-        "OCA\\OpenCatalogi\\Contract\\WooRequestServiceInterface",
+        "OCA\\OpenCatalogi\\Contract\\InformationRequestServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestService"
     ],
     [
@@ -181,7 +181,7 @@
     ],
     [
         "alias",
-        "OCA\\OpenCatalogi\\Contract\\WooRegistrationServiceInterface",
+        "OCA\\OpenCatalogi\\Contract\\IndexRegistrationServiceInterface",
         "OCA\\OpenCatalogi\\Service\\WooRegistrationService"
     ],
     [
@@ -201,7 +201,7 @@
     ],
     [
         "alias",
-        "OCA\\OpenCatalogi\\Contract\\WooRequestStoreInterface",
+        "OCA\\OpenCatalogi\\Contract\\InformationRequestStoreInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestStore"
     ],
     [
@@ -236,7 +236,7 @@
     ],
     [
         "alias",
-        "OCA\\OpenCatalogi\\Contract\\WooRequestIntakeInterface",
+        "OCA\\OpenCatalogi\\Contract\\InformationRequestIntakeInterface",
         "OCA\\OpenCatalogi\\Service\\Woo\\WooRequestIntake"
     ],
     [

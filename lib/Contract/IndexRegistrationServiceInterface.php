@@ -29,7 +29,7 @@ use DateTimeInterface;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  */
-interface WooRegistrationServiceInterface {
+interface IndexRegistrationServiceInterface {
 	/**
 	 * The stored registration, with the answer the gateway gave.
 	 *

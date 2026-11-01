@@ -27,7 +27,7 @@ namespace OCA\OpenCatalogi\Contract;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  */
-interface WooCategoryRegistryInterface {
+interface InformationCategoryRegistryInterface {
 	/**
 	 * Every category a catalogue may publish under, keyed by code.
 	 *

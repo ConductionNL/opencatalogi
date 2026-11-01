@@ -35,7 +35,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeImmutable;
 use DomainException;
-use OCA\OpenCatalogi\Contract\WooRequestIntakeInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
 use Throwable;
 
 /**
@@ -43,7 +43,7 @@ use Throwable;
  *
  * @spec openspec/changes/portal-woo-request-intake/specs/woo-request-intake/spec.md#requirement-a-woo-request-delivered-by-the-portal-arms-its-term-req-wri-008
  */
-class WooRequestIntake implements WooRequestIntakeInterface {
+class WooRequestIntake implements InformationRequestIntakeInterface {
 
 	/**
 	 * The request is stored and its term runs; `dueAt` is set.
