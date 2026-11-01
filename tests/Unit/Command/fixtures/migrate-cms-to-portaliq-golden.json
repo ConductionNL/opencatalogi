@@ -1,0 +1,442 @@
+{
+    "dry run": {
+        "exit": 1,
+        "display": [
+            "Running in DRY-RUN mode \u2014 nothing is written. Re-run with --apply.",
+            "page: Home -> /home",
+            "  WOULD MOVE",
+            "page: Blocks -> /x",
+            "  REFUSED: no Portaliq widget is declared for content block type(s): carousel. Guessing one would save a page that renders nothing.",
+            "page: untitled -> /nameless",
+            "  Portaliq declares no counterpart for: faq. Carried in props where possible, but it will not render.",
+            "  WOULD MOVE",
+            "menu: Main",
+            "  Portaliq declares no counterpart for: icon. Carried in props where possible, but it will not render.",
+            "  WOULD MOVE",
+            "menu: Footer",
+            "  WOULD MOVE",
+            "Done. Moved=0, skipped=0, failed=1 (dry run, nothing written)",
+            ""
+        ],
+        "calls": [
+            {
+                "openRegister": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "publication",
+                    "page",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "read": [
+                    "publication",
+                    "menu",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "apply": {
+        "exit": 1,
+        "display": [
+            "page: Home -> /home",
+            "  MOVED",
+            "page: Blocks -> /x",
+            "  REFUSED: no Portaliq widget is declared for content block type(s): carousel. Guessing one would save a page that renders nothing.",
+            "page: untitled -> /nameless",
+            "  Portaliq declares no counterpart for: faq. Carried in props where possible, but it will not render.",
+            "  FAILED: save broke",
+            "menu: Main",
+            "  Portaliq declares no counterpart for: icon. Carried in props where possible, but it will not render.",
+            "  MOVED",
+            "menu: Footer",
+            "  MOVED",
+            "Done. Moved=3, skipped=0, failed=2",
+            ""
+        ],
+        "calls": [
+            {
+                "openRegister": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "publication",
+                    "page",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": "Home",
+                        "route": "/home",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "page",
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": null,
+                        "route": "/nameless",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "page",
+                    false,
+                    false
+                ]
+            },
+            {
+                "read": [
+                    "publication",
+                    "menu",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": "Main",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "menu",
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": "Footer",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "menu",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "apply, a save fails": {
+        "exit": 1,
+        "display": [
+            "page: Home -> /home",
+            "  MOVED",
+            "page: Blocks -> /x",
+            "  REFUSED: no Portaliq widget is declared for content block type(s): carousel. Guessing one would save a page that renders nothing.",
+            "page: untitled -> /nameless",
+            "  Portaliq declares no counterpart for: faq. Carried in props where possible, but it will not render.",
+            "  MOVED",
+            "menu: Main",
+            "  Portaliq declares no counterpart for: icon. Carried in props where possible, but it will not render.",
+            "  MOVED",
+            "menu: Footer",
+            "  FAILED: save broke",
+            "Done. Moved=3, skipped=0, failed=2",
+            ""
+        ],
+        "calls": [
+            {
+                "openRegister": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "publication",
+                    "page",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": "Home",
+                        "route": "/home",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "page",
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": null,
+                        "route": "/nameless",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "page",
+                    false,
+                    false
+                ]
+            },
+            {
+                "read": [
+                    "publication",
+                    "menu",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": "Main",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "menu",
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": "Footer",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "menu",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "apply, nothing to move": {
+        "exit": 0,
+        "display": [
+            "Done. Moved=0, skipped=0, failed=0",
+            ""
+        ],
+        "calls": [
+            {
+                "openRegister": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "publication",
+                    "page",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "read": [
+                    "publication",
+                    "menu",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "no portal": {
+        "exit": 1,
+        "display": [
+            "--portal is required. A Portaliq page and menu must name a portal, and nothing in this app's data says which one these belong to.",
+            ""
+        ],
+        "calls": []
+    },
+    "portal missing": {
+        "exit": 1,
+        "display": [
+            "--portal is required. A Portaliq page and menu must name a portal, and nothing in this app's data says which one these belong to.",
+            ""
+        ],
+        "calls": []
+    },
+    "openregister missing": {
+        "exit": 1,
+        "display": [
+            "Running in DRY-RUN mode \u2014 nothing is written. Re-run with --apply.",
+            "OpenRegister is not available, so nothing can be migrated.",
+            ""
+        ],
+        "calls": [
+            {
+                "openRegister": "OCA\\OpenRegister\\Service\\ObjectService"
+            }
+        ]
+    },
+    "pages unreadable": {
+        "exit": 1,
+        "display": [
+            "Could not read page rows: page unreadable",
+            ""
+        ],
+        "calls": [
+            {
+                "openRegister": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "publication",
+                    "page",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "menus unreadable": {
+        "exit": 1,
+        "display": [
+            "page: Home -> /home",
+            "  MOVED",
+            "page: Blocks -> /x",
+            "  REFUSED: no Portaliq widget is declared for content block type(s): carousel. Guessing one would save a page that renders nothing.",
+            "page: untitled -> /nameless",
+            "  Portaliq declares no counterpart for: faq. Carried in props where possible, but it will not render.",
+            "  FAILED: save broke",
+            "Could not read menu rows: menu unreadable",
+            ""
+        ],
+        "calls": [
+            {
+                "openRegister": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "publication",
+                    "page",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": "Home",
+                        "route": "/home",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "page",
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": null,
+                        "route": "/nameless",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "page",
+                    false,
+                    false
+                ]
+            },
+            {
+                "read": [
+                    "publication",
+                    "menu",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "rows not a list": {
+        "exit": 0,
+        "display": [
+            "menu: Main",
+            "  MOVED",
+            "Done. Moved=1, skipped=0, failed=0",
+            ""
+        ],
+        "calls": [
+            {
+                "openRegister": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "publication",
+                    "page",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "read": [
+                    "publication",
+                    "menu",
+                    {
+                        "_limit": 1000
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "title": "Main",
+                        "portal": "zuid"
+                    },
+                    "portaliq",
+                    "menu",
+                    false,
+                    false
+                ]
+            }
+        ]
+    }
+}
