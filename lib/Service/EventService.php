@@ -282,47 +282,19 @@ class EventService implements EventServiceInterface {
 			return false;
 		}
 
-		$objectRegister = $objectData['@self']['register'];
-		$objectSchema = $objectData['@self']['schema'];
-
 		try {
-			// Get the actual catalogs from the system to check if object matches any catalog.
 			$objectService = $this->getObjectService();
+			$catalogQuery = $this->catalogQuery();
+			if ($catalogQuery === null) {
+				return false;
+			}
 
-			// Get catalogs (assuming they're stored in a specific register/schema).
-			$settings = $this->settingsService->getSettings();
-			$catalogRegister = $settings['configuration']['catalog_register'] ?? null;
-			$catalogSchema = $settings['configuration']['catalog_schema'] ?? null;
-
-			if ($catalogRegister !== null && $catalogSchema !== null) {
-				// Get all catalog objects using searchObjects with proper filters.
-				$catalogObjects = $objectService->searchObjects(
-					query: [
-						'@self' => [
-							'register' => $catalogRegister,
-							'schema' => $catalogSchema,
-						],
-					]
-				);
-
-				// Check each catalog to see if it includes our object's register and schema.
-				foreach ($catalogObjects as $catalog) {
-					$catalogData = $catalog->jsonSerialize();
-					$catalogRegisters = ($catalogData['registers'] ?? []);
-					$catalogSchemas = ($catalogData['schemas'] ?? []);
-
-					// Convert object register/schema to integers for comparison.
-					$objectRegisterInt = (int)$objectRegister;
-					$objectSchemaInt = (int)$objectSchema;
-
-					// Check if this catalog includes the object's register and schema.
-					if (in_array($objectRegisterInt, $catalogRegisters) === true
-						&& in_array($objectSchemaInt, $catalogSchemas) === true
-					) {
-						return true;
-					}
+			// Check each catalog to see if it includes our object's register and schema.
+			foreach ($objectService->searchObjects(query: $catalogQuery) as $catalog) {
+				if ($this->catalogIncludes(catalogData: $catalog->jsonSerialize(), objectSelf: $objectData['@self']) === true) {
+					return true;
 				}
-			}//end if
+			}
 
 			return false;
 		} catch (\Exception $e) {
@@ -335,6 +307,42 @@ class EventService implements EventServiceInterface {
 		}//end try
 
 	}//end shouldAutoPublishObject()
+
+	/**
+	 * The search query for the configured catalogs.
+	 *
+	 * @return array|null The query, or null when the catalog register or schema is not configured.
+	 */
+	private function catalogQuery(): ?array {
+		$settings = $this->settingsService->getSettings();
+		$catalogRegister = $settings['configuration']['catalog_register'] ?? null;
+		$catalogSchema = $settings['configuration']['catalog_schema'] ?? null;
+		if ($catalogRegister === null || $catalogSchema === null) {
+			return null;
+		}
+
+		return [
+			'@self' => [
+				'register' => $catalogRegister,
+				'schema' => $catalogSchema,
+			],
+		];
+	}//end catalogQuery()
+
+	/**
+	 * Whether a catalog includes both the register and the schema of an object.
+	 *
+	 * The object's register and schema are compared as integers, loosely, against the catalog's lists.
+	 *
+	 * @param mixed $catalogData The catalog's data.
+	 * @param array $objectSelf The object's `@self`, with its register and schema.
+	 *
+	 * @return bool True when both are in the catalog.
+	 */
+	private function catalogIncludes(mixed $catalogData, array $objectSelf): bool {
+		return in_array((int)$objectSelf['register'], ($catalogData['registers'] ?? [])) === true
+			&& in_array((int)$objectSelf['schema'], ($catalogData['schemas'] ?? [])) === true;
+	}//end catalogIncludes()
 
 	/**
 	 * Publish an object via the live OpenRegister RBAC model.
@@ -433,44 +441,20 @@ class EventService implements EventServiceInterface {
 			// Use FileMapper to get files directly from database (no object updates triggered).
 			$files = $fileMapper->getFilesForObject($objectEntity);
 
-			// Process each file from the FileMapper.
 			foreach ($files as $file) {
-				$fileName = ($file['name'] ?? 'unknown');
-				$filePath = ($file['path'] ?? '');
-
-				// Check if file is already published by checking if it has a share token.
-				// FileMapper already includes share information in the file data.
+				// FileMapper includes the share information: a share token means already published.
 				if (empty($file['share_token']) === false) {
 					$result['skipped']++;
 					continue;
 				}
 
-				// Create share link directly without updating the object.
-				// Convert FileMapper path to OpenRegister format by adding /OpenRegister/ prefix.
-				$openRegisterPath = '/OpenRegister/' . $filePath;
+				$error = $this->shareFileError(fileService: $fileService, file: $file);
+				if ($error === null) {
+					$result['published']++;
+					continue;
+				}
 
-				try {
-					// Use the converted OpenRegister path format.
-					$shareLink = $fileService->createShareLink($openRegisterPath);
-
-					if ($shareLink !== null
-						&& $shareLink !== ''
-						&& str_contains($shareLink, 'not found') === false
-						&& str_contains($shareLink, 'couldn\'t be found') === false
-					) {
-						$result['published']++;
-					}
-
-					if ($shareLink === null
-						|| $shareLink === ''
-						|| str_contains($shareLink, 'not found') === true
-						|| str_contains($shareLink, 'couldn\'t be found') === true
-					) {
-						$result['errors'][] = "Failed to create share link for file {$fileName}";
-					}
-				} catch (\Exception $e) {
-					$result['errors'][] = "Failed to publish file {$fileName}: " . $e->getMessage();
-				}//end try
+				$result['errors'][] = $error;
 			}//end foreach
 
 			return $result;
@@ -480,4 +464,34 @@ class EventService implements EventServiceInterface {
 		}//end try
 
 	}//end publishObjectAttachments()
+
+	/**
+	 * Create the share link of one file, and say why when that failed.
+	 *
+	 * The FileMapper path gets the `/OpenRegister/` prefix the file service expects.
+	 * An empty link, or one that says the file was not found, counts as a failure.
+	 *
+	 * @param mixed $fileService The OpenRegister file service.
+	 * @param array $file The file, as FileMapper lists it.
+	 *
+	 * @return string|null The error, or null when the share link was created.
+	 */
+	private function shareFileError(mixed $fileService, array $file): ?string {
+		$fileName = ($file['name'] ?? 'unknown');
+		try {
+			$shareLink = $fileService->createShareLink('/OpenRegister/' . ($file['path'] ?? ''));
+		} catch (\Exception $e) {
+			return "Failed to publish file {$fileName}: " . $e->getMessage();
+		}
+
+		if ($shareLink === null
+			|| $shareLink === ''
+			|| str_contains($shareLink, 'not found') === true
+			|| str_contains($shareLink, 'couldn\'t be found') === true
+		) {
+			return "Failed to create share link for file {$fileName}";
+		}
+
+		return null;
+	}//end shareFileError()
 }//end class
