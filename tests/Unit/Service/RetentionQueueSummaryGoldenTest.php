@@ -36,6 +36,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for RetentionService::getQueueSummary.
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionQueue
  * @uses \OCA\OpenCatalogi\Service\RetentionPolicyTable
  */
 class RetentionQueueSummaryGoldenTest extends TestCase {
