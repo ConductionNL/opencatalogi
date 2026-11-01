@@ -1,0 +1,573 @@
+{
+    "empty": {
+        "table": null
+    },
+    "only non-array rows": {
+        "table": null
+    },
+    "one full category": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:permits",
+                    "inputEntries": [
+                        "\"permits\""
+                    ],
+                    "outputEntries": [
+                        12,
+                        "depublish"
+                    ]
+                }
+            ]
+        }
+    },
+    "term only": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:permits",
+                    "inputEntries": [
+                        "\"permits\""
+                    ],
+                    "outputEntries": [
+                        7,
+                        null
+                    ]
+                }
+            ]
+        }
+    },
+    "action only": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:permits",
+                    "inputEntries": [
+                        "\"permits\""
+                    ],
+                    "outputEntries": [
+                        null,
+                        "5"
+                    ]
+                }
+            ]
+        }
+    },
+    "empty rule": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:permits",
+                    "inputEntries": [
+                        "\"permits\""
+                    ],
+                    "outputEntries": [
+                        null,
+                        null
+                    ]
+                }
+            ]
+        }
+    },
+    "null term and action": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:permits",
+                    "inputEntries": [
+                        "\"permits\""
+                    ],
+                    "outputEntries": [
+                        null,
+                        null
+                    ]
+                }
+            ]
+        }
+    },
+    "zero term": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:permits",
+                    "inputEntries": [
+                        "\"permits\""
+                    ],
+                    "outputEntries": [
+                        0,
+                        ""
+                    ]
+                }
+            ]
+        }
+    },
+    "fallback only": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "_fallback",
+                    "inputEntries": [
+                        "-"
+                    ],
+                    "outputEntries": [
+                        6,
+                        "review"
+                    ]
+                }
+            ]
+        }
+    },
+    "fallback first": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:a",
+                    "inputEntries": [
+                        "\"a\""
+                    ],
+                    "outputEntries": [
+                        1,
+                        null
+                    ]
+                },
+                {
+                    "id": "cat:b",
+                    "inputEntries": [
+                        "\"b\""
+                    ],
+                    "outputEntries": [
+                        null,
+                        "keep"
+                    ]
+                },
+                {
+                    "id": "_fallback",
+                    "inputEntries": [
+                        "-"
+                    ],
+                    "outputEntries": [
+                        6,
+                        null
+                    ]
+                }
+            ]
+        }
+    },
+    "fallback middle": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:a",
+                    "inputEntries": [
+                        "\"a\""
+                    ],
+                    "outputEntries": [
+                        1,
+                        null
+                    ]
+                },
+                {
+                    "id": "cat:b",
+                    "inputEntries": [
+                        "\"b\""
+                    ],
+                    "outputEntries": [
+                        2,
+                        null
+                    ]
+                },
+                {
+                    "id": "_fallback",
+                    "inputEntries": [
+                        "-"
+                    ],
+                    "outputEntries": [
+                        null,
+                        "review"
+                    ]
+                }
+            ]
+        }
+    },
+    "fallback not an array": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:a",
+                    "inputEntries": [
+                        "\"a\""
+                    ],
+                    "outputEntries": [
+                        1,
+                        null
+                    ]
+                }
+            ]
+        }
+    },
+    "quote in category": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:say \"hi\"",
+                    "inputEntries": [
+                        "\"say \\\"hi\\\"\""
+                    ],
+                    "outputEntries": [
+                        3,
+                        null
+                    ]
+                }
+            ]
+        }
+    },
+    "dash and operator categories": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:-",
+                    "inputEntries": [
+                        "\"-\""
+                    ],
+                    "outputEntries": [
+                        1,
+                        null
+                    ]
+                },
+                {
+                    "id": "cat:>= 5",
+                    "inputEntries": [
+                        "\">= 5\""
+                    ],
+                    "outputEntries": [
+                        2,
+                        null
+                    ]
+                },
+                {
+                    "id": "cat:",
+                    "inputEntries": [
+                        "\"\""
+                    ],
+                    "outputEntries": [
+                        null,
+                        "x"
+                    ]
+                }
+            ]
+        }
+    },
+    "integer keys": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:0",
+                    "inputEntries": [
+                        "\"0\""
+                    ],
+                    "outputEntries": [
+                        1,
+                        null
+                    ]
+                },
+                {
+                    "id": "cat:7",
+                    "inputEntries": [
+                        "\"7\""
+                    ],
+                    "outputEntries": [
+                        null,
+                        "y"
+                    ]
+                }
+            ]
+        }
+    },
+    "float term": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:a",
+                    "inputEntries": [
+                        "\"a\""
+                    ],
+                    "outputEntries": [
+                        2,
+                        null
+                    ]
+                }
+            ]
+        }
+    },
+    "extra keys ignored": {
+        "table": {
+            "hitPolicy": "FIRST",
+            "inputs": [
+                {
+                    "name": "category",
+                    "type": "string"
+                }
+            ],
+            "outputs": [
+                {
+                    "name": "termMonths",
+                    "type": "number"
+                },
+                {
+                    "name": "action",
+                    "type": "string"
+                }
+            ],
+            "rules": [
+                {
+                    "id": "cat:a",
+                    "inputEntries": [
+                        "\"a\""
+                    ],
+                    "outputEntries": [
+                        4,
+                        "z"
+                    ]
+                }
+            ]
+        }
+    }
+}

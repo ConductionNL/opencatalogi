@@ -77,6 +77,59 @@ use ZipArchive;
 class PublicationService implements PublicationServiceInterface {
 
 	/**
+	 * The virtual facet for filtering by directory or catalog source.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const array DIRECTORY_FACET = [
+		'type' => 'categorical',
+		'description' => 'Directory/catalog source of the publication',
+		'facet_types' => ['terms'],
+		'has_labels' => true,
+		'sample_values' => [
+			[
+				'value' => 'local',
+				'label' => 'Local OpenCatalogi',
+				'count' => 1,
+			],
+			[
+				'value' => 'directory.opencatalogi.nl',
+				'label' => 'OpenCatalogi Directory',
+				'count' => 1,
+			],
+			[
+				'value' => 'dimpact.commonground.nu',
+				'label' => 'Dimpact',
+				'count' => 1,
+			],
+		],
+	];
+
+	/**
+	 * The virtual facet for filtering by catalog.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const array CATALOGS_FACET = [
+		'type' => 'categorical',
+		'description' => 'Catalog that contains the publication',
+		'facet_types' => ['terms'],
+		'has_labels' => true,
+		'sample_values' => [
+			[
+				'value' => 'default',
+				'label' => 'Default Catalog',
+				'count' => 1,
+			],
+			[
+				'value' => 'test-catalog',
+				'label' => 'Test Catalog',
+				'count' => 1,
+			],
+		],
+	];
+
+	/**
 	 * The result of a single-publication lookup that found nothing.
 	 *
 	 * @var array{success: false, error: string, status: int}
@@ -2527,50 +2580,11 @@ class PublicationService implements PublicationServiceInterface {
 
 		// Add directory facet for filtering by catalog source
 		// This will be populated dynamically based on available directories.
-		$mergedFacetable['@self']['directory'] = [
-			'type' => 'categorical',
-			'description' => 'Directory/catalog source of the publication',
-			'facet_types' => ['terms'],
-			'has_labels' => true,
-			'sample_values' => [
-				[
-					'value' => 'local',
-					'label' => 'Local OpenCatalogi',
-					'count' => 1,
-				],
-				[
-					'value' => 'directory.opencatalogi.nl',
-					'label' => 'OpenCatalogi Directory',
-					'count' => 1,
-				],
-				[
-					'value' => 'dimpact.commonground.nu',
-					'label' => 'Dimpact',
-					'count' => 1,
-				],
-			],
-		];
+		$mergedFacetable['@self']['directory'] = self::DIRECTORY_FACET;
 
 		// Add catalogs facet for filtering by catalog
 		// This will be populated dynamically based on available catalogs.
-		$mergedFacetable['@self']['catalogs'] = [
-			'type' => 'categorical',
-			'description' => 'Catalog that contains the publication',
-			'facet_types' => ['terms'],
-			'has_labels' => true,
-			'sample_values' => [
-				[
-					'value' => 'default',
-					'label' => 'Default Catalog',
-					'count' => 1,
-				],
-				[
-					'value' => 'test-catalog',
-					'label' => 'Test Catalog',
-					'count' => 1,
-				],
-			],
-		];
+		$mergedFacetable['@self']['catalogs'] = self::CATALOGS_FACET;
 
 		return $mergedFacetable;
 	}//end mergeFacetableData()
