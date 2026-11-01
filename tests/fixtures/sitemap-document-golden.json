@@ -1,0 +1,266 @@
+{
+    "category by name, owner from the publication": {
+        "document": {
+            "diwoo:Document": {
+                "diwoo:DiWoo": {
+                    "loc": "",
+                    "lastmod": "2024-04-04 04:04:04",
+                    "diwoo:creatiedatum": "2024-01-15",
+                    "diwoo:publisher": {
+                        "#text": "admin"
+                    },
+                    "diwoo:format": {
+                        "@resource": "http://publications.europa.eu/resource/authority/file-type/XML",
+                        "#text": "xml"
+                    },
+                    "diwoo:classificatiecollectie": {
+                        "diwoo:informatiecategorieen": {
+                            "diwoo:informatiecategorie": {
+                                "#text": "Wetten en algemeen verbindende voorschriften",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_139c6280"
+                            }
+                        }
+                    },
+                    "diwoo:documenthandelingen": {
+                        "diwoo:documenthandeling": {
+                            "diwoo:soortHandeling": {
+                                "#text": "ontvangst",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535"
+                            },
+                            "diwoo:atTime": "2024-04-04 04:04:04"
+                        }
+                    }
+                }
+            }
+        },
+        "violations": [
+            {
+                "documentLoc": "earlier",
+                "axis": "kept",
+                "reason": "appended to"
+            },
+            {
+                "documentLoc": "",
+                "axis": "publisher",
+                "reason": "organisation has no TOOI identifier"
+            }
+        ]
+    },
+    "every axis binds": {
+        "document": {
+            "diwoo:Document": {
+                "diwoo:DiWoo": {
+                    "loc": "https://example.com/files/doc.pdf",
+                    "lastmod": "2024-05-10 12:00:00",
+                    "diwoo:creatiedatum": "2024-01-15",
+                    "diwoo:publisher": {
+                        "#text": "file-owner",
+                        "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                    },
+                    "diwoo:format": {
+                        "@resource": "http://publications.europa.eu/resource/authority/file-type/PDF",
+                        "#text": "pdf"
+                    },
+                    "diwoo:classificatiecollectie": {
+                        "diwoo:informatiecategorieen": {
+                            "diwoo:informatiecategorie": {
+                                "#text": "Woo-verzoeken en -besluiten",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_3baef532"
+                            }
+                        }
+                    },
+                    "diwoo:documenthandelingen": {
+                        "diwoo:documenthandeling": {
+                            "diwoo:soortHandeling": {
+                                "#text": "vaststelling",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_641ecd76"
+                            },
+                            "diwoo:atTime": "2024-05-10 12:00:00"
+                        }
+                    }
+                }
+            }
+        },
+        "violations": [
+            {
+                "documentLoc": "earlier",
+                "axis": "kept",
+                "reason": "appended to"
+            }
+        ]
+    },
+    "handling time from the publication date": {
+        "document": {
+            "diwoo:Document": {
+                "diwoo:DiWoo": {
+                    "loc": "https://example.com/c.pdf",
+                    "lastmod": "2024-06-20 14:30:00",
+                    "diwoo:creatiedatum": "2024-01-15",
+                    "diwoo:publisher": {
+                        "#text": "admin"
+                    },
+                    "diwoo:format": {
+                        "@resource": "http://publications.europa.eu/resource/authority/file-type/PDF",
+                        "#text": "pdf"
+                    },
+                    "diwoo:classificatiecollectie": {
+                        "diwoo:informatiecategorieen": {
+                            "diwoo:informatiecategorie": {
+                                "#text": "Woo-verzoeken en -besluiten",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_3baef532"
+                            }
+                        }
+                    },
+                    "diwoo:documenthandelingen": {
+                        "diwoo:documenthandeling": {
+                            "diwoo:soortHandeling": {
+                                "#text": "ontvangst",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535"
+                            },
+                            "diwoo:atTime": "2023-12-31"
+                        }
+                    }
+                }
+            }
+        },
+        "violations": [
+            {
+                "documentLoc": "earlier",
+                "axis": "kept",
+                "reason": "appended to"
+            },
+            {
+                "documentLoc": "https://example.com/c.pdf",
+                "axis": "publisher",
+                "reason": "organisation has no TOOI identifier"
+            }
+        ]
+    },
+    "no axis binds": {
+        "document": {
+            "diwoo:Document": {
+                "diwoo:DiWoo": {
+                    "loc": "https://example.com/a.DOCX",
+                    "lastmod": "2024-06-20 14:30:00",
+                    "diwoo:creatiedatum": "2024-01-15",
+                    "diwoo:publisher": {
+                        "#text": "admin"
+                    },
+                    "diwoo:format": {
+                        "@resource": "http://publications.europa.eu/resource/authority/file-type/DOCX",
+                        "#text": "docx"
+                    }
+                }
+            }
+        },
+        "violations": [
+            {
+                "documentLoc": "earlier",
+                "axis": "kept",
+                "reason": "appended to"
+            },
+            {
+                "documentLoc": "https://example.com/a.DOCX",
+                "axis": "publisher",
+                "reason": "organisation has no TOOI identifier"
+            },
+            {
+                "documentLoc": "https://example.com/a.DOCX",
+                "axis": "informatiecategorie",
+                "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+            },
+            {
+                "documentLoc": "https://example.com/a.DOCX",
+                "axis": "soortHandeling",
+                "reason": "handling type does not resolve to a DiWoo value-list member"
+            }
+        ]
+    },
+    "only the category, handling defaults": {
+        "document": {
+            "diwoo:Document": {
+                "diwoo:DiWoo": {
+                    "loc": "https://example.com/b.pdf",
+                    "lastmod": "2024-04-04 04:04:04",
+                    "diwoo:creatiedatum": "2024-01-15",
+                    "diwoo:publisher": {
+                        "#text": "admin"
+                    },
+                    "diwoo:format": {
+                        "@resource": "http://publications.europa.eu/resource/authority/file-type/PDF",
+                        "#text": "pdf"
+                    },
+                    "diwoo:classificatiecollectie": {
+                        "diwoo:informatiecategorieen": {
+                            "diwoo:informatiecategorie": {
+                                "#text": "Woo-verzoeken en -besluiten",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_3baef532"
+                            }
+                        }
+                    },
+                    "diwoo:documenthandelingen": {
+                        "diwoo:documenthandeling": {
+                            "diwoo:soortHandeling": {
+                                "#text": "ontvangst",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535"
+                            },
+                            "diwoo:atTime": "2024-04-04 04:04:04"
+                        }
+                    }
+                }
+            }
+        },
+        "violations": [
+            {
+                "documentLoc": "earlier",
+                "axis": "kept",
+                "reason": "appended to"
+            },
+            {
+                "documentLoc": "https://example.com/b.pdf",
+                "axis": "publisher",
+                "reason": "organisation has no TOOI identifier"
+            }
+        ]
+    },
+    "only the organisation": {
+        "document": {
+            "diwoo:Document": {
+                "diwoo:DiWoo": {
+                    "loc": "",
+                    "lastmod": "2024-03-03 03:03:03",
+                    "diwoo:creatiedatum": "2024-01-15",
+                    "diwoo:publisher": {
+                        "#text": "admin",
+                        "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0363"
+                    },
+                    "diwoo:format": {
+                        "@resource": "http://publications.europa.eu/resource/authority/file-type/ODT",
+                        "#text": "odt"
+                    },
+                    "diwoo:documenthandelingen": {
+                        "diwoo:documenthandeling": {
+                            "diwoo:soortHandeling": {
+                                "#text": "ontvangst",
+                                "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535"
+                            },
+                            "diwoo:atTime": "2024-03-03 03:03:03"
+                        }
+                    }
+                }
+            }
+        },
+        "violations": [
+            {
+                "documentLoc": "earlier",
+                "axis": "kept",
+                "reason": "appended to"
+            },
+            {
+                "documentLoc": "",
+                "axis": "informatiecategorie",
+                "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+            }
+        ]
+    }
+}

@@ -77,6 +77,7 @@
 
 <script>
 import { NcButton, NcSelect } from '@nextcloud/vue'
+import { visiblePageItems } from '../services/paginationPages.js'
 
 /**
  * Reusable pagination component for OpenRegister views
@@ -194,44 +195,7 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-object-table-listing/tasks.md#task-2 */
 		visiblePages() {
-			const current = this.currentPage
-			const total = this.totalPages
-			const pages = []
-
-			if (total <= 7) {
-				// Show all pages if 7 or fewer
-				for (let i = 1; i <= total; i++) {
-					pages.push(i)
-				}
-			} else {
-				// Always show first page
-				pages.push(1)
-
-				if (current <= 4) {
-					// Current page is near the beginning
-					for (let i = 2; i <= 5; i++) {
-						pages.push(i)
-					}
-					pages.push('...')
-					pages.push(total)
-				} else if (current >= total - 3) {
-					// Current page is near the end
-					pages.push('...')
-					for (let i = total - 4; i <= total; i++) {
-						pages.push(i)
-					}
-				} else {
-					// Current page is in the middle
-					pages.push('...')
-					for (let i = current - 1; i <= current + 1; i++) {
-						pages.push(i)
-					}
-					pages.push('...')
-					pages.push(total)
-				}
-			}
-
-			return pages
+			return visiblePageItems(this.currentPage, this.totalPages)
 		},
 	},
 

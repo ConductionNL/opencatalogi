@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -41,7 +42,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/structured-data-discoverability/spec.md
  */
-class SchemaOrgService {
+class SchemaOrgService implements SchemaOrgServiceInterface {
 
 	/**
 	 * Schema.org JSON-LD context IRI.
@@ -265,9 +266,6 @@ class SchemaOrgService {
 	 *
 	 * @return array<int, array<string, mixed>> The `DataDownload` nodes.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	private function buildDistributions(array $publication): array {
@@ -291,35 +289,51 @@ class SchemaOrgService {
 
 		$distributions = [];
 		foreach ($files as $file) {
-			$downloadUrl = ($file['downloadUrl'] ?? $file['accessUrl'] ?? null);
-			if (is_string($downloadUrl) === false || $downloadUrl === '') {
-				continue;
+			$node = $this->downloadNode(file: $file);
+			if ($node !== null) {
+				$distributions[] = $node;
 			}
-
-			$node = [
-				'@type' => 'DataDownload',
-				'contentUrl' => $downloadUrl,
-			];
-
-			$mimetype = ($file['mimetype'] ?? $file['mimeType'] ?? null);
-			if (is_string($mimetype) === true && $mimetype !== '') {
-				$node['encodingFormat'] = $mimetype;
-			}
-
-			$title = ($file['title'] ?? $file['name'] ?? null);
-			if (is_string($title) === true && $title !== '') {
-				$node['name'] = $title;
-			}
-
-			if (isset($file['size']) === true && is_numeric($file['size']) === true) {
-				$node['contentSize'] = (string)((int)$file['size']);
-			}
-
-			$distributions[] = $node;
-		}//end foreach
+		}
 
 		return $distributions;
 	}//end buildDistributions()
+
+	/**
+	 * The `DataDownload` node of one attachment, or null when it has no download url.
+	 *
+	 * @param array<string, mixed> $file The formatted attachment.
+	 *
+	 * @return array<string, string>|null The node.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function downloadNode(array $file): ?array {
+		$downloadUrl = ($file['downloadUrl'] ?? $file['accessUrl'] ?? null);
+		if (is_string($downloadUrl) === false || $downloadUrl === '') {
+			return null;
+		}
+
+		$node = [
+			'@type' => 'DataDownload',
+			'contentUrl' => $downloadUrl,
+		];
+
+		$mimetype = ($file['mimetype'] ?? $file['mimeType'] ?? null);
+		if (is_string($mimetype) === true && $mimetype !== '') {
+			$node['encodingFormat'] = $mimetype;
+		}
+
+		$title = ($file['title'] ?? $file['name'] ?? null);
+		if (is_string($title) === true && $title !== '') {
+			$node['name'] = $title;
+		}
+
+		if (isset($file['size']) === true && is_numeric($file['size']) === true) {
+			$node['contentSize'] = (string)((int)$file['size']);
+		}
+
+		return $node;
+	}//end downloadNode()
 
 	/**
 	 * Build the schema.org JSON-LD node for a single publication.
@@ -334,9 +348,6 @@ class SchemaOrgService {
 	 *
 	 * @return array<string, mixed> The schema.org JSON-LD node (single document).
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	public function buildPublicationNode(array $object, array $catalog, string $catalogSlug): array {
@@ -344,52 +355,16 @@ class SchemaOrgService {
 		$url = $this->dcatService->datasetIri($catalogSlug, $uuid);
 
 		$elected = $this->isDatasetElected(catalog: $catalog);
-		$schemaId = (int)($object['@self']['schema'] ?? 0);
-		$type = $this->markerTypeForSchema(schemaId: $schemaId);
-		if ($elected === true) {
-			$type = 'Dataset';
-		}
 
-		$node = [
-			'@context' => self::CONTEXT,
-			'@type' => $type,
-			'@id' => $url,
-			'url' => $url,
-		];
-
-		$name = ($object['title'] ?? $object['name'] ?? '');
-		if ($name !== '') {
-			$node['name'] = (string)$name;
-		}
-
-		$description = ($object['description'] ?? $object['summary'] ?? '');
-		if ($description !== '') {
-			$node['description'] = (string)$description;
-		}
-
-		$modified = ($object['@self']['updated'] ?? $object['publicationDate'] ?? null);
-		if ($modified !== null && $modified !== '') {
-			$node['dateModified'] = $this->isoDate(value: (string)$modified);
-		}
-
-		$license = ($object['license'] ?? null);
-		if (is_string($license) === true && $license !== '') {
-			$node['license'] = $license;
-		}
-
-		$keywords = ($object['tags'] ?? null);
-		if (is_array($keywords) === true && $keywords !== []) {
-			$strings = [];
-			foreach ($keywords as $keyword) {
-				if (is_scalar($keyword) === true && (string)$keyword !== '') {
-					$strings[] = (string)$keyword;
-				}
-			}
-
-			// No array_values(): $strings is built by `$strings[] = …` in the
-			// loop above, so it is already a list with sequential keys.
-			$node['keywords'] = $strings;
-		}
+		$node = array_merge(
+			[
+				'@context' => self::CONTEXT,
+				'@type' => $this->nodeType(object: $object, elected: $elected),
+				'@id' => $url,
+				'url' => $url,
+			],
+			$this->descriptiveFields(object: $object)
+		);
 
 		$publisher = $this->buildPublisher(catalog: $catalog);
 		if ($publisher !== null) {
@@ -402,15 +377,113 @@ class SchemaOrgService {
 				$node['distribution'] = $distributions;
 			}
 
-			$node['includedInDataCatalog'] = [
-				'@type' => 'DataCatalog',
-				'@id' => $this->catalogNodeUrl(catalogSlug: $catalogSlug),
-				'name' => (string)($catalog['title'] ?? $catalogSlug),
-			];
+			$node['includedInDataCatalog'] = $this->catalogBacklink(catalog: $catalog, catalogSlug: $catalogSlug);
 		}
 
 		return $node;
 	}//end buildPublicationNode()
+
+	/**
+	 * The `@type` of a publication node: `Dataset` when the catalog elects it,
+	 * otherwise the schema's `x-schema-org` marker.
+	 *
+	 * The marker is looked up in both cases.
+	 *
+	 * @param array<string, mixed> $object The rendered publication object.
+	 * @param bool $elected Whether the catalog elects the Dataset shape.
+	 *
+	 * @return string The type.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function nodeType(array $object, bool $elected): string {
+		$type = $this->markerTypeForSchema(schemaId: (int)($object['@self']['schema'] ?? 0));
+		if ($elected === true) {
+			$type = 'Dataset';
+		}
+
+		return $type;
+	}//end nodeType()
+
+	/**
+	 * The name, description, modification date, licence and keywords a publication carries.
+	 *
+	 * A field is left out when the publication has no usable value for it.
+	 *
+	 * @param array<string, mixed> $object The rendered publication object.
+	 *
+	 * @return array<string, mixed> The fields, in node order.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function descriptiveFields(array $object): array {
+		$fields = [];
+
+		$name = ($object['title'] ?? $object['name'] ?? '');
+		if ($name !== '') {
+			$fields['name'] = (string)$name;
+		}
+
+		$description = ($object['description'] ?? $object['summary'] ?? '');
+		if ($description !== '') {
+			$fields['description'] = (string)$description;
+		}
+
+		$modified = ($object['@self']['updated'] ?? $object['publicationDate'] ?? null);
+		if ($modified !== null && $modified !== '') {
+			$fields['dateModified'] = $this->isoDate(value: (string)$modified);
+		}
+
+		$license = ($object['license'] ?? null);
+		if (is_string($license) === true && $license !== '') {
+			$fields['license'] = $license;
+		}
+
+		$keywords = ($object['tags'] ?? null);
+		if (is_array($keywords) === true && $keywords !== []) {
+			$fields['keywords'] = $this->keywordStrings(keywords: $keywords);
+		}
+
+		return $fields;
+	}//end descriptiveFields()
+
+	/**
+	 * The non-empty scalar tags of a publication, as strings.
+	 *
+	 * @param array<int|string, mixed> $keywords The publication's tags.
+	 *
+	 * @return list<string> The keywords.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function keywordStrings(array $keywords): array {
+		$strings = [];
+		foreach ($keywords as $keyword) {
+			if (is_scalar($keyword) === true && (string)$keyword !== '') {
+				$strings[] = (string)$keyword;
+			}
+		}
+
+		return $strings;
+	}//end keywordStrings()
+
+	/**
+	 * The `includedInDataCatalog` backlink of an elected publication.
+	 *
+	 * @param array<string, mixed> $catalog The owning catalog object.
+	 * @param string $catalogSlug The catalog slug.
+	 *
+	 * @return array<string, string> The DataCatalog reference.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function catalogBacklink(array $catalog, string $catalogSlug): array {
+		return [
+			'@type' => 'DataCatalog',
+			'@id' => $this->catalogNodeUrl(catalogSlug: $catalogSlug),
+			'name' => (string)($catalog['title'] ?? $catalogSlug),
+		];
+	}//end catalogBacklink()
 
 	/**
 	 * Build the schema.org `DataCatalog` node for a catalog, listing its publicly

@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Command;
 
-use OCA\OpenCatalogi\Service\CmsMigrationService;
+use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -47,13 +47,13 @@ class MigrateCmsToPortaliqCommand extends Command {
 	/**
 	 * Wire the migration rules.
 	 *
-	 * @param CmsMigrationService $migration The mapping rules and lazy OR access.
+	 * @param CmsMigrationServiceInterface $migration The mapping rules and lazy OR access.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
-	public function __construct(private readonly CmsMigrationService $migration) {
+	public function __construct(private readonly CmsMigrationServiceInterface $migration) {
 		parent::__construct();
 	}//end __construct()
 
@@ -93,17 +93,11 @@ class MigrateCmsToPortaliqCommand extends Command {
 	 *
 	 * @return int Symfony command exit code.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$portal = trim((string)$input->getOption('portal'));
-		$dryRun = true;
-		if ((bool)$input->getOption('apply') === true) {
-			$dryRun = false;
-		}
+		$dryRun = ((bool)$input->getOption('apply') === false);
 
 		if ($portal === '') {
 			$output->writeln(
@@ -125,42 +119,79 @@ class MigrateCmsToPortaliqCommand extends Command {
 			return Command::FAILURE;
 		}
 
-		$tally = ['moved' => 0, 'skipped' => 0, 'failed' => 0];
+		return $this->moveAll(
+			run: ['portal' => $portal, 'objectService' => $objectService, 'dryRun' => $dryRun, 'output' => $output]
+		);
+	}//end execute()
 
+	/**
+	 * Move every page, then every menu, and report the tally.
+	 *
+	 * @param array<string, mixed> $run The run: `portal`, `objectService`, `dryRun` and `output`.
+	 *
+	 * @return int Symfony command exit code.
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 */
+	private function moveAll(array $run): int {
+		$tally = ['moved' => 0, 'skipped' => 0, 'failed' => 0];
 		foreach (['page', 'menu'] as $kind) {
-			$rows = $this->read(objectService: $objectService, schema: $kind, output: $output);
-			if ($rows === null) {
+			$kindTally = $this->moveKind(run: $run + ['kind' => $kind]);
+			if ($kindTally === null) {
 				return Command::FAILURE;
 			}
 
-			foreach ($rows as $row) {
-				$outcome = $this->moveOne(
-					kind: $kind,
-					row: $row,
-					portal: $portal,
-					objectService: $objectService,
-					dryRun: $dryRun,
-					output: $output
-				);
-				foreach ($outcome as $key => $value) {
-					$tally[$key] += $value;
-				}
+			foreach ($kindTally as $key => $value) {
+				$tally[$key] += $value;
 			}
 		}
 
+		return $this->reportTally(tally: $tally, run: $run);
+	}//end moveAll()
+
+	/**
+	 * Move every row of one source schema, or null when its rows cannot be read.
+	 *
+	 * @param array<string, mixed> $run The run, with the `kind` to move.
+	 *
+	 * @return array{moved:int, skipped:int, failed:int}|null The tally for this kind, or null.
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 */
+	private function moveKind(array $run): ?array {
+		$rows = $this->read(objectService: $run['objectService'], schema: $run['kind'], output: $run['output']);
+		if ($rows === null) {
+			return null;
+		}
+
+		$tally = ['moved' => 0, 'skipped' => 0, 'failed' => 0];
+		foreach ($rows as $row) {
+			foreach ($this->moveOne(row: $row, run: $run) as $key => $value) {
+				$tally[$key] += $value;
+			}
+		}
+
+		return $tally;
+	}//end moveKind()
+
+	/**
+	 * Print the tally and fail the run when any row failed.
+	 *
+	 * @param array{moved:int, skipped:int, failed:int} $tally The tally.
+	 * @param array<string, mixed> $run The run, for `dryRun` and `output`.
+	 *
+	 * @return int Symfony command exit code.
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 */
+	private function reportTally(array $tally, array $run): int {
 		$suffix = '';
-		if ($dryRun === true) {
+		if ($run['dryRun'] === true) {
 			$suffix = ' (dry run, nothing written)';
 		}
 
-		$output->writeln(
-			sprintf(
-				'<info>Done. Moved=%d, skipped=%d, failed=%d%s</info>',
-				$tally['moved'],
-				$tally['skipped'],
-				$tally['failed'],
-				$suffix
-			)
+		$run['output']->writeln(
+			sprintf('<info>Done. Moved=%d, skipped=%d, failed=%d%s</info>', $tally['moved'], $tally['skipped'], $tally['failed'], $suffix)
 		);
 
 		if ($tally['failed'] > 0) {
@@ -168,7 +199,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 		}
 
 		return Command::SUCCESS;
-	}//end execute()
+	}//end reportTally()
 
 	/**
 	 * Read one source schema's rows, or null when they cannot be read.
@@ -184,7 +215,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	private function read(object $objectService, string $schema, OutputInterface $output): ?array {
 		try {
 			$rows = $objectService->searchObjectsBySlug(
-				CmsMigrationService::SOURCE_REGISTER,
+				CmsMigrationServiceInterface::SOURCE_REGISTER,
 				$schema,
 				['_limit' => 1000],
 				false,
@@ -230,61 +261,75 @@ class MigrateCmsToPortaliqCommand extends Command {
 	/**
 	 * Move one page or menu.
 	 *
-	 * @param string          $kind          Either `page` or `menu`.
-	 * @param mixed           $row           The source row.
-	 * @param string          $portal        The target portal slug.
-	 * @param object          $objectService The OpenRegister ObjectService.
-	 * @param bool            $dryRun        Report rather than write.
-	 * @param OutputInterface $output        Console output stream.
+	 * @param mixed $row The source row.
+	 * @param array<string, mixed> $run The run: `kind`, `portal`, `objectService`, `dryRun` and `output`.
 	 *
 	 * @return array{moved:int, skipped:int, failed:int} The tally for this row.
 	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList) The collaborators are resolved
-	 *   once in execute() and passed down rather than re-resolved per row.
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
-	private function moveOne(
-		string $kind,
-		mixed $row,
-		string $portal,
-		object $objectService,
-		bool $dryRun,
-		OutputInterface $output
-	): array {
-		$none = ['moved' => 0, 'skipped' => 0, 'failed' => 0];
+	private function moveOne(mixed $row, array $run): array {
 		$fields = $this->migration->toFields(row: $row);
 		$name = (string)($fields['title'] ?? 'untitled');
 
-		[$target, $label, $built] = $this->mapRow(kind: $kind, fields: $fields, portal: $portal, name: $name);
+		[$target, $label, $built] = $this->mapRow(kind: $run['kind'], fields: $fields, portal: $run['portal'], name: $name);
 
-		$output->writeln(sprintf('<info>%s: %s</info>', $kind, $label));
+		$run['output']->writeln(sprintf('<info>%s: %s</info>', $run['kind'], $label));
 
 		if ($built['unmapped'] !== []) {
-			$output->writeln(
+			$run['output']->writeln(
 				sprintf(
 					'  <error>REFUSED: no Portaliq widget is declared for content block type(s): %s. '
 					. 'Guessing one would save a page that renders nothing.</error>',
 					implode(', ', $built['unmapped'])
 				)
 			);
-			return array_merge($none, ['failed' => 1]);
+			return ['moved' => 0, 'skipped' => 0, 'failed' => 1];
 		}
 
-		if ($built['dropped'] !== []) {
-			$output->writeln(
-				sprintf(
-					'  <comment>Portaliq declares no counterpart for: %s. Carried in props where '
-					. 'possible, but it will not render.</comment>',
-					implode(', ', $built['dropped'])
-				)
-			);
+		$this->warnDropped(dropped: $built['dropped'], output: $run['output']);
+
+		return $this->writeTarget(target: $target, run: $run);
+	}//end moveOne()
+
+	/**
+	 * Report what Portaliq declares no counterpart for, when anything.
+	 *
+	 * @param array<int, string> $dropped The dropped content.
+	 * @param OutputInterface $output Console output stream.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 */
+	private function warnDropped(array $dropped, OutputInterface $output): void {
+		if ($dropped === []) {
+			return;
 		}
 
-		if ($dryRun === true) {
-			$output->writeln('  <comment>WOULD MOVE</comment>');
-			return $none;
+		$output->writeln(
+			sprintf(
+				'  <comment>Portaliq declares no counterpart for: %s. Carried in props where '
+				. 'possible, but it will not render.</comment>',
+				implode(', ', $dropped)
+			)
+		);
+	}//end warnDropped()
+
+	/**
+	 * Write one mapped page or menu into Portaliq's register, or report that a dry run would.
+	 *
+	 * @param array<string, mixed> $target The Portaliq page or menu.
+	 * @param array<string, mixed> $run The run: `kind`, `objectService`, `dryRun` and `output`.
+	 *
+	 * @return array{moved:int, skipped:int, failed:int} The tally for this row.
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
+	 */
+	private function writeTarget(array $target, array $run): array {
+		if ($run['dryRun'] === true) {
+			$run['output']->writeln('  <comment>WOULD MOVE</comment>');
+			return ['moved' => 0, 'skipped' => 0, 'failed' => 0];
 		}
 
 		try {
@@ -292,20 +337,20 @@ class MigrateCmsToPortaliqCommand extends Command {
 			// Anonymous and refuses the create. The rows were READ with the same
 			// flags: a migration that can see a row and not write it moves
 			// nothing and reports eight failures.
-			$objectService->saveObject(
+			$run['objectService']->saveObject(
 				object: $target,
-				register: CmsMigrationService::TARGET_REGISTER,
-				schema: $kind,
+				register: CmsMigrationServiceInterface::TARGET_REGISTER,
+				schema: $run['kind'],
 				_rbac: false,
 				_multitenancy: false,
 			);
 		} catch (Throwable $e) {
-			$output->writeln(sprintf('  <error>FAILED: %s</error>', $e->getMessage()));
-			return array_merge($none, ['failed' => 1]);
+			$run['output']->writeln(sprintf('  <error>FAILED: %s</error>', $e->getMessage()));
+			return ['moved' => 0, 'skipped' => 0, 'failed' => 1];
 		}
 
-		$output->writeln('  <info>MOVED</info>');
+		$run['output']->writeln('  <info>MOVED</info>');
 
-		return array_merge($none, ['moved' => 1]);
-	}//end moveOne()
+		return ['moved' => 1, 'skipped' => 0, 'failed' => 0];
+	}//end writeTarget()
 }//end class

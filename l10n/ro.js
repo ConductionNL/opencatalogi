@@ -731,9 +731,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "Acest catalog nu are configurate registre sau scheme",
         "Add a register and a schema to the catalog to list its publications here.": "Adăugați un registru și o schemă la catalog pentru a-i afișa aici publicațiile.",
         "Open catalog": "Deschide catalogul",
-        "Register and schema": "Registru și schemă",
-        "{schema} in {register}": "{schema} în {register}",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creați primul dumneavoastră catalog. Este containerul în care vor sta publicațiile dumneavoastră. Alegeți registrul Publication și schema Publication, astfel încât catalogul să afișeze publicațiile pe care le adăugați."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creați primul dumneavoastră catalog. Este containerul în care vor sta publicațiile dumneavoastră. Alegeți registrul Publication și schema Publication, astfel încât catalogul să afișeze publicațiile pe care le adăugați.",
+        "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

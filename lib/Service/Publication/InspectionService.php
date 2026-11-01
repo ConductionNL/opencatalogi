@@ -38,13 +38,14 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 
 /**
  * Opens inspection windows and refuses the link once one closes.
  *
  * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
-class InspectionService {
+class InspectionService implements InspectionServiceInterface {
 
 	/**
 	 * Open an inspection on a record, for the term its type declares.

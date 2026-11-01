@@ -1024,6 +1024,7 @@ class PublicationServiceTest extends TestCase {
 		$this->assertSame(0, $data['total']);
 		$this->assertSame(1, $data['page']);
 		$this->assertSame(1, $data['pages']);
+		$this->assertSame(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []], $data);
 	}
 
 	public function testUsesReturnsRelatedObjects(): void {
@@ -1135,6 +1136,7 @@ class PublicationServiceTest extends TestCase {
 		$data = json_decode($response->render(), true);
 		$this->assertSame([], $data['results']);
 		$this->assertSame(0, $data['total']);
+		$this->assertSame(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []], $data);
 	}
 
 	public function testUsedReturnsReferencingObjects(): void {
@@ -3073,11 +3075,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			['_page' => 1],
-			'http://example.com/api',
-			true,  // includeCatalogs
-			true,  // reqDirFacets
-			true   // reqCatFacets
+			[
+				'requestParams' => ['_page' => 1],
+				'baseUrl' => 'http://example.com/api',
+				'includeCatalogs' => true,
+				'reqDirFacets' => true,
+				'reqCatFacets' => true,
+			]
 		);
 
 		$this->assertArrayHasKey('results', $result);
@@ -3116,11 +3120,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			false, // includeCatalogs
-			false, // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => false,
+				'reqDirFacets' => false,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('results', $result);
@@ -3167,11 +3173,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 2],
-			['_page' => 2],
-			'http://example.com/api',
-			true,  // includeCatalogs
-			false, // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => ['_page' => 2],
+				'baseUrl' => 'http://example.com/api',
+				'includeCatalogs' => true,
+				'reqDirFacets' => false,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('next', $result);
@@ -3212,11 +3220,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 0, '_page' => 1],
-			[],
-			'',
-			true,  // includeCatalogs
-			false, // reqDirFacets
-			true   // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => true,
+				'reqDirFacets' => false,
+				'reqCatFacets' => true,
+			]
 		);
 
 		$this->assertSame(0, $result['limit']);
@@ -3254,11 +3264,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			false, // includeCatalogs
-			true,  // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => false,
+				'reqDirFacets' => true,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('facets', $result);
@@ -3298,11 +3310,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			true,  // includeCatalogs
-			true,  // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => true,
+				'reqDirFacets' => true,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('facets', $result);
@@ -3874,6 +3888,23 @@ class PublicationServiceTest extends TestCase {
 		$this->assertCount(2, $titles);
 		$this->assertContains('A', $titles);
 		$this->assertContains('B', $titles);
+	}
+
+	public function testApplyCumulativeOrderingKeepsEqualRowsInPlace(): void {
+		$method = new \ReflectionMethod(PublicationService::class, 'applyCumulativeOrdering');
+		$method->setAccessible(true);
+
+		$results = [
+			['title' => 'B', 'score' => 1],
+			['title' => 'A', 'score' => 1],
+			['title' => 'C', 'score' => 1],
+		];
+
+		$ordered = $method->invoke($this->service, $results, [
+			'_order' => ['score' => 'DESC'],
+		]);
+
+		$this->assertSame(['B', 'A', 'C'], array_column($ordered, 'title'));
 	}
 
 	// =======================================================================

@@ -41,9 +41,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\Publication\DepublicationService;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -70,18 +70,18 @@ class DepublicationController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param DepublicationService $depublicationService Taking a publication back.
+	 * @param DepublicationServiceInterface $depublicationService Taking a publication back.
 	 * @param ContainerInterface $container Server container, for the register resolver.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly DepublicationService $depublicationService,
+		private readonly DepublicationServiceInterface $depublicationService,
 		private readonly ContainerInterface $container,
-		private readonly ServiceCatalogueService $objects,
+		private readonly ServiceCatalogueServiceInterface $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -125,14 +125,8 @@ class DepublicationController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function depublish(): JSONResponse {
 		$publication = $this->request->getParam('publication', []);
-		$channels = $this->request->getParam('channels', []);
-
 		if (is_array($publication) === false || $publication === []) {
 			return new JSONResponse(data: ['error' => 'missing-publication'], statusCode: Http::STATUS_BAD_REQUEST);
-		}
-
-		if (is_array($channels) === false) {
-			$channels = [];
 		}
 
 		try {
@@ -140,7 +134,7 @@ class DepublicationController extends Controller {
 				publication: $publication,
 				reason: trim((string)$this->request->getParam('reason', '')),
 				depublishedBy: $this->actor(),
-				channels: array_map('strval', $channels)
+				channels: $this->requestedChannels()
 			);
 		} catch (\DomainException $e) {
 			return new JSONResponse(
@@ -149,10 +143,38 @@ class DepublicationController extends Controller {
 			);
 		}
 
-		// The depublication is STORED, not just returned. REQ-PIN-106 says each
-		// channel's acknowledgement is recorded and an unacknowledged
-		// withdrawal is shown as outstanding; neither is possible against a
-		// value that only ever existed inside one response.
+		return $this->storeDepublication(depublication: $depublication);
+
+	}//end depublish()
+
+	/**
+	 * The channels the request asks to withdraw from, as strings; none when it names no list.
+	 *
+	 * @return array<int, string> The channels.
+	 */
+	private function requestedChannels(): array {
+		$channels = $this->request->getParam('channels', []);
+		if (is_array($channels) === false) {
+			return [];
+		}
+
+		return array_map('strval', $channels);
+
+	}//end requestedChannels()
+
+	/**
+	 * Store a new depublication and answer it with what is still outstanding.
+	 *
+	 * The depublication is STORED, not just returned. REQ-PIN-106 says each
+	 * channel's acknowledgement is recorded and an unacknowledged withdrawal is
+	 * shown as outstanding; neither is possible against a value that only ever
+	 * existed inside one response.
+	 *
+	 * @param array<string, mixed> $depublication The depublication.
+	 *
+	 * @return JSONResponse The stored depublication, or why it could not be stored.
+	 */
+	private function storeDepublication(array $depublication): JSONResponse {
 		try {
 			$saved = $this->objects->getObjectService()->saveObject(
 				object: $depublication,
@@ -172,6 +194,18 @@ class DepublicationController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
+		return $this->withOutstanding(saved: $saved);
+
+	}//end storeDepublication()
+
+	/**
+	 * A stored depublication with its outstanding channels and whether it is complete.
+	 *
+	 * @param mixed $saved What the object store answered.
+	 *
+	 * @return JSONResponse The depublication.
+	 */
+	private function withOutstanding(mixed $saved): JSONResponse {
 		$stored = $this->asArray(object: $saved);
 		$outstanding = $this->depublicationService->outstandingChannels(depublication: $stored);
 
@@ -185,7 +219,7 @@ class DepublicationController extends Controller {
 			)
 		);
 
-	}//end depublish()
+	}//end withOutstanding()
 
 	/**
 	 * Record that a channel acknowledged its withdrawal.
@@ -207,17 +241,59 @@ class DepublicationController extends Controller {
 	public function acknowledgeWithdrawal(): JSONResponse {
 		$id = trim((string)$this->request->getParam('depublication', ''));
 		$channel = trim((string)$this->request->getParam('channel', ''));
-
 		if ($id === '' || $channel === '') {
-			return new JSONResponse(
-				data: [
-					'error' => 'missing-parameters',
-					'message' => $this->l10n->t('Name the depublication and the channel that acknowledged.'),
-				],
-				statusCode: Http::STATUS_BAD_REQUEST
+			return $this->badRequest(
+				error: 'missing-parameters',
+				message: $this->l10n->t('Name the depublication and the channel that acknowledged.')
 			);
 		}
 
+		$found = $this->findDepublication(id: $id);
+		if ($found instanceof JSONResponse) {
+			return $found;
+		}
+
+		if ($this->withdrawalWasSent(depublication: $found['depublication'], channel: $channel) === false) {
+			return $this->badRequest(
+				error: 'unknown-channel',
+				message: $this->l10n->t('No withdrawal was sent to that channel, so there is nothing for it to acknowledge.')
+			);
+		}
+
+		$found['depublication'] = $this->depublicationService->recordAcknowledgement(
+			depublication: $found['depublication'],
+			channel: $channel,
+			answer: trim((string)$this->request->getParam('answer', ''))
+		);
+
+		return $this->storeAcknowledgement(found: $found);
+
+	}//end acknowledgeWithdrawal()
+
+	/**
+	 * A 400 answer naming the error and explaining it.
+	 *
+	 * @param string $error The error code.
+	 * @param string $message The translated explanation.
+	 *
+	 * @return JSONResponse The 400 answer.
+	 */
+	private function badRequest(string $error, string $message): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => $error, 'message' => $message],
+			statusCode: Http::STATUS_BAD_REQUEST
+		);
+
+	}//end badRequest()
+
+	/**
+	 * Read a stored depublication with the register and schema it lives in.
+	 *
+	 * @param string $id The depublication's id.
+	 *
+	 * @return array<string, mixed>|JSONResponse The `id`, `config` and `depublication`, or the 503 or 404 answer.
+	 */
+	private function findDepublication(string $id): array|JSONResponse {
 		try {
 			$config = $this->depublicationConfiguration();
 			$objectService = $this->objects->getObjectService();
@@ -233,34 +309,47 @@ class DepublicationController extends Controller {
 			return new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND);
 		}
 
+		return ['id' => $id, 'config' => $config, 'depublication' => $depublication];
+
+	}//end findDepublication()
+
+	/**
+	 * Whether a depublication sent a withdrawal to a channel.
+	 *
+	 * A channel nobody wrote to cannot acknowledge on its behalf, which is the
+	 * failure that would let a document be reported as gone from a harvester
+	 * that still holds it.
+	 *
+	 * @param array<string, mixed> $depublication The stored depublication.
+	 * @param string $channel The channel that acknowledged.
+	 *
+	 * @return bool True when a withdrawal was sent to the channel.
+	 */
+	private function withdrawalWasSent(array $depublication, string $channel): bool {
 		$channels = array_map(
 			static fn (array $withdrawal): string => (string)($withdrawal['channel'] ?? ''),
 			array_filter((array)($depublication['withdrawals'] ?? []), 'is_array')
 		);
 
-		if (in_array($channel, $channels, true) === false) {
-			return new JSONResponse(
-				data: [
-					'error' => 'unknown-channel',
-					'message' => $this->l10n->t('No withdrawal was sent to that channel, so there is nothing for it to acknowledge.'),
-				],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
-		}
+		return in_array($channel, $channels, true);
 
-		$updated = $this->depublicationService->recordAcknowledgement(
-			depublication: $depublication,
-			channel: $channel,
-			answer: trim((string)$this->request->getParam('answer', ''))
-		);
+	}//end withdrawalWasSent()
 
+	/**
+	 * Store an acknowledged depublication under its own id and answer it with what is still outstanding.
+	 *
+	 * @param array<string, mixed> $found The `id`, `config` and `depublication` from findDepublication().
+	 *
+	 * @return JSONResponse The depublication, or the 503 answer.
+	 */
+	private function storeAcknowledgement(array $found): JSONResponse {
 		try {
 			$saved = $this->objects->getObjectService()->saveObject(
-				object: $updated,
+				object: $found['depublication'],
 				extend: [],
-				register: $config['register'],
-				schema: $config['schema'],
-				uuid: $id
+				register: $found['config']['register'],
+				schema: $found['config']['schema'],
+				uuid: $found['id']
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -269,18 +358,7 @@ class DepublicationController extends Controller {
 			);
 		}
 
-		$stored = $this->asArray(object: $saved);
-		$outstanding = $this->depublicationService->outstandingChannels(depublication: $stored);
+		return $this->withOutstanding(saved: $saved);
 
-		return new JSONResponse(
-			array_merge(
-				$stored,
-				[
-					'outstandingChannels' => $outstanding,
-					'complete' => ($outstanding === []),
-				]
-			)
-		);
-
-	}//end acknowledgeWithdrawal()
+	}//end storeAcknowledgement()
 }//end class

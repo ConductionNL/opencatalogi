@@ -279,6 +279,40 @@ class PublicationQuerySearchContractTest extends TestCase {
 		$this->assertSame([1], $store->queries[0]['_schemas']);
 	}
 
+	/**
+	 * A catalogue whose registers are all words must not widen the search to every register.
+	 *
+	 * With no id left the register scope was empty, which adds neither `_register` nor
+	 * `_registers`: the catalogue's schema ids then searched every register holding them.
+	 * The catalogue gets an empty scope, which is the empty envelope.
+	 */
+	public function testACatalogueWithOnlyWordRegistersSearchesNothingRatherThanEveryRegister(): void {
+		$envelope = $this->search(
+			['documentType' => 'minutes'],
+			$store,
+			['registers' => ['Voorbeeld Registers 1'], 'schemas' => [1]]
+		);
+
+		$this->assertSame([], $envelope['results']);
+		$this->assertSame(0, $envelope['total']);
+		$this->assertSame([], $store->queries, 'OpenRegister was searched without a register scope.');
+
+		$asJson = $this->search([], $store, ['registers' => '["Voorbeeld Registers 1"]', 'schemas' => '[1]']);
+		$this->assertSame([], $asJson['results']);
+		$this->assertSame([], $store->queries);
+
+		$asWord = $this->search([], $store, ['registers' => 'Voorbeeld Registers 1', 'schemas' => [1]]);
+		$this->assertSame([], $asWord['results']);
+		$this->assertSame([], $store->queries);
+	}
+
+	/** A catalogue that names no register at all keeps the scope it always had. */
+	public function testACatalogueNamingNoRegisterIsNotMadeEmptyByTheGuard(): void {
+		$envelope = $this->search(['documentType' => 'minutes'], $store, ['registers' => [], 'schemas' => [1]]);
+
+		$this->assertSame(['besluitenlijst-jan', 'verslag-apr'], $this->ids($envelope));
+	}
+
 	/** REQ-SCF-002 scenario "A bad date". */
 	public function testABadDateNamesTheParameter(): void {
 		try {

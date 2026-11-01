@@ -382,13 +382,14 @@
 						v-model="publicCacheSeconds"
 						type="number"
 						min="0"
+						max="3600"
 						:label="t('opencatalogi', 'Public cache time (seconds)')"
 						:disabled="savingPublicCache" />
 					<p class="option-description">
 						{{
 							t(
 								'opencatalogi',
-								'How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. 0 switches caching off.',
+								'How long a CDN or browser may keep an answer of the public API for a visitor without an account. A longer time gives faster answers and a longer wait before a change is visible. At most 3600 seconds; 0 switches caching off.',
 							)
 						}}
 					</p>

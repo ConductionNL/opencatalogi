@@ -3,16 +3,9 @@
 /**
  * OpenCatalogi Obligations Requested Event.
  *
- * The cross-app contract the obligation overview reads through. OpenCatalogi
- * dispatches one event per registered source, carrying that source's app id.
- * The listener in the source app answers with the publication obligations it
- * holds. A source without a listener leaves the event unanswered, and the
- * overview names that source as unread rather than counting it as zero.
- *
- * The contract, for a listener in another app: `getAppId(): string` names the
- * source being asked; `setObligations(array $obligations): void` answers with
- * a list of rows carrying `title`, `recordReference`, and either `publishedAt`
- * or `dueDate` (ISO 8601); a row that is not an array is dropped.
+ * Asks one registered source app what it must still publish. The app that
+ * owns the source answers by setting the obligations; nobody answering is
+ * itself an answer, and the overview shows that source as unread.
  *
  * @category Event
  * @package  OCA\OpenCatalogi\Event
@@ -38,30 +31,27 @@ namespace OCA\OpenCatalogi\Event;
 use OCP\EventDispatcher\Event;
 
 /**
- * Asks one source app for its publication obligations.
+ * One source's obligations, set by the listener of the app that owns it.
+ *
+ * An obligation is an array with `title`, `dueDate` (ISO 8601, or empty when
+ * unknown), `publishedAt` (empty while unpublished), `reference` and,
+ * optionally, `category` and `url`.
  *
  * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
 class ObligationsRequestedEvent extends Event {
 
 	/**
-	 * The obligations the source answered with.
+	 * What the source answered, or null while nobody answered.
 	 *
-	 * @var array<int, array<string, mixed>>
+	 * @var array<int, array<string, mixed>>|null
 	 */
-	private array $obligations = [];
-
-	/**
-	 * Whether a listener answered.
-	 *
-	 * @var boolean
-	 */
-	private bool $answered = false;
+	private ?array $obligations = null;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param string $appId The source app being asked.
+	 * @param string $appId The app id of the source being asked.
 	 */
 	public function __construct(
 		private readonly string $appId,
@@ -71,7 +61,7 @@ class ObligationsRequestedEvent extends Event {
 	}//end __construct()
 
 	/**
-	 * The source app being asked.
+	 * The app id of the source being asked.
 	 *
 	 * @return string The app id.
 	 *
@@ -83,42 +73,28 @@ class ObligationsRequestedEvent extends Event {
 	}//end getAppId()
 
 	/**
-	 * Answer with the source's obligations. An empty list is an answer: the
-	 * source holds nothing that must be published.
+	 * Answer for the source.
 	 *
-	 * @param array<int, mixed> $obligations The obligations.
+	 * @param array<int, array<string, mixed>> $obligations The source's obligations.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function setObligations(array $obligations): void {
-		$this->obligations = array_values(array_filter($obligations, 'is_array'));
-		$this->answered = true;
+		$this->obligations = array_values($obligations);
 
 	}//end setObligations()
 
 	/**
-	 * The obligations the source answered with.
+	 * What the source answered.
 	 *
-	 * @return array<int, array<string, mixed>> The obligations.
+	 * @return array<int, array<string, mixed>>|null The obligations, or null when nobody answered.
 	 *
 	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
-	public function getObligations(): array {
+	public function getObligations(): ?array {
 		return $this->obligations;
 
 	}//end getObligations()
-
-	/**
-	 * Whether a listener answered.
-	 *
-	 * @return boolean True once a listener set obligations.
-	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
-	 */
-	public function isAnswered(): bool {
-		return $this->answered;
-
-	}//end isAnswered()
 }//end class

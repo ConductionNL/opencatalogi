@@ -1,0 +1,895 @@
+{
+	"catalogs": {
+		"none": null,
+		"array": [
+			{
+				"id": "c1",
+				"slug": "publications",
+				"title": "Publications"
+			},
+			{
+				"@self": {
+					"id": "c2",
+					"slug": "self-slug"
+				},
+				"id": "x2"
+			},
+			{
+				"id": 7,
+				"title": "No slug"
+			}
+		],
+		"results": {
+			"results": [
+				{
+					"id": "c1",
+					"slug": "publications",
+					"title": "Publications"
+				},
+				{
+					"@self": {
+						"id": "c2",
+						"slug": "self-slug"
+					},
+					"id": "x2"
+				},
+				{
+					"id": 7,
+					"title": "No slug"
+				}
+			]
+		},
+		"empty": {}
+	},
+	"cases": [
+		{
+			"name": "null result",
+			"catalogs": "none",
+			"result": null,
+			"effects": [],
+			"error": null
+		},
+		{
+			"name": "empty result",
+			"catalogs": "none",
+			"result": {},
+			"effects": [],
+			"error": null
+		},
+		{
+			"name": "local, string catalog",
+			"catalogs": "none",
+			"result": {
+				"id": "p1",
+				"@self": {
+					"directory": "local",
+					"catalog": "woo"
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "woo",
+							"id": "p1"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "local, empty string catalog",
+			"catalogs": "none",
+			"result": {
+				"id": "p1",
+				"@self": {
+					"directory": "local",
+					"catalog": "",
+					"catalogs": [
+						{
+							"title": "T"
+						}
+					]
+				}
+			},
+			"effects": [],
+			"error": null
+		},
+		{
+			"name": "no directory, top-level catalog object",
+			"catalogs": "none",
+			"result": {
+				"id": "p2",
+				"catalog": {
+					"slug": "top"
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "top",
+							"id": "p2"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "self catalog wins over top-level",
+			"catalogs": "none",
+			"result": {
+				"id": "p2",
+				"catalog": "top",
+				"@self": {
+					"catalog": "inner"
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "inner",
+							"id": "p2"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "self catalog null falls to top-level",
+			"catalogs": "none",
+			"result": {
+				"id": "p2",
+				"catalog": "top",
+				"@self": {
+					"catalog": null
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "top",
+							"id": "p2"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "catalog object without slug, catalogs[0] slug",
+			"catalogs": "none",
+			"result": {
+				"id": "p3",
+				"@self": {
+					"catalog": {
+						"id": "c"
+					},
+					"catalogs": [
+						{
+							"slug": "first"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "first",
+							"id": "p3"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "self id when no top id",
+			"catalogs": "none",
+			"result": {
+				"@self": {
+					"id": "sid",
+					"directory": "local",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "s",
+							"id": "sid"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "top id 0 falls back to self id",
+			"catalogs": "none",
+			"result": {
+				"id": 0,
+				"@self": {
+					"id": "sid",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "s",
+							"id": "sid"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "no id at all",
+			"catalogs": "none",
+			"result": {
+				"@self": {
+					"catalog": "s"
+				}
+			},
+			"effects": [],
+			"error": null
+		},
+		{
+			"name": "catalogs not array",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": {
+						"slug": "x"
+					}
+				}
+			},
+			"effects": [],
+			"error": null
+		},
+		{
+			"name": "catalogs empty array",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": []
+				}
+			},
+			"effects": [],
+			"error": null
+		},
+		{
+			"name": "lookup by id in array collection",
+			"catalogs": "array",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"id": "c1"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				],
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "publications",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "lookup by @self.id in results collection",
+			"catalogs": "results",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"id": "c2"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				],
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "self-slug",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "lookup numeric id as string",
+			"catalogs": "array",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"id": "7",
+							"title": "Fallback Title!"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				],
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "fallback-title",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "lookup miss, title slugified",
+			"catalogs": "array",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"id": "zz",
+							"title": "  Hello, World -- Two  "
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				],
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "hello-world-two",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "lookup miss, no title",
+			"catalogs": "array",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"id": "zz"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "lookup in empty collection object",
+			"catalogs": "empty",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"id": "c1",
+							"title": "Pubs"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				],
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "pubs",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "lookup with null collection",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"id": "c1"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "stub slug wins over its title",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"slug": "stub",
+							"title": "Other Title"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "stub",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "lookup hit wins over title",
+			"catalogs": "array",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"id": "c1",
+							"title": "Other Title"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				],
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "publications",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "title only",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"title": "Árbol Ñ 2"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "rbol-2",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "title that slugifies to empty",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"title": "---"
+						}
+					]
+				}
+			},
+			"effects": [],
+			"error": null
+		},
+		{
+			"name": "numeric title",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"catalogs": [
+						{
+							"title": 42
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "42",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "federated with uri",
+			"catalogs": "none",
+			"result": {
+				"id": "p/1",
+				"@self": {
+					"directory": "nc-fed-2",
+					"uri": "http://localhost:9082/apps/openregister/api/objects/a",
+					"catalog": "my cat"
+				}
+			},
+			"effects": [
+				[
+					"open",
+					"http://localhost:9082/index.php/apps/opencatalogi/#/publications/my%20cat/p%2F1",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "federated with bad uri falls to host",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "https://peer.example.org/path",
+					"uri": "not a url",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"open",
+					"https://peer.example.org/index.php/apps/opencatalogi/#/publications/s/p",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "federated host with port colon",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "peer.example:",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"open",
+					"https://peer.example/index.php/apps/opencatalogi/#/publications/s/p",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "federated host only scheme",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "http://",
+					"catalog": "s"
+				}
+			},
+			"effects": [],
+			"error": null
+		},
+		{
+			"name": "federated HTTPS uppercase scheme",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "HTTPS://Peer.Example/x/y",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"open",
+					"https://Peer.Example/index.php/apps/opencatalogi/#/publications/s/p",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "federated without slug",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "peer.example"
+				}
+			},
+			"effects": [
+				[
+					"open",
+					"https://peer.example/index.php/apps/opencatalogi/",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "federated without id",
+			"catalogs": "none",
+			"result": {
+				"@self": {
+					"directory": "peer.example",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"open",
+					"https://peer.example/index.php/apps/opencatalogi/",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "federated catalog lookup",
+			"catalogs": "array",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "peer",
+					"catalogs": [
+						{
+							"id": "c1"
+						}
+					]
+				}
+			},
+			"effects": [
+				[
+					"getCollection",
+					"catalog"
+				],
+				[
+					"open",
+					"https://peer/index.php/apps/opencatalogi/#/publications/publications/p",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "federated numeric directory",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": 5,
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"open",
+					"https://5/index.php/apps/opencatalogi/#/publications/s/p",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "directory local string with uri",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "local",
+					"uri": "https://x.org/a",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "s",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "empty directory string",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "s",
+							"id": "p"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "numeric slug and id stringified",
+			"catalogs": "none",
+			"result": {
+				"id": 12,
+				"@self": {
+					"directory": "local",
+					"catalog": {
+						"slug": 99
+					}
+				}
+			},
+			"effects": [
+				[
+					"push",
+					{
+						"name": "PublicationDetail",
+						"params": {
+							"catalogSlug": "99",
+							"id": "12"
+						}
+					}
+				]
+			],
+			"error": null
+		},
+		{
+			"name": "file uri origin null",
+			"catalogs": "none",
+			"result": {
+				"id": "p",
+				"@self": {
+					"directory": "peer",
+					"uri": "file:///etc/x",
+					"catalog": "s"
+				}
+			},
+			"effects": [
+				[
+					"open",
+					"null/index.php/apps/opencatalogi/#/publications/s/p",
+					"_blank",
+					"noopener,noreferrer"
+				]
+			],
+			"error": null
+		}
+	]
+}

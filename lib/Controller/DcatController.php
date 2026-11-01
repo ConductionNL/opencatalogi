@@ -25,12 +25,12 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
+use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
-use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\DcatSerializer;
-use OCA\OpenCatalogi\Service\DcatService;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -50,18 +50,20 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
  */
 class DcatController extends Controller {
+	use AnswersCrossOriginReadRequests;
+
 	/**
 	 * DcatController constructor.
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
-	 * @param DcatService $dcatService The DCAT orchestration service.
-	 * @param DcatSerializer $serializer The DCAT serializer.
-	 * @param CatalogiService $catalogiService Catalog resolution (slug → catalog).
-	 * @param PublicationQueryService $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
+	 * @param DcatServiceInterface $dcatService The DCAT orchestration service.
+	 * @param DcatSerializerInterface $serializer The DCAT serializer.
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug → catalog).
+	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param StandardsVersionService $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
+	 * @param StandardsVersionServiceInterface $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -69,69 +71,18 @@ class DcatController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly DcatService $dcatService,
-		private readonly DcatSerializer $serializer,
-		private readonly CatalogiService $catalogiService,
-		private readonly PublicationQueryService $queryService,
+		private readonly DcatServiceInterface $dcatService,
+		private readonly DcatSerializerInterface $serializer,
+		private readonly CatalogiServiceInterface $catalogiService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly StandardsVersionService $standardsVersions,
+		private readonly StandardsVersionServiceInterface $standardsVersions,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * '*' (the default) emits a literal '*'; an unvetted caller Origin is never echoed
-	 * back unless explicitly allowlisted — mirroring PublicationsController (#735).
-	 *
-	 * @return string The Access-Control-Allow-Origin value.
-	 *
-	 * @spec exclude CORS-policy plumbing mirroring PublicationsController; fail-closed on
-	 *       Origin reflection, no domain behaviour.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = trim($this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
-	 * Build the standard public-CORS header set for DCAT responses.
-	 *
-	 * @return array<string, string> The header map.
-	 */
-	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
-
-	}//end corsHeaders()
 
 	/**
 	 * Preflighted CORS response for the public DCAT OPTIONS routes.
@@ -145,14 +96,7 @@ class DcatController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-		return $response;
+		return $this->readOnlyPreflight();
 	}//end preflightedCors()
 
 	/**
@@ -239,7 +183,7 @@ class DcatController extends Controller {
 			if ($ifNoneMatch !== '' && $etag !== '' && trim($ifNoneMatch) === $etag) {
 				return new DcatResponse(
 					body: '',
-					contentType: DcatSerializer::FORMATS[$format],
+					contentType: DcatSerializerInterface::FORMATS[$format],
 					status: 304,
 					headers: $this->cachingHeaders(document: $document)
 				);
@@ -345,7 +289,7 @@ class DcatController extends Controller {
 
 		return new DcatResponse(
 			body: $body,
-			contentType: DcatSerializer::FORMATS[$format],
+			contentType: DcatSerializerInterface::FORMATS[$format],
 			status: 200,
 			headers: $headers
 		);
@@ -384,7 +328,7 @@ class DcatController extends Controller {
 		return new JSONResponse(
 			[
 				'error' => $this->l10n->t('Unsupported serialization format'),
-				'supported' => array_keys(DcatSerializer::FORMATS),
+				'supported' => array_keys(DcatSerializerInterface::FORMATS),
 			],
 			406
 		);

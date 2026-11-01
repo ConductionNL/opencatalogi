@@ -362,13 +362,6 @@
 					"order": 97
 				},
 				{
-					"id": "ObligationsMenu",
-					"label": "Woo obligations",
-					"icon": "ClipboardCheckOutline",
-					"route": "Obligations",
-					"order": 98
-				},
-				{
 					"id": "SettingsMenu",
 					"label": "Settings",
 					"icon": "CogOutline",
@@ -515,7 +508,7 @@
 			"type": "custom",
 			"component": "CatalogPublicationsIndex",
 			"title": "Publications",
-			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage for one register/schema pair, with a selector when the catalog has several, kept in the `_pair` query parameter. It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. `register`/`schema` below name the publication pair: rows of that pair open on PublicationDetail, rows of any other pair (e.g. publiccode) have no detail page, so a click selects them and Edit uses CnIndexPage's form for their schema. CnIndexPage itself lists the catalog's active pair. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Every other config key reaches CnIndexPage for every pair, so it must fit any schema; config that only fits the publication schema, such as `columns` naming its properties or `actions` with a publication handler, goes in `publicationPairConfig`, which CnIndexPage gets on the publication pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`. The columns name publication properties, so they sit in `publicationPairConfig` and other pairs show CnIndexPage's default columns for their schema. Bare-string columns take their label from the live schema; fragment-only properties carry a label so an install without them shows a named column.",
+			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage over all of its pairs at once: the list comes from `/api/{catalogSlug}` through CnIndexPage's `collectionUrl`, newest first, while `register`/`schema` below name the page's own pair (the publication pair, which drives the columns, Add and the form). It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. Publication rows open on PublicationDetail and edit in the publication modal; rows of any other pair (e.g. publicationRule, publiccode) open on the generic CatalogObjectDetail page (click, View, or a new tab), while Edit opens CnIndexPage's form for their own schema; save, copy and delete go to their own pair. A row whose `@self` register or schema is not numeric has no detail page and opens in the form. `sidebar` turns on CnIndexPage's search, filter and columns sidebar. Config for a catalog WITHOUT the publication pair goes in `otherPairConfig`, applied only then: its Name, Summary and Updated columns replace the every-scalar-property default, and the other properties stay available in the sidebar's Columns tab. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Config that only fits the publication schema, such as `columns` and `actions` with a publication handler, goes in `publicationPairConfig`, applied when the page's pair is the publication pair; its custom actions show on publication rows only. Mass export and import stay off because they would cover the page's own pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). COLUMNS: Name, Status, Files, Updated, the set the list had before the CnIndexPage migration. Name is `@self.name`, which every schema has. Files counts `@self.files` (file IDs) with the library's `count` formatter; it is not sortable. Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`. BULK: `publicationPairConfig.bulkActions` name handlers in the app's handler map; the page calls them with the selected rows and the action's own `props` (`openSelectionDialog` opens the mass dialog `props.dialog` names), and reloads the list and clears the selection when that dialog closes. The bulk actions follow `showDeleteAction`: off, they are hidden.",
 			"config": {
 				"register": "@resolve:publication_register",
 				"schema": "@resolve:publication_schema",
@@ -533,52 +526,26 @@
 				"sortOrder": "desc",
 				"publicationPairConfig": {
 					"columns": [
-						"title",
+						{
+							"key": "@self.name",
+							"label": "Name",
+							"sortable": true
+						},
 						"status",
 						{
-							"key": "@self.created",
-							"label": "Created",
-							"format": "date-time",
-							"sortable": true
+							"key": "@self.files",
+							"label": "Files",
+							"formatter": "count",
+							"formatterOptions": {
+								"zero": "0"
+							}
 						},
 						{
 							"key": "@self.updated",
 							"label": "Updated",
 							"format": "date-time",
 							"sortable": true
-						},
-						{
-							"key": "caseReference",
-							"label": "Case reference",
-							"sortable": true
-						},
-						"depublicationDate",
-						"description",
-						"organization",
-						"plooiDeliveredAt",
-						"plooiIdentifier",
-						"plooiReason",
-						"plooiStatus",
-						"publicationDate",
-						{
-							"key": "publicationKind",
-							"label": "Kind of publication",
-							"sortable": true
-						},
-						"retentionAction",
-						"retentionCategory",
-						"retentionExpiresAt",
-						"retentionLastEvaluatedAt",
-						"retentionNote",
-						"retentionTermMonths",
-						{
-							"key": "soortHandeling",
-							"label": "Document handling",
-							"sortable": true
-						},
-						"summary",
-						"themes",
-						"wooCategory"
+						}
 					],
 					"actions": [
 						"builtin:view",
@@ -591,6 +558,65 @@
 						},
 						"builtin:copy",
 						"builtin:delete"
+					],
+					"bulkActions": [
+						{
+							"id": "publish",
+							"label": "Publish",
+							"icon": "Publish",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massPublishObjects"
+							}
+						},
+						{
+							"id": "depublish",
+							"label": "Depublish",
+							"icon": "PublishOff",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massDepublishObjects"
+							}
+						},
+						{
+							"id": "lock",
+							"label": "Lock",
+							"icon": "Lock",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massLockObjects"
+							}
+						},
+						{
+							"id": "unlock",
+							"label": "Unlock",
+							"icon": "LockOpen",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massUnlockObjects"
+							}
+						},
+						{
+							"id": "validate",
+							"label": "Validate",
+							"icon": "CheckDecagram",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massValidateObjects"
+							}
+						},
+						{
+							"id": "merge",
+							"label": "Merge",
+							"icon": "CallMerge",
+							"handler": "openPublicationMerge"
+						},
+						{
+							"id": "migrate",
+							"label": "Migrate",
+							"icon": "DatabaseArrowRight",
+							"handler": "openPublicationMigration"
+						}
 					]
 				},
 				"actionToggles": {
@@ -599,12 +625,107 @@
 					"showCopyAction": true,
 					"showDeleteAction": true,
 					"showViewToggle": true,
-					"selectable": true
+					"selectable": true,
+					"showMassExport": false,
+					"showMassImport": false
 				},
 				"inlineSearch": true,
 				"showCountWithSearch": true,
 				"emptyText": "No publications found",
+				"otherPairConfig": {
+					"columns": [
+						{
+							"key": "@self.name",
+							"label": "Name",
+							"sortable": true
+						},
+						{
+							"key": "@self.summary",
+							"label": "Summary",
+							"sortable": true
+						},
+						{
+							"key": "@self.updated",
+							"label": "Updated",
+							"format": "date-time",
+							"sortable": true
+						}
+					]
+				},
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				},
 				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
+		},
+		{
+			"id": "CatalogObjectDetail",
+			"route": "/publications/:catalogSlug/:register/:schema/:id",
+			"type": "detail",
+			"title": "Details",
+			"_note": "Generic detail page for an object of any schema in a catalog other than the publication schema, e.g. a harvested publiccode component in the Componenten catalog. CatalogPublicationsIndex opens rows of other pairs here; register and schema come from the row's own `@self`, through the route. The Data card is read-only because its inline editor cannot edit free-form object properties such as publiccode's per-language `description` (it would write back a string); edits go through the header Edit button, whose form renders those properties with their schema `widget`. Related lists the object's references; the audit trail lives in the sidebar.",
+			"config": {
+				"register": "@route.register",
+				"schema": "@route.schema",
+				"idParam": "@route.id",
+				"notFoundRoute": {
+					"name": "Publications"
+				},
+				"notFoundRouteLabel": "Publications",
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "object-data",
+						"type": "data",
+						"title": "Data",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"editable": false
+						}
+					},
+					{
+						"id": "object-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "object-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 10
+					},
+					{
+						"id": "2",
+						"widgetId": "object-related",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 4
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -721,11 +842,10 @@
 					},
 					{
 						"id": "pub-files",
-						"type": "integration",
-						"integrationId": "files",
+						"type": "publication-attachments",
 						"title": "Attachments",
 						"icon": "FolderOutline",
-						"props": {
+						"content": {
 							"maxDisplay": 100
 						}
 					},
@@ -1377,14 +1497,6 @@
 			"title": "Directory",
 			"component": "FederationDirectory",
 			"_note": "FederationDirectory (custom) fetches /api/listings and renders CnFederationStatus with mapped nodes + an admin add-directory modal. The bare CnFederationStatus this replaced shipped a permanent empty-state because the manifest had no :nodes binding."
-		},
-		{
-			"id": "Obligations",
-			"route": "/obligations",
-			"type": "custom",
-			"title": "Woo obligations",
-			"component": "ObligationsIndex",
-			"_note": "Admin only (GET /api/obligations is AuthorizedAdminSetting; the page shows a note to anyone else). Board OcWooVerplichtingen: four totals, a table per source system, the outstanding records late first; the unread sources stand above the figures (REQ-WOO-003)."
 		},
 		{
 			"id": "Reports",

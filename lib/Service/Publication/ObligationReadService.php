@@ -3,12 +3,11 @@
 /**
  * OpenCatalogi Obligation Read Service.
  *
- * Reads every enabled `obligationSource` and asks each one for its publication
- * obligations through `ObligationsRequestedEvent`. What comes back goes to
- * `ObligationOverviewService::assemble()`, which already knows how to keep a
- * source that failed visible: a source whose listener threw, or that no
- * listener answered, is unread with its reason, never a source with nothing to
- * publish.
+ * Asks every enabled obligation source what it must still publish and hands
+ * the answers to ObligationOverviewService. A source is asked through
+ * ObligationsRequestedEvent, which the app that owns it answers; a source
+ * whose app does not answer, or whose reader throws, stays in the overview as
+ * unread with the reason.
  *
  * @category Service
  * @package  OCA\OpenCatalogi\Service\Publication
@@ -31,53 +30,49 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Event\ObligationsRequestedEvent;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
+use Psr\Container\ContainerInterface;
 use RuntimeException;
 
 /**
- * Asks every registered source for its obligations and assembles the overview.
+ * Reads the registered sources and assembles the obligation overview.
  *
- * @SuppressWarnings(PHPMD.CouplingBetweenObjects) the event, reader, config and assembler are what the contract names
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The dispatcher and its event, the overview assembler,
+ *                                                 the config, the container, the app manager and the
+ *                                                 date classes are each one step of reading the sources.
  *
  * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
  */
-class ObligationReadService {
+class ObligationReadService implements ObligationReadServiceInterface {
 
 	/**
-	 * The reason a source without a listener is unread.
-	 *
-	 * @var string
+	 * The reason a source carries when no app answered for it.
 	 */
 	public const NO_READER = 'No reader answered for this source.';
 
 	/**
-	 * How long one source may take before its answer is not trusted.
-	 *
-	 * @var integer
-	 */
-	public const READ_LIMIT_SECONDS = 5;
-
-	/**
 	 * Constructor.
 	 *
-	 * @param IEventDispatcher $dispatcher The event dispatcher.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
-	 * @param IAppConfig $config App configuration.
-	 * @param ObligationOverviewService $overview The assembler.
-	 * @param string $appName The app name.
+	 * @param IEventDispatcher          $dispatcher The event dispatcher.
+	 * @param ObligationOverviewService $overview   The overview assembler.
+	 * @param IAppConfig                $config     App configuration.
+	 * @param ContainerInterface        $container  The container, for OpenRegister's ObjectService.
+	 * @param IAppManager               $appManager Tells whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly IEventDispatcher $dispatcher,
-		private readonly ServiceCatalogueService $objects,
-		private readonly IAppConfig $config,
 		private readonly ObligationOverviewService $overview,
-		private readonly string $appName = 'opencatalogi',
+		private readonly IAppConfig $config,
+		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -85,37 +80,26 @@ class ObligationReadService {
 	/**
 	 * Read every enabled source and assemble the overview.
 	 *
+	 * Besides the assembled overview the answer carries `dueThisWeek`,
+	 * `publishedThisMonth` and `bySource` (per source: outstanding, late and
+	 * the next due date), and the obligations ordered late first, then by due
+	 * date.
+	 *
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
 	 *
-	 * @return array<string, mixed> The overview `ObligationOverviewService::assemble()` returns.
+	 * @return array<string, mixed> The overview.
 	 *
-	 * @throws UnreadableRuleException When the source register or schema is not configured.
+	 * @throws RuntimeException When the sources themselves cannot be read.
 	 *
 	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
-	public function read(?DateTimeInterface $now = null): array {
+	public function read(?DateTimeInterface $now=null): array {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($now !== null) {
-			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+			$moment = new DateTimeImmutable($now->format(DateTimeInterface::ATOM));
 		}
 
-		[$register, $schema] = $this->sourceConfiguration();
-		$objectService = $this->objects->getObjectService();
-
-		$result = $objectService->searchObjectsPaginated(
-			['@self' => ['register' => $register, 'schema' => $schema], '_limit' => 200],
-			_rbac: false,
-			_multitenancy: false
-		);
-
-		$sources = [];
-		foreach (($result['results'] ?? []) as $row) {
-			$source = $this->asArray(object: $row);
-			if ($source !== []) {
-				$sources[] = $source;
-			}
-		}
-
+		$sources = $this->loadSources();
 		$answers = [];
 		foreach ($sources as $source) {
 			if ((bool)($source['enabled'] ?? true) === false) {
@@ -124,108 +108,193 @@ class ObligationReadService {
 
 			$appId = (string)($source['appId'] ?? '');
 			$answers[$appId] = $this->ask(appId: $appId);
-
-			if (is_array($answers[$appId]) === true) {
-				$this->markRead(objectService: $objectService, source: $source, register: $register, schema: $schema, moment: $moment);
-			}
 		}
 
-		return $this->overview->assemble(sources: $sources, obligationsBySource: $answers, now: $moment);
+		$overview = $this->overview->assemble(sources: $sources, obligationsBySource: $answers, now: $moment);
+
+		return $this->summarise(overview: $overview, sources: $sources, now: $moment);
 
 	}//end read()
 
 	/**
 	 * Ask one source for its obligations.
 	 *
-	 * @param string $appId The source.
+	 * @param string $appId The source's app id.
 	 *
-	 * @return array<int, array<string, mixed>>|\Throwable The obligations, or why they could not be read.
+	 * @return array<int, array<string, mixed>>|\Throwable The obligations, or why there are none.
 	 */
 	private function ask(string $appId): array|\Throwable {
-		$event = new ObligationsRequestedEvent(appId: $appId);
-		$started = microtime(true);
-
 		try {
+			$event = new ObligationsRequestedEvent(appId: $appId);
 			$this->dispatcher->dispatchTyped($event);
 		} catch (\Throwable $e) {
 			return $e;
 		}
 
-		if ((microtime(true) - $started) > self::READ_LIMIT_SECONDS) {
-			return new RuntimeException('This source took longer than ' . self::READ_LIMIT_SECONDS . ' seconds to answer.');
-		}
-
-		if ($event->isAnswered() === false) {
-			return new RuntimeException(self::NO_READER);
-		}
-
-		return $event->getObligations();
+		return ($event->getObligations() ?? new RuntimeException(self::NO_READER));
 
 	}//end ask()
 
 	/**
-	 * Record when a source was last read. A failed write leaves the overview
-	 * standing: the read happened, only its moment was not stored.
+	 * Add the totals and the per-source rows the page shows.
 	 *
-	 * @param object $objectService OpenRegister ObjectService.
-	 * @param array<string, mixed> $source The source.
-	 * @param string $register The register.
-	 * @param string $schema The schema.
-	 * @param DateTimeImmutable $moment The moment of the read.
+	 * @param array<string, mixed>             $overview The assembled overview.
+	 * @param array<int, array<string, mixed>> $sources  The registered sources.
+	 * @param DateTimeImmutable                $now      The moment.
 	 *
-	 * @return void
+	 * @return array<string, mixed> The overview with its summaries.
 	 */
-	private function markRead(object $objectService, array $source, string $register, string $schema, DateTimeImmutable $moment): void {
-		$uuid = (string)($source['id'] ?? '');
-		if ($uuid === '') {
-			return;
+	private function summarise(array $overview, array $sources, DateTimeImmutable $now): array {
+		$weekEnd    = $now->add(new DateInterval('P7D'));
+		$monthStart = $now->setDate((int)$now->format('Y'), (int)$now->format('m'), 1)->setTime(0, 0);
+
+		$dueThisWeek = 0;
+		$publishedThisMonth = 0;
+		$bySource = $this->sourceRows(sources: $sources);
+		foreach ($overview['obligations'] as $obligation) {
+			$state = $obligation['state'];
+			if ($state === 'published') {
+				$publishedAt = $this->dateOf(value: $obligation['publishedAt'] ?? '');
+				$publishedThisMonth += (int)($publishedAt !== null && $publishedAt >= $monthStart);
+				continue;
+			}
+
+			$due = $this->dateOf(value: $obligation['dueDate'] ?? '');
+			$dueThisWeek += (int)($state === 'due' && $due !== null && $due <= $weekEnd);
+			$source = $obligation['source'];
+			$bySource[$source] = $this->countInto(row: $bySource[$source], state: $state, due: $due);
 		}
 
-		$stored = $source;
-		unset($stored['id'], $stored['@self']);
-		$stored['lastReadAt'] = $moment->format(DATE_ATOM);
+		$order = ['late' => 0, 'due' => 1, 'unknown' => 2, 'published' => 3];
+		usort(
+			$overview['obligations'],
+			fn (array $a, array $b): int => [$order[$a['state']] ?? 4, (string)($a['dueDate'] ?? '')]
+				<=> [$order[$b['state']] ?? 4, (string)($b['dueDate'] ?? '')]
+		);
+
+		$overview['dueThisWeek'] = $dueThisWeek;
+		$overview['publishedThisMonth'] = $publishedThisMonth;
+		$overview['bySource'] = array_values($bySource);
+
+		return $overview;
+
+	}//end summarise()
+
+	/**
+	 * An empty row per enabled source, keyed by app id.
+	 *
+	 * @param array<int, array<string, mixed>> $sources The registered sources.
+	 *
+	 * @return array<string, array<string, mixed>> The rows.
+	 */
+	private function sourceRows(array $sources): array {
+		$rows = [];
+		foreach ($sources as $source) {
+			if ((bool)($source['enabled'] ?? true) === false) {
+				continue;
+			}
+
+			$appId = (string)($source['appId'] ?? '');
+			$rows[$appId] = [
+				'appId'       => $appId,
+				'title'       => (string)($source['title'] ?? $appId),
+				'outstanding' => 0,
+				'late'        => 0,
+				'nextDue'     => null,
+			];
+		}
+
+		return $rows;
+
+	}//end sourceRows()
+
+	/**
+	 * Count one outstanding obligation into its source's row.
+	 *
+	 * @param array<string, mixed>   $row   The source's row.
+	 * @param string                 $state The obligation's state.
+	 * @param DateTimeImmutable|null $due   Its due date.
+	 *
+	 * @return array<string, mixed> The row.
+	 */
+	private function countInto(array $row, string $state, ?DateTimeImmutable $due): array {
+		$row['outstanding']++;
+		$row['late'] += (int)($state === 'late');
+
+		$next = $this->dateOf(value: $row['nextDue']);
+		if ($due !== null && ($next === null || $due < $next)) {
+			$row['nextDue'] = $due->format(DateTimeInterface::ATOM);
+		}
+
+		return $row;
+
+	}//end countInto()
+
+	/**
+	 * Read a date, or null when it cannot be read.
+	 *
+	 * @param mixed $value The stored value.
+	 *
+	 * @return DateTimeImmutable|null The date.
+	 */
+	private function dateOf(mixed $value): ?DateTimeImmutable {
+		if (is_string($value) === false || trim($value) === '') {
+			return null;
+		}
 
 		try {
-			$objectService->saveObject(
-				$stored,
-				[],
-				$register,
-				$schema,
-				$uuid,
+			return new DateTimeImmutable($value);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+	}//end dateOf()
+
+	/**
+	 * The registered sources, as arrays.
+	 *
+	 * @return array<int, array<string, mixed>> The sources; none when the schema is not configured.
+	 *
+	 * @throws RuntimeException When OpenRegister cannot be asked.
+	 */
+	private function loadSources(): array {
+		$register = $this->config->getValueString('opencatalogi', 'publication_register', '');
+		$schema = $this->config->getValueString('opencatalogi', 'obligation_source_schema', '');
+		if ($register === '' || $schema === '') {
+			return [];
+		}
+
+		if ($this->appManager->isInstalled('openregister') === false) {
+			throw new RuntimeException('The obligation sources could not be read: OpenRegister is not installed');
+		}
+
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$result = $objectService->searchObjectsPaginated(
+				query: [
+					'@self'  => ['register' => $register, 'schema' => $schema],
+					'_limit' => 200,
+				],
 				_rbac: false,
 				_multitenancy: false
 			);
 		} catch (\Throwable $e) {
-			return;
+			throw new RuntimeException('The obligation sources could not be read: '.$e->getMessage(), 0, $e);
 		}
 
-	}//end markRead()
-
-	/**
-	 * The register and schema the sources live in.
-	 *
-	 * @return array{0: string, 1: string} The register and schema.
-	 *
-	 * @throws UnreadableRuleException When either is not configured.
-	 */
-	private function sourceConfiguration(): array {
-		$register = trim($this->config->getValueString($this->appName, 'publication_register', ''));
-		$schema = trim($this->config->getValueString($this->appName, 'obligation_source_schema', ''));
-
-		if ($register === '' || $schema === '') {
-			throw new UnreadableRuleException(
-				'The obligation sources are not configured, so this app cannot say what must be published.'
-			);
+		$sources = [];
+		foreach (($result['results'] ?? []) as $object) {
+			$sources[] = $this->asArray(object: $object);
 		}
 
-		return [$register, $schema];
+		return $sources;
 
-	}//end sourceConfiguration()
+	}//end loadSources()
 
 	/**
-	 * Read an object's properties, whatever shape OpenRegister returned.
+	 * An OpenRegister object as a flat array of its properties.
 	 *
-	 * @param mixed $object The result.
+	 * @param mixed $object The object or its array.
 	 *
 	 * @return array<string, mixed> The properties.
 	 */
@@ -238,8 +307,8 @@ class ObligationReadService {
 			return [];
 		}
 
-		if (isset($object['id']) === false && isset($object['@self']['id']) === true) {
-			$object['id'] = $object['@self']['id'];
+		if (isset($object['object']) === true && is_array($object['object']) === true) {
+			return array_merge($object['object'], ['id' => ($object['uuid'] ?? $object['id'] ?? null)]);
 		}
 
 		return $object;

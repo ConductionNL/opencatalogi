@@ -75,6 +75,53 @@ let menuCatalogsSequence = 0
 let menuCatalogsWalk = null
 
 /**
+ * The query for a related-data request: the caller's params, and for `uses`
+ * and `used` an `_extend` that defaults to the schema.
+ *
+ * @param {string} dataType - The kind of related data
+ * @param {object} params - The caller's params
+ * @return {object} The query params
+ */
+function relatedQueryParams(dataType, params) {
+	if (dataType !== 'uses' && dataType !== 'used') {
+		return { ...params }
+	}
+
+	return {
+		...params,
+		_extend: params._extend || params.extend || '@self.schema',
+	}
+}
+
+/**
+ * The pagination of a related-data answer. The limit is the API's, else the
+ * requested one, else 500 for files and 20 for anything else.
+ *
+ * @param {object} data - The API answer
+ * @param {object} params - The caller's params
+ * @param {string} dataType - The kind of related data
+ * @return {object} The pagination info
+ */
+function relatedPagination(data, params, dataType) {
+	const apiLimit = data.limit ? parseInt(data.limit, 10) : null
+	const limit =
+		apiLimit
+		|| params._limit
+		|| params.limit
+		|| (dataType === 'files' ? 500 : 20)
+	const total = data.total || 0
+
+	return {
+		total,
+		page: data.page || 1,
+		pages: data.pages || Math.ceil(total / limit),
+		limit,
+		next: data.next || null,
+		prev: data.prev || null,
+	}
+}
+
+/**
  * Whether a collection fetch reloads the whole collection rather than one
  * paged, sorted or searched slice of it.
  *
@@ -103,6 +150,169 @@ function toMenuCatalog(catalog) {
 		registers: normaliseIdList(catalog.registers),
 		schemas: normaliseIdList(catalog.schemas),
 	}
+}
+
+/**
+ * The id of an object, from its top level or its `@self` metadata.
+ *
+ * @param {object} obj - The object
+ * @return {string|undefined} The id
+ */
+function objectIdOf(obj) {
+	return obj.id || obj['@self']?.id
+}
+
+/**
+ * The id, register and schema an object names, from its top level or `@self`.
+ *
+ * @param {object} objectItem - The object
+ * @return {{objectId: string, register: *, schema: *}} The references
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
+function objectRefs(objectItem) {
+	return {
+		objectId: objectIdOf(objectItem),
+		register: objectItem['@self']?.register || objectItem.register,
+		schema: objectItem['@self']?.schema || objectItem.schema,
+	}
+}
+
+/**
+ * Send one request to an object's OpenRegister endpoint, throwing
+ * `Failed to <action> object: ...` when the response is not ok.
+ *
+ * @param {{objectId: string, registerId: string, schemaId: string}} target - The object
+ * @param {{action: string, init?: object}} request - The action (`delete` uses the object URL itself) and the fetch options, POST by default
+ * @return {Promise<Response>} The response
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
+async function objectRequest(target, request) {
+	const suffix = request.action === 'delete' ? '' : `/${request.action}`
+	const response = await fetch(
+		`/index.php/apps/openregister/api/objects/${target.registerId}/${target.schemaId}/${target.objectId}${suffix}`,
+		request.init || { method: 'POST' },
+	)
+	if (!response.ok) {
+		throw new Error(
+			`Failed to ${request.action} object: ${response.status} ${response.statusText}`,
+		)
+	}
+	return response
+}
+
+/**
+ * The fetch options for a lock: a JSON body only when a process or duration is given.
+ *
+ * @param {string|null} process - The process name
+ * @param {number|null} duration - The duration in seconds
+ * @return {object} The fetch options
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
+function lockRequestInit(process, duration) {
+	const body = {}
+	if (process) body.process = process
+	if (duration) body.duration = duration
+	const hasBody = Object.keys(body).length > 0
+	return {
+		method: 'POST',
+		headers: hasBody ? { 'Content-Type': 'application/json' } : undefined,
+		body: hasBody ? JSON.stringify(body) : undefined,
+	}
+}
+
+/**
+ * Split settled per-item outcomes into the ones that succeeded and the ones that did not.
+ *
+ * @param {Array<PromiseSettledResult<object>>} results - The outcomes, each `{ success, id, ... }` when fulfilled
+ * @return {{successful: Array, failed: Array}} The outcomes by result
+ */
+function splitSettled(results) {
+	const successful = results
+		.filter((r) => r.status === 'fulfilled' && r.value.success)
+		.map((r) => r.value)
+	const failed = results
+		.filter(
+			(r) =>
+				r.status === 'rejected'
+				|| (r.status === 'fulfilled' && !r.value.success),
+		)
+		.map((r) => r.value || unknownFailure())
+
+	return { successful, failed }
+}
+
+/**
+ * The outcome recorded for an item whose action rejected without one.
+ *
+ * @return {{success: boolean, error: string}} The outcome
+ */
+function unknownFailure() {
+	return { success: false, error: 'Unknown error' }
+}
+
+/**
+ * Run one store action on every object at once. Each failure is recorded on
+ * its object, the progress callback hears about every object, and the objects
+ * that succeeded leave the selection.
+ *
+ * @param {object} store - The object store
+ * @param {Array<object|string>} objects - The objects to act on
+ * @param {object} options - What to do
+ * @param {string} options.verb - The action's name, for the console
+ * @param {Function} options.act - Performs the action on one object
+ * @param {Function} [options.idOf] - Reads the id of an object, before acting on it
+ * @param {Function|null} [options.onProgress] - Called after each object
+ * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+ */
+async function applyToEach(
+	store,
+	objects,
+	{ verb, act, idOf = objectIdOf, onProgress = null },
+) {
+	store.clearAllObjectErrors()
+
+	const results = await Promise.allSettled(
+		objects.map(async (obj) => {
+			try {
+				const objectId = idOf(obj)
+
+				await act(obj)
+
+				store.clearObjectError(objectId)
+
+				if (onProgress) onProgress(obj, true)
+
+				return { success: true, id: objectId, object: obj }
+			} catch (error) {
+				const objectId = objectIdOf(obj)
+				const errorMessage = error.message || 'Unknown error'
+
+				console.error(`Failed to ${verb} object ${objectId}:`, error)
+
+				store.setObjectError(objectId, errorMessage)
+
+				if (onProgress) onProgress(obj, false, errorMessage)
+
+				return {
+					success: false,
+					id: objectId,
+					object: obj,
+					error: errorMessage,
+				}
+			}
+		}),
+	)
+
+	const { successful, failed } = splitSettled(results)
+
+	if (successful.length > 0) {
+		const successfulIds = successful.map((r) => r.id)
+		store.setSelectedObjects(
+			store.selectedObjects.filter((id) => !successfulIds.includes(id)),
+		)
+	}
+
+	return { successful, failed }
 }
 
 /**
@@ -1322,17 +1532,7 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				const queryParams = {
-					...params,
-					...(dataType === 'uses' || dataType === 'used'
-						? {
-								_extend:
-									params._extend
-									|| params.extend
-									|| '@self.schema',
-							}
-						: {}),
-				}
+				const queryParams = relatedQueryParams(dataType, params)
 
 				const response = await fetch(
 					this._constructApiUrl(
@@ -1353,23 +1553,10 @@ export const useObjectStore = defineStore('object', {
 
 				// Update pagination info for related data
 				if (data.total !== undefined || data.page !== undefined) {
-					const paginationKey = `${type}_${dataType}`
-					const requestedLimit = params._limit || params.limit
-					const apiLimit = data.limit ? parseInt(data.limit, 10) : null
-					const actualLimit =
-						apiLimit
-						|| requestedLimit
-						|| (dataType === 'files' ? 500 : 20)
-					const paginationInfo = {
-						total: data.total || 0,
-						page: data.page || 1,
-						pages:
-							data.pages || Math.ceil((data.total || 0) / actualLimit),
-						limit: actualLimit,
-						next: data.next || null,
-						prev: data.prev || null,
-					}
-					this.setPagination(paginationKey, paginationInfo)
+					this.setPagination(
+						`${type}_${dataType}`,
+						relatedPagination(data, params, dataType),
+					)
 				}
 
 				// For audit trails, store the results array
@@ -1607,6 +1794,116 @@ export const useObjectStore = defineStore('object', {
 		},
 
 		/**
+		 * The object's id with its register and schema resolved to ids.
+		 *
+		 * @param {object} objectItem - The object
+		 * @return {{objectId: string, registerId: string, schemaId: string}} The target
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		objectTarget(objectItem) {
+			const { objectId, register, schema } = objectRefs(objectItem)
+			if (!objectId || !register || !schema) {
+				throw new Error(
+					'Object must have id, register, and schema information',
+				)
+			}
+			const registerId = this.extractId(register)
+			const schemaId = this.extractId(schema)
+			if (!registerId || !schemaId) {
+				throw new Error('Could not extract register or schema ID')
+			}
+			return { objectId, registerId, schemaId }
+		},
+
+		/**
+		 * Run `work` with the loading and error state of `state.key`, logging
+		 * `Error <verb> object:` and recording the message when it fails.
+		 *
+		 * @param {{key: string, verb: string}} state - The state key and the verb for the log
+		 * @param {Function} work - The async work
+		 * @return {Promise<*>} What the work returns
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async withObjectState(state, work) {
+			this.setLoading(state.key, true)
+			this.setError(state.key, null)
+			try {
+				return await work()
+			} catch (error) {
+				console.error(`Error ${state.verb} object:`, error)
+				this.setError(state.key, error.message)
+				throw error
+			} finally {
+				this.setLoading(state.key, false)
+			}
+		},
+
+		/**
+		 * Post one action to an object, then refresh the active publication
+		 * and, unless `request.keepSelection`, drop the object from the selection.
+		 *
+		 * @param {object} objectItem - The object
+		 * @param {{action: string, verb: string, keepSelection?: boolean, init?: object}} request - The action
+		 * @return {Promise<object>} The updated object
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		async runObjectAction(objectItem, request) {
+			const target = this.objectTarget(objectItem)
+			return this.withObjectState(
+				{ key: `${request.action}_${target.objectId}`, verb: request.verb },
+				async () => {
+					const response = await objectRequest(target, request)
+					const updatedObject = await response.json()
+					this.refreshActivePublication(target.objectId, updatedObject)
+					if (!request.keepSelection) {
+						this.forgetSelected(target.objectId)
+					}
+					return updatedObject
+				},
+			)
+		},
+
+		/**
+		 * Replace the active publication when it is the given object.
+		 *
+		 * @param {string} objectId - The object's id
+		 * @param {object} updatedObject - The new version
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		refreshActivePublication(objectId, updatedObject) {
+			const activePublication = this.activeObjects.publication
+			if (
+				activePublication
+				&& (activePublication.id === objectId
+					|| activePublication['@self']?.id === objectId)
+			) {
+				this.activeObjects = {
+					...this.activeObjects,
+					publication: updatedObject,
+				}
+			}
+		},
+
+		/**
+		 * Drop an object from the selection when it is selected.
+		 *
+		 * @param {string} objectId - The object's id
+		 * @spec openspec/specs/generic-object-modals/spec.md
+		 */
+		forgetSelected(objectId) {
+			const isSelected = this.selectedObjects.some(
+				(obj) => objectIdOf(obj) === objectId,
+			)
+			if (isSelected) {
+				this.setSelectedObjects(
+					this.selectedObjects.filter(
+						(obj) => objectIdOf(obj) !== objectId,
+					),
+				)
+			}
+		},
+
+		/**
 		 * Delete object.
 		 *
 		 * Accepts either the object itself, or the legacy `(type, id)` pair. Four
@@ -1643,55 +1940,18 @@ export const useObjectStore = defineStore('object', {
 				objectItem = resolved
 			}
 
-			const objectId = objectItem?.id || objectItem?.['@self']?.id
-			const register = objectItem?.['@self']?.register || objectItem?.register
-			const schema = objectItem?.['@self']?.schema || objectItem?.schema
-
-			if (!objectId || !register || !schema) {
-				throw new Error(
-					'Object must have id, register, and schema information',
-				)
-			}
-
-			const registerId = this.extractId(register)
-			const schemaId = this.extractId(schema)
-
-			if (!registerId || !schemaId) {
-				throw new Error('Could not extract register or schema ID')
-			}
-
-			this.setLoading(`delete_${objectId}`, true)
-			this.setError(`delete_${objectId}`, null)
-
-			try {
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
-
-				const response = await fetch(endpoint, { method: 'DELETE' })
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to delete object: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				const isSelected = this.selectedObjects.some(
-					(obj) => (obj.id || obj['@self']?.id) === objectId,
-				)
-				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(
-						(obj) => (obj.id || obj['@self']?.id) !== objectId,
-					)
-					this.setSelectedObjects(remainingSelected)
-				}
-
-				return true
-			} catch (error) {
-				console.error('Error deleting object:', error)
-				this.setError(`delete_${objectId}`, error.message)
-				throw error
-			} finally {
-				this.setLoading(`delete_${objectId}`, false)
-			}
+			const target = this.objectTarget(objectItem || {})
+			return this.withObjectState(
+				{ key: `delete_${target.objectId}`, verb: 'deleting' },
+				async () => {
+					await objectRequest(target, {
+						action: 'delete',
+						init: { method: 'DELETE' },
+					})
+					this.forgetSelected(target.objectId)
+					return true
+				},
+			)
 		},
 
 		/**
@@ -1703,69 +1963,10 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/publications/spec.md
 		 */
 		async publishObject(objectItem) {
-			const objectId = objectItem.id || objectItem['@self']?.id
-			const register = objectItem['@self']?.register || objectItem.register
-			const schema = objectItem['@self']?.schema || objectItem.schema
-
-			if (!objectId || !register || !schema) {
-				throw new Error(
-					'Object must have id, register, and schema information',
-				)
-			}
-
-			const registerId = this.extractId(register)
-			const schemaId = this.extractId(schema)
-
-			if (!registerId || !schemaId) {
-				throw new Error('Could not extract register or schema ID')
-			}
-
-			this.setLoading(`publish_${objectId}`, true)
-			this.setError(`publish_${objectId}`, null)
-
-			try {
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/publish`
-
-				const response = await fetch(endpoint, { method: 'POST' })
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to publish object: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				const updatedObject = await response.json()
-
-				const activePublication = this.activeObjects.publication
-				if (
-					activePublication
-					&& (activePublication.id === objectId
-						|| activePublication['@self']?.id === objectId)
-				) {
-					this.activeObjects = {
-						...this.activeObjects,
-						publication: updatedObject,
-					}
-				}
-
-				const isSelected = this.selectedObjects.some(
-					(obj) => (obj.id || obj['@self']?.id) === objectId,
-				)
-				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(
-						(obj) => (obj.id || obj['@self']?.id) !== objectId,
-					)
-					this.setSelectedObjects(remainingSelected)
-				}
-
-				return updatedObject
-			} catch (error) {
-				console.error('Error publishing object:', error)
-				this.setError(`publish_${objectId}`, error.message)
-				throw error
-			} finally {
-				this.setLoading(`publish_${objectId}`, false)
-			}
+			return this.runObjectAction(objectItem, {
+				action: 'publish',
+				verb: 'publishing',
+			})
 		},
 
 		/**
@@ -1777,69 +1978,10 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/publications/spec.md
 		 */
 		async depublishObject(objectItem) {
-			const objectId = objectItem.id || objectItem['@self']?.id
-			const register = objectItem['@self']?.register || objectItem.register
-			const schema = objectItem['@self']?.schema || objectItem.schema
-
-			if (!objectId || !register || !schema) {
-				throw new Error(
-					'Object must have id, register, and schema information',
-				)
-			}
-
-			const registerId = this.extractId(register)
-			const schemaId = this.extractId(schema)
-
-			if (!registerId || !schemaId) {
-				throw new Error('Could not extract register or schema ID')
-			}
-
-			this.setLoading(`depublish_${objectId}`, true)
-			this.setError(`depublish_${objectId}`, null)
-
-			try {
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/depublish`
-
-				const response = await fetch(endpoint, { method: 'POST' })
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to depublish object: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				const updatedObject = await response.json()
-
-				const activePublication = this.activeObjects.publication
-				if (
-					activePublication
-					&& (activePublication.id === objectId
-						|| activePublication['@self']?.id === objectId)
-				) {
-					this.activeObjects = {
-						...this.activeObjects,
-						publication: updatedObject,
-					}
-				}
-
-				const isSelected = this.selectedObjects.some(
-					(obj) => (obj.id || obj['@self']?.id) === objectId,
-				)
-				if (isSelected) {
-					const remainingSelected = this.selectedObjects.filter(
-						(obj) => (obj.id || obj['@self']?.id) !== objectId,
-					)
-					this.setSelectedObjects(remainingSelected)
-				}
-
-				return updatedObject
-			} catch (error) {
-				console.error('Error depublishing object:', error)
-				this.setError(`depublish_${objectId}`, error.message)
-				throw error
-			} finally {
-				this.setLoading(`depublish_${objectId}`, false)
-			}
+			return this.runObjectAction(objectItem, {
+				action: 'depublish',
+				verb: 'depublishing',
+			})
 		},
 
 		/**
@@ -1853,52 +1995,18 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async validateObject(objectItem) {
-			const objectId = objectItem.id || objectItem['@self']?.id
-			const register = objectItem['@self']?.register || objectItem.register
-			const schema = objectItem['@self']?.schema || objectItem.schema
-
-			if (!objectId || !register || !schema) {
-				throw new Error(
-					'Object must have id, register, and schema information',
-				)
-			}
-
-			const registerId = this.extractId(register)
-			const schemaId = this.extractId(schema)
-
-			if (!registerId || !schemaId) {
-				throw new Error('Could not extract register or schema ID')
-			}
-
-			this.setLoading(`validate_${objectId}`, true)
-			this.setError(`validate_${objectId}`, null)
-
-			try {
-				const result = await this.saveObject(objectItem, {
-					register: registerId,
-					schema: schemaId,
-				})
-
-				const activePublication = this.activeObjects.publication
-				if (
-					activePublication
-					&& (activePublication.id === objectId
-						|| activePublication['@self']?.id === objectId)
-				) {
-					this.activeObjects = {
-						...this.activeObjects,
-						publication: result.data,
-					}
-				}
-
-				return result.data
-			} catch (error) {
-				console.error('Error validating object:', error)
-				this.setError(`validate_${objectId}`, error.message)
-				throw error
-			} finally {
-				this.setLoading(`validate_${objectId}`, false)
-			}
+			const target = this.objectTarget(objectItem)
+			return this.withObjectState(
+				{ key: `validate_${target.objectId}`, verb: 'validating' },
+				async () => {
+					const result = await this.saveObject(objectItem, {
+						register: target.registerId,
+						schema: target.schemaId,
+					})
+					this.refreshActivePublication(target.objectId, result.data)
+					return result.data
+				},
+			)
 		},
 
 		/**
@@ -1916,73 +2024,12 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async lockObject(objectItem, process = null, duration = null) {
-			const objectId = objectItem.id || objectItem['@self']?.id
-			const register = objectItem['@self']?.register || objectItem.register
-			const schema = objectItem['@self']?.schema || objectItem.schema
-
-			if (!objectId || !register || !schema) {
-				throw new Error(
-					'Object must have id, register, and schema information',
-				)
-			}
-
-			const registerId = this.extractId(register)
-			const schemaId = this.extractId(schema)
-
-			if (!registerId || !schemaId) {
-				throw new Error('Could not extract register or schema ID')
-			}
-
-			this.setLoading(`lock_${objectId}`, true)
-			this.setError(`lock_${objectId}`, null)
-
-			try {
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/lock`
-
-				const body = {}
-				if (process) body.process = process
-				if (duration) body.duration = duration
-
-				const response = await fetch(endpoint, {
-					method: 'POST',
-					headers:
-						Object.keys(body).length > 0
-							? { 'Content-Type': 'application/json' }
-							: undefined,
-					body:
-						Object.keys(body).length > 0
-							? JSON.stringify(body)
-							: undefined,
-				})
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to lock object: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				const updatedObject = await response.json()
-
-				const activePublication = this.activeObjects.publication
-				if (
-					activePublication
-					&& (activePublication.id === objectId
-						|| activePublication['@self']?.id === objectId)
-				) {
-					this.activeObjects = {
-						...this.activeObjects,
-						publication: updatedObject,
-					}
-				}
-
-				return updatedObject
-			} catch (error) {
-				console.error('Error locking object:', error)
-				this.setError(`lock_${objectId}`, error.message)
-				throw error
-			} finally {
-				this.setLoading(`lock_${objectId}`, false)
-			}
+			return this.runObjectAction(objectItem, {
+				action: 'lock',
+				verb: 'locking',
+				keepSelection: true,
+				init: lockRequestInit(process, duration),
+			})
 		},
 
 		/**
@@ -1996,59 +2043,11 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async unlockObject(objectItem) {
-			const objectId = objectItem.id || objectItem['@self']?.id
-			const register = objectItem['@self']?.register || objectItem.register
-			const schema = objectItem['@self']?.schema || objectItem.schema
-
-			if (!objectId || !register || !schema) {
-				throw new Error(
-					'Object must have id, register, and schema information',
-				)
-			}
-
-			const registerId = this.extractId(register)
-			const schemaId = this.extractId(schema)
-
-			if (!registerId || !schemaId) {
-				throw new Error('Could not extract register or schema ID')
-			}
-
-			this.setLoading(`unlock_${objectId}`, true)
-			this.setError(`unlock_${objectId}`, null)
-
-			try {
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}/unlock`
-
-				const response = await fetch(endpoint, { method: 'POST' })
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to unlock object: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				const updatedObject = await response.json()
-
-				const activePublication = this.activeObjects.publication
-				if (
-					activePublication
-					&& (activePublication.id === objectId
-						|| activePublication['@self']?.id === objectId)
-				) {
-					this.activeObjects = {
-						...this.activeObjects,
-						publication: updatedObject,
-					}
-				}
-
-				return updatedObject
-			} catch (error) {
-				console.error('Error unlocking object:', error)
-				this.setError(`unlock_${objectId}`, error.message)
-				throw error
-			} finally {
-				this.setLoading(`unlock_${objectId}`, false)
-			}
+			return this.runObjectAction(objectItem, {
+				action: 'unlock',
+				verb: 'unlocking',
+				keepSelection: true,
+			})
 		},
 
 		/**
@@ -2548,72 +2547,16 @@ export const useObjectStore = defineStore('object', {
 		 * @param {Array<object|string>} objects - Array of objects or object IDs to delete
 		 * @param {Function} onProgress - Callback function called after each deletion (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
-		 */
-		/**
-		 * @param objects
-		 * @param onProgress
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massDeleteObjects(objects, onProgress = null) {
-			this.clearAllObjectErrors()
-
-			const results = await Promise.allSettled(
-				objects.map(async (obj) => {
-					try {
-						const objectId =
-							typeof obj === 'string'
-								? obj
-								: obj.id || obj['@self']?.id
-						const objectToDelete =
-							typeof obj === 'string' ? { id: obj } : obj
-
-						await this.deleteObject(objectToDelete)
-
-						this.clearObjectError(objectId)
-
-						if (onProgress) onProgress(obj, true)
-
-						return { success: true, id: objectId, object: obj }
-					} catch (error) {
-						const objectId = obj.id || obj['@self']?.id
-						const errorMessage = error.message || 'Unknown error'
-
-						console.error(`Failed to delete object ${objectId}:`, error)
-
-						this.setObjectError(objectId, errorMessage)
-
-						if (onProgress) onProgress(obj, false, errorMessage)
-
-						return {
-							success: false,
-							id: objectId,
-							object: obj,
-							error: errorMessage,
-						}
-					}
-				}),
-			)
-
-			const successful = results
-				.filter((r) => r.status === 'fulfilled' && r.value.success)
-				.map((r) => r.value)
-			const failed = results
-				.filter(
-					(r) =>
-						r.status === 'rejected'
-						|| (r.status === 'fulfilled' && !r.value.success),
-				)
-				.map((r) => r.value || { success: false, error: 'Unknown error' })
-
-			if (successful.length > 0) {
-				const successfulIds = successful.map((r) => r.id)
-				const remainingSelected = this.selectedObjects.filter(
-					(id) => !successfulIds.includes(id),
-				)
-				this.setSelectedObjects(remainingSelected)
-			}
-
-			return { successful, failed }
+			return applyToEach(this, objects, {
+				verb: 'delete',
+				act: (obj) =>
+					this.deleteObject(typeof obj === 'string' ? { id: obj } : obj),
+				idOf: (obj) => (typeof obj === 'string' ? obj : objectIdOf(obj)),
+				onProgress,
+			})
 		},
 
 		/**
@@ -2622,67 +2565,14 @@ export const useObjectStore = defineStore('object', {
 		 * @param {Array<object>} objects - Array of objects to publish
 		 * @param {Function} onProgress - Callback function called after each publication (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
-		 */
-		/**
-		 * @param objects
-		 * @param onProgress
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massPublishObjects(objects, onProgress = null) {
-			this.clearAllObjectErrors()
-
-			const results = await Promise.allSettled(
-				objects.map(async (obj) => {
-					try {
-						const objectId = obj.id || obj['@self']?.id
-
-						await this.publishObject(obj)
-
-						this.clearObjectError(objectId)
-
-						if (onProgress) onProgress(obj, true)
-
-						return { success: true, id: objectId, object: obj }
-					} catch (error) {
-						const objectId = obj.id || obj['@self']?.id
-						const errorMessage = error.message || 'Unknown error'
-
-						console.error(`Failed to publish object ${objectId}:`, error)
-
-						this.setObjectError(objectId, errorMessage)
-
-						if (onProgress) onProgress(obj, false, errorMessage)
-
-						return {
-							success: false,
-							id: objectId,
-							object: obj,
-							error: errorMessage,
-						}
-					}
-				}),
-			)
-
-			const successful = results
-				.filter((r) => r.status === 'fulfilled' && r.value.success)
-				.map((r) => r.value)
-			const failed = results
-				.filter(
-					(r) =>
-						r.status === 'rejected'
-						|| (r.status === 'fulfilled' && !r.value.success),
-				)
-				.map((r) => r.value || { success: false, error: 'Unknown error' })
-
-			if (successful.length > 0) {
-				const successfulIds = successful.map((r) => r.id)
-				const remainingSelected = this.selectedObjects.filter(
-					(id) => !successfulIds.includes(id),
-				)
-				this.setSelectedObjects(remainingSelected)
-			}
-
-			return { successful, failed }
+			return applyToEach(this, objects, {
+				verb: 'publish',
+				act: (obj) => this.publishObject(obj),
+				onProgress,
+			})
 		},
 
 		/**
@@ -2691,70 +2581,14 @@ export const useObjectStore = defineStore('object', {
 		 * @param {Array<object>} objects - Array of objects to depublish
 		 * @param {Function} onProgress - Callback function called after each depublication (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
-		 */
-		/**
-		 * @param objects
-		 * @param onProgress
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massDepublishObjects(objects, onProgress = null) {
-			this.clearAllObjectErrors()
-
-			const results = await Promise.allSettled(
-				objects.map(async (obj) => {
-					try {
-						const objectId = obj.id || obj['@self']?.id
-
-						await this.depublishObject(obj)
-
-						this.clearObjectError(objectId)
-
-						if (onProgress) onProgress(obj, true)
-
-						return { success: true, id: objectId, object: obj }
-					} catch (error) {
-						const objectId = obj.id || obj['@self']?.id
-						const errorMessage = error.message || 'Unknown error'
-
-						console.error(
-							`Failed to depublish object ${objectId}:`,
-							error,
-						)
-
-						this.setObjectError(objectId, errorMessage)
-
-						if (onProgress) onProgress(obj, false, errorMessage)
-
-						return {
-							success: false,
-							id: objectId,
-							object: obj,
-							error: errorMessage,
-						}
-					}
-				}),
-			)
-
-			const successful = results
-				.filter((r) => r.status === 'fulfilled' && r.value.success)
-				.map((r) => r.value)
-			const failed = results
-				.filter(
-					(r) =>
-						r.status === 'rejected'
-						|| (r.status === 'fulfilled' && !r.value.success),
-				)
-				.map((r) => r.value || { success: false, error: 'Unknown error' })
-
-			if (successful.length > 0) {
-				const successfulIds = successful.map((r) => r.id)
-				const remainingSelected = this.selectedObjects.filter(
-					(id) => !successfulIds.includes(id),
-				)
-				this.setSelectedObjects(remainingSelected)
-			}
-
-			return { successful, failed }
+			return applyToEach(this, objects, {
+				verb: 'depublish',
+				act: (obj) => this.depublishObject(obj),
+				onProgress,
+			})
 		},
 
 		/**
@@ -2763,70 +2597,14 @@ export const useObjectStore = defineStore('object', {
 		 * @param {Array<object>} objects - Array of objects to validate
 		 * @param {Function} onProgress - Callback function called after each validation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
-		 */
-		/**
-		 * @param objects
-		 * @param onProgress
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massValidateObjects(objects, onProgress = null) {
-			this.clearAllObjectErrors()
-
-			const results = await Promise.allSettled(
-				objects.map(async (obj) => {
-					try {
-						const objectId = obj.id || obj['@self']?.id
-
-						await this.validateObject(obj)
-
-						this.clearObjectError(objectId)
-
-						if (onProgress) onProgress(obj, true)
-
-						return { success: true, id: objectId, object: obj }
-					} catch (error) {
-						const objectId = obj.id || obj['@self']?.id
-						const errorMessage = error.message || 'Unknown error'
-
-						console.error(
-							`Failed to validate object ${objectId}:`,
-							error,
-						)
-
-						this.setObjectError(objectId, errorMessage)
-
-						if (onProgress) onProgress(obj, false, errorMessage)
-
-						return {
-							success: false,
-							id: objectId,
-							object: obj,
-							error: errorMessage,
-						}
-					}
-				}),
-			)
-
-			const successful = results
-				.filter((r) => r.status === 'fulfilled' && r.value.success)
-				.map((r) => r.value)
-			const failed = results
-				.filter(
-					(r) =>
-						r.status === 'rejected'
-						|| (r.status === 'fulfilled' && !r.value.success),
-				)
-				.map((r) => r.value || { success: false, error: 'Unknown error' })
-
-			if (successful.length > 0) {
-				const successfulIds = successful.map((r) => r.id)
-				const remainingSelected = this.selectedObjects.filter(
-					(id) => !successfulIds.includes(id),
-				)
-				this.setSelectedObjects(remainingSelected)
-			}
-
-			return { successful, failed }
+			return applyToEach(this, objects, {
+				verb: 'validate',
+				act: (obj) => this.validateObject(obj),
+				onProgress,
+			})
 		},
 
 		/**
@@ -2837,12 +2615,6 @@ export const useObjectStore = defineStore('object', {
 		 * @param {number} duration - Duration in seconds (optional)
 		 * @param {Function} onProgress - Callback function called after each lock operation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
-		 */
-		/**
-		 * @param objects
-		 * @param process
-		 * @param duration
-		 * @param onProgress
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massLockObjects(
@@ -2851,60 +2623,11 @@ export const useObjectStore = defineStore('object', {
 			duration = null,
 			onProgress = null,
 		) {
-			this.clearAllObjectErrors()
-
-			const results = await Promise.allSettled(
-				objects.map(async (obj) => {
-					try {
-						const objectId = obj.id || obj['@self']?.id
-
-						await this.lockObject(obj, process, duration)
-
-						this.clearObjectError(objectId)
-
-						if (onProgress) onProgress(obj, true)
-
-						return { success: true, id: objectId, object: obj }
-					} catch (error) {
-						const objectId = obj.id || obj['@self']?.id
-						const errorMessage = error.message || 'Unknown error'
-
-						console.error(`Failed to lock object ${objectId}:`, error)
-
-						this.setObjectError(objectId, errorMessage)
-
-						if (onProgress) onProgress(obj, false, errorMessage)
-
-						return {
-							success: false,
-							id: objectId,
-							object: obj,
-							error: errorMessage,
-						}
-					}
-				}),
-			)
-
-			const successful = results
-				.filter((r) => r.status === 'fulfilled' && r.value.success)
-				.map((r) => r.value)
-			const failed = results
-				.filter(
-					(r) =>
-						r.status === 'rejected'
-						|| (r.status === 'fulfilled' && !r.value.success),
-				)
-				.map((r) => r.value || { success: false, error: 'Unknown error' })
-
-			if (successful.length > 0) {
-				const successfulIds = successful.map((r) => r.id)
-				const remainingSelected = this.selectedObjects.filter(
-					(id) => !successfulIds.includes(id),
-				)
-				this.setSelectedObjects(remainingSelected)
-			}
-
-			return { successful, failed }
+			return applyToEach(this, objects, {
+				verb: 'lock',
+				act: (obj) => this.lockObject(obj, process, duration),
+				onProgress,
+			})
 		},
 
 		/**
@@ -2913,67 +2636,14 @@ export const useObjectStore = defineStore('object', {
 		 * @param {Array<object>} objects - Array of objects to unlock
 		 * @param {Function} onProgress - Callback function called after each unlock operation (optional)
 		 * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
-		 */
-		/**
-		 * @param objects
-		 * @param onProgress
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massUnlockObjects(objects, onProgress = null) {
-			this.clearAllObjectErrors()
-
-			const results = await Promise.allSettled(
-				objects.map(async (obj) => {
-					try {
-						const objectId = obj.id || obj['@self']?.id
-
-						await this.unlockObject(obj)
-
-						this.clearObjectError(objectId)
-
-						if (onProgress) onProgress(obj, true)
-
-						return { success: true, id: objectId, object: obj }
-					} catch (error) {
-						const objectId = obj.id || obj['@self']?.id
-						const errorMessage = error.message || 'Unknown error'
-
-						console.error(`Failed to unlock object ${objectId}:`, error)
-
-						this.setObjectError(objectId, errorMessage)
-
-						if (onProgress) onProgress(obj, false, errorMessage)
-
-						return {
-							success: false,
-							id: objectId,
-							object: obj,
-							error: errorMessage,
-						}
-					}
-				}),
-			)
-
-			const successful = results
-				.filter((r) => r.status === 'fulfilled' && r.value.success)
-				.map((r) => r.value)
-			const failed = results
-				.filter(
-					(r) =>
-						r.status === 'rejected'
-						|| (r.status === 'fulfilled' && !r.value.success),
-				)
-				.map((r) => r.value || { success: false, error: 'Unknown error' })
-
-			if (successful.length > 0) {
-				const successfulIds = successful.map((r) => r.id)
-				const remainingSelected = this.selectedObjects.filter(
-					(id) => !successfulIds.includes(id),
-				)
-				this.setSelectedObjects(remainingSelected)
-			}
-
-			return { successful, failed }
+			return applyToEach(this, objects, {
+				verb: 'unlock',
+				act: (obj) => this.unlockObject(obj),
+				onProgress,
+			})
 		},
 
 		/**
@@ -3131,16 +2801,7 @@ export const useObjectStore = defineStore('object', {
 				}),
 			)
 
-			const successful = results
-				.filter((r) => r.status === 'fulfilled' && r.value.success)
-				.map((r) => r.value)
-			const failed = results
-				.filter(
-					(r) =>
-						r.status === 'rejected'
-						|| (r.status === 'fulfilled' && !r.value.success),
-				)
-				.map((r) => r.value || { success: false, error: 'Unknown error' })
+			const { successful, failed } = splitSettled(results)
 
 			if (successful.length > 0) {
 				const successfulIds = successful.map((r) => r.id)
@@ -3183,16 +2844,7 @@ export const useObjectStore = defineStore('object', {
 				}),
 			)
 
-			const successful = results
-				.filter((r) => r.status === 'fulfilled' && r.value.success)
-				.map((r) => r.value)
-			const failed = results
-				.filter(
-					(r) =>
-						r.status === 'rejected'
-						|| (r.status === 'fulfilled' && !r.value.success),
-				)
-				.map((r) => r.value || { success: false, error: 'Unknown error' })
+			const { successful, failed } = splitSettled(results)
 
 			if (successful.length > 0) {
 				const successfulIds = successful.map((r) => r.id)

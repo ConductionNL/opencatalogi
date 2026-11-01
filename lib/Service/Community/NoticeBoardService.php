@@ -37,13 +37,14 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 
 /**
  * Notice boards, their notices, and the line between a notice and a publication.
  *
  * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
  */
-class NoticeBoardService {
+class NoticeBoardService implements NoticeBoardServiceInterface {
 
 	/**
 	 * The schema slug a notice lives under.

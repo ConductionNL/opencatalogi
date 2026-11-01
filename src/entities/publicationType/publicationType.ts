@@ -1,4 +1,4 @@
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TPublicationType } from './publicationType.types'
 
 import { z } from 'zod'
@@ -14,69 +14,9 @@ export class PublicationType implements TPublicationType {
 	public summary!: string
 	public version!: string
 	public required!: string[]
-	public properties!: Record<
-		string,
-		{
-			title: string
-			description: string
-			type:
-				| 'string'
-				| 'number'
-				| 'integer'
-				| 'object'
-				| 'array'
-				| 'boolean'
-				| 'dictionary'
-			format:
-				| 'date'
-				| 'time'
-				| 'duration'
-				| 'date-time'
-				| 'url'
-				| 'uri'
-				| 'uuid'
-				| 'email'
-				| 'idn-email'
-				| 'hostname'
-				| 'idn-hostname'
-				| 'ipv4'
-				| 'ipv6'
-				| 'uri-reference'
-				| 'iri'
-				| 'iri-reference'
-				| 'uri-template'
-				| 'json-pointer'
-				| 'regex'
-				| 'binary'
-				| 'byte'
-				| 'password'
-				| 'rsin'
-				| 'kvk'
-				| 'bsn'
-				| 'oidn'
-				| 'telephone'
-			pattern: string
-			default: string
-			behavior: string
-			required: boolean
-			deprecated: boolean
-			minLength: number
-			maxLength: number
-			example: string
-			minimum: number
-			maximum: number
-			multipleOf: number
-			exclusiveMin: boolean
-			exclusiveMax: boolean
-			minItems: number
-			maxItems: number
-		}
-	>
+	public properties!: TPublicationType['properties']
 
-	public archive!: {
-		valuation: 'b' | 'v' | 'n'
-		class: 1 | 2 | 3 | 4 | 5
-	}
+	public archive!: TPublicationType['archive']
 
 	public source!: string
 
@@ -139,7 +79,7 @@ export class PublicationType implements TPublicationType {
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TPublicationType, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/5og7tj13bkzj5-create-metadata
 		const propertiesDataSchema = z.object({
 			title: z.string().min(1, 'is verplicht'),
@@ -208,7 +148,7 @@ export class PublicationType implements TPublicationType {
 			summary: z.string().min(1, 'is verplicht'),
 			version: z.string(),
 			required: z.string().array(),
-			properties: z.record(propertiesDataSchema), // z.record allows for any amount of any keys, with specific type for value validation
+			properties: z.record(z.string(), propertiesDataSchema), // z.record allows for any amount of any keys, with specific type for value validation
 			archive: z.object({
 				valuation: z.enum(['b', 'v', 'n'], {
 					message: "kan alleen 'b', 'v', of 'n' zijn",
@@ -220,10 +160,6 @@ export class PublicationType implements TPublicationType {
 			source: z.string().url('is niet een url').or(z.literal('')),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

@@ -48,29 +48,24 @@
 	</NcEmptyContent>
 	<CnIndexPage
 		v-else
+		ref="index"
 		:key="indexKey"
 		v-bind="indexProps"
 		:title="t('opencatalogi', 'Publications')"
-		:description="catalog.title"
-		:register="String(activePair.register)"
-		:schema="String(activePair.schema)"
-		:rowClickToView="opensDetail"
-		:viewTo="opensDetail ? rowTarget : null"
+		:description="t('opencatalogi', 'Manage your publications and their status')"
+		:showTitle="true"
+		:register="String(primaryPair.register)"
+		:schema="String(primaryPair.schema)"
+		:collectionUrl="collectionUrl"
+		:rowClickToView="true"
+		:viewTo="rowTarget"
+		:cardAccent="cardAccent"
+		:editOpensDetail="true"
 		@rowClick="onRowOpen"
 		@rowAuxClick="onRowOpen"
-		@view="onRowOpen"
-		@editOpen="onRowOpen">
-		<template v-if="pairs.length > 1" #below-header>
-			<NcSelect
-				class="catalog-publications__pair"
-				:modelValue="activeOption"
-				:options="pairOptions"
-				label="label"
-				:clearable="false"
-				:inputLabel="t('opencatalogi', 'Register and schema')"
-				@update:modelValue="onPairSelected" />
-		</template>
-	</CnIndexPage>
+		@view="onView"
+		@editOpen="onEdit"
+		@add="onAdd" />
 </template>
 
 <script>
@@ -81,15 +76,13 @@ import {
 } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
-import { NcButton, NcEmptyContent, NcLoadingIcon, NcSelect } from '@nextcloud/vue'
+import { NcButton, NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 import DatabaseAlertOutline from 'vue-material-design-icons/DatabaseAlertOutline.vue'
 import DatabaseCogOutline from 'vue-material-design-icons/DatabaseCogOutline.vue'
 import DatabaseOffOutline from 'vue-material-design-icons/DatabaseOffOutline.vue'
 import { catalogScopePairs, normaliseIdList } from '../../services/catalogScope.js'
-import { objectStore } from '../../store/store.js'
-
-/** The query key holding the active pair. Underscored, so CnIndexPage does not send it to the API as a filter. */
-const PAIR_QUERY_KEY = '_pair'
+import { getPublicationStatus } from '../../services/publicationStatus.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 /** Listeners CnPageRenderer binds for its own row opening, which only works on `type:"index"` pages. */
 const RENDERER_ROW_LISTENERS = [
@@ -103,15 +96,18 @@ const RENDERER_ROW_LISTENERS = [
  * CatalogPublicationsIndex: the publications of one catalog, scoped like the
  * backend's `/api/{catalogSlug}`, to the catalog's registers × schemas.
  *
- * Renders the library's CnIndexPage for one register/schema pair at a time.
- * With several pairs a selector picks the active one, kept in the `_pair`
- * query parameter. Rows of the publication pair open on PublicationDetail;
- * rows of any other pair have no detail page, so a click selects them and
- * Edit uses CnIndexPage's own form for that schema. Takes the page config and
- * route params from CnPageRenderer, and passes the rest of the config through
- * to CnIndexPage, `publicationPairConfig` on the publication pair only.
+ * Renders the library's CnIndexPage over all of the catalog's pairs at once,
+ * listed from `/api/{catalogSlug}` through its `collectionUrl`. The page's own
+ * pair is the publication pair when the catalog holds it, else its first pair.
+ * Rows of the publication pair open on PublicationDetail, rows of any other
+ * pair on the generic CatalogObjectDetail page. Edit opens the publication
+ * modal for publications and CnIndexPage's form for other schemas. Takes the
+ * page config and route params from CnPageRenderer, and passes the rest of the
+ * config through to CnIndexPage, plus `publicationPairConfig` when the page's
+ * pair is the publication pair and `otherPairConfig` when it is not.
  *
  * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+ * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
  */
 export default {
 	name: 'CatalogPublicationsIndex',
@@ -123,7 +119,11 @@ export default {
 		NcButton,
 		NcEmptyContent,
 		NcLoadingIcon,
-		NcSelect,
+	},
+
+	inject: {
+		/** The app's handler map, which CnAppRoot provides as `customComponents`. */
+		cnCustomComponents: { default: () => ({}) },
 	},
 
 	inheritAttrs: false,
@@ -141,10 +141,15 @@ export default {
 		schema: { type: String, default: '' },
 		/**
 		 * CnIndexPage props that only fit the publication schema, such as its
-		 * columns and row actions. Passed on the publication pair only; other
-		 * pairs fall back to CnIndexPage's defaults for their schema.
+		 * columns and row actions. Passed when the page's pair is the
+		 * publication pair; its custom row actions show on publication rows only.
 		 */
 		publicationPairConfig: { type: Object, default: () => ({}) },
+		/**
+		 * CnIndexPage props for a catalog without the publication pair, such as
+		 * a default column set, so not every schema property becomes a column.
+		 */
+		otherPairConfig: { type: Object, default: () => ({}) },
 	},
 
 	data() {
@@ -154,8 +159,8 @@ export default {
 			resolving: false,
 			failed: false,
 			resolveSequence: 0,
-			/** Register and schema titles for the selector, keyed `register:<id>` / `schema:<id>`. */
-			scopeTitles: {},
+			/** A bulk action opened a dialog; when it closes the list reloads. */
+			selectionActionOpen: false,
 		}
 	},
 
@@ -204,75 +209,105 @@ export default {
 			return catalogScopePairs(this.catalog)
 		},
 
-		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
-		activePair() {
-			const key = this.$route?.query?.[PAIR_QUERY_KEY]
+		/**
+		 * The publication register and schema ids, or null when either is unknown.
+		 *
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 */
+		publicationPair() {
+			const [register] = normaliseIdList([this.register])
+			const [schema] = normaliseIdList([this.schema])
+			return register !== undefined && schema !== undefined
+				? { register, schema }
+				: null
+		},
+
+		/**
+		 * The page's own pair for CnIndexPage: the publication pair when the
+		 * catalog holds it, else the catalog's first pair.
+		 *
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 */
+		primaryPair() {
 			return (
-				this.pairs.find((pair) => pair.key === key) ?? this.pairs[0] ?? null
+				this.pairs.find((pair) => this.isPublicationPair(pair))
+				?? this.pairs[0]
+				?? null
 			)
+		},
+
+		/**
+		 * The catalog's own list endpoint, which searches all of its pairs at once.
+		 *
+		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 */
+		collectionUrl() {
+			return generateUrl('/apps/opencatalogi/api/{catalogSlug}', {
+				catalogSlug: this.catalogSlug,
+			})
 		},
 
 		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
 		indexKey() {
-			const pair = this.activePair
+			const pair = this.primaryPair
 			return `${this.catalogSlug}:${pair?.register}:${pair?.schema}`
 		},
 
 		/**
-		 * Whether the active pair is the publication pair, which has a detail page.
+		 * Whether the page's pair is the publication pair, which picks the config.
 		 *
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
-		opensDetail() {
-			const [register] = normaliseIdList([this.register])
-			const [schema] = normaliseIdList([this.schema])
-			const pair = this.activePair
-			return Boolean(
-				pair
-				&& register !== undefined
-				&& schema !== undefined
-				&& pair.register === register
-				&& pair.schema === schema,
-			)
+		isPublicationPagePair() {
+			return this.isPublicationPair(this.primaryPair)
 		},
 
-		/** @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003 */
+		/**
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 * @spec openspec/specs/publications/spec.md#requirement-a-catalog-without-the-publication-schema-lists-a-default-column-set-cos-003
+		 */
 		indexProps() {
 			const attrs = { ...this.$attrs }
 			for (const listener of RENDERER_ROW_LISTENERS) {
 				delete attrs[listener]
 			}
-			if (this.opensDetail) {
-				return {
-					...this.actionToggles,
-					...attrs,
-					...this.publicationPairConfig,
-				}
+			if (!this.isPublicationPagePair) {
+				return { ...this.actionToggles, ...attrs, ...this.otherPairConfig }
 			}
-			// CnIndexPage's View only emits; without a detail page it would do nothing.
-			return { ...this.actionToggles, ...attrs, showViewAction: false }
+			const config = { ...this.publicationPairConfig }
+			if (Array.isArray(config.actions)) {
+				// The publication's own actions (e.g. its file list) do not fit a row of another schema.
+				config.actions = config.actions.map((action) =>
+					action && typeof action === 'object'
+						? {
+								...action,
+								visible: (row) =>
+									this.isPublicationRow(row)
+									&& (typeof action.visible === 'function'
+										? action.visible(row)
+										: action.visible !== false),
+							}
+						: action,
+				)
+			}
+			if (Array.isArray(config.bulkActions)) {
+				config.bulkActions =
+					this.actionToggles.showDeleteAction === false
+						? []
+						: config.bulkActions.map((action) =>
+								this.bindBulkAction(action),
+							)
+			}
+			return { ...this.actionToggles, ...attrs, ...config }
 		},
 
-		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
-		pairOptions() {
-			return this.pairs.map((pair) => ({
-				key: pair.key,
-				label: t('opencatalogi', '{schema} in {register}', {
-					schema: this.scopeTitles[`schema:${pair.schema}`] ?? pair.schema,
-					register:
-						this.scopeTitles[`register:${pair.register}`]
-						?? pair.register,
-				}),
-			}))
-		},
-
-		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
-		activeOption() {
-			return (
-				this.pairOptions.find(
-					(option) => option.key === this.activePair?.key,
-				) ?? null
-			)
+		/**
+		 * Whether one of the app's modals or dialogs is open.
+		 *
+		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-list-reloads-after-a-selection-action-psa-002
+		 */
+		overlayOpen() {
+			return Boolean(navigationStore.modal || navigationStore.dialog)
 		},
 
 		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
@@ -283,6 +318,23 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * After a dialog a bulk action opened has closed, the list reloads and
+		 * the selection clears, so the rows show what the dialog changed.
+		 *
+		 * @param {boolean} open Whether a modal or dialog is open.
+		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-list-reloads-after-a-selection-action-psa-002
+		 */
+		overlayOpen(open) {
+			if (open || !this.selectionActionOpen) {
+				return
+			}
+			this.selectionActionOpen = false
+			const index = this.$refs.index
+			index?.onSelect?.([])
+			index?.onRefreshEvent?.()
+		},
+
 		catalogSlug: {
 			immediate: true,
 			/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
@@ -302,19 +354,6 @@ export default {
 			if (!this.resolving && !this.menuCatalog) {
 				this.resolveCatalog({ walk: false })
 			}
-		},
-
-		pairs: {
-			immediate: true,
-			/**
-			 * @param {Array<{register: number, schema: number}>} pairs The pairs.
-			 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
-			 */
-			handler(pairs) {
-				if (pairs.length > 1) {
-					this.loadScopeTitles(pairs)
-				}
-			},
 		},
 	},
 
@@ -372,99 +411,153 @@ export default {
 		},
 
 		/**
-		 * Load the register and schema titles the selector shows. An id whose
-		 * title does not load stays shown as the id. Each id is requested once;
-		 * its null placeholder marks the request as in flight.
+		 * Bind a bulk action whose `handler` names a function in the app's
+		 * handler map, so it is called with the selected rows themselves and
+		 * the action's own `props`, not only their ids. Any other entry is
+		 * left to CnIndexPage.
 		 *
-		 * @param {Array<{register: number, schema: number}>} pairs The pairs.
-		 * @return {Promise<void>}
-		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
+		 * @param {object} action The manifest bulk action.
+		 * @return {object} The action, with a bound handler when it names one.
+		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-selection-bar-opens-the-mass-dialogs-on-the-selected-publications-psa-001
 		 */
-		async loadScopeTitles(pairs) {
-			const wanted = new Set()
-			for (const pair of pairs) {
-				wanted.add(`register:${pair.register}`)
-				wanted.add(`schema:${pair.schema}`)
+		bindBulkAction(action) {
+			const handler =
+				action && typeof action.handler === 'string'
+					? this.cnCustomComponents?.[action.handler]
+					: null
+			if (typeof handler !== 'function') {
+				return action
 			}
-			const missing = [...wanted].filter((key) => !(key in this.scopeTitles))
-			if (missing.length === 0) {
-				return
-			}
-			const placeholders = Object.fromEntries(
-				missing.map((key) => [key, null]),
-			)
-			this.scopeTitles = { ...this.scopeTitles, ...placeholders }
-			await Promise.all(
-				missing.map(async (key) => {
-					const [kind, id] = key.split(':')
-					try {
-						const response = await fetch(
-							generateUrl(`/apps/openregister/api/${kind}s/{id}`, {
-								id,
-							}),
-						)
-						if (!response.ok) return
-						const data = await response.json()
-						if (typeof data?.title === 'string' && data.title !== '') {
-							this.scopeTitles = {
-								...this.scopeTitles,
-								[key]: data.title,
-							}
-						}
-					} catch {
-						// The id stays as the label.
+			return {
+				...action,
+				handler: (scope) => {
+					const ids = (scope?.selectedIds || []).map(String)
+					const objects = (this.$refs.index?.selectedObjects || []).filter(
+						(row) => ids.includes(String(row?.id)),
+					)
+					const opened = handler({
+						...scope,
+						objects,
+						props: action.props || {},
+					})
+					if (opened) {
+						this.selectionActionOpen = true
 					}
-				}),
-			)
-		},
-
-		/**
-		 * Switch the list to another pair. Starts from a clean query: the
-		 * previous pair's filters, search and sort belong to another schema.
-		 *
-		 * @param {{key: string}|null} option The selected option.
-		 * @return {void}
-		 * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
-		 */
-		onPairSelected(option) {
-			if (!option || option.key === this.activePair?.key) {
-				return
+				},
 			}
-			this.$router
-				.push({ query: { [PAIR_QUERY_KEY]: option.key } })
-				.catch(() => {})
 		},
 
 		/**
-		 * Where a row opens: its publication's detail page in this catalog.
+		 * Whether a pair is the publication pair.
 		 *
-		 * @param {object} row The row.
-		 * @return {object|null} The router location, or null for a row of another pair or without an id.
+		 * @param {{register: number, schema: number}|null} pair The pair.
+		 * @return {boolean} True for the publication pair.
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
 		 */
-		rowTarget(row) {
-			if (!this.opensDetail) {
+		isPublicationPair(pair) {
+			const publication = this.publicationPair
+			return Boolean(
+				pair
+				&& publication
+				&& pair.register === publication.register
+				&& pair.schema === publication.schema,
+			)
+		},
+
+		/**
+		 * Whether a row is a publication, by its own `@self` register and schema.
+		 *
+		 * @param {object} row The row.
+		 * @return {boolean} True for a publication row.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 */
+		isPublicationRow(row) {
+			const self = row?.['@self'] || {}
+			const [register] = normaliseIdList([self.register])
+			const [schema] = normaliseIdList([self.schema])
+			return this.isPublicationPair({ register, schema })
+		},
+
+		/**
+		 * A publication card's status color and icon; other rows get none.
+		 *
+		 * @param {object} row The card's object.
+		 * @return {?{variant: string, icon: string, label: string}}
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-publication-card-req-tbl-005
+		 */
+		cardAccent(row) {
+			if (!this.isPublicationRow(row)) {
 				return null
 			}
+			switch (getPublicationStatus(row)) {
+				case 'published':
+					return {
+						variant: 'success',
+						icon: 'ListBoxOutline',
+						label: t('opencatalogi', 'Published'),
+					}
+				case 'depublished':
+					return {
+						variant: 'error',
+						icon: 'AlertOutline',
+						label: t('opencatalogi', 'Depublished'),
+					}
+				default:
+					return {
+						variant: 'warning',
+						icon: 'Pencil',
+						label: t('opencatalogi', 'Concept'),
+					}
+			}
+		},
+
+		/**
+		 * Where a row opens: a publication on its detail page in this catalog,
+		 * an object of another schema on the generic detail page for its pair.
+		 *
+		 * @param {object} row The row.
+		 * @return {object|null} The router location, or null for a row without an id, register or schema.
+		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
+		 */
+		rowTarget(row) {
 			const self = row?.['@self'] || {}
 			const id = row?.id ?? self.id ?? self.uuid ?? row?.uuid
 			if (id === undefined || id === null || id === '') {
 				return null
 			}
+			if (this.isPublicationRow(row)) {
+				return {
+					name: 'PublicationDetail',
+					params: { catalogSlug: this.catalogSlug, id: String(id) },
+				}
+			}
+			const [register] = normaliseIdList([self.register])
+			const [schema] = normaliseIdList([self.schema])
+			if (register === undefined || schema === undefined) {
+				return null
+			}
 			return {
-				name: 'PublicationDetail',
-				params: { catalogSlug: this.catalogSlug, id: String(id) },
+				name: 'CatalogObjectDetail',
+				params: {
+					catalogSlug: this.catalogSlug,
+					register: String(register),
+					schema: String(schema),
+					id: String(id),
+				},
 			}
 		},
 
 		/**
-		 * Open a row on a click, a middle click or the View action. A
-		 * ctrl/cmd/shift or middle click opens it in a new tab.
+		 * Open a row on a click, a middle click or the View action, on its
+		 * detail page. A ctrl/cmd/shift or middle click opens it in a new tab. A
+		 * row without a detail page opens in the form for its own schema instead.
 		 *
 		 * @param {object} row The row.
 		 * @param {Event} [event] The originating event, when there is one.
 		 * @return {void}
 		 * @spec openspec/specs/retrofit-2026-05-26-object-table-listing/spec.md#requirement-table-actions-and-pagination-req-tbl-003
+		 * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
 		 */
 		onRowOpen(row, event) {
 			const nativeEvent =
@@ -477,7 +570,52 @@ export default {
 			const target = this.rowTarget(row)
 			if (target) {
 				openRowTarget(nativeEvent, target, this.$router)
+				return
 			}
+			// A middle click has nothing to open in a new tab.
+			if (nativeEvent?.button !== 1) {
+				this.$refs.index?.openFormDialog(row)
+			}
+		},
+
+		/**
+		 * The View action: every row opens on its detail page.
+		 *
+		 * @param {object} row The row.
+		 * @param {Event} [event] The originating event, when there is one.
+		 * @return {void}
+		 * @spec openspec/specs/publications/spec.md#requirement-an-object-of-another-schema-in-a-catalog-opens-on-its-own-detail-page-cos-001
+		 */
+		onView(row, event) {
+			this.onRowOpen(row, event)
+		},
+
+		/**
+		 * The Edit action: a publication opens in the app's own publication modal,
+		 * a row of another schema in CnIndexPage's form for its own schema.
+		 *
+		 * @param {object} row The row.
+		 * @return {void}
+		 * @spec openspec/specs/generic-object-modals/spec.md#requirement-provide-single-object-lifecycle-modals-driven-by-the-navigation-store-gom-001
+		 */
+		onEdit(row) {
+			if (!this.isPublicationRow(row)) {
+				this.$refs.index?.openFormDialog(row)
+				return
+			}
+			objectStore.setActiveObject('publication', row)
+			navigationStore.setModal('viewObject')
+		},
+
+		/**
+		 * Open the app's own create modal, which lets the user pick a schema.
+		 *
+		 * @return {void}
+		 * @spec openspec/specs/generic-object-modals/spec.md#requirement-provide-single-object-lifecycle-modals-driven-by-the-navigation-store-gom-001
+		 */
+		onAdd() {
+			objectStore.setActiveObject('publication', null)
+			navigationStore.setModal('viewObject')
 		},
 	},
 }
@@ -488,9 +626,5 @@ export default {
 	display: flex;
 	justify-content: center;
 	padding: calc(var(--default-grid-baseline) * 10);
-}
-
-.catalog-publications__pair {
-	max-width: 480px;
 }
 </style>

@@ -1,5 +1,8 @@
 <script setup>
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { navigationStore, objectStore } from '../../store/store.js'
+
+const { isAdmin } = useIsAdmin()
 </script>
 
 <template>
@@ -143,6 +146,21 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						)
 					}}
 				</NcCheckboxRadioSwitch>
+				<NcCheckboxRadioSwitch
+					v-model="catalogi.showWithheld"
+					:disabled="objectStore.isLoading('catalog')"
+					data-testid="catalog-show-withheld">
+					{{
+						t(
+							'opencatalogi',
+							'Show which documents of a publication were withheld, and on which grounds',
+						)
+					}}
+				</NcCheckboxRadioSwitch>
+				<CatalogStaffAccessFields
+					v-if="isAdmin"
+					v-model="catalogi.staffAccess"
+					:disabled="objectStore.isLoading('catalog')" />
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -198,12 +216,19 @@ import {
 } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
 import { Catalogi } from '../../entities/index.js'
+import {
+	catalogFormFromObject,
+	catalogOrganizationOption,
+	idOptions,
+} from '../../services/catalogForm.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 export default {
 	name: 'CatalogModal',
 	components: {
+		CatalogStaffAccessFields,
 		NcModal,
 		NcTextField,
 		NcButton,
@@ -230,6 +255,8 @@ export default {
 				status: { id: 'development', label: 'Development' },
 				hasWooSitemap: false,
 				hasOoapi: false,
+				showWithheld: false,
+				staffAccess: null,
 			},
 
 			selectedOrganization: null,
@@ -331,7 +358,7 @@ export default {
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,
-				filters: {},
+				filters: this.catalogi.filters || {},
 			})
 
 			const result = catalogiItem.validate()
@@ -350,59 +377,27 @@ export default {
 
 	/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 	updated() {
-		if (navigationStore.modal === 'catalog' && !this.hasUpdated) {
-			this.hasUpdated = true
-
-			if (this.isEdit) {
-				const activeCatalog = objectStore.getActiveObject('catalog')
-
-				this.catalogi = {
-					...activeCatalog,
-					// Extract id from @self if not present at top level
-					id: activeCatalog.id || activeCatalog['@self']?.id || '',
-					filters: Array.isArray(activeCatalog.filters)
-						? {}
-						: activeCatalog.filters || {},
-
-					status:
-						this.statusOptions.find(
-							(opt) =>
-								opt.id
-								=== (activeCatalog.status || '').toLowerCase(),
-						) || this.statusOptions[0],
-				}
-
-				// Find and set the selected organization
-				const org = objectStore
-					.getCollection('organization')
-					.results.find(
-						(org) =>
-							org.id
-							&& activeCatalog.organization
-							&& org.id.toString()
-								=== activeCatalog.organization.toString(),
-					)
-
-				this.selectedOrganization = org
-					? { id: org.id, label: org.title }
-					: null
-
-				// Map existing registers and schemas to the format expected by NcSelect
-				this.selectedRegisters = activeCatalog.registers.map((id) => ({
-					id,
-					label:
-						objectStore.availableRegisters.find((r) => r.id === id)
-							?.title || id,
-				}))
-
-				this.selectedSchemas = activeCatalog.schemas.map((id) => ({
-					id,
-					label:
-						objectStore.availableSchemas.find((s) => s.id === id)?.title
-						|| id,
-				}))
-			}
+		if (navigationStore.modal !== 'catalog' || this.hasUpdated) {
+			return
 		}
+		this.hasUpdated = true
+		if (!this.isEdit) {
+			return
+		}
+		const activeCatalog = objectStore.getActiveObject('catalog')
+		this.catalogi = catalogFormFromObject(activeCatalog, this.statusOptions)
+		this.selectedOrganization = catalogOrganizationOption(
+			activeCatalog,
+			objectStore.getCollection('organization').results,
+		)
+		this.selectedRegisters = idOptions(
+			activeCatalog.registers,
+			objectStore.availableRegisters,
+		)
+		this.selectedSchemas = idOptions(
+			activeCatalog.schemas,
+			objectStore.availableSchemas,
+		)
 	},
 
 	methods: {
@@ -422,6 +417,8 @@ export default {
 				status: { id: 'development', label: 'Development' },
 				hasWooSitemap: false,
 				hasOoapi: false,
+				showWithheld: false,
+				staffAccess: null,
 			}
 			this.selectedOrganization = null
 			this.selectedRegisters = []
@@ -450,7 +447,7 @@ export default {
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,
-				filters: {},
+				filters: this.catalogi.filters || {},
 			})
 
 			if (this.isEdit) {

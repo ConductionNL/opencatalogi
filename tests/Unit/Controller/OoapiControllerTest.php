@@ -26,6 +26,8 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\OoapiPage;
+use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Controller\OoapiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\OoapiService;
@@ -175,7 +177,7 @@ class OoapiControllerTest extends TestCase {
 
 		$this->ooapiService->expects($this->once())
 			->method('listCourses')
-			->with($this->anything(), '3', '5', 2, 10)
+			->with($this->scopeOn(register: '3', schema: '5', catalog: ['id' => 'cat-1', 'hasOoapi' => true]), $this->pageOf(number: 2, size: 10))
 			->willReturn(['items' => [['courseId' => 'c1']], 'pageNumber' => 2, 'pageSize' => 10, 'hasNext' => false]);
 
 		$response = $this->controller->courses('hva-onderwijs');
@@ -222,7 +224,7 @@ class OoapiControllerTest extends TestCase {
 
 		$this->ooapiService->expects($this->once())
 			->method('listOfferings')
-			->with($this->anything(), '3', '5', 'course-1', 1, OoapiService::DEFAULT_PAGE_SIZE)
+			->with($this->scopeOn(register: '3', schema: '5'), $this->pageOf(number: 1, size: OoapiService::DEFAULT_PAGE_SIZE), 'course-1')
 			->willReturn(['items' => [], 'pageNumber' => 1, 'pageSize' => OoapiService::DEFAULT_PAGE_SIZE, 'hasNext' => false]);
 
 		$response = $this->controller->courseOfferings('hva-onderwijs', 'course-1');
@@ -338,7 +340,7 @@ class OoapiControllerTest extends TestCase {
 		// is not a sufficient assertion.
 		$this->ooapiService->expects($this->once())
 			->method('listPrograms')
-			->with($this->anything(), '7', '9', 3, 25)
+			->with($this->scopeOn(register: '7', schema: '9'), $this->pageOf(number: 3, size: 25))
 			->willReturn(
 				[
 					'items' => [['programId' => 'p1']],
@@ -393,7 +395,7 @@ class OoapiControllerTest extends TestCase {
 		// the wrong field would 404 every real request.
 		$this->ooapiService->expects($this->once())
 			->method('getResource')
-			->with($this->anything(), '7', '9', 'p1', 'programId')
+			->with($this->scopeOn(register: '7', schema: '9'), 'p1', 'programId')
 			->willReturn(['programId' => 'p1', 'name' => 'Bachelor']);
 
 		$response = $this->controller->program('hva-onderwijs', 'p1');
@@ -433,7 +435,7 @@ class OoapiControllerTest extends TestCase {
 
 		$this->ooapiService->expects($this->once())
 			->method('getResource')
-			->with($this->anything(), '11', '13', 'o1', 'offeringId')
+			->with($this->scopeOn(register: '11', schema: '13'), 'o1', 'offeringId')
 			->willReturn(['offeringId' => 'o1', 'courseId' => 'c1']);
 
 		$response = $this->controller->offering('hva-onderwijs', 'o1');
@@ -444,4 +446,205 @@ class OoapiControllerTest extends TestCase {
 		$this->assertSame('c1', $response->getData()['courseId']);
 
 	}//end testOfferingResolvesByOfferingIdFieldOnItsOwnRegisterPair()
+
+	/**
+	 * Every consumer endpoint, with its arguments and the config context it resolves.
+	 *
+	 * @return array<string, array{0: string, 1: array<int, string>, 2: string}>
+	 */
+	public static function consumerEndpoints(): array {
+		return [
+			'organizations' => ['organizations', ['hva'], 'organization'],
+			'organization' => ['organization', ['hva', 'org-1'], 'organization'],
+			'courses' => ['courses', ['hva'], 'ooapi_courses'],
+			'course' => ['course', ['hva', 'c1'], 'ooapi_courses'],
+			'programs' => ['programs', ['hva'], 'ooapi_programs'],
+			'program' => ['program', ['hva', 'p1'], 'ooapi_programs'],
+			'courseOfferings' => ['courseOfferings', ['hva', 'c1'], 'ooapi_offerings'],
+			'offering' => ['offering', ['hva', 'o1'], 'ooapi_offerings'],
+		];
+	}
+
+	/**
+	 * @dataProvider consumerEndpoints
+	 */
+	public function testEveryConsumerEndpointRefusesAnAnonymousCaller(string $method, array $args, string $context): void {
+		$this->userSession->method('getUser')->willReturn(null);
+		$this->catalogiService->expects($this->never())->method('getCatalogBySlug');
+
+		$this->assertSame(401, $this->controller->$method(...$args)->getStatus());
+	}
+
+	/**
+	 * @dataProvider consumerEndpoints
+	 */
+	public function testEveryConsumerEndpointRefusesAnUnknownCatalogBeforeItsContext(string $method, array $args, string $context): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->with('hva')->willReturn(null);
+		$this->container->expects($this->never())->method('get');
+
+		$this->assertSame(404, $this->controller->$method(...$args)->getStatus());
+	}
+
+	/**
+	 * @dataProvider consumerEndpoints
+	 */
+	public function testEveryConsumerEndpointResolvesItsOwnContext(string $method, array $args, string $context): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->request->method('getParam')->willReturnCallback(static fn ($key, $default = null) => $default);
+		$envelope = ['items' => [], 'pageNumber' => 1, 'pageSize' => 25, 'hasNext' => false];
+		$this->ooapiService->method('listCourses')->willReturn($envelope);
+		$this->ooapiService->method('listPrograms')->willReturn($envelope);
+		$this->ooapiService->method('listOfferings')->willReturn($envelope);
+		$this->ooapiService->method('getResource')->willReturn(['id' => 'x']);
+		$this->ooapiService->method('organizationById')->willReturn(['id' => 'x']);
+
+		$keys = new \ArrayObject();
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => new class($keys) {
+				public function __construct(
+					private \ArrayObject $keys,
+				) {
+				}
+
+				public function resolveRegisterId(string $a, string $k): string {
+					$this->keys[] = $k;
+					return '3';
+				}
+
+				public function resolveSchemaId(string $a, string $k): string {
+					$this->keys[] = $k;
+					return '5';
+				}
+			}
+		);
+
+		$this->assertSame(200, $this->controller->$method(...$args)->getStatus());
+		$this->assertSame([$context.'_register', $context.'_schema'], $keys->getArrayCopy());
+	}
+
+	/**
+	 * @return array<string, array{0: string, 1: string, 2: string}>
+	 */
+	public static function singleResourceEndpoints(): array {
+		return [
+			'organization' => ['organization', 'organizationById', 'Organization not found'],
+			'course' => ['course', 'getResource', 'Course not found'],
+			'program' => ['program', 'getResource', 'Program not found'],
+			'offering' => ['offering', 'getResource', 'Offering not found'],
+		];
+	}
+
+	/**
+	 * @dataProvider singleResourceEndpoints
+	 */
+	public function testSingleResourceEndpointsAnswerTheirOwnNotFound(string $method, string $serviceMethod, string $message): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->method($serviceMethod)->willReturn(null);
+
+		$response = $this->controller->$method('hva', 'missing');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['error' => $message], $response->getData());
+	}
+
+	public function testOrganizationRendersTheCatalogOrganizationById(): void {
+		$this->authenticateAsAllowedConsumer();
+		$catalog = ['id' => 'cat-1', 'hasOoapi' => true];
+		$this->catalogiService->method('getCatalogBySlug')->willReturn($catalog);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->expects($this->once())
+			->method('organizationById')
+			->with($this->scopeOn(register: '3', schema: '5', catalog: $catalog), 'org-1')
+			->willReturn(['organizationId' => 'org-1']);
+
+		$response = $this->controller->organization('hva', 'org-1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['organizationId' => 'org-1'], $response->getData());
+	}
+
+	public function testOrganizationsListsTheCatalogOrganization(): void {
+		$this->authenticateAsAllowedConsumer();
+		$catalog = ['id' => 'cat-1', 'hasOoapi' => true];
+		$this->catalogiService->method('getCatalogBySlug')->willReturn($catalog);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->expects($this->once())
+			->method('renderOrganization')
+			->with($this->scopeOn(register: '3', schema: '5', catalog: $catalog))
+			->willReturn(['organizationId' => 'org-1']);
+
+		$response = $this->controller->organizations('hva');
+
+		$this->assertSame(
+			['pageNumber' => 1, 'pageSize' => 1, 'hasNext' => false, 'items' => [['organizationId' => 'org-1']]],
+			$response->getData()
+		);
+	}
+
+	public function testCourseResolvesByCourseIdField(): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->expects($this->once())
+			->method('getResource')
+			->with($this->scopeOn(register: '3', schema: '5'), 'c1', 'courseId')
+			->willReturn(['courseId' => 'c1']);
+
+		$response = $this->controller->course('hva', 'c1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['courseId' => 'c1'], $response->getData());
+	}
+
+	public function testAnUnexpectedFailureInsideTheCatalogContextAnswers500(): void {
+		$this->authenticateAsAllowedConsumer();
+		$this->catalogiService->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'hasOoapi' => true]);
+		$this->ooapiService->method('isOoapiEnabled')->willReturn(true);
+		$this->wireResolvedRegisterConfiguration('3', '5');
+		$this->ooapiService->method('getResource')->willThrowException(new \RuntimeException('boom'));
+
+		$response = $this->controller->course('hva', 'c1');
+
+		$this->assertSame(500, $response->getStatus());
+	}
+
+	/**
+	 * Matches an OoapiScope on the given register/schema pair and, when given, catalog.
+	 *
+	 * @param string                    $register The register id.
+	 * @param string                    $schema   The schema id.
+	 * @param array<string, mixed>|null $catalog  The catalog, or null for any.
+	 *
+	 * @return \PHPUnit\Framework\Constraint\Callback<OoapiScope> The constraint.
+	 */
+	private function scopeOn(string $register, string $schema, ?array $catalog = null): \PHPUnit\Framework\Constraint\Callback {
+		return $this->callback(
+			static fn (OoapiScope $scope): bool => $scope->register === $register
+				&& $scope->schema === $schema
+				&& ($catalog === null || $scope->catalog === $catalog)
+		);
+	}
+
+	/**
+	 * Matches an OoapiPage with the given number and size and no filter.
+	 *
+	 * @param int $number The page number.
+	 * @param int $size   The page size.
+	 *
+	 * @return \PHPUnit\Framework\Constraint\Callback<OoapiPage> The constraint.
+	 */
+	private function pageOf(int $number, int $size): \PHPUnit\Framework\Constraint\Callback {
+		return $this->callback(
+			static fn (OoapiPage $page): bool => $page->number === $number && $page->size === $size && $page->filter === []
+		);
+	}
 }

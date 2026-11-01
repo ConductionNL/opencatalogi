@@ -1,22 +1,12 @@
 <?php
 
 /**
- * Unit tests for ObligationReadService.
- *
- * Every listener answers the real ObligationsRequestedEvent. A faked event
- * would hide a wrong accessor, which is the failure the woo build rules name.
- *
- * @category Test
- * @package  OCA\OpenCatalogi\Tests
- *
- * @author    Conduction Development Team <info@conduction.nl>
- * @copyright 2026 Conduction B.V.
- * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  *
- * @link https://www.OpenCatalogi.nl
+ * Tests for ObligationReadService: every enabled source is asked through the
+ * real ObligationsRequestedEvent, and a source that fails or that nobody
+ * answers for stays visible as unread.
  */
 
 declare(strict_types=1);
@@ -24,308 +14,207 @@ declare(strict_types=1);
 namespace Unit\Service\Publication;
 
 use DateTimeImmutable;
-use DateTimeZone;
 use OCA\OpenCatalogi\Event\ObligationsRequestedEvent;
 use OCA\OpenCatalogi\Service\Publication\ObligationOverviewService;
 use OCA\OpenCatalogi\Service\Publication\ObligationReadService;
-use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
-use OCP\EventDispatcher\Event;
+use OCP\App\IAppManager;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
+use RuntimeException;
 
 /**
- * A dispatcher that calls the listeners it was given, in order, as the server's does.
- */
-class ListeningDispatcher implements IEventDispatcher {
-
-	/** @var array<int, callable> */
-	public array $listeners = [];
-
-	public function addListener(string $eventName, callable $listener, int $priority = 0): void {
-		$this->listeners[] = $listener;
-	}
-
-	public function removeListener(string $eventName, callable $listener): void {
-	}
-
-	public function addServiceListener(string $eventName, string $className, int $priority = 0): void {
-	}
-
-	public function hasListeners(string $eventName): bool {
-		return $this->listeners !== [];
-	}
-
-	public function dispatch(string $eventName, Event $event): void {
-		$this->dispatchTyped($event);
-	}
-
-	public function dispatchTyped(Event $event): void {
-		foreach ($this->listeners as $listener) {
-			$listener($event);
-		}
-	}
-}
-
-/**
- * An OpenRegister ObjectService double: the obligationSource rows, and every save.
- */
-class ObligationSourceObjects {
-
-	/** @var array<int, array<string, mixed>> */
-	public array $queries = [];
-
-	/** @var array<int, array<string, mixed>> */
-	public array $saved = [];
-
-	/**
-	 * @param array<int, array<string, mixed>> $sources The stored sources.
-	 */
-	public function __construct(private array $sources) {
-	}
-
-	public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
-		$this->queries[] = $query;
-		return ['results' => $this->sources, 'total' => count($this->sources)];
-	}
-
-	public function saveObject(array $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true): array {
-		$this->saved[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac];
-		return $object;
-	}
-}
-
-/**
- * @covers \OCA\OpenCatalogi\Service\Publication\ObligationReadService
- * @covers \OCA\OpenCatalogi\Event\ObligationsRequestedEvent
- * @covers \OCA\OpenCatalogi\Service\Publication\ObligationOverviewService
+ * Unit tests for ObligationReadService.
  */
 class ObligationReadServiceTest extends TestCase {
 
-	private ListeningDispatcher $dispatcher;
-
-	protected function setUp(): void {
-		$this->dispatcher = new ListeningDispatcher();
-
-	}//end setUp()
-
 	/**
-	 * The service under test over the given stored sources.
+	 * The service over the given sources and listeners.
 	 *
-	 * @param ObligationSourceObjects $objects The OpenRegister double.
-	 * @param string $schema The configured obligationSource schema.
+	 * @param array<int, array<string, mixed>> $sources   The obligationSource rows.
+	 * @param array<string, callable>          $listeners Per app id, what its listener does with the event.
 	 *
-	 * @return ObligationReadService
+	 * @return ObligationReadService The service.
 	 */
-	private function service(ObligationSourceObjects $objects, string $schema = '12'): ObligationReadService {
+	private function service(array $sources, array $listeners): ObligationReadService {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			static fn (string $app, string $key, string $default = '') => match ($key) {
-				'publication_register' => '3',
-				'obligation_source_schema' => $schema,
-				default => $default,
+			static fn (string $app, string $key): string => match ($key) {
+				'publication_register' => '31',
+				'obligation_source_schema' => '1553',
+				default => '',
 			}
 		);
-		$reader = $this->getMockBuilder(ServiceCatalogueService::class)
-			->disableOriginalConstructor()
-			->onlyMethods(['getObjectService'])
-			->getMock();
-		$reader->method('getObjectService')->willReturn($objects);
 
-		return new ObligationReadService(
-			dispatcher: $this->dispatcher,
-			objects: $reader,
-			config: $config,
-			overview: new ObligationOverviewService()
+		$objectService = new class($sources) {
+			/**
+			 * @param array<int, array<string, mixed>> $sources The rows to answer.
+			 */
+			public function __construct(private array $sources) {
+			}
+
+			/**
+			 * @param array<string, mixed> $query         The query.
+			 * @param bool                 $_rbac         Ignored.
+			 * @param bool                 $_multitenancy Ignored.
+			 *
+			 * @return array<string, mixed> The rows.
+			 */
+			public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array {
+				return ['results' => $this->sources];
+			}
+		};
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($objectService);
+
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(
+			static function (ObligationsRequestedEvent $event) use ($listeners): void {
+				if (isset($listeners[$event->getAppId()]) === true) {
+					($listeners[$event->getAppId()])($event);
+				}
+			}
 		);
+
+		return new ObligationReadService($dispatcher, new ObligationOverviewService(), $config, $container, $this->appManager(installed: true));
 
 	}//end service()
 
 	/**
-	 * Three stored sources: one that answers, one that throws, one nobody listens for.
-	 *
-	 * @return ObligationSourceObjects
+	 * One source answers, one throws and one has no reader.
 	 */
-	private function threeSources(): ObligationSourceObjects {
-		return new ObligationSourceObjects(
-			[
-				['id' => 'u-dossiq', 'appId' => 'dossiq', 'title' => 'Zaken', 'enabled' => true],
-				['id' => 'u-filinq', 'appId' => 'filinq', 'title' => 'Documenten', 'enabled' => true],
-				['id' => 'u-stil', 'appId' => 'stilleapp', 'title' => 'Stil', 'enabled' => true],
-				['id' => 'u-uit', 'appId' => 'uitgezet', 'title' => 'Uit', 'enabled' => false],
+	public function testEverySourceIsAskedAndTheUnreadOnesAreNamed(): void {
+		$service = $this->service(
+			sources: [
+				['appId' => 'dossiq', 'title' => 'Woo-besluiten', 'enabled' => true],
+				['appId' => 'decos', 'title' => 'Convenanten en brieven', 'enabled' => true],
+				['appId' => 'notubiz', 'title' => 'Raadsstukken', 'enabled' => true],
+				['appId' => 'retired', 'title' => 'Uit', 'enabled' => false],
+			],
+			listeners: [
+				'dossiq' => static function (ObligationsRequestedEvent $event): void {
+					$event->setObligations(
+						[
+							['title' => 'Besluit jeugdzorgcontracten', 'dueDate' => '2026-10-06T00:00:00+00:00', 'publishedAt' => ''],
+							['title' => 'Besluit Molenweg', 'dueDate' => '2026-10-09T00:00:00+00:00', 'publishedAt' => ''],
+							['title' => 'Besluit kermis', 'dueDate' => '2026-10-01T00:00:00+00:00', 'publishedAt' => '2026-10-02T10:00:00+00:00'],
+						]
+					);
+				},
+				'decos' => static function (): void {
+					throw new RuntimeException('Decos JOIN answered 502');
+				},
 			]
 		);
 
-	}//end threeSources()
+		$overview = $service->read(now: new DateTimeImmutable('2026-10-08T09:00:00+00:00'));
 
-	/**
-	 * One source answers with three obligations, one throws and one has no
-	 * reader. The answering source's obligations are listed; the other two are
-	 * unread with their reason and are not counted as zero.
-	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
-	 */
-	public function testOneSourceAnswersOneThrowsAndOneHasNoReader(): void {
-		$this->dispatcher->addListener(
-			ObligationsRequestedEvent::class,
-			static function (Event $event): void {
-				if ($event instanceof ObligationsRequestedEvent && $event->getAppId() === 'dossiq') {
-					$event->setObligations(
-						[
-							['title' => 'Besluit A', 'publishedAt' => '2026-09-01T00:00:00+00:00'],
-							['title' => 'Besluit B', 'dueDate' => '2026-09-01T00:00:00+00:00'],
-							['title' => 'Besluit C', 'dueDate' => '2026-12-01T00:00:00+00:00'],
-						]
-					);
-				}
-			}
-		);
-		$this->dispatcher->addListener(
-			ObligationsRequestedEvent::class,
-			static function (Event $event): void {
-				if ($event instanceof ObligationsRequestedEvent && $event->getAppId() === 'filinq') {
-					throw new \RuntimeException('Filinq is in maintenance.');
-				}
-			}
-		);
-		$objects = $this->threeSources();
-
-		$overview = $this->service(objects: $objects)->read(now: new DateTimeImmutable('2026-10-01T00:00:00+00:00', new DateTimeZone('UTC')));
-
-		$this->assertSame(['Besluit A', 'Besluit B', 'Besluit C'], array_column($overview['obligations'], 'title'));
-		$this->assertSame(['dossiq', 'dossiq', 'dossiq'], array_column($overview['obligations'], 'source'));
-		$this->assertSame(1, $overview['published']);
+		$this->assertSame(3, $overview['total']);
 		$this->assertSame(1, $overview['late']);
-		$this->assertSame(1, $overview['sourcesRead']);
-		$this->assertSame(3, $overview['sourcesRegistered'], 'a switched-off source is left out entirely');
-
-		$unread = array_column($overview['unreadSources'], 'reason', 'appId');
-		$this->assertSame(['filinq', 'stilleapp'], array_keys($unread));
-		$this->assertSame('Filinq is in maintenance.', $unread['filinq']);
-		$this->assertSame(ObligationReadService::NO_READER, $unread['stilleapp']);
-
-	}//end testOneSourceAnswersOneThrowsAndOneHasNoReader()
-
-	/**
-	 * A source that answered gets its `lastReadAt`; one that did not keeps the
-	 * old moment, because it was not read.
-	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
-	 */
-	public function testOnlyASourceThatWasReadGetsItsLastReadMoment(): void {
-		$this->dispatcher->addListener(
-			ObligationsRequestedEvent::class,
-			static function (Event $event): void {
-				if ($event instanceof ObligationsRequestedEvent && $event->getAppId() === 'dossiq') {
-					$event->setObligations([]);
-				}
-			}
+		$this->assertSame(2, $overview['outstanding']);
+		$this->assertSame(1, $overview['dueThisWeek']);
+		$this->assertSame(1, $overview['publishedThisMonth']);
+		$this->assertSame(3, $overview['sourcesRegistered']);
+		$this->assertSame(
+			[
+				['appId' => 'decos', 'reason' => 'Decos JOIN answered 502'],
+				['appId' => 'notubiz', 'reason' => ObligationReadService::NO_READER],
+			],
+			$overview['unreadSources']
 		);
-		$objects = $this->threeSources();
+		$this->assertSame(['late', 'due', 'published'], array_column($overview['obligations'], 'state'));
 
-		$overview = $this->service(objects: $objects)->read(now: new DateTimeImmutable('2026-10-01T08:00:00+00:00'));
+		$dossiq = $overview['bySource'][0];
+		$this->assertSame('dossiq', $dossiq['appId']);
+		$this->assertSame(2, $dossiq['outstanding']);
+		$this->assertSame(1, $dossiq['late']);
+		$this->assertSame('2026-10-06T00:00:00+00:00', $dossiq['nextDue']);
+		$this->assertCount(3, $overview['bySource']);
 
-		$this->assertSame(1, $overview['sourcesRead'], 'an empty answer is an answer: that source has nothing to publish');
-		$this->assertCount(1, $objects->saved);
-		$save = $objects->saved[0];
-		$this->assertSame('u-dossiq', $save['uuid']);
-		$this->assertSame('2026-10-01T08:00:00+00:00', $save['object']['lastReadAt']);
-		$this->assertSame('3', (string)$save['register']);
-		$this->assertSame('12', (string)$save['schema']);
-
-	}//end testOnlyASourceThatWasReadGetsItsLastReadMoment()
+	}//end testEverySourceIsAskedAndTheUnreadOnesAreNamed()
 
 	/**
-	 * The sources are read from the configured register and schema, and
-	 * without a configured schema the service refuses rather than reporting an
-	 * organisation with no sources as compliant.
-	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * Without a configured schema there are no sources, and nothing is asked.
 	 */
-	public function testWithoutAConfiguredSourceSchemaTheOverviewRefuses(): void {
-		$objects = $this->threeSources();
+	public function testAnUnconfiguredSchemaHasNoSources(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('');
+		$dispatcher = $this->createMock(IEventDispatcher::class);
+		$dispatcher->expects($this->never())->method('dispatchTyped');
 
-		$this->expectException(UnreadableRuleException::class);
-
-		$this->service(objects: $objects, schema: '')->read();
-
-	}//end testWithoutAConfiguredSourceSchemaTheOverviewRefuses()
-
-	/**
-	 * The stored sources are read from the configured register and schema.
-	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
-	 */
-	public function testTheSourcesComeFromTheConfiguredSchema(): void {
-		$objects = $this->threeSources();
-
-		$this->service(objects: $objects)->read();
-
-		$this->assertSame(['register' => '3', 'schema' => '12'], $objects->queries[0]['@self']);
-
-	}//end testTheSourcesComeFromTheConfiguredSchema()
-
-	/**
-	 * The saved `lastReadAt` is valid under the real `obligationSource` fragment.
-	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
-	 */
-	public function testTheSavedSourceFitsTheRealSchemaFragment(): void {
-		$this->dispatcher->addListener(
-			ObligationsRequestedEvent::class,
-			static function (Event $event): void {
-				if ($event instanceof ObligationsRequestedEvent) {
-					$event->setObligations([]);
-				}
-			}
+		$service = new ObligationReadService(
+			$dispatcher,
+			new ObligationOverviewService(),
+			$config,
+			$this->createMock(ContainerInterface::class),
+			$this->appManager(installed: true)
 		);
-		$objects = $this->threeSources();
-		$this->service(objects: $objects)->read(now: new DateTimeImmutable('2026-10-01T08:00:00+00:00'));
 
-		$fragment = json_decode(
-			(string)file_get_contents(__DIR__ . '/../../../../lib/Settings/register.d/publication-inspection-and-the-national-indexes.json'),
-			true
-		)['components']['schemas']['obligationSource'];
+		$overview = $service->read();
 
-		foreach ($objects->saved as $save) {
-			$object = $save['object'];
-			foreach ($fragment['required'] as $required) {
-				$this->assertArrayHasKey($required, $object);
-			}
+		$this->assertSame(0, $overview['sourcesRegistered']);
+		$this->assertSame([], $overview['bySource']);
 
-			foreach (array_keys($object) as $property) {
-				if ($property === 'id') {
-					continue;
-				}
-
-				$this->assertArrayHasKey($property, $fragment['properties'], 'the schema declares ' . $property);
-			}
-
-			$this->assertSame('date-time', $fragment['properties']['lastReadAt']['format']);
-			$this->assertNotFalse(DateTimeImmutable::createFromFormat(DATE_ATOM, $object['lastReadAt']));
-		}
-
-		$this->assertCount(3, $objects->saved);
-
-	}//end testTheSavedSourceFitsTheRealSchemaFragment()
+	}//end testAnUnconfiguredSchemaHasNoSources()
 
 	/**
-	 * The event carries the source it asks, and an answer only once set.
-	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
+	 * Sources that cannot be read are an error, not an empty overview.
 	 */
-	public function testTheEventIsUnansweredUntilAListenerSetsObligations(): void {
-		$event = new ObligationsRequestedEvent(appId: 'dossiq');
+	public function testUnreadableSourcesAreAnError(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('7');
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willThrowException(new RuntimeException('OpenRegister is not installed'));
 
-		$this->assertSame('dossiq', $event->getAppId());
-		$this->assertFalse($event->isAnswered());
-		$this->assertSame([], $event->getObligations());
+		$service = new ObligationReadService(
+			$this->createMock(IEventDispatcher::class),
+			new ObligationOverviewService(),
+			$config,
+			$container,
+			$this->appManager(installed: true)
+		);
 
-		$event->setObligations([['title' => 'Besluit'], 'geen rij']);
+		$this->expectException(RuntimeException::class);
+		$service->read();
 
-		$this->assertTrue($event->isAnswered());
-		$this->assertSame([['title' => 'Besluit']], $event->getObligations());
+	}//end testUnreadableSourcesAreAnError()
 
-	}//end testTheEventIsUnansweredUntilAListenerSetsObligations()
+	/**
+	 * Without OpenRegister the sources are an error, and the container is not asked.
+	 */
+	public function testWithoutOpenRegisterTheSourcesAreAnError(): void {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('7');
+		$container = $this->createMock(ContainerInterface::class);
+		$container->expects($this->never())->method('get');
+
+		$service = new ObligationReadService(
+			$this->createMock(IEventDispatcher::class),
+			new ObligationOverviewService(),
+			$config,
+			$container,
+			$this->appManager(installed: false)
+		);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('OpenRegister is not installed');
+		$service->read();
+
+	}//end testWithoutOpenRegisterTheSourcesAreAnError()
+
+	/**
+	 * An app manager that answers whether OpenRegister is installed.
+	 *
+	 * @param bool $installed The answer.
+	 *
+	 * @return IAppManager
+	 */
+	private function appManager(bool $installed): IAppManager {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturn($installed);
+		return $appManager;
+
+	}//end appManager()
 }//end class

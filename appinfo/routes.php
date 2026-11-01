@@ -96,7 +96,6 @@ return [
 		// Active publication, inspection and the national indexes: the admin surfaces.
 		['name' => 'publicationRules#previewRule', 'url' => '/api/publication-rules/preview', 'verb' => 'POST'],
 		['name' => 'publicationRules#validateDecision', 'url' => '/api/publication-rules/validate-decision', 'verb' => 'POST'],
-		['name' => 'publicationRules#obligations', 'url' => '/api/obligations', 'verb' => 'GET'],
 		['name' => 'depublication#depublish', 'url' => '/api/publications/depublish', 'verb' => 'POST'],
 		['name' => 'depublication#acknowledgeWithdrawal', 'url' => '/api/publications/depublish/acknowledge', 'verb' => 'POST'],
 		// Publish now, withdraw with a reason, publish again, withdraw one document
@@ -110,6 +109,8 @@ return [
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
 		['name' => 'inspection#open', 'url' => '/api/inspections', 'verb' => 'POST'],
 		['name' => 'commentPeriod#open', 'url' => '/api/comment-periods', 'verb' => 'POST'],
+		// What must still be published, read from every registered source (woo-obligation-overview).
+		['name' => 'obligation#index', 'url' => '/api/obligations', 'verb' => 'GET'],
 		// Published service and case type catalogue: the admin surfaces.
 		['name' => 'serviceCatalogue#unavailableEntries', 'url' => '/api/service-catalogue/unavailable', 'verb' => 'GET'],
 		['name' => 'serviceCatalogue#importCaseType', 'url' => '/api/case-types/import', 'verb' => 'POST'],

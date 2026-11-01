@@ -39,8 +39,8 @@ namespace OCA\OpenCatalogi\Service\Portal;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -49,7 +49,7 @@ use Throwable;
  *
  * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-frequency-decides-when-and-how-the-resident-hears-req-ssa-003
  */
-class SavedSearchMatcher {
+class SavedSearchMatcher implements SavedSearchMatcherInterface {
 
 	/**
 	 * The most saved searches read per run.
@@ -60,11 +60,6 @@ class SavedSearchMatcher {
 	 * The most due saved searches handled per run.
 	 */
 	private const DUE_LIMIT = 200;
-
-	/**
-	 * The most rows asked of one search.
-	 */
-	private const SEARCH_LIMIT = 100;
 
 	/**
 	 * The most publications in one digest.
@@ -140,8 +135,7 @@ class SavedSearchMatcher {
 				}
 
 				$stats['handled']++;
-				$matches = $this->matches(saved: $saved, from: $lastRunAt, until: $now);
-				$stats['notices'] += $this->notify(saved: $saved, matches: $matches, until: $nowUtc);
+				$stats['notices'] += $this->notify(saved: $saved, window: new SearchWindow(from: $lastRunAt, until: $now));
 			} catch (Throwable $e) {
 				$stats['failed']++;
 				$this->logger->warning(
@@ -184,38 +178,27 @@ class SavedSearchMatcher {
 	 * The publications that became public in the window and fit the query,
 	 * oldest first.
 	 *
-	 * @param array<string, mixed> $saved The saved search.
-	 * @param DateTimeImmutable    $from  The last run (exclusive).
-	 * @param DateTimeImmutable    $until The moment of the run (inclusive).
+	 * @param array<string, mixed> $saved  The saved search.
+	 * @param SearchWindow         $window The run window.
 	 *
 	 * @return array<int, array{publication: string, title: string, url: string, publicationDate: string}>
 	 *
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-matching-finds-only-publications-the-resident-could-have-found-new-since-the-last-run-req-ssa-002
-	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) SearchQueryTranslator is a pure function over the query.
 	 */
-	private function matches(array $saved, DateTimeImmutable $from, DateTimeImmutable $until): array {
-		$params = SearchQueryTranslator::fromSavedQuery(query: (array)($saved['query'] ?? []));
-		$range = (array)($params['publicationDate'] ?? []);
-		unset($range['gte'], $range['lte']);
-		$params['publicationDate'] = array_merge($range, ['gt' => $this->utc(moment: $from), 'lte' => $this->utc(moment: $until)]);
-		$params['_limit'] = self::SEARCH_LIMIT;
-		$params['_order'] = ['publicationDate' => 'asc'];
-
+	private function matches(array $saved, SearchWindow $window): array {
+		$params = $window->searchParams(query: (array)($saved['query'] ?? []));
 		$filters = (array)($saved['query']['filters'] ?? []);
-		$window = [
-			'from' => $from,
-			'until' => $until,
-			'periodFrom' => $this->moment(value: ($filters['periodFrom'] ?? null)),
-			'periodTo' => $this->moment(value: ($filters['periodTo'] ?? null))?->setTime(23, 59, 59),
-		];
+		$window = $window->narrowedTo(
+			periodFrom: $this->moment(value: ($filters['periodFrom'] ?? null)),
+			periodTo: $this->moment(value: ($filters['periodTo'] ?? null))?->setTime(23, 59, 59)
+		);
 
 		$found = [];
 		foreach ($this->search->search(params: $params) as $row) {
 			$self = (array)($row['@self'] ?? []);
 			$id = (string)($self['id'] ?? ($row['id'] ?? ''));
 			$date = $this->moment(value: ($row['publicationDate'] ?? null));
-			if ($id === '' || ($self['schema'] ?? null) !== PortalObjectStore::PUBLICATION_SCHEMA || $this->inWindow(date: $date, window: $window) === false
+			if ($id === '' || ($self['schema'] ?? null) !== PortalObjectStore::PUBLICATION_SCHEMA || $window->contains(date: $date) === false
 				|| $this->publications->isObjectPublic(objectData: $row) === false
 			) {
 				continue;
@@ -236,40 +219,21 @@ class SavedSearchMatcher {
 	}//end matches()
 
 	/**
-	 * Whether a publication date lies in the run's window and the saved period.
+	 * Match a saved search in its window, write each notice's message, then
+	 * record it on the saved search, and move `lastRunAt` in the save after
+	 * the last message.
 	 *
-	 * @param DateTimeImmutable|null                $date   The publication date.
-	 * @param array<string, DateTimeImmutable|null> $window from, until (exclusive, inclusive), periodFrom, periodTo.
-	 *
-	 * @return bool
-	 */
-	private function inWindow(?DateTimeImmutable $date, array $window): bool {
-		if ($date === null || $date <= $window['from'] || $date > $window['until']) {
-			return false;
-		}
-
-		if ($window['periodFrom'] !== null && $date < $window['periodFrom']) {
-			return false;
-		}
-
-		return $window['periodTo'] === null || $date <= $window['periodTo'];
-
-	}//end inWindow()
-
-	/**
-	 * Write each notice's message, then record it on the saved search, and
-	 * move `lastRunAt` in the save after the last message.
-	 *
-	 * @param array<string, mixed>             $saved   The saved search.
-	 * @param array<int, array<string, mixed>> $matches The matches.
-	 * @param string                           $until   The end of the window, UTC.
+	 * @param array<string, mixed> $saved  The saved search.
+	 * @param SearchWindow         $window The run window.
 	 *
 	 * @return int How many notices were handed over.
 	 *
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-notice-reaches-the-resident-through-portaliq-and-a-crash-sends-late-not-never-req-ssa-004
 	 */
-	private function notify(array $saved, array $matches, string $until): int {
+	private function notify(array $saved, SearchWindow $window): int {
 		$id = (string)$saved['id'];
+		$until = $this->utc(moment: $window->until);
+		$matches = $this->matches(saved: $saved, window: $window);
 		if ($matches === []) {
 			$saved['lastRunAt'] = $until;
 			$this->store->save(schema: SavedSearchService::SCHEMA, data: $saved, id: $id);

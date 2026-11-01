@@ -730,9 +730,8 @@
         "This catalog has no registers or schemas configured": "Šiam katalogui nesukonfigūruota jokių registrų ar schemų",
         "Add a register and a schema to the catalog to list its publications here.": "Pridėkite registrą ir schemą prie katalogo, kad čia būtų rodomos jo publikacijos.",
         "Open catalog": "Atverti katalogą",
-        "Register and schema": "Registras ir schema",
-        "{schema} in {register}": "{schema} ({register})",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Sukurkite pirmąjį katalogą. Tai talpykla, kurioje bus jūsų publikacijos. Pasirinkite registrą Publication ir schemą Publication, kad katalogas rodytų jūsų pridedamas publikacijas."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Sukurkite pirmąjį katalogą. Tai talpykla, kurioje bus jūsų publikacijos. Pasirinkite registrą Publication ir schemą Publication, kad katalogas rodytų jūsų pridedamas publikacijas.",
+        "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną"
     },
     "plurals": {}
 }

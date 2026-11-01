@@ -37,7 +37,8 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -77,8 +78,9 @@ use RuntimeException;
  * configuration vs sync options), which is out of scope for this change.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.TooManyMethods) Object type configuration is split into small private steps to stay under the unit limits.
  */
-class SettingsService {
+class SettingsService implements SettingsServiceInterface {
 
 	/**
 	 * The OpenRegister register the shared organisation projection lives on.
@@ -98,42 +100,101 @@ class SettingsService {
 	private const SHARED_ORGANISATION_SCHEMA = 'nc-organisation';
 
 	/**
-	 * Minimum allowed federation sync interval in seconds (15 minutes).
+	 * Object types whose config keys are `<type>_source`, `<type>_schema` and `<type>_register`,
+	 * with the schema slug equal to the type.
 	 *
-	 * The interval bounds live here rather than on the cron job because this is
-	 * the class that PUBLISHES them (getSyncOptions) and ENFORCES them
-	 * (updateSyncOptions clamps a submitted value against them). Holding them on
-	 * DirectorySync meant a service referenced a cron class purely to read three
-	 * numbers — which pushed this class over PHPMD's coupling threshold — and
-	 * left the same clamp expressed in two places. DirectorySync now aliases
-	 * these, so `self::MIN_INTERVAL_SECONDS` still resolves.
-	 *
-	 * @var integer
+	 * 'publication' resolves publication_register/publication_schema for retention
+	 * evaluation (RET-005). 'document' was retired: attachments are files on the
+	 * publication. 'organization' is absent because its schema is OpenRegister's
+	 * `nc-organisation` projection, resolved by resolveSharedOrganisationConfiguration().
 	 */
-	public const MIN_INTERVAL_SECONDS = 900;
+	private const OBJECT_TYPES = [
+		'catalog',
+		'listing',
+		'publication',
+		'theme',
+		'glossary',
+	];
 
 	/**
-	 * Maximum allowed federation sync interval in seconds (24 hours).
+	 * OOAPI types (OOAPI-003/OOAPI-010): config prefix => schema slug.
 	 *
-	 * @var integer
+	 * The course/program/offering schemas live in the shared publication register
+	 * (a register.d fragment, ADR-037). The OOAPI-010 config prefixes differ from
+	 * the slugs, hence the map.
 	 */
-	public const MAX_INTERVAL_SECONDS = 86400;
+	private const OOAPI_TYPE_MAP = [
+		'ooapi_courses' => 'course',
+		'ooapi_programs' => 'program',
+		'ooapi_offerings' => 'offering',
+	];
 
 	/**
-	 * Default federation sync interval in seconds (1 hour).
+	 * Schemas in the shared publication register whose config keys differ from their
+	 * slugs, grouped with the register key a group writes first (or null).
 	 *
-	 * @var integer
+	 * An unset key makes the matching controller answer 503: an unconfigured
+	 * capability is refused, not shown as empty.
+	 * - Woo transparency (WOO-PROV-002), including dossiq's withheld documents.
+	 * - The published service and case type catalogue.
+	 * - Active publication, inspection and the national indexes.
+	 * - Woo request intake and the comment period.
+	 * - The public and community surface; a notice is its own schema so it never
+	 *   enters the sitemap.
 	 */
-	public const DEFAULT_INTERVAL_SECONDS = 3600;
+	private const KEYED_SCHEMA_GROUPS = [
+		[
+			'register' => 'woo_register',
+			'schemas' => [
+				'woo_batch_schema' => 'wooBatch',
+				'woo_assessment_schema' => 'wooAssessment',
+				'withheld_document_schema' => 'withheldDocument',
+			],
+		],
+		[
+			'register' => 'service_catalogue_register',
+			'schemas' => [
+				'service_catalogue_entry_schema' => 'serviceCatalogueEntry',
+				'case_type_definition_schema' => 'caseTypeDefinition',
+				'knowledge_article_schema' => 'knowledgeArticle',
+				'article_verdict_schema' => 'articleVerdict',
+			],
+		],
+		[
+			'register' => null,
+			'schemas' => [
+				'publication_rule_schema' => 'publicationRule',
+				'inspection_schema' => 'inspection',
+				'publication_process_schema' => 'publicationProcess',
+				'zienswijze_ask_schema' => 'zienswijzeAsk',
+				'depublication_schema' => 'depublication',
+				'obligation_source_schema' => 'obligationSource',
+			],
+		],
+		[
+			'register' => null,
+			'schemas' => [
+				'woo_request_schema' => 'wooRequest',
+				'comment_period_schema' => 'commentPeriod',
+			],
+		],
+		[
+			'register' => null,
+			'schemas' => [
+				'service_status_schema' => 'serviceStatus',
+				'status_subscription_schema' => 'statusSubscription',
+				'instance_banner_schema' => 'instanceBanner',
+				'notice_board_schema' => 'noticeBoard',
+				'notice_schema' => 'notice',
+				'record_vote_schema' => 'recordVote',
+			],
+		],
+	];
 
-	/**
-	 * App config key holding what a register event can still complete in a catalogue scope.
-	 *
-	 * A JSON list of register slugs not resolved yet, plus the ids of resolved
-	 * registers whose catalogue still names a schema by slug. Written by
-	 * backfillCatalogScopes(), read by CatalogScopePendingListener.
-	 */
-	public const CATALOG_SCOPE_PENDING_KEY = 'catalog_scope_pending';
+
+
+
+
 
 	/**
 	 * Seeded catalogues that ship unpublished and are published once their scope resolves.
@@ -163,14 +224,6 @@ class SettingsService {
 	 */
 	private const OPENREGISTER_APP_ID = 'openregister';
 
-	/**
-	 * This constant defines the minimum version of the OpenRegister
-	 * application that is required for compatibility and
-	 * functionality.
-	 *
-	 * @var string $minORVersion The minimum required version of OpenRegister.
-	 */
-	private const MIN_OPENREGISTER_VERSION = '0.1.7';
 
 	/**
 	 * SettingsService constructor.
@@ -574,106 +627,142 @@ class SettingsService {
 	 *
 	 * @return array Array of registers with enriched schema data.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	private function enrichRegistersWithSchemas(array $registers): array {
 		try {
-			// Get the schema mapper to fetch full schema objects.
 			$schemaMapper = $this->getSchemaMapper();
 			if ($schemaMapper === null) {
-				// If we can't get the schema mapper, return registers as-is.
 				return $registers;
 			}
 
-			// Normalise every register to its array form once, so the schema-ID
-			// sweep below and the enrichment pass agree on the same shape.
-			$registerArrays = [];
-			foreach ($registers as $register) {
-				$registerArray = (array)$register;
-				if (is_object($register) === true && method_exists($register, 'jsonSerialize') === true) {
-					$registerArray = $register->jsonSerialize();
-				}
+			$registerArrays = array_map(fn ($register) => self::entityArray(entity: $register), $registers);
 
-				$registerArrays[] = $registerArray;
-			}
+			$schemaMap = self::referencedSchemas(schemaMapper: $schemaMapper, registerArrays: $registerArrays);
 
-			// Collect the distinct numeric schema IDs referenced by ALL registers, then
-			// resolve them in ONE batched query. Resolving per-ID inside the register
-			// loop issued a `find()` per schema — on this instance that is 2,814 queries
-			// for 348 registers on every settings request, and dominated the ~11s the
-			// endpoint took to respond.
-			$idsToResolve = [];
-			foreach ($registerArrays as $registerArray) {
-				$schemaIds = $registerArray['schemas'] ?? [];
-				if (is_array($schemaIds) === false) {
-					continue;
-				}
-
-				foreach ($schemaIds as $schemaId) {
-					if (is_numeric($schemaId) === true) {
-						$idsToResolve[(int)$schemaId] = true;
-					}
-				}
-			}
-
-			// The batched lookup chunks its IN() list and returns a map keyed by
-			// schema ID. It reads the table directly, matching the _rbac: false /
-			// _multitenancy: false posture the per-ID find() call used here before.
-			$schemaMap = [];
-			if (empty($idsToResolve) === false) {
-				$schemaMap = $schemaMapper->findMultipleOptimized(ids: array_keys($idsToResolve));
-			}
-
-			$enrichedRegisters = [];
-
-			foreach ($registerArrays as $registerArray) {
-				// Get schema IDs from the register.
-				$schemaIds = $registerArray['schemas'] ?? [];
-
-				// If schemas is not an array or is empty, keep as-is.
-				if (is_array($schemaIds) === false || empty($schemaIds) === true) {
-					$enrichedRegisters[] = $registerArray;
-					continue;
-				}
-
-				// Replace each schema ID with the full schema object from the batch.
-				$fullSchemas = [];
-				foreach ($schemaIds as $schemaId) {
-					// Skip if not a number (already an object).
-					if (is_numeric($schemaId) === false) {
-						$fullSchemas[] = $schemaId;
-						continue;
-					}
-
-					// A schema ID with no row is silently dropped, as before.
-					$schema = $schemaMap[(int)$schemaId] ?? null;
-					if ($schema === null) {
-						continue;
-					}
-
-					// Convert schema entity to array.
-					$schemaArray = (array)$schema;
-					if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
-						$schemaArray = $schema->jsonSerialize();
-					}
-
-					$fullSchemas[] = $schemaArray;
-				}//end foreach
-
-				// Replace schema IDs with full schema objects.
-				$registerArray['schemas'] = $fullSchemas;
-				$enrichedRegisters[] = $registerArray;
-			}//end foreach
-
-			return $enrichedRegisters;
+			return array_map(fn (array $register) => self::withFullSchemas(registerArray: $register, schemaMap: $schemaMap), $registerArrays);
 		} catch (\Exception $e) {
-			// If enrichment fails, return registers as-is.
 			return $registers;
 		}//end try
 
 	}//end enrichRegistersWithSchemas()
+
+	/**
+	 * An entity as an array: its jsonSerialize() form, or the array cast.
+	 *
+	 * @param mixed $entity The entity, object or array.
+	 *
+	 * @return array The array form.
+	 *
+	 * @spec exclude Internal shape step of enrichRegistersWithSchemas().
+	 */
+	private static function entityArray(mixed $entity): array {
+		if (is_object($entity) === true && method_exists($entity, 'jsonSerialize') === true) {
+			return $entity->jsonSerialize();
+		}
+
+		return (array)$entity;
+
+	}//end entityArray()
+
+	/**
+	 * The schemas the registers reference, by id, from one batched query.
+	 *
+	 * A find() per ID was 2,814 queries for 348 registers on every settings
+	 * request. The batched lookup reads the table directly, matching the
+	 * _rbac: false / _multitenancy: false posture of the per-ID find().
+	 *
+	 * @param \OCA\OpenRegister\Db\SchemaMapper $schemaMapper The schema mapper.
+	 * @param array<int, array> $registerArrays The registers in array form.
+	 *
+	 * @return array The resolved schemas by id.
+	 *
+	 * @spec exclude Internal lookup step of enrichRegistersWithSchemas().
+	 */
+	private static function referencedSchemas(\OCA\OpenRegister\Db\SchemaMapper $schemaMapper, array $registerArrays): array {
+		$idsToResolve = self::referencedSchemaIds(registerArrays: $registerArrays);
+		if (empty($idsToResolve) === true) {
+			return [];
+		}
+
+		return $schemaMapper->findMultipleOptimized(ids: $idsToResolve);
+
+	}//end referencedSchemas()
+
+	/**
+	 * The distinct numeric schema ids the registers reference, in first-seen order.
+	 *
+	 * @param array<int, array> $registerArrays The registers in array form.
+	 *
+	 * @return array<int, int> The schema ids.
+	 *
+	 * @spec exclude Internal collection step of enrichRegistersWithSchemas().
+	 */
+	private static function referencedSchemaIds(array $registerArrays): array {
+		$idsToResolve = [];
+		foreach ($registerArrays as $registerArray) {
+			$schemaIds = $registerArray['schemas'] ?? [];
+			if (is_array($schemaIds) === false) {
+				continue;
+			}
+
+			foreach (array_filter($schemaIds, 'is_numeric') as $schemaId) {
+				$idsToResolve[(int)$schemaId] = true;
+			}
+		}
+
+		return array_keys($idsToResolve);
+
+	}//end referencedSchemaIds()
+
+	/**
+	 * A register with its schema ids replaced by the resolved schemas.
+	 *
+	 * A register without a schema list keeps it as it is.
+	 *
+	 * @param array $registerArray The register in array form.
+	 * @param array $schemaMap The resolved schemas by id.
+	 *
+	 * @return array The register.
+	 *
+	 * @spec exclude Internal enrichment step of enrichRegistersWithSchemas().
+	 */
+	private static function withFullSchemas(array $registerArray, array $schemaMap): array {
+		$schemaIds = $registerArray['schemas'] ?? [];
+		if (is_array($schemaIds) === false || empty($schemaIds) === true) {
+			return $registerArray;
+		}
+
+		$registerArray['schemas'] = self::resolvedSchemas(schemaIds: $schemaIds, schemaMap: $schemaMap);
+		return $registerArray;
+
+	}//end withFullSchemas()
+
+	/**
+	 * Schema ids replaced by their resolved schemas.
+	 *
+	 * A non-numeric entry is kept as it is; an id with no row is dropped.
+	 *
+	 * @param array $schemaIds The schema ids.
+	 * @param array $schemaMap The resolved schemas by id.
+	 *
+	 * @return array The schemas.
+	 *
+	 * @spec exclude Internal enrichment step of enrichRegistersWithSchemas().
+	 */
+	private static function resolvedSchemas(array $schemaIds, array $schemaMap): array {
+		$fullSchemas = [];
+		foreach ($schemaIds as $schemaId) {
+			if (is_numeric($schemaId) === false) {
+				$fullSchemas[] = $schemaId;
+			} elseif (isset($schemaMap[(int)$schemaId]) === true) {
+				$fullSchemas[] = self::entityArray(entity: $schemaMap[(int)$schemaId]);
+			}
+		}
+
+		return $fullSchemas;
+
+	}//end resolvedSchemas()
 
 	/**
 	 * Keep only the known national channels that name a source slug.
@@ -781,10 +870,11 @@ class SettingsService {
 
 					if ($key === 'public_api_cache_seconds') {
 						// A negative or unreadable time switches caching off rather than
-						// storing something the cache headers cannot use.
+						// storing something the cache headers cannot use; more than an
+						// hour is stored as an hour, the ceiling the headers apply too.
 						$seconds = 0;
 						if (is_numeric($value) === true) {
-							$seconds = max(0, (int)$value);
+							$seconds = min(self::PUBLIC_API_CACHE_MAX_SECONDS, max(0, (int)$value));
 						}
 
 						$value = $seconds;
@@ -970,123 +1060,13 @@ class SettingsService {
 	 * @throws \RuntimeException If settings loading fails.
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	public function loadSettings(bool $force = false): array {
 		try {
-			// Get the absolute path to the app directory.
-			$appPath = $this->appManager->getAppPath(Application::APP_ID);
-
-			// Build absolute path to the configuration file.
-			$absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
-
-			// Check if file exists.
-			if (file_exists($absoluteFilePath) === false) {
-				throw new RuntimeException("Configuration file not found: {$absoluteFilePath}");
-			}
-
-			// Read the JSON file content.
-			$jsonContent = file_get_contents($absoluteFilePath);
-			if ($jsonContent === false) {
-				throw new RuntimeException("Failed to read configuration file: {$absoluteFilePath}");
-			}
-
-			// Parse JSON.
-			$data = json_decode($jsonContent, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				throw new RuntimeException('Invalid JSON in configuration file: ' . json_last_error_msg());
-			}
-
-			// ADR-037: merge modular register fragments from Settings/register.d/*.json.
-			// Each OpenSpec change drops its own fragment file instead of editing this
-			// monolith, so concurrent builds touch disjoint files (no merge conflicts).
-			// OpenAPI `components.schemas` / `paths` are keyed objects, so disjoint
-			// fragments union cleanly by key.
-			$fragmentDir = $appPath . '/lib/Settings/register.d';
-			if (is_dir($fragmentDir) === true) {
-				$fragmentFiles = glob($fragmentDir . '/*.json');
-				sort($fragmentFiles);
-				foreach ($fragmentFiles as $fragmentFile) {
-					$fragmentContent = file_get_contents($fragmentFile);
-					if ($fragmentContent === false) {
-						continue;
-					}
-
-					$fragmentData = json_decode($fragmentContent, true);
-					if (json_last_error() !== JSON_ERROR_NONE) {
-						// Skip malformed fragment; the monolith import still succeeds.
-						continue;
-					}
-
-					$data = self::deepMergeConfig(base: $data, overlay: $fragmentData);
-				}
-			}//end if
-
-			// ADR-037 guard: a fragment that declares a schema but forgets to list it
-			// under `components.registers.publication.schemas` gets the schema created
-			// and then orphaned — no register holds it, so no magic table is provisioned
-			// and the app's `{type}_register`/`{type}_schema` pair points at a register
-			// without that schema (how OOAPI course/program/offering broke). This
-			// pipeline only ever provisions one register, so attach the strays.
-			$data = self::attachOrphanSchemasToPublicationRegister(data: $data);
-
-			// Calculate relative path from Nextcloud root for sourceUrl tracking.
-			// appPath is something like /var/www/html/apps-extra/opencatalogi
-			// We need to get the part after the Nextcloud root.
-			$nextcloudRoot = dirname(dirname(dirname($appPath)));
-			// Go up from apps-extra/opencatalogi to root.
-			$relativeFilePath = str_replace($nextcloudRoot . '/', '', $absoluteFilePath);
-
-			// Fallback: if path calculation fails, use the standard relative path.
-			if (str_starts_with($relativeFilePath, 'apps-extra/') === false
-				&& str_starts_with($relativeFilePath, 'apps/') === false
-			) {
-				$relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
-			}
-
-			// Set the sourceUrl in the data if not already set.
-			// This allows the cron job to track the file location.
-			if (isset($data['x-openregister']) === false) {
-				$data['x-openregister'] = [];
-			}
-
-			if (isset($data['x-openregister']['sourceUrl']) === false) {
-				$data['x-openregister']['sourceUrl'] = $relativeFilePath;
-			}
-
-			if (isset($data['x-openregister']['sourceType']) === false) {
-				$data['x-openregister']['sourceType'] = 'local';
-			}
-
-			// Get the configuration service.
-			$configurationService = $this->getConfigurationService();
-
-			// Get the current app version. dynamically.
-			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
-
-			// The fragment digest is NOT folded into the version any more.
-			//
-			// ADR-037 originally appended `+frag.<md5>` so OpenRegister's
-			// version-gated import would re-import when a register.d fragment
-			// changed. That made the decision depend on how two md5 hashes SORT:
-			// version_compare treats `+…` as further version parts and compares
-			// them lexically, not as semver build metadata. Unchanged content
-			// re-imported roughly half the time, and a real change was skipped
-			// the other half — caught only by the content-differs fallback.
-			//
-			// OpenRegister now hashes the merged configuration itself and skips
-			// on hash equality, so a changed fragment is detected there, from the
-			// data, without this app encoding anything into a version string.
-			// The version means what it says again: the app's version.
-			//
-			// Use importFromApp to import the configuration data directly.
-			// This avoids the file path resolution issue in importFromFilePath.
-			$result = $configurationService->importFromApp(
-				appId: Application::APP_ID,
-				data: $data,
-				version: $currentAppVersion,
+			$result = $this->importConfiguration(
+				data: $this->readRegisterConfiguration(appPath: $this->appManager->getAppPath(AppIdentity::APP_ID)),
 				force: $force
 			);
 
@@ -1099,14 +1079,8 @@ class SettingsService {
 			// never get attached to the already-existing register. Reconcile additively.
 			$this->registerSchemaLink->reconcile($result);
 
-			// WOO-529: the seed data in publication_register.json creates the
-			// default "Publications" catalog with unset `registers`/`schemas`
-			// because the numeric IDs are only known AFTER importFromApp() has
-			// returned. Without those arrays PublicationService::getCatalogFilters()
-			// has no scope to union and every publish flow (federation search,
-			// create-publication modal) sees zero rows. Backfill now that the
-			// IDs are resolved, so a fresh install lands directly in a working
-			// state instead of the WOO-527 "not configured" empty state.
+			// WOO-529: the seeded default catalog gets its `registers`/`schemas`
+			// only now that importFromApp() has resolved the numeric IDs.
 			$this->backfillCatalogScopes();
 
 			return $result;
@@ -1115,6 +1089,205 @@ class SettingsService {
 		}//end try
 
 	}//end loadSettings()
+
+	/**
+	 * Import the configuration payload into OpenRegister for this app.
+	 *
+	 * OpenRegister hashes the merged configuration and skips an import whose
+	 * hash is unchanged, so the version passed is the app's own version.
+	 *
+	 * @param array<mixed> $data The configuration payload.
+	 * @param boolean $force Whether to import regardless of version checks.
+	 *
+	 * @return array The import result.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+	 *
+	 * @spec exclude Internal import step of loadSettings().
+	 */
+	private function importConfiguration(array $data, bool $force): array {
+		return $this->getConfigurationService()->importFromApp(
+			appId: AppIdentity::APP_ID,
+			data: $data,
+			version: $this->appManager->getAppVersion(AppIdentity::APP_ID),
+			force: $force
+		);
+
+	}//end importConfiguration()
+
+	/**
+	 * Read publication_register.json with its register.d fragments merged in.
+	 *
+	 * Schemas no register declares are attached to the publication register, and
+	 * the file location is recorded as the payload's source for the cron job.
+	 *
+	 * @param string $appPath The absolute app directory.
+	 *
+	 * @return array<mixed> The configuration payload to import.
+	 * @throws \RuntimeException If the file is missing, unreadable or not valid JSON.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function readRegisterConfiguration(string $appPath): array {
+		$absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
+
+		$data = self::mergeRegisterFragments(
+			data: self::readConfigurationFile(path: $absoluteFilePath),
+			fragmentDir: $appPath . '/lib/Settings/register.d'
+		);
+
+		// ADR-037 guard: a fragment that declares a schema but forgets to list it
+		// under `components.registers.publication.schemas` gets the schema created
+		// and then orphaned — no register holds it, so no magic table is provisioned
+		// and the app's `{type}_register`/`{type}_schema` pair points at a register
+		// without that schema (how OOAPI course/program/offering broke). This
+		// pipeline only ever provisions one register, so attach the strays.
+		$data = self::attachOrphanSchemasToPublicationRegister(data: $data);
+
+		return self::withSourceTracking(
+			data: $data,
+			sourceUrl: self::relativeSourcePath(appPath: $appPath, absoluteFilePath: $absoluteFilePath)
+		);
+
+	}//end readRegisterConfiguration()
+
+	/**
+	 * Read and decode a JSON configuration file.
+	 *
+	 * @param string $path The absolute file path.
+	 *
+	 * @return mixed The decoded JSON.
+	 * @throws \RuntimeException If the file is missing, unreadable or not valid JSON.
+	 *
+	 * @spec exclude Internal read step of readRegisterConfiguration().
+	 */
+	private static function readConfigurationFile(string $path): mixed {
+		if (file_exists($path) === false) {
+			throw new RuntimeException("Configuration file not found: {$path}");
+		}
+
+		$jsonContent = file_get_contents($path);
+		if ($jsonContent === false) {
+			throw new RuntimeException("Failed to read configuration file: {$path}");
+		}
+
+		$data = json_decode($jsonContent, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			throw new RuntimeException('Invalid JSON in configuration file: ' . json_last_error_msg());
+		}
+
+		return $data;
+
+	}//end readConfigurationFile()
+
+	/**
+	 * Merge the modular register fragments onto the base config (ADR-037).
+	 *
+	 * Each OpenSpec change drops its own fragment file instead of editing the
+	 * monolith, so concurrent builds touch disjoint files. Fragments merge in
+	 * file name order; an unreadable or malformed fragment is skipped.
+	 *
+	 * @param mixed $data The base config.
+	 * @param string $fragmentDir The fragment directory.
+	 *
+	 * @return mixed The merged config.
+	 *
+	 * @spec exclude Internal merge step of readRegisterConfiguration().
+	 */
+	private static function mergeRegisterFragments(mixed $data, string $fragmentDir): mixed {
+		foreach (self::fragmentFiles(directory: $fragmentDir) as $fragmentFile) {
+			$fragmentContent = file_get_contents($fragmentFile);
+			if ($fragmentContent === false) {
+				continue;
+			}
+
+			$fragmentData = json_decode($fragmentContent, true);
+			if (json_last_error() !== JSON_ERROR_NONE) {
+				continue;
+			}
+
+			$data = self::deepMergeConfig(base: $data, overlay: $fragmentData);
+		}
+
+		return $data;
+
+	}//end mergeRegisterFragments()
+
+	/**
+	 * The JSON fragment files of a directory, sorted by name.
+	 *
+	 * @param string $directory The fragment directory.
+	 *
+	 * @return array<int, string> The file paths, none when the directory is absent.
+	 *
+	 * @spec exclude Internal listing step of mergeRegisterFragments().
+	 */
+	private static function fragmentFiles(string $directory): array {
+		if (is_dir($directory) === false) {
+			return [];
+		}
+
+		$fragmentFiles = glob($directory . '/*.json');
+		sort($fragmentFiles);
+		return $fragmentFiles;
+
+	}//end fragmentFiles()
+
+	/**
+	 * The configuration file's path relative to the Nextcloud root.
+	 *
+	 * The root is taken as three levels above the app directory; when that
+	 * does not give an `apps-extra/` or `apps/` path, the standard one is used.
+	 *
+	 * @param string $appPath The absolute app directory.
+	 * @param string $absoluteFilePath The absolute configuration file path.
+	 *
+	 * @return string The relative path.
+	 *
+	 * @spec exclude Internal path step of readRegisterConfiguration().
+	 */
+	private static function relativeSourcePath(string $appPath, string $absoluteFilePath): string {
+		$nextcloudRoot = dirname(dirname(dirname($appPath)));
+		$relativeFilePath = str_replace($nextcloudRoot . '/', '', $absoluteFilePath);
+
+		if (str_starts_with($relativeFilePath, 'apps-extra/') === false
+			&& str_starts_with($relativeFilePath, 'apps/') === false
+		) {
+			return 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
+		}
+
+		return $relativeFilePath;
+
+	}//end relativeSourcePath()
+
+	/**
+	 * Set the payload's source url and type where it does not declare them.
+	 *
+	 * The cron job reads them to track the file location.
+	 *
+	 * @param array<mixed> $data The configuration payload.
+	 * @param string $sourceUrl The relative file path.
+	 *
+	 * @return array<mixed> The payload with its source set.
+	 *
+	 * @spec exclude Internal source step of readRegisterConfiguration().
+	 */
+	private static function withSourceTracking(array $data, string $sourceUrl): array {
+		if (isset($data['x-openregister']) === false) {
+			$data['x-openregister'] = [];
+		}
+
+		if (isset($data['x-openregister']['sourceUrl']) === false) {
+			$data['x-openregister']['sourceUrl'] = $sourceUrl;
+		}
+
+		if (isset($data['x-openregister']['sourceType']) === false) {
+			$data['x-openregister']['sourceType'] = 'local';
+		}
+
+		return $data;
+
+	}//end withSourceTracking()
 
 	/**
 	 * Deep-merge a register fragment onto the base config (ADR-037).
@@ -1241,302 +1414,229 @@ class SettingsService {
 	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 * @spec openspec/changes/fix-woo-capability-provisioning/specs/woo-transparency/spec.md#requirement-woo-config-keys-are-auto-configured-on-install-and-repair-woo-prov-002
 	 */
 	private function updateObjectTypeConfiguration(array $importResult): void {
-		// Get the object types that need configuration.
-		// 'publication' is included so publication_register/publication_schema
-		// resolve for retention evaluation (RET-005); it was previously omitted.
-		// 'document' was retired: attachments are files on the publication, so
-		// there is no document_register/document_schema left to resolve. The
-		// public full-text search assembly (SCH-PFTS-005/SCH-PFTS-002) resolves
-		// the document schema by slug when a legacy instance still has one, and
-		// finds nothing once it does not.
-		//
-		// 'organization' is absent for a different reason: the schema is
-		// OpenRegister's `nc-organisation` projection now, not one this app
-		// ships, so it cannot be resolved from this app's own import result.
-		// resolveSharedOrganisationConfiguration() points the same three config
-		// keys at OpenRegister's directory register instead, which is why the
-		// frontend picker needs no change at all.
-		$objectTypes = [
-			'catalog',
-			'listing',
-			'publication',
-			'theme',
-			'glossary',
-		];
-
-		// OOAPI-catalog-publication (OOAPI-003/OOAPI-010): the course/program/offering
-		// schemas are added to the SAME shared 'publication' register via a register.d
-		// fragment (ADR-037) — this app's loadSettings()/importFromApp() pipeline only
-		// ever creates one OpenRegister register, so a genuinely separate "dedicated"
-		// register (design.md D6) is not achievable without a larger SettingsService
-		// rearchitecture; the config-key prefix (`ooapi_courses` etc.) intentionally
-		// differs from the schema slug (`course` etc.) to match the OOAPI-010 config
-		// key names, so it is resolved via this explicit map rather than the direct
-		// type === slug convention used by $objectTypes above.
-		$ooapiTypeMap = [
-			'ooapi_courses' => 'course',
-			'ooapi_programs' => 'program',
-			'ooapi_offerings' => 'offering',
-		];
-
-		// WOO transparency (fix-woo-capability-provisioning / WOO-PROV-002): the WOO
-		// config-key prefixes deliberately differ from their schema slugs (`woo_batch_schema`
-		// for `wooBatch`, `woo_assessment_schema` for `wooAssessment`) — same rationale as
-		// $ooapiTypeMap above. `woo_register` has no matching schema slug at all (both
-		// wooBatch and wooAssessment live in the SAME shared publication register, D1), so
-		// it is set directly from $registerId alongside this map rather than inside it.
-		$wooSchemaMap = [
-			'woo_batch_schema' => 'wooBatch',
-			'woo_assessment_schema' => 'wooAssessment',
-		];
-
-		// Published service and case type catalogue: four schemas in the same
-		// shared publication register, with snake_case config keys rather than
-		// the camelCase schema slugs, for the same reason as $wooSchemaMap.
-		$catalogueSchemaMap = [
-			'service_catalogue_entry_schema' => 'serviceCatalogueEntry',
-			'case_type_definition_schema' => 'caseTypeDefinition',
-			'knowledge_article_schema' => 'knowledgeArticle',
-			'article_verdict_schema' => 'articleVerdict',
-		];
-
-		// Active publication, inspection and the national indexes: six more
-		// schemas in the same shared publication register, same key convention.
-		$publicationSchemaMap = [
-			'publication_rule_schema' => 'publicationRule',
-			'inspection_schema' => 'inspection',
-			'publication_process_schema' => 'publicationProcess',
-			'zienswijze_ask_schema' => 'zienswijzeAsk',
-			'depublication_schema' => 'depublication',
-			'obligation_source_schema' => 'obligationSource',
-		];
-
-		// Woo request intake and the comment period: two more schemas in the
-		// same shared publication register, same key convention. A Woo request
-		// is minted here rather than assumed to exist elsewhere, which is what
-		// gives a statutory term a subject.
-		$wooRequestSchemaMap = [
-			'woo_request_schema' => 'wooRequest',
-			'comment_period_schema' => 'commentPeriod',
-		];
-
-		// The public and community surface: the status page, the banner, the
-		// notice boards and the reader's vote. A notice is deliberately its own
-		// schema rather than a publication, so it never enters the sitemap.
-		$communitySchemaMap = [
-			'service_status_schema' => 'serviceStatus',
-			'status_subscription_schema' => 'statusSubscription',
-			'instance_banner_schema' => 'instanceBanner',
-			'notice_board_schema' => 'noticeBoard',
-			'notice_schema' => 'notice',
-			'record_vote_schema' => 'recordVote',
-		];
-
-		// Build a map of schema slugs to schema IDs.
-		$schemaMap = [];
-		foreach (($importResult['schemas'] ?? []) as $schema) {
-			// Handle both object and array formats.
-			if (is_object($schema) === true) {
-				// Nextcloud entities have jsonSerialize() method to convert to array.
-				if (method_exists($schema, 'jsonSerialize') === true) {
-					$schemaArray = $schema->jsonSerialize();
-					if (isset($schemaArray['slug']) === true && isset($schemaArray['id']) === true) {
-						$schemaMap[$schemaArray['slug']] = $schemaArray['id'];
-					}
-				}
-
-				continue;
-			}
-
-			if (is_array($schema) === true && isset($schema['slug']) === true) {
-				$schemaMap[$schema['slug']] = ($schema['id'] ?? $schema['uuid'] ?? null);
-			}
-		}
-
-		// Get the register ID (all schemas share the same publication register).
-		$registerId = null;
-		foreach (($importResult['registers'] ?? []) as $register) {
-			// Handle both object and array formats.
-			if (is_object($register) === true) {
-				// Nextcloud entities have jsonSerialize() method to convert to array.
-				if (method_exists($register, 'jsonSerialize') === true) {
-					$registerArray = $register->jsonSerialize();
-					if (isset($registerArray['slug']) === true && $registerArray['slug'] === 'publication') {
-						$registerId = ($registerArray['id'] ?? $registerArray['uuid'] ?? null);
-						break;
-					}
-				}
-
-				continue;
-			}
-
-			// Already an array.
-			if (is_array($register) === true && isset($register['slug']) === true
-				&& $register['slug'] === 'publication'
-			) {
-				$registerId = ($register['id'] ?? $register['uuid'] ?? null);
-				break;
-			}
-		}//end foreach
-
-		// Fallback: `importFromApp(force: false)` version-skips when the app
-		// version has not changed since the previous successful import, and
-		// returns an empty `schemas`/`registers` array in that case. If any
-		// config-app key we depend on (catalog_register, publication_schema,
-		// etc.) has been cleared manually (setup-wizard test reset, admin
-		// troubleshooting) between imports, the version-skip leaves the keys
-		// unset — surfaces as the setup wizard's "Publishing registers are
-		// still not configured" error even though every schema exists in the
-		// OpenRegister database. Fill in any expected slug not present in the
-		// import result by looking it up directly, scoped to this app so a
-		// slug collision with another app's register never leaks.
-		$expectedSlugs = array_merge(
-			$objectTypes,
-			array_values($ooapiTypeMap),
-			array_values($wooSchemaMap),
-			array_values($catalogueSchemaMap),
-			array_values($publicationSchemaMap),
-			array_values($wooRequestSchemaMap),
-			array_values($communitySchemaMap)
-		);
-		$missingSlugs = array_diff($expectedSlugs, array_keys($schemaMap));
-		if (empty($missingSlugs) === false) {
-			try {
-				$schemaMapper = $this->container->get(\OCA\OpenRegister\Db\SchemaMapper::class);
-				foreach ($missingSlugs as $slug) {
-					$found = $schemaMapper->findByApplicationAndSlug($slug, Application::APP_ID);
-					if ($found !== null) {
-						$schemaMap[$slug] = $found->getId();
-					}
-				}
-			} catch (\Throwable $e) {
-				// OpenRegister may be temporarily unavailable during boot; the
-				// caller (reload-settings, cron, tests) surfaces the missing
-				// config via registersConfigured() so we swallow the fallback
-				// failure rather than fatal the whole import path.
-				$this->logger->warning(
-					'Schema slug fallback lookup failed: ' . $e->getMessage(),
-					['app' => Application::APP_ID]
-				);
-			}
-		}
-
+		$schemaMap = $this->fillMissingSchemaIds(schemaMap: $this->mapImportedSchemaIds(schemas: ($importResult['schemas'] ?? [])));
+		$registerId = $this->findImportedPublicationRegisterId(registers: ($importResult['registers'] ?? []));
 		if ($registerId === null) {
-			try {
-				$registerMapper = $this->container->get(\OCA\OpenRegister\Db\RegisterMapper::class);
-				// `RegisterMapper::find()` accepts a slug/uuid/id and returns
-				// a Register entity — safer than `findIdsBySlugs()` which
-				// returns `array<slug, array<id>>` and needs two-step nav.
-				$register = $registerMapper->find('publication');
-				$registerId = $register->getId();
-			} catch (\Throwable $e) {
-				$this->logger->warning(
-					'Register slug fallback lookup failed: ' . $e->getMessage(),
-					['app' => Application::APP_ID]
-				);
-			}
+			$registerId = $this->lookUpPublicationRegisterId();
 		}
 
-		// Update configuration for each object type.
-		foreach ($objectTypes as $type) {
-			// Set source to openregister.
-			$this->config->setValueString($this->appName, "{$type}_source", 'openregister');
-
-			// Set schema ID if found in the import result.
-			// `isset()` is already false for a null value, so a following
-			// `!== null` can never be false. PHPStan 2 reports it as
-			// notIdentical.alwaysTrue.
-			if (isset($schemaMap[$type]) === true) {
-				$this->config->setValueString($this->appName, "{$type}_schema", (string)$schemaMap[$type]);
-			}
-
-			// Set register ID if found.
-			if ($registerId !== null) {
-				$this->config->setValueString($this->appName, "{$type}_register", (string)$registerId);
-			}
+		foreach (self::OBJECT_TYPES as $type) {
+			$this->writeObjectTypeConfiguration(prefix: $type, schemaId: ($schemaMap[$type] ?? null), registerId: $registerId);
 		}
 
-		// OOAPI-catalog-publication: same two steps, keyed by the OOAPI-010 config
-		// prefix rather than the schema slug (see $ooapiTypeMap comment above).
-		foreach ($ooapiTypeMap as $configPrefix => $schemaSlug) {
-			$this->config->setValueString($this->appName, "{$configPrefix}_source", 'openregister');
-
-			if (isset($schemaMap[$schemaSlug]) === true) {
-				$this->config->setValueString($this->appName, "{$configPrefix}_schema", (string)$schemaMap[$schemaSlug]);
-			}
-
-			if ($registerId !== null) {
-				$this->config->setValueString($this->appName, "{$configPrefix}_register", (string)$registerId);
-			}
+		foreach (self::OOAPI_TYPE_MAP as $configPrefix => $schemaSlug) {
+			$this->writeObjectTypeConfiguration(prefix: $configPrefix, schemaId: ($schemaMap[$schemaSlug] ?? null), registerId: $registerId);
 		}
 
-		// WOO transparency: the shared publication register id, plus the two
-		// explicitly-mapped schema ids. Idempotent + never overwrite an existing
-		// value with an empty one — mirrors the conditional writes above (D5).
-		if ($registerId !== null) {
-			$this->config->setValueString($this->appName, 'woo_register', (string)$registerId);
-		}
-
-		foreach ($wooSchemaMap as $configKey => $schemaSlug) {
-			if (isset($schemaMap[$schemaSlug]) === true) {
-				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
-			}
-		}
-
-		// The service catalogue shares the same publication register, and each of
-		// its four schemas gets its own key. A key that stays unset makes the
-		// catalogue controller answer 503, which is the intended refusal: an
-		// unconfigured catalogue is not an empty one.
-		if ($registerId !== null) {
-			$this->config->setValueString($this->appName, 'service_catalogue_register', (string)$registerId);
-		}
-
-		foreach ($catalogueSchemaMap as $configKey => $schemaSlug) {
-			if (isset($schemaMap[$schemaSlug]) === true) {
-				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
-			}
-		}
-
-		// The publication rules, inspections and the rest share the publication
-		// register, which `publication_register` already points at. A key that
-		// stays unset makes the inspection controller answer 503 rather than
-		// pretending there are no inspections.
-		foreach ($publicationSchemaMap as $configKey => $schemaSlug) {
-			if (isset($schemaMap[$schemaSlug]) === true) {
-				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
-			}
-		}
-
-		// The Woo request and the comment period share the same register. An
-		// unset key makes the intake answer 503 rather than minting a request
-		// nothing can read back, and a request nobody can read back is a
-		// statutory term counted against nothing.
-		foreach ($wooRequestSchemaMap as $configKey => $schemaSlug) {
-			if (isset($schemaMap[$schemaSlug]) === true) {
-				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
-			}
-		}
-
-		// The community surface shares the same register. An unset key makes
-		// the status page answer 503 rather than reporting that nothing is
-		// wrong with anything.
-		foreach ($communitySchemaMap as $configKey => $schemaSlug) {
-			if (isset($schemaMap[$schemaSlug]) === true) {
-				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
-			}
+		foreach (self::KEYED_SCHEMA_GROUPS as $group) {
+			$this->writeKeyedSchemaGroup(group: $group, schemaMap: $schemaMap, registerId: $registerId);
 		}
 
 		// The organisation is OpenRegister's, so its keys come from there.
 		$this->resolveSharedOrganisationConfiguration();
-
 	}//end updateObjectTypeConfiguration()
+
+	/**
+	 * Map schema slugs to ids from an import result, in the entity or the array shape.
+	 *
+	 * An entity counts only with both slug and id; an array row needs a slug and
+	 * falls back from id to uuid.
+	 *
+	 * @param iterable $schemas The imported schemas.
+	 *
+	 * @return array<string, mixed> Schema id by slug.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function mapImportedSchemaIds(iterable $schemas): array {
+		$schemaMap = [];
+		foreach ($schemas as $schema) {
+			$data = $this->importedEntityData(entity: $schema);
+			if ($data === null || isset($data['slug']) === false) {
+				continue;
+			}
+
+			if (is_object($schema) === true && isset($data['id']) === false) {
+				continue;
+			}
+
+			$schemaMap[$data['slug']] = ($data['id'] ?? $data['uuid'] ?? null);
+		}
+
+		return $schemaMap;
+	}//end mapImportedSchemaIds()
+
+	/**
+	 * The id of the `publication` register in an import result, or null.
+	 *
+	 * @param iterable $registers The imported registers.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function findImportedPublicationRegisterId(iterable $registers) {
+		foreach ($registers as $register) {
+			$data = $this->importedEntityData(entity: $register);
+			if (isset($data['slug']) === true && $data['slug'] === 'publication') {
+				return ($data['id'] ?? $data['uuid'] ?? null);
+			}
+		}
+
+		return null;
+	}//end findImportedPublicationRegisterId()
+
+	/**
+	 * An imported register or schema as an array: entities through jsonSerialize(), arrays as they are.
+	 *
+	 * @param mixed $entity The imported row.
+	 *
+	 * @return array|null Null when the row has neither shape.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function importedEntityData($entity): ?array {
+		if (is_object($entity) === true) {
+			if (method_exists($entity, 'jsonSerialize') === false) {
+				return null;
+			}
+
+			$entity = $entity->jsonSerialize();
+		}
+
+		if (is_array($entity) === false) {
+			return null;
+		}
+
+		return $entity;
+	}//end importedEntityData()
+
+	/**
+	 * Look up, scoped to this app, every expected schema slug the import result did not carry.
+	 *
+	 * `importFromApp(force: false)` skips an unchanged app version and then returns no
+	 * schemas, so keys cleared by hand since the last import (a setup wizard reset)
+	 * would stay unset although the schemas exist. A failing lookup is logged: the
+	 * missing configuration surfaces through registersConfigured().
+	 *
+	 * @param array $schemaMap Schema id by slug from the import result.
+	 *
+	 * @return array Schema id by slug, completed where the lookup found one.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function fillMissingSchemaIds(array $schemaMap): array {
+		$missingSlugs = array_diff($this->expectedSchemaSlugs(), array_keys($schemaMap));
+		if (empty($missingSlugs) === true) {
+			return $schemaMap;
+		}
+
+		try {
+			$schemaMapper = $this->container->get(\OCA\OpenRegister\Db\SchemaMapper::class);
+			foreach ($missingSlugs as $slug) {
+				$found = $schemaMapper->findByApplicationAndSlug($slug, AppIdentity::APP_ID);
+				if ($found !== null) {
+					$schemaMap[$slug] = $found->getId();
+				}
+			}
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Schema slug fallback lookup failed: ' . $e->getMessage(),
+				['app' => AppIdentity::APP_ID]
+			);
+		}
+
+		return $schemaMap;
+	}//end fillMissingSchemaIds()
+
+	/**
+	 * Every schema slug this app configures, in configuration order.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function expectedSchemaSlugs(): array {
+		$slugs = array_merge(self::OBJECT_TYPES, array_values(self::OOAPI_TYPE_MAP));
+		foreach (self::KEYED_SCHEMA_GROUPS as $group) {
+			$slugs = array_merge($slugs, array_values($group['schemas']));
+		}
+
+		return $slugs;
+	}//end expectedSchemaSlugs()
+
+	/**
+	 * Look up the `publication` register by slug when the import result did not carry it.
+	 *
+	 * @return mixed The register id, or null when the lookup fails (logged).
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function lookUpPublicationRegisterId() {
+		try {
+			// The find() call accepts a slug and returns the entity, unlike findIdsBySlugs().
+			$registerMapper = $this->container->get(\OCA\OpenRegister\Db\RegisterMapper::class);
+			return $registerMapper->find('publication')->getId();
+		} catch (\Throwable $e) {
+			$this->logger->warning(
+				'Register slug fallback lookup failed: ' . $e->getMessage(),
+				['app' => AppIdentity::APP_ID]
+			);
+			return null;
+		}
+	}//end lookUpPublicationRegisterId()
+
+	/**
+	 * Write `<prefix>_source`, and `<prefix>_schema` and `<prefix>_register` when known.
+	 *
+	 * @param string $prefix     The config key prefix.
+	 * @param mixed  $schemaId   The schema id, or null.
+	 * @param mixed  $registerId The register id, or null.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function writeObjectTypeConfiguration(string $prefix, $schemaId, $registerId): void {
+		$this->config->setValueString($this->appName, "{$prefix}_source", 'openregister');
+
+		if ($schemaId !== null) {
+			$this->config->setValueString($this->appName, "{$prefix}_schema", (string)$schemaId);
+		}
+
+		if ($registerId !== null) {
+			$this->config->setValueString($this->appName, "{$prefix}_register", (string)$registerId);
+		}
+	}//end writeObjectTypeConfiguration()
+
+	/**
+	 * Write a group's register key (when it has one and the id is known) and each known schema id.
+	 *
+	 * A value is never overwritten with an empty one.
+	 *
+	 * @param array $group      The group: `register` (key or null) and `schemas` (key => slug).
+	 * @param array $schemaMap  Schema id by slug.
+	 * @param mixed $registerId The register id, or null.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function writeKeyedSchemaGroup(array $group, array $schemaMap, $registerId): void {
+		if ($group['register'] !== null && $registerId !== null) {
+			$this->config->setValueString($this->appName, $group['register'], (string)$registerId);
+		}
+
+		foreach ($group['schemas'] as $configKey => $schemaSlug) {
+			if (isset($schemaMap[$schemaSlug]) === true) {
+				$this->config->setValueString($this->appName, $configKey, (string)$schemaMap[$schemaSlug]);
+			}
+		}
+	}//end writeKeyedSchemaGroup()
 
 	/**
 	 * Point the `organization_*` keys at OpenRegister's shared organisation.
@@ -1615,154 +1715,24 @@ class SettingsService {
 	 */
 	public function backfillCatalogScopes(): void {
 		try {
-			$publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
-			$publicationSchema = $this->config->getValueString($this->appName, 'publication_schema', '');
-			$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
-			$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-
-			if ($publicationRegister === '' || $publicationSchema === ''
-				|| $catalogRegister === '' || $catalogSchema === ''
-			) {
-				// Nothing to backfill against — the caller will surface the
-				// config gap via the setup wizard's reload-settings step.
+			$run = $this->catalogScopeBackfillRun();
+			if ($run === null) {
 				return;
 			}
 
-			if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
-				return;
+			foreach ($this->catalogsToBackfill(run: $run) as $catalog) {
+				$catalogData = $this->catalogArray(catalog: $catalog);
+				if ($catalogData !== null) {
+					$this->backfillCatalogScope(run: $run, catalogData: $catalogData);
+				}
 			}
-
-			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			// Every catalogue, published or not: this runs from the import and
-			// from register events, often without a user session, and an
-			// unpublished seeded catalogue still needs its scope resolved.
-			$catalogs = $objectService->searchObjects(
-				query: [
-					'@self' => [
-						'register' => $catalogRegister,
-						'schema' => $catalogSchema,
-					],
-				],
-				_rbac: false,
-				_multitenancy: false
-			);
-			if (is_array($catalogs) === false) {
-				$catalogs = [];
-			}
-
-			$pending = [];
-			foreach ($catalogs as $catalog) {
-				$catalogData = $catalog;
-				if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
-					$catalogData = $catalog->jsonSerialize();
-				}
-
-				if (is_array($catalogData) === false) {
-					continue;
-				}
-
-				$registers = ($catalogData['registers'] ?? null);
-				$schemas = ($catalogData['schemas'] ?? null);
-
-				// A seeded catalogue names its scope by slug (the ids only exist
-				// after the import). Resolve those first, or the empty-looking
-				// check below would never see them and the scope would stay
-				// unreadable to isObjectInCatalogScope(), which intvals it.
-				// Schema slugs resolve only inside the catalogue's own registers:
-				// a bare slug like `module` can name another app's schema.
-				$slugsResolved = false;
-				if (is_array($registers) === true && is_array($schemas) === true) {
-					$scope = $this->resolveScopeSlugs(registers: $registers, schemas: $schemas);
-					$registers = $scope['registers'];
-					$schemas = $scope['schemas'];
-					$slugsResolved = $scope['changed'];
-					$pending = array_merge($pending, $scope['pending']);
-				}
-
-				if ($slugsResolved === true) {
-					$catalogData['registers'] = $registers;
-					$catalogData['schemas'] = $schemas;
-				}
-
-				$needsRegisters = ($registers === null || (is_array($registers) === true && count($registers) === 0));
-				$needsSchemas = ($schemas === null || (is_array($schemas) === true && count($schemas) === 0));
-
-				if ($needsRegisters === false && $needsSchemas === false && $slugsResolved === false
-					&& $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas) === false
-				) {
-					// Admin has already configured a scope; leave it alone.
-					continue;
-				}
-
-				$catalogId = ($catalogData['@self']['id'] ?? ($catalogData['id'] ?? null));
-				if ($catalogId === null) {
-					continue;
-				}
-
-				// OpenRegister's saveObject re-validates against the full schema,
-				// so we can't send a partial diff — start from the current object
-				// (minus `@self`, which is server-owned) and merge the missing
-				// scope arrays on top.
-				$merged = $catalogData;
-				unset($merged['@self']);
-				if ($needsRegisters === true) {
-					$merged['registers'] = [$publicationRegister];
-				}
-
-				if ($needsSchemas === true) {
-					$merged['schemas'] = [$publicationSchema];
-				}
-
-				// A seeded catalogue that ships unpublished because it names
-				// another app (applicatielandschap names stackiq) is published
-				// once, the first time its scope holds ids only. Without that app
-				// it stays hidden instead of showing an empty catalogue. What it
-				// then publishes is still decided per object by the other app's
-				// read rules, which OpenRegister's own public API already applies.
-				$publishNow = $this->shouldPublishResolvedSeed(catalog: $catalogData, registers: $registers, schemas: $schemas);
-				if ($publishNow === true) {
-					$merged['published'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM);
-				}
-
-				// Persisted date-time fields can come back in the SQL-style
-				// "YYYY-MM-DD HH:MM:SS" shape (no `T`, no timezone) that fails
-				// the schema's ISO 8601 format validator on re-save. Normalise
-				// any string field looking like that back to full ISO 8601 so
-				// the update passes validation without touching the intent of
-				// the value. Non-string / already-ISO values are left alone.
-				foreach ($merged as $key => $value) {
-					if (is_string($value) === true
-						&& preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) === 1
-					) {
-						$merged[$key] = str_replace(' ', 'T', $value) . '+00:00';
-					}
-				}
-
-				try {
-					$objectService->saveObject(
-						object: $merged,
-						register: $catalogRegister,
-						schema: $catalogSchema,
-						uuid: (string)$catalogId,
-						_rbac: false,
-						_multitenancy: false,
-					);
-					if ($publishNow === true) {
-						$this->markSeedPublished(slug: (string)$catalogData['slug']);
-					}
-				} catch (\Exception) {
-					// Per-catalog failure must not abort the whole settings
-					// import; the admin can retro-fit via the catalog edit view.
-					continue;
-				}
-			}//end foreach
 
 			// What a later register event can still complete (stackiq installed
 			// after OpenCatalogi). CatalogScopePendingListener reads this.
 			$this->config->setValueString(
 				$this->appName,
 				self::CATALOG_SCOPE_PENDING_KEY,
-				(string)json_encode(array_values(array_unique($pending)))
+				(string)json_encode(array_values(array_unique($run->pending)))
 			);
 		} catch (\Exception) {
 			// Never let backfill failure sink the settings import — the wizard
@@ -1773,21 +1743,254 @@ class SettingsService {
 	}//end backfillCatalogScopes()
 
 	/**
+	 * Start a backfill run, or null when there is nothing to backfill against.
+	 *
+	 * A config gap is surfaced by the setup wizard's reload-settings step.
+	 *
+	 * @return CatalogScopeBackfill|null
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function catalogScopeBackfillRun(): ?CatalogScopeBackfill {
+		$run = new CatalogScopeBackfill(config: $this->config, appName: $this->appName);
+		if ($run->isConfigured() === false
+			|| in_array('openregister', $this->appManager->getInstalledApps(), true) === false
+		) {
+			return null;
+		}
+
+		$run->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		return $run;
+	}//end catalogScopeBackfillRun()
+
+	/**
+	 * Every catalogue, published or not.
+	 *
+	 * This runs from the import and from register events, often without a user
+	 * session, and an unpublished seeded catalogue still needs its scope resolved.
+	 *
+	 * @param CatalogScopeBackfill $run The backfill run.
+	 *
+	 * @return array<int, mixed>
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function catalogsToBackfill(CatalogScopeBackfill $run): array {
+		$catalogs = $run->objectService->searchObjects(
+			query: $run->catalogQuery(),
+			_rbac: false,
+			_multitenancy: false
+		);
+		if (is_array($catalogs) === false) {
+			return [];
+		}
+
+		return $catalogs;
+	}//end catalogsToBackfill()
+
+	/**
+	 * A catalogue as an array, or null when it is neither an array nor serialises to one.
+	 *
+	 * @param mixed $catalog The catalogue as the search returned it.
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @spec exclude Type-narrowing plumbing.
+	 */
+	private function catalogArray(mixed $catalog): ?array {
+		if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+			$catalog = $catalog->jsonSerialize();
+		}
+
+		if (is_array($catalog) === false) {
+			return null;
+		}
+
+		return $catalog;
+	}//end catalogArray()
+
+	/**
+	 * Resolve one catalogue's scope slugs, patch a missing scope, and save it.
+	 *
+	 * A catalogue whose scope is already set, holds no slugs and is not due its
+	 * one automatic publication is left alone. A failed save is skipped: the
+	 * admin can retro-fit it via the catalog edit view.
+	 *
+	 * @param CatalogScopeBackfill $run The backfill run.
+	 * @param array<string, mixed> $catalogData The catalogue as stored.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function backfillCatalogScope(CatalogScopeBackfill $run, array $catalogData): void {
+		$scope = $this->resolvedCatalogScope(run: $run, catalogData: $catalogData);
+		$patch = $this->catalogScopePatch(run: $run, scope: $scope);
+		if ($patch === null) {
+			return;
+		}
+
+		try {
+			$run->objectService->saveObject(
+				object: $patch['object'],
+				register: $run->catalogRegister,
+				schema: $run->catalogSchema,
+				uuid: $patch['uuid'],
+				_rbac: false,
+				_multitenancy: false,
+			);
+			if ($patch['publishedSlug'] !== null) {
+				$this->markSeedPublished(slug: $patch['publishedSlug']);
+			}
+		} catch (\Exception) {
+			return;
+		}
+
+	}//end backfillCatalogScope()
+
+	/**
+	 * One catalogue with the slugs in its scope resolved to ids where they can be.
+	 *
+	 * A seeded catalogue names its scope by slug (the ids only exist after the
+	 * import). Schema slugs resolve only inside the catalogue's own registers: a
+	 * bare slug like `module` can name another app's schema. What cannot resolve
+	 * yet is added to the run's pending list.
+	 *
+	 * @param CatalogScopeBackfill $run The backfill run.
+	 * @param array<string, mixed> $catalogData The catalogue as stored.
+	 *
+	 * @return array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool}
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
+	 */
+	private function resolvedCatalogScope(CatalogScopeBackfill $run, array $catalogData): array {
+		$scope = [
+			'data' => $catalogData,
+			'registers' => ($catalogData['registers'] ?? null),
+			'schemas' => ($catalogData['schemas'] ?? null),
+			'changed' => false,
+		];
+		if (is_array($scope['registers']) === false || is_array($scope['schemas']) === false) {
+			return $scope;
+		}
+
+		$resolved = $this->resolveScopeSlugs(registers: $scope['registers'], schemas: $scope['schemas']);
+		$run->pending = array_merge($run->pending, $resolved['pending']);
+		$scope['registers'] = $resolved['registers'];
+		$scope['schemas'] = $resolved['schemas'];
+		$scope['changed'] = $resolved['changed'];
+		if ($resolved['changed'] === true) {
+			$scope['data']['registers'] = $resolved['registers'];
+			$scope['data']['schemas'] = $resolved['schemas'];
+		}
+
+		return $scope;
+	}//end resolvedCatalogScope()
+
+	/**
+	 * The object to save for one catalogue, or null when it needs no save.
+	 *
+	 * OpenRegister's saveObject re-validates against the full schema, so the
+	 * patch is the whole current object (minus the server-owned `@self`) with
+	 * an empty scope filled from the publication register and schema. A seeded
+	 * catalogue due its one automatic publication gets a `published` date.
+	 *
+	 * @param CatalogScopeBackfill $run The backfill run.
+	 * @param array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool} $scope The resolved catalogue.
+	 *
+	 * @return array{object: array<string, mixed>, uuid: string, publishedSlug: string|null}|null
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 */
+	private function catalogScopePatch(CatalogScopeBackfill $run, array $scope): ?array {
+		$data = $scope['data'];
+		$needsRegisters = $this->isEmptyScopeList(value: $scope['registers']);
+		$needsSchemas = $this->isEmptyScopeList(value: $scope['schemas']);
+		$publishNow = $this->shouldPublishResolvedSeed(scope: $scope);
+		$catalogId = ($data['@self']['id'] ?? ($data['id'] ?? null));
+		if (($needsRegisters === false && $needsSchemas === false && $scope['changed'] === false && $publishNow === false)
+			|| $catalogId === null
+		) {
+			return null;
+		}
+
+		$merged = $data;
+		unset($merged['@self']);
+		if ($needsRegisters === true) {
+			$merged['registers'] = [$run->publicationRegister];
+		}
+
+		if ($needsSchemas === true) {
+			$merged['schemas'] = [$run->publicationSchema];
+		}
+
+		$publishedSlug = null;
+		if ($publishNow === true) {
+			$merged['published'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM);
+			$publishedSlug = (string)$data['slug'];
+		}
+
+		return [
+			'object' => $this->withIsoDateTimes(object: $merged),
+			'uuid' => (string)$catalogId,
+			'publishedSlug' => $publishedSlug,
+		];
+	}//end catalogScopePatch()
+
+	/**
+	 * Whether a scope list is missing or empty.
+	 *
+	 * @param mixed $value The registers or schemas of a scope.
+	 *
+	 * @return bool
+	 *
+	 * @spec exclude Type-narrowing plumbing.
+	 */
+	private function isEmptyScopeList(mixed $value): bool {
+		return $value === null || (is_array($value) === true && count($value) === 0);
+	}//end isEmptyScopeList()
+
+	/**
+	 * The object with every SQL-style "YYYY-MM-DD HH:MM:SS" string as full ISO 8601.
+	 *
+	 * Persisted date-time fields can come back in that shape, which fails the
+	 * schema's ISO 8601 format validator on re-save. Other values are kept.
+	 *
+	 * @param array<string, mixed> $object The object to save.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+	 */
+	private function withIsoDateTimes(array $object): array {
+		foreach ($object as $key => $value) {
+			if (is_string($value) === true
+				&& preg_match('/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/', $value) === 1
+			) {
+				$object[$key] = str_replace(' ', 'T', $value) . '+00:00';
+			}
+		}
+
+		return $object;
+	}//end withIsoDateTimes()
+
+	/**
 	 * Whether a seeded catalogue is due its one automatic publication.
 	 *
 	 * True only for a slug in PUBLISH_WHEN_RESOLVED that has no `published`
 	 * date, whose scope holds ids only, and that was never published this way
 	 * before. The last condition keeps an administrator's later unpublish.
 	 *
-	 * @param array<string, mixed> $catalog The catalogue as stored.
-	 * @param mixed $registers The scope's registers after resolution.
-	 * @param mixed $schemas The scope's schemas after resolution.
+	 * @param array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool} $scope The resolved catalogue.
 	 *
 	 * @return bool
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
 	 */
-	private function shouldPublishResolvedSeed(array $catalog, mixed $registers, mixed $schemas): bool {
+	private function shouldPublishResolvedSeed(array $scope): bool {
+		$catalog = $scope['data'];
+		$registers = $scope['registers'];
+		$schemas = $scope['schemas'];
 		$slug = ($catalog['slug'] ?? null);
 		$scopeResolver = new CatalogScopeSlugResolver();
 		if (in_array($slug, self::PUBLISH_WHEN_RESOLVED, true) === false
@@ -1856,11 +2059,13 @@ class SettingsService {
 		return (new CatalogScopeSlugResolver())->resolveScope(
 			registers: $registers,
 			schemas: $schemas,
-			findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),
-			schemaIdsOfRegister: static fn (int $registerId): array => (
-				$registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []
-			),
-			schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper?->find($schemaId, _rbac: false, _multitenancy: false)?->getSlug()
+			lookups: new CatalogScopeLookups(
+				findRegisterId: static fn (string $slug) => $registerMapper?->find($slug, _rbac: false, _multitenancy: false)?->getId(),
+				schemaIdsOfRegister: static fn (int $registerId): array => (
+					$registerMapper?->find($registerId, _rbac: false, _multitenancy: false)?->getSchemas() ?? []
+				),
+				schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper?->find($schemaId, _rbac: false, _multitenancy: false)?->getSlug()
+			)
 		);
 	}//end resolveScopeSlugs()
 
@@ -1878,11 +2083,11 @@ class SettingsService {
 	private function shouldLoadSettings(): bool {
 		try {
 			// Get the current app version.
-			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+			$currentAppVersion = $this->appManager->getAppVersion(AppIdentity::APP_ID);
 
 			// Get the configuration service. to check stored version.
 			$configurationService = $this->getConfigurationService();
-			$storedVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
+			$storedVersion = $configurationService->getConfiguredAppVersion(AppIdentity::APP_ID);
 
 			// If no stored version exists, we need to load settings.
 			if ($storedVersion === null) {
@@ -1913,11 +2118,11 @@ class SettingsService {
 	public function getVersionInfo(): array {
 		try {
 			// Get the current app version.
-			$currentAppVersion = $this->appManager->getAppVersion(Application::APP_ID);
+			$currentAppVersion = $this->appManager->getAppVersion(AppIdentity::APP_ID);
 
 			// Get the configuration service. to check stored version.
 			$configurationService = $this->getConfigurationService();
-			$storedConfigVersion = $configurationService->getConfiguredAppVersion(Application::APP_ID);
+			$storedConfigVersion = $configurationService->getConfiguredAppVersion(AppIdentity::APP_ID);
 
 			// Determine if versions match.
 			$versionsMatch = $storedConfigVersion !== null

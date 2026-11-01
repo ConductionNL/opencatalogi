@@ -174,7 +174,8 @@ const CnAppNav = {
 
 // Stub of CnIndexPage with the props a wrapper sets; everything else lands in
 // `$attrs`. Renders the `#below-header` slot so a wrapper's header content
-// can be asserted.
+// can be asserted. `selectedObjects`, `onSelect` and `onRefreshEvent` stand in
+// for the selection and reload a wrapper drives.
 const CnIndexPage = {
 	name: 'CnIndexPage',
 	props: {
@@ -184,13 +185,40 @@ const CnIndexPage = {
 		schema: { type: [Object, String], default: null },
 		rowClickToView: { type: Boolean, default: false },
 		viewTo: { type: Function, default: null },
+		showTitle: { type: Boolean, default: false },
+		collectionUrl: { type: String, default: '' },
 	},
 	emits: ['row-click', 'row-aux-click', 'view', 'edit-open'],
+	data() {
+		return {
+			formDialogItem: null,
+			selectedObjects: [],
+			refreshCount: 0,
+		}
+	},
+	methods: {
+		openFormDialog(item) {
+			this.formDialogItem = item
+		},
+		onSelect(ids) {
+			this.selectedObjects = this.selectedObjects.filter((row) =>
+				ids.includes(row.id),
+			)
+		},
+		onRefreshEvent() {
+			this.refreshCount += 1
+		},
+	},
 	render() {
 		return h('div', { class: 'cn-index-page-stub' }, [
 			this.$slots['below-header']?.(),
 		])
 	},
+}
+
+// The library's objects-changed signal, reduced to a no-op.
+function dispatchObjectsChanged() {
+	return true
 }
 
 // The library's row-opening helpers, reduced to a plain router push.
@@ -211,6 +239,7 @@ module.exports = {
 	useObjectStore: createObjectStore('conduction-objects'),
 	CnAppNav,
 	CnIndexPage,
+	dispatchObjectsChanged,
 	isNewTabHandled,
 	openRowTarget,
 	CnThemePreview,

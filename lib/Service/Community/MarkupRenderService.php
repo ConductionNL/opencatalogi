@@ -35,12 +35,14 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Community;
 
+use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
+
 /**
  * Renders this app's markup dialect to HTML, and stores nothing.
  *
  * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
  */
-class MarkupRenderService {
+class MarkupRenderService implements MarkupRenderServiceInterface {
 
 	/**
 	 * The largest body this endpoint renders.

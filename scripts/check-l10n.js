@@ -419,8 +419,20 @@ function collectManifestStrings() {
 		// folderSidebar.allLabel, the "All" row of an index page's folder
 		// sidebar (adopt-connection-registry's Integrations page).
 		'allLabel',
+		// An index page's Add button and the line under its list.
+		'addLabel',
+		'footerNote',
 	])
+	// Widget templates the library translates before it fills them.
+	const TEMPLATE_FIELDS = new Set(['caption', 'meta', 'trailing'])
+	// A record-list template made of tokens only ("{title}") has no words to translate.
+	const TOKENS_ONLY = /^\s*(\{[^{}]+\}\s*)+$/
 	const out = new Set()
+	const remember = (text) => {
+		if (typeof text === 'string' && text.trim() && !TOKENS_ONLY.test(text)) {
+			out.add(text)
+		}
+	}
 	const visit = (node) => {
 		if (Array.isArray(node)) {
 			node.forEach(visit)
@@ -430,7 +442,35 @@ function collectManifestStrings() {
 		for (const [key, value] of Object.entries(node)) {
 			if (key.startsWith('_')) continue
 			if (FIELDS.has(key) && typeof value === 'string' && value.trim()) {
-				out.add(value)
+				if (!TOKENS_ONLY.test(value)) {
+					out.add(value)
+				}
+			} else if (
+				TEMPLATE_FIELDS.has(key)
+				&& (typeof value === 'string' || Array.isArray(value))
+			) {
+				// A record-list or stat template: one string or a list of them.
+				;[value].flat().forEach(remember)
+			} else if (key === 'meta' && value && Array.isArray(value.parts)) {
+				value.parts.forEach(remember)
+			} else if (
+				key === 'pill'
+				&& value
+				&& value.labels
+				&& typeof value.labels === 'object'
+			) {
+				Object.values(value.labels).forEach(remember)
+			} else if (key === 'valueLabels' && value && typeof value === 'object') {
+				// `{ field: { storedValue: "Label" } }`: the labels are shown translated.
+				Object.values(value).forEach((labels) => {
+					if (labels && typeof labels === 'object') {
+						Object.values(labels)
+							.filter(
+								(label) => typeof label === 'string' && label.trim(),
+							)
+							.forEach((label) => out.add(label))
+					}
+				})
 			} else {
 				visit(value)
 			}

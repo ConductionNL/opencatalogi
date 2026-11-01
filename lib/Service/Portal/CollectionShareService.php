@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Service\Portal;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\CollectionShareServiceInterface;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
 use OCP\IURLGenerator;
 
@@ -36,7 +37,7 @@ use OCP\IURLGenerator;
  *
  * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-shared-dossier-shows-only-what-is-public-now-and-a-revoked-link-answers-404-req-ccol-005
  */
-class CollectionShareService {
+class CollectionShareService implements CollectionShareServiceInterface {
 
 	/**
 	 * The shared-dossier page of portaliq's public site, before the token.

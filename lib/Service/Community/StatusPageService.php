@@ -38,13 +38,14 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 
 /**
  * Renders the status page from states an administrator set.
  *
  * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
  */
-class StatusPageService {
+class StatusPageService implements StatusPageServiceInterface {
 
 	/**
 	 * The states a component may be in.
@@ -53,12 +54,6 @@ class StatusPageService {
 	 */
 	public const STATES = ['available', 'degraded', 'unavailable', 'maintenance'];
 
-	/**
-	 * How long a state stays current, in hours, when nothing else is configured.
-	 *
-	 * @var integer
-	 */
-	public const DEFAULT_STALENESS_HOURS = 24;
 
 	/**
 	 * Set a component's state.

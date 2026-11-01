@@ -14,12 +14,10 @@
  * 2026-09-19 and this paragraph names them, because a docblock that still
  * advertises a surface is what stops the next person looking for it.
  *
- * The obligation overview is here: `GET /api/obligations` (admin) asks every
- * enabled `obligationSource` through `ObligationsRequestedEvent` and lists the
- * sources it could not read beside the obligations of those it could
- * (woo-obligation-overview). The harvest intake joins as the source `harvest`
- * once `harvest-feed-intake` lands; until then no listener answers for it and
- * it shows as unread, which is the truth.
+ * The obligation overview is not here: it is ObligationController
+ * (`GET /api/obligations`), which asks every registered source through
+ * ObligationReadService. The harvest intake is not a source yet; it waits on
+ * `harvest-feed-intake`.
  *
  * Every write here is admin-gated. The two public surfaces of this change live
  * in InspectionController (the inspection link) and in the public search
@@ -46,9 +44,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
-use OCA\OpenCatalogi\Service\Publication\ObligationReadService;
-use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
+use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
+use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -80,9 +77,8 @@ class PublicationRulesController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param PublicationRuleService $ruleService The rule evaluator.
-	 * @param DecisionPublicationValidator $decisionValidator The decision type validation.
-	 * @param ObligationReadService $obligations The obligation overview reader.
+	 * @param PublicationRuleServiceInterface $ruleService The rule evaluator.
+	 * @param DecisionPublicationValidatorInterface $decisionValidator The decision type validation.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -92,9 +88,8 @@ class PublicationRulesController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationRuleService $ruleService,
-		private readonly DecisionPublicationValidator $decisionValidator,
-		private readonly ObligationReadService $obligations,
+		private readonly PublicationRuleServiceInterface $ruleService,
+		private readonly DecisionPublicationValidatorInterface $decisionValidator,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -112,14 +107,7 @@ class PublicationRulesController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->readWritePreflight();
 
 	}//end preflightedCors()
 
@@ -261,36 +249,4 @@ class PublicationRulesController extends Controller {
 		return $response;
 
 	}//end publicSearch()
-
-	/**
-	 * The obligation overview: what must be published, what is, and what is
-	 * late, over every registered source.
-	 *
-	 * A source that failed or that no reader answered is in `unreadSources`
-	 * with its reason, never counted as a source with nothing to publish.
-	 *
-	 * @return JSONResponse The overview, or a refusal when the sources cannot be read.
-	 *
-	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
-	 */
-	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
-	public function obligations(): JSONResponse {
-		try {
-			return new JSONResponse($this->obligations->read());
-		} catch (UnreadableRuleException $e) {
-			return new JSONResponse(
-				data: ['error' => 'obligations-unreadable', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		} catch (\Throwable $e) {
-			return new JSONResponse(
-				data: [
-					'error' => 'obligations-unreadable',
-					'message' => $this->l10n->t('The obligation sources could not be read, so this is not an overview with nothing to publish.'),
-				],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		}
-
-	}//end obligations()
 }//end class

@@ -26,7 +26,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
-use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -42,58 +42,33 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling directory-related operations.
+ *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) CorsSettings is the thirteenth type, shared with the other list controllers.
  */
 class DirectoryController extends Controller {
-
-	/**
-	 * Allowed CORS methods.
-	 *
-	 * @var string
-	 */
-	private string $corsMethods;
-
-	/**
-	 * Allowed CORS headers.
-	 *
-	 * @var string
-	 */
-	private string $corsAllowedHeaders;
-
-	/**
-	 * CORS max age.
-	 *
-	 * @var integer
-	 */
-	private int $corsMaxAge;
+	use SendsListCorsHeaders;
 
 	/**
 	 * DirectoryController constructor.
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param DirectoryService $directoryService The directory service.
+	 * @param DirectoryServiceInterface $directoryService The directory service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $config App config for CORS allowlist (optional).
-	 * @param string $corsMethods Allowed CORS methods.
-	 * @param string $corsAllowedHeaders Allowed CORS headers.
-	 * @param integer $corsMaxAge CORS max age.
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly DirectoryService $directoryService,
+		private readonly DirectoryServiceInterface $directoryService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?IAppConfig $config = null,
-		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		int $corsMaxAge = 1728000,
+		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
-		$this->corsMethods = $corsMethods;
-		$this->corsAllowedHeaders = $corsAllowedHeaders;
-		$this->corsMaxAge = $corsMaxAge;
 
 	}//end __construct()
 
@@ -106,33 +81,18 @@ class DirectoryController extends Controller {
 	 *
 	 * @return string The header value to use for Access-Control-Allow-Origin.
 	 *
+	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod) Called from the SendsListCorsHeaders trait.
+	 *
 	 * @spec exclude CORS-policy plumbing; reads IAppConfig allowlist, no Origin reflection.
 	 */
 	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->config !== null) {
-			$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
 		$callerOrigin = $this->request->getHeader('Origin');
 		if ($callerOrigin === '') {
 			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
 		}
 
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
+		$configured = ($this->config?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+		return (new CorsAllowlist($configured))->allowedFor($callerOrigin);
 	}//end resolveAllowedOrigin()
 
 	/**
@@ -148,14 +108,7 @@ class DirectoryController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->withListPreflightHeaders(response: new Response());
 	}//end preflightedCors()
 
 	/**
@@ -167,6 +120,9 @@ class DirectoryController extends Controller {
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
+	 *
+	 * @no-admin-idor-exempt DirectoryService::getDirectory() searches only the configured listing and
+	 *       catalog register/schema, with RBAC and multitenancy on; request parameters filter within that scope.
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
@@ -181,11 +137,7 @@ class DirectoryController extends Controller {
 
 			// Create JSON response with CORS headers (#735 — never reflect Origin).
 			$response = new JSONResponse($data);
-			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-			return $response;
+			return $this->withListCorsHeaders(response: $response);
 		} catch (\Exception $e) {
 			// Public endpoint — log details server-side, return generic body (#735).
 			$this->logger?->error(
@@ -199,11 +151,7 @@ class DirectoryController extends Controller {
 				data: ['error' => $this->l10n->t('Internal server error')],
 				statusCode: 500
 			);
-			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-			return $response;
+			return $this->withListCorsHeaders(response: $response);
 		}//end try
 
 	}//end index()
@@ -244,11 +192,7 @@ class DirectoryController extends Controller {
 			);
 
 			// Add CORS headers for public API access (#735 — never reflect Origin).
-			$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-			$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-			$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-			return $response;
+			return $this->withListCorsHeaders(response: $response);
 		}//end if
 
 		// Sync the directory with the provided URL.
@@ -304,10 +248,6 @@ class DirectoryController extends Controller {
 		}//end try
 
 		// Add CORS headers for public API access (#735 — never reflect Origin).
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->withListCorsHeaders(response: $response);
 	}//end update()
 }//end class

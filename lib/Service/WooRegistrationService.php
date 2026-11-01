@@ -34,6 +34,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\IndexRegistrationServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
@@ -45,7 +46,7 @@ use OCP\IURLGenerator;
  *
  * @spec openspec/specs/woo-compliance/spec.md#requirement-the-woo-index-registration-is-requested-through-the-gateway-req-wih-003
  */
-class WooRegistrationService {
+class WooRegistrationService implements IndexRegistrationServiceInterface {
 
 	private const APP_NAME = 'opencatalogi';
 

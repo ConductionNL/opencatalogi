@@ -731,9 +731,8 @@ OC.L10N.register(
         "This catalog has no registers or schemas configured": "Fir dëse Katalog si keng Registeren oder Schemaen agestallt",
         "Add a register and a schema to the catalog to list its publications here.": "Setzt dem Katalog e Register an e Schema bäi, fir seng Verëffentlechungen hei unzeweisen.",
         "Open catalog": "Katalog opmaachen",
-        "Register and schema": "Register a Schema",
-        "{schema} in {register}": "{schema} an {register}",
-        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Maacht Ären éischte Katalog. Et ass de Container, an deem Är Verëffentlechunge stinn. Wielt de Register Publication an d'Schema Publication, sou datt de Katalog d'Verëffentlechungen weist, déi Dir bäisetzt."
+        "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Maacht Ären éischte Katalog. Et ass de Container, an deem Är Verëffentlechunge stinn. Wielt de Register Publication an d'Schema Publication, sou datt de Katalog d'Verëffentlechungen weist, déi Dir bäisetzt.",
+        "Manage your publications and their status": "Verwalt Är Publikatiounen an hire Status"
     },
     "nplurals=2; plural=(n != 1);"
 )
