@@ -1012,5 +1012,49 @@
                 }
             }
         ]
+    },
+    "config read throws": {
+        "thrown": "RuntimeException: config store down",
+        "log": [
+            {
+                "read": "onboarding_completed_version"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "search": [
+                    {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    false,
+                    false,
+                    null,
+                    null,
+                    null
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": "catalog_register"
+            },
+            {
+                "read": "catalog_schema"
+            },
+            {
+                "read": "default_catalog_scope"
+            }
+        ]
     }
 }

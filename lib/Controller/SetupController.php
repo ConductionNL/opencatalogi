@@ -517,9 +517,10 @@ class SetupController extends Controller {
 	 * @return JSONResponse The result.
 	 */
 	private function saveFirstCatalog(object $objectService, array $target): JSONResponse {
+		$catalog = $this->firstCatalogObject();
 		try {
 			$objectService->saveObject(
-				object: $this->firstCatalogObject(),
+				object: $catalog,
 				register: $target['register'],
 				schema: $target['schema'],
 				_rbac: false,

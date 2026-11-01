@@ -81,6 +81,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 			'no catalog register' => [['config' => ['catalog_register' => ''] + $base]],
 			'no catalog schema' => [['config' => ['catalog_schema' => ''] + $base]],
 			'save throws' => [['config' => $base, 'fail' => 'save']],
+			'config read throws' => [['config' => $base, 'fail' => 'config']],
 		];
 
 	}//end cases()
@@ -95,8 +96,12 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 	#[DataProvider('cases')]
 	public function testCreateFirstCatalogMatchesTheRecording(array $case): void {
 		$name = $this->dataName();
-		$response = $this->controller(case: $case)->action('create-first-catalog');
-		$actual = ['status' => $response->getStatus(), 'data' => $response->getData(), 'log' => $this->log];
+		try {
+			$response = $this->controller(case: $case)->action('create-first-catalog');
+			$actual = ['status' => $response->getStatus(), 'data' => $response->getData(), 'log' => $this->log];
+		} catch (\Throwable $e) {
+			$actual = ['thrown' => get_class($e) . ': ' . $e->getMessage(), 'log' => $this->log];
+		}
 
 		$recorded = [];
 		if (file_exists(self::FIXTURE) === true) {
@@ -124,8 +129,12 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 		$values = $case['config'];
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
-			function (string $app, string $key, string $default = '') use (&$values): string {
+			function (string $app, string $key, string $default = '') use (&$values, $case): string {
 				$this->log[] = ['read' => $key];
+				if (($case['fail'] ?? null) === 'config' && $key === 'default_catalog_scope') {
+					throw new RuntimeException('config store down');
+				}
+
 				return ($values[$key] ?? $default);
 			}
 		);
