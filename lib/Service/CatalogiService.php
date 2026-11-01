@@ -253,58 +253,112 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @throws NotFoundExceptionInterface
 	 *
 	 * @spec openspec/specs/catalogs/spec.md
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	public function computeRewrittenRegistersAndSchemas(array $object): array {
 		$modified = [];
 
-		if (isset($object['registers']) === true && is_array($object['registers']) === true) {
-			$rewrittenRegisters = array_map(
-				function ($register) {
-					if ($this->isNumericId(value: $register) === true) {
-						return $register;
-					}
-
-					try {
-						return $this->getRegisterMapper()->find($register)->getId();
-					} catch (NotFoundException $e) {
-						throw new RuntimeException('Register ' . $register . ' not found.');
-					}
-				},
-				$object['registers']
-			);
-
-			if ($rewrittenRegisters !== $object['registers']) {
-				$modified['registers'] = $rewrittenRegisters;
-			}
+		$registers = $this->rewrittenIds(
+			values: ($object['registers'] ?? null),
+			resolve: fn (mixed $register): mixed => $this->registerIdOf(register: $register)
+		);
+		if ($registers !== null) {
+			$modified['registers'] = $registers;
 		}
 
-		if (isset($object['schemas']) === true && is_array($object['schemas']) === true) {
-			$schemaLookup = $this->schemaLookupFor(registers: ($modified['registers'] ?? ($object['registers'] ?? [])));
-			$rewrittenSchemas = array_map(
-				function ($schema) use ($schemaLookup) {
-					if ($this->isNumericId(value: $schema) === true) {
-						return $schema;
-					}
-
-					$schemaId = $schemaLookup((string)$schema);
-					if ($schemaId === null) {
-						throw new RuntimeException('Schema ' . $schema . ' not found.');
-					}
-
-					return $schemaId;
-				},
-				$object['schemas']
-			);
-
-			if ($rewrittenSchemas !== $object['schemas']) {
-				$modified['schemas'] = $rewrittenSchemas;
-			}
+		$schemas = $this->rewrittenSchemaIds(object: $object, modified: $modified);
+		if ($schemas !== null) {
+			$modified['schemas'] = $schemas;
 		}
 
 		return $modified;
 	}//end computeRewrittenRegistersAndSchemas()
+
+	/**
+	 * Resolve every value of a register or schema list, and report the list only when it changed.
+	 *
+	 * @param mixed $values The list from the catalogue payload, or anything else.
+	 * @param callable $resolve Maps one value to its id; throws when it cannot.
+	 *
+	 * @return array<int|string, mixed>|null The rewritten list, or null when the
+	 *                                       value is not a list or nothing changed.
+	 */
+	private function rewrittenIds(mixed $values, callable $resolve): ?array {
+		if (is_array($values) === false) {
+			return null;
+		}
+
+		$rewritten = array_map($resolve, $values);
+		if ($rewritten === $values) {
+			return null;
+		}
+
+		return $rewritten;
+	}//end rewrittenIds()
+
+	/**
+	 * Rewrite the payload's schema list, scoped to the registers after their own rewrite.
+	 *
+	 * @param array<string, mixed> $object The catalogue payload.
+	 * @param array<string, mixed> $modified The keys rewritten so far (`registers` when it changed).
+	 *
+	 * @return array<int|string, mixed>|null The rewritten schemas, or null when unchanged or absent.
+	 */
+	private function rewrittenSchemaIds(array $object, array $modified): ?array {
+		if (isset($object['schemas']) === false || is_array($object['schemas']) === false) {
+			return null;
+		}
+
+		$schemaLookup = $this->schemaLookupFor(registers: ($modified['registers'] ?? ($object['registers'] ?? [])));
+
+		return $this->rewrittenIds(
+			values: $object['schemas'],
+			resolve: fn (mixed $schema): mixed => $this->schemaIdOf(schema: $schema, lookup: $schemaLookup)
+		);
+	}//end rewrittenSchemaIds()
+
+	/**
+	 * Resolve one register slug or id to its id.
+	 *
+	 * @param mixed $register A register id or slug.
+	 *
+	 * @return mixed The value itself when it is already an id, otherwise the register's id.
+	 *
+	 * @throws \RuntimeException When no register has that slug.
+	 */
+	private function registerIdOf(mixed $register): mixed {
+		if ($this->isNumericId(value: $register) === true) {
+			return $register;
+		}
+
+		try {
+			return $this->getRegisterMapper()->find($register)->getId();
+		} catch (NotFoundException $e) {
+			throw new RuntimeException('Register ' . $register . ' not found.');
+		}
+	}//end registerIdOf()
+
+	/**
+	 * Resolve one schema slug or id to its id through the catalogue's schema lookup.
+	 *
+	 * @param mixed $schema A schema id or slug.
+	 * @param callable $lookup Slug to schema id, null when not found (see schemaLookupFor()).
+	 *
+	 * @return mixed The value itself when it is already an id, otherwise the schema's id.
+	 *
+	 * @throws \RuntimeException When the lookup finds no schema for the slug.
+	 */
+	private function schemaIdOf(mixed $schema, callable $lookup): mixed {
+		if ($this->isNumericId(value: $schema) === true) {
+			return $schema;
+		}
+
+		$schemaId = $lookup((string)$schema);
+		if ($schemaId === null) {
+			throw new RuntimeException('Schema ' . $schema . ' not found.');
+		}
+
+		return $schemaId;
+	}//end schemaIdOf()
 
 	/**
 	 * Build the schema slug lookup for one catalogue.
