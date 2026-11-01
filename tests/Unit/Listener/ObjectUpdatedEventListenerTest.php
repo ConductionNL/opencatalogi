@@ -174,68 +174,40 @@ class ObjectUpdatedEventListenerTest extends TestCase {
 	}
 
 	// -------------------------------------------------------------------------
-	// shouldProcessUpdate (private)
+	// update decisions (through handle)
 	// -------------------------------------------------------------------------
 
-	public function testShouldProcessUpdateViaReflection(): void {
-		$method = new \ReflectionMethod(ObjectUpdatedEventListener::class, 'shouldProcessUpdate');
-		$method->setAccessible(true);
+	/**
+	 * The six update decisions, driven through handle(): processed exactly when the EventService is called.
+	 */
+	public function testUpdateDecisionsThroughHandle(): void {
+		$live = new \DateTime('2025-01-01');
+		$attachments = ['auto_publish_attachments' => true, 'auto_publish_objects' => false];
+		$objects = ['auto_publish_attachments' => false, 'auto_publish_objects' => true];
+		$decisions = [
+			'attachments, published' => [$attachments, $live, null, true],
+			'attachments, not published' => [$attachments, null, null, false],
+			'nothing enabled' => [['auto_publish_attachments' => false, 'auto_publish_objects' => false], $live, null, false],
+			'objects, became published' => [$objects, $live, $this->createObjectEntityMock(), true],
+			'objects, already published' => [$objects, $live, $this->createObjectEntityMock(published: new \DateTime('2024-01-01')), false],
+			'objects, no old entity, not published' => [$objects, null, null, false],
+		];
 
-		// Auto-publish attachments enabled, object is published (past publicationDate).
-		$result = $method->invoke(
-			$this->listener,
-			['publicationDate' => '2025-01-01T00:00:00+00:00'],
-			null,
-			['auto_publish_attachments' => true, 'auto_publish_objects' => false]
-		);
-		$this->assertTrue($result);
+		foreach ($decisions as [$options, $published, $old, $processed]) {
+			$settings = $this->createMock(SettingsService::class);
+			$settings->method('getPublishingOptions')->willReturn($options);
+			$events = $this->createMock(EventService::class);
+			$events->expects($processed === true ? $this->once() : $this->never())
+				->method('handleObjectUpdateEvents')
+				->willReturn(['processed' => 0, 'published' => 0, 'attachmentsPublished' => 0, 'errors' => []]);
 
-		// Auto-publish attachments enabled, object NOT published (no publicationDate).
-		$result = $method->invoke(
-			$this->listener,
-			['@self' => []],
-			null,
-			['auto_publish_attachments' => true, 'auto_publish_objects' => false]
-		);
-		$this->assertFalse($result);
+			$event = $this->createMock(ObjectUpdatedEvent::class);
+			$event->method('getNewObject')->willReturn($this->createObjectEntityMock(published: $published));
+			$event->method('getOldObject')->willReturn($old);
 
-		// Nothing enabled.
-		$result = $method->invoke(
-			$this->listener,
-			['publicationDate' => '2025-01-01T00:00:00+00:00'],
-			null,
-			['auto_publish_attachments' => false, 'auto_publish_objects' => false]
-		);
-		$this->assertFalse($result);
-
-		// Auto-publish objects enabled, object became published (old was unpublished).
-		$oldEntity = $this->createObjectEntityMock();
-		$result = $method->invoke(
-			$this->listener,
-			['publicationDate' => '2025-01-01T00:00:00+00:00'],
-			$oldEntity,
-			['auto_publish_attachments' => false, 'auto_publish_objects' => true]
-		);
-		$this->assertTrue($result);
-
-		// Auto-publish objects enabled, object was already published.
-		$oldEntityPub = $this->createObjectEntityMock(published: new \DateTime('2024-01-01'));
-		$result = $method->invoke(
-			$this->listener,
-			['publicationDate' => '2025-01-01T00:00:00+00:00'],
-			$oldEntityPub,
-			['auto_publish_attachments' => false, 'auto_publish_objects' => true]
-		);
-		$this->assertFalse($result);
-
-		// Auto-publish objects enabled, no old entity, object not published.
-		$result = $method->invoke(
-			$this->listener,
-			['@self' => []],
-			null,
-			['auto_publish_attachments' => false, 'auto_publish_objects' => true]
-		);
-		$this->assertFalse($result);
+			$this->makeListener(settingsService: $settings, eventService: $events)->handle($event);
+			$this->addToAssertionCount(1);
+		}
 	}
 
 	// -------------------------------------------------------------------------
