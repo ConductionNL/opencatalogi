@@ -44,6 +44,7 @@ use Psr\Log\LoggerInterface;
  *
  * @covers \OCA\OpenCatalogi\Service\CatalogiService
  * @uses   \OCA\OpenCatalogi\Service\CallerScope
+ * @uses   \OCA\OpenCatalogi\Service\CatalogScopeResolver
  */
 class CatalogIndexGoldenTest extends TestCase {
 
