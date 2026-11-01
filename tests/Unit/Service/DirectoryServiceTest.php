@@ -4631,4 +4631,25 @@ class DirectoryServiceTest extends TestCase {
 		parse_str($uri->getQuery(), $query);
 		$this->assertSame('false', $query['_aggregate'] ?? null);
 	}
+
+	/**
+	 * A peer listing that names no directory is synced.
+	 *
+	 * @return void
+	 */
+	public function testAListingWithoutADirectoryIsSyncable(): void {
+		$this->assertTrue($this->invokePrivateMethod('isSyncableListing', [['id' => 'l-1']]));
+	}
+
+	/**
+	 * A listing without a title takes the name from its metadata.
+	 *
+	 * @return void
+	 */
+	public function testAListingWithoutATitleTakesItsMetadataName(): void {
+		$listing = $this->invokePrivateMethod('withListingIdentity', [['id' => 'l-1', '@self' => ['name' => 'Catalogus A']]]);
+
+		$this->assertSame('Catalogus A', $listing['title']);
+		$this->assertSame('l-1', $listing['catalog']);
+	}
 }
