@@ -236,6 +236,14 @@ class StatsControllerTest extends TestCase {
 		$this->assertSame(403, $resp->getStatus());
 	}//end testPublicationStatsDeniedOutsideTheCatalogScope()
 
+	public function testPublicationStatsIgnoresAForgedRegisterAndSchema(): void {
+		$this->wire(readable: ['pub-elsewhere']);
+		$this->usage->expects($this->never())->method('getPublicationStats');
+
+		$resp = $this->controllerWithForgedRequest()->publication('pub-elsewhere');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testPublicationStatsIgnoresAForgedRegisterAndSchema()
+
 	public function testPublicationStatsDeniedWhenTheScopeLookupFails(): void {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$this->catalogi->method('getCatalogFilters')->willThrowException(new \RuntimeException('config gone'));
