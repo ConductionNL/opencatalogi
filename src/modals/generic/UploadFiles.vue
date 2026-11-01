@@ -493,7 +493,11 @@ import TagEdit from 'vue-material-design-icons/TagEdit.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import { Attachment } from '../../entities/index.js'
 import { EventBus } from '../../eventBus.js'
-import { knownTags, labelOptionLists } from '../../services/uploadTags.js'
+import {
+	closingTags,
+	knownTags,
+	labelOptionLists,
+} from '../../services/uploadTags.js'
 import { useFileSelection } from './../../composables/UseFileSelection.js'
 
 const dropZoneRef = ref()
@@ -706,16 +710,7 @@ export default {
 		closeDialog() {
 			// mark internal close to avoid duplicate external watcher emission
 			this.__uploadFilesClosingInternally = true
-			// compute safe tags to emit
-			let tagsToEmit =
-				Array.isArray(this.latestTags) && this.latestTags.length > 0
-					? this.latestTags
-					: []
-			if (tagsToEmit.length === 0) {
-				const stored =
-					objectStore.getCollection && objectStore.getCollection('tags')
-				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
-			}
+			const tagsToEmit = closingTags(this.latestTags, objectStore)
 			// ensure latest tags are saved globally
 			try {
 				objectStore.setCollection('tags', tagsToEmit)
@@ -725,7 +720,7 @@ export default {
 				tags: tagsToEmit,
 				newTags: this.newTags,
 			})
-			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+			if (tagsToEmit.length > 0) {
 				EventBus.$emit('upload-files:tags-updated', {
 					tags: tagsToEmit,
 					newTags: this.newTags,
@@ -922,22 +917,13 @@ export default {
 				this.__uploadFilesClosingInternally = false
 				return
 			}
-			// compute safe tags source
-			let tagsToEmit =
-				Array.isArray(this.latestTags) && this.latestTags.length > 0
-					? this.latestTags
-					: []
-			if (tagsToEmit.length === 0) {
-				const stored =
-					objectStore.getCollection && objectStore.getCollection('tags')
-				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
-			}
+			const tagsToEmit = closingTags(this.latestTags, objectStore)
 			// emit the same close events as closeDialog
 			EventBus.$emit('upload-files:closed', {
 				tags: tagsToEmit,
 				newTags: this.newTags || [],
 			})
-			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+			if (tagsToEmit.length > 0) {
 				EventBus.$emit('upload-files:tags-updated', {
 					tags: tagsToEmit,
 					newTags: this.newTags || [],

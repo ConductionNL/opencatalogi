@@ -8,7 +8,12 @@
  * Offline, no DOM.
  */
 import { describe, expect, it } from 'vitest'
-import { knownTags, labelOptionLists } from '../../src/services/uploadTags.js'
+import {
+	closingTags,
+	knownTags,
+	labelOptionLists,
+} from '../../src/services/uploadTags.js'
+import closeGolden from './fixtures/upload-files-close-golden.json'
 import golden from './fixtures/upload-files-tags-golden.json'
 
 /**
@@ -54,6 +59,27 @@ describe('upload dialog tags (golden)', () => {
 		const lists = labelOptionLists(tags, 'No label')
 		expect(lists.options).toEqual(testCase.state.labelOptions.options)
 		expect(lists.edit).toEqual(testCase.state.labelOptionsEdit.options)
+		expect(reads).toEqual(
+			testCase.log
+				.filter((entry) => entry[0] === 'getCollection')
+				.map((entry) => entry[1]),
+		)
+	})
+})
+
+const closeCases = closeGolden.filter((c) =>
+	c.log.some((entry) => entry[1] === 'upload-files:closed'),
+)
+
+describe('upload dialog closing tags (golden)', () => {
+	it.each(closeCases.map((c) => [c.name, c]))('%s', (_name, testCase) => {
+		const reads = []
+		const closed = testCase.log.find(
+			(entry) => entry[1] === 'upload-files:closed',
+		)
+		expect(
+			closingTags(testCase.state.latestTags, storeOf(testCase.store, reads)),
+		).toEqual(closed[2].tags)
 		expect(reads).toEqual(
 			testCase.log
 				.filter((entry) => entry[0] === 'getCollection')

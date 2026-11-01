@@ -84,3 +84,30 @@ export function labelOptionLists(tags, noLabel) {
 		edit: [...tags],
 	}
 }
+
+/**
+ * Whether a value is an array with at least one entry.
+ *
+ * @param {unknown} value The value.
+ * @return {boolean} True for a non-empty array.
+ */
+function isNonEmptyArray(value) {
+	return Array.isArray(value) && value.length > 0
+}
+
+/**
+ * The tags the dialog reports when it closes: its latest tags, else the tags
+ * kept in the store, else none.
+ *
+ * @param {unknown} latestTags The dialog's latest tags.
+ * @param {object} store The object store.
+ * @return {Array<string>} The tags.
+ * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
+ */
+export function closingTags(latestTags, store) {
+	if (isNonEmptyArray(latestTags)) {
+		return latestTags
+	}
+	const stored = store.getCollection && store.getCollection('tags')
+	return isNonEmptyArray(stored) ? stored : []
+}
