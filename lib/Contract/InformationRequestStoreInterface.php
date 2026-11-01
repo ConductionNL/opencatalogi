@@ -29,7 +29,7 @@ use RuntimeException;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  */
-interface WooRequestStoreInterface {
+interface InformationRequestStoreInterface {
 	/**
 	 * Write a request.
 	 *

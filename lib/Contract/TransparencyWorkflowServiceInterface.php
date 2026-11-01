@@ -29,7 +29,7 @@ use RuntimeException;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  */
-interface WooServiceInterface {
+interface TransparencyWorkflowServiceInterface {
 	/**
 	 * The WOO Art. 5.1/5.2 weigeringsgronden (refusal grounds) catalogue. Each
 	 * entry is the article reference (stored value) mapped to a short Dutch

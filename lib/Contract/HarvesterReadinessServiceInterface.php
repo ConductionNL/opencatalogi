@@ -27,7 +27,7 @@ namespace OCA\OpenCatalogi\Contract;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  */
-interface WooReadinessServiceInterface {
+interface HarvesterReadinessServiceInterface {
 	/**
 	 * Whether at least one WOO-enabled catalog is configured.
 	 *

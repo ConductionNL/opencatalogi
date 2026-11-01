@@ -30,7 +30,7 @@ use DomainException;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  */
-interface WooRequestServiceInterface {
+interface InformationRequestServiceInterface {
 	/**
 	 * Build the record for a request that just arrived.
 	 *

@@ -25,7 +25,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Contract\WooCategoryRegistryInterface;
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Http\TextResponse;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\AppFramework\Controller;
@@ -63,7 +63,7 @@ class RobotsController extends Controller {
 	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param IURLGenerator $urlGenerator The URL generator.
 	 * @param IL10N $l10n The localization service.
-	 * @param WooCategoryRegistryInterface $categories The information categories, bundled plus local.
+	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		$appName,
@@ -72,7 +72,7 @@ class RobotsController extends Controller {
 		private readonly OpenRegisterLookup $openRegister,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IL10N $l10n,
-		private readonly WooCategoryRegistryInterface $categories,
+		private readonly InformationCategoryRegistryInterface $categories,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

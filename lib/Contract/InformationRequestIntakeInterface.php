@@ -27,7 +27,7 @@ namespace OCA\OpenCatalogi\Contract;
  *
  * Callers outside Service/ depend on this interface instead of on the class.
  */
-interface WooRequestIntakeInterface {
+interface InformationRequestIntakeInterface {
 	/**
 	 * The register could not store the request.
 	 */
