@@ -398,5 +398,26 @@
                 "deleted": 3
             }
         ]
+    ],
+    "an owner field next to subjectRef": [
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\RegisterMapper"
+        ],
+        [
+            "container",
+            "OCA\\OpenRegister\\Db\\SchemaMapper"
+        ],
+        [
+            "removeEverythingOf",
+            "subject-1"
+        ],
+        [
+            "info",
+            "OpenCatalogi: removed a closed portal account's dossiers and saved searches",
+            {
+                "deleted": 3
+            }
+        ]
     ]
 }
