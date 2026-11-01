@@ -1,0 +1,874 @@
+{
+    "open: stored": {
+        "status": 201,
+        "data": {
+            "publication": "pub-1",
+            "openedBy": "ambtenaar",
+            "termDays": 42,
+            "id": "period-1"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "saveObject": [
+                    {
+                        "publication": "pub-1",
+                        "openedBy": "ambtenaar",
+                        "termDays": 42
+                    },
+                    "7",
+                    "9",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "open: a forged openedBy, userId, requestedBy and owner are ignored": {
+        "status": 201,
+        "data": {
+            "publication": "pub-1",
+            "openedBy": "ambtenaar",
+            "termDays": 42,
+            "id": "period-1"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "saveObject": [
+                    {
+                        "publication": "pub-1",
+                        "openedBy": "ambtenaar",
+                        "termDays": 42
+                    },
+                    "7",
+                    "9",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "open: no parameters": {
+        "status": 201,
+        "data": {
+            "publication": "",
+            "openedBy": "ambtenaar",
+            "termDays": 0,
+            "id": "period-1"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": ""
+                    },
+                    0,
+                    "",
+                    "",
+                    false,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "saveObject": [
+                    {
+                        "publication": "",
+                        "openedBy": "ambtenaar",
+                        "termDays": 0
+                    },
+                    "7",
+                    "9",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "open: not signed in": {
+        "status": 201,
+        "data": {
+            "publication": "pub-1",
+            "openedBy": "",
+            "termDays": 42,
+            "id": "period-1"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    ""
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "saveObject": [
+                    {
+                        "publication": "pub-1",
+                        "openedBy": "",
+                        "termDays": 42
+                    },
+                    "7",
+                    "9",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "open: automatic withdrawal off": {
+        "status": 201,
+        "data": {
+            "publication": "pub-1",
+            "openedBy": "ambtenaar",
+            "termDays": 42,
+            "id": "period-1"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    false,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "saveObject": [
+                    {
+                        "publication": "pub-1",
+                        "openedBy": "ambtenaar",
+                        "termDays": 42
+                    },
+                    "7",
+                    "9",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "open: refused": {
+        "status": 400,
+        "data": {
+            "error": "period-refused",
+            "message": "unknown remedy"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            }
+        ]
+    },
+    "open: term engine unavailable": {
+        "status": 503,
+        "data": {
+            "error": "term-engine-unavailable",
+            "message": "engine down"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            }
+        ]
+    },
+    "open: service throws something else": {
+        "thrown": "RuntimeException: unexpected",
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            }
+        ]
+    },
+    "open: register unavailable": {
+        "status": 503,
+        "data": {
+            "error": "register-unreadable"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            }
+        ]
+    },
+    "open: register not configured": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            }
+        ]
+    },
+    "open: app config unavailable": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Cannot resolve register configuration for publication_register: IAppConfig unavailable"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "open: save fails": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "register write failed"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "saveObject": [
+                    {
+                        "publication": "pub-1",
+                        "openedBy": "ambtenaar",
+                        "termDays": 42
+                    },
+                    "7",
+                    "9",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "open: saved as an entity": {
+        "status": 201,
+        "data": {
+            "publication": "pub-1",
+            "openedBy": "ambtenaar",
+            "termDays": 42,
+            "id": "period-1"
+        },
+        "calls": [
+            {
+                "open": [
+                    {
+                        "id": "pub-1"
+                    },
+                    42,
+                    "zienswijze",
+                    "https://www.officielebekendmakingen.nl/stcrt-2026-1",
+                    true,
+                    "ambtenaar"
+                ]
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "saveObject": [
+                    {
+                        "publication": "pub-1",
+                        "openedBy": "ambtenaar",
+                        "termDays": 42
+                    },
+                    "7",
+                    "9",
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "show: found": {
+        "status": 200,
+        "data": {
+            "state": "open",
+            "publication": "pub-1",
+            "endDate": "2099-04-13T09:00:00+00:00",
+            "legalRemedy": "zienswijze"
+        },
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "find": [
+                    "period-1",
+                    "7",
+                    "9"
+                ]
+            },
+            {
+                "publicView": {
+                    "publication": "pub-1",
+                    "endDate": "2099-04-13T09:00:00+00:00",
+                    "legalRemedy": "zienswijze"
+                }
+            }
+        ]
+    },
+    "show: found as an entity": {
+        "status": 200,
+        "data": {
+            "state": "open",
+            "publication": "pub-1",
+            "endDate": "2099-04-13T09:00:00+00:00",
+            "legalRemedy": "zienswijze",
+            "id": null
+        },
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "find": [
+                    "period-1",
+                    "7",
+                    "9"
+                ]
+            },
+            {
+                "publicView": {
+                    "publication": "pub-1",
+                    "endDate": "2099-04-13T09:00:00+00:00",
+                    "legalRemedy": "zienswijze",
+                    "id": null
+                }
+            }
+        ]
+    },
+    "show: register unavailable": {
+        "status": 503,
+        "data": {
+            "error": "register-unreadable"
+        },
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            }
+        ]
+    },
+    "show: register not configured": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+        },
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            }
+        ]
+    },
+    "show: find throws": {
+        "status": 404,
+        "data": {
+            "error": "unknown-period"
+        },
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "find": [
+                    "period-1",
+                    "7",
+                    "9"
+                ]
+            }
+        ]
+    },
+    "show: reads as nothing": {
+        "status": 404,
+        "data": {
+            "error": "unknown-period"
+        },
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "find": [
+                    "period-1",
+                    "7",
+                    "9"
+                ]
+            }
+        ]
+    },
+    "show: unreadable dates": {
+        "status": 503,
+        "data": {
+            "error": "unreadable-period",
+            "message": "The dates of this comment period cannot be read."
+        },
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "find": [
+                    "period-1",
+                    "7",
+                    "9"
+                ]
+            },
+            {
+                "publicView": {
+                    "publication": "pub-1",
+                    "endDate": "2099-04-13T09:00:00+00:00",
+                    "legalRemedy": "zienswijze"
+                }
+            }
+        ]
+    },
+    "show: view throws something else": {
+        "thrown": "RuntimeException: unexpected",
+        "calls": [
+            {
+                "container": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container": "OCP\\IAppConfig"
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            },
+            {
+                "find": [
+                    "period-1",
+                    "7",
+                    "9"
+                ]
+            },
+            {
+                "publicView": {
+                    "publication": "pub-1",
+                    "endDate": "2099-04-13T09:00:00+00:00",
+                    "legalRemedy": "zienswijze"
+                }
+            }
+        ]
+    }
+}
