@@ -412,7 +412,7 @@
       "count": 1
     },
     "@typescript-eslint/no-unused-vars": {
-      "count": 12
+      "count": 10
     },
     "jsdoc/require-param-type": {
       "count": 15
@@ -421,7 +421,7 @@
       "count": 4
     },
     "no-empty": {
-      "count": 8
+      "count": 7
     },
     "vue/custom-event-name-casing": {
       "count": 8

@@ -493,6 +493,7 @@ import TagEdit from 'vue-material-design-icons/TagEdit.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import { Attachment } from '../../entities/index.js'
 import { EventBus } from '../../eventBus.js'
+import { knownTags, labelOptionLists } from '../../services/uploadTags.js'
 import { useFileSelection } from './../../composables/UseFileSelection.js'
 
 const dropZoneRef = ref()
@@ -827,42 +828,12 @@ export default {
 				)
 				const data = await response.json().catch(() => [])
 
-				const tagSet = new Set(Array.isArray(data) ? data : [])
-				// merge with tags from current publication attachments (if collection exists and is array)
-				let attachmentsCollection = []
-				try {
-					const attCol =
-						objectStore.getCollection
-						&& objectStore.getCollection('publicationAttachments')
-					attachmentsCollection = Array.isArray(attCol?.results)
-						? attCol.results
-						: []
-				} catch (_) {
-					attachmentsCollection = []
-				}
-				for (const att of attachmentsCollection) {
-					if (Array.isArray(att?.labels)) {
-						for (const label of att.labels) tagSet.add(label)
-					}
-				}
-				// also merge with previously stored tags in store, if present
-				try {
-					const storedTags =
-						objectStore.getCollection
-						&& objectStore.getCollection('tags')
-					if (Array.isArray(storedTags)) {
-						for (const t of storedTags) tagSet.add(t)
-					}
-				} catch (_) {}
-
-				const tags = Array.from(tagSet).sort()
-
-				const noLabel = noLabelOption()
-				const newLabelOptions = [
-					noLabel,
-					...tags.filter((tag) => tag !== noLabel),
-				]
-				const newLabelOptionsEdit = [...tags]
+				const lists = labelOptionLists(
+					knownTags(data, objectStore),
+					noLabelOption(),
+				)
+				const newLabelOptions = lists.options
+				const newLabelOptionsEdit = lists.edit
 
 				this.labelOptions.options = newLabelOptions
 				this.labelOptionsEdit.options = newLabelOptionsEdit
