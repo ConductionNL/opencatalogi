@@ -293,7 +293,6 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @psalm-suppress InvalidArgument
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
@@ -312,66 +311,10 @@ class DirectoryService implements DirectoryServiceInterface {
 		// Get ObjectService from container..
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		// Get listing configuration.
-		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
-		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
-
-		// Removed redundant logging.
-		$uniqueDirectoryUrls = [];
-
-		// Get listings if configuration is available.
-		if (empty($listingSchema) === false && empty($listingRegister) === false) {
-			try {
-				$query = [
-					'@self' => [
-						'register' => $listingRegister,
-						'schema' => $listingSchema,
-					],
-				];
-
-				// Directory data is public by design — listings/catalogs have authorization.read=["public"].
-				// RBAC is disabled so public directory discovery works without user context (see ADR-002).
-				// Multitenancy is NOT bypassed: each tenant sees only its own listing objects.
-				// Cross-instance federation uses the explicit URL-based remote-fetch path instead.
-				$listings = $objectService->searchObjects($query, _rbac: false);
-
-				// Build unique directory URLs using URL as key to automatically handle duplicates.
-				foreach ($listings as $listing) {
-					$listingData = $listing->jsonSerialize();
-					$objectData = ($listingData['object'] ?? $listingData);
-
-					$available = ($objectData['integrationLevel'] ?? null) === 'search';
-					$default = $objectData['default'] ?? false;
-
-					// Removed redundant logging.
-					// Apply post-query filtering for nested object properties.
-					if ($availableOnly === true && $available === false) {
-						// Skip unavailable listings.
-						continue;
-					}
-
-					if ($defaultOnly === true && $default === false) {
-						// Skip non-default listings.
-						continue;
-					}
-
-					// Check for publications URL in the object data.
-					// This method historically returns publications URLs — every caller that
-					// fetches publications (PublicationService::getPublications, getUsed,
-					// getPublication, the aggregated federation search) treats each returned
-					// URL as a publications endpoint. The BFS sync flow uses the sibling
-					// method getKnownDirectoryUrls() below to walk `directory` URLs instead.
-					if (isset($objectData['publications']) === true && empty($objectData['publications']) === false) {
-						$uniqueDirectoryUrls[$objectData['publications']] = $objectData['publications'];
-					}
-				}//end foreach
-			} catch (\Exception $e) {
-				// Removed redundant logging.
-			}//end try
-		}//end if
-
-		// Return just the unique URLs as an indexed array.
-		$result = array_values($uniqueDirectoryUrls);
+		$result = $this->publicationsUrls(
+			objectService: $objectService,
+			flags: ['available' => $availableOnly, 'default' => $defaultOnly]
+		);
 
 		// Cache the result with current timestamp.
 		$this->cachedUniqueDirs = $result;
@@ -379,6 +322,82 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		return $result;
 	}//end getUniqueDirectories()
+
+	/**
+	 * The unique publications URLs of the stored listings that pass the filters.
+	 *
+	 * Every caller treats each returned URL as a publications endpoint;
+	 * getKnownDirectoryUrls() returns the peers' directory URLs instead.
+	 *
+	 * @param mixed                                $objectService The OpenRegister object service.
+	 * @param array{available: bool, default: bool} $flags         Which filters apply.
+	 *
+	 * @return array<int, mixed> The URLs, in the order they were first found.
+	 */
+	private function publicationsUrls(mixed $objectService, array $flags): array {
+		$urls = [];
+		foreach ($this->storedListingObjects(objectService: $objectService) as $objectData) {
+			if ($this->isSelectedListing(objectData: $objectData, flags: $flags) === true
+				&& empty($objectData['publications']) === false
+			) {
+				$urls[$objectData['publications']] = $objectData['publications'];
+			}
+		}
+
+		return array_values($urls);
+	}//end publicationsUrls()
+
+	/**
+	 * The object data of every stored listing, for getUniqueDirectories().
+	 *
+	 * Directory data is public by design: listings and catalogs have
+	 * authorization.read=["public"]. RBAC is disabled so public directory
+	 * discovery works without user context (see ADR-002). Multitenancy is NOT
+	 * bypassed: each tenant sees only its own listing objects. Cross-instance
+	 * federation uses the explicit URL-based remote-fetch path instead.
+	 *
+	 * @param mixed $objectService The OpenRegister object service.
+	 *
+	 * @return array<int, mixed> The listings' object data; empty when the listing
+	 *                           register or schema is not configured. A failing
+	 *                           search or serialisation ends the list early.
+	 */
+	private function storedListingObjects(mixed $objectService): array {
+		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		if (empty($listingSchema) === true || empty($listingRegister) === true) {
+			return [];
+		}
+
+		$objects = [];
+		try {
+			$query = ['@self' => ['register' => $listingRegister, 'schema' => $listingSchema]];
+			foreach ($objectService->searchObjects($query, _rbac: false) as $listing) {
+				$listingData = $listing->jsonSerialize();
+				$objects[] = ($listingData['object'] ?? $listingData);
+			}
+		} catch (\Exception $e) {
+			// A listing store that cannot be read yields what was read so far.
+		}
+
+		return $objects;
+	}//end storedListingObjects()
+
+	/**
+	 * Whether a stored listing passes the available-only and default-only filters.
+	 *
+	 * @param mixed                                $objectData The listing's object data.
+	 * @param array{available: bool, default: bool} $flags     Which filters apply.
+	 *
+	 * @return bool True when no applying filter rejects the listing.
+	 */
+	private function isSelectedListing(mixed $objectData, array $flags): bool {
+		if ($flags['available'] === true && ($objectData['integrationLevel'] ?? null) !== 'search') {
+			return false;
+		}
+
+		return $flags['default'] === false || ($objectData['default'] ?? false) !== false;
+	}//end isSelectedListing()
 
 	/**
 	 * Get the set of known peer `/api/directory` URLs to sync with.
