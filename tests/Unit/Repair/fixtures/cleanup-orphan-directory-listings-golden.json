@@ -106,19 +106,23 @@
         "tables": [
             [
                 "openregister_table_1_7",
-                "scan"
+                "scan",
+                "_deleted IS NULL AND (directory IS NULL OR directory NOT LIKE '%/api/directory%')"
             ],
             [
                 "openregister_table_1_7",
-                "count"
+                "count",
+                "_deleted IS NULL AND directory LIKE '%/api/directory%'"
             ],
             [
                 "openregister_table_3_7",
-                "scan"
+                "scan",
+                "_deleted IS NULL AND (directory IS NULL OR directory NOT LIKE '%/api/directory%')"
             ],
             [
                 "openregister_table_3_7",
-                "count"
+                "count",
+                "_deleted IS NULL AND directory LIKE '%/api/directory%'"
             ]
         ]
     },
@@ -145,15 +149,18 @@
         "tables": [
             [
                 "openregister_table_1_7",
-                "scan"
+                "scan",
+                "_deleted IS NULL AND (directory IS NULL OR directory NOT LIKE '%/api/directory%')"
             ],
             [
                 "openregister_table_3_7",
-                "scan"
+                "scan",
+                "_deleted IS NULL AND (directory IS NULL OR directory NOT LIKE '%/api/directory%')"
             ],
             [
                 "openregister_table_3_7",
-                "count"
+                "count",
+                "_deleted IS NULL AND directory LIKE '%/api/directory%'"
             ]
         ]
     },
@@ -176,11 +183,13 @@
         "tables": [
             [
                 "openregister_table_1_7",
-                "scan"
+                "scan",
+                "_deleted IS NULL AND (directory IS NULL OR directory NOT LIKE '%/api/directory%')"
             ],
             [
                 "openregister_table_1_7",
-                "count"
+                "count",
+                "_deleted IS NULL AND directory LIKE '%/api/directory%'"
             ]
         ]
     },
@@ -195,11 +204,13 @@
         "tables": [
             [
                 "openregister_table_1_7",
-                "scan"
+                "scan",
+                "_deleted IS NULL AND (directory IS NULL OR directory NOT LIKE '%/api/directory%')"
             ],
             [
                 "openregister_table_1_7",
-                "count"
+                "count",
+                "_deleted IS NULL AND directory LIKE '%/api/directory%'"
             ]
         ]
     },
@@ -218,11 +229,13 @@
         "tables": [
             [
                 "openregister_table_1_7",
-                "scan"
+                "scan",
+                "_deleted IS NULL AND (directory IS NULL OR directory NOT LIKE '%/api/directory%')"
             ],
             [
                 "openregister_table_1_7",
-                "count"
+                "count",
+                "_deleted IS NULL AND directory LIKE '%/api/directory%'"
             ]
         ]
     },
@@ -245,11 +258,13 @@
         "tables": [
             [
                 "openregister_table_4_12",
-                "scan"
+                "scan",
+                "_deleted IS NULL AND (directory IS NULL OR directory NOT LIKE '%/api/directory%')"
             ],
             [
                 "openregister_table_4_12",
-                "count"
+                "count",
+                "_deleted IS NULL AND directory LIKE '%/api/directory%'"
             ]
         ]
     }
