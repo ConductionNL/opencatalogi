@@ -681,12 +681,10 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
 	 */
 	private function retentionCandidates(RetentionRun $run): ?array {
-		$windowEnd = $run->now->add(new DateInterval('P' . $this->getWarningWindowDays() . 'D'));
-		$query = [
-			'@self' => ['register' => $run->register, 'schema' => $run->schema],
-			'retentionExpiresAt' => ['$lte' => $windowEnd->format(DateTimeInterface::ATOM)],
-			'_limit' => 1000,
-		];
+		$query = (new RetentionQueue(now: $run->now))->query(
+			scope: ['register' => $run->register, 'schema' => $run->schema],
+			windowDays: $this->getWarningWindowDays()
+		);
 
 		try {
 			$result = $run->objectService->searchObjectsPaginated(query: $query, _rbac: false, _multitenancy: false);
@@ -779,9 +777,9 @@ class RetentionService implements RetentionServiceInterface {
 	public function getQueueSummary(): array {
 		$summary = ['expiringSoon' => 0, 'reviewRequired' => 0, 'archived' => 0];
 
-		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		foreach (($this->queueObjects(now: $now) ?? []) as $object) {
-			$bucket = $this->queueBucket(data: $this->plainArray(object: $object), now: $now);
+		$queue = new RetentionQueue(now: new DateTimeImmutable('now', new DateTimeZone('UTC')));
+		foreach (($this->queueObjects(queue: $queue) ?? []) as $object) {
+			$bucket = $queue->bucket(data: $this->plainArray(object: $object));
 			if ($bucket !== null) {
 				$summary[$bucket]++;
 			}
@@ -793,20 +791,20 @@ class RetentionService implements RetentionServiceInterface {
 	/**
 	 * The publications whose retention term ends within the warning window.
 	 *
-	 * @param DateTimeImmutable $now The moment of the summary.
+	 * @param RetentionQueue $queue The review queue at the moment of the summary.
 	 *
 	 * @return array|null The objects, or null when OpenRegister or the scope is missing or the search fails.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 	 */
-	private function queueObjects(DateTimeImmutable $now): ?array {
+	private function queueObjects(RetentionQueue $queue): ?array {
 		$objectService = $this->getObjectService();
 		$scope = $this->publicationScope();
 		if ($objectService === null || $scope === null) {
 			return null;
 		}
 
-		$query = $this->queueQuery(scope: $scope, now: $now);
+		$query = $queue->query(scope: $scope, windowDays: $this->getWarningWindowDays());
 
 		try {
 			$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
@@ -817,26 +815,6 @@ class RetentionService implements RetentionServiceInterface {
 
 		return ($result['results'] ?? []);
 	}//end queueObjects()
-
-	/**
-	 * The search for publications whose term ends within the warning window.
-	 *
-	 * @param array $scope The publication register and schema.
-	 * @param DateTimeImmutable $now The moment of the summary.
-	 *
-	 * @return array<string, mixed> The query.
-	 *
-	 * @spec exclude Internal query step of queueObjects().
-	 */
-	private function queueQuery(array $scope, DateTimeImmutable $now): array {
-		$windowEnd = $now->add(new DateInterval('P' . $this->getWarningWindowDays() . 'D'));
-
-		return [
-			'@self' => $scope,
-			'retentionExpiresAt' => ['$lte' => $windowEnd->format(DateTimeInterface::ATOM)],
-			'_limit' => 1000,
-		];
-	}//end queueQuery()
 
 	/**
 	 * The configured publication register and schema, or null when either is unset.
@@ -854,75 +832,6 @@ class RetentionService implements RetentionServiceInterface {
 
 		return ['register' => $register, 'schema' => $schema];
 	}//end publicationScope()
-
-	/**
-	 * The summary count a publication adds to, or null for none.
-	 *
-	 * An archived publication counts as archived; an expired one with the
-	 * review action needs review; one that has not expired yet is expiring soon.
-	 *
-	 * @param array $data The publication.
-	 * @param DateTimeImmutable $now The moment of the summary.
-	 *
-	 * @return string|null The summary key.
-	 *
-	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
-	 */
-	private function queueBucket(array $data, DateTimeImmutable $now): ?string {
-		if ((string)($data['status'] ?? '') === 'archived') {
-			return 'archived';
-		}
-
-		$expiry = $this->retentionExpiry(data: $data);
-		if ($expiry === null) {
-			return null;
-		}
-
-		if ($expiry > $now) {
-			return 'expiringSoon';
-		}
-
-		return self::reviewBucket(data: $data);
-	}//end queueBucket()
-
-	/**
-	 * The review-required key for an expired publication whose action is review, the default.
-	 *
-	 * @param array $data The publication.
-	 *
-	 * @return string|null The summary key, or null for another action.
-	 *
-	 * @spec exclude Internal check of queueBucket().
-	 */
-	private static function reviewBucket(array $data): ?string {
-		if ((string)($data['retentionAction'] ?? 'review') === 'review') {
-			return 'reviewRequired';
-		}
-
-		return null;
-	}//end reviewBucket()
-
-	/**
-	 * A publication's retention expiry, or null when it is unset or unreadable.
-	 *
-	 * @param array $data The publication.
-	 *
-	 * @return DateTimeImmutable|null The expiry.
-	 *
-	 * @spec exclude Internal parse step of queueBucket().
-	 */
-	private function retentionExpiry(array $data): ?DateTimeImmutable {
-		$expiresAt = ($data['retentionExpiresAt'] ?? null);
-		if ($expiresAt === null || $expiresAt === '') {
-			return null;
-		}
-
-		try {
-			return new DateTimeImmutable((string)$expiresAt);
-		} catch (\Throwable $e) {
-			return null;
-		}
-	}//end retentionExpiry()
 
 	/**
 	 * Record a human disposal/extension decision (who/when/basis/rationale).
