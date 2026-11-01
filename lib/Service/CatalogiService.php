@@ -91,6 +91,17 @@ class CatalogiService implements CatalogiServiceInterface {
 	];
 
 	/**
+	 * Request config keys index() copies into the search query, with the query key each one becomes.
+	 */
+	private const INDEX_PAGING_PARAMETERS = [
+		'limit' => '_limit',
+		'offset' => '_offset',
+		'page' => '_page',
+		'queries' => '_queries',
+		'order' => '_order',
+	];
+
+	/**
 	 * The cached object service instance.
 	 *
 	 * @var object|null
@@ -839,13 +850,8 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @NoAdminRequired
 	 * @NoCSRFRequired
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	public function index(null|string|int $catalogId = null): JSONResponse {
 		// Get config and fetch objects.
@@ -864,95 +870,98 @@ class CatalogiService implements CatalogiServiceInterface {
 
 		$objectService = $this->getObjectService();
 
-		// Copy the request filters FIRST and strip every register/schema key from them,
-		// then write the (guarded) scope. The loop used to run after the scope and to
-		// skip only `register` / `schema`, so `?@self[register]=R&@self[schema]=S`
-		// replaced the whole `@self` block and an anonymous caller read any schema on
-		// the instance (WOO-581 review). Non-scope `@self` filters survive the strip.
-		$query = [];
-		if (empty($config['filters']) === false) {
-			foreach ($config['filters'] as $key => $value) {
-				$query[$key] = $value;
-			}
-		}
-
-		// Scope for magic mapper routing. Both scopes are non-empty here (see the
-		// fail-closed above). writeScope() keeps the schema a list unless the scope is
-		// one schema in one register (WOO-581 review rounds 3 and 4).
-		$query = CallerScope::strip(query: $query);
-		$query = CallerScope::writeScope(query: $query, registers: $context['registers'], schemas: $context['schemas']);
-
-		// Add special parameters.
-		if (isset($config['limit']) === true) {
-			$query['_limit'] = $config['limit'];
-		}
-
-		if (isset($config['offset']) === true) {
-			$query['_offset'] = $config['offset'];
-		}
-
-		if (isset($config['page']) === true) {
-			$query['_page'] = $config['page'];
-		}
-
-		if (isset($config['queries']) === true) {
-			$query['_queries'] = $config['queries'];
-		}
-
-		if (isset($config['order']) === true) {
-			$query['_order'] = $config['order'];
-		}
-
 		// Use searchObjectsPaginated which handles pagination internally. RBAC governs
 		// visibility (_rbac: true); _multitenancy: false so cross-org public reads resolve.
 		// The catalog schema's conditional public-read rule (published <= $now) already
 		// gates published-vs-draft for anonymous callers — no extra filtering needed.
 		$result = $objectService->searchObjectsPaginated(
-			query: $query,
+			query: $this->buildIndexQuery(config: $config, context: $context),
 			_rbac: true,
 			_multitenancy: false
 		);
 
-		// Authenticated-read-parity (CAT-AUTH-001): OpenRegister RBAC already decided
-		// (via _rbac: true above) that this caller may read every object in $result;
-		// this only governs how much `@self` metadata the envelope carries. Anonymous
-		// callers keep today's minimal envelope; authenticated callers see the full
-		// `@self` metadata OR already lets them read.
-		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
-
-		// Filter out unwanted properties from the @self array in each object.
-		$filteredResults = array_map(
-			function ($object) use ($isAnonymous) {
-				// The OR SOLR backend returns array shapes (not ObjectEntity instances)
-				// from searchObjectsPaginated; the magic-mapper backend returns entities.
-				// Guard so we do not fatal with "Call to a member function jsonSerialize()
-				// on array" under SOLR (#736), mirroring the dual-shape handling already
-				// present in CatalogiController/PublicationsController::index.
-				if (is_array($object) === true) {
-					$objectArray = $object;
-				} else {
-					$objectArray = $object->jsonSerialize();
-				}
-
-				if ($isAnonymous === true
-					&& isset($objectArray['@self']) === true
-					&& is_array($objectArray['@self']) === true
-				) {
-					// Remove unwanted properties from the @self array.
-					$objectArray['@self'] = array_diff_key(
-						$objectArray['@self'],
-						array_flip(self::UNWANTED_SELF_PROPERTIES)
-					);
-				}
-
-				return $objectArray;
-			},
-			$result['results']
-		);
-
-		$result['results'] = $filteredResults;
+		$result['results'] = $this->envelopeResults(results: $result['results']);
 
 		// Return paginated results.
 		return new JSONResponse($result);
 	}//end index()
+
+	/**
+	 * Build the search query for index() from the request config and the catalogue scope.
+	 *
+	 * The request filters are stripped of every register/schema key BEFORE the
+	 * guarded scope is written, so `?@self[register]=R&@self[schema]=S` can never
+	 * replace that scope (WOO-581 review). Non-scope `@self` filters survive the strip.
+	 *
+	 * Both scopes must be non-empty: index() fails closed before calling this.
+	 * writeScope() keeps the schema a list unless the scope is one schema in one
+	 * register (WOO-581 review rounds 3 and 4).
+	 *
+	 * @param array<string, mixed>        $config  The request config from getConfig().
+	 * @param array<string, array<mixed>> $context The catalogue scope from getCatalogFilters().
+	 *
+	 * @return array<string, mixed> The query for searchObjectsPaginated().
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope is a set of pure functions over the query (WOO-581)
+	 */
+	private function buildIndexQuery(array $config, array $context): array {
+		$query = CallerScope::strip(query: $config['filters']);
+		$query = CallerScope::writeScope(query: $query, registers: $context['registers'], schemas: $context['schemas']);
+
+		foreach (self::INDEX_PAGING_PARAMETERS as $configKey => $queryKey) {
+			if (isset($config[$configKey]) === true) {
+				$query[$queryKey] = $config[$configKey];
+			}
+		}
+
+		return $query;
+	}//end buildIndexQuery()
+
+	/**
+	 * Shape every search result into the envelope index() returns.
+	 *
+	 * Authenticated-read-parity (CAT-AUTH-001): OpenRegister RBAC already decided
+	 * (via _rbac: true) that this caller may read every object in the results;
+	 * this only governs how much `@self` metadata the envelope carries. Anonymous
+	 * callers keep the minimal envelope; authenticated callers see the full
+	 * `@self` metadata OR already lets them read.
+	 *
+	 * @param array<int, mixed> $results The search results, entities or arrays.
+	 *
+	 * @return array<int, array<string, mixed>> The result rows as arrays.
+	 */
+	private function envelopeResults(array $results): array {
+		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+
+		return array_map(
+			fn ($object): array => $this->envelopeOf(object: $object, isAnonymous: $isAnonymous),
+			$results
+		);
+	}//end envelopeResults()
+
+	/**
+	 * Turn one search result into an array, without the hidden `@self` keys for anonymous callers.
+	 *
+	 * The OR SOLR backend returns array shapes (not ObjectEntity instances) from
+	 * searchObjectsPaginated; the magic-mapper backend returns entities. Both are
+	 * accepted so SOLR does not fatal with "Call to a member function jsonSerialize()
+	 * on array" (#736).
+	 *
+	 * @param mixed $object      One search result.
+	 * @param bool  $isAnonymous Whether the caller has no session user.
+	 *
+	 * @return array<string, mixed> The result as an array.
+	 */
+	private function envelopeOf(mixed $object, bool $isAnonymous): array {
+		$objectArray = $object;
+		if (is_array($object) === false) {
+			$objectArray = $object->jsonSerialize();
+		}
+
+		if ($isAnonymous === true && isset($objectArray['@self']) === true && is_array($objectArray['@self']) === true) {
+			$objectArray['@self'] = array_diff_key($objectArray['@self'], array_flip(self::UNWANTED_SELF_PROPERTIES));
+		}
+
+		return $objectArray;
+	}//end envelopeOf()
 }//end class
