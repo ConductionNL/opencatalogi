@@ -934,5 +934,239 @@
                 "objects": "getObjectService"
             }
         ]
+    },
+    "depublish ignores a depublishedBy inside the publication": {
+        "status": 200,
+        "data": {
+            "publication": "p-1",
+            "depublishedBy": "ambtenaar",
+            "withdrawals": [],
+            "id": "stored-1",
+            "outstandingChannels": [
+                "koop"
+            ],
+            "complete": false
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit",
+                        "depublishedBy": "mallory"
+                    },
+                    "",
+                    "ambtenaar",
+                    []
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "publication": "p-1",
+                        "depublishedBy": "ambtenaar",
+                        "withdrawals": []
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    null
+                ]
+            },
+            {
+                "outstanding": {
+                    "publication": "p-1",
+                    "depublishedBy": "ambtenaar",
+                    "withdrawals": [],
+                    "id": "stored-1"
+                }
+            }
+        ]
+    },
+    "acknowledge saves under the depublication id, not a forged uuid": {
+        "status": 200,
+        "data": {
+            "id": "d-1",
+            "withdrawals": [
+                {
+                    "channel": "koop2"
+                },
+                {
+                    "channel": "plooi"
+                }
+            ],
+            "acknowledged": "plooi",
+            "outstandingChannels": [
+                "koop"
+            ],
+            "complete": false
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            },
+            {
+                "acknowledge": [
+                    {
+                        "id": "d-1",
+                        "withdrawals": [
+                            {
+                                "channel": "koop2"
+                            },
+                            {
+                                "channel": "plooi"
+                            }
+                        ]
+                    },
+                    "plooi",
+                    "gone"
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "save": [
+                    {
+                        "id": "d-1",
+                        "withdrawals": [
+                            {
+                                "channel": "koop2"
+                            },
+                            {
+                                "channel": "plooi"
+                            }
+                        ],
+                        "acknowledged": "plooi"
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    "d-1"
+                ]
+            },
+            {
+                "outstanding": {
+                    "id": "d-1",
+                    "withdrawals": [
+                        {
+                            "channel": "koop2"
+                        },
+                        {
+                            "channel": "plooi"
+                        }
+                    ],
+                    "acknowledged": "plooi"
+                }
+            }
+        ]
+    },
+    "acknowledge, unknown channel with forged withdrawals": {
+        "status": 400,
+        "data": {
+            "error": "unknown-channel",
+            "message": "No withdrawal was sent to that channel, so there is nothing for it to acknowledge."
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            }
+        ]
+    },
+    "acknowledge, numeric channel compared strictly": {
+        "status": 400,
+        "data": {
+            "error": "unknown-channel",
+            "message": "No withdrawal was sent to that channel, so there is nothing for it to acknowledge."
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            }
+        ]
     }
 }

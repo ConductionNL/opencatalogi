@@ -67,7 +67,8 @@ class DepublicationGoldenTest extends TestCase {
 
 		return [
 			'depublish' => [['action' => 'depublish', 'params' => ['publication' => $publication, 'channels' => ['plooi', 7], 'reason' => '  wrong  ']]],
-			'depublish ignores a forged depublishedBy' => [['action' => 'depublish', 'params' => ['publication' => $publication, 'depublishedBy' => 'mallory', 'requestedBy' => 'mallory']]],
+			'depublish ignores a forged depublishedBy' => [['action' => 'depublish', 'params' => ['publication' => $publication, 'depublishedBy' => 'mallory', 'requestedBy' => 'mallory', 'userId' => 'mallory']]],
+			'depublish ignores a depublishedBy inside the publication' => [['action' => 'depublish', 'params' => ['publication' => $publication + ['depublishedBy' => 'mallory'], 'depublishedBy' => 'mallory', 'userId' => 'mallory']]],
 			'depublish without a session user' => [['action' => 'depublish', 'user' => null, 'params' => ['publication' => $publication]]],
 			'depublish, channels not a list' => [['action' => 'depublish', 'params' => ['publication' => $publication, 'channels' => 'plooi']]],
 			'depublish, no publication' => [['action' => 'depublish', 'params' => []]],
@@ -79,6 +80,9 @@ class DepublicationGoldenTest extends TestCase {
 			'depublish, every channel acknowledged' => [['action' => 'depublish', 'outstanding' => [], 'params' => ['publication' => $publication]]],
 			'acknowledge' => [['action' => 'acknowledge', 'params' => $ack]],
 			'acknowledge, last channel' => [['action' => 'acknowledge', 'outstanding' => [], 'params' => $ack]],
+			'acknowledge saves under the depublication id, not a forged uuid' => [['action' => 'acknowledge', 'params' => $ack + ['uuid' => 'other-id', 'id' => 'other-id']]],
+			'acknowledge, unknown channel with forged withdrawals' => [['action' => 'acknowledge', 'params' => ['depublication' => 'd-1', 'channel' => 'koop', 'withdrawals' => [['channel' => 'koop']]]]],
+			'acknowledge, numeric channel compared strictly' => [['action' => 'acknowledge', 'stored' => ['id' => 'd-1', 'withdrawals' => [['channel' => '10']]], 'params' => ['depublication' => 'd-1', 'channel' => '1e1']]],
 			'acknowledge, no depublication' => [['action' => 'acknowledge', 'params' => ['channel' => 'plooi']]],
 			'acknowledge, no channel' => [['action' => 'acknowledge', 'params' => ['depublication' => 'd-1', 'channel' => '  ']]],
 			'acknowledge, unknown channel' => [['action' => 'acknowledge', 'params' => ['depublication' => 'd-1', 'channel' => 'koop']]],
