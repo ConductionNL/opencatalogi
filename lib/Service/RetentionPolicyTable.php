@@ -62,38 +62,69 @@ class RetentionPolicyTable {
 	 */
 	public function fromDefaults(array $catalogDefaults): ?array {
 		$rules = [];
-		$fallbackRule = null;
+		$fallbackRules = [];
 		foreach ($catalogDefaults as $category => $rule) {
 			if (is_array($rule) === false) {
 				continue;
 			}
 
-			$outputEntries = [null, null];
-			if (isset($rule['termMonths']) === true) {
-				$outputEntries[0] = (int)$rule['termMonths'];
-			}
-
-			if (isset($rule['action']) === true) {
-				$outputEntries[1] = (string)$rule['action'];
-			}
-
 			if ((string)$category === '_fallback') {
-				$fallbackRule = ['id' => '_fallback', 'inputEntries' => ['-'], 'outputEntries' => $outputEntries];
+				$fallbackRules = [['id' => '_fallback', 'inputEntries' => ['-'], 'outputEntries' => $this->outputEntries(rule: $rule)]];
 				continue;
 			}
 
-			$cell = '"' . str_replace('"', '\\"', (string)$category) . '"';
-			$rules[] = ['id' => 'cat:' . (string)$category, 'inputEntries' => [$cell], 'outputEntries' => $outputEntries];
+			$rules[] = $this->categoryRule(category: (string)$category, rule: $rule);
 		}
 
-		if ($fallbackRule !== null) {
-			$rules[] = $fallbackRule;
-		}
-
+		$rules = array_merge($rules, $fallbackRules);
 		if (count($rules) === 0) {
 			return null;
 		}
 
+		return $this->table(rules: $rules);
+	}//end fromDefaults()
+
+	/**
+	 * The rule that matches one category exactly.
+	 *
+	 * @param string               $category The category, quoted into a literal input cell.
+	 * @param array<string, mixed> $rule     The stored rule.
+	 *
+	 * @return array<string, mixed> The decision-table rule.
+	 */
+	private function categoryRule(string $category, array $rule): array {
+		$cell = '"' . str_replace('"', '\\"', $category) . '"';
+		return ['id' => 'cat:' . $category, 'inputEntries' => [$cell], 'outputEntries' => $this->outputEntries(rule: $rule)];
+	}//end categoryRule()
+
+	/**
+	 * The `termMonths` and `action` output entries of a stored rule; a missing key gives null.
+	 *
+	 * @param array<string, mixed> $rule The stored rule.
+	 *
+	 * @return array{0: int|null, 1: string|null} The output entries.
+	 */
+	private function outputEntries(array $rule): array {
+		$outputEntries = [null, null];
+		if (isset($rule['termMonths']) === true) {
+			$outputEntries[0] = (int)$rule['termMonths'];
+		}
+
+		if (isset($rule['action']) === true) {
+			$outputEntries[1] = (string)$rule['action'];
+		}
+
+		return $outputEntries;
+	}//end outputEntries()
+
+	/**
+	 * The FIRST-hit decision table around the given rules.
+	 *
+	 * @param list<array<string, mixed>> $rules The rules, in match order.
+	 *
+	 * @return array<string, mixed> The decision-table definition.
+	 */
+	private function table(array $rules): array {
 		return [
 			'hitPolicy' => 'FIRST',
 			'inputs' => [['name' => 'category', 'type' => 'string']],
@@ -103,5 +134,5 @@ class RetentionPolicyTable {
 			],
 			'rules' => $rules,
 		];
-	}//end fromDefaults()
+	}//end table()
 }//end class
