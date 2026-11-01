@@ -26,8 +26,8 @@ namespace Unit\Controller;
 
 use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
-use OCA\OpenCatalogi\Contract\WooRequestServiceInterface;
-use OCA\OpenCatalogi\Contract\WooRequestStoreInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Controller\WooRequestController;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
@@ -131,7 +131,7 @@ class WooRequestReceiveGoldenTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn((($case['user'] ?? true) === true) ? $user : null);
 
-		$requests = $this->createMock(WooRequestServiceInterface::class);
+		$requests = $this->createMock(InformationRequestServiceInterface::class);
 		$requests->method('receive')->willReturnCallback(
 			function (array $input, string $receivedBy, ?DateTimeInterface $now = null) use ($fail): array {
 				$this->calls[] = ['receive' => [$input, $receivedBy]];
@@ -156,7 +156,7 @@ class WooRequestReceiveGoldenTest extends TestCase {
 		);
 
 		$saves = 0;
-		$store = $this->createMock(WooRequestStoreInterface::class);
+		$store = $this->createMock(InformationRequestStoreInterface::class);
 		$store->method('save')->willReturnCallback(
 			function (array $record, string $uuid = '') use ($fail, $case, &$saves): array {
 				$saves++;
