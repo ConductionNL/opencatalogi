@@ -1,0 +1,1176 @@
+
+=== lint ===
+No syntax errors detected in ./fix-phpcs.php
+No syntax errors detected in ./tests/bootstrap.php
+No syntax errors detected in ./tests/Stubs/Doctrine/ParameterType.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/Platforms/AbstractPlatform.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/Schema/Schema.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/Exception.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/Connection.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/Logging/SQLLogger.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/Types/Types.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/Types/Type.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/ArrayParameterType.php
+No syntax errors detected in ./tests/Stubs/Doctrine/DBAL/Query/Expression/ExpressionBuilder.php
+No syntax errors detected in ./tests/Stubs/Mcp/IMcpToolProvider.php
+No syntax errors detected in ./tests/Stubs/AppHost/IMetricsProvider.php
+No syntax errors detected in ./tests/Stubs/AppHost/MetricSample.php
+No syntax errors detected in ./tests/Stubs/OC/AppScriptDependency.php
+No syntax errors detected in ./tests/Stubs/OC/Util.php
+No syntax errors detected in ./tests/Stubs/OC/Hooks/Emitter.php
+No syntax errors detected in ./tests/Stubs/OC/User/NoUserException.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Event/ObjectCreatingEvent.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Event/ObjectDeletedEvent.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Event/ToolRegistrationEvent.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Event/ObjectUpdatingEvent.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Event/ObjectCreatedEvent.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Event/ObjectUpdatedEvent.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/Object/PermissionHandler.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/ToolRegistry.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/Dmn/DecisionEvaluationException.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/Dmn/DecisionTableEvaluator.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/Dmn/UnaryTestEvaluator.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/FileService.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/RegisterResolverService.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/Resolver/Exception/MissingConfigException.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/ConfigurationService.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/DeckCardService.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Service/ObjectService.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Db/SchemaMapper.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Db/FileMapper.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Db/RegisterMapper.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Db/Agent.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Db/Register.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Db/Schema.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Db/ObjectEntity.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Exception/RegisterNotFoundException.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Exception/SchemaNotFoundException.php
+No syntax errors detected in ./tests/Stubs/OpenRegister/Tool/ToolInterface.php
+No syntax errors detected in ./tests/Stubs/Integriq/Event/GatewayDeliveryRequestedEvent.php
+No syntax errors detected in ./tests/Stubs/Integriq/Event/ConnectionRefreshRequestedEvent.php
+No syntax errors detected in ./tests/Stubs/Integriq/Event/ConnectionStatusReportedEvent.php
+No syntax errors detected in ./tests/Stubs/Integriq/Service/ConnectionStore.php
+No syntax errors detected in ./tests/Stubs/Integriq/Service/CallService.php
+No syntax errors detected in ./tests/Integration/bootstrap.php
+No syntax errors detected in ./tests/Integration/CatalogFilteringTest.php
+No syntax errors detected in ./tests/bootstrap-unit.php
+No syntax errors detected in ./tests/Unit/BackgroundJob/CommentPeriodWithdrawalWiringTest.php
+No syntax errors detected in ./tests/Unit/BackgroundJob/SavedSearchMatchingJobTest.php
+No syntax errors detected in ./tests/Unit/BackgroundJob/WooReadinessCheckTest.php
+No syntax errors detected in ./tests/Unit/BackgroundJob/BroadcastTest.php
+No syntax errors detected in ./tests/Unit/BackgroundJob/DirectorySyncTest.php
+No syntax errors detected in ./tests/Unit/BackgroundJob/RetentionEvaluationTest.php
+No syntax errors detected in ./tests/Unit/Controller/WooRegistrationControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/OoapiControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/NoticeBoardControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/CatalogiControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/PortalCollectionControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/DepublicationControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/CommunityControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/FederationControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/PublicationDisclosureControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/RobotsControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/ThemesControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/UiControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/SearchControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/ServiceCatalogueControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/ListingsControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/ConnectionReportCallersTest.php
+No syntax errors detected in ./tests/Unit/Controller/InspectionControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/SchemaOrgControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/SitemapControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/StatsControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/WooReadinessControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/SettingsControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/WooRequestControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/WooControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/DirectoryControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/DcatControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/PublicationsControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/CommentPeriodControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/PublicationRulesControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/GlossaryControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/RetentionControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/PublicationStateControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/SetupControllerTest.php
+No syntax errors detected in ./tests/Unit/Controller/AnswersCacheablyTest.php
+No syntax errors detected in ./tests/Unit/Controller/PubliccodeHarvestControllerTest.php
+No syntax errors detected in ./tests/Unit/Repair/InitializeSettingsTest.php
+No syntax errors detected in ./tests/Unit/Repair/CleanupOrphanDirectoryListingsTest.php
+No syntax errors detected in ./tests/Unit/Repair/RemoveRetiredCronJobsTest.php
+No syntax errors detected in ./tests/Unit/Repair/WOO536RepairReadRulesTest.php
+No syntax errors detected in ./tests/Unit/Repair/RenameDutchPublicationColumnsTest.php
+No syntax errors detected in ./tests/Unit/AppManifestPhpFloorTest.php
+No syntax errors detected in ./tests/Unit/AppInfo/RouteNameUniquenessTest.php
+No syntax errors detected in ./tests/Unit/AppInfo/NoWooRequestScreenTest.php
+No syntax errors detected in ./tests/Unit/AppInfo/CanonicalSettingsRouteContractTest.php
+No syntax errors detected in ./tests/Unit/AppInfo/ApplicationRegisterInvariantTest.php
+No syntax errors detected in ./tests/Unit/Mcp/OpenCatalogiToolProviderTest.php
+No syntax errors detected in ./tests/Unit/Service/OoapiMappingServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/FileServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/CatalogiServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/WithheldDocumentsTest.php
+No syntax errors detected in ./tests/Unit/Service/DirectoryServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/UsageCounterServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/PublicationQuerySearchContractTest.php
+No syntax errors detected in ./tests/Unit/Service/ServiceCatalogueServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/RetentionPolicyTableTest.php
+No syntax errors detected in ./tests/Unit/Service/TooiVocabularyServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/StandardsVersionServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/WooRequestStoreTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/WithheldDocumentsRecordTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/LocalCategoryAdmissionTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/WooCategoryRegistryTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/WooRequestIntakeTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/StatutoryTermTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/WithheldDocumentStoreTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/WooRequestServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Woo/Fixtures/DossiqWooRefusalGrounds.php
+No syntax errors detected in ./tests/Unit/Service/Woo/DocumentRedactorTest.php
+No syntax errors detected in ./tests/Unit/Service/Federation/FederationHostPolicyTest.php
+No syntax errors detected in ./tests/Unit/Service/Community/MarkupRenderServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Community/CommunitySurfaceTest.php
+No syntax errors detected in ./tests/Unit/Service/Withheld/WithheldFromPublicationStoreTest.php
+No syntax errors detected in ./tests/Unit/Service/PublicationServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/PublicationQueryServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/QualityServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/SearchQueryTranslatorTest.php
+No syntax errors detected in ./tests/Unit/Service/PubliccodeHarvestServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/WithheldOnThePublicReadTest.php
+No syntax errors detected in ./tests/Unit/Service/DemoDataServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/RegisterSchemaLinkServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/RegisterFragmentMergeTest.php
+No syntax errors detected in ./tests/Unit/Service/EventServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/CatalogScopeSlugResolverTest.php
+No syntax errors detected in ./tests/Unit/Service/Connection/ConnectionReporterTest.php
+No syntax errors detected in ./tests/Unit/Service/Connection/ConnectionObservationsTest.php
+No syntax errors detected in ./tests/Unit/Service/OoapiServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/AttachmentMigrationServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/CaseTypeCatalogueServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/BroadcastServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/SchemaOrgServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/DcatVocabularyServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/WooReadinessServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/WooServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/SitemapServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/CmsMigrationServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/DcatMappingServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/DcatServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/RetentionServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/DcatSerializerTest.php
+No syntax errors detected in ./tests/Unit/Service/SettingsServiceCatalogScopeTest.php
+No syntax errors detected in ./tests/Unit/Service/Portal/SavedSearchMatcherTest.php
+No syntax errors detected in ./tests/Unit/Service/Portal/FakePortalObjectStore.php
+No syntax errors detected in ./tests/Unit/Service/Portal/CitizenCollectionServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Portal/PortalObjectStoreMessageTest.php
+No syntax errors detected in ./tests/Unit/Service/Portal/PublicationLinkerTest.php
+No syntax errors detected in ./tests/Unit/Service/Portal/SavedSearchServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/SettingsServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/CallerScopeTest.php
+No syntax errors detected in ./tests/Unit/Service/AttachOrphanSchemasTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/DecisionAndProcessTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/PublicationRuleServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/PlooiDeliveryServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/PublishedCollectionsServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/InspectionServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/DepublicationAndIndexTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/PublicationStateServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/PublicationRightsTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/NationalIndexServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/CommentPeriodServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/Publication/CommentPeriodWithdrawalServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/DownloadServiceTest.php
+No syntax errors detected in ./tests/Unit/Service/WooRegistrationServiceTest.php
+No syntax errors detected in ./tests/Unit/Listener/CatalogSchemaEventListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/ObjectUpdatedEventListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/ProvideManifestConfigStateListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/ManifestSentinelParityTest.php
+No syntax errors detected in ./tests/Unit/Listener/PlooiDeliveryListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/PortalAccountRemovedListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/CatalogScopePendingListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/CatalogCacheEventListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/ObjectCreatedEventListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/ToolRegistrationListenerTest.php
+No syntax errors detected in ./tests/Unit/Listener/WooReadinessTriggerListenerTest.php
+No syntax errors detected in ./tests/Unit/Command/AttachDocumentsToPublicationsCommandTest.php
+No syntax errors detected in ./tests/Unit/Architecture/HarvestArchitectureTest.php
+No syntax errors detected in ./tests/Unit/Http/TextResponseTest.php
+No syntax errors detected in ./tests/Unit/Http/XMLResponseTest.php
+No syntax errors detected in ./tests/Unit/OpenApiParityTest.php
+No syntax errors detected in ./tests/Unit/Sections/OpenCatalogiAdminTest.php
+No syntax errors detected in ./tests/Unit/Exception/DirectoryUrlExceptionTest.php
+No syntax errors detected in ./tests/Unit/Dashboard/UnpublishedAttachmentsWidgetTest.php
+No syntax errors detected in ./tests/Unit/Dashboard/UnpublishedPublicationsWidgetTest.php
+No syntax errors detected in ./tests/Unit/Dashboard/CatalogWidgetTest.php
+No syntax errors detected in ./tests/Unit/Tool/CMSToolTest.php
+No syntax errors detected in ./tests/Unit/Observability/OpenCatalogiMetricsProviderTest.php
+No syntax errors detected in ./tests/Unit/Portal/PortalContributionProviderTest.php
+No syntax errors detected in ./tests/Unit/Portal/PortalAssertionVerifierTest.php
+No syntax errors detected in ./tests/Unit/OoapiNoRawSqlTest.php
+No syntax errors detected in ./tests/Unit/Settings/WithheldDocumentSchemaTest.php
+No syntax errors detected in ./tests/Unit/Settings/PubliccodeHarvestFlowTest.php
+No syntax errors detected in ./tests/Unit/Settings/WooRegisterSchemasTest.php
+No syntax errors detected in ./tests/Unit/Settings/WooRequestAndCommentPeriodRegisterTest.php
+No syntax errors detected in ./tests/Unit/Settings/PublicationWooCategoryTest.php
+No syntax errors detected in ./tests/Unit/Settings/PortalDetailSchemaTest.php
+No syntax errors detected in ./tests/Unit/Settings/PublishFromStackiqSeedTest.php
+No syntax errors detected in ./tests/Unit/Settings/OpenCatalogiAdminTest.php
+No syntax errors detected in ./tests/Unit/Settings/WooJourneyRegisterTest.php
+No syntax errors detected in ./tests/Unit/Settings/PubliccodeMappingTest.php
+No syntax errors detected in ./tests/Unit/Settings/ConnectionsDeclarationTest.php
+No syntax errors detected in ./tests/Unit/Settings/WooRequestMigrationStampTest.php
+No syntax errors detected in ./templates/settings/admin.php
+No syntax errors detected in ./templates/index.php
+No syntax errors detected in ./scripts/setup-local-menus.php
+No syntax errors detected in ./scripts/coverage-guard.php
+No syntax errors detected in ./appinfo/routes.php
+No syntax errors detected in ./lib/BackgroundJob/WooReadinessCheckNow.php
+No syntax errors detected in ./lib/BackgroundJob/SavedSearchMatchingJob.php
+No syntax errors detected in ./lib/BackgroundJob/PlooiDelivery.php
+No syntax errors detected in ./lib/BackgroundJob/Broadcast.php
+No syntax errors detected in ./lib/BackgroundJob/RetentionEvaluation.php
+No syntax errors detected in ./lib/BackgroundJob/WooReadinessCheck.php
+No syntax errors detected in ./lib/BackgroundJob/DirectorySync.php
+No syntax errors detected in ./lib/BackgroundJob/CommentPeriodWithdrawal.php
+No syntax errors detected in ./lib/Controller/DirectoryController.php
+No syntax errors detected in ./lib/Controller/PortalCollectionController.php
+No syntax errors detected in ./lib/Controller/GlossaryController.php
+No syntax errors detected in ./lib/Controller/SettingsController.php
+No syntax errors detected in ./lib/Controller/ThemesController.php
+No syntax errors detected in ./lib/Controller/PublicationsController.php
+No syntax errors detected in ./lib/Controller/PublicationStateController.php
+No syntax errors detected in ./lib/Controller/FederationController.php
+No syntax errors detected in ./lib/Controller/WooController.php
+No syntax errors detected in ./lib/Controller/WooRegistrationController.php
+No syntax errors detected in ./lib/Controller/UiController.php
+No syntax errors detected in ./lib/Controller/WooRequestController.php
+No syntax errors detected in ./lib/Controller/AnswersCrossOriginRequests.php
+No syntax errors detected in ./lib/Controller/ListingsController.php
+No syntax errors detected in ./lib/Controller/PubliccodeHarvestController.php
+No syntax errors detected in ./lib/Controller/ApiDocumentationController.php
+No syntax errors detected in ./lib/Controller/PublicationRulesController.php
+No syntax errors detected in ./lib/Controller/StatsController.php
+No syntax errors detected in ./lib/Controller/RobotsController.php
+No syntax errors detected in ./lib/Controller/CommunityController.php
+No syntax errors detected in ./lib/Controller/DcatController.php
+No syntax errors detected in ./lib/Controller/SchemaOrgController.php
+No syntax errors detected in ./lib/Controller/WooReadinessController.php
+No syntax errors detected in ./lib/Controller/ServiceCatalogueController.php
+No syntax errors detected in ./lib/Controller/SitemapController.php
+No syntax errors detected in ./lib/Controller/ReadsOpenRegisterResults.php
+No syntax errors detected in ./lib/Controller/PublicationDisclosureController.php
+No syntax errors detected in ./lib/Controller/NoticeBoardController.php
+No syntax errors detected in ./lib/Controller/RetentionController.php
+No syntax errors detected in ./lib/Controller/AnswersPortalSubjects.php
+No syntax errors detected in ./lib/Controller/ResolvesRegisterConfiguration.php
+No syntax errors detected in ./lib/Controller/CommentPeriodController.php
+No syntax errors detected in ./lib/Controller/AnswersCacheably.php
+No syntax errors detected in ./lib/Controller/InspectionController.php
+No syntax errors detected in ./lib/Controller/SetupController.php
+No syntax errors detected in ./lib/Controller/SharedCollectionController.php
+No syntax errors detected in ./lib/Controller/PortalSavedSearchController.php
+No syntax errors detected in ./lib/Controller/DepublicationController.php
+No syntax errors detected in ./lib/Controller/SearchController.php
+No syntax errors detected in ./lib/Controller/OoapiController.php
+No syntax errors detected in ./lib/Controller/CatalogiController.php
+No syntax errors detected in ./lib/Repair/InitializeSettings.php
+No syntax errors detected in ./lib/Repair/CleanupOrphanDirectoryListings.php
+No syntax errors detected in ./lib/Repair/WOO536RepairReadRules.php
+No syntax errors detected in ./lib/Repair/RemoveRetiredCronJobs.php
+No syntax errors detected in ./lib/Repair/RenameDutchPublicationColumns.php
+No syntax errors detected in ./lib/AppInfo/Application.php
+No syntax errors detected in ./lib/Mcp/OpenCatalogiToolProvider.php
+No syntax errors detected in ./lib/Service/DownloadService.php
+No syntax errors detected in ./lib/Service/WooRegistrationService.php
+No syntax errors detected in ./lib/Service/CmsMigrationService.php
+No syntax errors detected in ./lib/Service/DcatMappingService.php
+No syntax errors detected in ./lib/Service/CallerScope.php
+No syntax errors detected in ./lib/Service/UsageCounterService.php
+No syntax errors detected in ./lib/Service/OoapiMappingService.php
+No syntax errors detected in ./lib/Service/RetentionService.php
+No syntax errors detected in ./lib/Service/CatalogiService.php
+No syntax errors detected in ./lib/Service/DcatVocabularyService.php
+No syntax errors detected in ./lib/Service/Woo/WooRequestIntake.php
+No syntax errors detected in ./lib/Service/Woo/StatutoryTerm.php
+No syntax errors detected in ./lib/Service/Woo/TermRefusedException.php
+No syntax errors detected in ./lib/Service/Woo/DocumentRedactor.php
+No syntax errors detected in ./lib/Service/Woo/WithheldDocuments.php
+No syntax errors detected in ./lib/Service/Woo/WooCategoryRegistry.php
+No syntax errors detected in ./lib/Service/Woo/BatchPublicationWriter.php
+No syntax errors detected in ./lib/Service/Woo/WithheldDocumentStore.php
+No syntax errors detected in ./lib/Service/Woo/TermEngineUnavailableException.php
+No syntax errors detected in ./lib/Service/Woo/WooRequestService.php
+No syntax errors detected in ./lib/Service/Woo/LocalCategoryAdmission.php
+No syntax errors detected in ./lib/Service/Woo/WooRequestStore.php
+No syntax errors detected in ./lib/Service/RegisterSchemaLinkService.php
+No syntax errors detected in ./lib/Service/DemoDataService.php
+No syntax errors detected in ./lib/Service/TooiVocabularyService.php
+No syntax errors detected in ./lib/Service/BroadcastService.php
+No syntax errors detected in ./lib/Service/AttachmentMigrationService.php
+No syntax errors detected in ./lib/Service/Federation/FederationHostPolicy.php
+No syntax errors detected in ./lib/Service/RetentionPolicyTable.php
+No syntax errors detected in ./lib/Service/Community/BannerService.php
+No syntax errors detected in ./lib/Service/Community/NoticeBoardService.php
+No syntax errors detected in ./lib/Service/Community/AtomFeedService.php
+No syntax errors detected in ./lib/Service/Community/MarkupRenderService.php
+No syntax errors detected in ./lib/Service/Community/StatusPageService.php
+No syntax errors detected in ./lib/Service/Withheld/WithheldFromPublication.php
+No syntax errors detected in ./lib/Service/Withheld/WithheldFromPublicationStore.php
+No syntax errors detected in ./lib/Service/FileService.php
+No syntax errors detected in ./lib/Service/CaseTypeCatalogueService.php
+No syntax errors detected in ./lib/Service/WooCategory.php
+No syntax errors detected in ./lib/Service/QualityService.php
+No syntax errors detected in ./lib/Service/PubliccodeHarvestService.php
+No syntax errors detected in ./lib/Service/DcatSerializer.php
+No syntax errors detected in ./lib/Service/WooService.php
+No syntax errors detected in ./lib/Service/Connection/ConnectionObservations.php
+No syntax errors detected in ./lib/Service/Connection/ConnectionReporter.php
+No syntax errors detected in ./lib/Service/SearchQueryTranslator.php
+No syntax errors detected in ./lib/Service/PublicationService.php
+No syntax errors detected in ./lib/Service/OoapiService.php
+No syntax errors detected in ./lib/Service/EventService.php
+No syntax errors detected in ./lib/Service/PublicationQueryService.php
+No syntax errors detected in ./lib/Service/SettingsService.php
+No syntax errors detected in ./lib/Service/DcatService.php
+No syntax errors detected in ./lib/Service/SchemaOrgService.php
+No syntax errors detected in ./lib/Service/WooReadinessService.php
+No syntax errors detected in ./lib/Service/SearchRangeGuard.php
+No syntax errors detected in ./lib/Service/SitemapService.php
+No syntax errors detected in ./lib/Service/CatalogScopeSlugResolver.php
+No syntax errors detected in ./lib/Service/ServiceCatalogueService.php
+No syntax errors detected in ./lib/Service/DirectoryService.php
+No syntax errors detected in ./lib/Service/Portal/PortalInput.php
+No syntax errors detected in ./lib/Service/Portal/PublicationLinker.php
+No syntax errors detected in ./lib/Service/Portal/PublicSearchRunner.php
+No syntax errors detected in ./lib/Service/Portal/CitizenCollectionService.php
+No syntax errors detected in ./lib/Service/Portal/CollectionShareService.php
+No syntax errors detected in ./lib/Service/Portal/SavedSearchMatcher.php
+No syntax errors detected in ./lib/Service/Portal/SavedSearchNoticeWriter.php
+No syntax errors detected in ./lib/Service/Portal/PortalObjectStore.php
+No syntax errors detected in ./lib/Service/Portal/SavedSearchService.php
+No syntax errors detected in ./lib/Service/Catalogue/CaseTypeSourceReader.php
+No syntax errors detected in ./lib/Service/Catalogue/ExternalCatalogueUnreachableException.php
+No syntax errors detected in ./lib/Service/Catalogue/CatalogueUnreadableException.php
+No syntax errors detected in ./lib/Service/Catalogue/GatewayCaseTypeSourceReader.php
+No syntax errors detected in ./lib/Service/Publication/PublicationRuleService.php
+No syntax errors detected in ./lib/Service/Publication/UnreadableRuleException.php
+No syntax errors detected in ./lib/Service/Publication/TermRollUnavailableException.php
+No syntax errors detected in ./lib/Service/Publication/NationalIndexService.php
+No syntax errors detected in ./lib/Service/Publication/PublishedCollectionsService.php
+No syntax errors detected in ./lib/Service/Publication/IndexUnreachableException.php
+No syntax errors detected in ./lib/Service/Publication/PublicationStateService.php
+No syntax errors detected in ./lib/Service/Publication/ObligationOverviewService.php
+No syntax errors detected in ./lib/Service/Publication/CommentPeriodWithdrawalService.php
+No syntax errors detected in ./lib/Service/Publication/CommentPeriodService.php
+No syntax errors detected in ./lib/Service/Publication/DecisionPublicationValidator.php
+No syntax errors detected in ./lib/Service/Publication/PlooiDeliveryService.php
+No syntax errors detected in ./lib/Service/Publication/PublicationRights.php
+No syntax errors detected in ./lib/Service/Publication/DepublicationService.php
+No syntax errors detected in ./lib/Service/Publication/TermRoll.php
+No syntax errors detected in ./lib/Service/Publication/InspectionService.php
+No syntax errors detected in ./lib/Service/StandardsVersionService.php
+No syntax errors detected in ./lib/Service/Broadcast/BroadcastResult.php
+No syntax errors detected in ./lib/Listener/PortalAccountRemovedListener.php
+No syntax errors detected in ./lib/Listener/ProvideManifestConfigStateListener.php
+No syntax errors detected in ./lib/Listener/CatalogScopePendingListener.php
+No syntax errors detected in ./lib/Listener/PlooiDeliveryListener.php
+No syntax errors detected in ./lib/Listener/CatalogCacheEventListener.php
+No syntax errors detected in ./lib/Listener/WooReadinessTriggerListener.php
+No syntax errors detected in ./lib/Listener/CatalogSchemaEventListener.php
+No syntax errors detected in ./lib/Listener/ObjectUpdatedEventListener.php
+No syntax errors detected in ./lib/Listener/ObjectCreatedEventListener.php
+No syntax errors detected in ./lib/Listener/ToolRegistrationListener.php
+No syntax errors detected in ./lib/Migration/Version6Date20241208222530.php
+No syntax errors detected in ./lib/Migration/Version6Date20250419123213.php
+No syntax errors detected in ./lib/Migration/Version6Date20241129151236.php
+No syntax errors detected in ./lib/Migration/Version6Date20241011085015.php
+No syntax errors detected in ./lib/Command/AttachDocumentsToPublicationsCommand.php
+No syntax errors detected in ./lib/Command/MigrateCmsToPortaliqCommand.php
+No syntax errors detected in ./lib/Http/TextResponse.php
+No syntax errors detected in ./lib/Http/DcatResponse.php
+No syntax errors detected in ./lib/Http/XMLResponse.php
+No syntax errors detected in ./lib/Sections/OpenCatalogiAdmin.php
+No syntax errors detected in ./lib/Exception/PortalInputException.php
+No syntax errors detected in ./lib/Exception/DirectoryUrlException.php
+No syntax errors detected in ./lib/Exception/PortalNotFoundException.php
+No syntax errors detected in ./lib/Exception/MalformedSearchParameterException.php
+No syntax errors detected in ./lib/Dashboard/CatalogWidget.php
+No syntax errors detected in ./lib/Dashboard/MostViewedPublicationsWidget.php
+No syntax errors detected in ./lib/Dashboard/UnpublishedPublicationsWidget.php
+No syntax errors detected in ./lib/Dashboard/UnpublishedAttachmentsWidget.php
+No syntax errors detected in ./lib/Dashboard/RetentionWidget.php
+No syntax errors detected in ./lib/Tool/CMSTool.php
+No syntax errors detected in ./lib/Observability/OpenCatalogiMetricsProvider.php
+No syntax errors detected in ./lib/Portal/PortalAssertionVerifier.php
+No syntax errors detected in ./lib/Portal/PortalContributionProvider.php
+No syntax errors detected in ./lib/Settings/OpenCatalogiAdmin.php
+No syntax errors detected in ./.php-cs-fixer.dist.php
+No syntax errors detected in ./phpstan-bootstrap.php
+
+=== phpcs ===
+.[33mW[0m[33mW[0m[33mW[0m[33mW[0m[33mW[0m.[33mW[0m[33mW[0m...[33mW[0m..[33mW[0m[33mW[0m[33mW[0m[33mW[0m..[33mW[0m.....[33mW[0m....[33mW[0m..[33mW[0m.........[33mW[0m[33mW[0m[33mW[0m[33mW[0m[33mW[0m[33mW[0m[33mW[0m[33mW[0m[33mW[0m[33mW[0m.[33mW[0m[33mW[0m[33mW[0m[33mW[0m 60 / 60 (100%)
+
+
+
+[1mFILE: ...nlinde/zuiddrecht-demo/lf-opencatalogi/lib/BackgroundJob/DirectorySync.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 37 | [33mWARNING[0m | Class DirectorySync is missing @spec PHPDoc tag — link back
+    |         | to openspec/specs/{capability}/spec.md#requirement-{slug}, not
+    |         | a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/BackgroundJob/Broadcast.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 43 | [33mWARNING[0m | Class Broadcast is missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: .../zuiddrecht-demo/lf-opencatalogi/lib/BackgroundJob/RetentionEvaluation.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 45 | [33mWARNING[0m | Class RetentionEvaluation is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...nlinde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/ThemesController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 53 | [33mWARNING[0m | Class ThemesController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...de/zuiddrecht-demo/lf-opencatalogi/lib/Controller/FederationController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 48 | [33mWARNING[0m | Class FederationController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...inde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/ListingsController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 60 | [33mWARNING[0m | Class ListingsController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...inde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/GlossaryController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 54 | [33mWARNING[0m | Class GlossaryController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...nde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/RetentionController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 49 | [33mWARNING[0m | Class RetentionController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...nde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/DirectoryController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 46 | [33mWARNING[0m | Class DirectoryController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...inde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/CatalogiController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 47 | [33mWARNING[0m | Class CatalogiController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...ubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/WooController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 54 | [33mWARNING[0m | Class WooController is missing @spec PHPDoc tag — link back
+    |         | to openspec/specs/{capability}/spec.md#requirement-{slug}, not
+    |         | a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...benlinde/zuiddrecht-demo/lf-opencatalogi/lib/Repair/InitializeSettings.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES[0m
+--------------------------------------------------------------------------------
+ 43 | [33mWARNING[0m | Class InitializeSettings is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+ 81 | [33mWARNING[0m | Public method InitializeSettings::getName() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...inde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/SettingsController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 46 | [33mWARNING[0m | Class SettingsController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...nlinde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/SearchController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 66 | [33mWARNING[0m | Class SearchController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...ome/rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/AppInfo/Application.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 71 | [33mWARNING[0m | Class Application is missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...ddrecht-demo/lf-opencatalogi/lib/Repair/CleanupOrphanDirectoryListings.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES[0m
+--------------------------------------------------------------------------------
+ 51 | [33mWARNING[0m | Class CleanupOrphanDirectoryListings is missing @spec PHPDoc
+    |         | tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+ 77 | [33mWARNING[0m | Public method CleanupOrphanDirectoryListings::getName() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...nlinde/zuiddrecht-demo/lf-opencatalogi/lib/Controller/RobotsController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 47 | [33mWARNING[0m | Class RobotsController is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: .../zuiddrecht-demo/lf-opencatalogi/lib/Controller/PublicationsController.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 67 | [33mWARNING[0m | Class PublicationsController is missing @spec PHPDoc tag —
+    |         | link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...linde/zuiddrecht-demo/lf-opencatalogi/lib/Repair/WOO536RepairReadRules.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 98 | [33mWARNING[0m | Public method WOO536RepairReadRules::getName() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...linde/zuiddrecht-demo/lf-opencatalogi/lib/Mcp/OpenCatalogiToolProvider.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 4 WARNINGS AFFECTING 4 LINES[0m
+--------------------------------------------------------------------------------
+  64 | [33mWARNING[0m | Class OpenCatalogiToolProvider is missing @spec PHPDoc tag —
+     |         | link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+     |         | change dir
+ 156 | [33mWARNING[0m | Public method OpenCatalogiToolProvider::getAppId() is missing
+     |         | @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 168 | [33mWARNING[0m | Public method OpenCatalogiToolProvider::getTools() is missing
+     |         | @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 184 | [33mWARNING[0m | Public method OpenCatalogiToolProvider::invokeTool() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...e/zuiddrecht-demo/lf-opencatalogi/lib/Service/PubliccodeHarvestService.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 46 | [33mWARNING[0m | Class PubliccodeHarvestService is missing @spec PHPDoc tag —
+    |         | link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...recht-demo/lf-opencatalogi/lib/Service/Federation/FederationHostPolicy.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 41 | [33mWARNING[0m | Class FederationHostPolicy is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Service/CatalogiService.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES[0m
+--------------------------------------------------------------------------------
+ 536 | [33mWARNING[0m | Public method CatalogiService::getAvailableRegisters() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 545 | [33mWARNING[0m | Public method CatalogiService::getAvailableSchemas() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: home/rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Service/WooService.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 60 | [33mWARNING[0m | Class WooService is missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: .../rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Service/SitemapService.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 50 | [33mWARNING[0m | Class SitemapService is missing @spec PHPDoc tag — link back
+    |         | to openspec/specs/{capability}/spec.md#requirement-{slug}, not
+    |         | a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...e/zuiddrecht-demo/lf-opencatalogi/lib/Service/CatalogScopeSlugResolver.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 33 | [33mWARNING[0m | Class CatalogScopeSlugResolver is missing @spec PHPDoc tag —
+    |         | link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...zuiddrecht-demo/lf-opencatalogi/lib/Listener/CatalogCacheEventListener.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 46 | [33mWARNING[0m | Class CatalogCacheEventListener is missing @spec PHPDoc tag —
+    |         | link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...de/zuiddrecht-demo/lf-opencatalogi/lib/Service/PublicationQueryService.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 44 | [33mWARNING[0m | Class PublicationQueryService is missing @spec PHPDoc tag —
+    |         | link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...uiddrecht-demo/lf-opencatalogi/lib/Listener/CatalogSchemaEventListener.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 50 | [33mWARNING[0m | Class CatalogSchemaEventListener is missing @spec PHPDoc tag
+    |         | — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: .../zuiddrecht-demo/lf-opencatalogi/lib/Service/Broadcast/BroadcastResult.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES[0m
+--------------------------------------------------------------------------------
+ 41 | [33mWARNING[0m | Class BroadcastResult is missing @spec PHPDoc tag — link back
+    |         | to openspec/specs/{capability}/spec.md#requirement-{slug}, not
+    |         | a change dir
+ 84 | [33mWARNING[0m | Public method BroadcastResult::isSuccessful() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...iddrecht-demo/lf-opencatalogi/lib/Migration/Version6Date20241208222530.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 4 WARNINGS AFFECTING 4 LINES[0m
+--------------------------------------------------------------------------------
+  31 | [33mWARNING[0m | Class Version6Date20241208222530 is missing @spec PHPDoc tag
+     |         | — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+     |         | change dir
+  41 | [33mWARNING[0m | Public method Version6Date20241208222530::preSchemaChange() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+  54 | [33mWARNING[0m | Public method Version6Date20241208222530::changeSchema() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 154 | [33mWARNING[0m | Public method Version6Date20241208222530::postSchemaChange()
+     |         | is missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...t-demo/lf-opencatalogi/lib/Listener/ProvideManifestConfigStateListener.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 50 | [33mWARNING[0m | Class ProvideManifestConfigStateListener is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...iddrecht-demo/lf-opencatalogi/lib/Migration/Version6Date20250419123213.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 4 WARNINGS AFFECTING 4 LINES[0m
+--------------------------------------------------------------------------------
+ 30 | [33mWARNING[0m | Class Version6Date20250419123213 is missing @spec PHPDoc tag
+    |         | — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+ 40 | [33mWARNING[0m | Public method Version6Date20250419123213::preSchemaChange() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 53 | [33mWARNING[0m | Public method Version6Date20250419123213::changeSchema() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 87 | [33mWARNING[0m | Public method Version6Date20250419123213::postSchemaChange() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: home/rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Http/TextResponse.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES[0m
+--------------------------------------------------------------------------------
+ 30 | [33mWARNING[0m | Class TextResponse is missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+ 67 | [33mWARNING[0m | Public method TextResponse::render() is missing @spec PHPDoc
+    |         | tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...iddrecht-demo/lf-opencatalogi/lib/Listener/CatalogScopePendingListener.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 49 | [33mWARNING[0m | Class CatalogScopePendingListener is missing @spec PHPDoc tag
+    |         | — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...iddrecht-demo/lf-opencatalogi/lib/Migration/Version6Date20241129151236.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 4 WARNINGS AFFECTING 4 LINES[0m
+--------------------------------------------------------------------------------
+  31 | [33mWARNING[0m | Class Version6Date20241129151236 is missing @spec PHPDoc tag
+     |         | — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+     |         | change dir
+  41 | [33mWARNING[0m | Public method Version6Date20241129151236::preSchemaChange() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+  54 | [33mWARNING[0m | Public method Version6Date20241129151236::changeSchema() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 137 | [33mWARNING[0m | Public method Version6Date20241129151236::postSchemaChange()
+     |         | is missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...enlinde/zuiddrecht-demo/lf-opencatalogi/lib/Sections/OpenCatalogiAdmin.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 5 WARNINGS AFFECTING 5 LINES[0m
+--------------------------------------------------------------------------------
+ 30 | [33mWARNING[0m | Class OpenCatalogiAdmin is missing @spec PHPDoc tag — link
+    |         | back to openspec/specs/{capability}/spec.md#requirement-{slug},
+    |         | not a change dir
+ 63 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getIcon() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 72 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getID() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 81 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getName() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 90 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getPriority() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...de/zuiddrecht-demo/lf-opencatalogi/lib/Exception/DirectoryUrlException.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES[0m
+--------------------------------------------------------------------------------
+ 28 | [33mWARNING[0m | Class DirectoryUrlException is missing @spec PHPDoc tag —
+    |         | link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+ 36 | [33mWARNING[0m | Public method DirectoryUrlException::setMessage() is missing
+    |         | @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: home/rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Http/XMLResponse.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 4 WARNINGS AFFECTING 4 LINES[0m
+--------------------------------------------------------------------------------
+  36 | [33mWARNING[0m | Class XMLResponse is missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+     |         | change dir
+ 111 | [33mWARNING[0m | Public method XMLResponse::setRenderCallback() is missing
+     |         | @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 121 | [33mWARNING[0m | Public method XMLResponse::render() is missing @spec PHPDoc
+     |         | tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 148 | [33mWARNING[0m | Public method XMLResponse::arrayToXml() is missing @spec
+     |         | PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...iddrecht-demo/lf-opencatalogi/lib/Migration/Version6Date20241011085015.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 4 WARNINGS AFFECTING 4 LINES[0m
+--------------------------------------------------------------------------------
+  33 | [33mWARNING[0m | Class Version6Date20241011085015 is missing @spec PHPDoc tag
+     |         | — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+     |         | change dir
+  43 | [33mWARNING[0m | Public method Version6Date20241011085015::preSchemaChange() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+  56 | [33mWARNING[0m | Public method Version6Date20241011085015::changeSchema() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 834 | [33mWARNING[0m | Public method Version6Date20241011085015::postSchemaChange()
+     |         | is missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: .../zuiddrecht-demo/lf-opencatalogi/lib/Listener/ToolRegistrationListener.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 42 | [33mWARNING[0m | Class ToolRegistrationListener is missing @spec PHPDoc tag —
+    |         | link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...drecht-demo/lf-opencatalogi/lib/Dashboard/MostViewedPublicationsWidget.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 6 WARNINGS AFFECTING 6 LINES[0m
+--------------------------------------------------------------------------------
+ 31 | [33mWARNING[0m | Class MostViewedPublicationsWidget is missing @spec PHPDoc tag
+    |         | — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+ 48 | [33mWARNING[0m | Public method MostViewedPublicationsWidget::getId() is missing
+    |         | @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 57 | [33mWARNING[0m | Public method MostViewedPublicationsWidget::getTitle() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 66 | [33mWARNING[0m | Public method MostViewedPublicationsWidget::getOrder() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 75 | [33mWARNING[0m | Public method MostViewedPublicationsWidget::getIconClass() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 84 | [33mWARNING[0m | Public method MostViewedPublicationsWidget::getUrl() is missing
+    |         | @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Dashboard/CatalogWidget.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 6 WARNINGS AFFECTING 6 LINES[0m
+--------------------------------------------------------------------------------
+ 33 | [33mWARNING[0m | Class CatalogWidget is missing @spec PHPDoc tag — link back
+    |         | to openspec/specs/{capability}/spec.md#requirement-{slug}, not
+    |         | a change dir
+ 50 | [33mWARNING[0m | Public method CatalogWidget::getId() is missing @spec PHPDoc
+    |         | tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 59 | [33mWARNING[0m | Public method CatalogWidget::getTitle() is missing @spec PHPDoc
+    |         | tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 68 | [33mWARNING[0m | Public method CatalogWidget::getOrder() is missing @spec PHPDoc
+    |         | tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 77 | [33mWARNING[0m | Public method CatalogWidget::getIconClass() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 86 | [33mWARNING[0m | Public method CatalogWidget::getUrl() is missing @spec PHPDoc
+    |         | tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...recht-demo/lf-opencatalogi/lib/Dashboard/UnpublishedPublicationsWidget.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 6 WARNINGS AFFECTING 6 LINES[0m
+--------------------------------------------------------------------------------
+ 33 | [33mWARNING[0m | Class UnpublishedPublicationsWidget is missing @spec PHPDoc tag
+    |         | — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+ 50 | [33mWARNING[0m | Public method UnpublishedPublicationsWidget::getId() is missing
+    |         | @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 59 | [33mWARNING[0m | Public method UnpublishedPublicationsWidget::getTitle() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 68 | [33mWARNING[0m | Public method UnpublishedPublicationsWidget::getOrder() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 77 | [33mWARNING[0m | Public method UnpublishedPublicationsWidget::getIconClass() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 86 | [33mWARNING[0m | Public method UnpublishedPublicationsWidget::getUrl() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...benlinde/zuiddrecht-demo/lf-opencatalogi/lib/Dashboard/RetentionWidget.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 6 WARNINGS AFFECTING 6 LINES[0m
+--------------------------------------------------------------------------------
+ 33 | [33mWARNING[0m | Class RetentionWidget is missing @spec PHPDoc tag — link back
+    |         | to openspec/specs/{capability}/spec.md#requirement-{slug}, not
+    |         | a change dir
+ 50 | [33mWARNING[0m | Public method RetentionWidget::getId() is missing @spec PHPDoc
+    |         | tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 59 | [33mWARNING[0m | Public method RetentionWidget::getTitle() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 68 | [33mWARNING[0m | Public method RetentionWidget::getOrder() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 77 | [33mWARNING[0m | Public method RetentionWidget::getIconClass() is missing @spec
+    |         | PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 86 | [33mWARNING[0m | Public method RetentionWidget::getUrl() is missing @spec PHPDoc
+    |         | tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...drecht-demo/lf-opencatalogi/lib/Dashboard/UnpublishedAttachmentsWidget.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 6 WARNINGS AFFECTING 6 LINES[0m
+--------------------------------------------------------------------------------
+ 33 | [33mWARNING[0m | Class UnpublishedAttachmentsWidget is missing @spec PHPDoc tag
+    |         | — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+ 50 | [33mWARNING[0m | Public method UnpublishedAttachmentsWidget::getId() is missing
+    |         | @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 59 | [33mWARNING[0m | Public method UnpublishedAttachmentsWidget::getTitle() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 68 | [33mWARNING[0m | Public method UnpublishedAttachmentsWidget::getOrder() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 77 | [33mWARNING[0m | Public method UnpublishedAttachmentsWidget::getIconClass() is
+    |         | missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 86 | [33mWARNING[0m | Public method UnpublishedAttachmentsWidget::getUrl() is missing
+    |         | @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...enlinde/zuiddrecht-demo/lf-opencatalogi/lib/Settings/OpenCatalogiAdmin.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 6 WARNINGS AFFECTING 6 LINES[0m
+--------------------------------------------------------------------------------
+  35 | [33mWARNING[0m | Class OpenCatalogiAdmin is missing @spec PHPDoc tag — link
+     |         | back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+     |         | change dir
+  59 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getForm() is missing @spec
+     |         | PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+  78 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getSection() is missing @spec
+     |         | PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+  92 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getPriority() is missing
+     |         | @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 104 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getName() is missing @spec
+     |         | PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 116 | [33mWARNING[0m | Public method OpenCatalogiAdmin::getAuthorizedAppConfig() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: home/rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Tool/CMSTool.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 4 WARNINGS AFFECTING 4 LINES[0m
+--------------------------------------------------------------------------------
+  62 | [33mWARNING[0m | Class CMSTool is missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+     |         | change dir
+ 122 | [33mWARNING[0m | Public method CMSTool::getName() is missing @spec PHPDoc tag
+     |         | — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 131 | [33mWARNING[0m | Public method CMSTool::getDescription() is missing @spec
+     |         | PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 142 | [33mWARNING[0m | Public method CMSTool::setAgent() is missing @spec PHPDoc tag
+     |         | — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...enlinde/zuiddrecht-demo/lf-opencatalogi/lib/Service/PublicationService.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 2 WARNINGS AFFECTING 2 LINES[0m
+--------------------------------------------------------------------------------
+ 454 | [33mWARNING[0m | Public method PublicationService::getAvailableRegisters() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+ 463 | [33mWARNING[0m | Public method PublicationService::getAvailableSchemas() is
+     |         | missing @spec PHPDoc tag — link back to
+     |         | openspec/specs/{capability}/spec.md#requirement-{slug}
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Service/SettingsService.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 81 | [33mWARNING[0m | Class SettingsService is missing @spec PHPDoc tag — link back
+    |         | to openspec/specs/{capability}/spec.md#requirement-{slug}, not
+    |         | a change dir
+--------------------------------------------------------------------------------
+
+
+[1mFILE: ...me/rubenlinde/zuiddrecht-demo/lf-opencatalogi/lib/Service/EventService.php[0m
+--------------------------------------------------------------------------------
+[1mFOUND 0 ERRORS AND 1 WARNING AFFECTING 1 LINE[0m
+--------------------------------------------------------------------------------
+ 46 | [33mWARNING[0m | Class EventService is missing @spec PHPDoc tag — link back to
+    |         | openspec/specs/{capability}/spec.md#requirement-{slug}, not a
+    |         | change dir
+--------------------------------------------------------------------------------
+
+Time: 1.32 secs; Memory: 8MB
+
+
+=== phpmd ===
+
+=== psalm ===
+Target PHP version: 8.3 (inferred from composer.json).
+Scanning files...
+Analyzing files...
+
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░  60 / 180 (33%)
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 120 / 180 (66%)
+░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░ 180 / 180 (100%)
+
+
+------------------------------
+[42;2m                              [0m
+[42;30;2m       No errors found!       [0m
+[42;2m                              [0m
+------------------------------
+629 other issues found.
+You can display them with [30;48;5;195m--show-info=true[0m
+------------------------------
+
+Checks took 40.33 seconds and used 303.461MB of memory
+Psalm was able to infer types for 90.5336% of the codebase
+
+=== phpstan ===
+Note: Using configuration file /home/rubenlinde/zuiddrecht-demo/lf-opencatalogi/phpstan.neon.
+   0/178 [░░░░░░░░░░░░░░░░░░░░░░░░░░░░]   0%
+  40/178 [▓▓▓▓▓▓░░░░░░░░░░░░░░░░░░░░░░]  22%
+ 178/178 [▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓] 100%
+
+
+ [OK] No errors                                                                 
+
+
+=== test:all ===
+SKIPPED: the unit suite needs a Nextcloud server tree (../../lib/base.php not found) - run from inside a Nextcloud checkout or in CI
+
+ALL CHECKS PASSED - EXCEPT test:all, WHICH DID NOT RUN.
+The unit suite needs a Nextcloud server tree (../../lib/base.php). In a bare
+checkout it is skipped, so this green says NOTHING about the tests. Verified:
+a deliberately failing test still produces this exact line. Run check:strict
+from inside a Nextcloud checkout, or rely on the CI PHPUnit job, for a real
+test verdict.
+EXIT=0
