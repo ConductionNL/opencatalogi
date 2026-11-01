@@ -1,0 +1,364 @@
+{
+	"files": [
+		{
+			"id": 1,
+			"title": "T1",
+			"name": "n1"
+		},
+		{
+			"id": 2,
+			"name": "n2"
+		},
+		{
+			"id": 3
+		},
+		{
+			"id": 0,
+			"title": ""
+		}
+	],
+	"cases": [
+		{
+			"name": "all from props",
+			"props": {
+				"register": "reg",
+				"schema": "sch",
+				"ctx": {}
+			},
+			"responses": {
+				"state": {
+					"data": {
+						"state": "public"
+					}
+				},
+				"files": {
+					"data": [
+						{
+							"id": 1,
+							"title": "T1",
+							"name": "n1"
+						},
+						{
+							"id": 2,
+							"name": "n2"
+						},
+						{
+							"id": 3
+						},
+						{
+							"id": 0,
+							"title": ""
+						}
+					]
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"reg\",\"schema\":\"sch\",\"id\":\"pub-1\"}"
+			],
+			"state": "public",
+			"documents": [
+				{
+					"id": 1,
+					"label": "T1"
+				},
+				{
+					"id": 2,
+					"label": "n2"
+				},
+				{
+					"id": 3,
+					"label": "3"
+				},
+				{
+					"id": 0,
+					"label": "0"
+				}
+			]
+		},
+		{
+			"name": "ctx fallbacks",
+			"props": {
+				"register": "",
+				"schema": "",
+				"ctx": {
+					"register": "creg",
+					"schema": "csch"
+				}
+			},
+			"responses": {
+				"state": {
+					"data": {
+						"state": "draft"
+					}
+				},
+				"files": {
+					"data": {
+						"results": [
+							{
+								"id": 1,
+								"title": "T1",
+								"name": "n1"
+							},
+							{
+								"id": 2,
+								"name": "n2"
+							},
+							{
+								"id": 3
+							},
+							{
+								"id": 0,
+								"title": ""
+							}
+						]
+					}
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"creg\",\"schema\":\"csch\",\"id\":\"pub-1\"}"
+			],
+			"state": "draft",
+			"documents": [
+				{
+					"id": 1,
+					"label": "T1"
+				},
+				{
+					"id": 2,
+					"label": "n2"
+				},
+				{
+					"id": 3,
+					"label": "3"
+				},
+				{
+					"id": 0,
+					"label": "0"
+				}
+			]
+		},
+		{
+			"name": "defaults",
+			"props": {
+				"register": "",
+				"schema": "",
+				"ctx": {}
+			},
+			"responses": {
+				"state": {
+					"data": {}
+				},
+				"files": {
+					"data": {}
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"publication\",\"schema\":\"publication\",\"id\":\"pub-1\"}"
+			],
+			"state": "",
+			"documents": []
+		},
+		{
+			"name": "schema object slug",
+			"props": {
+				"register": "r",
+				"schema": {
+					"slug": "sl",
+					"id": 9
+				},
+				"ctx": {}
+			},
+			"responses": {
+				"state": {
+					"data": {
+						"state": "withdrawn"
+					}
+				},
+				"files": {
+					"data": []
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"r\",\"schema\":\"sl\",\"id\":\"pub-1\"}"
+			],
+			"state": "withdrawn",
+			"documents": []
+		},
+		{
+			"name": "schema object id only",
+			"props": {
+				"register": "r",
+				"schema": {
+					"id": 9
+				},
+				"ctx": {}
+			},
+			"responses": {
+				"state": {
+					"throw": true
+				},
+				"files": {
+					"data": [
+						{
+							"id": 1,
+							"title": "T1",
+							"name": "n1"
+						}
+					]
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"r\",\"schema\":9,\"id\":\"pub-1\"}"
+			],
+			"state": "",
+			"documents": [
+				{
+					"id": 1,
+					"label": "T1"
+				}
+			]
+		},
+		{
+			"name": "ctx schema object",
+			"props": {
+				"register": "",
+				"schema": "",
+				"ctx": {
+					"schema": {
+						"slug": "cs"
+					}
+				}
+			},
+			"responses": {
+				"state": {
+					"data": {
+						"state": ""
+					}
+				},
+				"files": {
+					"throw": true
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"publication\",\"schema\":\"cs\",\"id\":\"pub-1\"}"
+			],
+			"state": "",
+			"documents": []
+		},
+		{
+			"name": "state data null throws",
+			"props": {
+				"register": "r",
+				"schema": "s",
+				"ctx": {}
+			},
+			"responses": {
+				"state": {
+					"data": null
+				},
+				"files": {
+					"data": null
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"r\",\"schema\":\"s\",\"id\":\"pub-1\"}"
+			],
+			"state": "",
+			"documents": []
+		},
+		{
+			"name": "results not array",
+			"props": {
+				"register": "r",
+				"schema": "s",
+				"ctx": {}
+			},
+			"responses": {
+				"state": {
+					"data": {
+						"state": "archived"
+					}
+				},
+				"files": {
+					"data": {
+						"results": null
+					}
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"r\",\"schema\":\"s\",\"id\":\"pub-1\"}"
+			],
+			"state": "archived",
+			"documents": []
+		},
+		{
+			"name": "props win over ctx",
+			"props": {
+				"register": "p",
+				"schema": "ps",
+				"ctx": {
+					"register": "c",
+					"schema": "cs"
+				}
+			},
+			"responses": {
+				"state": {
+					"data": {
+						"state": "scheduled"
+					}
+				},
+				"files": {
+					"data": [
+						{
+							"id": 1,
+							"title": "T1",
+							"name": "n1"
+						},
+						{
+							"id": 2,
+							"name": "n2"
+						},
+						{
+							"id": 3
+						},
+						{
+							"id": 0,
+							"title": ""
+						}
+					]
+				}
+			},
+			"calls": [
+				"vis:visibility",
+				"/apps/openregister/api/objects/{register}/{schema}/{id}/files {\"register\":\"p\",\"schema\":\"ps\",\"id\":\"pub-1\"}"
+			],
+			"state": "scheduled",
+			"documents": [
+				{
+					"id": 1,
+					"label": "T1"
+				},
+				{
+					"id": 2,
+					"label": "n2"
+				},
+				{
+					"id": 3,
+					"label": "3"
+				},
+				{
+					"id": 0,
+					"label": "0"
+				}
+			]
+		}
+	]
+}

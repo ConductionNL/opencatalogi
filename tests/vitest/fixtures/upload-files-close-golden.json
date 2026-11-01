@@ -1,0 +1,966 @@
+[
+	{
+		"name": "onExternalClose: closing internally",
+		"method": "onExternalClose",
+		"state": {
+			"internal": true,
+			"latestTags": [
+				"a"
+			],
+			"newTags": [
+				"n"
+			]
+		},
+		"store": {
+			"stored": [
+				"s"
+			]
+		},
+		"log": [],
+		"closingInternallyAfterCall": false,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "closeDialog: closing internally",
+		"method": "closeDialog",
+		"state": {
+			"internal": true,
+			"latestTags": [
+				"a"
+			],
+			"newTags": [
+				"n"
+			]
+		},
+		"store": {
+			"stored": [
+				"s"
+			]
+		},
+		"log": [
+			[
+				"setCollection",
+				"tags",
+				[
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": [
+						"n"
+					]
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": [
+						"n"
+					]
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "onExternalClose: latest tags win",
+		"method": "onExternalClose",
+		"state": {
+			"latestTags": [
+				"a",
+				"b"
+			],
+			"newTags": [
+				"b"
+			]
+		},
+		"store": {
+			"stored": [
+				"s"
+			]
+		},
+		"log": [
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"a",
+						"b"
+					],
+					"newTags": [
+						"b"
+					]
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"a",
+						"b"
+					],
+					"newTags": [
+						"b"
+					]
+				}
+			],
+			[
+				"resetDialogState",
+				false
+			]
+		],
+		"closingInternallyAfterCall": false,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "closeDialog: latest tags win",
+		"method": "closeDialog",
+		"state": {
+			"latestTags": [
+				"a",
+				"b"
+			],
+			"newTags": [
+				"b"
+			]
+		},
+		"store": {
+			"stored": [
+				"s"
+			]
+		},
+		"log": [
+			[
+				"setCollection",
+				"tags",
+				[
+					"a",
+					"b"
+				]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"a",
+						"b"
+					],
+					"newTags": [
+						"b"
+					]
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"a",
+						"b"
+					],
+					"newTags": [
+						"b"
+					]
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "onExternalClose: empty latest, stored used",
+		"method": "onExternalClose",
+		"state": {
+			"latestTags": [],
+			"newTags": null
+		},
+		"store": {
+			"stored": [
+				"s",
+				"t"
+			]
+		},
+		"log": [
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"s",
+						"t"
+					],
+					"newTags": []
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"s",
+						"t"
+					],
+					"newTags": []
+				}
+			],
+			[
+				"resetDialogState",
+				false
+			]
+		],
+		"closingInternallyAfterCall": false,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "closeDialog: empty latest, stored used",
+		"method": "closeDialog",
+		"state": {
+			"latestTags": [],
+			"newTags": null
+		},
+		"store": {
+			"stored": [
+				"s",
+				"t"
+			]
+		},
+		"log": [
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"s",
+					"t"
+				]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"s",
+						"t"
+					],
+					"newTags": null
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"s",
+						"t"
+					],
+					"newTags": null
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "onExternalClose: latest not array, stored used",
+		"method": "onExternalClose",
+		"state": {
+			"latestTags": "a"
+		},
+		"store": {
+			"stored": [
+				"s"
+			]
+		},
+		"log": [
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"s"
+					],
+					"newTags": []
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"s"
+					],
+					"newTags": []
+				}
+			],
+			[
+				"resetDialogState",
+				false
+			]
+		],
+		"closingInternallyAfterCall": false,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "closeDialog: latest not array, stored used",
+		"method": "closeDialog",
+		"state": {
+			"latestTags": "a"
+		},
+		"store": {
+			"stored": [
+				"s"
+			]
+		},
+		"log": [
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"s"
+				]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"s"
+					]
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"s"
+					]
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "onExternalClose: nothing anywhere",
+		"method": "onExternalClose",
+		"state": {
+			"latestTags": []
+		},
+		"store": {
+			"stored": []
+		},
+		"log": [
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [],
+					"newTags": []
+				}
+			],
+			[
+				"resetDialogState",
+				false
+			]
+		],
+		"closingInternallyAfterCall": false,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "closeDialog: nothing anywhere",
+		"method": "closeDialog",
+		"state": {
+			"latestTags": []
+		},
+		"store": {
+			"stored": []
+		},
+		"log": [
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": []
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "onExternalClose: stored not array",
+		"method": "onExternalClose",
+		"state": {
+			"latestTags": null,
+			"newTags": [
+				"x"
+			]
+		},
+		"store": {
+			"stored": "q"
+		},
+		"log": [
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [],
+					"newTags": [
+						"x"
+					]
+				}
+			],
+			[
+				"resetDialogState",
+				false
+			]
+		],
+		"closingInternallyAfterCall": false,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "closeDialog: stored not array",
+		"method": "closeDialog",
+		"state": {
+			"latestTags": null,
+			"newTags": [
+				"x"
+			]
+		},
+		"store": {
+			"stored": "q"
+		},
+		"log": [
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [],
+					"newTags": [
+						"x"
+					]
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "onExternalClose: no getCollection",
+		"method": "onExternalClose",
+		"state": {
+			"latestTags": []
+		},
+		"store": {
+			"noGetCollection": true
+		},
+		"log": [
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [],
+					"newTags": []
+				}
+			],
+			[
+				"resetDialogState",
+				false
+			]
+		],
+		"closingInternallyAfterCall": false,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "closeDialog: no getCollection",
+		"method": "closeDialog",
+		"state": {
+			"latestTags": []
+		},
+		"store": {
+			"noGetCollection": true
+		},
+		"log": [
+			[
+				"setCollection",
+				"tags",
+				[]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": []
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "onExternalClose: internal flag falsy string",
+		"method": "onExternalClose",
+		"state": {
+			"internal": "",
+			"latestTags": [
+				"a"
+			]
+		},
+		"store": {},
+		"log": [
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": []
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": []
+				}
+			],
+			[
+				"resetDialogState",
+				""
+			]
+		],
+		"closingInternallyAfterCall": "",
+		"closingInternallyAfterTimers": ""
+	},
+	{
+		"name": "closeDialog: internal flag falsy string",
+		"method": "closeDialog",
+		"state": {
+			"internal": "",
+			"latestTags": [
+				"a"
+			]
+		},
+		"store": {},
+		"log": [
+			[
+				"setCollection",
+				"tags",
+				[
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"a"
+					]
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"a"
+					]
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "onExternalClose: setCollection throws",
+		"method": "onExternalClose",
+		"state": {
+			"latestTags": [
+				"a"
+			],
+			"newTags": [
+				"a"
+			]
+		},
+		"store": {
+			"setThrows": true
+		},
+		"log": [
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": [
+						"a"
+					]
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": [
+						"a"
+					]
+				}
+			],
+			[
+				"resetDialogState",
+				false
+			]
+		],
+		"closingInternallyAfterCall": false,
+		"closingInternallyAfterTimers": false
+	},
+	{
+		"name": "closeDialog: setCollection throws",
+		"method": "closeDialog",
+		"state": {
+			"latestTags": [
+				"a"
+			],
+			"newTags": [
+				"a"
+			]
+		},
+		"store": {
+			"setThrows": true
+		},
+		"log": [
+			[
+				"setCollection",
+				"tags",
+				[
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:closed",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": [
+						"a"
+					]
+				}
+			],
+			[
+				"emit",
+				"upload-files:tags-updated",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": [
+						"a"
+					]
+				}
+			],
+			[
+				"setDialog",
+				null
+			],
+			[
+				"getActiveObject",
+				"publication"
+			],
+			[
+				"setActiveObject",
+				"publication",
+				{
+					"id": "pub"
+				}
+			],
+			[
+				"fetchPublications"
+			],
+			[
+				"resetDialogState",
+				true
+			],
+			[
+				"setTimeout",
+				0
+			]
+		],
+		"closingInternallyAfterCall": true,
+		"closingInternallyAfterTimers": false
+	}
+]
