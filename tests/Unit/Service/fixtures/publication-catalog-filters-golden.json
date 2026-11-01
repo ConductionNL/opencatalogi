@@ -1,0 +1,941 @@
+{
+    "all, cached": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [
+                        "r1",
+                        "r2",
+                        "r3"
+                    ],
+                    "schemas": [
+                        "s1",
+                        "s2"
+                    ]
+                },
+                "availableRegisters": {
+                    "0": "r1",
+                    "1": "r2",
+                    "3": "r3"
+                },
+                "availableSchemas": {
+                    "0": "s1",
+                    "3": "s2"
+                }
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r1",
+                        "r2",
+                        "r3"
+                    ],
+                    "schemas": [
+                        "s1",
+                        "s2"
+                    ]
+                },
+                "availableRegisters": {
+                    "0": "r1",
+                    "1": "r2",
+                    "3": "r3"
+                },
+                "availableSchemas": {
+                    "0": "s1",
+                    "3": "s2"
+                }
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            }
+        ]
+    },
+    "one catalog, cached per id": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [
+                        "r-c1"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c1"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r-c1"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c1"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r1",
+                        "r2",
+                        "r3"
+                    ],
+                    "schemas": [
+                        "s1",
+                        "s2"
+                    ]
+                },
+                "availableRegisters": {
+                    "0": "r1",
+                    "1": "r2",
+                    "3": "r3"
+                },
+                "availableSchemas": {
+                    "0": "s1",
+                    "3": "s2"
+                }
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r-c1"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c1"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "ObjectService::find": {
+                    "id": "c1"
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": [
+                        "s9",
+                        "s-private"
+                    ]
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            }
+        ]
+    },
+    "two catalogs are cached apart": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [
+                        "r-c1"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c1"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r-c2"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c2"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r-c1"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c1"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "ObjectService::find": {
+                    "id": "c1"
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": [
+                        "s9",
+                        "s-private"
+                    ]
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c2"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "ObjectService::find": {
+                    "id": "c2"
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": [
+                        "s9",
+                        "s-private"
+                    ]
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            }
+        ]
+    },
+    "number and its text share the cache": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [
+                        "r-5"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-5"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r-5"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-5"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": 5
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "ObjectService::find": {
+                    "id": 5
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": [
+                        "s9",
+                        "s-private"
+                    ]
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "5"
+                }
+            }
+        ]
+    },
+    "no catalogs": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [],
+                    "schemas": []
+                },
+                "availableRegisters": [],
+                "availableSchemas": []
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": []
+                }
+            }
+        ]
+    },
+    "count-shaped search": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [],
+                    "schemas": []
+                },
+                "availableRegisters": [],
+                "availableSchemas": []
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r-c1"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c1"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": []
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "ObjectService::find": {
+                    "id": "c1"
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": [
+                        "s9",
+                        "s-private"
+                    ]
+                }
+            }
+        ]
+    },
+    "no catalog schema is not cached": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [],
+                    "schemas": []
+                },
+                "availableRegisters": [],
+                "availableSchemas": []
+            },
+            {
+                "result": {
+                    "registers": [],
+                    "schemas": []
+                },
+                "availableRegisters": [],
+                "availableSchemas": []
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    },
+    "no catalog register": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [],
+                    "schemas": []
+                },
+                "availableRegisters": [],
+                "availableSchemas": []
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    },
+    "schema zero is configured": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [
+                        "r1",
+                        "r2",
+                        "r3"
+                    ],
+                    "schemas": [
+                        "s1",
+                        "s2"
+                    ]
+                },
+                "availableRegisters": {
+                    "0": "r1",
+                    "1": "r2",
+                    "3": "r3"
+                },
+                "availableSchemas": {
+                    "0": "s1",
+                    "3": "s2"
+                }
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "0",
+                            "schema": "0"
+                        }
+                    }
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            }
+        ]
+    },
+    "scope after a refusal": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [
+                        "r1",
+                        "r2",
+                        "r3"
+                    ],
+                    "schemas": [
+                        "s1",
+                        "s2"
+                    ]
+                },
+                "availableRegisters": {
+                    "0": "r1",
+                    "1": "r2",
+                    "3": "r3"
+                },
+                "availableSchemas": {
+                    "0": "s1",
+                    "3": "s2"
+                }
+            },
+            {
+                "result": {
+                    "registers": [],
+                    "schemas": []
+                },
+                "availableRegisters": [],
+                "availableSchemas": []
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    },
+    "search fails": {
+        "steps": [
+            {
+                "exception": "RuntimeException",
+                "message": "search down",
+                "availableRegisters": [],
+                "availableSchemas": []
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "find fails": {
+        "steps": [
+            {
+                "exception": "RuntimeException",
+                "message": "not found",
+                "availableRegisters": [],
+                "availableSchemas": []
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": "missing"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "ObjectService::find": {
+                    "id": "missing"
+                }
+            }
+        ]
+    },
+    "openregister absent": {
+        "steps": [
+            {
+                "exception": "RuntimeException",
+                "message": "OpenRegister service is not available.",
+                "availableRegisters": [],
+                "availableSchemas": []
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": null
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    }
+}
