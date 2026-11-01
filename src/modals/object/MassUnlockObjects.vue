@@ -1,87 +1,56 @@
 /** * @file MassUnlockObjects.vue * @module Modals/Object * @author Your Name *
 @copyright 2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
-<script setup>
-import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
-</script>
-
 <template>
-	<NcDialog
-		:name="dialogTitle"
-		:canClose="true"
-		size="normal"
-		class="mass-action-dialog"
-		@update:open="handleDialogClose">
-		<!-- Object Selection Review -->
-		<div v-if="success === null" class="unlock-step">
-			<NcNoteCard type="warning">
-				{{
-					t(
-						'opencatalogi',
-						'Objects will be unlocked and made available for editing by other users. Only objects that are currently locked can be unlocked.',
-					)
-				}}
-			</NcNoteCard>
-
-			<SelectedObjectsList
-				:title="
-					(objectStore.selectedObjects?.length || 0) === 1
-						? t('opencatalogi', 'Publication to Unlock')
-						: t('opencatalogi', 'Selected Publications')
-				"
-				:showRemove="true" />
-		</div>
-
-		<NcNoteCard v-if="success" type="success">
-			<p>
-				{{
-					originalSelectedCount > 1
-						? t('opencatalogi', '{type}s successfully unlocked', {
-								type: t('opencatalogi', 'Publication'),
-							})
-						: t('opencatalogi', '{type} successfully unlocked', {
-								type: t('opencatalogi', 'Publication'),
-							})
-				}}
-			</p>
-		</NcNoteCard>
-		<NcNoteCard v-if="error" type="error">
-			<p>{{ error }}</p>
+	<MassObjectActionDialog
+		:title="dialogTitle"
+		:confirmLabel="t('opencatalogi', 'Unlock')"
+		confirmVariant="warning"
+		:confirmDisabled="loading || objectsToUnlock.length === 0"
+		:loading="loading"
+		:success="success"
+		:error="error"
+		:successMessage="
+			originalSelectedCount > 1
+				? t('opencatalogi', '{type}s successfully unlocked', {
+						type: t('opencatalogi', 'Publication'),
+					})
+				: t('opencatalogi', '{type} successfully unlocked', {
+						type: t('opencatalogi', 'Publication'),
+					})
+		"
+		@close="closeDialog"
+		@confirm="unlockObjects()">
+		<NcNoteCard type="warning">
+			{{
+				t(
+					'opencatalogi',
+					'Objects will be unlocked and made available for editing by other users. Only objects that are currently locked can be unlocked.',
+				)
+			}}
 		</NcNoteCard>
 
-		<template #actions>
-			<NcButton @click="closeDialog">
-				<template #icon>
-					<Cancel :size="20" />
-				</template>
-				{{
-					success === null
-						? t('opencatalogi', 'Cancel')
-						: t('opencatalogi', 'Close')
-				}}
-			</NcButton>
-			<NcButton
-				v-if="success === null"
-				:disabled="
-					loading || (objectStore.selectedObjects?.length || 0) === 0
-				"
-				variant="warning"
-				@click="unlockObjects()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<LockOpenOutline v-if="!loading" :size="20" />
-				</template>
-				{{ t('opencatalogi', 'Unlock') }}
-			</NcButton>
+		<SelectedObjectsList
+			:title="
+				objectsToUnlock.length === 1
+					? t('opencatalogi', 'Publication to Unlock')
+					: t('opencatalogi', 'Selected Publications')
+			"
+			:showRemove="true" />
+
+		<template #icon>
+			<LockOpenOutline :size="20" />
 		</template>
-	</NcDialog>
+	</MassObjectActionDialog>
 </template>
 
 <script>
-import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+import { NcNoteCard } from '@nextcloud/vue'
 import LockOpenOutline from 'vue-material-design-icons/LockOpenOutline.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
+import MassObjectActionDialog from './MassObjectActionDialog.vue'
+import { objectStore } from '../../store/store.js'
+import massObjectAction from './massObjectAction.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -89,30 +58,13 @@ import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 export default {
 	name: 'MassUnlockObjects',
 	components: {
-		NcDialog,
-		NcButton,
-		NcLoadingIcon,
+		MassObjectActionDialog,
 		NcNoteCard,
 		SelectedObjectsList,
-		// Icons
 		LockOpenOutline,
-		Cancel,
 	},
 
-	props: {
-		// No props needed - always uses selected objects from store
-	},
-
-	data() {
-		return {
-			success: null,
-			loading: false,
-			error: false,
-			result: null,
-			closeModalTimeout: null,
-			originalSelectedCount: 0,
-		}
-	},
+	mixins: [massObjectAction],
 
 	computed: {
 		/**
@@ -140,65 +92,20 @@ export default {
 		},
 	},
 
-	mounted() {
-		this.initializeSelection()
-	},
-
 	methods: {
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
-		initializeSelection() {
-			// Store the original count for success message
-			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
-		},
-
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
-		closeDialog() {
-			// Clear any pending timeout that might reopen the dialog
-			if (this.closeModalTimeout) {
-				clearTimeout(this.closeModalTimeout)
-				this.closeModalTimeout = null
-			}
-			navigationStore.setDialog(false)
-		},
-
-		/**
-		 * @param isOpen
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4
-		 */
-		handleDialogClose(isOpen) {
-			if (!isOpen) {
-				this.closeDialog()
-			}
-		},
-
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		async unlockObjects() {
 			this.loading = true
 
 			try {
-				// Get the objects to unlock
-				const objectsToProcess = [...this.objectsToUnlock]
-
-				// Use the store's mass unlock method
-				const { successful, failed } =
-					await objectStore.massUnlockObjects(objectsToProcess)
-
-				if (successful.length > 0) {
-					this.success = true
-					// Refresh publications using catalogStore
-					catalogStore.fetchPublications()
-
-					// Only auto-close if there are no failures
-					if (failed.length === 0) {
-						this.closeModalTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-					}
-				}
-
-				if (failed.length > 0) {
-					this.error = `Failed to unlock ${failed.length} object${failed.length > 1 ? 's' : ''}`
-				}
+				const result = await objectStore.massUnlockObjects([
+					...this.objectsToUnlock,
+				])
+				this.finishMassAction(
+					result,
+					(count) =>
+						`Failed to unlock ${count} object${count > 1 ? 's' : ''}`,
+				)
 			} catch (error) {
 				this.success = false
 				this.error =
@@ -210,15 +117,3 @@ export default {
 	},
 }
 </script>
-
-<style scoped>
-.unlock-step {
-	padding: 0;
-}
-
-.step-title {
-	margin-top: 0 !important;
-	margin-bottom: 16px;
-	color: var(--color-main-text);
-}
-</style>

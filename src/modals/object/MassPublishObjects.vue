@@ -1,15 +1,16 @@
-<script setup>
-import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
-</script>
-
 <template>
-	<NcDialog
-		:name="dialogTitle"
-		:canClose="true"
-		size="normal"
-		class="mass-action-dialog"
-		@update:open="handleDialogClose">
-		<div v-if="success === null" class="publish-step">
+	<MassObjectActionDialog
+		:title="dialogTitle"
+		:confirmLabel="t('opencatalogi', 'Publish')"
+		confirmVariant="primary"
+		:confirmDisabled="submitDisabled"
+		:loading="loading"
+		:success="success"
+		:error="error"
+		:successMessage="successMessage"
+		@close="closeDialog"
+		@confirm="publishObjects()">
+		<div class="publish-step">
 			<div class="mode-row">
 				<div class="mode-row__mode">
 					<span
@@ -66,64 +67,34 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				:disabledReason="unsupportedReason" />
 		</div>
 
-		<NcNoteCard type="info">
-			{{ infoText }}
-		</NcNoteCard>
-		<NcNoteCard
-			v-if="alreadyPublishedCount > 0 && mode !== 'retroactive'"
-			type="warning">
-			{{ alreadyPublishedWarning }}
-		</NcNoteCard>
-		<NcNoteCard v-if="unsupportedCount > 0" type="warning">
-			{{ unsupportedWarning }}
-		</NcNoteCard>
-
-		<NcNoteCard v-if="success" type="success">
-			<p>{{ successMessage }}</p>
-		</NcNoteCard>
-		<NcNoteCard v-if="error" type="error">
-			<p>{{ error }}</p>
-		</NcNoteCard>
-
-		<template #actions>
-			<NcButton @click="closeDialog">
-				<template #icon>
-					<Cancel :size="20" />
-				</template>
-				{{
-					success === null
-						? t('opencatalogi', 'Cancel')
-						: t('opencatalogi', 'Close')
-				}}
-			</NcButton>
-			<NcButton
-				v-if="success === null"
-				:disabled="submitDisabled"
-				variant="primary"
-				@click="publishObjects()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<Publish v-if="!loading" :size="20" />
-				</template>
-				{{ t('opencatalogi', 'Publish') }}
-			</NcButton>
+		<template #notes>
+			<NcNoteCard type="info">
+				{{ infoText }}
+			</NcNoteCard>
+			<NcNoteCard
+				v-if="alreadyPublishedCount > 0 && mode !== 'retroactive'"
+				type="warning">
+				{{ alreadyPublishedWarning }}
+			</NcNoteCard>
+			<NcNoteCard v-if="unsupportedCount > 0" type="warning">
+				{{ unsupportedWarning }}
+			</NcNoteCard>
 		</template>
-	</NcDialog>
+
+		<template #icon>
+			<Publish :size="20" />
+		</template>
+	</MassObjectActionDialog>
 </template>
 
 <script>
-import {
-	NcButton,
-	NcDateTimePicker,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-	NcSelect,
-} from '@nextcloud/vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+import { NcDateTimePicker, NcNoteCard, NcSelect } from '@nextcloud/vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
+import MassObjectActionDialog from './MassObjectActionDialog.vue'
 import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
+import { objectStore } from '../../store/store.js'
+import massObjectAction from './massObjectAction.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -131,26 +102,20 @@ import { schemaHasPublicationDateFields } from '../../services/schemaHelpers.js'
 export default {
 	name: 'MassPublishObjects',
 	components: {
-		NcDialog,
-		NcButton,
+		MassObjectActionDialog,
 		NcDateTimePicker,
-		NcLoadingIcon,
 		NcNoteCard,
 		NcSelect,
 		SelectedObjectsList,
 		Publish,
-		Cancel,
 	},
+
+	mixins: [massObjectAction],
 
 	data() {
 		return {
 			selectedMode: null,
 			publishDate: null,
-			success: null,
-			loading: false,
-			error: false,
-			closeModalTimeout: null,
-			originalSelectedCount: 0,
 		}
 	},
 
@@ -351,7 +316,6 @@ export default {
 
 	/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 	mounted() {
-		this.originalSelectedCount = this.selectedObjects.length
 		this.selectedMode = this.modeOptions[0]
 	},
 
@@ -490,25 +454,6 @@ export default {
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
-		closeDialog() {
-			if (this.closeModalTimeout) {
-				clearTimeout(this.closeModalTimeout)
-				this.closeModalTimeout = null
-			}
-			navigationStore.setDialog(false)
-		},
-
-		/**
-		 * @param isOpen
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1
-		 */
-		handleDialogClose(isOpen) {
-			if (!isOpen) {
-				this.closeDialog()
-			}
-		},
-
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-1 */
 		async publishObjects() {
 			if (this.selectedMode?.disabled) return
 			this.loading = true
@@ -555,25 +500,9 @@ export default {
 				}
 			}
 
-			if (successful.length > 0) {
-				catalogStore.fetchPublications()
-			}
-
-			if (failed.length === 0 && successful.length > 0) {
-				this.success = true
-				this.closeModalTimeout = setTimeout(() => {
-					this.closeDialog()
-				}, 2000)
-			} else if (failed.length > 0) {
-				this.error = t(
-					'opencatalogi',
-					'Failed to publish {count} object(s)',
-					{ count: failed.length },
-				)
-				if (successful.length > 0) {
-					this.success = true
-				}
-			}
+			this.finishMassAction({ successful, failed }, (count) =>
+				t('opencatalogi', 'Failed to publish {count} object(s)', { count }),
+			)
 
 			this.loading = false
 		},
