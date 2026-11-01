@@ -48,6 +48,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for CatalogiService::getCatalogFilters().
  *
  * @covers \OCA\OpenCatalogi\Service\CatalogiService
+ * @covers \OCA\OpenCatalogi\Service\CatalogScopeResolver
  */
 class CatalogFiltersScopeGoldenTest extends TestCase {
 

@@ -47,7 +47,6 @@ use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
-use Symfony\Component\Uid\Uuid;
 
 /**
  * Service for handling catalog-related operations.
@@ -482,144 +481,47 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogFilters(null|string|int $catalogId = null): array {
-		// FAIL CLOSED. getCatalogBySlug() — the sibling method in this same class
-		// — already refuses when either key is empty; this method did not, and the
-		// asymmetry is the bug.
-		//
-		// An empty key does NOT fall through to "no scope" harmlessly. It is put
-		// into the query verbatim, and `??` only falls through on null, so
-		// MagicMapper receives '' and casts it: `find((int) '')` is `find(0)`,
-		// which resolves nothing, leaves $register/$schema null, and so SKIPS the
-		// `if ($register !== null && $schema !== null)` scoped branch entirely —
-		// falling through to the cross-table path. Combined with the
-		// `_rbac: false` below, an unconfigured instance therefore ran an
-		// UNSCOPED, RBAC-DISABLED sweep of every object on the instance in order
-		// to derive a catalog scope. That is the same degradation shape as #828
-		// (GET /api/listings): an unresolved scope becoming NO scope rather than
-		// a refusal.
-		//
-		// Returning empty arrays is the correct refusal here rather than an
-		// exception, because that is already the contract callers handle:
-		// PublicationService::setObjectServiceContext() checks
-		// `empty($allowedRegisters) || empty($allowedSchemas)` and returns
-		// without querying, explicitly to "refuse to do a platform-wide scan".
-		//
-		// The two reads sit directly above their guard on purpose. They used to be
-		// twenty lines higher, above this comment, which put the read and the check
-		// that makes it safe far enough apart that both a reviewer and hydra
-		// gate-50 read the site as unguarded.
-		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
-		if ($schema === '' || $register === '') {
-			return $this->refusedCatalogFilters(scope: ['schema' => $schema, 'register' => $register]);
+		$resolver = new CatalogScopeResolver(config: $this->config, logger: $this->logger);
+		$scope = $resolver->configuredScope();
+		if ($scope === null) {
+			return $this->storeCatalogFilters(registers: [], schemas: []);
 		}
 
 		// Get catalogs using searchObjects (handles deleted field correctly).
-		$catalogs = $this->getObjectService()->searchObjects(
-			query: $this->catalogFiltersQuery(scope: ['schema' => $schema, 'register' => $register], catalogId: $catalogId),
-			_rbac: false,
-			_multitenancy: false
-		);
+		$query = $resolver->searchQuery(scope: $scope, catalogId: $catalogId);
+		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
 
-		// Remove duplicate values and assign to class properties.
 		// SCH-PFTS-CAT-002 (WOO-581): this scope serves `#[PublicPage]`
 		// `/api/catalogi/{id}`, which searched it with `_rbac: true` unguarded, so an
 		// anonymous caller read the full record of a schema without an
 		// `authorization` block. Same anonymous-only rule as every other public
 		// catalog reader; signed-in callers get the list back untouched.
-		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
-		$this->availableSchemas = $this->container->get(PublicationQueryService::class)
-			->applySchemaScopeReadRuleGuard(schemaIds: $this->collectUnique(catalogs: $catalogs, property: 'schemas'));
+		return $this->storeCatalogFilters(
+			registers: $resolver->collectUnique(catalogs: $catalogs, property: 'registers'),
+			schemas: $this->container->get(PublicationQueryService::class)
+				->applySchemaScopeReadRuleGuard(schemaIds: $resolver->collectUnique(catalogs: $catalogs, property: 'schemas'))
+		);
+
+	}//end getCatalogFilters()
+
+	/**
+	 * Store the catalog scope as the available registers and schemas.
+	 *
+	 * @param array $registers The de-duplicated registers.
+	 * @param array $schemas   The de-duplicated schemas the caller may see.
+	 *
+	 * @return array{registers: array, schemas: array} The scope as lists.
+	 */
+	private function storeCatalogFilters(array $registers, array $schemas): array {
+		$this->availableRegisters = $registers;
+		$this->availableSchemas = $schemas;
 
 		return [
 			'registers' => array_values($this->availableRegisters),
 			'schemas' => array_values($this->availableSchemas),
 		];
 
-	}//end getCatalogFilters()
-
-	/**
-	 * Refuse to derive a catalogue scope: log it and leave the scope empty.
-	 *
-	 * @param array{schema: string, register: string} $scope The configured catalog schema and register, one of them empty.
-	 *
-	 * @return array{registers: array, schemas: array} The empty scope.
-	 */
-	private function refusedCatalogFilters(array $scope): array {
-		$this->logger->error(
-			'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
-			[
-				'schema' => $scope['schema'],
-				'register' => $scope['register'],
-			]
-		);
-		$this->availableRegisters = [];
-		$this->availableSchemas = [];
-		return [
-			'registers' => [],
-			'schemas' => [],
-		];
-	}//end refusedCatalogFilters()
-
-	/**
-	 * The catalog search behind getCatalogFilters().
-	 *
-	 * A UUID is matched on `@self.uuid`; any other id (such as a slug) on the
-	 * catalog's own `slug` field.
-	 *
-	 * @param array{schema: string, register: string} $scope The configured catalog schema and register.
-	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
-	 *
-	 * @return array The query.
-	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) Uuid::isValid() is a pure check on the id.
-	 */
-	private function catalogFiltersQuery(array $scope, null|string|int $catalogId): array {
-		$query = [
-			'@self' => [
-				'register' => $scope['register'],
-				'schema' => $scope['schema'],
-			],
-		];
-		if ($catalogId === null) {
-			return $query;
-		}
-
-		if (Uuid::isValid((string)$catalogId) === true) {
-			$query['@self']['uuid'] = $catalogId;
-			return $query;
-		}
-
-		$query['slug'] = (string)$catalogId;
-		return $query;
-	}//end catalogFiltersQuery()
-
-	/**
-	 * Collect the unique values of one array-valued property across catalogs.
-	 *
-	 * Extracted from getCatalogFilters() so the fail-closed guard added there
-	 * does not push that method over PHPMD's cyclomatic-complexity threshold.
-	 * A baseline entry would have been the wrong repair: it is scoped to
-	 * (rule, file) and would licence every future violation of that rule in
-	 * this file, including ones nobody has looked at.
-	 *
-	 * @param array<int,mixed> $catalogs The catalog objects returned by the search.
-	 * @param string $property The array-valued property to collect ('registers' | 'schemas').
-	 *
-	 * @return array<int,mixed> The de-duplicated union of that property's values.
-	 */
-	private function collectUnique(array $catalogs, string $property): array {
-		$collected = [];
-
-		foreach ($catalogs as $catalog) {
-			$catalog = $catalog->jsonSerialize();
-			if (isset($catalog[$property]) === true && is_array($catalog[$property]) === true) {
-				$collected = array_merge($collected, $catalog[$property]);
-			}
-		}
-
-		return array_unique($collected);
-	}//end collectUnique()
+	}//end storeCatalogFilters()
 
 	/**
 	 * Get the list of available registers.
