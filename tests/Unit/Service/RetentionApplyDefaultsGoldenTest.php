@@ -95,6 +95,10 @@ class RetentionApplyDefaultsGoldenTest extends TestCase {
 			'zero term kept empty' => [['defaults' => $defaults, 'slug' => 'open', 'publication' => $published + ['retentionCategory' => 'besluit', 'retentionTermMonths' => 0, 'retentionAction' => '']]],
 			'no publication date' => [['defaults' => $defaults, 'slug' => 'open', 'publication' => ['retentionCategory' => 'besluit']]],
 			'bad publication date' => [['defaults' => $defaults, 'slug' => 'open', 'publication' => ['retentionCategory' => 'besluit', 'publicationDate' => 'gisteren']]],
+			'evaluation fails, term set' => [['defaults' => $defaults, 'slug' => 'open', 'publication' => $published + ['retentionCategory' => 'besluit', 'retentionTermMonths' => 2], 'evaluator' => 'fails']],
+			'outputs not an array, term set' => [['defaults' => $defaults, 'slug' => 'open', 'publication' => $published + ['retentionCategory' => 'vreemd', 'retentionTermMonths' => 2], 'evaluator' => 'scalar-outputs']],
+			'no rule matched, term set' => [['defaults' => $defaults, 'slug' => 'strict', 'publication' => $published + ['retentionCategory' => 'advies', 'retentionTermMonths' => 2]]],
+			'term as text' => [['defaults' => $defaults, 'slug' => 'open', 'publication' => $published + ['retentionCategory' => 'besluit'], 'evaluator' => 'text-term']],
 			'end of month' => [['defaults' => $defaults, 'slug' => 'open', 'publication' => $published + ['retentionCategory' => 'vreemd']]],
 		];
 
@@ -176,6 +180,10 @@ class RetentionApplyDefaultsGoldenTest extends TestCase {
 
 				if ($this->mode === 'scalar-outputs') {
 					return ['outputs' => 'x'];
+				}
+
+				if ($this->mode === 'text-term') {
+					return ['outputs' => ['termMonths' => '7', 'action' => 'archive']];
 				}
 
 				if ($this->mode === 'no-outputs') {

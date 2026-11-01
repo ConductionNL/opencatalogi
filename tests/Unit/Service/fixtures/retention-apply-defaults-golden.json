@@ -1865,5 +1865,385 @@
             ],
             "warnings": []
         }
+    },
+    "evaluation fails, term set": {
+        "publication": {
+            "title": "P",
+            "publicationDate": "2026-01-31T10:00:00+00:00",
+            "retentionCategory": "besluit",
+            "retentionTermMonths": 2
+        },
+        "log": {
+            "evaluated": [
+                {
+                    "table": {
+                        "hitPolicy": "FIRST",
+                        "inputs": [
+                            {
+                                "name": "category",
+                                "type": "string"
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "name": "termMonths",
+                                "type": "number"
+                            },
+                            {
+                                "name": "action",
+                                "type": "string"
+                            }
+                        ],
+                        "rules": [
+                            {
+                                "id": "cat:besluit",
+                                "inputEntries": [
+                                    "\"besluit\""
+                                ],
+                                "outputEntries": [
+                                    24,
+                                    "depublish"
+                                ]
+                            },
+                            {
+                                "id": "cat:advies",
+                                "inputEntries": [
+                                    "\"advies\""
+                                ],
+                                "outputEntries": [
+                                    6,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "cat:brief",
+                                "inputEntries": [
+                                    "\"brief\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    "archive"
+                                ]
+                            },
+                            {
+                                "id": "cat:raar",
+                                "inputEntries": [
+                                    "\"raar\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    "shred"
+                                ]
+                            },
+                            {
+                                "id": "cat:leeg",
+                                "inputEntries": [
+                                    "\"leeg\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "cat:vreemd",
+                                "inputEntries": [
+                                    "\"vreemd\""
+                                ],
+                                "outputEntries": [
+                                    1,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "_fallback",
+                                "inputEntries": [
+                                    "-"
+                                ],
+                                "outputEntries": [
+                                    12,
+                                    "review"
+                                ]
+                            }
+                        ]
+                    },
+                    "inputs": {
+                        "category": "besluit"
+                    }
+                }
+            ],
+            "warnings": [
+                "[RetentionService] retention decision-table evaluation failed: engine down"
+            ]
+        }
+    },
+    "outputs not an array, term set": {
+        "publication": {
+            "title": "P",
+            "publicationDate": "2026-01-31T10:00:00+00:00",
+            "retentionCategory": "vreemd",
+            "retentionTermMonths": 2
+        },
+        "log": {
+            "evaluated": [
+                {
+                    "table": {
+                        "hitPolicy": "FIRST",
+                        "inputs": [
+                            {
+                                "name": "category",
+                                "type": "string"
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "name": "termMonths",
+                                "type": "number"
+                            },
+                            {
+                                "name": "action",
+                                "type": "string"
+                            }
+                        ],
+                        "rules": [
+                            {
+                                "id": "cat:besluit",
+                                "inputEntries": [
+                                    "\"besluit\""
+                                ],
+                                "outputEntries": [
+                                    24,
+                                    "depublish"
+                                ]
+                            },
+                            {
+                                "id": "cat:advies",
+                                "inputEntries": [
+                                    "\"advies\""
+                                ],
+                                "outputEntries": [
+                                    6,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "cat:brief",
+                                "inputEntries": [
+                                    "\"brief\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    "archive"
+                                ]
+                            },
+                            {
+                                "id": "cat:raar",
+                                "inputEntries": [
+                                    "\"raar\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    "shred"
+                                ]
+                            },
+                            {
+                                "id": "cat:leeg",
+                                "inputEntries": [
+                                    "\"leeg\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "cat:vreemd",
+                                "inputEntries": [
+                                    "\"vreemd\""
+                                ],
+                                "outputEntries": [
+                                    1,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "_fallback",
+                                "inputEntries": [
+                                    "-"
+                                ],
+                                "outputEntries": [
+                                    12,
+                                    "review"
+                                ]
+                            }
+                        ]
+                    },
+                    "inputs": {
+                        "category": "vreemd"
+                    }
+                }
+            ],
+            "warnings": []
+        }
+    },
+    "no rule matched, term set": {
+        "publication": {
+            "title": "P",
+            "publicationDate": "2026-01-31T10:00:00+00:00",
+            "retentionCategory": "advies",
+            "retentionTermMonths": 2
+        },
+        "log": {
+            "evaluated": [
+                {
+                    "table": {
+                        "hitPolicy": "FIRST",
+                        "inputs": [
+                            {
+                                "name": "category",
+                                "type": "string"
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "name": "termMonths",
+                                "type": "number"
+                            },
+                            {
+                                "name": "action",
+                                "type": "string"
+                            }
+                        ],
+                        "rules": [
+                            {
+                                "id": "cat:besluit",
+                                "inputEntries": [
+                                    "\"besluit\""
+                                ],
+                                "outputEntries": [
+                                    3,
+                                    null
+                                ]
+                            }
+                        ]
+                    },
+                    "inputs": {
+                        "category": "advies"
+                    }
+                }
+            ],
+            "warnings": []
+        }
+    },
+    "term as text": {
+        "publication": {
+            "title": "P",
+            "publicationDate": "2026-01-31T10:00:00+00:00",
+            "retentionCategory": "besluit",
+            "retentionTermMonths": 7,
+            "retentionAction": "archive",
+            "retentionExpiresAt": "2026-08-31T10:00:00+00:00"
+        },
+        "log": {
+            "evaluated": [
+                {
+                    "table": {
+                        "hitPolicy": "FIRST",
+                        "inputs": [
+                            {
+                                "name": "category",
+                                "type": "string"
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "name": "termMonths",
+                                "type": "number"
+                            },
+                            {
+                                "name": "action",
+                                "type": "string"
+                            }
+                        ],
+                        "rules": [
+                            {
+                                "id": "cat:besluit",
+                                "inputEntries": [
+                                    "\"besluit\""
+                                ],
+                                "outputEntries": [
+                                    24,
+                                    "depublish"
+                                ]
+                            },
+                            {
+                                "id": "cat:advies",
+                                "inputEntries": [
+                                    "\"advies\""
+                                ],
+                                "outputEntries": [
+                                    6,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "cat:brief",
+                                "inputEntries": [
+                                    "\"brief\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    "archive"
+                                ]
+                            },
+                            {
+                                "id": "cat:raar",
+                                "inputEntries": [
+                                    "\"raar\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    "shred"
+                                ]
+                            },
+                            {
+                                "id": "cat:leeg",
+                                "inputEntries": [
+                                    "\"leeg\""
+                                ],
+                                "outputEntries": [
+                                    null,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "cat:vreemd",
+                                "inputEntries": [
+                                    "\"vreemd\""
+                                ],
+                                "outputEntries": [
+                                    1,
+                                    null
+                                ]
+                            },
+                            {
+                                "id": "_fallback",
+                                "inputEntries": [
+                                    "-"
+                                ],
+                                "outputEntries": [
+                                    12,
+                                    "review"
+                                ]
+                            }
+                        ]
+                    },
+                    "inputs": {
+                        "category": "besluit"
+                    }
+                }
+            ],
+            "warnings": []
+        }
     }
 }
