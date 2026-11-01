@@ -87,6 +87,13 @@ class ReadRulesRepairGoldenTest extends TestCase {
 					['publication', 26, ['read' => [['match' => ['publicationDate' => ['$lte' => '$now']]]]]],
 				],
 			]],
+			'no conditional rule' => [[
+				'schemas' => [
+					['publication', 31, ['read' => ['authenticated']]],
+					['publication', 32, ['read' => []]],
+					['publication', 33, ['read' => [['group' => 'public']]]],
+				],
+			]],
 			'update fails' => [['schemas' => [['publication', 1, $single], ['document', 2, $dutch]], 'update' => 'throw']],
 			'openregister disabled' => [['enabled' => false, 'schemas' => [['publication', 1, $single]]]],
 			'mapper unavailable' => [['mapper' => 'throw', 'schemas' => []]],

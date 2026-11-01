@@ -334,5 +334,19 @@
         {
             "info": "WOO-536 read-rule backfill: 0 schema(s) updated, 6 skipped (no Dutch keys, already correct or customised)"
         }
+    ],
+    "no conditional rule": [
+        {
+            "info": "WOO-536: schema 'publication' (id 31) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 32) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 33) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536 read-rule backfill: 0 schema(s) updated, 3 skipped (no Dutch keys, already correct or customised)"
+        }
     ]
 }
