@@ -832,7 +832,7 @@
   },
   "src/store/modules/search.js": {
     "no-console": {
-      "count": 8
+      "count": 5
     }
   },
   "src/store/modules/search.spec.ts": {
