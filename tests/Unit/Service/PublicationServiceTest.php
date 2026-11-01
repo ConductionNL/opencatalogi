@@ -3890,6 +3890,23 @@ class PublicationServiceTest extends TestCase {
 		$this->assertContains('B', $titles);
 	}
 
+	public function testApplyCumulativeOrderingKeepsEqualRowsInPlace(): void {
+		$method = new \ReflectionMethod(PublicationService::class, 'applyCumulativeOrdering');
+		$method->setAccessible(true);
+
+		$results = [
+			['title' => 'B', 'score' => 1],
+			['title' => 'A', 'score' => 1],
+			['title' => 'C', 'score' => 1],
+		];
+
+		$ordered = $method->invoke($this->service, $results, [
+			'_order' => ['score' => 'DESC'],
+		]);
+
+		$this->assertSame(['B', 'A', 'C'], array_column($ordered, 'title'));
+	}
+
 	// =======================================================================
 	// download — success path
 	// =======================================================================
