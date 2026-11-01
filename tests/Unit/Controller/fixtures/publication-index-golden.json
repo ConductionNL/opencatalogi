@@ -1,0 +1,1806 @@
+{
+    "unknown catalog": {
+        "status": 404,
+        "data": {
+            "error": "Catalog not found"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": []
+    },
+    "no schemas": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [],
+                "registers": [
+                    1
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"dfbaa24502aeb2ef5a5165413bb736f8b6921688\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": []
+                }
+            },
+            {
+                "warning": "[PublicationsController::index] Empty catalog scope after the read-rule guard \u2014 returning an empty envelope",
+                "context": {
+                    "catalogSlug": "woo"
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "schemas named by slug only": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "@catalog": {
+                "slug": "woo",
+                "title": "",
+                "schemas": [],
+                "registers": [
+                    1
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cd26c18f87b3ff5e1c85a3a86d67e7b30d592ff3\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        "besluit"
+                    ]
+                }
+            },
+            {
+                "warning": "[PublicationsController::index] Empty catalog scope after the read-rule guard \u2014 returning an empty envelope",
+                "context": {
+                    "catalogSlug": "woo"
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "guard drops every schema": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [],
+                "registers": [
+                    1
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"dfbaa24502aeb2ef5a5165413bb736f8b6921688\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "warning": "[PublicationsController::index] Empty catalog scope after the read-rule guard \u2014 returning an empty envelope",
+                "context": {
+                    "catalogSlug": "woo"
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "plain list": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    [],
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "keeps empty values": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a",
+                    "empty": ""
+                },
+                [],
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"ac0df9277ebea50fb3a5b36484bf5c2c6a8ab375\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    {
+                        "_empty": "true"
+                    },
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": {
+                        "_empty": "true"
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "no results key": {
+        "status": 200,
+        "data": {
+            "total": 0,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"492c377f4c940ea8e410635156fa5648771f3256\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    [],
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "results not a list": {
+        "status": 200,
+        "data": {
+            "results": "x",
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"4c7f563d6f2ed5708b0e908961e901401fdf15e3\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    [],
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "extend as text": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    {
+                        "q": "x",
+                        "_extend": [
+                            "@self.a"
+                        ]
+                    },
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": {
+                        "q": "x",
+                        "_extend": [
+                            "@self.a"
+                        ]
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "_extend as list": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    {
+                        "q": "x",
+                        "_extend": [
+                            "@self.a"
+                        ]
+                    },
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": {
+                        "q": "x",
+                        "_extend": [
+                            "@self.a"
+                        ]
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "both extend keys": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    {
+                        "_extend": [
+                            "@self.b"
+                        ]
+                    },
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": {
+                        "_extend": [
+                            "@self.b"
+                        ]
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "extend a number": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    {
+                        "_extend": []
+                    },
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": {
+                        "_extend": []
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "empty extend left alone": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    {
+                        "extend": "",
+                        "_extend": []
+                    },
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": {
+                        "extend": "",
+                        "_extend": []
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "signed in caller": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "private, no-store",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    [],
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "revalidation answers 304": {
+        "status": 304,
+        "data": [],
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    [],
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "openregister missing": {
+        "status": 500,
+        "data": {
+            "error": "Internal server error"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "error": "[PublicationsController::index] Failed to retrieve publications",
+                "context": {
+                    "catalogSlug": "woo",
+                    "error": "OpenRegister service is not available."
+                }
+            }
+        ]
+    },
+    "search throws": {
+        "status": 500,
+        "data": {
+            "error": "Internal server error"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    [],
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "error": "[PublicationsController::index] Failed to retrieve publications",
+                "context": {
+                    "catalogSlug": "woo",
+                    "error": "secret detail"
+                }
+            }
+        ]
+    },
+    "guard narrows the schemas": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    1
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"0ada5685fd1db1d0ff97fabbca535cf62d4f5787\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "schemas": [
+                        1,
+                        2
+                    ],
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "schemas": [
+                            1
+                        ],
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "guarded": true
+                    },
+                    [],
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        1
+                    ],
+                    "params": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "schemas": [
+                        1
+                    ],
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "a catalogue in the request is not the scope": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "id": "a"
+                },
+                {
+                    "id": "e"
+                },
+                "raw"
+            ],
+            "total": 3,
+            "@catalog": {
+                "slug": "woo",
+                "title": "Woo",
+                "schemas": [
+                    3,
+                    4
+                ],
+                "registers": [
+                    1
+                ]
+            },
+            "@self": {
+                "schemas": [
+                    "s"
+                ],
+                "registers": [
+                    "r"
+                ]
+            }
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cb9893e16860d926bca38504d1bef6d3ac89ec27\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "build": [
+                    {
+                        "slug": "woo",
+                        "title": "Woo",
+                        "registers": [
+                            1
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    {
+                        "catalog": {
+                            "schemas": [
+                                99
+                            ]
+                        }
+                    },
+                    true
+                ]
+            },
+            {
+                "search": {
+                    "_schemas": [
+                        3,
+                        4
+                    ],
+                    "params": {
+                        "catalog": {
+                            "schemas": [
+                                99
+                            ]
+                        }
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "strip": {
+                    "id": "a",
+                    "empty": ""
+                }
+            },
+            {
+                "strip": {
+                    "id": "e",
+                    "blank": ""
+                }
+            },
+            {
+                "resolve": {
+                    "slug": "woo",
+                    "title": "Woo",
+                    "registers": [
+                        1
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "guarded": true
+                }
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    }
+}
