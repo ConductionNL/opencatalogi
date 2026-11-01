@@ -414,8 +414,6 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @return array<string, array<string>> Array containing available registers and schemas
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess)
-	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogFilters(null|string|int $catalogId = null): array {
@@ -448,42 +446,15 @@ class CatalogiService implements CatalogiServiceInterface {
 		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
 		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
 		if ($schema === '' || $register === '') {
-			$this->logger->error(
-				'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
-				[
-					'schema' => $schema,
-					'register' => $register,
-				]
-			);
-			$this->availableRegisters = [];
-			$this->availableSchemas = [];
-			return [
-				'registers' => [],
-				'schemas' => [],
-			];
-		}
-
-		// Setup the base query for searchObjects.
-		$query = [
-			'@self' => [
-				'register' => $register,
-				'schema' => $schema,
-			],
-		];
-
-		// If a specific catalog ID is provided, add it as a filter.
-		// UUIDs are matched on @self.uuid; anything else (e.g. a slug) is matched
-		// on the object's own 'slug' field.
-		if ($catalogId !== null) {
-			$query['slug'] = (string)$catalogId;
-			if (Uuid::isValid((string)$catalogId) === true) {
-				unset($query['slug']);
-				$query['@self']['uuid'] = $catalogId;
-			}
+			return $this->refusedCatalogFilters(scope: ['schema' => $schema, 'register' => $register]);
 		}
 
 		// Get catalogs using searchObjects (handles deleted field correctly).
-		$catalogs = $this->getObjectService()->searchObjects(query: $query, _rbac: false, _multitenancy: false);
+		$catalogs = $this->getObjectService()->searchObjects(
+			query: $this->catalogFiltersQuery(scope: ['schema' => $schema, 'register' => $register], catalogId: $catalogId),
+			_rbac: false,
+			_multitenancy: false
+		);
 
 		// Remove duplicate values and assign to class properties.
 		// SCH-PFTS-CAT-002 (WOO-581): this scope serves `#[PublicPage]`
@@ -501,6 +472,62 @@ class CatalogiService implements CatalogiServiceInterface {
 		];
 
 	}//end getCatalogFilters()
+
+	/**
+	 * Refuse to derive a catalogue scope: log it and leave the scope empty.
+	 *
+	 * @param array{schema: string, register: string} $scope The configured catalog schema and register, one of them empty.
+	 *
+	 * @return array{registers: array, schemas: array} The empty scope.
+	 */
+	private function refusedCatalogFilters(array $scope): array {
+		$this->logger->error(
+			'Catalog schema or register not configured — refusing to derive a catalog scope from an unscoped search',
+			[
+				'schema' => $scope['schema'],
+				'register' => $scope['register'],
+			]
+		);
+		$this->availableRegisters = [];
+		$this->availableSchemas = [];
+		return [
+			'registers' => [],
+			'schemas' => [],
+		];
+	}//end refusedCatalogFilters()
+
+	/**
+	 * The catalog search behind getCatalogFilters().
+	 *
+	 * A UUID is matched on `@self.uuid`; any other id (such as a slug) on the
+	 * catalog's own `slug` field.
+	 *
+	 * @param array{schema: string, register: string} $scope The configured catalog schema and register.
+	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
+	 *
+	 * @return array The query.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) Uuid::isValid() is a pure check on the id.
+	 */
+	private function catalogFiltersQuery(array $scope, null|string|int $catalogId): array {
+		$query = [
+			'@self' => [
+				'register' => $scope['register'],
+				'schema' => $scope['schema'],
+			],
+		];
+		if ($catalogId === null) {
+			return $query;
+		}
+
+		if (Uuid::isValid((string)$catalogId) === true) {
+			$query['@self']['uuid'] = $catalogId;
+			return $query;
+		}
+
+		$query['slug'] = (string)$catalogId;
+		return $query;
+	}//end catalogFiltersQuery()
 
 	/**
 	 * Collect the unique values of one array-valued property across catalogs.
