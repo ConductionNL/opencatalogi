@@ -509,5 +509,86 @@
         {
             "info": "RenameDutchPublicationColumns: 0 column(s) renamed, 0 column(s) back-filled, across 2 shard table(s)."
         }
+    ],
+    "a schema id only inside the table name": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "bindValue": [
+                "pattern",
+                "%openregister\\_table\\_%"
+            ]
+        },
+        {
+            "execute": {
+                "pattern": "%openregister\\_table\\_%"
+            }
+        },
+        {
+            "info": "RenameDutchPublicationColumns: no publication shard tables on this install; nothing to do."
+        }
+    ],
+    "a zero-padded schema id": [
+        {
+            "executeQuery": [
+                "SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (?,?,?)",
+                [
+                    "Publication",
+                    "Document",
+                    "WooBatch"
+                ]
+            ]
+        },
+        {
+            "fetchAll": 7
+        },
+        {
+            "prepare": "SELECT table_name FROM information_schema.tables WHERE table_name LIKE :pattern"
+        },
+        {
+            "bindValue": [
+                "pattern",
+                "%openregister\\_table\\_%"
+            ]
+        },
+        {
+            "execute": {
+                "pattern": "%openregister\\_table\\_%"
+            }
+        },
+        {
+            "prepare": "SELECT column_name FROM information_schema.columns WHERE table_name = :table"
+        },
+        {
+            "bindValue": [
+                "table",
+                "oc_openregister_table_1_4"
+            ]
+        },
+        {
+            "execute": {
+                "table": "oc_openregister_table_1_4"
+            }
+        },
+        {
+            "executeStatement": "ALTER TABLE \"oc_openregister_table_1_4\" RENAME COLUMN \"publicatiedatum\" TO \"publication_date\""
+        },
+        {
+            "info": "RenameDutchPublicationColumns: 1 column(s) renamed, 0 column(s) back-filled, across 1 shard table(s)."
+        }
     ]
 }

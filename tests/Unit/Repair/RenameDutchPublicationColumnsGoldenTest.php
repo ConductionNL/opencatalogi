@@ -80,6 +80,8 @@ class RenameDutchPublicationColumnsGoldenTest extends TestCase {
 			'a table without the Dutch columns' => [['ids' => ['4'], 'tables' => ['oc_openregister_table_1_4'], 'columns' => ['oc_openregister_table_1_4' => ['id', 'publication_date']]]],
 			'columns of one table unreadable' => [['ids' => ['4', '9'], 'tables' => $tables, 'columns' => $columns, 'fail' => ['columns:oc_openregister_table_1_4']]],
 			'some statements fail' => [['ids' => ['4', '9'], 'tables' => $tables, 'columns' => $columns, 'fail' => ['exec:RENAME COLUMN "besluit"', 'exec:SET "inventory_list"']]],
+			'a schema id only inside the table name' => [['ids' => ['4'], 'tables' => ['oc_openregister_table_4_9'], 'columns' => ['oc_openregister_table_4_9' => ['publicatiedatum']]]],
+			'a zero-padded schema id' => [['ids' => ['04'], 'tables' => ['oc_openregister_table_1_4'], 'columns' => ['oc_openregister_table_1_4' => ['publicatiedatum']]]],
 			'every statement fails' => [['ids' => ['4', '9'], 'tables' => $tables, 'columns' => $columns, 'fail' => ['exec:']]],
 		];
 
