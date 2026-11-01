@@ -1,0 +1,938 @@
+{
+    "depublish": {
+        "status": 200,
+        "data": {
+            "publication": "p-1",
+            "depublishedBy": "ambtenaar",
+            "withdrawals": [
+                "plooi",
+                "7"
+            ],
+            "id": "stored-1",
+            "outstandingChannels": [
+                "koop"
+            ],
+            "complete": false
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "wrong",
+                    "ambtenaar",
+                    [
+                        "plooi",
+                        "7"
+                    ]
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "publication": "p-1",
+                        "depublishedBy": "ambtenaar",
+                        "withdrawals": [
+                            "plooi",
+                            "7"
+                        ]
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    null
+                ]
+            },
+            {
+                "outstanding": {
+                    "publication": "p-1",
+                    "depublishedBy": "ambtenaar",
+                    "withdrawals": [
+                        "plooi",
+                        "7"
+                    ],
+                    "id": "stored-1"
+                }
+            }
+        ]
+    },
+    "depublish ignores a forged depublishedBy": {
+        "status": 200,
+        "data": {
+            "publication": "p-1",
+            "depublishedBy": "ambtenaar",
+            "withdrawals": [],
+            "id": "stored-1",
+            "outstandingChannels": [
+                "koop"
+            ],
+            "complete": false
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "",
+                    "ambtenaar",
+                    []
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "publication": "p-1",
+                        "depublishedBy": "ambtenaar",
+                        "withdrawals": []
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    null
+                ]
+            },
+            {
+                "outstanding": {
+                    "publication": "p-1",
+                    "depublishedBy": "ambtenaar",
+                    "withdrawals": [],
+                    "id": "stored-1"
+                }
+            }
+        ]
+    },
+    "depublish without a session user": {
+        "status": 200,
+        "data": {
+            "publication": "p-1",
+            "depublishedBy": "",
+            "withdrawals": [],
+            "id": "stored-1",
+            "outstandingChannels": [
+                "koop"
+            ],
+            "complete": false
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "",
+                    "",
+                    []
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "publication": "p-1",
+                        "depublishedBy": "",
+                        "withdrawals": []
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    null
+                ]
+            },
+            {
+                "outstanding": {
+                    "publication": "p-1",
+                    "depublishedBy": "",
+                    "withdrawals": [],
+                    "id": "stored-1"
+                }
+            }
+        ]
+    },
+    "depublish, channels not a list": {
+        "status": 200,
+        "data": {
+            "publication": "p-1",
+            "depublishedBy": "ambtenaar",
+            "withdrawals": [],
+            "id": "stored-1",
+            "outstandingChannels": [
+                "koop"
+            ],
+            "complete": false
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "",
+                    "ambtenaar",
+                    []
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "publication": "p-1",
+                        "depublishedBy": "ambtenaar",
+                        "withdrawals": []
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    null
+                ]
+            },
+            {
+                "outstanding": {
+                    "publication": "p-1",
+                    "depublishedBy": "ambtenaar",
+                    "withdrawals": [],
+                    "id": "stored-1"
+                }
+            }
+        ]
+    },
+    "depublish, no publication": {
+        "status": 400,
+        "data": {
+            "error": "missing-publication"
+        },
+        "log": []
+    },
+    "depublish, publication not a list": {
+        "status": 400,
+        "data": {
+            "error": "missing-publication"
+        },
+        "log": []
+    },
+    "depublish refused": {
+        "status": 400,
+        "data": {
+            "error": "depublication-refused",
+            "message": "already depublished"
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "",
+                    "ambtenaar",
+                    []
+                ]
+            }
+        ]
+    },
+    "depublish, store unreadable": {
+        "status": 503,
+        "data": {
+            "error": "depublication-unstored",
+            "message": "The withdrawals were sent but could not be recorded."
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "",
+                    "ambtenaar",
+                    []
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            }
+        ]
+    },
+    "depublish, store throws": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "save broke"
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "",
+                    "ambtenaar",
+                    []
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "publication": "p-1",
+                        "depublishedBy": "ambtenaar",
+                        "withdrawals": []
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    null
+                ]
+            }
+        ]
+    },
+    "depublish, register not configured": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/l59-wt3/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "",
+                    "ambtenaar",
+                    []
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            }
+        ]
+    },
+    "depublish, every channel acknowledged": {
+        "status": 200,
+        "data": {
+            "publication": "p-1",
+            "depublishedBy": "ambtenaar",
+            "withdrawals": [],
+            "id": "stored-1",
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "log": [
+            {
+                "depublish": [
+                    {
+                        "id": "p-1",
+                        "title": "Besluit"
+                    },
+                    "",
+                    "ambtenaar",
+                    []
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "save": [
+                    {
+                        "publication": "p-1",
+                        "depublishedBy": "ambtenaar",
+                        "withdrawals": []
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    null
+                ]
+            },
+            {
+                "outstanding": {
+                    "publication": "p-1",
+                    "depublishedBy": "ambtenaar",
+                    "withdrawals": [],
+                    "id": "stored-1"
+                }
+            }
+        ]
+    },
+    "acknowledge": {
+        "status": 200,
+        "data": {
+            "id": "d-1",
+            "withdrawals": [
+                {
+                    "channel": "koop2"
+                },
+                {
+                    "channel": "plooi"
+                }
+            ],
+            "acknowledged": "plooi",
+            "outstandingChannels": [
+                "koop"
+            ],
+            "complete": false
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            },
+            {
+                "acknowledge": [
+                    {
+                        "id": "d-1",
+                        "withdrawals": [
+                            {
+                                "channel": "koop2"
+                            },
+                            {
+                                "channel": "plooi"
+                            }
+                        ]
+                    },
+                    "plooi",
+                    "gone"
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "save": [
+                    {
+                        "id": "d-1",
+                        "withdrawals": [
+                            {
+                                "channel": "koop2"
+                            },
+                            {
+                                "channel": "plooi"
+                            }
+                        ],
+                        "acknowledged": "plooi"
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    "d-1"
+                ]
+            },
+            {
+                "outstanding": {
+                    "id": "d-1",
+                    "withdrawals": [
+                        {
+                            "channel": "koop2"
+                        },
+                        {
+                            "channel": "plooi"
+                        }
+                    ],
+                    "acknowledged": "plooi"
+                }
+            }
+        ]
+    },
+    "acknowledge, last channel": {
+        "status": 200,
+        "data": {
+            "id": "d-1",
+            "withdrawals": [
+                {
+                    "channel": "koop2"
+                },
+                {
+                    "channel": "plooi"
+                }
+            ],
+            "acknowledged": "plooi",
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            },
+            {
+                "acknowledge": [
+                    {
+                        "id": "d-1",
+                        "withdrawals": [
+                            {
+                                "channel": "koop2"
+                            },
+                            {
+                                "channel": "plooi"
+                            }
+                        ]
+                    },
+                    "plooi",
+                    "gone"
+                ]
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "save": [
+                    {
+                        "id": "d-1",
+                        "withdrawals": [
+                            {
+                                "channel": "koop2"
+                            },
+                            {
+                                "channel": "plooi"
+                            }
+                        ],
+                        "acknowledged": "plooi"
+                    },
+                    [],
+                    "publication_register-id",
+                    "depublication_schema-id",
+                    "d-1"
+                ]
+            },
+            {
+                "outstanding": {
+                    "id": "d-1",
+                    "withdrawals": [
+                        {
+                            "channel": "koop2"
+                        },
+                        {
+                            "channel": "plooi"
+                        }
+                    ],
+                    "acknowledged": "plooi"
+                }
+            }
+        ]
+    },
+    "acknowledge, no depublication": {
+        "status": 400,
+        "data": {
+            "error": "missing-parameters",
+            "message": "Name the depublication and the channel that acknowledged."
+        },
+        "log": []
+    },
+    "acknowledge, no channel": {
+        "status": 400,
+        "data": {
+            "error": "missing-parameters",
+            "message": "Name the depublication and the channel that acknowledged."
+        },
+        "log": []
+    },
+    "acknowledge, unknown channel": {
+        "status": 400,
+        "data": {
+            "error": "unknown-channel",
+            "message": "No withdrawal was sent to that channel, so there is nothing for it to acknowledge."
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            }
+        ]
+    },
+    "acknowledge, withdrawals not lists": {
+        "status": 400,
+        "data": {
+            "error": "unknown-channel",
+            "message": "No withdrawal was sent to that channel, so there is nothing for it to acknowledge."
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            }
+        ]
+    },
+    "acknowledge, no withdrawals": {
+        "status": 400,
+        "data": {
+            "error": "unknown-channel",
+            "message": "No withdrawal was sent to that channel, so there is nothing for it to acknowledge."
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            }
+        ]
+    },
+    "acknowledge, unreadable": {
+        "status": 503,
+        "data": {
+            "error": "depublication-unreadable"
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            }
+        ]
+    },
+    "acknowledge, not found": {
+        "status": 404,
+        "data": {
+            "error": "not-found"
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "d-1",
+                    "publication_register-id",
+                    "depublication_schema-id"
+                ]
+            }
+        ]
+    },
+    "acknowledge, register not configured": {
+        "status": 404,
+        "data": {
+            "error": "not-found"
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            }
+        ]
+    },
+    "acknowledge, store unreadable": {
+        "status": 503,
+        "data": {
+            "error": "depublication-unreadable"
+        },
+        "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "depublication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            }
+        ]
+    }
+}
