@@ -1,0 +1,1089 @@
+{
+    "testCatalogListingMatchesTheRecording dcat and ooapi": {
+        "listing": {
+            "id": "c",
+            "catalog": "c",
+            "catalogusId": "c",
+            "title": "Unknown Catalog",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p",
+            "dcatEndpoint": "https://self/apps/opencatalogi/api/catalogs/both/dcat",
+            "ooapiEndpoint": "https://self/apps/opencatalogi/api/catalogs/both/ooapi/v5"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            },
+            {
+                "getBaseUrl": []
+            },
+            {
+                "getBaseUrl": []
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording dcat as text": {
+        "listing": {
+            "id": "c",
+            "catalog": "c",
+            "catalogusId": "c",
+            "title": "Unknown Catalog",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p",
+            "dcatEndpoint": "https://self/apps/opencatalogi/api/catalogs/woo/dcat"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            },
+            {
+                "getBaseUrl": []
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording dcat off": {
+        "listing": {
+            "id": "c",
+            "catalog": "c",
+            "catalogusId": "c",
+            "title": "Unknown Catalog",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording dcat on": {
+        "listing": {
+            "id": "c",
+            "catalog": "c",
+            "catalogusId": "c",
+            "title": "Unknown Catalog",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p",
+            "dcatEndpoint": "https://self/apps/opencatalogi/api/catalogs/woo/dcat"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            },
+            {
+                "getBaseUrl": []
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording dcat without slug": {
+        "listing": {
+            "id": "c",
+            "catalog": "c",
+            "catalogusId": "c",
+            "title": "Unknown Catalog",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording empty": {
+        "listing": {
+            "id": "",
+            "catalog": "",
+            "catalogusId": "",
+            "title": "Unknown Catalog",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "(now)"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording full array": {
+        "listing": {
+            "id": "c1",
+            "catalog": "c1",
+            "catalogusId": "c1",
+            "title": "Woo",
+            "summary": "S",
+            "status": "live",
+            "description": "D",
+            "organization": "O",
+            "schemas": [
+                "s1"
+            ],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "2026-01-01T00:00:00+00:00"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording full entity": {
+        "listing": {
+            "id": "c1",
+            "catalog": "c1",
+            "catalogusId": "c1",
+            "title": "Woo",
+            "summary": "S",
+            "status": "live",
+            "description": "D",
+            "organization": "O",
+            "schemas": [
+                "s1"
+            ],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "2026-01-01T00:00:00+00:00"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording ooapi on": {
+        "listing": {
+            "id": "c",
+            "catalog": "c",
+            "catalogusId": "c",
+            "title": "Unknown Catalog",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p",
+            "ooapiEndpoint": "https://self/apps/opencatalogi/api/catalogs/edu/ooapi/v5"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            },
+            {
+                "getBaseUrl": []
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording summary from description": {
+        "listing": {
+            "id": "c",
+            "catalog": "c",
+            "catalogusId": "c",
+            "title": "Unknown Catalog",
+            "summary": "D",
+            "status": "development",
+            "description": "D",
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording wrapped under object": {
+        "listing": {
+            "id": "outer",
+            "catalog": "outer",
+            "catalogusId": "outer",
+            "title": "Inner",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            }
+        ]
+    },
+    "testCatalogListingMatchesTheRecording wrapped with own id": {
+        "listing": {
+            "id": "inner",
+            "catalog": "inner",
+            "catalogusId": "inner",
+            "title": "Unknown Catalog",
+            "summary": "Local catalog",
+            "status": "development",
+            "description": null,
+            "organization": null,
+            "schemas": [],
+            "directory": "https://self/route/opencatalogi.directory.index",
+            "search": "https://self/route/opencatalogi.search.index",
+            "publications": "https://self/route/opencatalogi.federation.publications",
+            "version": "1.2.3",
+            "published": "p"
+        },
+        "calls": [
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.search.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.search.index"
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.federation.publications"
+                }
+            },
+            {
+                "getAppInfo": {
+                    "appId": "opencatalogi"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording include federated": {
+        "listings": [
+            {
+                "id": "l1",
+                "directory": "https://self/route/opencatalogi.directory.index",
+                "title": "Ours"
+            },
+            {
+                "id": "l2",
+                "directory": "https://peer/api/directory"
+            },
+            {
+                "object": {
+                    "id": "l3",
+                    "directory": "https://peer/api/directory"
+                },
+                "id": "w3"
+            },
+            {
+                "object": {
+                    "id": "l4",
+                    "directory": "https://self/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "id": "l5",
+                "directory": ""
+            },
+            {
+                "id": "l6"
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "listing-schema",
+                            "register": "listing-register"
+                        }
+                    }
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording include federated false": {
+        "listings": [
+            {
+                "id": "l1",
+                "directory": "https://self/route/opencatalogi.directory.index",
+                "title": "Ours"
+            },
+            {
+                "object": {
+                    "id": "l4",
+                    "directory": "https://self/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "id": "l5",
+                "directory": ""
+            },
+            {
+                "id": "l6"
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "listing-schema",
+                            "register": "listing-register"
+                        }
+                    }
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording include federated text": {
+        "listings": [
+            {
+                "id": "l1",
+                "directory": "https://self/route/opencatalogi.directory.index",
+                "title": "Ours"
+            },
+            {
+                "id": "l2",
+                "directory": "https://peer/api/directory"
+            },
+            {
+                "object": {
+                    "id": "l3",
+                    "directory": "https://peer/api/directory"
+                },
+                "id": "w3"
+            },
+            {
+                "object": {
+                    "id": "l4",
+                    "directory": "https://self/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "id": "l5",
+                "directory": ""
+            },
+            {
+                "id": "l6"
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "listing-schema",
+                            "register": "listing-register"
+                        }
+                    }
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording local only": {
+        "listings": [
+            {
+                "id": "l1",
+                "directory": "https://self/route/opencatalogi.directory.index",
+                "title": "Ours"
+            },
+            {
+                "object": {
+                    "id": "l4",
+                    "directory": "https://self/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "id": "l5",
+                "directory": ""
+            },
+            {
+                "id": "l6"
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "listing-schema",
+                            "register": "listing-register"
+                        }
+                    }
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording no listing register": {
+        "listings": [],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording no listing schema": {
+        "listings": [],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording no listings": {
+        "listings": [],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "listing-schema",
+                            "register": "listing-register"
+                        }
+                    }
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording paging and filters": {
+        "listings": [
+            {
+                "id": "l1",
+                "directory": "https://self/route/opencatalogi.directory.index",
+                "title": "Ours"
+            },
+            {
+                "object": {
+                    "id": "l4",
+                    "directory": "https://self/route/opencatalogi.directory.index"
+                }
+            },
+            {
+                "id": "l5",
+                "directory": ""
+            },
+            {
+                "id": "l6"
+            }
+        ],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "listing-schema",
+                            "register": "listing-register"
+                        },
+                        "title": "Ours",
+                        "_limit": 5,
+                        "_offset": 2
+                    }
+                }
+            },
+            {
+                "linkToRoute": {
+                    "routeName": "opencatalogi.directory.index"
+                }
+            },
+            {
+                "getAbsoluteURL": {
+                    "url": "/route/opencatalogi.directory.index"
+                }
+            }
+        ]
+    },
+    "testDirectoryListingsMatchTheRecording search fails": {
+        "listings": [],
+        "calls": [
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_schema"
+                }
+            },
+            {
+                "getValueString": {
+                    "app": "opencatalogi",
+                    "key": "listing_register"
+                }
+            },
+            {
+                "searchObjects": {
+                    "query": {
+                        "@self": {
+                            "schema": "listing-schema",
+                            "register": "listing-register"
+                        }
+                    }
+                }
+            }
+        ]
+    }
+}

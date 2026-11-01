@@ -111,6 +111,17 @@ class DirectoryService implements DirectoryServiceInterface {
 	];
 
 	/**
+	 * The per-catalog harvest endpoints: the catalog flag that enables one, the
+	 * listing field that advertises it and its path under the catalog.
+	 *
+	 * @var array<string, array{0: string, 1: string}>
+	 */
+	private const HARVEST_ENDPOINTS = [
+		'hasDcat' => ['dcatEndpoint', 'dcat'],
+		'hasOoapi' => ['ooapiEndpoint', 'ooapi/v5'],
+	];
+
+	/**
 	 * Cached unique directories to avoid repeated database queries.
 	 *
 	 * @var array|null
@@ -2665,43 +2676,73 @@ class DirectoryService implements DirectoryServiceInterface {
 				$this->directoryQuery(scope: ['schema' => $listingSchema, 'register' => $listingRegister], requestParams: $requestParams)
 			);
 
-			// Get our directory URL to identify locally-created listings.
-			$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
-				$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-			);
-
 			// BFS-discovery opt-in: sync-code passes `?include-federated=1` so peers
-			// can transitively learn about each other's known directories. Public
-			// consumers (search UI, browsers) get the default filtered view — only
-			// catalogs that originate from THIS instance — to preserve the historical
-			// "no cross-broadcast" contract.
-			$includeFederated = filter_var(
-				($requestParams['include-federated'] ?? false),
-				FILTER_VALIDATE_BOOLEAN
+			// can transitively learn about each other's known directories.
+			return $this->servedListings(
+				listingResult: $listingResult,
+				includeFederated: filter_var(($requestParams['include-federated'] ?? false), FILTER_VALIDATE_BOOLEAN)
 			);
-
-			$listings = [];
-			foreach ($listingResult as $object) {
-				$listingData = $object;
-				if ($object instanceof \OCP\AppFramework\Db\Entity) {
-					$listingData = $object->jsonSerialize();
-				}
-
-				if ($includeFederated === false
-					&& $this->isFromOtherDirectory(listingData: $listingData, ourDirectoryUrl: $ourDirectoryUrl) === true
-				) {
-					continue;
-				}
-
-				$listings[] = $this->filterListingProperties(listing: $listingData);
-			}
-
-			return $listings;
 		} catch (\Exception $e) {
 			return [];
 		}//end try
 
 	}//end directoryListings()
+
+	/**
+	 * The stored listings this instance serves, without their internal properties.
+	 *
+	 * Public consumers (search UI, browsers) get only the listings that originate
+	 * from THIS instance, which preserves the historical "no cross-broadcast"
+	 * contract; `includeFederated` also serves the listings learnt from peers.
+	 *
+	 * @param mixed $listingResult The stored listing entities or their data.
+	 * @param bool $includeFederated Whether listings of other directories are served too.
+	 *
+	 * @return array<int, array<string, mixed>> The served listings.
+	 */
+	private function servedListings(mixed $listingResult, bool $includeFederated): array {
+		$ourDirectoryUrl = $this->localRouteUrl(route: 'opencatalogi.directory.index');
+
+		$listings = [];
+		foreach ($listingResult as $object) {
+			$listingData = $this->entityData(object: $object);
+			if ($includeFederated === false
+				&& $this->isFromOtherDirectory(listingData: $listingData, ourDirectoryUrl: $ourDirectoryUrl) === true
+			) {
+				continue;
+			}
+
+			$listings[] = $this->filterListingProperties(listing: $listingData);
+		}
+
+		return $listings;
+	}//end servedListings()
+
+	/**
+	 * The serialised data of an entity; any other value as it is.
+	 *
+	 * @param mixed $object The entity or its data.
+	 *
+	 * @return mixed The data.
+	 */
+	private function entityData(mixed $object): mixed {
+		if ($object instanceof \OCP\AppFramework\Db\Entity) {
+			return $object->jsonSerialize();
+		}
+
+		return $object;
+	}//end entityData()
+
+	/**
+	 * The absolute URL of one of this app's routes.
+	 *
+	 * @param string $route The route name.
+	 *
+	 * @return string The absolute URL.
+	 */
+	private function localRouteUrl(string $route): string {
+		return $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute($route));
+	}//end localRouteUrl()
 
 	/**
 	 * Whether a listing was synced from another directory.
@@ -2806,78 +2847,72 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function convertCatalogToListing($catalogObject): array {
-		// Extract catalog data.
-		$catalogData = $catalogObject;
-		if ($catalogObject instanceof \OCP\AppFramework\Db\Entity) {
-			$catalogData = $catalogObject->jsonSerialize();
-		}
-
+		$catalogData = $this->entityData(object: $catalogObject);
 		$catalog = ($catalogData['object'] ?? $catalogData);
 
-		// Get our directory URL for the listing.
-		$directoryUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-		);
+		// The publications URL is the federation endpoint (publications.index requires a catalogSlug).
+		$endpoints = [
+			'directory' => $this->localRouteUrl(route: 'opencatalogi.directory.index'),
+			'search' => $this->localRouteUrl(route: 'opencatalogi.search.index'),
+			'publications' => $this->localRouteUrl(route: 'opencatalogi.federation.publications'),
+			'version' => $this->appManager->getAppInfo('opencatalogi')['version'],
+			// Publication date from catalog, default to now for public visibility.
+			'published' => ($catalog['published'] ?? (new DateTime())->format('c')),
+		];
 
-		// Get our search and publications URLs.
-		// Use federation endpoint (not publications.index which requires catalogSlug).
-		$searchUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.search.index')
-		);
-		$publicationsUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.federation.publications')
-		);
-
-		// Create listing object from catalog - only core API fields.
 		$catalogId = ($catalog['id'] ?? $catalogData['id'] ?? '');
-		$listing = [
-			// Required fields for listing.
+		$listing = array_merge($this->catalogListingFields(catalog: $catalog, catalogId: $catalogId), $endpoints);
+
+		return array_merge($listing, $this->catalogHarvestEndpoints(catalog: $catalog));
+	}//end convertCatalogToListing()
+
+	/**
+	 * The core API fields a listing takes from its catalog.
+	 *
+	 * @param mixed $catalog The catalog data.
+	 * @param mixed $catalogId The catalog id, used as the listing id too.
+	 *
+	 * @return array<string, mixed> The fields, in listing order.
+	 */
+	private function catalogListingFields(mixed $catalog, mixed $catalogId): array {
+		return [
 			'id' => $catalogId,
 			'catalog' => $catalogId,
 			'catalogusId' => $catalogId,
 			'title' => ($catalog['title'] ?? 'Unknown Catalog'),
 			'summary' => ($catalog['summary'] ?? $catalog['description'] ?? 'Local catalog'),
 			'status' => ($catalog['status'] ?? 'development'),
-
-			// Optional fields from catalog.
 			'description' => $catalog['description'] ?? null,
 			'organization' => $catalog['organization'] ?? null,
 			'schemas' => ($catalog['schemas'] ?? []),
-
-			// Directory-specific fields.
-			'directory' => $directoryUrl,
-			'search' => $searchUrl,
-			'publications' => $publicationsUrl,
-			'version' => $this->appManager->getAppInfo('opencatalogi')['version'],
-
-			// Publication date from catalog, default to now for public visibility.
-			'published' => ($catalog['published'] ?? (new DateTime())->format('c')),
 		];
+	}//end catalogListingFields()
 
-		// Federation discovery (DCAT-009): advertise the per-catalog DCAT harvest endpoint
-		// when the catalog is DCAT-enabled, so remote instances and aggregators learn where
-		// to harvest. Disabled catalogs carry no dcatEndpoint. Extends the existing directory
-		// machinery with one field — no new broadcast channel or cron (FED-OR-001/002).
-		$hasDcat = filter_var(($catalog['hasDcat'] ?? false), FILTER_VALIDATE_BOOLEAN);
+	/**
+	 * The per-catalog harvest endpoints a listing advertises.
+	 *
+	 * Federation discovery: a catalog with a slug advertises its DCAT harvest
+	 * endpoint when DCAT is enabled (DCAT-009) and its OOAPI 5.0 base endpoint
+	 * when OOAPI publication is enabled (OOAPI-009), so remote instances and the
+	 * national directory learn where to harvest. No new broadcast channel or cron
+	 * (FED-OR-001/002).
+	 *
+	 * @param mixed $catalog The catalog data.
+	 *
+	 * @return array<string, string> `dcatEndpoint` and/or `ooapiEndpoint`, when enabled.
+	 */
+	private function catalogHarvestEndpoints(mixed $catalog): array {
 		$catalogSlug = ($catalog['slug'] ?? '');
-		if ($hasDcat === true && $catalogSlug !== '') {
-			$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
-			$listing['dcatEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/dcat";
+		$endpoints = [];
+		foreach (self::HARVEST_ENDPOINTS as $flag => [$field, $path]) {
+			if (filter_var(($catalog[$flag] ?? false), FILTER_VALIDATE_BOOLEAN) === true && $catalogSlug !== '') {
+				$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+				$endpoints[$field] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/$path";
+			}
 		}
 
-		// Federation discovery (OOAPI-009): advertise the per-catalog OOAPI 5.0 base
-		// endpoint when the catalog has OOAPI publication enabled, so remote instances
-		// and the national directory discover where to reach an institution's course
-		// catalog. Rides the same listing-projection helper as dcatEndpoint above — no
-		// new broadcast channel or cron (FED-OR-001/002).
-		$hasOoapi = filter_var(($catalog['hasOoapi'] ?? false), FILTER_VALIDATE_BOOLEAN);
-		if ($hasOoapi === true && $catalogSlug !== '') {
-			$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
-			$listing['ooapiEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/ooapi/v5";
-		}
-
-		return $listing;
-	}//end convertCatalogToListing()
+		return $endpoints;
+	}//end catalogHarvestEndpoints()
 
 	/**
 	 * Filter listing object to remove properties not meant for external API
