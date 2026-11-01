@@ -100,7 +100,7 @@ class StatsController extends Controller {
 		// confirm the caller may read this publication under its own OR RBAC
 		// rule before returning any stats.
 		if ($this->requireAuthenticatedUser() === null
-			|| $this->canReadPublication(id: $id) === false
+			|| $this->canReadObject(id: $id) === false
 		) {
 			return new JSONResponse(
 				['error' => $this->l10n->t('You are not allowed to view statistics for this publication.')],
@@ -143,6 +143,10 @@ class StatsController extends Controller {
 		$catalog = $this->catalogiService->getCatalogBySlug($slug);
 		if ($catalog === null) {
 			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		}
+
+		if ($this->canReadCatalog(catalog: $catalog) === false) {
+			return $this->catalogForbidden();
 		}
 
 		[$from, $to] = $this->readRange();
@@ -218,11 +222,6 @@ class StatsController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
-	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
-	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on) and its datasets are
-	 *   read by DcatService::buildCatalogDocument() with RBAC on, so only rows the caller may
-	 *   read are scored.
-	 *
 	 * @spec openspec/specs/publication-quality/spec.md
 	 */
 	public function quality(string $slug): JSONResponse {
@@ -237,6 +236,10 @@ class StatsController extends Controller {
 		$catalog = $this->catalogiService->getCatalogBySlug($slug);
 		if ($catalog === null) {
 			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		}
+
+		if ($this->canReadCatalog(catalog: $catalog) === false) {
+			return $this->catalogForbidden();
 		}
 
 		$worst = (int)($this->request->getParam('worst', 5));
@@ -294,6 +297,10 @@ class StatsController extends Controller {
 		$catalog = $this->catalogiService->getCatalogBySlug($slug);
 		if ($catalog === null) {
 			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		}
+
+		if ($this->canReadCatalog(catalog: $catalog) === false) {
+			return $this->catalogForbidden();
 		}
 
 		[$from, $to] = $this->readRange();
@@ -419,20 +426,55 @@ class StatsController extends Controller {
 	}//end requireAuthenticatedUser()
 
 	/**
-	 * Check whether the current caller may read a publication under OR RBAC.
+	 * Check whether the current caller may read a catalog under OR RBAC.
 	 *
-	 * Resolves the publication with `_rbac: true`; an empty result means the
-	 * caller is not permitted on it (or it does not exist), which is treated as
-	 * "not allowed" — the same authorization rule that governs the publication
-	 * itself (ANA-004, no-IDOR).
+	 * The catalog is looked up by its id under the caller's own RBAC. A catalog
+	 * without an id is not readable.
 	 *
-	 * @param string $id The publication UUID.
+	 * @param array<string, mixed> $catalog The resolved catalog.
 	 *
-	 * @return boolean True when the caller may read the publication.
+	 * @return boolean True when the caller may read the catalog.
 	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
-	private function canReadPublication(string $id): bool {
+	private function canReadCatalog(array $catalog): bool {
+		$id = (string)($catalog['id'] ?? $catalog['@self']['id'] ?? '');
+		if ($id === '') {
+			return false;
+		}
+
+		return $this->canReadObject(id: $id);
+	}//end canReadCatalog()
+
+	/**
+	 * The 403 answer for a catalog the caller may not read.
+	 *
+	 * @return JSONResponse The forbidden response.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function catalogForbidden(): JSONResponse {
+		return new JSONResponse(
+			['error' => $this->l10n->t('You are not allowed to view statistics for this catalog.')],
+			Http::STATUS_FORBIDDEN
+		);
+	}//end catalogForbidden()
+
+	/**
+	 * Check whether the current caller may read an object under OR RBAC.
+	 *
+	 * Resolves the object with `_rbac: true`; an empty result means the
+	 * caller is not permitted on it (or it does not exist), which is treated as
+	 * "not allowed" — the same authorization rule that governs the object
+	 * itself (ANA-004, no-IDOR).
+	 *
+	 * @param string $id The object UUID.
+	 *
+	 * @return boolean True when the caller may read the object.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function canReadObject(string $id): bool {
 		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === false) {
 			return false;
 		}
@@ -459,5 +501,5 @@ class StatsController extends Controller {
 			return false;
 		}//end try
 
-	}//end canReadPublication()
+	}//end canReadObject()
 }//end class

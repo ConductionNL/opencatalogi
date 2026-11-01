@@ -102,6 +102,49 @@ class StatsControllerTest extends TestCase {
 			->willReturn($os);
 	}//end withReadableObject()
 
+	/**
+	 * Resolve catalog `cat-1` by slug and answer the caller's own RBAC read of it.
+	 *
+	 * The read must be a lookup of the resolved catalog's id with RBAC on; any
+	 * other query is not this guard and answers "not readable".
+	 */
+	private function withCatalog(bool $readable): ObjectService|MockObject {
+		$this->catalogi->method('getCatalogBySlug')->willReturn(['id' => 'cat-1', 'slug' => 'woo', 'hasDcat' => true]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$os = $this->createMock(ObjectService::class);
+		$os->method('searchObjects')->willReturnCallback(
+			fn (array $query = [], bool $_rbac = true, bool $_multitenancy = true) => ($readable === true
+				&& $query === ['@self' => ['uuid' => 'cat-1']]
+				&& $_rbac === true) ? [['id' => 'cat-1']] : []
+		);
+		return $os;
+	}//end withCatalog()
+
+	/**
+	 * A controller whose request carries forged identity and target parameters.
+	 */
+	private function controllerWithForgedRequest(): StatsController {
+		$request = $this->createMock(IRequest::class);
+		$request->method('getParam')->willReturnCallback(
+			fn (string $k, $d = null) => match ($k) {
+				'userId', 'requestedBy', 'owner' => 'admin',
+				'id', 'catalog' => 'cat-1',
+				default => $d,
+			}
+		);
+		return new StatsController(
+			'opencatalogi',
+			$request,
+			$this->usage,
+			$this->catalogi,
+			$this->appManager,
+			$this->container,
+			$this->l10n,
+			$this->userSession,
+			$this->logger,
+		);
+	}//end controllerWithForgedRequest()
+
 	// ──────────────────────────────────────────────────────────
 	// Per-publication stats authorization (ANA-004 / no-IDOR)
 	// ──────────────────────────────────────────────────────────
@@ -141,7 +184,8 @@ class StatsControllerTest extends TestCase {
 	// ──────────────────────────────────────────────────────────
 
 	public function testCatalogStatsReturnsRollup(): void {
-		$this->catalogi->method('getCatalogBySlug')->willReturn(['slug' => 'woo']);
+		$os = $this->withCatalog(true);
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($os);
 		$this->usage->method('getCatalogStats')->willReturn(
 			[
 				'views' => 200,
@@ -172,6 +216,35 @@ class StatsControllerTest extends TestCase {
 		$this->assertSame('a', $data['topViewed'][0]['publication']);
 		$this->assertSame('2026-01-01', $data['countingStart']);
 	}//end testCatalogStatsReturnsRollup()
+
+	public function testCatalogStatsDeniedWhenCallerCannotReadCatalog(): void {
+		$os = $this->withCatalog(false);
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($os);
+		$this->usage->expects($this->never())->method('getCatalogStats');
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controller->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsDeniedWhenCallerCannotReadCatalog()
+
+	public function testCatalogStatsIgnoresForgedIdentityParameters(): void {
+		$os = $this->withCatalog(false);
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($os);
+		$this->usage->expects($this->never())->method('getCatalogStats');
+
+		$resp = $this->controllerWithForgedRequest()->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsIgnoresForgedIdentityParameters()
+
+	public function testCatalogStatsDeniedForCatalogWithoutId(): void {
+		$this->catalogi->method('getCatalogBySlug')->willReturn(['slug' => 'woo']);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->expects($this->never())->method('get');
+		$this->usage->expects($this->never())->method('getCatalogStats');
+
+		$resp = $this->controller->catalog('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testCatalogStatsDeniedForCatalogWithoutId()
 
 	public function testCatalogStatsUnknownCatalog(): void {
 		$this->catalogi->method('getCatalogBySlug')->willReturn(null);
@@ -264,8 +337,28 @@ class StatsControllerTest extends TestCase {
 	// CSV export (ANA-007)
 	// ──────────────────────────────────────────────────────────
 
+	public function testExportDeniedWhenCallerCannotReadCatalog(): void {
+		$os = $this->withCatalog(false);
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($os);
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controller->export('woo');
+		$this->assertInstanceOf(JSONResponse::class, $resp);
+		$this->assertSame(403, $resp->getStatus());
+	}//end testExportDeniedWhenCallerCannotReadCatalog()
+
+	public function testExportIgnoresForgedIdentityParameters(): void {
+		$os = $this->withCatalog(false);
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($os);
+		$this->usage->expects($this->never())->method('getCountersForCatalog');
+
+		$resp = $this->controllerWithForgedRequest()->export('woo');
+		$this->assertSame(403, $resp->getStatus());
+	}//end testExportIgnoresForgedIdentityParameters()
+
 	public function testExportProducesCsvDownload(): void {
-		$this->catalogi->method('getCatalogBySlug')->willReturn(['slug' => 'woo']);
+		$os = $this->withCatalog(true);
+		$this->container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($os);
 		$this->usage->method('getCountersForCatalog')->willReturn(
 			[
 				['publication' => 'a', 'category' => 'Besluiten', 'published' => '2026-01-01', 'kind' => 'view', 'count' => 5],
@@ -324,8 +417,24 @@ class StatsControllerTest extends TestCase {
 		$this->assertSame(403, $response->getStatus());
 	}//end testQualityRejectsAnonymous()
 
+	public function testQualityDeniedWhenCallerCannotReadCatalog(): void {
+		$os = $this->withCatalog(false);
+		$this->container->method('get')->willReturnCallback(
+			function (string $id) use ($os) {
+				if ($id === 'OCA\OpenRegister\Service\ObjectService') {
+					return $os;
+				}
+
+				throw new \RuntimeException('unexpected: ' . $id);
+			}
+		);
+
+		$response = $this->controllerWithForgedRequest()->quality('woo');
+		$this->assertSame(403, $response->getStatus());
+	}//end testQualityDeniedWhenCallerCannotReadCatalog()
+
 	public function testQualityReturnsRollup(): void {
-		$this->catalogi->method('getCatalogBySlug')->willReturn(['hasDcat' => true]);
+		$os = $this->withCatalog(true);
 
 		$dcat = $this->createMock(\OCA\OpenCatalogi\Service\DcatService::class);
 		$dcat->method('buildCatalogDocument')->willReturn(
@@ -341,7 +450,11 @@ class StatsControllerTest extends TestCase {
 		$quality = new \OCA\OpenCatalogi\Service\QualityService($this->createConfiguredMock(\OCP\IAppConfig::class, []));
 
 		$this->container->method('get')->willReturnCallback(
-			function (string $id) use ($dcat, $quality) {
+			function (string $id) use ($dcat, $quality, $os) {
+				if ($id === 'OCA\OpenRegister\Service\ObjectService') {
+					return $os;
+				}
+
 				if ($id === \OCA\OpenCatalogi\Contract\DcatServiceInterface::class) {
 					return $dcat;
 				}
