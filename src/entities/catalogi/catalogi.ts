@@ -48,21 +48,61 @@ export class Catalogi implements TCatalogi {
 
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	private hydrate(data: TCatalogi): void {
+		this.hydrateText(data)
+		this.hydrateScope(data)
+		this.hydrateFlags(data)
+		this.hydrateStaffAccess(data)
+	}
+
+	/**
+	 * Fill the id, texts, slug and status.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateText(data: TCatalogi): void {
 		this.id = data?.id?.toString() || ''
 		this.title = data?.title || ''
 		this.summary = data?.summary || ''
 		this.description = data?.description || ''
 		this.image = data?.image || ''
-		this.listed = data?.listed || false
 		this.status = (data?.status as CatalogStatus) || 'development'
+		this.slug = data?.slug || ''
+	}
+
+	/**
+	 * Fill the organization, the registers and schemas (arrays only) and the filters.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateScope(data: TCatalogi): void {
 		this.organization = data.organization || ''
 		this.registers = (Array.isArray(data.registers) && data.registers) || []
 		this.schemas = (Array.isArray(data.schemas) && data.schemas) || []
 		this.filters = data.filters || {}
-		this.slug = data?.slug || ''
+	}
+
+	/**
+	 * Fill the listing and feature flags.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateFlags(data: TCatalogi): void {
+		this.listed = data?.listed || false
 		this.hasWooSitemap = data?.hasWooSitemap || false
 		this.hasOoapi = data?.hasOoapi || false
 		this.showWithheld = data?.showWithheld === true
+	}
+
+	/**
+	 * Copy the staff access, when the data has it.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateStaffAccess(data: TCatalogi): void {
 		if (data?.staffAccess) {
 			this.staffAccess = {
 				restricted: data.staffAccess.restricted === true,
