@@ -430,6 +430,26 @@ class CommunityControllerTest extends TestCase {
 	}//end testASchemaWithoutReadRulesNeverReachesTheFeed()
 
 	/**
+	 * The feed reads the catalogue's own registers, not the register the
+	 * publication schema is configured under.
+	 *
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 */
+	public function testTheFeedReadsTheCataloguesOwnRegisters(): void {
+		$this->catalogi->method('getCatalogBySlug')->willReturn(['id' => 'cat-z', 'registers' => [5], 'schemas' => [1]]);
+		$or = $this->feedObjectService(published: [], boards: [], notices: []);
+		$this->objects->method('getObjectService')->willReturn($or);
+
+		$this->controller->feed(catalogSlug: 'zuiderdorp');
+
+		$publicationRead = $or->calls[0];
+		$this->assertTrue($publicationRead['anonymous']);
+		$this->assertSame(5, $publicationRead['query']['_register']);
+		$this->assertSame([1], $publicationRead['query']['_schemas']);
+
+	}//end testTheFeedReadsTheCataloguesOwnRegisters()
+
+	/**
 	 * A catalogue that does not exist, or that an anonymous reader may not see,
 	 * answers 404 rather than an empty feed.
 	 *

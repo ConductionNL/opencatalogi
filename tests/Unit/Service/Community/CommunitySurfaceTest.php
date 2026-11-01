@@ -309,6 +309,20 @@ class CommunitySurfaceTest extends TestCase {
 
 	}//end testAFeedCarriesOnlyTheNoticesOfItsOwnCatalogue()
 
+	/**
+	 * A board with an empty id is no board, so a notice that names no board
+	 * does not match it.
+	 *
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
+	 */
+	public function testABoardWithoutAnIdDoesNotClaimTheBoardlessNotices(): void {
+		$this->assertSame(
+			[],
+			$this->feed->noticesOfCatalogue(catalogId: 'cat-z', boards: [['id' => '', 'catalog' => 'cat-z']], notices: [['id' => 'n', 'title' => 'x']])
+		);
+
+	}//end testABoardWithoutAnIdDoesNotClaimTheBoardlessNotices()
+
 	public function testTheAtomDocumentEscapesWhatCameFromAnEntry(): void {
 		$atom = $this->feed->toAtom(
 			catalogTitle: 'Zuiderdorp',
