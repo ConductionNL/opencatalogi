@@ -877,6 +877,48 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 
 
 	/**
+	 * Internal targets written in another notation are refused before delivery.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function internalTargetsInOtherNotations(): array {
+		return [
+			'ipv4-mapped loopback'        => ['http://[::ffff:127.0.0.1]/directory'],
+			'ipv4-mapped loopback in hex' => ['http://[::ffff:7f00:1]/directory'],
+			'ipv4-mapped private'         => ['http://[::ffff:10.0.0.1]/directory'],
+			'ipv4-mapped metadata'        => ['http://[::ffff:169.254.169.254]/latest/meta-data'],
+			'ipv4-compatible loopback'    => ['http://[::127.0.0.1]/directory'],
+			'unspecified ipv4'            => ['http://0.0.0.0/directory'],
+			'this-network ipv4'           => ['http://0.1.2.3/directory'],
+			'shared address space'        => ['http://100.64.0.1/directory'],
+			'limited broadcast'           => ['http://255.255.255.255/directory'],
+		];
+
+	}//end internalTargetsInOtherNotations()
+
+
+	/**
+	 * Test enqueueBroadcast refuses an internal target in any notation.
+	 *
+	 * @dataProvider internalTargetsInOtherNotations
+	 *
+	 * @param string $url The broadcast target.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueBroadcastRejectsInternalTargetInOtherNotation(string $url): void {
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->broadcastService->enqueueBroadcast($url, 'https://self.example.com/api/directory');
+
+	}//end testEnqueueBroadcastRejectsInternalTargetInOtherNotation()
+
+
+	/**
 	 * A localhost instance must not advertise itself to a real directory.
 	 *
 	 * The SSRF pre-flight cannot catch this: it validates the TARGET, and the

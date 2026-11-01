@@ -31,6 +31,7 @@ use RuntimeException;
  * phpunit-unit.xml). Run them with the network group in an environment that has DNS.
  *
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
+ * @uses \OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard
  */
 class DirectoryServiceTest extends TestCase {
 	private DirectoryService $service;
@@ -4398,6 +4399,110 @@ class DirectoryServiceTest extends TestCase {
 		$this->service->validateOutboundUrl('http://[::1]/apps/opencatalogi/api/directory');
 
 	}//end testIpv6LoopbackIsRefusedEvenWithTheAllowanceOn()
+
+
+	/**
+	 * Internal addresses written in another notation.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function internalUrlsInOtherNotations(): array {
+		return [
+			'ipv4-mapped loopback'        => ['http://[::ffff:127.0.0.1]/apps/opencatalogi/api/directory'],
+			'ipv4-mapped loopback in hex' => ['http://[::ffff:7f00:1]/apps/opencatalogi/api/directory'],
+			'ipv4-mapped private'         => ['http://[::ffff:10.0.0.1]/apps/opencatalogi/api/directory'],
+			'ipv4-mapped metadata'        => ['http://[::ffff:169.254.169.254]/latest/meta-data/'],
+			'ipv4-compatible loopback'    => ['http://[::127.0.0.1]/apps/opencatalogi/api/directory'],
+			'shared address space'        => ['http://100.64.0.1/apps/opencatalogi/api/directory'],
+		];
+
+	}//end internalUrlsInOtherNotations()
+
+
+	/**
+	 * An internal address is refused by default in any notation.
+	 *
+	 * @dataProvider internalUrlsInOtherNotations
+	 *
+	 * @param string $url The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testInternalAddressInOtherNotationIsRefusedByDefault(string $url): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->service->validateOutboundUrl($url);
+
+	}//end testInternalAddressInOtherNotationIsRefusedByDefault()
+
+
+	/**
+	 * Addresses that stay refused with the allowance on, in any notation.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function neverAllowedUrls(): array {
+		return [
+			'ipv4-mapped metadata' => ['http://[::ffff:169.254.169.254]/latest/meta-data/'],
+			'this-network ipv4'    => ['http://0.1.2.3/apps/opencatalogi/api/directory'],
+			'ipv4-mapped zero'     => ['http://[::ffff:0.0.0.0]/apps/opencatalogi/api/directory'],
+		];
+
+	}//end neverAllowedUrls()
+
+
+	/**
+	 * The never-allowed set holds with the allowance on, in any notation.
+	 *
+	 * @dataProvider neverAllowedUrls
+	 *
+	 * @param string $url The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testNeverAllowedAddressIsRefusedWithTheAllowanceOn(string $url): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				return ($key === 'allow_internal_directories' ? 'yes' : $default);
+			}
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->service->validateOutboundUrl($url);
+
+	}//end testNeverAllowedAddressIsRefusedWithTheAllowanceOn()
+
+
+	/**
+	 * A mapped private address follows the allowance like its plain form.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testMappedPrivateAddressIsAllowedWhenExplicitlyEnabled(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				return ($key === 'allow_internal_directories' ? 'yes' : $default);
+			}
+		);
+
+		$this->service->validateOutboundUrl('http://[::ffff:10.0.0.5]/apps/opencatalogi/api/directory');
+
+		$this->addToAssertionCount(1);
+
+	}//end testMappedPrivateAddressIsAllowedWhenExplicitlyEnabled()
 
 
 

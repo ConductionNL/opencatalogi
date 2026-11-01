@@ -43,6 +43,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
+use OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -89,6 +90,13 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @var Client
 	 */
 	private readonly Client $client;
+
+	/**
+	 * Parses, resolves and classifies outbound URLs.
+	 *
+	 * @var OutboundUrlGuard|null
+	 */
+	private ?OutboundUrlGuard $urlGuard = null;
 
 	/**
 	 * Cached unique directory URLs for cross-directory checks.
@@ -1963,24 +1971,11 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec exclude SSRF input-validation guard for outbound directory fetches; security
 	 *       plumbing that hardens an existing fetch, no new domain behavior.
 	 */
 	private function assertSafeOutboundUrl(string $url): void {
-		$parsed = parse_url($url);
-		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
-			throw new InvalidArgumentException('Invalid directory URL provided');
-		}
-
-		$scheme = strtolower($parsed['scheme']);
-		if (in_array($scheme, ['http', 'https'], true) === false) {
-			throw new InvalidArgumentException('Directory URL scheme must be http or https');
-		}
-
-		$host = strtolower($parsed['host']);
+		$host = $this->urlGuard()->hostOf(url: $url, label: 'Directory');
 
 		// Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
 		// two local instances on a private network can federate. Empty by default, so a
@@ -1989,56 +1984,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			return;
 		}
 
-		// Reject obvious local hostnames outright.
-		if ($host === 'localhost' || str_ends_with($host, '.local') === true
-			|| str_ends_with($host, '.localhost') === true
-		) {
-			throw new InvalidArgumentException('Directory URL host is not allowed');
-		}
-
-		// Collect the IPs to check: the literal host if it is already an IP,
-		// otherwise every address the host resolves to via DNS.
-		$ipsToCheck = [];
-		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-			$ipsToCheck[] = $host;
-		}
-
-		if (empty($ipsToCheck) === true) {
-			// Strip IPv6 brackets if present.
-			$lookupHost = trim($host, '[]');
-			if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
-				$ipsToCheck[] = $lookupHost;
-			}
-
-			if (empty($ipsToCheck) === true) {
-				$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
-				if ($records !== false) {
-					foreach ($records as $record) {
-						if (isset($record['ip']) === true) {
-							$ipsToCheck[] = $record['ip'];
-						}
-
-						if (isset($record['ipv6']) === true) {
-							$ipsToCheck[] = $record['ipv6'];
-						}
-					}
-				}
-
-				// Fallback to gethostbyname for A records when dns_get_record is empty.
-				if (empty($ipsToCheck) === true) {
-					$resolved = gethostbyname($lookupHost);
-					if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
-						$ipsToCheck[] = $resolved;
-					}
-				}
-			}//end if
-		}//end if
-
-		if (empty($ipsToCheck) === true) {
-			throw new InvalidArgumentException('Directory URL host could not be resolved');
-		}
-
-		foreach ($ipsToCheck as $ipAddress) {
+		foreach ($this->urlGuard()->addressesOf(host: $host, label: 'Directory') as $ipAddress) {
 			if ($this->isBlockedIp(ipAddress: $ipAddress) === true) {
 				throw new InvalidArgumentException('Directory URL resolves to a disallowed (internal) address');
 			}
@@ -2072,7 +2018,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * Blocks loopback (127.0.0.0/8, ::1), private RFC1918 ranges, link-local
 	 * (169.254.0.0/16 incl. the 169.254.169.254 metadata endpoint, fe80::/10),
-	 * unique-local IPv6 (fc00::/7), and other reserved ranges via PHP's range flags.
+	 * unique-local IPv6 (fc00::/7), and other reserved ranges, as classified by
+	 * {@see OutboundUrlGuard} after IPv4-in-IPv6 forms are normalised.
 	 *
 	 * @param string $ipAddress The IP address to evaluate.
 	 *
@@ -2081,39 +2028,17 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec exclude SSRF range check supporting assertSafeOutboundUrl(); security plumbing.
 	 */
 	private function isBlockedIp(string $ipAddress): bool {
-		if (filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
-			// Unparseable address — treat as blocked to fail safe.
-			return true;
-		}
-
 		// NEVER ALLOWED, whatever the configuration says. These are checked
 		// FIRST so the private-range allowance below cannot reach them: the
 		// cloud-metadata endpoint is the single most valuable SSRF target on a
 		// hosted instance, and it lives in a link-local range that a naive
 		// "allow internal" switch would open along with everything else.
-		$blockedExact = [
-			'169.254.169.254',
-			'::1',
-			'0.0.0.0',
-			'::',
-		];
-		if (in_array($ipAddress, $blockedExact, true) === true) {
+		// Unparseable addresses are refused here too, to fail safe.
+		if ($this->urlGuard()->isNeverAllowed(ipAddress: $ipAddress) === true) {
 			return true;
 		}
 
-		if ($this->isBlockedIpv6Prefix(ipAddress: $ipAddress) === true) {
-			return true;
-		}
-
-		// FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false for
-		// private (RFC1918), loopback, link-local, and reserved ranges (IPv4 + IPv6).
-		$isPublic = filter_var(
-			value: $ipAddress,
-			filter: FILTER_VALIDATE_IP,
-			options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
-		);
-
-		if ($isPublic !== false) {
+		if ($this->urlGuard()->isInternal(ipAddress: $ipAddress) === false) {
 			return false;
 		}
 
@@ -2145,6 +2070,16 @@ class DirectoryService implements DirectoryServiceInterface {
 		return false;
 	}//end isBlockedIp()
 
+	/**
+	 * The outbound URL guard, created on first use.
+	 *
+	 * @return OutboundUrlGuard The guard.
+	 */
+	private function urlGuard(): OutboundUrlGuard {
+		$this->urlGuard ??= new OutboundUrlGuard();
+		return $this->urlGuard;
+	}//end urlGuard()
+
 
 	/**
 	 * Whether this instance may federate with directories on private addresses.
@@ -2165,32 +2100,6 @@ class DirectoryService implements DirectoryServiceInterface {
 	private function allowsInternalDirectories(): bool {
 		return $this->config->getValueString($this->appName, 'allow_internal_directories', 'no') === 'yes';
 	}//end allowsInternalDirectories()
-
-	/**
-	 * Determine whether an IPv6 address matches a blocked prefix range.
-	 *
-	 * Checks fc00::/7 (unique-local) and fe80::/10 (link-local) by inspecting
-	 * the lower-cased string prefix. Extracted from isBlockedIp() to reduce
-	 * cyclomatic complexity.
-	 *
-	 * @param string $ipAddress The IP address string to check.
-	 *
-	 * @return boolean True when the address has a blocked IPv6 prefix.
-	 *
-	 * @spec exclude SSRF range-check helper extracted from isBlockedIp(); security plumbing.
-	 */
-	private function isBlockedIpv6Prefix(string $ipAddress): bool {
-		$lower = strtolower($ipAddress);
-		// Match fc00::/7 (unique-local) and fe80::/10 (link-local) IPv6 prefixes.
-		if (str_starts_with($lower, 'fc') === true || str_starts_with($lower, 'fd') === true
-			|| str_starts_with($lower, 'fe8') === true || str_starts_with($lower, 'fe9') === true
-			|| str_starts_with($lower, 'fea') === true || str_starts_with($lower, 'feb') === true
-		) {
-			return true;
-		}
-
-		return false;
-	}//end isBlockedIpv6Prefix()
 
 	/**
 	 * Perform a GET request with SSRF-safe, per-hop-validated bounded redirects.
