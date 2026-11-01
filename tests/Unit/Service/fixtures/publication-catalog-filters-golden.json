@@ -937,5 +937,140 @@
                 }
             }
         ]
+    },
+    "a second catalog hits its own cache": {
+        "steps": [
+            {
+                "result": {
+                    "registers": [
+                        "r-c1"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c1"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r-c2"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c2"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            },
+            {
+                "result": {
+                    "registers": [
+                        "r-c2"
+                    ],
+                    "schemas": [
+                        "s9"
+                    ]
+                },
+                "availableRegisters": [
+                    "r-c2"
+                ],
+                "availableSchemas": [
+                    "s9"
+                ]
+            }
+        ],
+        "calls": [
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c1"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "ObjectService::find": {
+                    "id": "c1"
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": [
+                        "s9",
+                        "s-private"
+                    ]
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c2"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    }
+                }
+            },
+            {
+                "ObjectService::find": {
+                    "id": "c2"
+                }
+            },
+            {
+                "applySchemaScopeReadRuleGuard": {
+                    "schemaIds": [
+                        "s9",
+                        "s-private"
+                    ]
+                }
+            },
+            {
+                "getCatalogFilters": {
+                    "catalogId": "c2"
+                }
+            }
+        ]
     }
 }

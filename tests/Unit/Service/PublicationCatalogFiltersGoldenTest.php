@@ -77,6 +77,7 @@ class PublicationCatalogFiltersGoldenTest extends TestCase {
 			'all, cached' => [['catalogs' => $catalogs, 'ids' => [null, null]]],
 			'one catalog, cached per id' => [['catalogs' => $catalogs, 'ids' => ['c1', 'c1', null, 'c1']]],
 			'two catalogs are cached apart' => [['catalogs' => $catalogs, 'ids' => ['c1', 'c2', 'c1']]],
+			'a second catalog hits its own cache' => [['catalogs' => $catalogs, 'ids' => ['c1', 'c2', 'c2']]],
 			'number and its text share the cache' => [['catalogs' => $catalogs, 'ids' => [5, '5']]],
 			'no catalogs' => [['catalogs' => [], 'ids' => [null]]],
 			'count-shaped search' => [['catalogs' => 'count', 'ids' => [null, 'c1']]],
