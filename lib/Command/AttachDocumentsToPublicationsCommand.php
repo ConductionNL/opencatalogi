@@ -101,53 +101,59 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
-		$dryRun = ((bool)$input->getOption('apply') === false);
-		$keepDocuments = (bool)$input->getOption('keep-documents');
-
-		if ($dryRun === true) {
+		$run = [
+			'dryRun' => ((bool)$input->getOption('apply') === false),
+			'keepDocuments' => (bool)$input->getOption('keep-documents'),
+			'output' => $output,
+		];
+		if ($run['dryRun'] === true) {
 			$output->writeln(
 				'<comment>Running in DRY-RUN mode. Nothing is moved and nothing is removed. '
 				. 'Re-run with --apply to migrate.</comment>'
 			);
 		}
 
-		$services = $this->openRegisterServices();
-		if ($services === null) {
+		$run['services'] = $this->openRegisterServices();
+		if ($run['services'] === null) {
 			$output->writeln('<error>OpenRegister is not available, so nothing can be migrated.</error>');
 			return Command::FAILURE;
 		}
 
-		$documents = $this->readDocuments(objectService: $services['objects'], output: $output);
+		$documents = $this->readDocuments(objectService: $run['services']['objects'], output: $output);
 		if ($documents === null) {
 			return Command::FAILURE;
 		}
 
-		$tally = ['migrated' => 0, 'files' => 0, 'skipped' => 0, 'failed' => 0];
+		return $this->migrateAll(documents: $documents, run: $run);
+	}//end execute()
 
+	/**
+	 * Migrate every document, report the tally, and fail when any document failed.
+	 *
+	 * @param array<int, mixed> $documents The document rows.
+	 * @param array<string,mixed> $run The run: `services`, `dryRun`, `keepDocuments` and `output`.
+	 *
+	 * @return int Symfony command exit code.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
+	 */
+	private function migrateAll(array $documents, array $run): int {
+		$tally = $this->outcome(counts: []);
 		foreach ($documents as $document) {
-			$outcome = $this->migrateOne(
-				document: $document,
-				run: ['services' => $services, 'dryRun' => $dryRun, 'keepDocuments' => $keepDocuments, 'output' => $output]
-			);
-
-			foreach ($outcome as $key => $value) {
+			foreach ($this->migrateOne(document: $document, run: $run) as $key => $value) {
 				$tally[$key] += $value;
 			}
 		}
 
 		$suffix = '';
-		if ($dryRun === true) {
+		if ($run['dryRun'] === true) {
 			$suffix = ' (dry run, nothing written)';
 		}
 
-		$output->writeln(
-			sprintf(
+		$run['output']->writeln(
+			vsprintf(
 				'<info>Done. Migrated=%d documents, files moved=%d, skipped=%d, failed=%d%s</info>',
-				$tally['migrated'],
-				$tally['files'],
-				$tally['skipped'],
-				$tally['failed'],
-				$suffix
+				[...array_values($tally), $suffix]
 			)
 		);
 
@@ -156,7 +162,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		}
 
 		return Command::SUCCESS;
-	}//end execute()
+	}//end migrateAll()
 
 	/**
 	 * Resolve the OpenRegister collaborators, or null when any is unavailable.
@@ -250,6 +256,22 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		}
 
 		$doc['files'] = $files;
+
+		return $this->moveDocument(doc: $doc, run: $run);
+	}//end migrateOne()
+
+	/**
+	 * Report a document with its files, then move them and remove the document as the run allows.
+	 *
+	 * @param array<string,mixed> $doc The document's uuid, name, fields, publication, metadata and files.
+	 * @param array<string,mixed> $run The run: `services`, `dryRun`, `keepDocuments` and `output`.
+	 *
+	 * @return array{migrated:int, files:int, skipped:int, failed:int} The tally for this document.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
+	 */
+	private function moveDocument(array $doc, array $run): array {
+		$files = $doc['files'];
 		$this->reportDocument(doc: $doc, output: $run['output']);
 		if (count($files) === 0) {
 			$this->explainMetadataOnly(output: $run['output']);
@@ -274,7 +296,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		$doc['moved'] = $moved;
 
 		return $this->removeDocument(doc: $doc, run: $run);
-	}//end migrateOne()
+	}//end moveDocument()
 
 	/**
 	 * A tally for one document: zero everywhere except the given counts.
