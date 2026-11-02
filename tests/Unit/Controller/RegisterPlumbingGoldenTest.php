@@ -668,7 +668,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 	}//end defaultFor()
 
 	/**
-	 * A JSON-safe view of a value: responses by status, data and headers, doubles by label.
+	 * A JSON-safe view of a value: responses by status, data and headers (without the per-request id), doubles by label.
 	 *
 	 * @param mixed $value The value.
 	 *
@@ -686,6 +686,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			}
 
 			$headers = $value->getHeaders();
+			unset($headers['X-Request-Id']);
 			ksort($headers);
 			$view['headers'] = $headers;
 			return $view;
