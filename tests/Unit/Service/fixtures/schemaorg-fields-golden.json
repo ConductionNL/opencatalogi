@@ -438,5 +438,54 @@
         "asked": [
             "schema:0"
         ]
+    },
+    "catalog: described": {
+        "@context": "https://schema.org",
+        "@type": "DataCatalog",
+        "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+        "url": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+        "name": "Open",
+        "description": "All open data",
+        "publisher": {
+            "@type": "Organization",
+            "name": "Gemeente Test",
+            "@id": "https://example.test/org"
+        },
+        "dataset": []
+    },
+    "catalog: empty description": {
+        "@context": "https://schema.org",
+        "@type": "DataCatalog",
+        "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+        "url": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+        "name": "Open",
+        "publisher": {
+            "@type": "Organization",
+            "name": "Gemeente Test",
+            "@id": "https://example.test/org"
+        },
+        "dataset": []
+    },
+    "catalog: numeric description": {
+        "@context": "https://schema.org",
+        "@type": "DataCatalog",
+        "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+        "url": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+        "name": "cat",
+        "description": "0",
+        "publisher": {
+            "@type": "Organization",
+            "name": "Gemeente Test",
+            "@id": "https://example.test/org"
+        },
+        "dataset": []
+    },
+    "catalog: no publisher": {
+        "@context": "https://schema.org",
+        "@type": "DataCatalog",
+        "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+        "url": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+        "name": "cat",
+        "dataset": []
     }
 }

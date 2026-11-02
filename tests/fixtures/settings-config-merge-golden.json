@@ -13,6 +13,7 @@
     "merge: empty base list": "{\n    \"l\": [\n        \"x\"\n    ]\n}",
     "merge: empty both": "[]",
     "merge: empty overlay list": "{\n    \"l\": [\n        \"x\"\n    ]\n}",
+    "merge: int-keyed map into list": "{\n    \"l\": [\n        1,\n        \"z\"\n    ]\n}",
     "merge: integer keys map": "{\n    \"5\": \"c\",\n    \"7\": \"b\"\n}",
     "merge: list into map": "{\n    \"m\": {\n        \"k\": 1,\n        \"0\": 5,\n        \"1\": 6\n    }\n}",
     "merge: list overlay keys": "{\n    \"l\": [\n        \"a\",\n        \"b\"\n    ],\n    \"0\": \"top\"\n}",

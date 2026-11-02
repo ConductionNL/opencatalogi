@@ -132,6 +132,51 @@ class SchemaOrgFieldsGoldenTest extends TestCase {
 	}//end testNodeMatchesTheRecording()
 
 	/**
+	 * The catalogs each catalog node case renders.
+	 *
+	 * @return array<string, array{0: array<string, mixed>}>
+	 */
+	public static function catalogs(): array {
+		return [
+			'described' => [['title' => 'Open', 'description' => 'All open data']],
+			'empty description' => [['title' => 'Open', 'description' => '']],
+			'numeric description' => [['description' => 0]],
+			'no publisher' => [['dcatPublisherName' => '', 'dcatPublisherUri' => '']],
+		];
+
+	}//end catalogs()
+
+	/**
+	 * buildCatalogNode() matches the recording (no ObjectService, so no datasets are listed).
+	 *
+	 * @param array<string, mixed> $catalog The catalog.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('catalogs')]
+	public function testCatalogNodeMatchesTheRecording(array $catalog): void {
+		$name = 'catalog: ' . $this->dataName();
+		$node = $this->service(files: [])->buildCatalogNode($catalog, 'cat');
+
+		$recorded = [];
+		if (file_exists(self::FIXTURE) === true) {
+			$recorded = json_decode((string)file_get_contents(self::FIXTURE), true);
+		}
+
+		if (getenv('GOLDEN_RECORD') === '1') {
+			$recorded[$name] = $node;
+			file_put_contents(self::FIXTURE, json_encode($recorded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertArrayHasKey($name, $recorded, 'No recording for ' . $name);
+		$this->assertSame(
+			json_encode($recorded[$name], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES),
+			json_encode($node, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)
+		);
+
+	}//end testCatalogNodeMatchesTheRecording()
+
+	/**
 	 * Build the service over a schema mapper with fixed markers and the given attachments.
 	 *
 	 * @param array<int, mixed>|string $files The formatted attachments, or 'no-results'.

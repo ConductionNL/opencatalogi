@@ -62,6 +62,7 @@ class SettingsConfigMergeGoldenTest extends TestCase {
 			'empty overlay list' => [['l' => ['x']], ['l' => []]],
 			'list into map' => [['m' => ['k' => 1]], ['m' => [5, 6]]],
 			'map into list' => [['l' => [1, 2]], ['l' => ['k' => 'v']]],
+			'int-keyed map into list' => [['l' => [1, 2]], ['l' => [1 => 'z']]],
 			'sparse list is a map' => [['l' => [0 => 'a', 2 => 'c']], ['l' => [0 => 'z']]],
 			'array over scalar' => [['a' => 'x'], ['a' => ['y']]],
 			'scalar over array' => [['a' => ['y']], ['a' => 'x']],
