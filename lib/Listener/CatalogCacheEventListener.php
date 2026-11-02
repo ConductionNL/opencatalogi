@@ -100,80 +100,23 @@ class CatalogCacheEventListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function handle(Event $event): void {
-		// Verify this is a supported event type.
-		if ($event instanceof ObjectCreatedEvent === false
-			&& $event instanceof ObjectUpdatedEvent === false
-			&& $event instanceof ObjectDeletedEvent === false
-		) {
-			return;
-		}
-
 		try {
-			// Get the object from the event based on event type.
 			$objectEntity = $this->extractObjectFromEvent(event: $event);
-			if ($objectEntity === null) {
+			if ($objectEntity === null || $this->isCatalogObject(objectEntity: $objectEntity) === false) {
 				return;
 			}
 
-			// Get catalog schema and register from config.
-			$catalogSchema = $this->appConfig->getValueString(
-				app: 'opencatalogi',
-				key: 'catalog_schema',
-				default: ''
-			);
-			$catalogRegister = $this->appConfig->getValueString(
-				app: 'opencatalogi',
-				key: 'catalog_register',
-				default: ''
-			);
-
-			// Only process if this is a catalog object.
-			if ($objectEntity->getSchema() !== $catalogSchema
-				|| $objectEntity->getRegister() !== $catalogRegister
-			) {
-				return;
-			}
-
-			// Get catalog data.
 			$catalogData = $objectEntity->jsonSerialize();
-
-			// Handle cache based on event type.
 			if (isset($catalogData['slug']) === false) {
 				return;
 			}
 
-			if ($event instanceof ObjectDeletedEvent) {
-				// For deletion, only invalidate cache.
-				$this->catalogiService->invalidateCatalogCache($catalogData['slug']);
-				$this->logger->info(
-					message: 'OpenCatalogi: Catalog cache invalidated after deletion',
-					context: [
-						'catalogId' => $objectEntity->getUuid(),
-						'slug' => $catalogData['slug'],
-					]
-				);
-				return;
-			}
-
-			// For creation and updates, invalidate and warm up cache.
-			$this->catalogiService->warmupCatalogCache($catalogData['slug']);
-			$eventType = 'update';
-			if ($event instanceof ObjectCreatedEvent) {
-				$eventType = 'creation';
-			}
-
-			$this->logger->info(
-				message: 'OpenCatalogi: Catalog cache warmed up after ' . $eventType,
-				context: [
-					'catalogId' => $objectEntity->getUuid(),
-					'slug' => $catalogData['slug'],
-				]
+			$this->refreshCatalogCache(
+				event: $event,
+				catalog: ['entity' => $objectEntity, 'slug' => $catalogData['slug']]
 			);
 		} catch (\Exception $e) {
 			// Log unexpected errors and continue gracefully.
@@ -184,4 +127,63 @@ class CatalogCacheEventListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Whether an object sits in the configured catalog schema and register.
+	 *
+	 * @param object $objectEntity The object from the event.
+	 *
+	 * @return bool True for a catalog object.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function isCatalogObject(object $objectEntity): bool {
+		$catalogSchema = $this->appConfig->getValueString(
+			app: 'opencatalogi',
+			key: 'catalog_schema',
+			default: ''
+		);
+		$catalogRegister = $this->appConfig->getValueString(
+			app: 'opencatalogi',
+			key: 'catalog_register',
+			default: ''
+		);
+
+		return $objectEntity->getSchema() === $catalogSchema
+			&& $objectEntity->getRegister() === $catalogRegister;
+
+	}//end isCatalogObject()
+
+	/**
+	 * Invalidate the cache of a deleted catalog, or warm up the cache of a created or updated one.
+	 *
+	 * @param Event $event The object event.
+	 * @param array{entity: object, slug: mixed} $catalog The catalog object and its slug.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function refreshCatalogCache(Event $event, array $catalog): void {
+		if ($event instanceof ObjectDeletedEvent) {
+			$this->catalogiService->invalidateCatalogCache($catalog['slug']);
+			$this->logger->info(
+				message: 'OpenCatalogi: Catalog cache invalidated after deletion',
+				context: ['catalogId' => $catalog['entity']->getUuid(), 'slug' => $catalog['slug']]
+			);
+			return;
+		}
+
+		$this->catalogiService->warmupCatalogCache($catalog['slug']);
+		$eventType = 'update';
+		if ($event instanceof ObjectCreatedEvent) {
+			$eventType = 'creation';
+		}
+
+		$this->logger->info(
+			message: 'OpenCatalogi: Catalog cache warmed up after ' . $eventType,
+			context: ['catalogId' => $catalog['entity']->getUuid(), 'slug' => $catalog['slug']]
+		);
+
+	}//end refreshCatalogCache()
 }//end class

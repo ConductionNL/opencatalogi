@@ -40,19 +40,17 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\BannerServiceInterface;
 use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
+use OCA\OpenCatalogi\Service\BannerDismissals;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * The banners and the notice boards.
@@ -71,22 +69,18 @@ class NoticeBoardController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container.
 	 * @param IUserSession $userSession The current session.
-	 * @param BannerServiceInterface $bannerService The instance banner.
+	 * @param BannerDismissals $banners The banners per user and their dismissals.
 	 * @param NoticeBoardServiceInterface $noticeService The notice boards.
-	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
 		private readonly IUserSession $userSession,
-		private readonly BannerServiceInterface $bannerService,
+		private readonly BannerDismissals $banners,
 		private readonly NoticeBoardServiceInterface $noticeService,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly RegisterAccess $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -115,22 +109,7 @@ class NoticeBoardController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		$dismissed = json_decode(
-			$this->config->getValueString($this->appName, 'banner_dismissals_' . $user->getUID(), '[]'),
-			true
-		);
-		if (is_array($dismissed) === false) {
-			$dismissed = [];
-		}
-
-		return new JSONResponse(
-			[
-				'banners' => $this->bannerService->forUser(
-					banners: $banners,
-					dismissedIds: array_map('strval', $dismissed)
-				),
-			]
-		);
+		return new JSONResponse(['banners' => $this->banners->forUser(banners: $banners, uid: $user->getUID())]);
 
 	}//end banners()
 
@@ -154,18 +133,7 @@ class NoticeBoardController extends Controller {
 			return new JSONResponse(data: ['error' => 'missing-banner'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
-		$key = 'banner_dismissals_' . $user->getUID();
-		$dismissed = json_decode($this->config->getValueString($this->appName, $key, '[]'), true);
-		if (is_array($dismissed) === false) {
-			$dismissed = [];
-		}
-
-		$dismissed[] = $bannerId;
-		$this->config->setValueString(
-			$this->appName,
-			$key,
-			(string)json_encode(array_values(array_unique(array_map('strval', $dismissed))))
-		);
+		$this->banners->dismiss(uid: $user->getUID(), bannerId: $bannerId);
 
 		return new JSONResponse(['dismissed' => true]);
 
@@ -196,7 +164,7 @@ class NoticeBoardController extends Controller {
 
 		try {
 			$config = $this->configurationFor(schemaKey: 'notice_board_schema');
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $checked,
 				extend: [],
 				register: $config['register'],
@@ -250,7 +218,7 @@ class NoticeBoardController extends Controller {
 
 		try {
 			$config = $this->configurationFor(schemaKey: 'notice_schema');
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $checked,
 				extend: [],
 				register: $config['register'],

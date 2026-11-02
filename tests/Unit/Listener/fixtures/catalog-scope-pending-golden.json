@@ -1,0 +1,211 @@
+{
+    "another event": [],
+    "created, pending by slug": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ],
+    "created, pending by id": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ],
+    "updated, pending by slug": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ],
+    "slug in capitals": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ],
+    "pending in capitals": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ]
+    ],
+    "pending id as a number": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ],
+    "unrelated register": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ]
+    ],
+    "only the old register pending": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ]
+    ],
+    "nothing pending": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ]
+    ],
+    "pending not json": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ]
+    ],
+    "pending a string": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ]
+    ],
+    "pending an object": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ],
+    "several pending": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ],
+    "backfill fails": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ],
+        [
+            "warning",
+            "OpenCatalogi: could not complete a catalogue scope after a register event: backfill down",
+            {
+                "exception": "RuntimeException: backfill down"
+            }
+        ]
+    ],
+    "backfill fails, next event runs again": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ],
+        [
+            "warning",
+            "OpenCatalogi: could not complete a catalogue scope after a register event: backfill down",
+            {
+                "exception": "RuntimeException: backfill down"
+            }
+        ],
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ],
+        [
+            "warning",
+            "OpenCatalogi: could not complete a catalogue scope after a register event: backfill down",
+            {
+                "exception": "RuntimeException: backfill down"
+            }
+        ]
+    ],
+    "backfill fires the event again": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ],
+    "two events": [
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ],
+        [
+            "getValueString",
+            "opencatalogi",
+            "catalog_scope_pending",
+            "[]"
+        ],
+        [
+            "backfillCatalogScopes"
+        ]
+    ]
+}

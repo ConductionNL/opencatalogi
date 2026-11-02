@@ -92,6 +92,25 @@ class PortalAccountRemovedListenerTest extends TestCase {
 		$this->assertSame([], $this->store->objects['savedSearch']);
 	}
 
+	public function testARemovalThatChangesTheSubjectDeletesNothing(): void {
+		$this->listener->handle(new ObjectUpdatedEvent(
+			$this->entity('41', ['subjectRef' => 'subject-2', 'status' => 'removed']),
+			$this->entity('41', ['subjectRef' => 'subject-1', 'status' => 'active'])
+		));
+
+		$this->assertCount(3, $this->store->objects['collection']);
+		$this->assertCount(1, $this->store->objects['savedSearch']);
+	}
+
+	public function testARemovalWithoutASubjectUsesTheStoredOne(): void {
+		$this->listener->handle(new ObjectUpdatedEvent(
+			$this->entity('41', ['status' => 'removed']),
+			$this->entity('41', ['subjectRef' => 'subject-1', 'status' => 'active'])
+		));
+
+		$this->assertSame(['c3'], array_keys($this->store->objects['collection']));
+	}
+
 	public function testOtherUpdatesChangeNothing(): void {
 		$events = [
 			new ObjectUpdatedEvent($this->entity('41', ['subjectRef' => 'subject-1', 'status' => 'active']), $this->entity('41', ['subjectRef' => 'subject-1', 'status' => 'pending'])),

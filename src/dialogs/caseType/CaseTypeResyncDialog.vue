@@ -126,7 +126,7 @@ import { navigationStore } from '../../store/store.js'
  * `GET /api/case-types/{id}/resync` reports as changed, and posts the
  * properties the administrator takes as `accepted`.
  *
- * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+ * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
  */
 export default {
 	name: 'CaseTypeResyncDialog',
@@ -152,17 +152,17 @@ export default {
 	},
 
 	computed: {
-		/** @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
+		/** @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
 		properties() {
 			return navigationStore.dialogProperties || {}
 		},
 
-		/** @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
+		/** @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
 		entryTitle() {
 			return this.properties.entryTitle || ''
 		},
 
-		/** @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
+		/** @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
 		caseTypeName() {
 			return (
 				this.definition?.title
@@ -172,7 +172,7 @@ export default {
 			)
 		},
 
-		/** @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
+		/** @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
 		summary() {
 			const vars = { name: this.caseTypeName, count: this.changes.length }
 			if (this.changes.length === 0) {
@@ -195,7 +195,7 @@ export default {
 					)
 		},
 
-		/** @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
+		/** @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
 		accepted() {
 			return this.changes
 				.map((change) => change.property)
@@ -214,7 +214,7 @@ export default {
 		 * Find the case type definition and read what a resync would change.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+		 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
 		 */
 		async load() {
 			const identifier = String(this.properties.caseType || '').trim()
@@ -264,7 +264,7 @@ export default {
 		 * Post the taken properties.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+		 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
 		 */
 		async apply() {
 			this.applying = true
@@ -280,7 +280,7 @@ export default {
 
 		/**
 		 * @return {string} The resync endpoint of the found definition.
-		 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+		 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
 		 */
 		resyncUrl() {
 			return generateUrl('/apps/opencatalogi/api/case-types/{id}/resync', {
@@ -293,7 +293,7 @@ export default {
 		 *
 		 * @param {Error} error The failure.
 		 * @return {void}
-		 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+		 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
 		 */
 		fail(error) {
 			this.error =
@@ -305,7 +305,7 @@ export default {
 		/**
 		 * @param {unknown} value A property value.
 		 * @return {string} The value as text.
-		 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+		 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
 		 */
 		displayValue(value) {
 			if (value === null || value === undefined || value === '') {
@@ -317,7 +317,7 @@ export default {
 		/**
 		 * @param {boolean} open Whether the dialog stays open.
 		 * @return {void}
-		 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+		 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
 		 */
 		onOpenChange(open) {
 			if (!open) {
@@ -325,7 +325,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
+		/** @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002 */
 		close() {
 			navigationStore.setDialog(false)
 		},

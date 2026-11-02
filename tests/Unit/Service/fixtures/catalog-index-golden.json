@@ -1,0 +1,1000 @@
+{
+    "no params, anonymous": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "title": "Een",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Twee",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Drie",
+                    "@self": "not-an-array"
+                },
+                {
+                    "title": "Vier"
+                }
+            ],
+            "total": 4,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "no params, signed in": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "title": "Een",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "schemaVersion": "1.0",
+                        "relations": [
+                            "a"
+                        ],
+                        "locked": null,
+                        "owner": "alice",
+                        "folder": 9,
+                        "application": "app",
+                        "validation": [],
+                        "retention": [],
+                        "size": 12,
+                        "deleted": null,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Twee",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "schemaVersion": "1.0",
+                        "relations": [
+                            "a"
+                        ],
+                        "locked": null,
+                        "owner": "alice",
+                        "folder": 9,
+                        "application": "app",
+                        "validation": [],
+                        "retention": [],
+                        "size": 12,
+                        "deleted": null,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Drie",
+                    "@self": "not-an-array"
+                },
+                {
+                    "title": "Vier"
+                }
+            ],
+            "total": 4,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "no session service": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "title": "Een",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Twee",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Drie",
+                    "@self": "not-an-array"
+                },
+                {
+                    "title": "Vier"
+                }
+            ],
+            "total": 4,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "limit, offset, page": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "limit": "5",
+                    "offset": "15",
+                    "page": "2",
+                    "q": "x",
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 5,
+                    "_offset": 15,
+                    "_page": 2,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "underscored paging": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "_limit": 7,
+                    "_offset": 3,
+                    "_page": 9,
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "page without offset": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "page": "3",
+                    "limit": "10",
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 10,
+                    "_offset": 20,
+                    "_page": 3,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "underscored page only": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "_page": 4,
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_offset": 60,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "queries as string": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "queries": "title",
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": [
+                        "title"
+                    ]
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "queries as list": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "_queries": [
+                        "a",
+                        "b"
+                    ],
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "order and extend": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "order": {
+                        "title": "asc"
+                    },
+                    "_extend": "x",
+                    "fields": "a",
+                    "_unset": "b",
+                    "_search": "s",
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "id and route stripped": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "kind": "k",
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "forged scope and identity, anonymous": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "title": "Een",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Twee",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Drie",
+                    "@self": "not-an-array"
+                },
+                {
+                    "title": "Vier"
+                }
+            ],
+            "total": 4,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "owner": "admin",
+                        "organisation": "o",
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "userId": "admin",
+                    "requestedBy": "admin",
+                    "owner": "admin",
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "forged identity, signed in as bob": {
+        "status": 200,
+        "data": {
+            "results": [
+                {
+                    "title": "Een",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "schemaVersion": "1.0",
+                        "relations": [
+                            "a"
+                        ],
+                        "locked": null,
+                        "owner": "alice",
+                        "folder": 9,
+                        "application": "app",
+                        "validation": [],
+                        "retention": [],
+                        "size": 12,
+                        "deleted": null,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Twee",
+                    "@self": {
+                        "id": "row-1",
+                        "register": 21,
+                        "schema": 28,
+                        "schemaVersion": "1.0",
+                        "relations": [
+                            "a"
+                        ],
+                        "locked": null,
+                        "owner": "alice",
+                        "folder": 9,
+                        "application": "app",
+                        "validation": [],
+                        "retention": [],
+                        "size": 12,
+                        "deleted": null,
+                        "published": "2026-01-01",
+                        "uri": "https://x/row-1"
+                    }
+                },
+                {
+                    "title": "Drie",
+                    "@self": "not-an-array"
+                },
+                {
+                    "title": "Vier"
+                }
+            ],
+            "total": 4,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "userId": "admin",
+                    "requestedBy": "admin",
+                    "owner": "admin",
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "scalar @self filter": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "several registers and schemas": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": [
+                            21,
+                            22
+                        ],
+                        "schema": [
+                            28,
+                            29,
+                            30
+                        ]
+                    },
+                    "_registers": [
+                        21,
+                        22
+                    ],
+                    "_schemas": [
+                        28,
+                        29,
+                        30
+                    ],
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "one register, several schemas": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": [
+                            28,
+                            29
+                        ]
+                    },
+                    "_schemas": [
+                        28,
+                        29
+                    ],
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "catalog by slug": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    },
+                    "slug": "my-catalog"
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "catalog by uuid": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1",
+                        "uuid": "0b8e2f8a-6f43-4d5e-9e8c-3a1b2c3d4e5f"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "catalog by int id": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    },
+                    "slug": "12"
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": 28
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "guard drops every schema": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "guard drops one schema": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0,
+            "page": 1
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            },
+            {
+                "kind": "page",
+                "query": {
+                    "@self": {
+                        "register": 21,
+                        "schema": 29
+                    },
+                    "_limit": 20,
+                    "_queries": []
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "catalog without registers": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "catalog without schemas": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0
+        },
+        "searches": [
+            {
+                "kind": "catalogs",
+                "query": {
+                    "@self": {
+                        "register": "register-1",
+                        "schema": "schema-1"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "unconfigured catalog register": {
+        "status": 200,
+        "data": {
+            "results": [],
+            "total": 0
+        },
+        "searches": []
+    }
+}

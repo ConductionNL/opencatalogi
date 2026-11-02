@@ -43,7 +43,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
  * active publication, so Add sets it from the page's object first; when the
  * dialog closes the list is read again.
  *
- * @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001
+ * @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001
  */
 export default {
 	name: 'PublicationAttachmentsWidget',
@@ -71,7 +71,7 @@ export default {
 	},
 
 	computed: {
-		/** @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
+		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		ctx() {
 			const injected =
 				this.cnObjectContext
@@ -81,31 +81,31 @@ export default {
 			return injected || holder || {}
 		},
 
-		/** @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
+		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		cardTitle() {
 			return (
 				this.title || this.content.title || t('opencatalogi', 'Attachments')
 			)
 		},
 
-		/** @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
+		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		openDialog() {
 			return navigationStore.dialog
 		},
 
-		/** @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
+		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		publication() {
 			return this.ctx.object || null
 		},
 
-		/** @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
+		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		resolvedObjectId() {
 			return String(
 				this.objectId || this.ctx.objectId || this.publication?.id || '',
 			)
 		},
 
-		/** @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
+		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		resolvedRegister() {
 			return String(
 				this.register
@@ -115,7 +115,7 @@ export default {
 			)
 		},
 
-		/** @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
+		/** @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001 */
 		resolvedSchema() {
 			const schema =
 				this.schema || this.ctx.schema || this.publication?.['@self']?.schema
@@ -130,7 +130,7 @@ export default {
 		 * Read the files again once the upload dialog this widget opened closes.
 		 *
 		 * @param {string|false|null} dialog The open dialog.
-		 * @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001
+		 * @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001
 		 */
 		openDialog(dialog) {
 			if (this.uploading && dialog !== 'uploadFiles') {
@@ -147,7 +147,7 @@ export default {
 		 * Open the upload dialog for this publication.
 		 *
 		 * @return {void}
-		 * @spec openspec/changes/publication-attachment-upload-dialog/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001
+		 * @spec openspec/specs/publication-attachment-upload-dialog/spec.md#requirement-the-attachments-card-opens-the-upload-dialog-pau-001
 		 */
 		addAttachment() {
 			if (!this.publication) {

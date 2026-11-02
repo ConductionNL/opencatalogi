@@ -132,17 +132,10 @@ class StatsController extends Controller {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function catalog(string $slug): JSONResponse {
-		// Auth guard: catalog usage roll-ups are officer-facing, never anonymous.
-		if ($this->requireAuthenticatedUser() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Authentication required.')],
-				Http::STATUS_FORBIDDEN
-			);
-		}
-
-		$catalog = $this->catalogiService->getCatalogBySlug($slug);
-		if ($catalog === null) {
-			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		// Officer-facing, never anonymous, and only for a catalog the caller may read.
+		$catalog = $this->readableCatalog(slug: $slug);
+		if ($catalog instanceof JSONResponse) {
+			return $catalog;
 		}
 
 		[$from, $to] = $this->readRange();
@@ -218,25 +211,13 @@ class StatsController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
-	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
-	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on) and its datasets are
-	 *   read by DcatService::buildCatalogDocument() with RBAC on, so only rows the caller may
-	 *   read are scored.
-	 *
 	 * @spec openspec/specs/publication-quality/spec.md
 	 */
 	public function quality(string $slug): JSONResponse {
-		// Auth guard: quality roll-ups are officer-facing, never anonymous.
-		if ($this->requireAuthenticatedUser() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Authentication required.')],
-				Http::STATUS_FORBIDDEN
-			);
-		}
-
-		$catalog = $this->catalogiService->getCatalogBySlug($slug);
-		if ($catalog === null) {
-			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		// Officer-facing, never anonymous, and only for a catalog the caller may read.
+		$catalog = $this->readableCatalog(slug: $slug);
+		if ($catalog instanceof JSONResponse) {
+			return $catalog;
 		}
 
 		$worst = (int)($this->request->getParam('worst', 5));
@@ -283,17 +264,10 @@ class StatsController extends Controller {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function export(string $slug): DataDownloadResponse|JSONResponse {
-		// Auth guard: the CSV export is officer-facing, never anonymous.
-		if ($this->requireAuthenticatedUser() === null) {
-			return new JSONResponse(
-				['error' => $this->l10n->t('Authentication required.')],
-				Http::STATUS_FORBIDDEN
-			);
-		}
-
-		$catalog = $this->catalogiService->getCatalogBySlug($slug);
-		if ($catalog === null) {
-			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		// Officer-facing, never anonymous, and only for a catalog the caller may read.
+		$catalog = $this->readableCatalog(slug: $slug);
+		if ($catalog instanceof JSONResponse) {
+			return $catalog;
 		}
 
 		[$from, $to] = $this->readRange();
@@ -421,10 +395,9 @@ class StatsController extends Controller {
 	/**
 	 * Check whether the current caller may read a publication under OR RBAC.
 	 *
-	 * Resolves the publication with `_rbac: true`; an empty result means the
-	 * caller is not permitted on it (or it does not exist), which is treated as
-	 * "not allowed" — the same authorization rule that governs the publication
-	 * itself (ANA-004, no-IDOR).
+	 * Tries every register and schema of the configured catalogs, and reads the
+	 * publication there under the caller's own RBAC. A publication outside every
+	 * catalog is not readable.
 	 *
 	 * @param string $id The publication UUID.
 	 *
@@ -433,6 +406,88 @@ class StatsController extends Controller {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	private function canReadPublication(string $id): bool {
+		try {
+			$filters = $this->catalogiService->getCatalogFilters();
+		} catch (\Throwable $e) {
+			$this->logger->warning('[StatsController] catalog scope lookup failed', ['error' => $e->getMessage()]);
+			return false;
+		}
+
+		foreach (($filters['registers'] ?? []) as $register) {
+			$readableIn = array_filter(
+				($filters['schemas'] ?? []),
+				fn ($schema): bool => $this->canReadObject(id: $id, location: ['register' => $register, 'schema' => $schema])
+			);
+			if ($readableIn !== []) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end canReadPublication()
+
+	/**
+	 * Resolve a catalog by slug for a signed-in caller who may read it.
+	 *
+	 * The resolved catalog is read again by its id, register and schema under
+	 * the caller's own RBAC. A catalog missing any of the three is not readable.
+	 *
+	 * @param string $slug The catalog slug.
+	 *
+	 * @return array<string, mixed>|JSONResponse The catalog, or the 403/404 answer.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function readableCatalog(string $slug): array|JSONResponse {
+		if ($this->requireAuthenticatedUser() === null) {
+			return new JSONResponse(
+				['error' => $this->l10n->t('Authentication required.')],
+				Http::STATUS_FORBIDDEN
+			);
+		}
+
+		$catalog = $this->catalogiService->getCatalogBySlug($slug);
+		if ($catalog === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		}
+
+		$location = [
+			'register' => ($catalog['@self']['register'] ?? null),
+			'schema' => ($catalog['@self']['schema'] ?? null),
+		];
+		if ($this->canReadObject(id: (string)($catalog['id'] ?? ''), location: $location) === false) {
+			return new JSONResponse(
+				['error' => $this->l10n->t('You are not allowed to view statistics for this catalog.')],
+				Http::STATUS_FORBIDDEN
+			);
+		}
+
+		return $catalog;
+	}//end readableCatalog()
+
+	/**
+	 * Check whether the current caller may read an object under OR RBAC.
+	 *
+	 * Searches the object's own register and schema for its uuid with
+	 * `_rbac: true`. OpenRegister finds nothing without a register and schema,
+	 * so the id, register and schema are all required. An empty result means the caller is not permitted
+	 * on it (or it does not exist), which is treated as "not allowed" (ANA-004,
+	 * no-IDOR).
+	 *
+	 * @param string $id The object UUID.
+	 * @param array{register?: mixed, schema?: mixed} $location The object's register and schema.
+	 *
+	 * @return boolean True when the caller may read the object.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function canReadObject(string $id, array $location): bool {
+		$register = (string)($location['register'] ?? '');
+		$schema = (string)($location['schema'] ?? '');
+		if (in_array(needle: '', haystack: [$id, $register, $schema], strict: true) === true) {
+			return false;
+		}
+
 		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === false) {
 			return false;
 		}
@@ -446,7 +501,7 @@ class StatsController extends Controller {
 
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$results = $objectService->searchObjects(
-				query: ['@self' => ['uuid' => $id]],
+				query: ['@self' => ['register' => $register, 'schema' => $schema, 'uuid' => $id]],
 				_rbac: true,
 				_multitenancy: false,
 			);
@@ -455,9 +510,9 @@ class StatsController extends Controller {
 		} catch (\Throwable $e) {
 			// Fail closed: an authorization-resolution failure denies access
 			// (never silently fall open — gate unsafe-auth-resolver).
-			$this->logger->warning('[StatsController] publication authorization check failed', ['error' => $e->getMessage()]);
+			$this->logger->warning('[StatsController] object authorization check failed', ['error' => $e->getMessage()]);
 			return false;
 		}//end try
 
-	}//end canReadPublication()
+	}//end canReadObject()
 }//end class

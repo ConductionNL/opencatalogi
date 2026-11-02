@@ -95,7 +95,7 @@ import { navigationStore } from '../../store/store.js'
  * gets its own `POST /api/retention/publications/{id}/decision`, so each gets
  * its own history entry.
  *
- * @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
+ * @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
  */
 export default {
 	name: 'RetentionDecisionDialog',
@@ -121,12 +121,12 @@ export default {
 	},
 
 	computed: {
-		/** @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
+		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		properties() {
 			return navigationStore.dialogProperties || {}
 		},
 
-		/** @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
+		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		decision() {
 			return ['extend', 'depublish', 'archive'].includes(
 				this.properties.decision,
@@ -135,7 +135,7 @@ export default {
 				: 'extend'
 		},
 
-		/** @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
+		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		title() {
 			return {
 				extend: t('opencatalogi', 'Extend term'),
@@ -144,7 +144,7 @@ export default {
 			}[this.decision]
 		},
 
-		/** @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
+		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		intro() {
 			const count = this.publications.length
 			const vars = { count }
@@ -184,13 +184,13 @@ export default {
 					)
 		},
 
-		/** @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
+		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		monthsValue() {
 			const value = Number.parseInt(this.months, 10)
 			return Number.isFinite(value) ? value : 0
 		},
 
-		/** @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
+		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		canSubmit() {
 			return (
 				!this.saving
@@ -200,7 +200,7 @@ export default {
 			)
 		},
 
-		/** @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
+		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		doneText() {
 			return {
 				extend: t('opencatalogi', 'The retention term was extended.'),
@@ -221,7 +221,7 @@ export default {
 		 * Take the handed-over publications and read the others by id.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
+		 * @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
 		 */
 		async load() {
 			const given = Array.isArray(this.properties.publications)
@@ -264,7 +264,7 @@ export default {
 		 * Post the decision for every publication, one by one.
 		 *
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
+		 * @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
 		 */
 		async submit() {
 			this.saving = true
@@ -298,7 +298,7 @@ export default {
 		 *
 		 * @param {object} publication The publication.
 		 * @return {string} "<current> to <new>", or '' without a current date.
-		 * @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
+		 * @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
 		 */
 		dateRange(publication) {
 			const current = new Date(publication?.retentionExpiresAt || '')
@@ -318,7 +318,7 @@ export default {
 		/**
 		 * @param {boolean} open Whether the dialog stays open.
 		 * @return {void}
-		 * @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
+		 * @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
 		 */
 		onOpenChange(open) {
 			if (!open) {
@@ -326,7 +326,7 @@ export default {
 			}
 		},
 
-		/** @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
+		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		close() {
 			navigationStore.setDialog(false)
 		},

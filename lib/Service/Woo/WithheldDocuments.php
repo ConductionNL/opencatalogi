@@ -200,12 +200,12 @@ class WithheldDocuments {
 	 * @throws Throwable When dossiq's list cannot be read.
 	 */
 	private function resolveAll(?object $grounds, array $entries): array {
-		$byCode = $this->index(grounds: $grounds, entries: $entries);
+		$lookup = $this->lookup(grounds: $grounds, entries: $entries);
 		$accepted = [];
 		$refused = [];
 		$positions = [];
 		foreach ($entries as $entry) {
-			$resolved = $this->resolve(grounds: $grounds, byCode: $byCode, entry: $entry);
+			$resolved = $this->resolve(lookup: $lookup, entry: $entry);
 			if (isset($resolved['refused']) === false && isset($positions[$entry['position']]) === true) {
 				$resolved = ['refused' => ['position' => $entry['position'], 'code' => $entry['grounds'][0], 'reason' => self::REASON_INVALID_ENTRY]];
 			}
@@ -255,26 +255,45 @@ class WithheldDocuments {
 	}//end index()
 
 	/**
+	 * How one code is looked up: in dossiq's list read once, or through
+	 * `byCode()` when that list cannot be read in one go. Null without dossiq.
+	 *
+	 * @param object|null $grounds dossiq's WooRefusalGrounds.
+	 * @param list<array{position: int, grounds: list<string>}> $entries The reduced entries.
+	 *
+	 * @return \Closure(string): mixed|null
+	 *
+	 * @throws Throwable When dossiq's list cannot be read.
+	 */
+	private function lookup(?object $grounds, array $entries): ?\Closure {
+		if ($grounds === null) {
+			return null;
+		}
+
+		$byCode = $this->index(grounds: $grounds, entries: $entries);
+		if ($byCode === null) {
+			return static fn (string $code): mixed => $grounds->byCode($code);
+		}
+
+		return static fn (string $code): mixed => ($byCode[$code] ?? null);
+	}//end lookup()
+
+	/**
 	 * Resolve one entry's codes through dossiq's list.
 	 *
-	 * @param object|null                                 $grounds dossiq's WooRefusalGrounds.
-	 * @param array<string, array<string, mixed>>|null    $byCode  The list read once, or null to ask `byCode()`.
-	 * @param array{position: int, grounds: list<string>} $entry   The reduced entry.
+	 * @param (\Closure(string): mixed)|null $lookup How a code is looked up, or null without dossiq.
+	 * @param array{position: int, grounds: list<string>} $entry The reduced entry.
 	 *
 	 * @return array<string, mixed> `['entry' => ...]` or `['refused' => ...]`.
 	 */
-	private function resolve(?object $grounds, ?array $byCode, array $entry): array {
-		if ($entry['position'] < 1 || $entry['grounds'] === [] || $grounds === null) {
+	private function resolve(?\Closure $lookup, array $entry): array {
+		if ($entry['position'] < 1 || $entry['grounds'] === [] || $lookup === null) {
 			return ['refused' => ['position' => $entry['position'], 'code' => (string)($entry['grounds'][0] ?? ''), 'reason' => self::REASON_INVALID_ENTRY]];
 		}
 
 		$stored = [];
 		foreach ($entry['grounds'] as $code) {
-			$ground = $byCode[$code] ?? null;
-			if ($byCode === null) {
-				$ground = $grounds->byCode($code);
-			}
-
+			$ground = $lookup($code);
 			if (is_array($ground) === false) {
 				return ['refused' => ['position' => $entry['position'], 'code' => $code, 'reason' => self::REASON_UNKNOWN_GROUND]];
 			}

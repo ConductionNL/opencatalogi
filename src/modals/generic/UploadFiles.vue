@@ -493,6 +493,11 @@ import TagEdit from 'vue-material-design-icons/TagEdit.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import { Attachment } from '../../entities/index.js'
 import { EventBus } from '../../eventBus.js'
+import {
+	closingTags,
+	knownTags,
+	labelOptionLists,
+} from '../../services/uploadTags.js'
 import { useFileSelection } from './../../composables/UseFileSelection.js'
 
 const dropZoneRef = ref()
@@ -705,16 +710,7 @@ export default {
 		closeDialog() {
 			// mark internal close to avoid duplicate external watcher emission
 			this.__uploadFilesClosingInternally = true
-			// compute safe tags to emit
-			let tagsToEmit =
-				Array.isArray(this.latestTags) && this.latestTags.length > 0
-					? this.latestTags
-					: []
-			if (tagsToEmit.length === 0) {
-				const stored =
-					objectStore.getCollection && objectStore.getCollection('tags')
-				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
-			}
+			const tagsToEmit = closingTags(this.latestTags, objectStore)
 			// ensure latest tags are saved globally
 			try {
 				objectStore.setCollection('tags', tagsToEmit)
@@ -724,7 +720,7 @@ export default {
 				tags: tagsToEmit,
 				newTags: this.newTags,
 			})
-			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+			if (tagsToEmit.length > 0) {
 				EventBus.$emit('upload-files:tags-updated', {
 					tags: tagsToEmit,
 					newTags: this.newTags,
@@ -827,42 +823,12 @@ export default {
 				)
 				const data = await response.json().catch(() => [])
 
-				const tagSet = new Set(Array.isArray(data) ? data : [])
-				// merge with tags from current publication attachments (if collection exists and is array)
-				let attachmentsCollection = []
-				try {
-					const attCol =
-						objectStore.getCollection
-						&& objectStore.getCollection('publicationAttachments')
-					attachmentsCollection = Array.isArray(attCol?.results)
-						? attCol.results
-						: []
-				} catch (_) {
-					attachmentsCollection = []
-				}
-				for (const att of attachmentsCollection) {
-					if (Array.isArray(att?.labels)) {
-						for (const label of att.labels) tagSet.add(label)
-					}
-				}
-				// also merge with previously stored tags in store, if present
-				try {
-					const storedTags =
-						objectStore.getCollection
-						&& objectStore.getCollection('tags')
-					if (Array.isArray(storedTags)) {
-						for (const t of storedTags) tagSet.add(t)
-					}
-				} catch (_) {}
-
-				const tags = Array.from(tagSet).sort()
-
-				const noLabel = noLabelOption()
-				const newLabelOptions = [
-					noLabel,
-					...tags.filter((tag) => tag !== noLabel),
-				]
-				const newLabelOptionsEdit = [...tags]
+				const lists = labelOptionLists(
+					knownTags(data, objectStore),
+					noLabelOption(),
+				)
+				const newLabelOptions = lists.options
+				const newLabelOptionsEdit = lists.edit
 
 				this.labelOptions.options = newLabelOptions
 				this.labelOptionsEdit.options = newLabelOptionsEdit
@@ -951,22 +917,13 @@ export default {
 				this.__uploadFilesClosingInternally = false
 				return
 			}
-			// compute safe tags source
-			let tagsToEmit =
-				Array.isArray(this.latestTags) && this.latestTags.length > 0
-					? this.latestTags
-					: []
-			if (tagsToEmit.length === 0) {
-				const stored =
-					objectStore.getCollection && objectStore.getCollection('tags')
-				if (Array.isArray(stored) && stored.length > 0) tagsToEmit = stored
-			}
+			const tagsToEmit = closingTags(this.latestTags, objectStore)
 			// emit the same close events as closeDialog
 			EventBus.$emit('upload-files:closed', {
 				tags: tagsToEmit,
 				newTags: this.newTags || [],
 			})
-			if (Array.isArray(tagsToEmit) && tagsToEmit.length > 0) {
+			if (tagsToEmit.length > 0) {
 				EventBus.$emit('upload-files:tags-updated', {
 					tags: tagsToEmit,
 					newTags: this.newTags || [],

@@ -6,6 +6,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -40,8 +41,7 @@ class CatalogiControllerTest extends TestCase {
 			$this->request,
 			$this->catalogiService,
 			$this->config,
-			$this->container,
-			$this->appManager
+			new OpenRegisterLookup($this->container, $this->appManager)
 		);
 	}
 

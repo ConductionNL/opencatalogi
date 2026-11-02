@@ -1,0 +1,669 @@
+{
+	"getPublication/ok": {
+		"returned": {
+			"id": "abc-1",
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [
+			[
+				"Publication fetched:",
+				{
+					"id": "abc-1",
+					"facetable": {
+						"@self": {
+							"register": {}
+						}
+					}
+				}
+			]
+		],
+		"consoleError": [],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"getPublication/failed": {
+		"thrown": "HTTP error! status: 503",
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [],
+		"consoleError": [
+			[
+				"Failed to fetch publication:",
+				"HTTP error! status: 503"
+			]
+		],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"getPublication/network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [],
+		"consoleError": [
+			[
+				"Failed to fetch publication:",
+				"offline"
+			]
+		],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"getPublicationUses/ok": {
+		"returned": {
+			"id": "abc-1",
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1/uses?_limit=5&_search=tree",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [
+			[
+				"Publication uses fetched:",
+				{
+					"id": "abc-1",
+					"facetable": {
+						"@self": {
+							"register": {}
+						}
+					}
+				}
+			]
+		],
+		"consoleError": [],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"getPublicationUses/failed": {
+		"thrown": "HTTP error! status: 503",
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1/uses?_limit=5&_search=tree",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [],
+		"consoleError": [
+			[
+				"Failed to fetch publication uses:",
+				"HTTP error! status: 503"
+			]
+		],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"getPublicationUses/network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1/uses?_limit=5&_search=tree",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [],
+		"consoleError": [
+			[
+				"Failed to fetch publication uses:",
+				"offline"
+			]
+		],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"getPublicationUsed/ok": {
+		"returned": {
+			"id": "abc-1",
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1/used?_page=2",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [
+			[
+				"Publication used by fetched:",
+				{
+					"id": "abc-1",
+					"facetable": {
+						"@self": {
+							"register": {}
+						}
+					}
+				}
+			]
+		],
+		"consoleError": [],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"getPublicationUsed/failed": {
+		"thrown": "HTTP error! status: 503",
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1/used?_page=2",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [],
+		"consoleError": [
+			[
+				"Failed to fetch publication used by:",
+				"HTTP error! status: 503"
+			]
+		],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"getPublicationUsed/network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications/abc-1/used?_page=2",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [],
+		"consoleError": [
+			[
+				"Failed to fetch publication used by:",
+				"offline"
+			]
+		],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"discoverFacetableFields/ok": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications?_search=park&_facetable=true&_aggregate=true&_limit=0&status=open&_extra=1",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [
+			[
+				"Discovering facetable fields with params:",
+				"_search=park&_facetable=true&_aggregate=true&_limit=0&status=open&_extra=1"
+			],
+			[
+				"Facetable fields discovered:",
+				{
+					"@self": {
+						"register": {}
+					}
+				}
+			]
+		],
+		"consoleError": [],
+		"state": {
+			"searchTerm": "park",
+			"filters": {
+				"status": "open"
+			},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"discoverFacetableFields/failed": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications?_search=park&_facetable=true&_aggregate=true&_limit=0&status=open&_extra=1",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [
+			[
+				"Discovering facetable fields with params:",
+				"_search=park&_facetable=true&_aggregate=true&_limit=0&status=open&_extra=1"
+			]
+		],
+		"consoleError": [
+			[
+				"Failed to discover facetable fields:",
+				"HTTP error! status: 503"
+			]
+		],
+		"state": {
+			"searchTerm": "park",
+			"filters": {
+				"status": "open"
+			},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"discoverFacetableFields/network": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications?_search=park&_facetable=true&_aggregate=true&_limit=0&status=open&_extra=1",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"consoleLog": [
+			[
+				"Discovering facetable fields with params:",
+				"_search=park&_facetable=true&_aggregate=true&_limit=0&status=open&_extra=1"
+			]
+		],
+		"consoleError": [
+			[
+				"Failed to discover facetable fields:",
+				"offline"
+			]
+		],
+		"state": {
+			"searchTerm": "park",
+			"filters": {
+				"status": "open"
+			},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"clearSearch/ok": {
+		"returned": null,
+		"fetchCalls": [],
+		"consoleLog": [
+			[
+				"Search cleared"
+			]
+		],
+		"consoleError": [],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"clearSearch/failed": {
+		"returned": null,
+		"fetchCalls": [],
+		"consoleLog": [
+			[
+				"Search cleared"
+			]
+		],
+		"consoleError": [],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	},
+	"clearSearch/network": {
+		"returned": null,
+		"fetchCalls": [],
+		"consoleLog": [
+			[
+				"Search cleared"
+			]
+		],
+		"consoleError": [],
+		"state": {
+			"searchTerm": "",
+			"filters": {},
+			"ordering": {},
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {},
+			"activeFacets": {},
+			"facetsLoading": false,
+			"loading": false,
+			"error": null,
+			"viewMode": "cards",
+			"selectedPublications": []
+		}
+	}
+}

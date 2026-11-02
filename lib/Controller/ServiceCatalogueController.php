@@ -38,6 +38,7 @@ use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,7 +49,6 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use Psr\Container\ContainerInterface;
 
 /**
  * Serves the published service catalogue and the case type catalogue.
@@ -69,7 +69,7 @@ class ServiceCatalogueController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container.
+	 * @param OpenRegisterLookup $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localisation.
 	 * @param ServiceCatalogueServiceInterface $catalogueService The catalogue reader.
 	 * @param CaseTypeCatalogueServiceInterface $caseTypeService The case type importer.
@@ -81,7 +81,7 @@ class ServiceCatalogueController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookup $registers,
 		private readonly IL10N $l10n,
 		private readonly ServiceCatalogueServiceInterface $catalogueService,
 		private readonly CaseTypeCatalogueServiceInterface $caseTypeService,
@@ -151,7 +151,7 @@ class ServiceCatalogueController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
-	 * @spec openspec/changes/service-catalogue-admin-screens/specs/service-catalogue-admin-screens/spec.md#requirement-an-administrator-lists-the-catalogue-entries-with-their-availability-sca-001
+	 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-an-administrator-lists-the-catalogue-entries-with-their-availability-sca-001
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {

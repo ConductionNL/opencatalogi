@@ -34,10 +34,6 @@ export class Configuration implements TConfiguration {
 			useMongo: z.boolean(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

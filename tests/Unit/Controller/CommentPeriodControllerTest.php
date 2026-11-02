@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\CommentPeriodController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCP\App\IAppManager;
@@ -171,7 +172,7 @@ class CommentPeriodControllerTest extends TestCase {
 		return new CommentPeriodController(
 			'opencatalogi',
 			$this->request,
-			$container,
+			new OpenRegisterLookup($container, $this->createMock(IAppManager::class)),
 			$l10n,
 			$userSession,
 			$periods
@@ -318,7 +319,7 @@ class CommentPeriodControllerTest extends TestCase {
 		$controller = new CommentPeriodController(
 			'opencatalogi',
 			$this->request,
-			$container,
+			new OpenRegisterLookup($container, $this->createMock(IAppManager::class)),
 			$l10n,
 			$userSession,
 			new CommentPeriodService(new TermRoll($engineless, $appManager), $config, $urls)

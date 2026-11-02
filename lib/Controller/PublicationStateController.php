@@ -35,8 +35,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -65,8 +65,8 @@ class PublicationStateController extends Controller {
 	 * @param PublicationStateServiceInterface $states       The visibility state and the record per move.
 	 * @param PublicationRights       $rights       The update right on one publication.
 	 * @param DepublicationServiceInterface    $depublisher  Sends the withdrawals.
-	 * @param ContainerInterface      $container    Server container, for the register resolver and OpenRegister's file service.
-	 * @param ServiceCatalogueServiceInterface $objects      The OpenRegister reader.
+	 * @param ContainerInterface      $container    Server container, for OpenRegister's file service.
+	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService.
 	 */
 	public function __construct(
 		$appName,
@@ -77,7 +77,7 @@ class PublicationStateController extends Controller {
 		private readonly PublicationRights $rights,
 		private readonly DepublicationServiceInterface $depublisher,
 		private readonly ContainerInterface $container,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly RegisterAccess $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -161,42 +161,92 @@ class PublicationStateController extends Controller {
 			return $refusal;
 		}
 
-		$reason = trim((string)$this->request->getParam('reason', ''));
-		if ($reason === '') {
+		if ($this->reason() === '') {
 			return $this->reasonMissing();
 		}
 
-		$properties = $this->asArray(object: $publication);
+		return $this->withdrawWithReason(id: $id, properties: $this->asArray(object: $publication));
+
+	}//end withdraw()
+
+	/**
+	 * Take a public or scheduled publication down, then tell every channel it reached.
+	 *
+	 * @param string               $id         The publication id.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return JSONResponse The stored depublication, or the refusal.
+	 */
+	private function withdrawWithReason(string $id, array $properties): JSONResponse {
+		$state = $this->takeDown(id: $id, properties: $properties);
+		if ($state instanceof JSONResponse) {
+			return $state;
+		}
+
+		return $this->record(
+			depublication: $this->depublisher->depublish(
+				publication: array_replace($properties, ['id' => $id]),
+				reason: $this->reason(),
+				depublishedBy: $this->actor(),
+				channels: $this->channelsFor(state: $state, properties: $properties)
+			)
+		);
+
+	}//end withdrawWithReason()
+
+	/**
+	 * Save the withdrawn record of a public or scheduled publication.
+	 *
+	 * Down first: the mistake leaves the public API now, whatever the
+	 * channels answer after.
+	 *
+	 * @param string               $id         The publication id.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return string|JSONResponse The state it was in, or 409 for another state, or the save refusal.
+	 */
+	private function takeDown(string $id, array $properties): string|JSONResponse {
 		$state = $this->states->stateOf(publication: $properties);
 		if ($state !== PublicationStateServiceInterface::STATE_PUBLIC && $state !== PublicationStateServiceInterface::STATE_SCHEDULED) {
 			return $this->conflict(state: $state);
 		}
 
-		// Down first: the mistake leaves the public API now, whatever the
-		// channels answer after.
 		try {
 			$this->save(id: $id, record: $this->states->withdrawnRecord(publication: $properties));
 		} catch (\Throwable $e) {
 			return $this->refused(e: $e);
 		}
 
-		$channels = [];
-		if ($state === PublicationStateServiceInterface::STATE_PUBLIC) {
-			$channels = $this->states->channelsReached(publication: $properties);
+		return $state;
+
+	}//end takeDown()
+
+	/**
+	 * The channels to tell: those a public publication reached, none for a scheduled one.
+	 *
+	 * @param string               $state      The state before the withdrawal.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return array<int, string> The channels.
+	 */
+	private function channelsFor(string $state, array $properties): array {
+		if ($state !== PublicationStateServiceInterface::STATE_PUBLIC) {
+			return [];
 		}
 
-		$properties['id'] = $id;
+		return $this->states->channelsReached(publication: $properties);
 
-		return $this->record(
-			depublication: $this->depublisher->depublish(
-				publication: $properties,
-				reason: $reason,
-				depublishedBy: $this->actor(),
-				channels: $channels
-			)
-		);
+	}//end channelsFor()
 
-	}//end withdraw()
+	/**
+	 * The withdrawal reason from the request, trimmed.
+	 *
+	 * @return string The reason, empty when none was given.
+	 */
+	private function reason(): string {
+		return trim((string)$this->request->getParam('reason', ''));
+
+	}//end reason()
 
 	/**
 	 * Withdraw one document of a publication with a reason.
@@ -219,7 +269,7 @@ class PublicationStateController extends Controller {
 			return $refusal;
 		}
 
-		$reason = trim((string)$this->request->getParam('reason', ''));
+		$reason = $this->reason();
 		if ($reason === '') {
 			return $this->reasonMissing();
 		}
@@ -293,7 +343,7 @@ class PublicationStateController extends Controller {
 				registerKey: 'publication_register',
 				schemaKey: 'depublication_schema'
 			);
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $this->states->storable(depublication: $depublication),
 				extend: [],
 				register: $configuration['register'],
@@ -338,7 +388,7 @@ class PublicationStateController extends Controller {
 		);
 
 		try {
-			return $this->objects->getObjectService()->find(
+			return $this->registers->getObjectService()->find(
 				id: $id,
 				register: $configuration['register'],
 				schema: $configuration['schema'],
@@ -371,7 +421,7 @@ class PublicationStateController extends Controller {
 		);
 		unset($record['id']);
 
-		$this->objects->getObjectService()->saveObject(
+		$this->registers->getObjectService()->saveObject(
 			object: $record,
 			register: $configuration['register'],
 			schema: $configuration['schema'],

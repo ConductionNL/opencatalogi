@@ -1,0 +1,231 @@
+{
+    "all": {
+        "results": [
+            {
+                "result": [
+                    "https://a/pub",
+                    "https://b/pub",
+                    "https://c/pub",
+                    "https://d/pub",
+                    "https://e/pub",
+                    "https://f/pub"
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    },
+    "available only": {
+        "results": [
+            {
+                "result": [
+                    "https://a/pub",
+                    "https://b/pub",
+                    "https://e/pub",
+                    "https://f/pub"
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    },
+    "default only": {
+        "results": [
+            {
+                "result": [
+                    "https://a/pub",
+                    "https://c/pub",
+                    "https://e/pub"
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    },
+    "available and default": {
+        "results": [
+            {
+                "result": [
+                    "https://a/pub",
+                    "https://e/pub"
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    },
+    "cached across flags": {
+        "results": [
+            {
+                "result": [
+                    "https://a/pub",
+                    "https://e/pub"
+                ]
+            },
+            {
+                "result": [
+                    "https://a/pub",
+                    "https://e/pub"
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    },
+    "no listings": {
+        "results": [
+            {
+                "result": []
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    },
+    "no listing schema": {
+        "results": [
+            {
+                "result": []
+            }
+        ],
+        "searches": []
+    },
+    "no listing register": {
+        "results": [
+            {
+                "result": []
+            }
+        ],
+        "searches": []
+    },
+    "serialise fails halfway": {
+        "results": [
+            {
+                "result": [
+                    "https://a/pub",
+                    "https://b/pub"
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    },
+    "search fails": {
+        "results": [
+            {
+                "result": []
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    },
+    "openregister absent": {
+        "results": [
+            {
+                "exception": "RuntimeException",
+                "message": "OpenRegister service is not available."
+            }
+        ],
+        "searches": []
+    },
+    "publications and directory": {
+        "results": [
+            {
+                "result": [
+                    "https://a/api/publications"
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "listing-register",
+                        "schema": "listing-schema"
+                    }
+                },
+                "rbac": false,
+                "multitenancy": true
+            }
+        ]
+    }
+}

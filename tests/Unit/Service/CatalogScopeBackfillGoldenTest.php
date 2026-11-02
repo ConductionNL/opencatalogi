@@ -30,6 +30,7 @@
  * @covers \OCA\OpenCatalogi\Service\SettingsService
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeBackfill
+ * @uses \OCA\OpenCatalogi\Service\CatalogScopeLookups
  */
 
 declare(strict_types=1);
