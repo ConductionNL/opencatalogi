@@ -192,4 +192,25 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 		];
 
 	}//end configuredRegister()
+
+	/**
+	 * An OpenRegister service from the container when OpenRegister is among the installed apps.
+	 *
+	 * @param string $serviceId   The container id of the service.
+	 * @param string $unavailable The message of the refusal when OpenRegister is not installed.
+	 *
+	 * @return mixed The service.
+	 *
+	 * @throws RuntimeException When OpenRegister is not installed.
+	 *
+	 * @spec exclude pure framework plumbing: the runtime-guarded OpenRegister dependency (ADR-083).
+	 */
+	public function installedService(string $serviceId, string $unavailable): mixed {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get($serviceId);
+		}
+
+		throw new RuntimeException($unavailable);
+
+	}//end installedService()
 }//end class

@@ -70,7 +70,7 @@
   },
   "src/composables/UseFileSelection.js": {
     "no-unused-vars": {
-      "count": 3
+      "count": 2
     },
     "no-use-before-define": {
       "count": 13
@@ -327,11 +327,6 @@
   },
   "src/entities/theme/theme.spec.ts": {
     "import-extensions/extensions": {
-      "count": 1
-    }
-  },
-  "src/main.js": {
-    "no-unused-vars": {
       "count": 1
     }
   },

@@ -1,31 +1,61 @@
 import { objectStore } from '../store/store.js'
 
 /**
+ * The id a schema reference names: an object's id, uuid or slug, or the
+ * reference itself when it is a plain value.
  *
- * @param publication
+ * @param {object|string|number} ref The schema reference.
+ * @return {string|number|null|undefined} The id.
+ */
+function schemaRefId(ref) {
+	return typeof ref === 'object' ? (ref.id ?? ref.uuid ?? ref.slug) : ref
+}
+
+/**
+ * Whether a schema reference is the schema itself, with its properties.
+ *
+ * @param {object|string|number} ref The schema reference.
+ * @return {boolean}
+ */
+function isInlineSchema(ref) {
+	return typeof ref === 'object' && Boolean(ref.properties)
+}
+
+/**
+ * The first known schema whose id, uuid or slug equals the id, or null.
+ *
+ * @param {string|number} id The id to look up.
+ * @return {object|null} The schema.
+ */
+function knownSchema(id) {
+	const schemas = objectStore?.availableSchemas
+	if (!Array.isArray(schemas)) return null
+
+	const key = String(id)
+	return (
+		schemas.find((s) =>
+			[s.id, s.uuid, s.slug].some((value) => String(value) === key),
+		) || null
+	)
+}
+
+/**
+ * The schema of a publication: an inline schema with properties, else the
+ * known schema its reference (in @self, else on the publication) names.
+ *
+ * @param {object} publication The publication.
+ * @return {object|null} The schema.
  */
 function resolveSchema(publication) {
 	const ref = publication?.['@self']?.schema ?? publication?.schema
 	if (!ref) return null
 
-	if (typeof ref === 'object' && ref.properties) {
+	if (isInlineSchema(ref)) {
 		return ref
 	}
 
-	const id = typeof ref === 'object' ? (ref.id ?? ref.uuid ?? ref.slug) : ref
-	if (id == null) return null
-
-	const schemas = objectStore?.availableSchemas
-	if (!Array.isArray(schemas)) return null
-
-	return (
-		schemas.find(
-			(s) =>
-				String(s.id) === String(id)
-				|| String(s.uuid) === String(id)
-				|| String(s.slug) === String(id),
-		) || null
-	)
+	const id = schemaRefId(ref)
+	return id == null ? null : knownSchema(id)
 }
 
 /**
