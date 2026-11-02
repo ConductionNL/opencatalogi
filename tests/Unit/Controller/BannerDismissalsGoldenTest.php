@@ -52,6 +52,7 @@ use ReflectionNamedType;
  * @uses   \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses   \OCA\OpenCatalogi\Service\RegisterAccess
+ * @covers \OCA\OpenCatalogi\Service\BannerDismissals
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 class BannerDismissalsGoldenTest extends TestCase {
