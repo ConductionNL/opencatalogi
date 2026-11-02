@@ -41,9 +41,9 @@ class MissingConfigException extends \Exception {
 		$this->appId = $appId;
 		$this->configKey = $configKey;
 		parent::__construct(
-			sprintf('Resolver config key "%s" is not set for app "%s" and no default was provided.', $configKey, $appId),
-			500,
-			$previous
+			message: sprintf('Resolver config key "%s" is not set for app "%s" and no default was provided.', $configKey, $appId),
+			code: 500,
+			previous: $previous
 		);
 
 	}//end __construct()

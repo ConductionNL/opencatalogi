@@ -150,11 +150,11 @@ class DepublicationGoldenTest extends TestCase {
 		$response = $this->controller(case: $case)->depublish();
 		$detail = (string)($response->getData()['detail'] ?? '');
 
-		$this->assertSame(503, $response->getStatus());
-		$this->assertSame('register_not_configured', $response->getData()['error']);
-		$this->assertStringContainsString('publication_register', $detail);
-		$this->assertStringNotContainsString('.php', $detail);
-		$this->assertStringNotContainsString(dirname(__DIR__, 3), $detail);
+		$this->assertSame(expected: 503, actual: $response->getStatus());
+		$this->assertSame(expected: 'register_not_configured', actual: $response->getData()['error']);
+		$this->assertStringContainsString(needle: 'publication_register', haystack: $detail);
+		$this->assertStringNotContainsString(needle: '.php', haystack: $detail);
+		$this->assertStringNotContainsString(needle: dirname(path: __DIR__, levels: 3), haystack: $detail);
 
 	}//end testAnUnsetRegisterAnswersWithoutAServerPath()
 

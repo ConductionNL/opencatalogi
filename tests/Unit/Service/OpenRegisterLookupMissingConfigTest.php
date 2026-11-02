@@ -78,12 +78,12 @@ class OpenRegisterLookupMissingConfigTest extends TestCase {
 
 		try {
 			$lookup->registerConfiguration(registerKey: 'notice_register', schemaKey: 'notice_schema');
-			$this->fail('No exception for an unset setting.');
+			$this->fail(message: 'No exception for an unset setting.');
 		} catch (MissingConfigException $e) {
-			$this->assertSame('opencatalogi', $e->getAppId());
-			$this->assertSame($key, $e->getConfigKey());
-			$this->assertStringContainsString($key, $e->getMessage());
-			$this->assertStringNotContainsString('.php', $e->getMessage());
+			$this->assertSame(expected: 'opencatalogi', actual: $e->getAppId());
+			$this->assertSame(expected: $key, actual: $e->getConfigKey());
+			$this->assertStringContainsString(needle: $key, haystack: $e->getMessage());
+			$this->assertStringNotContainsString(needle: '.php', haystack: $e->getMessage());
 		}
 
 	}//end testAnUnsetSettingNamesItsKey()
