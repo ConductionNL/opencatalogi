@@ -151,6 +151,23 @@ class OpenCatalogiMetricsLookupGoldenTest extends TestCase {
 			}
 		};
 
+		$registerEntity = new class {
+			/**
+			 * @return array<string, mixed>
+			 */
+			public function jsonSerialize(): array {
+				return ['id' => 6, 'schemas' => [21]];
+			}
+		};
+		$publicationEntity = new class {
+			/**
+			 * @return array<string, mixed>
+			 */
+			public function jsonSerialize(): array {
+				return ['status' => 'entity', 'catalog' => 'e'];
+			}
+		};
+
 		return [
 			'awkward shapes' => [[
 				'schemas' => [
@@ -172,9 +189,13 @@ class OpenCatalogiMetricsLookupGoldenTest extends TestCase {
 					['id' => '3', 'schemas' => [['id' => '22'], 23, 11, 0]],
 					['id' => 4],
 					(object)['id' => 5, 'schemas' => [14]],
+					$registerEntity,
+					['id' => 7, 'schemas' => 11],
 				],
 				'objects' => [
-					'2:11' => [['status' => 'published', 'catalog' => 'a'], 'x'],
+					'2:11' => [['status' => 'published', 'catalog' => 'a'], 'x', $publicationEntity],
+					'7:11' => [['status' => 'not listed']],
+					'6:21' => [['status' => 'from entity register']],
 					'3:11' => 'throw',
 					'2:14' => 'not a list',
 					'5:14' => ['k' => ['status' => 'concept']],

@@ -20,6 +20,13 @@
                     },
                     {
                         "labels": {
+                            "status": "entity",
+                            "catalog": "e"
+                        },
+                        "value": 1
+                    },
+                    {
+                        "labels": {
                             "status": "concept",
                             "catalog": ""
                         },
@@ -42,6 +49,12 @@
                     {
                         "labels": {
                             "status": "active"
+                        },
+                        "value": 1
+                    },
+                    {
+                        "labels": {
+                            "status": "from entity register"
                         },
                         "value": 1
                     },
@@ -140,6 +153,16 @@
                 "query": {
                     "@self": {
                         "register": 2,
+                        "schema": 21
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            },
+            {
+                "query": {
+                    "@self": {
+                        "register": 6,
                         "schema": 21
                     }
                 },
