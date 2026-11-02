@@ -188,30 +188,47 @@ class SetupFederationSteps {
 	 * @return string The composed message.
 	 */
 	private function buildFederationMessage(int $created, int $updated, bool $advertised): string {
-		$parts = [];
+		return implode(' ', [$this->listingsPart(created: $created, updated: $updated), $this->announcePart(advertised: $advertised)]);
+	}//end buildFederationMessage()
 
+	/**
+	 * The sentence about the listings pulled from the directory.
+	 *
+	 * @param integer $created New listings pulled from the directory.
+	 * @param integer $updated Existing listings updated during the pull.
+	 *
+	 * @return string The sentence.
+	 */
+	private function listingsPart(int $created, int $updated): string {
 		if ($created > 0 || $updated > 0) {
-			$parts[] = $this->l10n->t(
+			return $this->l10n->t(
 				text: 'Fetched %1$d new and %2$d updated listing(s) from the directory.',
 				parameters: [$created, $updated]
 			);
-		} else {
-			$parts[] = $this->l10n->t(
-				'The directory has no other peer instances registered yet — federation activates automatically once other instances join.'
-			);
 		}
 
+		return $this->l10n->t(
+			'The directory has no other peer instances registered yet — federation activates automatically once other instances join.'
+		);
+	}//end listingsPart()
+
+	/**
+	 * The sentence about announcing this instance to the directory.
+	 *
+	 * @param boolean $advertised True when the broadcast to the directory succeeded.
+	 *
+	 * @return string The sentence.
+	 */
+	private function announcePart(bool $advertised): string {
 		if ($advertised === true) {
-			$parts[] = $this->l10n->t(
+			return $this->l10n->t(
 				'This instance was announced to the directory and is now discoverable to other peers.'
 			);
-		} else {
-			$parts[] = $this->l10n->t(
-				'This instance could not be announced to the directory (it may not be reachable from the directory host).'
-				. ' Federation still works one-way; retry later or announce it manually.'
-			);
 		}
 
-		return implode(' ', $parts);
-	}//end buildFederationMessage()
+		return $this->l10n->t(
+			'This instance could not be announced to the directory (it may not be reachable from the directory host).'
+			. ' Federation still works one-way; retry later or announce it manually.'
+		);
+	}//end announcePart()
 }//end class

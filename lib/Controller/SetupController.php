@@ -144,7 +144,7 @@ class SetupController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function action(string $actionId): JSONResponse {
-		return $this->actions->run(actionId: $actionId);
+		return $this->actions->run(actionId: $actionId, request: $this->request);
 
 	}//end action()
 }//end class

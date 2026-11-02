@@ -26,11 +26,11 @@ namespace OCA\OpenCatalogi\Service\Setup;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
-use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;
+use OCP\IRequest;
 
 /**
  * Writes the whitelisted setup keys and runs the setup actions the wizard posts.
@@ -56,17 +56,13 @@ class SetupActions {
 	 *
 	 * @param IAppConfig $config App configuration.
 	 * @param IL10N $l10n Localization.
-	 * @param SetupCatalogSteps $catalogSteps The register and first-catalog steps.
-	 * @param SetupDemoDataSteps $demoSteps The demo-data steps.
-	 * @param SetupFederationSteps $federationSteps The federation steps.
+	 * @param SetupStepRunner $steps The setup steps by action id.
 	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
-		private readonly SetupCatalogSteps $catalogSteps,
-		private readonly SetupDemoDataSteps $demoSteps,
-		private readonly SetupFederationSteps $federationSteps,
+		private readonly SetupStepRunner $steps,
 		private readonly ?ConnectionReporterInterface $connectionReporter = null,
 	) {
 	}//end __construct()
@@ -103,31 +99,20 @@ class SetupActions {
 	/**
 	 * Run one setup action and answer with its outcome.
 	 *
-	 * @param string $actionId The action id from the manifest.
+	 * @param string   $actionId The action id from the manifest.
+	 * @param IRequest $request  The request, for the dataset a card posts.
 	 *
 	 * @return JSONResponse `{ success, message }`, 400 for an unknown action.
 	 *
 	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
-	public function run(string $actionId): JSONResponse {
+	public function run(string $actionId, IRequest $request): JSONResponse {
+		$answer = $this->steps->run(actionId: $actionId, request: $request);
+		if ($answer !== null) {
+			return $answer;
+		}
+
 		switch ($actionId) {
-			// `install-demo-data` is the id the step used before it asked WHICH
-			// dataset, and it still means "import the one this app ships". Kept
-			// so an older manifest or a runbook that posts it keeps working.
-			case 'load-demo-data':
-				return $this->demoSteps->loadDataset();
-			case 'install-demo-data':
-				return $this->demoSteps->installDemoData(dataset: DemoDataServiceInterface::DEMO_DATASET);
-			case 'skip-demo-data':
-				return $this->demoSteps->skipDemoData();
-			case 'reload-settings':
-				return $this->catalogSteps->reloadSettings();
-			case 'create-first-catalog':
-				return $this->catalogSteps->createFirstCatalog();
-			case 'connect-federation':
-				return $this->federationSteps->connectFederation();
-			case 'sync-all-directories':
-				return $this->federationSteps->syncAllDirectories();
 			case 'complete':
 				$this->config->setValueString(AppIdentity::APP_ID, 'onboarding_completed_version', (string)SetupCatalogSteps::SETUP_VERSION);
 				return new JSONResponse(['success' => true, 'message' => $this->l10n->t('Setup complete.')]);

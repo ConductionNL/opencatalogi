@@ -37,6 +37,8 @@ use OCA\OpenCatalogi\Service\Setup\SetupActions;
 use OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps;
 use OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps;
 use OCA\OpenCatalogi\Service\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupSettingsStep;
+use OCA\OpenCatalogi\Service\Setup\SetupStepRunner;
 use OCA\OpenCatalogi\Service\Setup\SetupStatusReport;
 use OCA\OpenCatalogi\Controller\SettingsController;
 use OCA\OpenCatalogi\Controller\SetupController;
@@ -73,7 +75,9 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps
  * @covers \OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps
  * @covers \OCA\OpenCatalogi\Service\Setup\SetupFederationSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupSettingsStep
  * @covers \OCA\OpenCatalogi\Service\Setup\SetupStatusReport
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupStepRunner
  * @covers \OCA\OpenCatalogi\Service\BroadcastService
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
  * @uses \OCA\OpenCatalogi\Service\Broadcast\BroadcastResult
@@ -432,7 +436,7 @@ class ConnectionReportCallersTest extends TestCase {
 		IUserSession $session,
 		?ConnectionReporterInterface $reporter = null,
 	): SetupController {
-		$catalog = new SetupCatalogSteps($config, $container, $settings, $l10n, $logger);
+		$catalog = new SetupCatalogSteps($config, $container, $l10n, $logger);
 		return new SetupController(
 			$appName,
 			$request,
@@ -442,9 +446,12 @@ class ConnectionReportCallersTest extends TestCase {
 			new SetupActions(
 				$config,
 				$l10n,
-				$catalog,
-				new SetupDemoDataSteps($config, $demo, $request, $l10n, $logger),
-				new SetupFederationSteps($directory, $broadcast, $l10n, $logger),
+				new SetupStepRunner(
+					new SetupDemoDataSteps($config, $demo, $l10n, $logger),
+					new SetupSettingsStep($settings, $catalog, $l10n, $logger),
+					$catalog,
+					new SetupFederationSteps($directory, $broadcast, $l10n, $logger)
+				),
 				$reporter
 			)
 		);

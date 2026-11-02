@@ -68,14 +68,12 @@ class SetupDemoDataSteps {
 	 *
 	 * @param IAppConfig $config App configuration.
 	 * @param DemoDataServiceInterface $demoDataService Demo dataset import (ADR-111 rule 4).
-	 * @param IRequest $request The request, for the dataset a card posts.
 	 * @param IL10N $l10n Localization.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
 		private readonly DemoDataServiceInterface $demoDataService,
-		private readonly IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {
@@ -85,18 +83,20 @@ class SetupDemoDataSteps {
 	 * Install the dataset a card's Load button posted as `dataset`, or the
 	 * stored pick when nothing is posted (ADR-111 rule 4).
 	 *
+	 * @param IRequest $request The request, for the dataset a card posts.
+	 *
 	 * @return JSONResponse The outcome, carrying the counts.
 	 *
 	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
-	public function loadDataset(): JSONResponse {
+	public function loadDataset(IRequest $request): JSONResponse {
 		$picked = $this->config->getValueString(AppIdentity::APP_ID, self::DATASET_KEY, '');
 
 		// The card's Load button names its dataset in the body. An older wizard
 		// posts nothing and relies on the pick stored a step earlier. Nothing is
 		// stored before the load succeeds: a failed load must leave the step
 		// open for an operator who asked for data and got none.
-		$posted = $this->request->getParam('dataset');
+		$posted = $request->getParam('dataset');
 		if ($posted !== null) {
 			$refusal = $this->refuseDataset(value: $posted);
 			if ($refusal !== null) {
