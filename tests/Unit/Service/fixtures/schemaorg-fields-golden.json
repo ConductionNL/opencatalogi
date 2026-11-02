@@ -1,0 +1,442 @@
+{
+    "prefixed marker": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Report",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/a",
+            "url": "https://example.test/apps/opencatalogi/api/cat/a",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:1"
+        ]
+    },
+    "empty marker": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/a",
+            "url": "https://example.test/apps/opencatalogi/api/cat/a",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:2"
+        ]
+    },
+    "prefix only": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/a",
+            "url": "https://example.test/apps/opencatalogi/api/cat/a",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:3"
+        ]
+    },
+    "bare marker": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/a",
+            "url": "https://example.test/apps/opencatalogi/api/cat/a",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:4"
+        ]
+    },
+    "entity marker": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Article",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/a",
+            "url": "https://example.test/apps/opencatalogi/api/cat/a",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:6"
+        ]
+    },
+    "entity not an array": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/a",
+            "url": "https://example.test/apps/opencatalogi/api/cat/a",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:7"
+        ]
+    },
+    "numeric marker": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "42",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/a",
+            "url": "https://example.test/apps/opencatalogi/api/cat/a",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:8"
+        ]
+    },
+    "failing lookup": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/a",
+            "url": "https://example.test/apps/opencatalogi/api/cat/a",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:99"
+        ]
+    },
+    "organisation title and oin": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/x",
+            "url": "https://example.test/apps/opencatalogi/api/cat/x",
+            "publisher": {
+                "@type": "Organization",
+                "name": "T",
+                "@id": "O"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "organisation name and uri": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/x",
+            "url": "https://example.test/apps/opencatalogi/api/cat/x",
+            "publisher": {
+                "@type": "Organization",
+                "name": "N",
+                "@id": "U"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "organisation empty, defaults": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/x",
+            "url": "https://example.test/apps/opencatalogi/api/cat/x",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "defaults name only": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/x",
+            "url": "https://example.test/apps/opencatalogi/api/cat/x",
+            "publisher": {
+                "@type": "Organization",
+                "name": "P"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "defaults uri only": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/x",
+            "url": "https://example.test/apps/opencatalogi/api/cat/x",
+            "publisher": {
+                "@type": "Organization",
+                "@id": "https://u"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "numeric organisation": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/x",
+            "url": "https://example.test/apps/opencatalogi/api/cat/x",
+            "publisher": {
+                "@type": "Organization",
+                "name": "12",
+                "@id": "34"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "nothing to publish as": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/x",
+            "url": "https://example.test/apps/opencatalogi/api/cat/x"
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "odd attachments": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/f",
+            "url": "https://example.test/apps/opencatalogi/api/cat/f",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            },
+            "distribution": [
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/1",
+                    "contentSize": "0"
+                },
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/2",
+                    "contentSize": "12"
+                },
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/4",
+                    "encodingFormat": "text/plain",
+                    "name": "Four"
+                }
+            ],
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+                "name": "Open"
+            }
+        },
+        "asked": [
+            "schema:0",
+            "files:f"
+        ]
+    },
+    "no results key": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/f",
+            "url": "https://example.test/apps/opencatalogi/api/cat/f",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            },
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+                "name": "Open"
+            }
+        },
+        "asked": [
+            "schema:0",
+            "files:f"
+        ]
+    },
+    "uuid only": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/u-1",
+            "url": "https://example.test/apps/opencatalogi/api/cat/u-1",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            },
+            "distribution": [
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/1",
+                    "contentSize": "0"
+                },
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/2",
+                    "contentSize": "12"
+                },
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/4",
+                    "encodingFormat": "text/plain",
+                    "name": "Four"
+                }
+            ],
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+                "name": "Open"
+            }
+        },
+        "asked": [
+            "schema:0",
+            "files:u-1"
+        ]
+    },
+    "no object id": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/",
+            "url": "https://example.test/apps/opencatalogi/api/cat/",
+            "name": "x",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            },
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+                "name": "Open"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "id wins over uuid": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "Dataset",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/u-1",
+            "url": "https://example.test/apps/opencatalogi/api/cat/u-1",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            },
+            "distribution": [
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/1",
+                    "contentSize": "0"
+                },
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/2",
+                    "contentSize": "12"
+                },
+                {
+                    "@type": "DataDownload",
+                    "contentUrl": "https://f/4",
+                    "encodingFormat": "text/plain",
+                    "name": "Four"
+                }
+            ],
+            "includedInDataCatalog": {
+                "@type": "DataCatalog",
+                "@id": "https://example.test/apps/opencatalogi/api/catalogs/cat/schema",
+                "name": "Open"
+            }
+        },
+        "asked": [
+            "schema:0",
+            "files:i-1"
+        ]
+    },
+    "null fields": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/n",
+            "url": "https://example.test/apps/opencatalogi/api/cat/n",
+            "name": "Named",
+            "description": "Sum",
+            "dateModified": "not a date",
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    },
+    "numeric fields": {
+        "node": {
+            "@context": "https://schema.org",
+            "@type": "CreativeWork",
+            "@id": "https://example.test/apps/opencatalogi/api/cat/n",
+            "url": "https://example.test/apps/opencatalogi/api/cat/n",
+            "name": "0",
+            "description": "1.5",
+            "dateModified": "2026-01-02T00:00:00+00:00",
+            "license": "cc-by",
+            "keywords": [
+                "0",
+                "0"
+            ],
+            "publisher": {
+                "@type": "Organization",
+                "name": "Gemeente Test",
+                "@id": "https://example.test/org"
+            }
+        },
+        "asked": [
+            "schema:0"
+        ]
+    }
+}
