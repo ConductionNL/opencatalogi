@@ -101,20 +101,18 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 *
 	 * @param IClientService $clientService The Nextcloud HTTP client factory used for outbound checks.
 	 * @param DirectoryService $directoryService The directory service, reused for its SSRF outbound-URL guard.
-	 * @param SitemapService $sitemapService The sitemap service, reused for DIWOO validation (D1).
+	 * @param SitemapStandards $sitemaps The sitemap files, their DIWOO validation (D1) and the published DiWoo version.
 	 * @param SettingsService $settingsService The settings service, used to resolve WOO-enabled catalogs.
 	 * @param IAppConfig $config App configuration (report persistence + registration status).
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
-	 * @param StandardsVersionService $standardsVersions Compares the emitted DiWoo version with the published one.
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
 		private readonly DirectoryService $directoryService,
-		private readonly SitemapService $sitemapService,
+		private readonly SitemapStandards $sitemaps,
 		private readonly SettingsService $settingsService,
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
-		private readonly StandardsVersionService $standardsVersions,
 	) {
 
 	}//end __construct()
@@ -341,7 +339,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 */
 	private function checkCatalog(string $baseUrl, CatalogReadinessChecks $catalog): void {
 		$slug = $catalog->slug;
-		$categoryCode = (string)array_key_first($this->sitemapService->sitemapFiles());
+		$categoryCode = (string)array_key_first($this->sitemaps->sitemapFiles());
 		$sitemapIndexUrl = "$baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode";
 		$checkId = "sitemapindex:$slug";
 
@@ -439,11 +437,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		try {
-			$report = $this->sitemapService->validateDiwooOutput(
-				catalogSlug: $catalog->slug,
-				categoryCode: $categoryCode,
-				page: 1
-			);
+			$report = $this->sitemaps->validateFirstPage(catalogSlug: $catalog->slug, categoryCode: $categoryCode);
 		} catch (\Throwable $e) {
 			$catalog->fail(id: $checkId, reason: 'diwoo-validation-error');
 			return;
@@ -534,7 +528,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 */
 	private function resolveDiwooVersion(): array {
 		if ($this->diwooVersion === null) {
-			$this->diwooVersion = $this->standardsVersions->diwooVersion();
+			$this->diwooVersion = $this->sitemaps->versionComparison();
 		}
 
 		return $this->diwooVersion;

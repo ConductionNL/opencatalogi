@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\RegisterBindings;
 use OCA\OpenCatalogi\Service\WooService;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -241,6 +242,7 @@ class WooFakeTaskSequenceMapper {
 
 /**
  * @covers \OCA\OpenCatalogi\Service\WooService
+ * @uses \OCA\OpenCatalogi\Service\RegisterBindings
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
@@ -359,13 +361,12 @@ class WooServiceTest extends TestCase {
 
 		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $linker, $this->l10n);
 		$this->service = new WooService(
-			$this->config,
-			$this->container,
+			new RegisterBindings($this->config, $this->container),
 			$this->userSession,
 			$this->logger,
 			$this->l10n,
 			$writer,
-			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($writer, $this->container, $this->l10n, $this->logger),
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($writer, $this->container, $this->l10n, $this->logger)
 		);
 
 	}//end setUp()

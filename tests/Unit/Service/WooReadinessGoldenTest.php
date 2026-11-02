@@ -27,6 +27,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\SitemapStandards;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCP\Http\Client\IClient;
@@ -41,6 +42,7 @@ use PHPUnit\Framework\TestCase;
  * Golden test for WooReadinessService::runCheck.
  *
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
+ * @uses \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses   \OCA\OpenCatalogi\Service\CatalogReadinessChecks
  */
 class WooReadinessGoldenTest extends TestCase {
@@ -191,7 +193,7 @@ class WooReadinessGoldenTest extends TestCase {
 			['declared' => '0.9.8', 'published' => '0.9.9', 'status' => ($world['version'] ?? StandardsVersionService::STATUS_CURRENT)]
 		);
 
-		return new WooReadinessService($clients, $directory, $sitemaps, $settings, $config, $urls, $versions);
+		return new WooReadinessService($clients, $directory, new SitemapStandards($sitemaps, $versions), $settings, $config, $urls);
 
 	}//end service()
 
