@@ -1,0 +1,467 @@
+{
+    "awkward shapes": {
+        "families": [
+            {
+                "name": "publications_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "status": "published",
+                            "catalog": "a"
+                        },
+                        "value": 1
+                    },
+                    {
+                        "labels": {
+                            "status": "",
+                            "catalog": ""
+                        },
+                        "value": 1
+                    },
+                    {
+                        "labels": {
+                            "status": "concept",
+                            "catalog": ""
+                        },
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "name": "catalogs_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "name": "listings_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "status": "active"
+                        },
+                        "value": 1
+                    },
+                    {
+                        "labels": {
+                            "status": "inactive"
+                        },
+                        "value": 1
+                    }
+                ]
+            },
+            {
+                "name": "directory_entries_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "publication_views_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": "a"
+                        },
+                        "value": 2
+                    }
+                ]
+            },
+            {
+                "name": "file_downloads_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            }
+        ],
+        "searches": [
+            {
+                "query": {
+                    "@self": {
+                        "register": 2,
+                        "schema": 11
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            },
+            {
+                "query": {
+                    "@self": {
+                        "register": 3,
+                        "schema": 11
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            },
+            {
+                "query": {
+                    "@self": {
+                        "register": 2,
+                        "schema": 14
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            },
+            {
+                "query": {
+                    "@self": {
+                        "register": 5,
+                        "schema": 14
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            },
+            {
+                "query": {
+                    "@self": {
+                        "register": 3,
+                        "schema": 0
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            },
+            {
+                "query": {
+                    "@self": {
+                        "register": 2,
+                        "schema": 21
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            },
+            {
+                "query": {
+                    "@self": {
+                        "register": 3,
+                        "schema": 22
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            },
+            {
+                "query": {
+                    "@self": {
+                        "register": 3,
+                        "schema": 23
+                    }
+                },
+                "_rbac": false,
+                "_multitenancy": false
+            }
+        ],
+        "log": [
+            {
+                "level": "warning",
+                "message": "[OpenCatalogiMetricsProvider] Object aggregation failed",
+                "context": {
+                    "schema": 11,
+                    "register": 3,
+                    "error": "search down"
+                }
+            }
+        ]
+    },
+    "schema mapper fails": {
+        "families": [
+            {
+                "name": "publications_total",
+                "samples": []
+            },
+            {
+                "name": "catalogs_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "listings_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "directory_entries_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "publication_views_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "file_downloads_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            }
+        ],
+        "searches": [],
+        "log": [
+            {
+                "level": "warning",
+                "message": "[OpenCatalogiMetricsProvider] Failed to resolve schemas",
+                "context": {
+                    "needle": "ublicati",
+                    "error": "mapper down"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "[OpenCatalogiMetricsProvider] Failed to resolve schemas",
+                "context": {
+                    "needle": "atalog",
+                    "error": "mapper down"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "[OpenCatalogiMetricsProvider] Failed to resolve schemas",
+                "context": {
+                    "needle": "isting",
+                    "error": "mapper down"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "[OpenCatalogiMetricsProvider] Failed to resolve schemas",
+                "context": {
+                    "needle": "irectory",
+                    "error": "mapper down"
+                }
+            },
+            {
+                "level": "warning",
+                "message": "[OpenCatalogiMetricsProvider] Failed to resolve schemas",
+                "context": {
+                    "needle": "sageCounter",
+                    "error": "mapper down"
+                }
+            }
+        ]
+    },
+    "register mapper fails": {
+        "families": [
+            {
+                "name": "publications_total",
+                "samples": []
+            },
+            {
+                "name": "catalogs_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "listings_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "directory_entries_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "publication_views_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "file_downloads_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            }
+        ],
+        "searches": [],
+        "log": [
+            {
+                "level": "warning",
+                "message": "[OpenCatalogiMetricsProvider] Failed to map schemas to registers",
+                "context": {
+                    "error": "mapper down"
+                }
+            }
+        ]
+    },
+    "no object service": {
+        "families": [
+            {
+                "name": "publications_total",
+                "samples": []
+            },
+            {
+                "name": "catalogs_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "listings_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "directory_entries_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "publication_views_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "file_downloads_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            }
+        ],
+        "searches": [],
+        "log": []
+    },
+    "no mappers": {
+        "families": [
+            {
+                "name": "publications_total",
+                "samples": []
+            },
+            {
+                "name": "catalogs_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "listings_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "directory_entries_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "publication_views_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "file_downloads_total",
+                "samples": [
+                    {
+                        "labels": {
+                            "catalog": ""
+                        },
+                        "value": 0
+                    }
+                ]
+            }
+        ],
+        "searches": [],
+        "log": []
+    }
+}
