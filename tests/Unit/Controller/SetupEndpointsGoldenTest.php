@@ -24,18 +24,18 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
-use OCA\OpenCatalogi\Controller\Setup\SetupActions;
-use OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps;
-use OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps;
-use OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps;
-use OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep;
-use OCA\OpenCatalogi\Controller\Setup\SetupStepRunner;
-use OCA\OpenCatalogi\Controller\Setup\SetupStatusReport;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Controller\Setup\SetupActions;
+use OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep;
+use OCA\OpenCatalogi\Controller\Setup\SetupStatusReport;
+use OCA\OpenCatalogi\Controller\Setup\SetupStepRunner;
 use OCA\OpenCatalogi\Controller\SetupController;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;

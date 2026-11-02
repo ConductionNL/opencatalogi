@@ -32,8 +32,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
-use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;

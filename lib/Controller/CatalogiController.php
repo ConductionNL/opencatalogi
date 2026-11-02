@@ -26,8 +26,8 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
-use OCA\OpenCatalogi\Service\CallerScope;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Service\CallerScope;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;

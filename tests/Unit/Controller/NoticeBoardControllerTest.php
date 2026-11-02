@@ -27,12 +27,12 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
-use OCA\OpenCatalogi\Controller\NoticeBoardController;
 use OCA\OpenCatalogi\Controller\BannerDismissals;
+use OCA\OpenCatalogi\Controller\NoticeBoardController;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;

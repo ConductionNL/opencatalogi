@@ -22,10 +22,10 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\ThemesController;
-use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\TestCase;
