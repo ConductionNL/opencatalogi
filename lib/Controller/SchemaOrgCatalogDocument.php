@@ -3,8 +3,8 @@
 /**
  * Builds the schema.org DataCatalog node of a catalog found by its slug.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,7 +20,7 @@
  * @spec openspec/specs/structured-data-discoverability/spec.md
  */
 
-namespace OCA\OpenCatalogi\Service;
+namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;

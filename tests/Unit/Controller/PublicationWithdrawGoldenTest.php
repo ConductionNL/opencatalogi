@@ -28,9 +28,9 @@ use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\PublicationStateController;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
-use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
@@ -49,7 +49,7 @@ use Psr\Container\ContainerInterface;
  * @covers \OCA\OpenCatalogi\Controller\PublicationStateController
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
- * @uses   \OCA\OpenCatalogi\Service\RegisterAccess
+ * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
  */
 class PublicationWithdrawGoldenTest extends TestCase {
 

@@ -28,9 +28,9 @@ use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\DepublicationController;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -48,7 +48,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\DepublicationController
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
- * @uses   \OCA\OpenCatalogi\Service\RegisterAccess
+ * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
  */
 class DepublicationGoldenTest extends TestCase {
 
@@ -139,6 +139,24 @@ class DepublicationGoldenTest extends TestCase {
 		$this->assertSame($recorded[$name], json_decode((string)json_encode($actual), true));
 
 	}//end testActionMatchesTheRecording()
+
+	/**
+	 * An unset register answers 503 with a detail that names the setting and holds no server path.
+	 *
+	 * @return void
+	 */
+	public function testAnUnsetRegisterAnswersWithoutAServerPath(): void {
+		$case = ['action' => 'depublish', 'fail' => 'config', 'params' => ['publication' => ['id' => 'p-1']]];
+		$response = $this->controller(case: $case)->depublish();
+		$detail = (string)($response->getData()['detail'] ?? '');
+
+		$this->assertSame(expected: 503, actual: $response->getStatus());
+		$this->assertSame(expected: 'register_not_configured', actual: $response->getData()['error']);
+		$this->assertStringContainsString(needle: 'publication_register', haystack: $detail);
+		$this->assertStringNotContainsString(needle: '.php', haystack: $detail);
+		$this->assertStringNotContainsString(needle: dirname(path: __DIR__, levels: 3), haystack: $detail);
+
+	}//end testAnUnsetRegisterAnswersWithoutAServerPath()
 
 	/**
 	 * The controller over recording doubles for one case.

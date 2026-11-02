@@ -37,7 +37,7 @@ use OCP\AppFramework\Http\JSONResponse;
  * Resolve `<context>_register` / `<context>_schema` config via OpenRegister.
  *
  * Consuming controllers MUST expose a `$registers` property that answers
- * registerConfiguration() (OpenRegisterLookup or RegisterAccess).
+ * registerConfiguration() (OpenRegisterLookupInterface or RegisterAccess).
  */
 trait ResolvesRegisterConfiguration {
 	/**

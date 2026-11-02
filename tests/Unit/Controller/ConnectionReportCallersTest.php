@@ -33,14 +33,14 @@ use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
-use OCA\OpenCatalogi\Service\Setup\SetupActions;
-use OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps;
-use OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps;
-use OCA\OpenCatalogi\Service\Setup\SetupFederationSteps;
-use OCA\OpenCatalogi\Service\Setup\SetupSettingsStep;
-use OCA\OpenCatalogi\Service\Setup\SetupStepRunner;
-use OCA\OpenCatalogi\Service\Setup\SetupStatusReport;
 use OCA\OpenCatalogi\Controller\SettingsController;
+use OCA\OpenCatalogi\Controller\Setup\SetupActions;
+use OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep;
+use OCA\OpenCatalogi\Controller\Setup\SetupStatusReport;
+use OCA\OpenCatalogi\Controller\Setup\SetupStepRunner;
 use OCA\OpenCatalogi\Controller\SetupController;
 use OCA\OpenCatalogi\Controller\WooReadinessController;
 use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
@@ -71,13 +71,13 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\WooReadinessController
  * @covers \OCA\OpenCatalogi\Controller\SettingsController
  * @covers \OCA\OpenCatalogi\Controller\SetupController
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupActions
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupFederationSteps
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupSettingsStep
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupStatusReport
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupStepRunner
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupActions
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupStatusReport
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupStepRunner
  * @covers \OCA\OpenCatalogi\Service\BroadcastService
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
  * @uses \OCA\OpenCatalogi\Service\Broadcast\BroadcastResult
