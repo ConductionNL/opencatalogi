@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\NoticeBoardController;
+use OCA\OpenCatalogi\Service\BannerDismissals;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -82,9 +83,8 @@ class NoticeBoardControllerTest extends TestCase {
 		$this->controller = new NoticeBoardController(
 			'opencatalogi',
 			$this->request,
-			$this->config,
 			$this->userSession,
-			new BannerService(),
+			new BannerDismissals($this->config, new BannerService()),
 			new NoticeBoardService(),
 			new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
 		);
