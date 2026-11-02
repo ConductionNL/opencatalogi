@@ -23,7 +23,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for WooReadinessService.
  *
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
- * @uses \OCA\OpenCatalogi\Service\SitemapStandards
+ * @covers \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses \OCA\OpenCatalogi\Service\CatalogReadinessChecks
  */
 class WooReadinessServiceTest extends TestCase {

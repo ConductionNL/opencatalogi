@@ -42,7 +42,7 @@ use PHPUnit\Framework\TestCase;
  * Golden test for WooReadinessService::runCheck.
  *
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
- * @uses \OCA\OpenCatalogi\Service\SitemapStandards
+ * @covers \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses   \OCA\OpenCatalogi\Service\CatalogReadinessChecks
  */
 class WooReadinessGoldenTest extends TestCase {

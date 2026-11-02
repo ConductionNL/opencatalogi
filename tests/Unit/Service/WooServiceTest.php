@@ -242,7 +242,7 @@ class WooFakeTaskSequenceMapper {
 
 /**
  * @covers \OCA\OpenCatalogi\Service\WooService
- * @uses \OCA\OpenCatalogi\Service\RegisterBindings
+ * @covers \OCA\OpenCatalogi\Service\RegisterBindings
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
