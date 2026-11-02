@@ -33,9 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -68,10 +66,7 @@ class InspectionController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param InspectionServiceInterface $inspectionService The inspection windows.
-	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+	 * @param InspectionRecords $registers The inspection windows, and their records in the configured register pair.
 	 */
 	public function __construct(
 		$appName,
@@ -79,8 +74,7 @@ class InspectionController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly InspectionServiceInterface $inspectionService,
-		private readonly RegisterAccess $registers,
+		private readonly InspectionRecords $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -110,19 +104,6 @@ class InspectionController extends Controller {
 	}//end preflightedCors()
 
 	/**
-	 * The register and schema the inspections live in.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 */
-	private function inspectionConfiguration(): array {
-		return $this->resolveRegisterConfiguration(
-			registerKey: 'publication_register',
-			schemaKey: 'inspection_schema'
-		);
-
-	}//end inspectionConfiguration()
-
-	/**
 	 * Open an inspection on a record, choosing its documents.
 	 *
 	 * @return JSONResponse The inspection, or the refusal.
@@ -146,10 +127,8 @@ class InspectionController extends Controller {
 		}
 
 		try {
-			$inspection = $this->inspectionService->open(
-				record: $record,
-				recordType: $recordType,
-				documents: array_map('strval', $documents),
+			$inspection = $this->registers->open(
+				parameters: ['record' => $record, 'recordType' => $recordType, 'documents' => $documents],
 				openedBy: $openedBy
 			);
 		} catch (\DomainException $e) {
@@ -160,13 +139,7 @@ class InspectionController extends Controller {
 		}
 
 		try {
-			$config = $this->inspectionConfiguration();
-			$saved = $this->registers->getObjectService()->saveObject(
-				object: $inspection,
-				extend: [],
-				register: $config['register'],
-				schema: $config['schema']
-			);
+			$saved = $this->registers->store(inspection: $inspection);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
 				data: ['error' => 'register-unreadable', 'message' => $this->l10n->t('The inspection could not be stored.')],
@@ -176,7 +149,7 @@ class InspectionController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
+		return new JSONResponse($this->registers->toArray(object: $saved), Http::STATUS_CREATED);
 
 	}//end open()
 
@@ -197,14 +170,7 @@ class InspectionController extends Controller {
 		$token = (string)$this->request->getParam('token', '');
 
 		try {
-			$config = $this->inspectionConfiguration();
-			$inspection = $this->asArray(
-				object: $this->registers->getObjectService()->find(
-					id: $id,
-					register: $config['register'],
-					schema: $config['schema']
-				)
-			);
+			$inspection = $this->registers->find(id: $id);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
 				response: new JSONResponse(
@@ -219,7 +185,7 @@ class InspectionController extends Controller {
 		}
 
 		try {
-			$outcome = $this->inspectionService->resolveLink(inspection: $inspection, token: $token);
+			$outcome = $this->registers->resolveLink(inspection: $inspection, token: $token);
 		} catch (\DomainException $e) {
 			// An unreadable window refuses rather than defaulting either way.
 			return $this->withCors(
@@ -276,4 +242,5 @@ class InspectionController extends Controller {
 		return $response;
 
 	}//end withCors()
+
 }//end class

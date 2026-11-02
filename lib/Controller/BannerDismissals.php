@@ -3,8 +3,8 @@
 /**
  * The banners a user sees, without the ones that user dismissed.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service;
+namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;

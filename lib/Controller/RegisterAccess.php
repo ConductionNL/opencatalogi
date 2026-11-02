@@ -3,8 +3,8 @@
 /**
  * Configured register pairs and the service catalogue's ObjectService, for controllers.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,8 +22,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service;
+namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 
 /**
@@ -38,11 +39,11 @@ class RegisterAccess {
 	/**
 	 * Constructor.
 	 *
-	 * @param OpenRegisterLookup               $openRegister Resolves the configured register pairs.
+	 * @param OpenRegisterLookupInterface      $openRegister Resolves the configured register pairs.
 	 * @param ServiceCatalogueServiceInterface $catalogue    Reaches the ObjectService.
 	 */
 	public function __construct(
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 		private readonly ServiceCatalogueServiceInterface $catalogue,
 	) {
 

@@ -27,8 +27,8 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
+use OCA\OpenCatalogi\Controller\SchemaOrgCatalogDocument;
 use OCA\OpenCatalogi\Controller\SchemaOrgController;
-use OCA\OpenCatalogi\Service\SchemaOrgCatalogDocument;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -40,7 +40,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for SchemaOrgController::catalog().
  *
  * @covers \OCA\OpenCatalogi\Controller\SchemaOrgController
- * @covers \OCA\OpenCatalogi\Service\SchemaOrgCatalogDocument
+ * @covers \OCA\OpenCatalogi\Controller\SchemaOrgCatalogDocument
  * @uses   \OCA\OpenCatalogi\Controller\AnswersCrossOriginReadRequests
  * @uses   \OCA\OpenCatalogi\Controller\CorsAllowlist
  */

@@ -31,13 +31,8 @@ namespace OCA\OpenCatalogi\Service;
 use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
-use OCP\App\IAppManager;
-use OCP\IAppConfig;
-use OCP\IURLGenerator;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use RuntimeException;
 
 /**
  * Service for generating DIWOO-compliant sitemaps.
@@ -69,30 +64,19 @@ class SitemapService implements SitemapServiceInterface {
 	private const CONFIG_MAX_PER_PAGE = 'sitemap_max_per_page';
 
 	/**
-	 * The app id used for IAppConfig reads.
-	 *
-	 * @var string
-	 */
-	private const APP_NAME = 'opencatalogi';
-
-	/**
 	 * Constructor for SitemapService.
 	 *
-	 * @param ContainerInterface $container Server container for dependency injection
-	 * @param IAppManager $appManager App manager for checking installed apps
+	 * @param OpenRegisterLookup $openRegister The guarded OpenRegister services
 	 * @param SettingsService $settingsService The settings service
-	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator
-	 * @param IAppConfig $config App configuration (operator-tunable page size)
+	 * @param InstanceSettings $instance The base URL and app configuration (operator-tunable page size)
 	 * @param TooiVocabularyService $tooiVocabulary The TOOI value-list resolver
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly SettingsService $settingsService,
-		private readonly IURLGenerator $urlGenerator,
-		private readonly IAppConfig $config,
+		private readonly InstanceSettings $instance,
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
@@ -134,7 +118,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Promote hardcoded constants)
 	 */
 	private function getMaxPerPage(): int {
-		$value = $this->config->getValueInt(self::APP_NAME, self::CONFIG_MAX_PER_PAGE, self::DEFAULT_MAX_PER_PAGE);
+		$value = $this->instance->intValue(self::CONFIG_MAX_PER_PAGE, self::DEFAULT_MAX_PER_PAGE);
 		return max(1, $value);
 	}//end getMaxPerPage()
 
@@ -145,11 +129,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 */
 	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		}
-
-		throw new RuntimeException('OpenRegister service is not available.');
+		return $this->openRegister->installedService('OCA\OpenRegister\Service\ObjectService', 'OpenRegister service is not available.');
 	}//end getObjectService()
 
 	/**
@@ -159,11 +139,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 */
 	private function getFileService(): ?\OCA\OpenRegister\Service\FileService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\FileService');
-		}
-
-		throw new RuntimeException('OpenRegister FileService is not available.');
+		return $this->openRegister->installedService('OCA\OpenRegister\Service\FileService', 'OpenRegister FileService is not available.');
 	}//end getFileService()
 
 	/**
@@ -198,7 +174,7 @@ class SitemapService implements SitemapServiceInterface {
 			return $builder->response(sitemaps: []);
 		}
 
-		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
+		$baseUrl = $this->instance->baseUrl();
 		return $builder->response(
 			sitemaps: $builder->entries(
 				queries: $request->queries,

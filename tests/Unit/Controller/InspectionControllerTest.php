@@ -27,10 +27,11 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\InspectionController;
+use OCA\OpenCatalogi\Controller\InspectionRecords;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
-use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
@@ -101,8 +102,10 @@ class InspectionControllerTest extends TestCase {
 			$this->config,
 			$this->l10n,
 			$this->userSession,
-			new InspectionService(),
-			new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
+			new InspectionRecords(
+				new InspectionService(),
+				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
+			)
 		);
 
 	}//end setUp()
@@ -392,5 +395,60 @@ class InspectionControllerTest extends TestCase {
 		$this->assertSame('register-unreadable', $response->getData()['error']);
 
 	}//end testAnInspectionThatCannotBeStoredAnswers503()
+
+	/**
+	 * Numeric document ids are stored as strings.
+	 */
+	public function testNumericDocumentIdsAreStoredAsStrings(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+				'documents' => [7, 'doc-b'],
+			]
+		);
+
+		$response = $this->controller->open();
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame(['7', 'doc-b'], $store->saved[0]['documents']);
+
+	}//end testNumericDocumentIdsAreStoredAsStrings()
+
+	/**
+	 * A stored object in an envelope answers its properties with the envelope id.
+	 */
+	public function testAnEnvelopedStoredInspectionAnswersItsPropertiesWithTheEnvelopeId(): void {
+		$store = new class {
+			/**
+			 * Answer the saved inspection inside an OpenRegister envelope.
+			 *
+			 * @param array<string, mixed> $object   The inspection.
+			 * @param array<int, string>   $extend   Unused here.
+			 * @param string               $register Unused here.
+			 * @param string               $schema   Unused here.
+			 *
+			 * @return array<string, mixed> The envelope.
+			 */
+			public function saveObject(array $object, array $extend = [], string $register = '', string $schema = ''): array {
+				return ['id' => 'inspection-7', 'object' => ['termDays' => $object['termDays']]];
+			}
+		};
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+				'documents' => ['doc-a'],
+			]
+		);
+
+		$response = $this->controller->open();
+
+		$this->assertSame(['termDays' => 42, 'id' => 'inspection-7'], $response->getData());
+
+	}//end testAnEnvelopedStoredInspectionAnswersItsPropertiesWithTheEnvelopeId()
 
 }//end class

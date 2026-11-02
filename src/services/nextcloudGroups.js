@@ -66,15 +66,11 @@ export async function fetchNextcloudGroups() {
 		const workingEndpoint = '/ocs/v1.php/cloud/groups?format=json'
 
 		const response = await axios.get(generateUrl(workingEndpoint))
+		const groups = response.data?.ocs?.data?.groups
 
-		if (
-			response.data
-			&& response.data.ocs
-			&& response.data.ocs.data
-			&& response.data.ocs.data.groups
-		) {
+		if (groups) {
 			// Transform the groups into the format expected by the dropdown
-			return response.data.ocs.data.groups.map((group) => ({
+			return groups.map((group) => ({
 				label: group,
 				value: group,
 			}))
@@ -137,31 +133,66 @@ function fallbackGroups() {
 	return FALLBACK_GROUPS.map((group) => ({ ...group }))
 }
 
+/**
+ * Whether the cached groups are still valid at a moment.
+ *
+ * @param {number} now The moment in milliseconds
+ * @return {boolean} True while the cache holds groups younger than CACHE_DURATION
+ * @spec openspec/specs/content-management/spec.md
+ */
+function cacheIsFresh(now) {
+	return Boolean(
+		cachedGroups && cacheTimestamp && now - cacheTimestamp < CACHE_DURATION,
+	)
+}
+
+/**
+ * Whether a group list holds at least one group.
+ *
+ * @param {Array|null} groups The group list
+ * @return {boolean} True when the list is not empty
+ * @spec openspec/specs/content-management/spec.md
+ */
+function hasGroups(groups) {
+	return Boolean(groups && groups.length > 0)
+}
+
+/**
+ * Fetch fresh groups into the cache, or cache the fallback groups when the API has none.
+ *
+ * @param {number} now The moment in milliseconds
+ * @return {Promise<Array<{label: string, value: string}>>} The cached groups
+ * @spec openspec/specs/content-management/spec.md
+ */
+async function refreshGroups(now) {
+	cachedGroups = await fetchNextcloudGroups()
+	cacheTimestamp = now
+
+	// If we got groups from the API, return them
+	if (hasGroups(cachedGroups)) {
+		return cachedGroups
+	}
+
+	cachedGroups = fallbackGroups()
+	cacheTimestamp = now
+	return cachedGroups
+}
+
 /** @spec openspec/specs/content-management/spec.md */
 export async function getNextcloudGroups() {
 	const now = Date.now()
 
 	// Return cached groups if they're still valid
-	if (cachedGroups && cacheTimestamp && now - cacheTimestamp < CACHE_DURATION) {
+	if (cacheIsFresh(now)) {
 		return cachedGroups
 	}
 
 	// Fetch fresh groups and update cache
 	try {
-		cachedGroups = await fetchNextcloudGroups()
-		cacheTimestamp = now
-
-		// If we got groups from the API, return them
-		if (cachedGroups && cachedGroups.length > 0) {
-			return cachedGroups
-		}
-
-		cachedGroups = fallbackGroups()
-		cacheTimestamp = now
-		return cachedGroups
+		return await refreshGroups(now)
 	} catch (error) {
 		// Return cached groups if available, even if expired
-		if (cachedGroups && cachedGroups.length > 0) {
+		if (hasGroups(cachedGroups)) {
 			return cachedGroups
 		}
 
@@ -201,15 +232,24 @@ export function isUserLoggedIn() {
 
 		// Fallback: check if we have any user-related data in localStorage
 		// This is not secure but provides a basic indication
-		const hasUserData =
-			localStorage.getItem('nc_username')
-			|| localStorage.getItem('opencatalogi_user')
-			|| sessionStorage.getItem('nc_username')
-
-		return !!hasUserData
+		return !!storedUserName()
 	} catch (error) {
 		return false
 	}
+}
+
+/**
+ * The user name a page stored in the browser, if any.
+ *
+ * @return {string|null} The first stored user name, or null
+ * @spec openspec/specs/content-management/spec.md
+ */
+function storedUserName() {
+	return (
+		localStorage.getItem('nc_username')
+		|| localStorage.getItem('opencatalogi_user')
+		|| sessionStorage.getItem('nc_username')
+	)
 }
 
 /**

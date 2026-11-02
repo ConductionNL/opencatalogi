@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -41,7 +42,7 @@ use RuntimeException;
  *
  * @spec exclude pure framework plumbing: the runtime-guarded OpenRegister dependency (ADR-083).
  */
-class OpenRegisterLookup {
+class OpenRegisterLookup implements OpenRegisterLookupInterface {
 
 	/**
 	 * Constructor.
@@ -177,11 +178,12 @@ class OpenRegisterLookup {
 		$register = $appConfig->getValueString(AppIdentity::APP_ID, $registerKey, '');
 		$schema = $appConfig->getValueString(AppIdentity::APP_ID, $schemaKey, '');
 
-		if ($register === '' || $schema === '') {
-			throw new MissingConfigException(
-				'Register configuration is not set for ' . $registerKey . ' / ' . $schemaKey
-				. '. Run the OpenCatalogi setup wizard or POST to /api/settings/load to initialise registers and schemas.'
-			);
+		if ($register === '') {
+			throw new MissingConfigException(appId: AppIdentity::APP_ID, configKey: $registerKey);
+		}
+
+		if ($schema === '') {
+			throw new MissingConfigException(appId: AppIdentity::APP_ID, configKey: $schemaKey);
 		}
 
 		return [
@@ -190,4 +192,25 @@ class OpenRegisterLookup {
 		];
 
 	}//end configuredRegister()
+
+	/**
+	 * An OpenRegister service from the container when OpenRegister is among the installed apps.
+	 *
+	 * @param string $serviceId   The container id of the service.
+	 * @param string $unavailable The message of the refusal when OpenRegister is not installed.
+	 *
+	 * @return mixed The service.
+	 *
+	 * @throws RuntimeException When OpenRegister is not installed.
+	 *
+	 * @spec exclude pure framework plumbing: the runtime-guarded OpenRegister dependency (ADR-083).
+	 */
+	public function installedService(string $serviceId, string $unavailable): mixed {
+		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
+			return $this->container->get($serviceId);
+		}
+
+		throw new RuntimeException($unavailable);
+
+	}//end installedService()
 }//end class
