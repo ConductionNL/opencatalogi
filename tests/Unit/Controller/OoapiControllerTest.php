@@ -145,7 +145,7 @@ class OoapiControllerTest extends TestCase {
 				if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 					return new class {
 						public function resolveRegisterId(string $a, string $k): string {
-							throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException('unconfigured: ' . $k);
+							throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException($a, $k);
 						}
 
 						public function resolveSchemaId(string $a, string $k): string {
@@ -161,6 +161,10 @@ class OoapiControllerTest extends TestCase {
 		$response = $this->controller->courses('hva-onderwijs');
 
 		$this->assertSame(503, $response->getStatus());
+		$this->assertSame(
+			['error' => 'register_not_configured', 'detail' => "Missing config 'ooapi_courses_register' for app 'opencatalogi'"],
+			$response->getData()
+		);
 	}
 
 	public function testCoursesSuccessReturnsPaginatedEnvelope(): void {
