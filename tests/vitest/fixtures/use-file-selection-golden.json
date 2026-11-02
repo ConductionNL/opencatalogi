@@ -1,0 +1,5963 @@
+{
+	"multiple/empty/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/empty/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/empty/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/empty/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "d.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "c.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"new.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/empty/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/empty/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/empty/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "b.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/empty/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "d.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"a.txt",
+						"new.txt",
+						"c.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/allDuplicates": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [
+						"a.txt",
+						"b.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "c.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"a.txt",
+						"new.txt",
+						"d.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "b.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"a.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/throwing/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/throwing/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/throwing/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/throwing/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "d.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "c.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"new.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/throwing/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/throwing/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/throwing/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "b.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/throwing/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "d.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "c.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"new.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "b.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/change": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 2,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/empty/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/empty/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/empty/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/empty/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/empty/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/empty/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/empty/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/empty/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/related/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/related/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/related/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/related/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/related/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/related/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/related/allDuplicates": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [
+						"a.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/related/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/allDuplicates": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [
+						"a.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/throwing/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/throwing/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/throwing/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/throwing/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/throwing/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/throwing/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/throwing/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/throwing/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/change": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 2,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/empty/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/empty/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/empty/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/empty/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "d.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "c.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"new.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/empty/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/empty/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/empty/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "b.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/empty/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "d.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"a.txt",
+						"new.txt",
+						"c.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/allDuplicates": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [
+						"a.txt",
+						"b.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "c.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"a.txt",
+						"new.txt",
+						"d.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "b.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"a.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/throwing/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/throwing/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/throwing/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/throwing/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "d.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "c.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"new.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/throwing/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/throwing/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/throwing/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "b.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/throwing/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/none": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/emptyArray": {
+		"steps": [
+			{
+				"files": null,
+				"rejected": {
+					"names": [],
+					"seq": 0
+				}
+			}
+		],
+		"calls": {
+			"drop": 0,
+			"select": 0
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/single": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/several": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "new.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "d.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "c.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "other.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"new.txt"
+					],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/fileList": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/twoDrops": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/allDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "a.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "b.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/dropThenAllDuplicates": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/change": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			},
+			{
+				"files": [
+					{
+						"name": "one.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					},
+					{
+						"name": "two.txt",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [
+						"one.txt"
+					],
+					"seq": 2
+				}
+			}
+		],
+		"calls": {
+			"drop": 2,
+			"select": 2
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 2,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"no callbacks": [
+		{
+			"name": "a.txt",
+			"type": "text/plain",
+			"tags": [],
+			"status": "pending",
+			"isFile": true
+		}
+	],
+	"reset and set": {
+		"out": [
+			[
+				{
+					"name": "b.txt",
+					"type": "text/plain",
+					"tags": [],
+					"status": "pending",
+					"isFile": true
+				}
+			],
+			null,
+			null,
+			[
+				"raw"
+			]
+		],
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"setActiveObject",
+				"attachment",
+				null
+			]
+		]
+	}
+}
