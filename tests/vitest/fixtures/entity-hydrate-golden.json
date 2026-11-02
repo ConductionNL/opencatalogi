@@ -1,0 +1,204 @@
+{
+	"attachment empty": {
+		"accessUrl": "",
+		"anonymization": {
+			"anonymized": false,
+			"results": ""
+		},
+		"description": "",
+		"downloadUrl": "",
+		"extension": "",
+		"hash": "",
+		"id": "",
+		"labels": [],
+		"language": {
+			"code": "",
+			"level": ""
+		},
+		"license": "",
+		"modified": "",
+		"published": null,
+		"reference": "",
+		"size": "",
+		"status": "Concept",
+		"summary": "",
+		"title": "",
+		"type": "",
+		"versionOf": ""
+	},
+	"attachment falsy": {
+		"accessUrl": "",
+		"anonymization": {
+			"anonymized": false,
+			"results": ""
+		},
+		"description": "",
+		"downloadUrl": "",
+		"extension": "",
+		"hash": "",
+		"id": "0",
+		"labels": [],
+		"language": {
+			"code": "",
+			"level": ""
+		},
+		"license": "",
+		"modified": "",
+		"published": null,
+		"reference": "",
+		"size": "",
+		"status": "Concept",
+		"summary": "",
+		"title": "",
+		"type": "",
+		"versionOf": ""
+	},
+	"attachment full": {
+		"accessUrl": "https://a",
+		"anonymization": {
+			"anonymized": true,
+			"results": "done"
+		},
+		"description": "Description",
+		"downloadUrl": "https://d",
+		"extension": "pdf",
+		"hash": "abc",
+		"id": "42",
+		"labels": [
+			"a",
+			"b"
+		],
+		"language": {
+			"code": "nl",
+			"level": "B1"
+		},
+		"license": "EUPL-1.2",
+		"modified": "2026-01-03",
+		"published": "<Date 2026-01-02T03:04:05.000Z>",
+		"reference": "ref-1",
+		"size": "12 kB",
+		"status": "Published",
+		"summary": "Summary",
+		"title": "Title",
+		"type": "application/pdf",
+		"versionOf": "v0"
+	},
+	"attachment stringId": {
+		"accessUrl": "",
+		"anonymization": {
+			"anonymized": false
+		},
+		"description": "",
+		"downloadUrl": "",
+		"extension": "",
+		"hash": "",
+		"id": "uuid-1",
+		"labels": [],
+		"language": {
+			"code": "",
+			"level": ""
+		},
+		"license": "",
+		"modified": "",
+		"published": null,
+		"reference": "",
+		"size": "",
+		"status": "Concept",
+		"summary": "",
+		"title": "",
+		"type": "",
+		"versionOf": ""
+	},
+	"catalogi empty": {
+		"description": "",
+		"filters": {},
+		"hasOoapi": false,
+		"hasWooSitemap": false,
+		"id": "",
+		"image": "",
+		"listed": false,
+		"organization": "",
+		"registers": [],
+		"schemas": [],
+		"showWithheld": false,
+		"slug": "",
+		"status": "development",
+		"summary": "",
+		"title": ""
+	},
+	"catalogi falsy": {
+		"description": "",
+		"filters": {},
+		"hasOoapi": false,
+		"hasWooSitemap": false,
+		"id": "0",
+		"image": "",
+		"listed": false,
+		"organization": "",
+		"registers": [],
+		"schemas": [],
+		"showWithheld": false,
+		"slug": "",
+		"status": "development",
+		"summary": "",
+		"title": ""
+	},
+	"catalogi full": {
+		"description": "D",
+		"filters": {
+			"a": 1
+		},
+		"hasOoapi": true,
+		"hasWooSitemap": true,
+		"id": "7",
+		"image": "img.png",
+		"listed": true,
+		"organization": "org-1",
+		"registers": [
+			1,
+			2
+		],
+		"schemas": [
+			3
+		],
+		"showWithheld": true,
+		"slug": "catalog",
+		"staffAccess": {
+			"restricted": true,
+			"readGroups": [
+				"r"
+			],
+			"editGroups": [
+				"e"
+			]
+		},
+		"status": "production",
+		"summary": "S",
+		"title": "Catalog"
+	},
+	"catalogi staffAccessPartial": {
+		"description": "",
+		"filters": {},
+		"hasOoapi": false,
+		"hasWooSitemap": false,
+		"id": "",
+		"image": "",
+		"listed": false,
+		"organization": "",
+		"registers": [],
+		"schemas": [],
+		"showWithheld": false,
+		"slug": "",
+		"staffAccess": {
+			"restricted": false,
+			"readGroups": [],
+			"editGroups": []
+		},
+		"status": "development",
+		"summary": "",
+		"title": ""
+	},
+	"catalogi undefined": {
+		"thrown": "TypeError"
+	}
+}

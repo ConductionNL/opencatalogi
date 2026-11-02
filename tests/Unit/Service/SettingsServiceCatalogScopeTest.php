@@ -39,6 +39,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Service\SettingsService
  * @covers \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
  * @uses \OCA\OpenCatalogi\Service\CatalogScopeBackfill
+ * @uses \OCA\OpenCatalogi\Service\CatalogScopeLookups
  */
 class SettingsServiceCatalogScopeTest extends TestCase {
 

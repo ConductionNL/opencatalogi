@@ -29,7 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
-use OCA\OpenCatalogi\Contract\WooRequestStoreInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCP\IAppConfig;
@@ -40,7 +40,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
-class WooRequestStore implements WooRequestStoreInterface {
+class WooRequestStore implements InformationRequestStoreInterface {
 	use ReadsObjectProperties;
 
 	/**

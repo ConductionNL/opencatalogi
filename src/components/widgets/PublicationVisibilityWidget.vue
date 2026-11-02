@@ -58,6 +58,10 @@ import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
 import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublicationDialog.vue'
+import {
+	documentOptions,
+	filesRouteParams,
+} from '../../services/publicationVisibility.js'
 
 /**
  * Publish now, withdraw with a reason, and publish again (REQ-PPW-002/003/004).
@@ -178,26 +182,18 @@ export default {
 			}
 
 			try {
-				const schema = this.schema || this.ctx.schema || 'publication'
 				const { data } = await axios.get(
 					generateUrl(
 						'/apps/openregister/api/objects/{register}/{schema}/{id}/files',
-						{
-							register:
-								this.register || this.ctx.register || 'publication',
-							schema:
-								typeof schema === 'string'
-									? schema
-									: schema.slug || schema.id,
+						filesRouteParams({
+							register: this.register,
+							schema: this.schema,
+							ctx: this.ctx,
 							id: this.resolvedObjectId,
-						},
+						}),
 					),
 				)
-				const files = Array.isArray(data) ? data : data.results || []
-				this.documents = files.map((file) => ({
-					id: file.id,
-					label: file.title || file.name || String(file.id),
-				}))
+				this.documents = documentOptions(data)
 			} catch {
 				this.documents = []
 			}

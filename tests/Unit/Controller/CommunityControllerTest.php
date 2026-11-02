@@ -30,8 +30,11 @@ use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
+use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -86,13 +89,12 @@ class CommunityControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
 			$l10n,
 			$this->userSession,
 			new StatusPageService(),
 			new AtomFeedService(new PublicationRuleService(), new NoticeBoardService()),
 			new MarkupRenderService(),
-			$this->objects
+			new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
 		);
 
 	}//end setUp()

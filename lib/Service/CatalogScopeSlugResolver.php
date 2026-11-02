@@ -89,32 +89,24 @@ class CatalogScopeSlugResolver {
 	 *
 	 * @param array<int, mixed> $registers The scope's registers as stored.
 	 * @param array<int, mixed> $schemas The scope's schemas as stored.
-	 * @param callable(string): (int|string|null) $findRegisterId Looks a register slug up.
-	 * @param callable(int): array<int, mixed> $schemaIdsOfRegister The schema ids a register lists.
-	 * @param callable(int): (string|null) $schemaSlugOf The slug of a schema id.
+	 * @param CatalogScopeLookups $lookups The register and schema lookups.
 	 *
 	 * @return array{registers: array<int, mixed>, schemas: array<int, mixed>, changed: bool, pending: list<string>}
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
-	public function resolveScope(
-		array $registers,
-		array $schemas,
-		callable $findRegisterId,
-		callable $schemaIdsOfRegister,
-		callable $schemaSlugOf,
-	): array {
-		[$registers, $registersChanged] = $this->resolve(entries: $registers, resolve: $findRegisterId);
+	public function resolveScope(array $registers, array $schemas, CatalogScopeLookups $lookups): array {
+		[$registers, $registersChanged] = $this->resolve(entries: $registers, resolve: $lookups->findRegisterId);
 
 		$registerIds = array_values(array_map('intval', array_filter($registers, 'is_numeric')));
 
 		$slugToId = null;
-		$lookup = function (string $slug) use (&$slugToId, $registerIds, $schemaIdsOfRegister, $schemaSlugOf): ?int {
+		$lookup = function (string $slug) use (&$slugToId, $registerIds, $lookups): ?int {
 			if ($slugToId === null) {
 				$slugToId = $this->schemaSlugMap(
 					registerIds: $registerIds,
-					schemaIdsOfRegister: $schemaIdsOfRegister,
-					schemaSlugOf: $schemaSlugOf
+					schemaIdsOfRegister: $lookups->schemaIdsOfRegister,
+					schemaSlugOf: $lookups->schemaSlugOf
 				);
 			}
 

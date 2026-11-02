@@ -346,10 +346,10 @@
 	{
 		"row": "svc-extract",
 		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"decision": "decided-no",
+		"reason": "Code removed 2026-09-29 with svc-articles (decided no); DECISIONS row 268.",
 		"change": null,
-		"decidedOn": "2026-09-27"
+		"decidedOn": "2026-10-30"
 	},
 	{
 		"row": "svc-form-link",
@@ -378,10 +378,10 @@
 	{
 		"row": "svc-verdict",
 		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"decision": "decided-no",
+		"reason": "Code removed 2026-09-29 with svc-articles (decided no); DECISIONS row 268.",
 		"change": null,
-		"decidedOn": "2026-09-27"
+		"decidedOn": "2026-10-30"
 	},
 	{
 		"row": "woo-annual",

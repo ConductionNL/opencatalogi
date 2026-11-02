@@ -21,6 +21,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\ThemesController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\IAppConfig;
@@ -106,10 +107,10 @@ class PublicObjectListControllersTest extends TestCase {
 		if ($class === GlossaryController::class) {
 			$l10n = $this->createMock(IL10N::class);
 			$l10n->method('t')->willReturnArgument(0);
-			return new GlossaryController('opencatalogi', $request, $config, $container, $appManager, $l10n);
+			return new GlossaryController('opencatalogi', $request, $config, new OpenRegisterLookup($container, $appManager), $l10n);
 		}
 
-		return new ThemesController('opencatalogi', $request, $config, $container, $appManager);
+		return new ThemesController('opencatalogi', $request, $config, new OpenRegisterLookup($container, $appManager));
 	}
 
 	/**

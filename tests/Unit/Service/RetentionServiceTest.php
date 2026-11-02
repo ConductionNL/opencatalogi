@@ -68,6 +68,7 @@ class FakeObjectService {
 
 /**
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionQueue
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @uses \OCA\OpenCatalogi\Service\RetentionReport

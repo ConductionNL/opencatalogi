@@ -112,6 +112,31 @@ let cachedGroups = null
 let cacheTimestamp = null
 const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
 
+/** The groups offered when the Nextcloud API returns none. */
+const FALLBACK_GROUPS = [
+	{ label: 'All Users', value: 'all' },
+	{ label: 'Administrators', value: 'admin' },
+	{ label: 'Functioneel-beheerder', value: 'Functioneel-beheerder' },
+	{ label: 'Gebruik-beheerder', value: 'Gebruik-beheerder' },
+	{ label: 'Gebruik-raadpleger', value: 'Gebruik-raadpleger' },
+	{ label: 'Organisatie-beheerder', value: 'Organisatie-beheerder' },
+	{ label: 'VNG-raadpleger', value: 'VNG-raadpleger' },
+	{ label: 'Editors', value: 'editors' },
+	{ label: 'Viewers', value: 'viewers' },
+	{ label: 'Staff', value: 'staff' },
+	{ label: 'Managers', value: 'managers' },
+]
+
+/**
+ * A fresh copy of the fallback groups, so callers never share or change the list.
+ *
+ * @return {Array<{label: string, value: string}>} The fallback groups
+ * @spec openspec/specs/content-management/spec.md
+ */
+function fallbackGroups() {
+	return FALLBACK_GROUPS.map((group) => ({ ...group }))
+}
+
 /** @spec openspec/specs/content-management/spec.md */
 export async function getNextcloudGroups() {
 	const now = Date.now()
@@ -131,20 +156,7 @@ export async function getNextcloudGroups() {
 			return cachedGroups
 		}
 
-		// If no groups were fetched, use fallback groups
-		cachedGroups = [
-			{ label: 'All Users', value: 'all' },
-			{ label: 'Administrators', value: 'admin' },
-			{ label: 'Functioneel-beheerder', value: 'Functioneel-beheerder' },
-			{ label: 'Gebruik-beheerder', value: 'Gebruik-beheerder' },
-			{ label: 'Gebruik-raadpleger', value: 'Gebruik-raadpleger' },
-			{ label: 'Organisatie-beheerder', value: 'Organisatie-beheerder' },
-			{ label: 'VNG-raadpleger', value: 'VNG-raadpleger' },
-			{ label: 'Editors', value: 'editors' },
-			{ label: 'Viewers', value: 'viewers' },
-			{ label: 'Staff', value: 'staff' },
-			{ label: 'Managers', value: 'managers' },
-		]
+		cachedGroups = fallbackGroups()
 		cacheTimestamp = now
 		return cachedGroups
 	} catch (error) {
@@ -153,20 +165,7 @@ export async function getNextcloudGroups() {
 			return cachedGroups
 		}
 
-		// Return fallback groups if no cache available
-		return [
-			{ label: 'All Users', value: 'all' },
-			{ label: 'Administrators', value: 'admin' },
-			{ label: 'Functioneel-beheerder', value: 'Functioneel-beheerder' },
-			{ label: 'Gebruik-beheerder', value: 'Gebruik-beheerder' },
-			{ label: 'Gebruik-raadpleger', value: 'Gebruik-raadpleger' },
-			{ label: 'Organisatie-beheerder', value: 'Organisatie-beheerder' },
-			{ label: 'VNG-raadpleger', value: 'VNG-raadpleger' },
-			{ label: 'Editors', value: 'editors' },
-			{ label: 'Viewers', value: 'viewers' },
-			{ label: 'Staff', value: 'staff' },
-			{ label: 'Managers', value: 'managers' },
-		]
+		return fallbackGroups()
 	}
 }
 

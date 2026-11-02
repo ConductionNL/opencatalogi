@@ -25,8 +25,10 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\ThemesController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
@@ -53,6 +55,7 @@ class ListControllersNeedOpenRegisterTest extends TestCase {
 				$args[] = match (true) {
 					$param->getName() === 'appName' => 'opencatalogi',
 					$name === IAppManager::class => $appManager,
+					$name === OpenRegisterLookup::class => new OpenRegisterLookup($this->createMock(ContainerInterface::class), $appManager),
 					$param->isDefaultValueAvailable() === true => $param->getDefaultValue(),
 					default => $this->createMock($name),
 				};

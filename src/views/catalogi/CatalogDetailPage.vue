@@ -98,7 +98,7 @@ import { NcButton } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import { staffAccessLine } from '../../services/catalogStaffAccess.js'
+import { catalogMetadataItems } from '../../services/catalogMetadata.js'
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
@@ -177,52 +177,7 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		metadataItems() {
-			if (!this.catalog) return []
-			const self = this.catalog['@self'] || {}
-			return [
-				{
-					label: t('opencatalogi', 'Title'),
-					value: this.catalog.title || '-',
-				},
-				{
-					label: t('opencatalogi', 'Summary'),
-					value: this.catalog.summary || '-',
-				},
-				{
-					label: t('opencatalogi', 'Slug'),
-					value: this.catalog.slug || '-',
-				},
-				{
-					label: t('opencatalogi', 'Status'),
-					value: this.catalog.status || '-',
-				},
-				{
-					label: t('opencatalogi', 'Listed'),
-					value: this.catalog.listed
-						? t('opencatalogi', 'Public')
-						: t('opencatalogi', 'Private'),
-				},
-				{
-					label: t('opencatalogi', 'Staff access'),
-					value: staffAccessLine(this.catalog.staffAccess),
-				},
-				{
-					label: t('opencatalogi', 'Created'),
-					value: self.created
-						? new Date(self.created).toLocaleString()
-						: '-',
-				},
-				{
-					label: t('opencatalogi', 'Updated'),
-					value: self.updated
-						? new Date(self.updated).toLocaleString()
-						: '-',
-				},
-				{
-					label: t('opencatalogi', 'ID'),
-					value: self.id || this.catalog.id || '-',
-				},
-			]
+			return catalogMetadataItems(this.catalog)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */

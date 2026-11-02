@@ -90,6 +90,20 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 			}
 		};
 
+		return $this->commandWith(objectService: $objectService, fileService: $fileService, withServices: $withServices);
+
+	}//end commandOver()
+
+	/**
+	 * Build a command over the given OpenRegister object and file services.
+	 *
+	 * @param object $objectService The ObjectService fake.
+	 * @param object $fileService   The FileService fake.
+	 * @param bool   $withServices  Whether OpenRegister resolves at all.
+	 *
+	 * @return CommandTester The tester.
+	 */
+	private function commandWith(object $objectService, object $fileService, bool $withServices = true): CommandTester {
 		$fileMapper = new class {
 		};
 
@@ -119,7 +133,7 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 
 		return new CommandTester(new AttachDocumentsToPublicationsCommand(migration: $migration));
 
-	}//end commandOver()
+	}//end commandWith()
 
 	/**
 	 * A document row.
@@ -152,6 +166,45 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 		$this->assertStringContainsString('OpenRegister is not available', $tester->getDisplay());
 
 	}//end testItFailsLoudlyWhenOpenRegisterIsAbsent()
+
+	/**
+	 * A reader that throws fails the run and names the reason.
+	 *
+	 * @return void
+	 */
+	public function testItFailsWhenTheDocumentsCannotBeRead(): void {
+		$objectService = new class {
+			public function searchObjectsBySlug(string $register, string $schema, ...$rest): array {
+				throw new \RuntimeException('register offline');
+			}
+		};
+		$tester = $this->commandWith(objectService: $objectService, fileService: new \stdClass());
+
+		$this->assertSame(Command::FAILURE, $tester->execute([]));
+		$this->assertStringContainsString('Could not read documents: register offline', $tester->getDisplay());
+		$this->assertStringNotContainsString('Done.', $tester->getDisplay());
+
+	}//end testItFailsWhenTheDocumentsCannotBeRead()
+
+	/**
+	 * A reader that answers with a count instead of rows fails the run rather
+	 * than reporting a clean migration over nothing.
+	 *
+	 * @return void
+	 */
+	public function testItFailsWhenTheReaderReturnsACount(): void {
+		$objectService = new class {
+			public function searchObjectsBySlug(string $register, string $schema, ...$rest): int {
+				return 3;
+			}
+		};
+		$tester = $this->commandWith(objectService: $objectService, fileService: new \stdClass());
+
+		$this->assertSame(Command::FAILURE, $tester->execute([]));
+		$this->assertStringContainsString('returned a count rather than rows', $tester->getDisplay());
+		$this->assertStringNotContainsString('Done.', $tester->getDisplay());
+
+	}//end testItFailsWhenTheReaderReturnsACount()
 
 	/**
 	 * The default is a dry run.

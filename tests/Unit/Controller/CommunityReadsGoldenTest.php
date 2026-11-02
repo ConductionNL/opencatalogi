@@ -42,6 +42,9 @@ use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\CommunityController;
 use OCA\OpenCatalogi\Controller\NoticeBoardController;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\RegisterAccess;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
@@ -174,6 +177,7 @@ class CommunityReadsGoldenTest extends TestCase {
 				$name === IAppConfig::class => $config,
 				$name === ContainerInterface::class => $container,
 				$name === ServiceCatalogueServiceInterface::class => $objects,
+				$name === RegisterAccess::class => new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects),
 				default => $this->createMock($name),
 			};
 		}

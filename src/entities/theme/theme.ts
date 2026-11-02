@@ -60,10 +60,6 @@ export class Theme implements TTheme {
 			sort: z.number(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

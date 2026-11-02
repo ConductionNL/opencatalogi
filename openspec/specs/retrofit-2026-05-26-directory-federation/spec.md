@@ -34,3 +34,38 @@ The add-directory and view-directory modals MUST display a listing (with formatt
 - **WHEN** the modal renders
 - **THEN** the listing's fields MUST be displayed with formatted dates
 
+### Requirement: Add a directory by its address (REQ-DIR-004)
+
+An administrator MUST be able to add another organisation's directory by its
+address from the directory page. Adding MUST synchronise the directory at once
+and pull in its catalogues as listings.
+
+#### Scenario: a new directory brings its catalogues
+
+- **GIVEN** a remote installation that offers two catalogues
+- **WHEN** an administrator adds its directory address
+- **THEN** two listings from that installation MUST appear on the directory page
+
+### Requirement: Scheduled and on-demand synchronisation (REQ-DIR-005)
+
+A background job MUST synchronise every known directory on the interval set in
+the admin settings. The admin settings MUST also offer a button that
+synchronises all directories now.
+
+#### Scenario: sync now refreshes the listings
+
+- **GIVEN** a remote directory that added a catalogue since the last sync
+- **WHEN** an administrator chooses to synchronise directories now
+- **THEN** the new catalogue MUST appear as a listing
+
+### Requirement: Edit or remove a listing (REQ-DIR-006)
+
+An administrator MUST be able to edit a listing, including its integration
+level (search, sync or none), and remove it. Only listings with integration
+level "search" MUST take part in federated search.
+
+#### Scenario: a listing leaves federated search
+
+- **GIVEN** a listing with integration level "search"
+- **WHEN** an administrator sets it to "none"
+- **THEN** federated search MUST no longer query that listing

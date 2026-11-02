@@ -45,6 +45,8 @@ use Throwable;
  * Re-runs the catalogue scope backfill when a pending register is created or updated.
  *
  * @template-implements IEventListener<Event>
+ *
+ * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
  */
 class CatalogScopePendingListener implements IEventListener {
 
@@ -87,19 +89,38 @@ class CatalogScopePendingListener implements IEventListener {
 			return;
 		}
 
+		if ($this->isPending(register: $register) === true) {
+			$this->backfill();
+		}
+	}//end handle()
+
+	/**
+	 * Whether a catalogue scope waits for this register, by lower-cased slug or by id.
+	 *
+	 * @param Register $register The register.
+	 *
+	 * @return boolean True when the pending list names it.
+	 */
+	private function isPending(Register $register): bool {
 		$pending = json_decode(
 			$this->appConfig->getValueString('opencatalogi', SettingsServiceInterface::CATALOG_SCOPE_PENDING_KEY, '[]'),
 			true
 		);
 		if (is_array($pending) === false || $pending === []) {
-			return;
+			return false;
 		}
 
 		$keys = [strtolower((string)$register->getSlug()), (string)$register->getId()];
-		if (array_intersect($keys, $pending) === []) {
-			return;
-		}
 
+		return array_intersect($keys, $pending) !== [];
+	}//end isPending()
+
+	/**
+	 * Run the backfill once, logging a failure instead of passing it on.
+	 *
+	 * @return void
+	 */
+	private function backfill(): void {
 		self::$running = true;
 		try {
 			$this->settingsService->backfillCatalogScopes();
@@ -111,7 +132,7 @@ class CatalogScopePendingListener implements IEventListener {
 		} finally {
 			self::$running = false;
 		}
-	}//end handle()
+	}//end backfill()
 
 	/**
 	 * Take the register out of a register event.

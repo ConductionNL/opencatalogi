@@ -11,7 +11,7 @@
  * @param {(url: string) => void} deps.assign Opens a URL in this window.
  * @return {object} Handlers keyed by the name the manifest uses.
  *
- * @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
+ * @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
  */
 export function createRetentionActionHandlers({
 	navigationStore,
@@ -25,7 +25,7 @@ export function createRetentionActionHandlers({
 		 * @param {{actionId: string, item?: object, selectedIds?: Array<string>}} payload The action payload.
 		 * @return {void}
 		 *
-		 * @spec openspec/changes/retention-review-queue/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
+		 * @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001
 		 */
 		openRetentionDecision({ actionId, item, selectedIds = [] }) {
 			navigationStore.setDialog('retentionDecision', {

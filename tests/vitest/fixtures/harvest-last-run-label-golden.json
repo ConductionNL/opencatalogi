@@ -1,0 +1,143 @@
+[
+	{
+		"name": "no status run",
+		"run": "(absent)",
+		"label": "The harvest has not run yet."
+	},
+	{
+		"name": "null run",
+		"run": null,
+		"label": "The harvest has not run yet."
+	},
+	{
+		"name": "completed",
+		"run": {
+			"status": "completed",
+			"started": "2026-10-01T10:00:00.000Z"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and finished."
+	},
+	{
+		"name": "completed with error",
+		"run": {
+			"status": "completed",
+			"started": "2026-10-01T10:00:00.000Z",
+			"error": "boom"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and finished."
+	},
+	{
+		"name": "stopped clean",
+		"run": {
+			"status": "stopped",
+			"started": "2026-10-01T10:00:00.000Z"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and finished."
+	},
+	{
+		"name": "stopped empty error",
+		"run": {
+			"status": "stopped",
+			"started": "2026-10-01T10:00:00.000Z",
+			"error": ""
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and finished."
+	},
+	{
+		"name": "stopped with error",
+		"run": {
+			"status": "stopped",
+			"started": "2026-10-01T10:00:00.000Z",
+			"error": "Rate limit"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and stopped: Rate limit"
+	},
+	{
+		"name": "failed with error",
+		"run": {
+			"status": "failed",
+			"started": "2026-10-01T10:00:00.000Z",
+			"error": "x"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and stopped: x"
+	},
+	{
+		"name": "failed without error",
+		"run": {
+			"status": "failed",
+			"started": "2026-10-01T10:00:00.000Z"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and stopped: "
+	},
+	{
+		"name": "failed null error",
+		"run": {
+			"status": "failed",
+			"started": "2026-10-01T10:00:00.000Z",
+			"error": null
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and stopped: "
+	},
+	{
+		"name": "suspended with resume",
+		"run": {
+			"status": "suspended",
+			"started": "2026-10-01T10:00:00.000Z",
+			"resumeAt": "2026-10-01T11:30:00.000Z"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z]. It waits for the GitHub rate limit and goes on at D[2026-10-01T11:30:00.000Z]."
+	},
+	{
+		"name": "suspended without resume",
+		"run": {
+			"status": "suspended",
+			"started": "2026-10-01T10:00:00.000Z"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and is still running."
+	},
+	{
+		"name": "running",
+		"run": {
+			"status": "running",
+			"started": "2026-10-01T10:00:00.000Z"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and is still running."
+	},
+	{
+		"name": "unknown status with error",
+		"run": {
+			"status": "queued",
+			"started": "2026-10-01T10:00:00.000Z",
+			"error": "e"
+		},
+		"label": "Last run started D[2026-10-01T10:00:00.000Z] and is still running."
+	},
+	{
+		"name": "no started",
+		"run": {
+			"status": "completed"
+		},
+		"label": "Last run started  and finished."
+	},
+	{
+		"name": "empty started",
+		"run": {
+			"status": "running",
+			"started": ""
+		},
+		"label": "Last run started  and is still running."
+	},
+	{
+		"name": "empty run object",
+		"run": {},
+		"label": "Last run started  and is still running."
+	},
+	{
+		"name": "suspended no started",
+		"run": {
+			"status": "suspended",
+			"resumeAt": "2026-10-01T11:30:00.000Z"
+		},
+		"label": "Last run started . It waits for the GitHub rate limit and goes on at D[2026-10-01T11:30:00.000Z]."
+	}
+]

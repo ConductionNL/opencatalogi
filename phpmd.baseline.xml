@@ -51,13 +51,9 @@
 <phpmd-baseline>
   <violation rule="PHPMD\Rule\Design\LongMethod" file="lib/AppInfo/Application.php" method="register"/>
   <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="lib/Controller/GlossaryController.php"/>
-  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Controller/ListingsController.php"/>
   <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/ListingsController.php"/>
   <violation rule="PHPMD\Rule\Design\CouplingBetweenObjects" file="lib/Controller/MenusController.php"/>
   <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/PublicationsController.php"/>
-  <violation rule="PHPMD\Rule\Design\WeightedMethodCount" file="lib/Controller/SetupController.php"/>
-  <violation rule="PHPMD\Rule\Design\LongParameterList" file="lib/Controller/SetupController.php" method="__construct"/>
-  <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Controller/SetupController.php"/>
   <violation rule="PHPMD\Rule\UnusedFormalParameter" file="lib/Controller/WooController.php"/>
   <violation rule="PHPMD\Rule\CleanCode\StaticAccess" file="lib/Observability/OpenCatalogiMetricsProvider.php"/>
   <violation rule="PHPMD\Rule\CleanCode\ElseExpression" file="lib/Service/CatalogiService.php"/>

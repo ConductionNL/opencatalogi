@@ -199,11 +199,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
-			const resolvedCatalogId =
-				catalogId
-				|| this.activeCatalog?.slug
-				|| this.activeCatalog?.id
-				|| this.lastCatalogId
+			const resolvedCatalogId = this.resolvePublicationsCatalog(catalogId)
 			if (!resolvedCatalogId) {
 				console.error(
 					'[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists',
@@ -219,27 +215,11 @@ export const useCatalogStore = defineStore('catalog', {
 			const queryParams = new URLSearchParams(
 				publicationSearchParams(params, this.pagination),
 			)
+			// Use the slug-based publications endpoint (GET /api/{catalogSlug})
+			const url = `/index.php/apps/opencatalogi/api/${resolvedCatalogId}?${queryParams}`
 
 			try {
-				const catalogIdToUse = resolvedCatalogId
-
-				// Use the slug-based publications endpoint (GET /api/{catalogSlug})
-				const url = `/index.php/apps/opencatalogi/api/${catalogIdToUse}?${queryParams}`
-				const response = await fetch(url, {
-					method: 'GET',
-					headers: buildHeaders(),
-				})
-				const data = await response.json()
-
-				this.publications = publicationsPage(data)
-				this.pagination = {
-					page: this.publications.page,
-					limit: this.publications.limit,
-				}
-
-				await this.registerPublicationTypes(data)
-
-				objectStore.setCollection('publication', data.results)
+				await this.loadPublicationsPage(url)
 			} catch (error) {
 				console.error('Error fetching publications:', error)
 				this.publications = publicationsPage({})
@@ -247,6 +227,49 @@ export const useCatalogStore = defineStore('catalog', {
 				this.loading = false
 				objectStore.setLoading('publication', false)
 			}
+		},
+
+		/**
+		 * The catalog to list publications for: the given one, else the active
+		 * catalog's slug or id, else the last one listed.
+		 *
+		 * @param {string|null} catalogId - The requested catalog
+		 * @return {string|number|null} The catalog slug or id
+		 * @spec openspec/specs/catalogs/spec.md
+		 */
+		resolvePublicationsCatalog(catalogId) {
+			return (
+				catalogId
+				|| this.activeCatalog?.slug
+				|| this.activeCatalog?.id
+				|| this.lastCatalogId
+			)
+		},
+
+		/**
+		 * GET one publications page and store it: the page, its pagination, the
+		 * object types it uses and the publication collection.
+		 *
+		 * @param {string} url - The page URL
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/catalogs/spec.md
+		 */
+		async loadPublicationsPage(url) {
+			const response = await fetch(url, {
+				method: 'GET',
+				headers: buildHeaders(),
+			})
+			const data = await response.json()
+
+			this.publications = publicationsPage(data)
+			this.pagination = {
+				page: this.publications.page,
+				limit: this.publications.limit,
+			}
+
+			await this.registerPublicationTypes(data)
+
+			objectStore.setCollection('publication', data.results)
 		},
 
 		/**

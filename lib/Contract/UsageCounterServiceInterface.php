@@ -79,21 +79,14 @@ interface UsageCounterServiceInterface {
 	 * The stored object contains ONLY publication reference, date, kind, and
 	 * count. No request-derived attribute is ever written (ANA-002).
 	 *
-	 * @param string $publicationId The publication UUID being counted.
-	 * @param string $kind KIND_VIEW or KIND_DOWNLOAD.
+	 * @param PublicationUsage $usage The publication, kind and catalog being counted.
 	 * @param string|null $userAgent Request UA, evaluated for crawler-skip only.
-	 * @param string|null $catalog Optional catalog slug for roll-up labelling.
 	 *
 	 * @return boolean True when a count was recorded; false when skipped/failed.
 	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
-	public function increment(
-		string $publicationId,
-		string $kind,
-		?string $userAgent = null,
-		?string $catalog = null,
-	): bool;
+	public function increment(PublicationUsage $usage, ?string $userAgent = null): bool;
 
 	/**
 	 * Fetch all counter objects for a publication within a date range.
