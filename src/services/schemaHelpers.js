@@ -32,7 +32,11 @@ function knownSchema(id) {
 	if (!Array.isArray(schemas)) return null
 
 	const key = String(id)
-	return schemas.find((s) => [s.id, s.uuid, s.slug].some((value) => String(value) === key)) || null
+	return (
+		schemas.find((s) =>
+			[s.id, s.uuid, s.slug].some((value) => String(value) === key),
+		) || null
+	)
 }
 
 /**

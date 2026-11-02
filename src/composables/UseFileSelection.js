@@ -60,9 +60,11 @@ export function useFileSelection(options) {
 		}
 	}
 
-	const relatedFiles = () => objectStore.getRelatedData
+	const relatedFiles = () =>
+		objectStore.getRelatedData
 		&& objectStore.getRelatedData('publication', 'files')
-	const attachmentCollection = () => objectStore.getCollection
+	const attachmentCollection = () =>
+		objectStore.getCollection
 		&& objectStore.getCollection('publicationAttachments')
 
 	// Build the set of filenames that should block a new drop: everything
@@ -76,7 +78,11 @@ export function useFileSelection(options) {
 		const queued = Array.isArray(filesList.value)
 			? filesList.value.map((f) => f.name)
 			: []
-		return new Set([...queued, ...namesIn(relatedFiles), ...namesIn(attachmentCollection)])
+		return new Set([
+			...queued,
+			...namesIn(relatedFiles),
+			...namesIn(attachmentCollection),
+		])
 	}
 
 	// Wrap a raw File into a new File with tags/status metadata.

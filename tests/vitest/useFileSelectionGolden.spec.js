@@ -12,7 +12,14 @@ import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { afterAll, describe, expect, it, vi } from 'vitest'
 
-const hooks = vi.hoisted(() => ({ store: {}, onDrop: null, onChange: null, dialogOptions: null, dropOptions: null, resets: 0 }))
+const hooks = vi.hoisted(() => ({
+	store: {},
+	onDrop: null,
+	onChange: null,
+	dialogOptions: null,
+	dropOptions: null,
+	resets: 0,
+}))
 
 vi.mock('@vueuse/core', () => ({
 	useDropZone: (_zone, options) => {
@@ -23,22 +30,33 @@ vi.mock('@vueuse/core', () => ({
 	useFileDialog: (options) => {
 		hooks.dialogOptions = options
 		return {
-			onChange: (callback) => { hooks.onChange = callback },
+			onChange: (callback) => {
+				hooks.onChange = callback
+			},
 			open: () => {},
-			reset: () => { hooks.resets++ },
+			reset: () => {
+				hooks.resets++
+			},
 		}
 	},
 }))
 
 vi.mock('../../src/store/store.js', () => ({
-	objectStore: new Proxy({}, {
-		get: (_target, key) => hooks.store[key],
-	}),
+	objectStore: new Proxy(
+		{},
+		{
+			get: (_target, key) => hooks.store[key],
+		},
+	),
 }))
 
-const { useFileSelection } = await import('../../src/composables/UseFileSelection.js')
+const { useFileSelection } =
+	await import('../../src/composables/UseFileSelection.js')
 
-const FIXTURE = resolve(process.cwd(), 'tests/vitest/fixtures/use-file-selection-golden.json')
+const FIXTURE = resolve(
+	process.cwd(),
+	'tests/vitest/fixtures/use-file-selection-golden.json',
+)
 const RECORD = process.env.RECORD_GOLDEN === '1'
 const recorded = {}
 const expected = RECORD ? {} : JSON.parse(readFileSync(FIXTURE, 'utf8'))
@@ -52,11 +70,13 @@ afterAll(() => {
 /** A FileList look-alike, so the composable's FileList branch runs in node. */
 class FakeFileList {
 	constructor(files) {
-		files.forEach((file, i) => { this[i] = file })
+		files.forEach((file, i) => {
+			this[i] = file
+		})
 		this.length = files.length
 	}
 
-	* [Symbol.iterator]() {
+	*[Symbol.iterator]() {
 		for (let i = 0; i < this.length; i++) yield this[i]
 	}
 }
@@ -72,7 +92,9 @@ const file = (name) => new File(['x'], name, { type: 'text/plain', lastModified:
  * @return {object} the store
  */
 function storeOf(spec, reads) {
-	const store = { setActiveObject: (...args) => reads.push(['setActiveObject', ...args]) }
+	const store = {
+		setActiveObject: (...args) => reads.push(['setActiveObject', ...args]),
+	}
 	if (spec.related !== 'missing') {
 		store.getRelatedData = (...args) => {
 			reads.push(['getRelatedData', ...args])
@@ -90,14 +112,49 @@ function storeOf(spec, reads) {
 	return store
 }
 
-const describeFile = (f) => ({ name: f.name, type: f.type, tags: f.tags, status: f.status, isFile: f instanceof File })
-const describeList = (list) => (Array.isArray(list) ? list.map(describeFile) : list)
+/**
+ * The recorded shape of one queued file.
+ *
+ * @param {File} f the file
+ * @return {object} its name, type, tags and status
+ */
+function describeFile(f) {
+	return {
+		name: f.name,
+		type: f.type,
+		tags: f.tags,
+		status: f.status,
+		isFile: f instanceof File,
+	}
+}
 
-const withNames = { results: [{ name: 'a.txt' }, { title: 'b.txt' }, { name: '', title: 'c.txt' }, { name: '', title: '' }, {}, null] }
+/**
+ * The recorded shape of the file list.
+ *
+ * @param {Array|null} list the list
+ * @return {Array|null} the described files
+ */
+function describeList(list) {
+	return Array.isArray(list) ? list.map(describeFile) : list
+}
+
+const withNames = {
+	results: [
+		{ name: 'a.txt' },
+		{ title: 'b.txt' },
+		{ name: '', title: 'c.txt' },
+		{ name: '', title: '' },
+		{},
+		null,
+	],
+}
 const STORES = {
 	empty: { related: undefined, collection: undefined },
 	related: { related: withNames, collection: { results: 'x' } },
-	collection: { related: { results: null }, collection: { results: [{ title: 'd.txt' }, { name: 'a.txt', title: 'z' }] } },
+	collection: {
+		related: { results: null },
+		collection: { results: [{ title: 'd.txt' }, { name: 'a.txt', title: 'z' }] },
+	},
 	throwing: { related: 'throw', collection: 'throw' },
 	missing: { related: 'missing', collection: 'missing' },
 }
@@ -148,7 +205,10 @@ function runCase(optionName, storeName, dropName, viaChange) {
 		else if (drop && drop.list) files = new FakeFileList(drop.list.map(file))
 		if (viaChange) hooks.onChange(files)
 		else hooks.onDrop(files)
-		steps.push({ files: describeList(selection.files.value), rejected: selection.rejectedDuplicates.value })
+		steps.push({
+			files: describeList(selection.files.value),
+			rejected: selection.rejectedDuplicates.value,
+		})
 	}
 	return {
 		steps,
@@ -156,7 +216,10 @@ function runCase(optionName, storeName, dropName, viaChange) {
 		reads,
 		resets: hooks.resets,
 		accept: hooks.dialogOptions.accept,
-		dialog: { multiple: hooks.dialogOptions.multiple, reset: hooks.dialogOptions.reset },
+		dialog: {
+			multiple: hooks.dialogOptions.multiple,
+			reset: hooks.dialogOptions.reset,
+		},
 		dropDataTypes: hooks.dropOptions.dataTypes,
 	}
 }
@@ -180,12 +243,18 @@ describe('useFileSelection (golden)', () => {
 		for (const storeName of Object.keys(STORES)) {
 			for (const dropName of Object.keys(DROPS)) {
 				it(`${optionName} / ${storeName} / ${dropName}`, () => {
-					check(`${optionName}/${storeName}/${dropName}`, runCase(optionName, storeName, dropName, false))
+					check(
+						`${optionName}/${storeName}/${dropName}`,
+						runCase(optionName, storeName, dropName, false),
+					)
 				})
 			}
 		}
 		it(`${optionName} / via the file dialog`, () => {
-			check(`${optionName}/change`, runCase(optionName, 'related', 'twoDrops', true))
+			check(
+				`${optionName}/change`,
+				runCase(optionName, 'related', 'twoDrops', true),
+			)
 		})
 	}
 

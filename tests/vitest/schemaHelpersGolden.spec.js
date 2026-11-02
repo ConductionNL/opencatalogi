@@ -20,9 +20,13 @@ vi.mock('../../src/store/store.js', () => ({
 	},
 }))
 
-const { schemaHasPublicationDateFields } = await import('../../src/services/schemaHelpers.js')
+const { schemaHasPublicationDateFields } =
+	await import('../../src/services/schemaHelpers.js')
 
-const FIXTURE = resolve(process.cwd(), 'tests/vitest/fixtures/schema-helpers-golden.json')
+const FIXTURE = resolve(
+	process.cwd(),
+	'tests/vitest/fixtures/schema-helpers-golden.json',
+)
 const RECORD = process.env.RECORD_GOLDEN === '1'
 const recorded = {}
 const expected = RECORD ? {} : JSON.parse(readFileSync(FIXTURE, 'utf8'))
@@ -81,10 +85,15 @@ describe('schemaHasPublicationDateFields (golden)', () => {
 	for (const storeName of Object.keys(STORES)) {
 		it(`store ${storeName}`, () => {
 			hooks.store = STORES[storeName]
-			const out = { nullPublication: schemaHasPublicationDateFields(null), noSelf: schemaHasPublicationDateFields({}) }
+			const out = {
+				nullPublication: schemaHasPublicationDateFields(null),
+				noSelf: schemaHasPublicationDateFields({}),
+			}
 			for (const [placeName, place] of Object.entries(PLACES)) {
 				for (const [refName, ref] of Object.entries(REFS)) {
-					out[`${placeName}/${refName}`] = schemaHasPublicationDateFields(place(ref))
+					out[`${placeName}/${refName}`] = schemaHasPublicationDateFields(
+						place(ref),
+					)
 				}
 			}
 			recorded[storeName] = out
