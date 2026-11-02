@@ -82,6 +82,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\RegisterAccess
  * @covers \OCA\OpenCatalogi\Controller\CommunityPages
  * @covers \OCA\OpenCatalogi\Controller\ForwardsRegisterAccess
+ * @covers \OCA\OpenCatalogi\Controller\PublicationTransitions
  * @covers \OCA\OpenCatalogi\Controller\BannerDismissals
  * @covers \OCA\OpenCatalogi\Controller\InspectionRecords
  * @uses   \OCA\OpenCatalogi\Contract\CommentPeriodRequest
@@ -308,6 +309,12 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			),
 			'OCA\\OpenCatalogi\\Controller\\InspectionRecords' => new $type(
 				$this->collaborator(type: InspectionServiceInterface::class),
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Controller\\RegisterAccess')
+			),
+			'OCA\\OpenCatalogi\\Controller\\PublicationTransitions' => new $type(
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\PublicationStateServiceInterface'),
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\DepublicationServiceInterface'),
+				$this->collaborator(type: ContainerInterface::class),
 				$this->collaborator(type: 'OCA\\OpenCatalogi\\Controller\\RegisterAccess')
 			),
 			'OCA\\OpenCatalogi\\Controller\\CommunityPages' => new $type(
