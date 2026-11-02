@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Controller\SchemaOrgController;
+use OCA\OpenCatalogi\Service\SchemaOrgCatalogDocument;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -39,6 +40,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for SchemaOrgController::catalog().
  *
  * @covers \OCA\OpenCatalogi\Controller\SchemaOrgController
+ * @covers \OCA\OpenCatalogi\Service\SchemaOrgCatalogDocument
  * @uses   \OCA\OpenCatalogi\Controller\AnswersCrossOriginReadRequests
  * @uses   \OCA\OpenCatalogi\Controller\CorsAllowlist
  */
@@ -172,9 +174,7 @@ class SchemaOrgCatalogGoldenTest extends TestCase {
 		return new SchemaOrgController(
 			'opencatalogi',
 			$collaborators['request'],
-			$collaborators['schemaOrg'],
-			$collaborators['catalogs'],
-			$collaborators['queries'],
+			new SchemaOrgCatalogDocument($collaborators['schemaOrg'], $collaborators['catalogs'], $collaborators['queries']),
 			$collaborators['l10n'],
 			$collaborators['logger'],
 			$collaborators['config']
