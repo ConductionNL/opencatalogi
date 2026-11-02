@@ -23,10 +23,13 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\DcatAssurance;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
 use OCA\OpenCatalogi\Service\DcatVocabularyService;
+use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
@@ -41,6 +44,9 @@ use Psr\Log\LoggerInterface;
  * Golden test for DcatService::buildInstanceDocument.
  *
  * @covers \OCA\OpenCatalogi\Service\DcatService
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Service\InstanceSettings
+ * @uses \OCA\OpenCatalogi\Service\DcatAssurance
  * @uses \OCA\OpenCatalogi\Service\DcatMappingService
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
  */
@@ -178,14 +184,12 @@ class DcatInstanceDocumentGoldenTest extends TestCase {
 		$container->method('get')->willReturn($objectService);
 
 		return new DcatService(
-			$container,
-			$appManager,
+			new OpenRegisterLookup($container, $appManager),
 			new DcatMappingService(new DcatVocabularyService()),
 			new DcatSerializer(),
-			$urlGenerator,
-			$appConfig,
+			new InstanceSettings($urlGenerator, $appConfig),
 			$this->createMock(LoggerInterface::class),
-			$this->createMock(StandardsVersionService::class)
+			new DcatAssurance($this->createMock(StandardsVersionService::class))
 		);
 
 	}//end service()

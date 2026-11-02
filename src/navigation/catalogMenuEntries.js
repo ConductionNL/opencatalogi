@@ -27,23 +27,44 @@ export function catalogMenuEntries(catalogs) {
 	const seen = new Set()
 	const entries = []
 	for (const catalog of Array.isArray(catalogs) ? catalogs : []) {
-		const slug = catalog?.slug ? String(catalog.slug) : ''
+		const slug = catalogSlug(catalog)
 		if (slug === '' || seen.has(slug)) {
 			continue
 		}
 		seen.add(slug)
-		const title = typeof catalog.title === 'string' ? catalog.title : ''
-		entries.push({
-			id: `catalog-${slug}`,
-			label: title.trim() !== '' ? title : slug,
-			translateLabel: false,
-			icon: CATALOG_MENU_ICON,
-			route: CATALOG_MENU_ROUTE,
-			params: { catalogSlug: slug },
-			order: CATALOG_MENU_ORDER,
-		})
+		entries.push(catalogMenuEntry(slug, catalog.title))
 	}
 	return entries
+}
+
+/**
+ * A catalog's slug as a string, or an empty string when it has none.
+ *
+ * @param {{slug?: string}|null} catalog The catalog.
+ * @return {string} The slug.
+ */
+function catalogSlug(catalog) {
+	return catalog?.slug ? String(catalog.slug) : ''
+}
+
+/**
+ * The menu entry for one catalog, labelled with its title or else its slug.
+ *
+ * @param {string} slug The catalog slug.
+ * @param {unknown} title The catalog title as the server sent it.
+ * @return {object} The manifest menu entry.
+ */
+function catalogMenuEntry(slug, title) {
+	const label = typeof title === 'string' && title.trim() !== '' ? title : slug
+	return {
+		id: `catalog-${slug}`,
+		label,
+		translateLabel: false,
+		icon: CATALOG_MENU_ICON,
+		route: CATALOG_MENU_ROUTE,
+		params: { catalogSlug: slug },
+		order: CATALOG_MENU_ORDER,
+	}
 }
 
 /**
