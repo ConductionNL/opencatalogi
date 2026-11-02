@@ -162,7 +162,7 @@ class OoapiControllerTest extends TestCase {
 
 		$this->assertSame(503, $response->getStatus());
 		$this->assertSame(
-			['error' => 'register_not_configured', 'detail' => "Missing config 'ooapi_courses_register' for app 'opencatalogi'"],
+			['error' => 'register_not_configured', 'detail' => 'Resolver config key "ooapi_courses_register" is not set for app "opencatalogi" and no default was provided.'],
 			$response->getData()
 		);
 	}
