@@ -27,7 +27,7 @@
  *
  * @covers \OCA\OpenCatalogi\Controller\CatalogiController
  * @covers \OCA\OpenCatalogi\Controller\DirectoryController
- * @uses \OCA\OpenCatalogi\Controller\ListCorsPolicy
+ * @covers \OCA\OpenCatalogi\Controller\ListCorsPolicy
  * @covers \OCA\OpenCatalogi\Controller\GlossaryController
  * @covers \OCA\OpenCatalogi\Controller\ThemesController
  * @covers \OCA\OpenCatalogi\Controller\ServiceCatalogueController

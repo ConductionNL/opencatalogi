@@ -32,7 +32,7 @@
  * @covers \OCA\OpenCatalogi\Controller\CommunityController
  * @covers \OCA\OpenCatalogi\Controller\DcatController
  * @covers \OCA\OpenCatalogi\Controller\DirectoryController
- * @uses \OCA\OpenCatalogi\Controller\ListCorsPolicy
+ * @covers \OCA\OpenCatalogi\Controller\ListCorsPolicy
  * @covers \OCA\OpenCatalogi\Controller\GlossaryController
  * @covers \OCA\OpenCatalogi\Controller\InspectionController
  * @covers \OCA\OpenCatalogi\Controller\ListingsController
