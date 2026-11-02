@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Controller\PublicationRuleChecks;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
 use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
@@ -68,8 +69,7 @@ class PublicationRulesControllerTest extends TestCase {
 			$this->config,
 			$l10n,
 			$this->userSession,
-			new PublicationRuleService(),
-			new DecisionPublicationValidator(),
+			new PublicationRuleChecks(new PublicationRuleService(), new DecisionPublicationValidator())
 		);
 
 	}//end setUp()
@@ -165,5 +165,29 @@ class PublicationRulesControllerTest extends TestCase {
 		$this->assertSame(0, $data['total']);
 
 	}//end testThePublicSearchRunsOverTheProjections()
+
+	public function testEntriesThatAreNotRecordsAreLeftOutOfThePreviewAndTheSearch(): void {
+		$this->withParams(
+			[
+				'rule' => [
+					'recordType' => 'besluit',
+					'anonymousProperties' => ['title'],
+					'conditions' => [],
+				],
+				'sample' => ['not a record', 7, ['@type' => 'besluit', 'title' => 'Een']],
+				'records' => ['not a record', ['@type' => 'besluit', 'title' => 'Dorpsstraat']],
+				'rules' => ['not a rule', ['recordType' => 'besluit', 'enabled' => true, 'anonymousProperties' => ['title']]],
+				'q' => 'Dorpsstraat',
+			]
+		);
+
+		$preview = $this->controller->previewRule()->getData();
+		$search  = $this->controller->publicSearch()->getData();
+
+		$this->assertSame([['title' => 'Een']], $preview['wouldPublish']);
+		$this->assertSame(1, $search['total']);
+		$this->assertSame('Dorpsstraat', $search['results'][0]['title']);
+
+	}//end testEntriesThatAreNotRecordsAreLeftOutOfThePreviewAndTheSearch()
 
 }//end class
