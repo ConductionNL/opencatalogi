@@ -225,6 +225,46 @@
             }
         ]
     },
+    "CatalogiController::index / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "CatalogiController::index / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -470,6 +510,33 @@
             }
         ]
     },
+    "CatalogiController::preflightedCors / halfset": {
+        "answer": {
+            "response": "Response",
+            "status": 200,
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Access-Control-Max-Age": "1728000",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "CatalogiController::preflightedCors / noconfig": {
         "answer": {
             "response": "Response",
@@ -622,6 +689,41 @@
         ]
     },
     "CatalogiController::show / fallback": {
+        "answer": "double:CatalogiServiceInterface.index",
+        "log": [
+            {
+                "CatalogiServiceInterface.index": {
+                    "catalogId": "id-1"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            },
+            {
+                "CatalogiServiceInterface.index.addHeader": {
+                    "name": "Access-Control-Allow-Origin",
+                    "value": "https://a.example"
+                }
+            },
+            {
+                "CatalogiServiceInterface.index.addHeader": {
+                    "name": "Access-Control-Allow-Methods",
+                    "value": "PUT, POST, GET, DELETE, PATCH"
+                }
+            },
+            {
+                "CatalogiServiceInterface.index.addHeader": {
+                    "name": "Access-Control-Allow-Headers",
+                    "value": "Authorization, Content-Type, Accept"
+                }
+            }
+        ]
+    },
+    "CatalogiController::show / halfset": {
         "answer": "double:CatalogiServiceInterface.index",
         "log": [
             {
@@ -901,6 +1003,54 @@
             }
         ]
     },
+    "CommentPeriodController::open / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "CommentPeriodServiceInterface.open": {
+                    "request": "object:OCA\\OpenCatalogi\\Contract\\CommentPeriodRequest"
+                }
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "CommentPeriodController::open / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -1153,6 +1303,49 @@
                     "register": "cfg-publication_register",
                     "schema": "cfg-comment_period_schema"
                 }
+            }
+        ]
+    },
+    "CommentPeriodController::show / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "comment_period_schema",
+                    ""
+                ]
             }
         ]
     },
@@ -1670,6 +1863,46 @@
             }
         ]
     },
+    "CommunityController::feed / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_rule_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "CommunityController::feed / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -1984,6 +2217,33 @@
             }
         ]
     },
+    "CommunityController::preflightedCors / halfset": {
+        "answer": {
+            "response": "Response",
+            "status": 200,
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Access-Control-Max-Age": "1728000",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "CommunityController::preflightedCors / noconfig": {
         "answer": {
             "response": "Response",
@@ -2124,6 +2384,35 @@
         ]
     },
     "CommunityController::renderMarkup / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 400,
+            "data": {
+                "error": "missing-markup",
+                "message": "Send the markup to render."
+            },
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "CommunityController::renderMarkup / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 400,
@@ -2394,6 +2683,54 @@
             },
             {
                 "ObjectService.saveObject.jsonSerialize": []
+            }
+        ]
+    },
+    "CommunityController::setStatus / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "StatusPageServiceInterface.setState": {
+                    "component": "",
+                    "state": "",
+                    "message": "m",
+                    "setBy": "alice"
+                }
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_status_schema",
+                    ""
+                ]
             }
         ]
     },
@@ -2747,6 +3084,46 @@
             }
         ]
     },
+    "CommunityController::statusPage / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_status_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "CommunityController::statusPage / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -2951,6 +3328,25 @@
         },
         "log": []
     },
+    "DepublicationController::acknowledgeWithdrawal / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 400,
+            "data": {
+                "error": "missing-parameters",
+                "message": "Name the depublication and the channel that acknowledged."
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": []
+    },
     "DepublicationController::acknowledgeWithdrawal / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -3045,6 +3441,24 @@
         "log": []
     },
     "DepublicationController::depublish / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 400,
+            "data": {
+                "error": "missing-publication"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": []
+    },
+    "DepublicationController::depublish / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 400,
@@ -3316,6 +3730,46 @@
             }
         ]
     },
+    "GlossaryController::index / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "glossary_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "glossary_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "GlossaryController::index / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -3522,6 +3976,33 @@
         ]
     },
     "GlossaryController::preflightedCors / fallback": {
+        "answer": {
+            "response": "Response",
+            "status": 200,
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Access-Control-Max-Age": "1728000",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "GlossaryController::preflightedCors / halfset": {
         "answer": {
             "response": "Response",
             "status": 200,
@@ -3801,6 +4282,46 @@
                     "opencatalogi",
                     "cors_allowed_origins",
                     "*"
+                ]
+            }
+        ]
+    },
+    "GlossaryController::show / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "glossary_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "glossary_schema",
+                    ""
                 ]
             }
         ]
@@ -4123,6 +4644,54 @@
             }
         ]
     },
+    "InspectionController::follow / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 404,
+            "data": {
+                "error": "unknown-inspection"
+            },
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "inspection_schema",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "InspectionController::follow / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -4428,6 +4997,54 @@
             }
         ]
     },
+    "InspectionController::open / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "InspectionService.open": {
+                    "record": [],
+                    "recordType": [],
+                    "documents": [],
+                    "openedBy": "alice"
+                }
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "inspection_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "InspectionController::open / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -4645,6 +5262,33 @@
             }
         ]
     },
+    "InspectionController::preflightedCors / halfset": {
+        "answer": {
+            "response": "Response",
+            "status": 200,
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Access-Control-Max-Age": "1728000",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "InspectionController::preflightedCors / noconfig": {
         "answer": {
             "response": "Response",
@@ -4763,6 +5407,24 @@
         "log": []
     },
     "ListingsController::add / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 400,
+            "data": {
+                "message": "Property \"url\" is required"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": []
+    },
+    "ListingsController::add / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 400,
@@ -4959,6 +5621,46 @@
                     "register": "cfg-listing_register",
                     "schema": "cfg-listing_schema"
                 }
+            }
+        ]
+    },
+    "ListingsController::create / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_schema",
+                    ""
+                ]
             }
         ]
     },
@@ -5162,6 +5864,47 @@
                     "uuid": "id-1",
                     "register": "cfg-listing_register",
                     "schema": "cfg-listing_schema"
+                }
+            }
+        ]
+    },
+    "ListingsController::destroy / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 409,
+            "data": {
+                "message": "Listing register/schema is not configured. Run the setup wizard."
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_schema",
+                    ""
+                ]
+            },
+            {
+                "LoggerInterface.warning": {
+                    "message": "[ListingsController::destroy] Refusing scope-less delete \u2014 listing_register/listing_schema not configured",
+                    "context": {
+                        "id": "id-1"
+                    }
                 }
             }
         ]
@@ -5415,6 +6158,46 @@
             }
         ]
     },
+    "ListingsController::index / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "ListingsController::index / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -5602,6 +6385,33 @@
         ]
     },
     "ListingsController::preflightedCors / fallback": {
+        "answer": {
+            "response": "Response",
+            "status": 200,
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Access-Control-Max-Age": "1728000",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "ListingsController::preflightedCors / halfset": {
         "answer": {
             "response": "Response",
             "status": 200,
@@ -5833,6 +6643,46 @@
             }
         ]
     },
+    "ListingsController::show / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "ListingsController::show / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -5985,6 +6835,26 @@
         "log": []
     },
     "ListingsController::synchronise / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 200,
+            "data": [],
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "DirectoryServiceInterface.doCronSync": []
+            }
+        ]
+    },
+    "ListingsController::synchronise / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 200,
@@ -6219,6 +7089,46 @@
                     "schema": "cfg-listing_schema",
                     "uuid": "id-1"
                 }
+            }
+        ]
+    },
+    "ListingsController::update / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "listing_schema",
+                    ""
+                ]
             }
         ]
     },
@@ -6486,6 +7396,46 @@
             }
         ]
     },
+    "NoticeBoardController::banners / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "NoticeBoardController::banners / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -6680,6 +7630,24 @@
         },
         "log": []
     },
+    "NoticeBoardController::dismissBanner / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 400,
+            "data": {
+                "error": "missing-banner"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": []
+    },
     "NoticeBoardController::dismissBanner / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -6788,6 +7756,24 @@
         },
         "log": []
     },
+    "NoticeBoardController::saveNotice / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 400,
+            "data": {
+                "error": "missing-notice"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": []
+    },
     "NoticeBoardController::saveNotice / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -6879,6 +7865,24 @@
         "log": []
     },
     "NoticeBoardController::saveNoticeBoard / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 400,
+            "data": {
+                "error": "missing-board"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": []
+    },
+    "NoticeBoardController::saveNoticeBoard / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 400,
@@ -7014,6 +8018,40 @@
         ]
     },
     "OoapiController::course / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 403,
+            "data": {
+                "error": "This account is not an authorized OOAPI consumer"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "OoapiServiceInterface.isConsumerAllowed": {
+                    "username": "alice"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "OoapiController::course / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 403,
@@ -7246,6 +8284,40 @@
             }
         ]
     },
+    "OoapiController::courseOfferings / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 403,
+            "data": {
+                "error": "This account is not an authorized OOAPI consumer"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "OoapiServiceInterface.isConsumerAllowed": {
+                    "username": "alice"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "OoapiController::courseOfferings / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -7412,6 +8484,40 @@
         ]
     },
     "OoapiController::courses / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 403,
+            "data": {
+                "error": "This account is not an authorized OOAPI consumer"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "OoapiServiceInterface.isConsumerAllowed": {
+                    "username": "alice"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "OoapiController::courses / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 403,
@@ -7644,6 +8750,40 @@
             }
         ]
     },
+    "OoapiController::offering / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 403,
+            "data": {
+                "error": "This account is not an authorized OOAPI consumer"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "OoapiServiceInterface.isConsumerAllowed": {
+                    "username": "alice"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "OoapiController::offering / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -7810,6 +8950,40 @@
         ]
     },
     "OoapiController::organization / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 403,
+            "data": {
+                "error": "This account is not an authorized OOAPI consumer"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "OoapiServiceInterface.isConsumerAllowed": {
+                    "username": "alice"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "OoapiController::organization / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 403,
@@ -8042,6 +9216,40 @@
             }
         ]
     },
+    "OoapiController::organizations / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 403,
+            "data": {
+                "error": "This account is not an authorized OOAPI consumer"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "OoapiServiceInterface.isConsumerAllowed": {
+                    "username": "alice"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "OoapiController::organizations / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -8225,6 +9433,33 @@
             }
         ]
     },
+    "OoapiController::preflightedCors / halfset": {
+        "answer": {
+            "response": "Response",
+            "status": 200,
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Access-Control-Max-Age": "1728000",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "OoapiController::preflightedCors / noconfig": {
         "answer": {
             "response": "Response",
@@ -8370,6 +9605,40 @@
         ]
     },
     "OoapiController::program / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 403,
+            "data": {
+                "error": "This account is not an authorized OOAPI consumer"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "OoapiServiceInterface.isConsumerAllowed": {
+                    "username": "alice"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "OoapiController::program / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 403,
@@ -8602,6 +9871,40 @@
             }
         ]
     },
+    "OoapiController::programs / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 403,
+            "data": {
+                "error": "This account is not an authorized OOAPI consumer"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "OoapiServiceInterface.isConsumerAllowed": {
+                    "username": "alice"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "OoapiController::programs / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -8773,6 +10076,40 @@
         ]
     },
     "OoapiController::validate / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 404,
+            "data": {
+                "error": "Catalog not found"
+            },
+            "headers": {
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "GET, OPTIONS",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "CatalogiServiceInterface.getCatalogBySlug": {
+                    "slug": "id-1"
+                }
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "OoapiController::validate / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 404,
@@ -9015,6 +10352,46 @@
             }
         ]
     },
+    "PublicationStateController::publish / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "PublicationStateController::publish / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -9231,6 +10608,46 @@
                     "register": "cfg-publication_register",
                     "schema": "cfg-publication_schema"
                 }
+            }
+        ]
+    },
+    "PublicationStateController::visibility / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_schema",
+                    ""
+                ]
             }
         ]
     },
@@ -9453,6 +10870,46 @@
             }
         ]
     },
+    "PublicationStateController::withdraw / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "PublicationStateController::withdraw / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -9669,6 +11126,46 @@
                     "register": "cfg-publication_register",
                     "schema": "cfg-publication_schema"
                 }
+            }
+        ]
+    },
+    "PublicationStateController::withdrawFile / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "publication_schema",
+                    ""
+                ]
             }
         ]
     },
@@ -9915,6 +11412,46 @@
                     "register": "cfg-service_catalogue_register",
                     "schema": "cfg-case_type_definition_schema"
                 }
+            }
+        ]
+    },
+    "ServiceCatalogueController::applyResync / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_catalogue_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "case_type_definition_schema",
+                    ""
+                ]
             }
         ]
     },
@@ -10223,6 +11760,46 @@
             }
         ]
     },
+    "ServiceCatalogueController::caseType / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_catalogue_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "case_type_definition_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "ServiceCatalogueController::caseType / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -10397,6 +11974,25 @@
         "log": []
     },
     "ServiceCatalogueController::importCaseType / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 400,
+            "data": {
+                "error": "missing-parameters",
+                "message": "Name the external catalogue and the definition to import."
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": []
+    },
+    "ServiceCatalogueController::importCaseType / halfset": {
         "answer": {
             "response": "JSONResponse",
             "status": 400,
@@ -10764,6 +12360,46 @@
             }
         ]
     },
+    "ServiceCatalogueController::index / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_catalogue_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_catalogue_entry_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "ServiceCatalogueController::index / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -11005,6 +12641,33 @@
             }
         ]
     },
+    "ServiceCatalogueController::preflightedCors / halfset": {
+        "answer": {
+            "response": "Response",
+            "status": 200,
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Access-Control-Max-Age": "1728000",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
     "ServiceCatalogueController::preflightedCors / noconfig": {
         "answer": {
             "response": "Response",
@@ -11219,6 +12882,46 @@
                     "register": "cfg-service_catalogue_register",
                     "schema": "cfg-case_type_definition_schema"
                 }
+            }
+        ]
+    },
+    "ServiceCatalogueController::previewResync / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_catalogue_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "case_type_definition_schema",
+                    ""
+                ]
             }
         ]
     },
@@ -11551,6 +13254,46 @@
                     {
                         "_limit": 1000
                     }
+                ]
+            }
+        ]
+    },
+    "ServiceCatalogueController::unavailableEntries / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_catalogue_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "service_catalogue_entry_schema",
+                    ""
                 ]
             }
         ]
@@ -11891,6 +13634,46 @@
             }
         ]
     },
+    "ThemesController::index / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "ThemesController::index / noconfig": {
         "answer": {
             "response": "JSONResponse",
@@ -12097,6 +13880,33 @@
         ]
     },
     "ThemesController::preflightedCors / fallback": {
+        "answer": {
+            "response": "Response",
+            "status": 200,
+            "headers": {
+                "Access-Control-Allow-Credentials": "false",
+                "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+                "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+                "Access-Control-Allow-Origin": "https://a.example",
+                "Access-Control-Max-Age": "1728000",
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "cors_allowed_origins",
+                    "*"
+                ]
+            }
+        ]
+    },
+    "ThemesController::preflightedCors / halfset": {
         "answer": {
             "response": "Response",
             "status": 200,
@@ -12333,6 +14143,46 @@
                     "_rbac": true,
                     "_multitenancy": false
                 }
+            }
+        ]
+    },
+    "ThemesController::show / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Request-Id": "test-request-id",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_schema",
+                    ""
+                ]
             }
         ]
     },

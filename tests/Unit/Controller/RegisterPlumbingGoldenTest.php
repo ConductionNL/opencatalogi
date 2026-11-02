@@ -103,7 +103,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		ThemesController::class,
 	];
 
-	private const WORLDS = ['resolver', 'fallback', 'unset', 'noconfig', 'absent', 'anonymous'];
+	private const WORLDS = ['resolver', 'fallback', 'unset', 'halfset', 'noconfig', 'absent', 'anonymous'];
 
 	private const PARAMS = [
 		'_limit' => '5',
@@ -332,6 +332,10 @@ class RegisterPlumbingGoldenTest extends TestCase {
 				$this->log[] = ['IAppConfig.getValueString' => [$app, $key, $default]];
 				if ($key === 'cors_allowed_origins') {
 					return 'https://a.example';
+				}
+
+				if (str_ends_with($key, '_schema') === true && $this->world === 'halfset') {
+					return '';
 				}
 
 				if (str_ends_with($key, '_register') === true || str_ends_with($key, '_schema') === true) {
