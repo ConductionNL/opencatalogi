@@ -147,6 +147,65 @@ class PublicationRulesControllerTest extends TestCase {
 
 	}//end testADecisionThatFailsItsTypeIsRefusedWithTheReason()
 
+	/**
+	 * Validating a decision without a session is refused with 401, before the decision is read.
+	 */
+	public function testValidatingADecisionWithoutASessionIsRefused(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
+		$this->withParams(
+			[
+				'decision' => ['id' => 'b1'],
+				'decisionType' => ['publicationObligation' => true, 'responseTermDays' => 42],
+			]
+		);
+
+		$args = [];
+		foreach ((new \ReflectionClass(PublicationRulesController::class))->getConstructor()->getParameters() as $param) {
+			$type = $param->getType();
+			$name = ($type instanceof \ReflectionNamedType ? $type->getName() : null);
+			$args[] = match (true) {
+				$param->getName() === 'appName' => 'opencatalogi',
+				$name === IRequest::class => $this->request,
+				$name === IAppConfig::class => $this->config,
+				$name === IUserSession::class => $session,
+				default => $this->createMock($name),
+			};
+		}
+
+		$response = (new PublicationRulesController(...$args))->validateDecision();
+
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$this->assertSame(['error' => 'not-logged-in'], $response->getData());
+
+	}//end testValidatingADecisionWithoutASessionIsRefused()
+
+	/**
+	 * A rule the public search cannot evaluate answers 503, not an empty result.
+	 */
+	public function testThePublicSearchRefusesAnUnreadableRuleWith503(): void {
+		$this->withParams(
+			[
+				'records' => [['@type' => 'besluit', 'status' => 'definitief', 'title' => 'Een']],
+				'rules' => [
+					[
+						'recordType' => 'besluit',
+						'enabled' => true,
+						'anonymousProperties' => ['title'],
+						'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
+					],
+				],
+				'q' => '',
+			]
+		);
+
+		$response = $this->controller->publicSearch();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('unreadable-rule', $response->getData()['error']);
+
+	}//end testThePublicSearchRefusesAnUnreadableRuleWith503()
+
 	public function testThePublicSearchRunsOverTheProjections(): void {
 		$this->withParams(
 			[
