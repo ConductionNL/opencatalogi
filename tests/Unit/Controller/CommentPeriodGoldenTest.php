@@ -146,6 +146,7 @@ class CommentPeriodGoldenObjects {
  * @covers \OCA\OpenCatalogi\Controller\ReadsOpenRegisterResults
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Contract\CommentPeriodRequest
+ * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */
 class CommentPeriodGoldenTest extends TestCase {
 

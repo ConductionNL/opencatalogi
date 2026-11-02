@@ -47,6 +47,8 @@ use RuntimeException;
  *
  * @covers \OCA\OpenCatalogi\Controller\DepublicationController
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses   \OCA\OpenCatalogi\Service\RegisterAccess
  */
 class DepublicationGoldenTest extends TestCase {
 

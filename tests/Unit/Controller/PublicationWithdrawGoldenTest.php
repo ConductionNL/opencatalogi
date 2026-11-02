@@ -48,6 +48,8 @@ use Psr\Container\ContainerInterface;
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationStateController
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses   \OCA\OpenCatalogi\Service\RegisterAccess
  */
 class PublicationWithdrawGoldenTest extends TestCase {
 
