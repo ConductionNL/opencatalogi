@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\DirectoryController;
+use OCA\OpenCatalogi\Controller\ListCorsPolicy;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -47,7 +48,7 @@ class DirectoryControllerTest extends TestCase {
 			$this->directoryService,
 			$this->l10n,
 			$this->logger,
-			$this->config
+			new ListCorsPolicy($this->config)
 		);
 	}
 
@@ -147,7 +148,7 @@ class DirectoryControllerTest extends TestCase {
 			$this->directoryService,
 			$this->l10n,
 			$this->logger,
-			$config
+			new ListCorsPolicy($config)
 		);
 
 		$this->directoryService->method('getDirectory')->willReturn(['results' => []]);
