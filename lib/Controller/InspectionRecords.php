@@ -33,6 +33,7 @@ use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 class InspectionRecords {
+	use ForwardsRegisterAccess;
 
 	/**
 	 * Constructor.
@@ -48,23 +49,6 @@ class InspectionRecords {
 	) {
 
 	}//end __construct()
-
-	/**
-	 * Resolve the register and schema identifiers for a configuration context.
-	 *
-	 * @param string $registerKey The `<context>_register` config key.
-	 * @param string $schemaKey   The `<context>_schema` config key.
-	 *
-	 * @return array{register: string, schema: string} The resolved identifiers.
-	 *
-	 * @throws \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException When a context key is unconfigured.
-	 *
-	 * @spec exclude pure framework plumbing: the runtime-guarded OpenRegister dependency (ADR-083).
-	 */
-	public function registerConfiguration(string $registerKey, string $schemaKey): array {
-		return $this->registers->registerConfiguration(registerKey: $registerKey, schemaKey: $schemaKey);
-
-	}//end registerConfiguration()
 
 	/**
 	 * Open an inspection window over a record's chosen documents.

@@ -39,8 +39,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
-use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -77,12 +75,7 @@ class CommunityController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param StatusPageServiceInterface $statusService The status page.
-	 * @param AtomFeedServiceInterface $feedService The catalogue feed.
-	 * @param MarkupRenderServiceInterface $markupService The markup renderer.
-	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+	 * @param CommunityPages $registers The status page, the feed and the markup renderer, and the configured register pairs and ObjectService they use.
 	 */
 	public function __construct(
 		$appName,
@@ -90,10 +83,7 @@ class CommunityController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly StatusPageServiceInterface $statusService,
-		private readonly AtomFeedServiceInterface $feedService,
-		private readonly MarkupRenderServiceInterface $markupService,
-		private readonly RegisterAccess $registers,
+		private readonly CommunityPages $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -171,7 +161,7 @@ class CommunityController extends Controller {
 
 		return $this->withCors(
 			response: new JSONResponse(
-				$this->statusService->render(components: $components, stalenessHours: $stalenessHours)
+				$this->registers->renderStatus(components: $components, stalenessHours: $stalenessHours)
 			)
 		);
 
@@ -193,11 +183,13 @@ class CommunityController extends Controller {
 		}
 
 		try {
-			$status = $this->statusService->setState(
-				component: trim((string)$this->request->getParam('component', '')),
-				state: trim((string)$this->request->getParam('state', '')),
-				message: (string)$this->request->getParam('message', ''),
-				setBy: $setBy
+			$status = $this->registers->setState(
+				change: [
+					'component' => trim((string)$this->request->getParam('component', '')),
+					'state' => trim((string)$this->request->getParam('state', '')),
+					'message' => (string)$this->request->getParam('message', ''),
+					'setBy' => $setBy,
+				]
 			);
 		} catch (\DomainException $e) {
 			return new JSONResponse(
@@ -260,11 +252,14 @@ class CommunityController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		$entries = $this->feedService->entries(records: $records, notices: $notices, rules: $rules);
-		$atom = $this->feedService->toAtom(
-			catalogTitle: $catalogSlug,
-			selfUrl: $this->request->getRequestUri(),
-			entries: $entries
+		$atom = $this->registers->atom(
+			feed: [
+				'records' => $records,
+				'notices' => $notices,
+				'rules' => $rules,
+				'catalogTitle' => $catalogSlug,
+				'selfUrl' => $this->request->getRequestUri(),
+			]
 		);
 
 		$response = new DataDisplayResponse($atom, Http::STATUS_OK, ['Content-Type' => 'application/atom+xml; charset=UTF-8']);
@@ -303,7 +298,7 @@ class CommunityController extends Controller {
 			);
 		}
 
-		return $this->withCors(response: new JSONResponse($this->markupService->render(markup: $markup)));
+		return $this->withCors(response: new JSONResponse($this->registers->renderMarkup(markup: $markup)));
 
 	}//end renderMarkup()
 }//end class
