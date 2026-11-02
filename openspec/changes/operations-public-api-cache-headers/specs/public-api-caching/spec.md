@@ -8,7 +8,7 @@ status: proposed
 
 ### Requirement: Anonymous answers of the public API may be cached (REQ-PAC-001)
 
-A successful anonymous answer of the publication list, a publication, its attachments list and the public search SHALL carry `Cache-Control: public` with the configured max-age and `must-revalidate`, an `ETag` over the answer as sent, and `Vary: Origin, Accept, Accept-Language`. A request whose `If-None-Match` matches SHALL get 304 Not Modified without a body. Error answers SHALL carry no public cache header. An anonymous request that carries a body SHALL get `Cache-Control: no-store` and no `ETag`.
+A successful anonymous answer of the publication list, a publication, its attachments list and the public search — on the catalogue routes and on the federation routes (`/api/federation/publications/{id}` and its `/attachments`) alike — SHALL carry `Cache-Control: public` with the configured max-age and `must-revalidate`, an `ETag` over the answer as sent, and `Vary: Origin, Accept, Accept-Language`. A request whose `If-None-Match` matches SHALL get 304 Not Modified without a body. Error answers SHALL carry no public cache header. An anonymous request that carries a body SHALL get `Cache-Control: no-store` and no `ETag`.
 
 #### Scenario: A CDN caches a catalogue page
 
@@ -21,6 +21,13 @@ A successful anonymous answer of the publication list, a publication, its attach
 - **GIVEN** a reader who received an `ETag` for a publication
 - **WHEN** they request it again with that value in `If-None-Match` and the publication did not change
 - **THEN** the answer is 304 without a body
+
+#### Scenario: A portal reads a publication through the federation route
+
+- **GIVEN** a cache time of 60 seconds and a portal that reads `GET /api/federation/publications/{id}?_extend=@self.schema` on every page view
+- **WHEN** an anonymous visitor opens the page twice and the publication and its schema did not change
+- **THEN** the first answer carries `Cache-Control: public, max-age=60, must-revalidate` and an `ETag`, and the second, sent with that value in `If-None-Match`, is 304 without a body, so the schema does not travel again
+- @e2e exclude pinned by `tests/Unit/Controller/FederationControllerTest.php` (`testAnAnonymousFederatedPublicationIsPubliclyCacheable`, `testAMatchingIfNoneMatchOnTheFederationRouteAnswers304`)
 
 #### Scenario: An unknown catalogue
 

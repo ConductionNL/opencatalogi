@@ -27,9 +27,11 @@ function objectOr<T>(value: unknown, fallback: T): T {
  * @return Whether the publication is featured
  */
 function featuredFlag(value: unknown): boolean {
-	return (typeof value === 'boolean' && value)
+	return (
+		(typeof value === 'boolean' && value)
 		|| (typeof value === 'string' && !!parseInt(value))
 		|| false
+	)
 }
 
 /**

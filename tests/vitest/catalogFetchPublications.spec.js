@@ -58,22 +58,48 @@ describe('catalog store fetchPublications', () => {
 		await store.fetchPublications()
 
 		expect(fetch).not.toHaveBeenCalled()
-		expect(consoleError).toHaveBeenCalledWith('[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists')
+		expect(consoleError).toHaveBeenCalledWith(
+			'[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists',
+		)
 	})
 
 	it('requests the page and keeps the state and pagination', async () => {
-		const fetch = answer({ results: [{ id: 'p1' }], total: 41, page: 3, pages: 5, limit: 10, offset: 20 })
+		const fetch = answer({
+			results: [{ id: 'p1' }],
+			total: 41,
+			page: 3,
+			pages: 5,
+			limit: 10,
+			offset: 20,
+		})
 
-		await store.fetchPublications({ page: 3, limit: 10, q: 'x', _order: 'title' }, 'my-catalog')
+		await store.fetchPublications(
+			{ page: 3, limit: 10, q: 'x', _order: 'title' },
+			'my-catalog',
+		)
 
-		expect(fetch.mock.calls[0][0]).toBe('/index.php/apps/opencatalogi/api/my-catalog?_page=3&_limit=10&_extend=%40self.schema%2C%40self.register&q=x&_order=title')
+		expect(fetch.mock.calls[0][0]).toBe(
+			'/index.php/apps/opencatalogi/api/my-catalog?_page=3&_limit=10&_extend=%40self.schema%2C%40self.register&q=x&_order=title',
+		)
 		expect(fetch.mock.calls[0][1].method).toBe('GET')
 		expect(store.lastCatalogId).toBe('my-catalog')
-		expect(store.publications).toEqual({ results: [{ id: 'p1' }], total: 41, page: 3, pages: 5, limit: 10, offset: 20 })
+		expect(store.publications).toEqual({
+			results: [{ id: 'p1' }],
+			total: 41,
+			page: 3,
+			pages: 5,
+			limit: 10,
+			offset: 20,
+		})
 		expect(store.pagination).toEqual({ page: 3, limit: 10 })
 		expect(store.loading).toBe(false)
-		expect(objectStoreMock.setLoading.mock.calls).toEqual([['publication', true], ['publication', false]])
-		expect(objectStoreMock.setCollection).toHaveBeenCalledWith('publication', [{ id: 'p1' }])
+		expect(objectStoreMock.setLoading.mock.calls).toEqual([
+			['publication', true],
+			['publication', false],
+		])
+		expect(objectStoreMock.setCollection).toHaveBeenCalledWith('publication', [
+			{ id: 'p1' },
+		])
 	})
 
 	it('falls back to the active catalog, then the last one, and to default paging', async () => {
@@ -84,10 +110,22 @@ describe('catalog store fetchPublications', () => {
 		store.activeCatalog = null
 		await store.fetchPublications()
 
-		expect(fetch.mock.calls[0][0]).toBe('/index.php/apps/opencatalogi/api/c-slug?_page=1&_limit=20&_extend=%40self.schema%2C%40self.register')
+		expect(fetch.mock.calls[0][0]).toBe(
+			'/index.php/apps/opencatalogi/api/c-slug?_page=1&_limit=20&_extend=%40self.schema%2C%40self.register',
+		)
 		expect(fetch.mock.calls[1][0]).toContain('/api/c-slug?')
-		expect(store.publications).toEqual({ results: [], total: 0, page: 1, pages: 0, limit: 20, offset: 0 })
-		expect(objectStoreMock.setCollection).toHaveBeenLastCalledWith('publication', undefined)
+		expect(store.publications).toEqual({
+			results: [],
+			total: 0,
+			page: 1,
+			pages: 0,
+			limit: 20,
+			offset: 0,
+		})
+		expect(objectStoreMock.setCollection).toHaveBeenLastCalledWith(
+			'publication',
+			undefined,
+		)
 	})
 
 	it('registers each object type once, resolving ids through the page maps', async () => {
@@ -100,7 +138,10 @@ describe('catalog store fetchPublications', () => {
 				{ '@self': { schema: 7 } },
 			],
 			'@self': {
-				schemas: { 5: { id: 5, slug: 'publication' }, 6: { title: 'no slug' } },
+				schemas: {
+					5: { id: 5, slug: 'publication' },
+					6: { title: 'no slug' },
+				},
 				registers: { 2: { id: 2 } },
 			},
 		})
@@ -122,8 +163,18 @@ describe('catalog store fetchPublications', () => {
 
 		await store.fetchPublications({}, 'c')
 
-		expect(store.publications).toEqual({ results: [], total: 0, page: 1, pages: 0, limit: 20, offset: 0 })
+		expect(store.publications).toEqual({
+			results: [],
+			total: 0,
+			page: 1,
+			pages: 0,
+			limit: 20,
+			offset: 0,
+		})
 		expect(store.loading).toBe(false)
-		expect(consoleError).toHaveBeenCalledWith('Error fetching publications:', expect.any(Error))
+		expect(consoleError).toHaveBeenCalledWith(
+			'Error fetching publications:',
+			expect.any(Error),
+		)
 	})
 })
