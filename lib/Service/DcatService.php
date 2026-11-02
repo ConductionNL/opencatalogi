@@ -29,10 +29,6 @@
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\DcatServiceInterface;
-use OCP\App\IAppManager;
-use OCP\IAppConfig;
-use OCP\IURLGenerator;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -57,30 +53,22 @@ class DcatService implements DcatServiceInterface {
 	/**
 	 * DcatService constructor.
 	 *
-	 * @param ContainerInterface $container Server container for OR service resolution.
-	 * @param IAppManager $appManager App manager for OpenRegister availability checks.
+	 * @param OpenRegisterLookup $openRegister The guarded OpenRegister services.
 	 * @param DcatMappingService $mappingService Pure publication → DCAT
 	 *                                           mapping.
 	 * @param DcatSerializer $serializer Pure graph → JSON-LD/Turtle/RDF-XML
 	 *                                   serializer.
-	 * @param IURLGenerator $urlGenerator Nextcloud URL generator (absolute IRIs).
-	 * @param IAppConfig $appConfig App config (publisher defaults).
+	 * @param InstanceSettings $instance The base URL (absolute IRIs) and app config (publisher defaults).
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param StandardsVersionService $standardsVersions Declared DCAT-AP-NL profile version, and the published one.
-	 * @param QualityService|null $qualityService Optional MQA/FAIR scorer for DQV exposure (PQM-002).
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+	 * @param DcatAssurance $assurance The profile-version check and the optional DQV quality scorer.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly DcatMappingService $mappingService,
 		private readonly DcatSerializer $serializer,
-		private readonly IURLGenerator $urlGenerator,
-		private readonly IAppConfig $appConfig,
+		private readonly InstanceSettings $instance,
 		private readonly LoggerInterface $logger,
-		private readonly StandardsVersionService $standardsVersions,
-		private readonly ?QualityService $qualityService = null,
+		private readonly DcatAssurance $assurance,
 	) {
 
 	}//end __construct()
@@ -93,11 +81,7 @@ class DcatService implements DcatServiceInterface {
 	 * @throws RuntimeException When OpenRegister is not installed.
 	 */
 	private function getObjectService(): \OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		}
-
-		throw new RuntimeException('OpenRegister service is not available.');
+		return $this->openRegister->installedService('OCA\OpenRegister\Service\ObjectService', 'OpenRegister service is not available.');
 	}//end getObjectService()
 
 	/**
@@ -108,11 +92,7 @@ class DcatService implements DcatServiceInterface {
 	 * @throws RuntimeException When OpenRegister is not installed.
 	 */
 	private function getFileService(): \OCA\OpenRegister\Service\FileService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\FileService');
-		}
-
-		throw new RuntimeException('OpenRegister FileService is not available.');
+		return $this->openRegister->installedService('OCA\OpenRegister\Service\FileService', 'OpenRegister FileService is not available.');
 	}//end getFileService()
 
 	/**
@@ -123,11 +103,7 @@ class DcatService implements DcatServiceInterface {
 	 * @throws RuntimeException When OpenRegister is not installed.
 	 */
 	private function getSchemaMapper(): \OCA\OpenRegister\Db\SchemaMapper {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
-		}
-
-		throw new RuntimeException('OpenRegister SchemaMapper is not available.');
+		return $this->openRegister->installedService('OCA\OpenRegister\Db\SchemaMapper', 'OpenRegister SchemaMapper is not available.');
 	}//end getSchemaMapper()
 
 	/**
@@ -165,10 +141,10 @@ class DcatService implements DcatServiceInterface {
 		$defaultLicense = 'http://creativecommons.org/publicdomain/zero/1.0/';
 
 		return [
-			'publisherName' => ($catalog['dcatPublisherName'] ?? $this->appConfig->getValueString('opencatalogi', 'dcat_publisher_name', '')),
-			'publisherUri' => ($catalog['dcatPublisherUri'] ?? $this->appConfig->getValueString('opencatalogi', 'dcat_publisher_uri', '')),
-			'license' => ($catalog['dcatLicense'] ?? $this->appConfig->getValueString('opencatalogi', 'dcat_default_license', $defaultLicense)),
-			'contactPoint' => ($catalog['dcatContactPoint'] ?? $this->appConfig->getValueString('opencatalogi', 'dcat_contact_point', '')),
+			'publisherName' => ($catalog['dcatPublisherName'] ?? $this->instance->stringValue('dcat_publisher_name', '')),
+			'publisherUri' => ($catalog['dcatPublisherUri'] ?? $this->instance->stringValue('dcat_publisher_uri', '')),
+			'license' => ($catalog['dcatLicense'] ?? $this->instance->stringValue('dcat_default_license', $defaultLicense)),
+			'contactPoint' => ($catalog['dcatContactPoint'] ?? $this->instance->stringValue('dcat_contact_point', '')),
 			'organisation' => $organisation,
 		];
 
@@ -184,7 +160,7 @@ class DcatService implements DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-federation-directory-advertises-the-dcat-endpoint-dcat-009
 	 */
 	public function catalogEndpointUrl(string $catalogSlug): string {
-		$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+		$base = $this->instance->baseUrl();
 		return "$base/apps/opencatalogi/api/catalogs/$catalogSlug/dcat";
 	}//end catalogEndpointUrl()
 
@@ -199,7 +175,7 @@ class DcatService implements DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
 	 */
 	public function datasetIri(string $catalogSlug, string $uuid): string {
-		$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+		$base = $this->instance->baseUrl();
 		return "$base/apps/opencatalogi/api/$catalogSlug/$uuid";
 	}//end datasetIri()
 
@@ -418,8 +394,8 @@ class DcatService implements DcatServiceInterface {
 		$dataset = $this->mappingService->mapDataset(source: $source, profile: $profile);
 
 		// PQM-002: additive DQV measurements, only when the catalog opts in.
-		if ($scope['dqvExposure'] === true && $this->qualityService !== null) {
-			$dataset['dqv:hasQualityMeasurement'] = $this->qualityService->dqvMeasurements($this->qualityService->scoreDataset($dataset));
+		if ($scope['dqvExposure'] === true) {
+			$dataset = $this->assurance->withQualityMeasurements($dataset);
 		}
 
 		return $dataset;
@@ -601,8 +577,8 @@ class DcatService implements DcatServiceInterface {
 		}
 
 		$defaults = [
-			'publisherName' => $this->appConfig->getValueString('opencatalogi', 'dcat_publisher_name', ''),
-			'publisherUri' => $this->appConfig->getValueString('opencatalogi', 'dcat_publisher_uri', ''),
+			'publisherName' => $this->instance->stringValue('dcat_publisher_name', ''),
+			'publisherUri' => $this->instance->stringValue('dcat_publisher_uri', ''),
 		];
 		return $this->mappingService->buildPublisher($organisation, $defaults);
 	}//end instancePublisher()
@@ -617,14 +593,14 @@ class DcatService implements DcatServiceInterface {
 	 * @spec exclude Internal root step of buildInstanceDocument().
 	 */
 	private function instanceRootNode(array $graph): array {
-		$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+		$base = $this->instance->baseUrl();
 
 		return [
 			'@id' => "$base/apps/opencatalogi/api/dcat",
 			'@type' => 'dcat:Catalog',
-			'dct:title' => $this->appConfig->getValueString('opencatalogi', 'dcat_instance_title', 'OpenCatalogi'),
+			'dct:title' => $this->instance->stringValue('dcat_instance_title', 'OpenCatalogi'),
 			'dct:modified' => gmdate('Y-m-d\TH:i:sP'),
-			'foaf:homepage' => ['@id' => $this->appConfig->getValueString('opencatalogi', 'dcat_instance_homepage', $base)],
+			'foaf:homepage' => ['@id' => $this->instance->stringValue('dcat_instance_homepage', $base)],
 			'dcat:catalog' => array_map(static fn ($node) => ['@id' => $node['@id']], $graph),
 		];
 	}//end instanceRootNode()
@@ -647,12 +623,12 @@ class DcatService implements DcatServiceInterface {
 			$rootNode['dct:publisher'] = $publisher;
 		}
 
-		$license = $this->appConfig->getValueString('opencatalogi', 'dcat_default_license', 'http://creativecommons.org/publicdomain/zero/1.0/');
+		$license = $this->instance->stringValue('dcat_default_license', 'http://creativecommons.org/publicdomain/zero/1.0/');
 		if ($license !== '') {
 			$rootNode['dct:license'] = ['@id' => $license];
 		}
 
-		$contactPoint = $this->appConfig->getValueString('opencatalogi', 'dcat_contact_point', '');
+		$contactPoint = $this->instance->stringValue('dcat_contact_point', '');
 		if ($contactPoint !== '') {
 			$rootNode['dcat:contactPoint'] = ['@type' => 'vcard:Organization', 'vcard:fn' => $contactPoint];
 		}
@@ -675,7 +651,7 @@ class DcatService implements DcatServiceInterface {
 	 */
 	public function validateCatalog(array $catalog, string $catalogSlug): array {
 		$document = $this->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: 1);
-		$violations = $this->profileVersionViolations();
+		$violations = $this->assurance->profileVersionViolations();
 		foreach ($this->serializer->graphNodes($document) as $node) {
 			if (($node['@type'] ?? '') !== 'dcat:Dataset') {
 				continue;
@@ -694,34 +670,6 @@ class DcatService implements DcatServiceInterface {
 	}//end validateCatalog()
 
 	/**
-	 * The profile-version violation, when the publisher has moved past the version we target.
-	 *
-	 * A feed that declares a superseded profile is a feed whose mandatory-property
-	 * checklist is the wrong checklist, so it is reported as a violation rather than
-	 * left to a reader to notice. An unreadable release index yields no violation but
-	 * is still reported by the controller as `unknown`, never as current.
-	 *
-	 * @return array<int, array<string, mixed>> One entry when behind, empty otherwise.
-	 *
-	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
-	 */
-	private function profileVersionViolations(): array {
-		$profile = $this->standardsVersions->dcatApNlVersion();
-		if ($profile['status'] !== StandardsVersionService::STATUS_BEHIND) {
-			return [];
-		}
-
-		return [
-			[
-				'axis' => 'profile-version',
-				'declared' => $profile['declared'],
-				'published' => $profile['published'],
-			],
-		];
-
-	}//end profileVersionViolations()
-
-	/**
 	 * The canonical instance-level harvest-source URL for data.overheid.nl (DONL).
 	 *
 	 * @return string The `…/api/dcat` harvest-source URL.
@@ -729,7 +677,7 @@ class DcatService implements DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md
 	 */
 	public function harvestSourceUrl(): string {
-		$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+		$base = $this->instance->baseUrl();
 		return "$base/apps/opencatalogi/api/dcat";
 	}//end harvestSourceUrl()
 
@@ -757,7 +705,7 @@ class DcatService implements DcatServiceInterface {
 			violations: $themeViolations
 		);
 
-		$violations = array_merge($this->profileVersionViolations(), $themeViolations);
+		$violations = array_merge($this->assurance->profileVersionViolations(), $themeViolations);
 		foreach ($this->serializer->graphNodes($document) as $node) {
 			if (($node['@type'] ?? '') !== 'dcat:Dataset') {
 				continue;
@@ -810,8 +758,8 @@ class DcatService implements DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-instance-level-dcat-catalog-document-dcat-002
 	 */
 	public function getDcatEnabledCatalogs(): array {
-		$register = $this->appConfig->getValueString('opencatalogi', 'catalog_register', '');
-		$schema = $this->appConfig->getValueString('opencatalogi', 'catalog_schema', '');
+		$register = $this->instance->stringValue('catalog_register', '');
+		$schema = $this->instance->stringValue('catalog_schema', '');
 		if ($register === '' || $schema === '') {
 			return [];
 		}

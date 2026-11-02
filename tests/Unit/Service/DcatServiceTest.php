@@ -25,9 +25,12 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\DcatAssurance;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
+use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenRegister\Db\SchemaMapper;
 use OCA\OpenRegister\Service\FileService;
@@ -71,14 +74,12 @@ class DcatServiceTest extends TestCase {
 		);
 
 		$this->service = new DcatService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService()),
 			new DcatSerializer(),
-			$this->urlGenerator,
-			$this->appConfig,
+			new InstanceSettings($this->urlGenerator, $this->appConfig),
 			$this->createMock(LoggerInterface::class),
-			$this->standardsVersions
+			new DcatAssurance($this->standardsVersions)
 		);
 	}
 
@@ -214,14 +215,12 @@ class DcatServiceTest extends TestCase {
 		);
 
 		$service = new DcatService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			new DcatMappingService(new \OCA\OpenCatalogi\Service\DcatVocabularyService()),
 			new DcatSerializer(),
-			$this->urlGenerator,
-			$this->appConfig,
+			new InstanceSettings($this->urlGenerator, $this->appConfig),
 			$this->createMock(LoggerInterface::class),
-			$versions
+			new DcatAssurance($versions)
 		);
 
 		$this->wireOpenRegister();
@@ -334,4 +333,28 @@ class DcatServiceTest extends TestCase {
 
 		$this->assertSame([], $document['@graph'][0]['dcat:dataset']);
 	}//end testBuildCatalogDocumentWithoutARegisterScopeDoesNotSearch()
+
+	/**
+	 * Without OpenRegister each OpenRegister dependency refuses with its own message.
+	 *
+	 * @return void
+	 */
+	public function testOpenRegisterDependenciesRefuseWithTheirOwnMessage(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['files']);
+
+		$expected = [
+			'getObjectService' => 'OpenRegister service is not available.',
+			'getFileService' => 'OpenRegister FileService is not available.',
+			'getSchemaMapper' => 'OpenRegister SchemaMapper is not available.',
+		];
+		foreach ($expected as $method => $message) {
+			try {
+				(new \ReflectionMethod(DcatService::class, $method))->invoke($this->service);
+				$this->fail($method . ' did not refuse');
+			} catch (\RuntimeException $e) {
+				$this->assertSame($message, $e->getMessage(), $method);
+			}
+		}
+
+	}//end testOpenRegisterDependenciesRefuseWithTheirOwnMessage()
 }//end class
