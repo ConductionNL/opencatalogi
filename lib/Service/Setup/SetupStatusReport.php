@@ -135,16 +135,7 @@ class SetupStatusReport {
 
 		$defaultUrl = $this->directoryService->getDefaultDirectoryUrl();
 
-		try {
-			$listings = $objectService->searchObjects(
-				['@self' => ['register' => $register, 'schema' => $schema]],
-				_rbac: false,
-				_multitenancy: false
-			);
-		} catch (\Exception $e) {
-			return false;
-		}
-
+		$listings = $this->catalogSteps->searchAll(objectService: $objectService, location: ['register' => $register, 'schema' => $schema]);
 		if (is_array($listings) === false) {
 			return false;
 		}

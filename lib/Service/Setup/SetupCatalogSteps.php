@@ -252,18 +252,32 @@ class SetupCatalogSteps {
 			return false;
 		}
 
+		$catalogs = $this->searchAll(objectService: $objectService, location: ['register' => $register, 'schema' => $schema]);
+
+		return is_array($catalogs) === true && count($catalogs) > 0;
+	}//end catalogExists()
+
+	/**
+	 * Every object in one register and schema, read with system privileges, or null when the search fails.
+	 *
+	 * @param object                $objectService The OpenRegister ObjectService.
+	 * @param array<string, string> $location      The `register` and `schema` to search.
+	 *
+	 * @return mixed The search result, or null after an exception.
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
+	 */
+	public function searchAll(object $objectService, array $location): mixed {
 		try {
-			$catalogs = $objectService->searchObjects(
-				['@self' => ['register' => $register, 'schema' => $schema]],
+			return $objectService->searchObjects(
+				['@self' => ['register' => $location['register'], 'schema' => $location['schema']]],
 				_rbac: false,
 				_multitenancy: false
 			);
 		} catch (\Exception $e) {
-			return false;
+			return null;
 		}
-
-		return is_array($catalogs) === true && count($catalogs) > 0;
-	}//end catalogExists()
+	}//end searchAll()
 
 	/**
 	 * Resolve the OpenRegister ObjectService from the container.
