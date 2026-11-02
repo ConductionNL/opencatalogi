@@ -43,6 +43,7 @@ const SCHEMAS = [
 const STORES = {
 	schemas: { availableSchemas: SCHEMAS },
 	noList: { availableSchemas: null },
+	notAList: { availableSchemas: { 0: SCHEMAS[0], length: 1 } },
 	missing: null,
 }
 const REFS = {

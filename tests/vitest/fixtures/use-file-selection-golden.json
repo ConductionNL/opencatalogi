@@ -424,6 +424,49 @@
 		},
 		"dropDataTypes": null
 	},
+	"multiple/empty/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
 	"multiple/related/none": {
 		"steps": [
 			{
@@ -799,6 +842,49 @@
 				"getCollection",
 				"publicationAttachments"
 			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/related/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
 			[
 				"getRelatedData",
 				"publication",
@@ -1201,6 +1287,49 @@
 				"getCollection",
 				"publicationAttachments"
 			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/collection/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
 			[
 				"getRelatedData",
 				"publication",
@@ -1644,6 +1773,49 @@
 		},
 		"dropDataTypes": null
 	},
+	"multiple/throwing/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
 	"multiple/missing/none": {
 		"steps": [
 			{
@@ -1981,6 +2153,39 @@
 		"calls": {
 			"drop": 2,
 			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf,.txt",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"multiple/missing/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
 		},
 		"reads": [],
 		"resets": 0,
@@ -2429,6 +2634,49 @@
 		},
 		"dropDataTypes": null
 	},
+	"single/empty/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
 	"single/related/none": {
 		"steps": [
 			{
@@ -2779,6 +3027,49 @@
 		},
 		"dropDataTypes": null
 	},
+	"single/related/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
 	"single/collection/none": {
 		"steps": [
 			{
@@ -3111,6 +3402,49 @@
 				"getCollection",
 				"publicationAttachments"
 			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/collection/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
 			[
 				"getRelatedData",
 				"publication",
@@ -3487,6 +3821,49 @@
 		},
 		"dropDataTypes": null
 	},
+	"single/throwing/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
 	"single/missing/none": {
 		"steps": [
 			{
@@ -3757,6 +4134,39 @@
 		"calls": {
 			"drop": 2,
 			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": ".pdf",
+		"dialog": {
+			"multiple": false,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"single/missing/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
 		},
 		"reads": [],
 		"resets": 0,
@@ -4261,6 +4671,49 @@
 		},
 		"dropDataTypes": null
 	},
+	"noTypes/empty/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
 	"noTypes/related/none": {
 		"steps": [
 			{
@@ -4636,6 +5089,49 @@
 				"getCollection",
 				"publicationAttachments"
 			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/related/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
 			[
 				"getRelatedData",
 				"publication",
@@ -5038,6 +5534,49 @@
 				"getCollection",
 				"publicationAttachments"
 			],
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/collection/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
 			[
 				"getRelatedData",
 				"publication",
@@ -5481,6 +6020,49 @@
 		},
 		"dropDataTypes": null
 	},
+	"noTypes/throwing/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
+		},
+		"reads": [
+			[
+				"getRelatedData",
+				"publication",
+				"files"
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			]
+		],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
 	"noTypes/missing/none": {
 		"steps": [
 			{
@@ -5818,6 +6400,39 @@
 		"calls": {
 			"drop": 2,
 			"select": 2
+		},
+		"reads": [],
+		"resets": 0,
+		"accept": "*",
+		"dialog": {
+			"multiple": true,
+			"reset": true
+		},
+		"dropDataTypes": null
+	},
+	"noTypes/missing/emptyName": {
+		"steps": [
+			{
+				"files": [
+					{
+						"name": "",
+						"type": "text/plain",
+						"tags": [
+							"tag-a"
+						],
+						"status": "pending",
+						"isFile": true
+					}
+				],
+				"rejected": {
+					"names": [],
+					"seq": 1
+				}
+			}
+		],
+		"calls": {
+			"drop": 1,
+			"select": 1
 		},
 		"reads": [],
 		"resets": 0,

@@ -93,7 +93,7 @@ function storeOf(spec, reads) {
 const describeFile = (f) => ({ name: f.name, type: f.type, tags: f.tags, status: f.status, isFile: f instanceof File })
 const describeList = (list) => (Array.isArray(list) ? list.map(describeFile) : list)
 
-const withNames = { results: [{ name: 'a.txt' }, { title: 'b.txt' }, { name: '', title: 'c.txt' }, {}, null] }
+const withNames = { results: [{ name: 'a.txt' }, { title: 'b.txt' }, { name: '', title: 'c.txt' }, { name: '', title: '' }, {}, null] }
 const STORES = {
 	empty: { related: undefined, collection: undefined },
 	related: { related: withNames, collection: { results: 'x' } },
@@ -111,6 +111,7 @@ const DROPS = {
 	twoDrops: [['one.txt'], ['two.txt', 'one.txt']],
 	allDuplicates: [['a.txt', 'b.txt']],
 	dropThenAllDuplicates: [['one.txt'], ['one.txt']],
+	emptyName: [['']],
 }
 
 const OPTIONS = {
