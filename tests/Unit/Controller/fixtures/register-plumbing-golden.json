@@ -355,7 +355,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -995,7 +995,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -1237,7 +1237,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -1869,7 +1869,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -2491,7 +2491,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -2860,7 +2860,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -3433,7 +3433,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -3910,7 +3910,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -4522,7 +4522,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -5043,7 +5043,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -5513,7 +5513,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -5912,7 +5912,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -6318,7 +6318,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -6592,7 +6592,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -9093,7 +9093,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -9312,7 +9312,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -9531,7 +9531,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -9750,7 +9750,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -9996,7 +9996,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -10324,7 +10324,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -10890,7 +10890,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -11301,7 +11301,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -11657,7 +11657,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -12008,7 +12008,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -12419,7 +12419,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in /home/rubenlinde/sig-lanes/di2/di2-opencatalogi/lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",

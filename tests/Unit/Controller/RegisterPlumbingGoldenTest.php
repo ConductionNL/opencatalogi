@@ -699,6 +699,10 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			return array_map(fn (mixed $item): mixed => $this->normalise(value: $item), $value);
 		}
 
+		if (is_string($value) === true) {
+			return preg_replace('/ passed in \S+ on line \d+/', ' passed', $value);
+		}
+
 		if (is_float($value) === true && is_nan($value) === true) {
 			return 'NAN';
 		}
