@@ -24,7 +24,7 @@
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Tool\CMSTool;
+use OCA\OpenCatalogi\Contract\CMSToolInterface;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -44,16 +44,16 @@ class ToolRegistrationListener implements IEventListener {
 	/**
 	 * CMS tool.
 	 *
-	 * @var CMSTool
+	 * @var CMSToolInterface
 	 */
-	private CMSTool $cmsTool;
+	private CMSToolInterface $cmsTool;
 
 	/**
 	 * Constructor.
 	 *
-	 * @param CMSTool $cmsTool CMS tool.
+	 * @param CMSToolInterface $cmsTool CMS tool.
 	 */
-	public function __construct(CMSTool $cmsTool) {
+	public function __construct(CMSToolInterface $cmsTool) {
 		$this->cmsTool = $cmsTool;
 
 	}//end __construct()

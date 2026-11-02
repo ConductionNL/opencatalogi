@@ -27,8 +27,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCP\AppFramework\Http\Response;
+
 /**
- * Resolve the `Access-Control-Allow-Origin` value for the current request.
+ * Resolve the `Access-Control-Allow-Origin` value through ResolvesAllowedOrigin,
+ * and answer the read-write preflight.
  *
  * Consuming controllers MUST expose a `private readonly IAppConfig $config`
  * constructor-promoted property, and inherit `$appName` and `$request` from
@@ -37,34 +40,33 @@ namespace OCA\OpenCatalogi\Controller;
  * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
  */
 trait AnswersCrossOriginRequests {
+	use ResolvesAllowedOrigin;
+
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
+	 * The `cors_allowed_origins` setting.
 	 *
-	 * The caller's Origin is never echoed back unless it is on the allowlist.
+	 * @return string The setting.
+	 */
+	private function allowedOriginsSetting(): string {
+		return $this->config->getValueString($this->appName, 'cors_allowed_origins', '*');
+
+	}//end allowedOriginsSetting()
+
+	/**
+	 * The answer to a GET/POST CORS preflight: origin, methods, max age, headers and no credentials.
 	 *
-	 * @return string The header value.
+	 * @return Response The preflight response.
 	 *
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
+	private function readWritePreflight(): Response {
+		$response = new Response();
+		$this->addAllowedOriginHeaders(response: $response);
+		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+		$response->addHeader('Access-Control-Max-Age', '1728000');
+		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
+		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-
-	}//end resolveAllowedOrigin()
+		return $response;
+	}//end readWritePreflight()
 }//end trait

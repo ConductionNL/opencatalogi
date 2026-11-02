@@ -61,6 +61,8 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\SetupController
  * @covers \OCA\OpenCatalogi\Service\BroadcastService
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
+ * @uses \OCA\OpenCatalogi\Service\Broadcast\BroadcastResult
+ * @uses \OCA\OpenCatalogi\Service\Federation\FederationHostPolicy
  */
 class ConnectionReportCallersTest extends TestCase {
 

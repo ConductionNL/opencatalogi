@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\QualityServiceInterface;
 use OCP\IAppConfig;
 
 /**
@@ -38,7 +39,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/specs/publication-quality/spec.md
  */
-class QualityService {
+class QualityService implements QualityServiceInterface {
 
 	/**
 	 * The five MQA dimensions.

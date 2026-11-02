@@ -100,7 +100,8 @@ webpackConfig.module.rules.push({
 // them, so we re-add explicitly.
 webpackConfig.plugins = [
 	new VueLoaderPlugin(),
-	// TODO: Remove NodePolyfillPlugin when upgrading to Vue 3.
+	// Polyfills node builtins. `@conduction/nextcloud-vue` bundles a FilePicker
+	// chunk that imports `path`, which needs a real polyfill, not a `false` stub.
 	new NodePolyfillPlugin({ additionalAliases: ['process'] }),
 	new webpack.DefinePlugin({ appName: JSON.stringify(appId) }),
 	new webpack.DefinePlugin({
@@ -155,14 +156,6 @@ if (useLocalLib) {
 
 webpackConfig.resolve = webpackConfig.resolve || {}
 webpackConfig.resolve.extensions = ['.ts', '.js', '.vue', '.json']
-// `@conduction/nextcloud-vue` bundles a FilePicker chunk that imports node's
-// `path`; webpack 5 no longer polyfills node builtins automatically. It must be
-// a REAL polyfill, not `false` — an empty stub makes `path.join` undefined and
-// the picker throws at runtime.
-webpackConfig.resolve.fallback = {
-	...(webpackConfig.resolve.fallback || {}),
-	path: require.resolve('path-browserify'),
-}
 webpackConfig.resolve.alias = {
 	...(webpackConfig.resolve.alias || {}),
 	'@': path.resolve(__dirname, 'src'),

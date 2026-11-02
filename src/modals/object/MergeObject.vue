@@ -1,5 +1,5 @@
 <script setup>
-import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
+import { navigationStore, objectStore } from '../../store/store.js'
 
 import '../../css/json-highlight.css'
 </script>
@@ -15,15 +15,11 @@ import '../../css/json-highlight.css'
 				<span class="detail-label">{{
 					t('opencatalogi', 'Register:')
 				}}</span>
-				<span class="detail-value">{{
-					catalogStore.catalogiItem?.title || catalogStore.catalogiItem?.id
-				}}</span>
+				<span class="detail-value">{{ registerLabel }}</span>
 			</div>
 			<div class="detail-item">
 				<span class="detail-label">{{ t('opencatalogi', 'Schema:') }}</span>
-				<span class="detail-value">{{
-					catalogStore.schemaItem?.title || catalogStore.schemaItem?.id
-				}}</span>
+				<span class="detail-value">{{ schemaLabel }}</span>
 			</div>
 		</div>
 
@@ -681,6 +677,8 @@ import '../../css/json-highlight.css'
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -726,6 +724,8 @@ export default {
 	data() {
 		return {
 			step: 1, // 1: select target, 2: configure merge, 3: report
+			/** The source handed over by the list's Merge action. */
+			mergeSource: null,
 			loading: false,
 			searchTerm: '',
 			availableObjects: [],
@@ -746,7 +746,37 @@ export default {
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		sourceObject() {
-			return objectStore.objectItem
+			return this.mergeSource ?? objectStore.objectItem ?? null
+		},
+
+		/**
+		 * The source's register and schema ids, the pair both objects share.
+		 *
+		 * @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001
+		 */
+		sourcePair() {
+			const self = this.sourceObject?.['@self'] || {}
+			const id = (value) =>
+				value && typeof value === 'object' ? value.id : value
+			return { register: id(self.register), schema: id(self.schema) }
+		},
+
+		/** @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
+		registerLabel() {
+			const { register } = this.sourcePair
+			const known = (objectStore.availableRegisters || []).find(
+				(item) => String(item.id) === String(register),
+			)
+			return known?.title || register || ''
+		},
+
+		/** @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
+		schemaLabel() {
+			const { schema } = this.sourcePair
+			const known = (objectStore.availableSchemas || []).find(
+				(item) => String(item.id) === String(schema),
+			)
+			return known?.title || schema || ''
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
@@ -776,28 +806,49 @@ export default {
 	},
 
 	methods: {
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
+		/**
+		 * Read what the list handed over: the source, and the target with the
+		 * step to start at. Without a target the dialog starts at step 1.
+		 *
+		 * @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001
+		 */
 		initializeMerge() {
+			const transfer = navigationStore.getTransferData?.() || {}
+			this.mergeSource = transfer.mergeSource ?? null
 			if (!this.sourceObject) {
 				this.closeModal()
 				return
 			}
 			this.loadSourceData()
+			if (transfer.mergeTarget) {
+				this.selectedTargetObject = transfer.mergeTarget
+				if (transfer.startStep === 2) {
+					this.step = 2
+					this.initializeMergeData()
+				}
+			}
 			this.searchObjects()
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		async searchObjects() {
-			if (!catalogStore.catalogiItem || !catalogStore.schemaItem) {
+			const { register, schema } = this.sourcePair
+			if (!register || !schema) {
 				return
 			}
 
 			this.loading = true
 			try {
-				const response = await fetch(
-					`/index.php/apps/openregister/api/objects/${catalogStore.catalogiItem.id}/${catalogStore.schemaItem.id}?_search=${this.searchTerm}`,
+				const { data } = await axios.get(
+					generateUrl(
+						'/apps/openregister/api/objects/{register}/{schema}',
+						{
+							register,
+							schema,
+						},
+					),
+					{ params: { _search: this.searchTerm } },
 				)
-				const data = await response.json()
 
 				// Filter out the source object
 				this.availableObjects = data.results.filter(
@@ -1035,16 +1086,19 @@ export default {
 				// eslint-disable-next-line no-console
 				console.log('Final merged data to send:', finalMergedData)
 
-				// Use the object store method for consistent API handling
-				const result = await objectStore.mergeObjects({
-					register: catalogStore.catalogiItem.id,
-					schema: catalogStore.schemaItem.id,
-					sourceObjectId: this.sourceObject['@self'].id,
-					target: this.selectedTargetObject['@self'].id,
-					object: finalMergedData,
-					fileAction: this.fileAction,
-					relationAction: this.relationAction,
-				})
+				const { register, schema } = this.sourcePair
+				const result = await axios.post(
+					generateUrl(
+						'/apps/openregister/api/objects/{register}/{schema}/{id}/merge',
+						{ register, schema, id: this.sourceObject['@self'].id },
+					),
+					{
+						target: this.selectedTargetObject['@self'].id,
+						object: finalMergedData,
+						fileAction: this.fileAction,
+						relationAction: this.relationAction,
+					},
+				)
 
 				this.mergeResult = result.data
 				this.step = 3

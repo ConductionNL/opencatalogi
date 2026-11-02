@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use DateTimeInterface;
+use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -43,7 +44,7 @@ use Throwable;
 /**
  * Status, set-up, switch and run for the GitHub publiccode harvest.
  */
-class PubliccodeHarvestService {
+class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 
 	/**
 	 * The name the shipped flow carries. The flow store identifies a declared

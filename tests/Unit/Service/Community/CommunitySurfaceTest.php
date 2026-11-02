@@ -21,6 +21,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\OpenCatalogi\Service\Community\BannerService
  * @covers \OCA\OpenCatalogi\Service\Community\NoticeBoardService
  * @covers \OCA\OpenCatalogi\Service\Community\AtomFeedService
+ * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
  */
 class CommunitySurfaceTest extends TestCase {
 

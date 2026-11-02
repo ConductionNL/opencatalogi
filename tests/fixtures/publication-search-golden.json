@@ -1,0 +1,696 @@
+{
+    "plain request": {
+        "status": 200,
+        "body": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p1",
+                        "organisation": "org",
+                        "files": [
+                            {
+                                "published": "2025"
+                            }
+                        ]
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p2",
+                        "files": "none"
+                    },
+                    "title": "Two"
+                },
+                {
+                    "title": "No self"
+                }
+            ],
+            "facets": {
+                "@self": {
+                    "register": {
+                        "buckets": []
+                    }
+                }
+            },
+            "total": 3
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "_search": "woo",
+                    "_limit": 10,
+                    "_includeDeleted": false,
+                    "@self": {
+                        "register": [
+                            1,
+                            2
+                        ],
+                        "schema": [
+                            10,
+                            11
+                        ]
+                    },
+                    "_registers": [
+                        1,
+                        2
+                    ],
+                    "_schemas": [
+                        10,
+                        11
+                    ]
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "parameters mapped to _extend": {
+        "status": 200,
+        "body": {
+            "results": [],
+            "facets": [],
+            "total": 0
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "_extend": 5,
+                    "_includeDeleted": false,
+                    "@self": {
+                        "register": 1,
+                        "schema": 10
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "narrowed to one register and schema": {
+        "status": 200,
+        "body": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p1",
+                        "organisation": "org",
+                        "files": [
+                            {
+                                "published": "2025"
+                            }
+                        ]
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p2",
+                        "files": "none"
+                    },
+                    "title": "Two"
+                },
+                {
+                    "title": "No self"
+                }
+            ],
+            "facets": {
+                "@self": {
+                    "register": {
+                        "buckets": []
+                    }
+                }
+            },
+            "total": 3
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "owner": "me",
+                        "register": 2,
+                        "schema": "11"
+                    },
+                    "_facets": {
+                        "@self": {
+                            "register": {
+                                "type": "terms"
+                            }
+                        }
+                    },
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "narrowed with lists": {
+        "status": 200,
+        "body": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p1",
+                        "organisation": "org",
+                        "files": [
+                            {
+                                "published": "2025"
+                            }
+                        ]
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p2",
+                        "files": "none"
+                    },
+                    "title": "Two"
+                },
+                {
+                    "title": "No self"
+                }
+            ],
+            "facets": {
+                "@self": {
+                    "register": {
+                        "buckets": []
+                    }
+                }
+            },
+            "total": 3
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": [
+                            1,
+                            2
+                        ],
+                        "schema": [
+                            10
+                        ]
+                    },
+                    "_includeDeleted": false,
+                    "_registers": [
+                        1,
+                        2
+                    ],
+                    "_schemas": [
+                        10
+                    ]
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "register outside the scope": {
+        "status": 400,
+        "body": {
+            "error": "Invalid register(s) requested"
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            }
+        ]
+    },
+    "schema outside the scope": {
+        "status": 400,
+        "body": {
+            "error": "Invalid schema(s) requested"
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            }
+        ]
+    },
+    "empty schema scope fails closed": {
+        "status": 200,
+        "body": {
+            "results": [],
+            "facets": [],
+            "total": 0
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            }
+        ]
+    },
+    "empty register scope fails closed": {
+        "status": 200,
+        "body": {
+            "results": [],
+            "facets": [],
+            "total": 0
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            }
+        ]
+    },
+    "directory facet requested": {
+        "status": 200,
+        "body": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p1",
+                        "organisation": "org",
+                        "files": [
+                            {
+                                "published": "2025"
+                            }
+                        ]
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p2",
+                        "files": "none"
+                    },
+                    "title": "Two"
+                },
+                {
+                    "title": "No self"
+                }
+            ],
+            "facets": {
+                "@self": {
+                    "register": {
+                        "buckets": []
+                    },
+                    "directory": {
+                        "type": "terms",
+                        "buckets": [
+                            {
+                                "key": "local",
+                                "label": "local",
+                                "results": 1
+                            },
+                            {
+                                "key": "dir-a.nl",
+                                "label": "dir-a.nl",
+                                "results": 1
+                            },
+                            {
+                                "key": "dir-b.nl",
+                                "label": "dir-b.nl",
+                                "results": 1
+                            }
+                        ]
+                    }
+                }
+            },
+            "total": 3
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "_facets": {
+                        "@self": {
+                            "schema": {
+                                "type": "terms"
+                            }
+                        }
+                    },
+                    "_includeDeleted": false,
+                    "@self": {
+                        "register": 1,
+                        "schema": 10
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "catalogs facet requested": {
+        "status": 200,
+        "body": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p1",
+                        "organisation": "org",
+                        "files": [
+                            {
+                                "published": "2025"
+                            }
+                        ]
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p2",
+                        "files": "none"
+                    },
+                    "title": "Two"
+                },
+                {
+                    "title": "No self"
+                }
+            ],
+            "facets": {
+                "@self": {
+                    "register": {
+                        "buckets": []
+                    },
+                    "catalogs": {
+                        "type": "terms",
+                        "buckets": [
+                            {
+                                "key": "default",
+                                "label": "Default Catalog",
+                                "results": 1
+                            }
+                        ]
+                    }
+                }
+            },
+            "total": 3
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "_facets": {
+                        "@self": []
+                    },
+                    "_includeDeleted": false,
+                    "@self": {
+                        "register": 1,
+                        "schema": 10
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "searchObjects": {
+                    "@self": {
+                        "schema": "catalog-schema",
+                        "register": "catalog-register"
+                    }
+                }
+            }
+        ]
+    },
+    "one catalog by id": {
+        "status": 200,
+        "body": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p1",
+                        "organisation": "org",
+                        "files": [
+                            {
+                                "published": "2025"
+                            }
+                        ]
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p2",
+                        "files": "none"
+                    },
+                    "title": "Two"
+                },
+                {
+                    "title": "No self"
+                }
+            ],
+            "facets": {
+                "@self": {
+                    "register": {
+                        "buckets": []
+                    }
+                }
+            },
+            "total": 3
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "find": "cat-1"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "_search": "x",
+                    "_includeDeleted": false,
+                    "@self": {
+                        "register": 3,
+                        "schema": [
+                            30,
+                            31
+                        ]
+                    },
+                    "_schemas": [
+                        30,
+                        31
+                    ]
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "custom parameters win": {
+        "status": 200,
+        "body": {
+            "results": [],
+            "facets": [],
+            "total": 0
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "_limit": 5,
+                    "@self": {
+                        "register": 1,
+                        "schema": 10
+                    },
+                    "_extend": 7,
+                    "_includeDeleted": false
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "related ids": {
+        "body": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p1",
+                        "organisation": "org",
+                        "files": [
+                            {
+                                "published": "2025"
+                            }
+                        ]
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p2",
+                        "files": "none"
+                    },
+                    "title": "Two"
+                },
+                {
+                    "title": "No self"
+                }
+            ],
+            "facets": {
+                "@self": {
+                    "register": {
+                        "buckets": []
+                    }
+                }
+            },
+            "total": 3
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "_search": "x",
+                    "_ids": [
+                        "uuid-1",
+                        "uuid-2"
+                    ],
+                    "_includeDeleted": false,
+                    "@self": {
+                        "register": 1,
+                        "schema": 10
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "no related ids": {
+        "body": {
+            "results": [
+                {
+                    "@self": {
+                        "id": "p1",
+                        "organisation": "org",
+                        "files": [
+                            {
+                                "published": "2025"
+                            }
+                        ]
+                    },
+                    "title": "One"
+                },
+                {
+                    "@self": {
+                        "id": "p2",
+                        "files": "none"
+                    },
+                    "title": "Two"
+                },
+                {
+                    "title": "No self"
+                }
+            ],
+            "facets": {
+                "@self": {
+                    "register": {
+                        "buckets": []
+                    }
+                }
+            },
+            "total": 3
+        },
+        "calls": [
+            {
+                "searchObjects": {
+                    "@self": {
+                        "register": "catalog-register",
+                        "schema": "catalog-schema"
+                    }
+                }
+            },
+            {
+                "searchObjectsPaginated": {
+                    "_ids": [
+                        "caller"
+                    ],
+                    "_includeDeleted": false,
+                    "@self": {
+                        "register": 1,
+                        "schema": 10
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    }
+}

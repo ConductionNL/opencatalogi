@@ -32,19 +32,16 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 
 /**
  * The visibility state of a publication, and the record for each move.
  *
  * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
  */
-class PublicationStateService {
+class PublicationStateService implements PublicationStateServiceInterface {
 
 	public const STATE_DRAFT = 'draft';
-	public const STATE_SCHEDULED = 'scheduled';
-	public const STATE_PUBLIC = 'public';
-	public const STATE_WITHDRAWN = 'withdrawn';
-	public const STATE_ARCHIVED = 'archived';
 
 	/**
 	 * The state of a publication at a moment.

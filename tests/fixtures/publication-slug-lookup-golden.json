@@ -1,0 +1,416 @@
+{
+    "archived first match": {
+        "answers": {
+            "arch": null
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": [
+            [
+                "debug",
+                "WOO-536: publication slug matched multiple rows; using first-scanned",
+                {
+                    "slug": "arch",
+                    "count": 2
+                }
+            ]
+        ]
+    },
+    "collision uses the first": {
+        "answers": {
+            "dup": {
+                "summary": {
+                    "id": "first",
+                    "slug": "dup",
+                    "title": "First"
+                },
+                "public": true
+            }
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": [
+            [
+                "debug",
+                "WOO-536: publication slug matched multiple rows; using first-scanned",
+                {
+                    "slug": "dup",
+                    "count": 3
+                }
+            ]
+        ]
+    },
+    "empty results": {
+        "answers": {
+            "woo-besluit": null
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "entity rows": {
+        "answers": {
+            "ent": {
+                "summary": {
+                    "id": "e-1",
+                    "slug": "ent",
+                    "title": "Entity"
+                },
+                "public": true
+            }
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "match on @self slug, no register": {
+        "answers": {
+            "woo-besluit": {
+                "summary": {
+                    "id": "self-id",
+                    "slug": "woo-besluit",
+                    "title": "Besluit"
+                },
+                "public": true
+            }
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "match on @self slug, one register": {
+        "answers": {
+            "woo-besluit": {
+                "summary": {
+                    "id": "self-id",
+                    "slug": "woo-besluit",
+                    "title": "Besluit"
+                },
+                "public": true
+            }
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500,
+                    "_register": 4
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "match on top-level slug": {
+        "answers": {
+            "plain": {
+                "summary": {
+                    "id": "p-1",
+                    "slug": "plain",
+                    "title": ""
+                },
+                "public": true
+            }
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "no anonymous scope, twice": {
+        "answers": {
+            "woo-besluit": {
+                "summary": {
+                    "id": "self-id",
+                    "slug": "woo-besluit",
+                    "title": "Besluit"
+                },
+                "public": true
+            },
+            "other": {
+                "summary": {
+                    "id": "x",
+                    "slug": "other",
+                    "title": "Other"
+                },
+                "public": true
+            }
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": [
+            [
+                "error",
+                "WOO-578: this OpenRegister has no ObjectService::runAsAnonymous(), so /api/search evaluates with the caller session and signed-in users may see more than anonymous callers (the WOO-551 behaviour). Upgrade OpenRegister to a build that carries the anonymous evaluation scope to restore uniform visibility.",
+                []
+            ]
+        ]
+    },
+    "no id and no title": {
+        "answers": {
+            "bare": {
+                "summary": {
+                    "id": "",
+                    "slug": "bare",
+                    "title": ""
+                },
+                "public": true
+            }
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "no match": {
+        "answers": {
+            "missing": null
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "no results key": {
+        "answers": {
+            "woo-besluit": null
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "numeric id": {
+        "answers": {
+            "num": {
+                "summary": {
+                    "id": "42",
+                    "slug": "num",
+                    "title": "7"
+                },
+                "public": true
+            }
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "scan fails": {
+        "answers": {
+            "woo-besluit": null
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": [
+            [
+                "warning",
+                "WOO-536: slug scan threw",
+                {
+                    "slug": "woo-besluit",
+                    "error": "scan down"
+                }
+            ]
+        ]
+    },
+    "self slug wins over top-level slug": {
+        "answers": {
+            "top": null
+        },
+        "calls": [
+            [
+                "runAsAnonymous"
+            ],
+            [
+                "searchObjectsPaginated",
+                {
+                    "_schemas": [
+                        12
+                    ],
+                    "_limit": 500
+                },
+                true,
+                false
+            ]
+        ],
+        "log": []
+    }
+}

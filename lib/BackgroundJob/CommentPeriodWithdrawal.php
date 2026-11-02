@@ -34,7 +34,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\Publication\CommentPeriodWithdrawalService;
+use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -53,12 +53,12 @@ class CommentPeriodWithdrawal extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for scheduling.
-	 * @param CommentPeriodWithdrawalService $withdrawals The withdrawal pass.
+	 * @param CommentPeriodWithdrawalServiceInterface $withdrawals The withdrawal pass.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly CommentPeriodWithdrawalService $withdrawals,
+		private readonly CommentPeriodWithdrawalServiceInterface $withdrawals,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

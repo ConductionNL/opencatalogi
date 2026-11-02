@@ -23,7 +23,7 @@ import { translate as t } from '@nextcloud/l10n'
 				countLabel=""
 				horizontal
 				clickable
-				@click="onEntryClick(entry)" />
+				@click="onEntryClick" />
 		</div>
 	</div>
 </template>
@@ -44,8 +44,8 @@ import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
  * expiring-soon / review-required / archived counts as CnStatsBlock KPI
  * entries (ADR-049 stats-block pattern — this widget is a registered
  * Nextcloud dashboard component, not a manifest-v2 `widgets[]` declaration,
- * so the blocks are composed directly). Each entry deep-links into the
- * publications listing pre-filtered to that retention status.
+ * so the blocks are composed directly). Each entry opens the retention
+ * review queue.
  *
  * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
  */
@@ -107,20 +107,14 @@ export default {
 
 	methods: {
 		/**
-		 * Open the publications listing pre-filtered to the chosen retention status.
+		 * Open the retention review queue.
 		 *
-		 * @param {object} entry - The clicked summary entry.
 		 * @return {void}
 		 *
 		 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 		 */
-		onEntryClick(entry) {
-			window.open(
-				generateUrl(
-					'/apps/opencatalogi/?retention=' + encodeURIComponent(entry.id),
-				),
-				'_self',
-			)
+		onEntryClick() {
+			window.open(generateUrl('/apps/opencatalogi/retention'), '_self')
 		},
 
 		/**

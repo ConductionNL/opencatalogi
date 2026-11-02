@@ -26,8 +26,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\UsageCounterService;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -53,8 +53,8 @@ class StatsController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The HTTP request.
-	 * @param UsageCounterService $usageCounterService Aggregation over counter objects.
-	 * @param CatalogiService $catalogiService Catalog resolution by slug.
+	 * @param UsageCounterServiceInterface $usageCounterService Aggregation over counter objects.
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution by slug.
 	 * @param IAppManager $appManager Detects OpenRegister availability.
 	 * @param ContainerInterface $container DI container for the OR ObjectService.
 	 * @param IL10N $l10n Localization service.
@@ -64,8 +64,8 @@ class StatsController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly UsageCounterService $usageCounterService,
-		private readonly CatalogiService $catalogiService,
+		private readonly UsageCounterServiceInterface $usageCounterService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IAppManager $appManager,
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
@@ -128,6 +128,12 @@ class StatsController extends Controller {
 	 * @return JSONResponse Catalog totals + topViewed/topDownloaded lists.
 	 *
 	 * @NoAdminRequired
+	 *
+	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
+	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on), so a catalog the
+	 *   caller may not read is a 404. The catalog roll-up reads only usage counters labelled with that
+	 *   catalog: aggregates (publication, day, kind, count) that PublicationsController records
+	 *   when it serves a public read, never object data.
 	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
@@ -218,6 +224,11 @@ class StatsController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
+	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
+	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on) and its datasets are
+	 *   read by DcatService::buildCatalogDocument() with RBAC on, so only rows the caller may
+	 *   read are scored.
+	 *
 	 * @spec openspec/specs/publication-quality/spec.md
 	 */
 	public function quality(string $slug): JSONResponse {
@@ -240,8 +251,8 @@ class StatsController extends Controller {
 		}
 
 		try {
-			$dcatService = $this->container->get(\OCA\OpenCatalogi\Service\DcatService::class);
-			$qualityService = $this->container->get(\OCA\OpenCatalogi\Service\QualityService::class);
+			$dcatService = $this->container->get(\OCA\OpenCatalogi\Contract\DcatServiceInterface::class);
+			$qualityService = $this->container->get(\OCA\OpenCatalogi\Contract\QualityServiceInterface::class);
 
 			$document = $dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $slug, page: 1);
 			$nodes = [];
@@ -274,6 +285,12 @@ class StatsController extends Controller {
 	 * @return DataDownloadResponse|JSONResponse The CSV download, or an error.
 	 *
 	 * @NoAdminRequired
+	 *
+	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
+	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on), so a catalog the
+	 *   caller may not read is a 404. The CSV export reads only usage counters labelled with that
+	 *   catalog: aggregates (publication, day, kind, count) that PublicationsController records
+	 *   when it serves a public read, never object data.
 	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
@@ -336,9 +353,9 @@ class StatsController extends Controller {
 			}
 
 			$count = max(0, (int)($row['count'] ?? 0));
-			if (($row['kind'] ?? '') === UsageCounterService::KIND_VIEW) {
+			if (($row['kind'] ?? '') === UsageCounterServiceInterface::KIND_VIEW) {
 				$byPub[$pub]['views'] += $count;
-			} elseif (($row['kind'] ?? '') === UsageCounterService::KIND_DOWNLOAD) {
+			} elseif (($row['kind'] ?? '') === UsageCounterServiceInterface::KIND_DOWNLOAD) {
 				$byPub[$pub]['downloads'] += $count;
 			}
 		}//end foreach

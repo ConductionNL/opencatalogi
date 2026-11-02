@@ -71,4 +71,31 @@ class WithheldDocumentSchemaTest extends TestCase {
 		$this->assertContains('withheldDocument', $fragment['components']['registers']['publication']['schemas']);
 		$this->assertTrue($fragment['components']['registers']['publication']['configuration']['schemas']['withheldDocument']['magicMapping']);
 	}//end testTheSchemaArrivesWithItsSlugOnThePublicationRegister()
+
+	/**
+	 * A demo row names its publication by a seed reference the importer turns into
+	 * that publication's UUID; a fixed UUID matches no imported publication.
+	 */
+	public function testEveryDemoRowPointsAtADemoPublication(): void {
+		$mock = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/opencatalogi_mock_register.json'), true, 512, JSON_THROW_ON_ERROR);
+
+		$publications = [];
+		$rows = [];
+		foreach ($mock['components']['objects'] as $object) {
+			$schema = (string)($object['@self']['schema'] ?? '');
+			if ($schema === 'publication') {
+				$publications[] = 'publication:' . (string)$object['@self']['slug'];
+			}
+
+			if ($schema === 'withheldDocument') {
+				$rows[] = (string)($object['publication'] ?? '');
+			}
+		}
+
+		$this->assertNotSame([], $rows, 'the demo data ships withheld rows');
+		foreach ($rows as $reference) {
+			$this->assertStringStartsWith('@ref:', $reference);
+			$this->assertContains(substr($reference, strlen('@ref:')), $publications);
+		}
+	}//end testEveryDemoRowPointsAtADemoPublication()
 }//end class

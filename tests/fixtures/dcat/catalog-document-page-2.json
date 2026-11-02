@@ -1,0 +1,181 @@
+{
+    "document": {
+        "@context": {
+            "dcat": "http://www.w3.org/ns/dcat#",
+            "dcatap": "http://data.europa.eu/r5r/",
+            "dct": "http://purl.org/dc/terms/",
+            "dqv": "http://www.w3.org/ns/dqv#",
+            "foaf": "http://xmlns.com/foaf/0.1/",
+            "vcard": "http://www.w3.org/2006/vcard/ns#",
+            "hydra": "http://www.w3.org/ns/hydra/core#",
+            "profile": "https://data.overheid.nl/dcat-ap-nl/3.0"
+        },
+        "@graph": [
+            {
+                "@id": "https://host/apps/opencatalogi/api/catalogs/woo/dcat",
+                "@type": "dcat:Catalog",
+                "dct:title": "WOO",
+                "dct:conformsTo": {
+                    "@id": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+                },
+                "dcat:dataset": [
+                    {
+                        "@id": "https://host/apps/opencatalogi/api/woo/u1"
+                    },
+                    {
+                        "@id": "https://host/apps/opencatalogi/api/woo/u3"
+                    },
+                    {
+                        "@id": "https://host/apps/opencatalogi/api/woo/u4"
+                    }
+                ],
+                "dct:description": "Besluiten"
+            },
+            {
+                "@id": "https://host/apps/opencatalogi/api/woo/u1",
+                "@type": "dcat:Dataset",
+                "dct:title": "Besluit een",
+                "dcatap:hvdCategory": {
+                    "@id": "http://data.europa.eu/bna/c_dd313021"
+                },
+                "dcatap:applicableLegislation": {
+                    "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+                },
+                "dct:modified": "2026-02-03T04:05:06+00:00",
+                "dcat:landingPage": {
+                    "@id": "https://host/apps/opencatalogi/api/woo/u1"
+                },
+                "dct:identifier": "u1",
+                "dcat:distribution": [
+                    {
+                        "@id": "https://host/download/f-u1",
+                        "@type": "dcat:Distribution",
+                        "dcat:downloadURL": {
+                            "@id": "https://host/download/f-u1"
+                        },
+                        "dcat:accessURL": {
+                            "@id": "https://host/download/f-u1"
+                        },
+                        "dct:title": "f-u1.pdf",
+                        "dcat:byteSize": 42,
+                        "dct:license": {
+                            "@id": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+                        }
+                    }
+                ],
+                "dqv:hasQualityMeasurement": [
+                    {
+                        "dqv:value": 9
+                    }
+                ]
+            },
+            {
+                "@id": "https://host/apps/opencatalogi/api/woo/u3",
+                "@type": "dcat:Dataset",
+                "dct:title": "Besluit drie",
+                "dcatap:hvdCategory": {
+                    "@id": "http://data.europa.eu/bna/c_dd313021"
+                },
+                "dcatap:applicableLegislation": {
+                    "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+                },
+                "dct:modified": "2025-12-01T00:00:00+00:00",
+                "dcat:landingPage": {
+                    "@id": "https://host/apps/opencatalogi/api/woo/u3"
+                },
+                "dct:identifier": "u3",
+                "dqv:hasQualityMeasurement": [
+                    {
+                        "dqv:value": 8
+                    }
+                ]
+            },
+            {
+                "@id": "https://host/apps/opencatalogi/api/woo/u4",
+                "@type": "dcat:Dataset",
+                "dct:title": "Zonder id",
+                "dcatap:hvdCategory": {
+                    "@id": "http://data.europa.eu/bna/c_dd313021"
+                },
+                "dcatap:applicableLegislation": {
+                    "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+                },
+                "dcat:landingPage": {
+                    "@id": "https://host/apps/opencatalogi/api/woo/u4"
+                },
+                "dct:identifier": "https://host/apps/opencatalogi/api/woo/u4",
+                "dcat:distribution": [
+                    {
+                        "@id": "https://host/download/f-u4",
+                        "@type": "dcat:Distribution",
+                        "dcat:downloadURL": {
+                            "@id": "https://host/download/f-u4"
+                        },
+                        "dcat:accessURL": {
+                            "@id": "https://host/download/f-u4"
+                        },
+                        "dct:title": "f-u4.pdf",
+                        "dcat:byteSize": 42,
+                        "dct:license": {
+                            "@id": "http://creativecommons.org/publicdomain/zero/1.0/deed.nl"
+                        }
+                    }
+                ],
+                "dqv:hasQualityMeasurement": [
+                    {
+                        "dqv:value": 8
+                    }
+                ]
+            },
+            {
+                "@id": "https://host/apps/opencatalogi/api/catalogs/woo/dcat?page=2",
+                "@type": "hydra:PagedCollection",
+                "hydra:next": {
+                    "@id": "https://host/apps/opencatalogi/api/catalogs/woo/dcat?page=3"
+                },
+                "hydra:previous": {
+                    "@id": "https://host/apps/opencatalogi/api/catalogs/woo/dcat?page=1"
+                }
+            }
+        ],
+        "_meta": {
+            "lastModified": "Tue, 03 Feb 2026 04:05:06 GMT",
+            "etag": "\"0859d7601e6a175ad5ed32f2d02de2ab\"",
+            "count": 3,
+            "hasNext": true
+        }
+    },
+    "violations": [
+        {
+            "earlier": true
+        }
+    ],
+    "searched": [
+        {
+            "_limit": 1000,
+            "_page": 2,
+            "@self": {
+                "register": 20,
+                "schema": [
+                    28,
+                    29,
+                    30
+                ]
+            },
+            "_schemas": [
+                28,
+                29,
+                30
+            ],
+            "_order": {
+                "updated": "desc"
+            }
+        },
+        true,
+        false,
+        false,
+        null,
+        null,
+        null
+    ]
+}

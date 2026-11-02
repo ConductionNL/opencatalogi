@@ -69,13 +69,13 @@ describe('Publications "File list" row action', () => {
 describe('PublicationDetail Attachments widget', () => {
 	// CnFilesCard requests `limit=maxDisplay` (default 5), so the widget shows
 	// only as many files as this allows.
-	it('lists up to 100 files', () => {
+	it('lists up to 100 files, with the add button of the app widget', () => {
 		const files = page('PublicationDetail').config.widgets.find(
 			(w) => w.id === 'pub-files',
 		)
 
-		expect(files.integrationId).toBe('files')
-		expect(files.props).toEqual({ maxDisplay: 100 })
+		expect(files.type).toBe('publication-attachments')
+		expect(files.content).toEqual({ maxDisplay: 100 })
 	})
 })
 
@@ -166,6 +166,34 @@ describe('translateActionLabels', () => {
 		})
 	})
 
+	it('translates the bulk action labels beside the row actions', () => {
+		const out = translateActionLabels(
+			{
+				pages: [
+					{
+						id: 'Publications',
+						config: {
+							publicationPairConfig: {
+								bulkActions: [
+									{
+										id: 'lock',
+										label: 'Lock',
+										handler: 'openSelectionDialog',
+									},
+								],
+							},
+						},
+					},
+				],
+			},
+			(key) => `nl:${key}`,
+		)
+
+		expect(out.pages[0].config.publicationPairConfig.bulkActions).toEqual([
+			{ id: 'lock', label: 'nl:Lock', handler: 'openSelectionDialog' },
+		])
+	})
+
 	it('does not mutate its input', () => {
 		const snapshot = JSON.parse(JSON.stringify(input))
 
@@ -184,5 +212,26 @@ describe('translateActionLabels', () => {
 
 		expect(fileList(out.pages).label).toBe('Bestandenlijst')
 		expect(fileList(manifest.pages).label).toBe('File list')
+	})
+
+	it('ships every Publications bulk action label in the nl catalogue', () => {
+		const bulk = page('Publications').config.publicationPairConfig.bulkActions
+
+		expect(bulk.map((a) => a.id)).toEqual([
+			'publish',
+			'depublish',
+			'lock',
+			'unlock',
+			'validate',
+			'merge',
+			'migrate',
+		])
+		for (const action of bulk) {
+			expect(nlCatalogue.translations[action.label]).toEqual(
+				expect.any(String),
+			)
+		}
+		expect(enCatalogue.translations.Depublish).toBe('Depublish')
+		expect(nlCatalogue.translations.Depublish).toBe('Publicatie intrekken')
 	})
 })

@@ -121,6 +121,11 @@ export default {
 		NcLoadingIcon,
 	},
 
+	inject: {
+		/** The app's handler map, which CnAppRoot provides as `customComponents`. */
+		cnCustomComponents: { default: () => ({}) },
+	},
+
 	inheritAttrs: false,
 
 	props: {
@@ -154,6 +159,8 @@ export default {
 			resolving: false,
 			failed: false,
 			resolveSequence: 0,
+			/** A bulk action opened a dialog; when it closes the list reloads. */
+			selectionActionOpen: false,
 		}
 	},
 
@@ -283,7 +290,24 @@ export default {
 						: action,
 				)
 			}
+			if (Array.isArray(config.bulkActions)) {
+				config.bulkActions =
+					this.actionToggles.showDeleteAction === false
+						? []
+						: config.bulkActions.map((action) =>
+								this.bindBulkAction(action),
+							)
+			}
 			return { ...this.actionToggles, ...attrs, ...config }
+		},
+
+		/**
+		 * Whether one of the app's modals or dialogs is open.
+		 *
+		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-list-reloads-after-a-selection-action-psa-002
+		 */
+		overlayOpen() {
+			return Boolean(navigationStore.modal || navigationStore.dialog)
 		},
 
 		/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
@@ -294,6 +318,23 @@ export default {
 	},
 
 	watch: {
+		/**
+		 * After a dialog a bulk action opened has closed, the list reloads and
+		 * the selection clears, so the rows show what the dialog changed.
+		 *
+		 * @param {boolean} open Whether a modal or dialog is open.
+		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-list-reloads-after-a-selection-action-psa-002
+		 */
+		overlayOpen(open) {
+			if (open || !this.selectionActionOpen) {
+				return
+			}
+			this.selectionActionOpen = false
+			const index = this.$refs.index
+			index?.onSelect?.([])
+			index?.onRefreshEvent?.()
+		},
+
 		catalogSlug: {
 			immediate: true,
 			/** @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003 */
@@ -366,6 +407,43 @@ export default {
 				if (isCurrent()) {
 					this.resolving = false
 				}
+			}
+		},
+
+		/**
+		 * Bind a bulk action whose `handler` names a function in the app's
+		 * handler map, so it is called with the selected rows themselves and
+		 * the action's own `props`, not only their ids. Any other entry is
+		 * left to CnIndexPage.
+		 *
+		 * @param {object} action The manifest bulk action.
+		 * @return {object} The action, with a bound handler when it names one.
+		 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-selection-bar-opens-the-mass-dialogs-on-the-selected-publications-psa-001
+		 */
+		bindBulkAction(action) {
+			const handler =
+				action && typeof action.handler === 'string'
+					? this.cnCustomComponents?.[action.handler]
+					: null
+			if (typeof handler !== 'function') {
+				return action
+			}
+			return {
+				...action,
+				handler: (scope) => {
+					const ids = (scope?.selectedIds || []).map(String)
+					const objects = (this.$refs.index?.selectedObjects || []).filter(
+						(row) => ids.includes(String(row?.id)),
+					)
+					const opened = handler({
+						...scope,
+						objects,
+						props: action.props || {},
+					})
+					if (opened) {
+						this.selectionActionOpen = true
+					}
+				},
 			}
 		},
 

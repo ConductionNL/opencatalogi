@@ -36,6 +36,7 @@ namespace OCA\OpenCatalogi\Service\Community;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 
 /**
@@ -43,7 +44,7 @@ use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
  *
  * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogues-activity-is-published-as-a-feed-req-pcs-105
  */
-class AtomFeedService {
+class AtomFeedService implements AtomFeedServiceInterface {
 
 	/**
 	 * Constructor.

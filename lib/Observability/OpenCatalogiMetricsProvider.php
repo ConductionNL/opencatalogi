@@ -310,12 +310,35 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	 * @spec openspec/specs/adopt-apphost/spec.md
 	 */
 	public function metrics(): array {
-		$samples = [];
+		$samples = [$this->publicationsSample()];
+		$samples[] = MetricSample::single(
+			name: 'catalogs_total',
+			type: 'gauge',
+			help: 'Total catalogs',
+			value: $this->countObjectsBySchemaNeedle(needle: 'atalog')
+		);
+		$samples[] = $this->listingsSample();
+		$samples[] = MetricSample::single(
+			name: 'directory_entries_total',
+			type: 'gauge',
+			help: 'Total federated directory entries',
+			value: $this->countObjectsBySchemaNeedle(needle: 'irectory')
+		);
 
-		// Publications total by status and catalog.
-		$publicationPoints = [];
+		return array_merge($samples, $this->usageSamples());
+	}//end metrics()
+
+	/**
+	 * The publications total by status and catalog.
+	 *
+	 * @return MetricSample The `publications_total` family.
+	 *
+	 * @spec openspec/specs/adopt-apphost/spec.md
+	 */
+	private function publicationsSample(): MetricSample {
+		$points = [];
 		foreach ($this->getPublicationCounts() as $row) {
-			$publicationPoints[] = [
+			$points[] = [
 				'labels' => [
 					'status' => (string)($row['status'] ?? ''),
 					'catalog' => (string)($row['catalog'] ?? ''),
@@ -324,86 +347,89 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			];
 		}
 
-		$samples[] = new MetricSample(
+		return new MetricSample(
 			name: 'publications_total',
 			type: 'gauge',
 			help: 'Total publications by status and catalog',
-			samples: $publicationPoints
+			samples: $points
 		);
+	}//end publicationsSample()
 
-		// Catalogs total.
-		$samples[] = MetricSample::single(
-			name: 'catalogs_total',
-			type: 'gauge',
-			help: 'Total catalogs',
-			value: $this->countObjectsBySchemaNeedle(needle: 'atalog')
-		);
-
-		// Listings total by status (with the historical zero fallback).
-		$listingPoints = [];
+	/**
+	 * The listings total by status, with the historical zero fallback.
+	 *
+	 * @return MetricSample The `listings_total` family.
+	 *
+	 * @spec openspec/specs/adopt-apphost/spec.md
+	 */
+	private function listingsSample(): MetricSample {
+		$points = [];
 		foreach ($this->getListingCounts() as $row) {
-			$listingPoints[] = [
+			$points[] = [
 				'labels' => ['status' => (string)($row['status'] ?? '')],
 				'value' => (int)($row['cnt'] ?? 0),
 			];
 		}
 
-		if ($listingPoints === []) {
-			$listingPoints[] = ['labels' => [], 'value' => 0];
+		if ($points === []) {
+			$points[] = ['labels' => [], 'value' => 0];
 		}
 
-		$samples[] = new MetricSample(
+		return new MetricSample(
 			name: 'listings_total',
 			type: 'gauge',
 			help: 'Total listings by status',
-			samples: $listingPoints
+			samples: $points
 		);
+	}//end listingsSample()
 
-		// Federation — directory entries total.
-		$samples[] = MetricSample::single(
-			name: 'directory_entries_total',
-			type: 'gauge',
-			help: 'Total federated directory entries',
-			value: $this->countObjectsBySchemaNeedle(needle: 'irectory')
-		);
-
-		// Usage analytics — catalog-labelled view/download totals (ANA-008).
+	/**
+	 * The catalog-labelled view and download totals (ANA-008).
+	 *
+	 * @return MetricSample[] The `publication_views_total` and `file_downloads_total` families.
+	 *
+	 * @spec openspec/specs/adopt-apphost/spec.md
+	 */
+	private function usageSamples(): array {
 		$usage = $this->getUsageTotalsByCatalog();
 
-		$viewPoints = [];
-		foreach ($usage['view'] as $catalog => $count) {
-			$viewPoints[] = ['labels' => ['catalog' => (string)$catalog], 'value' => (int)$count];
+		return [
+			new MetricSample(
+				name: 'publication_views_total',
+				type: 'counter',
+				help: 'Total counted publication views by catalog',
+				samples: $this->catalogPoints(totals: $usage['view'])
+			),
+			new MetricSample(
+				name: 'file_downloads_total',
+				type: 'counter',
+				help: 'Total counted file downloads by catalog',
+				samples: $this->catalogPoints(totals: $usage['download'])
+			),
+		];
+	}//end usageSamples()
+
+	/**
+	 * One point per catalog, or a single `{catalog=""} 0` point when there are none.
+	 *
+	 * @param array<string, int> $totals Totals keyed by catalog.
+	 *
+	 * @return array<int, array{labels: array<string, string>, value: int}> The points.
+	 *
+	 * @spec openspec/specs/adopt-apphost/spec.md
+	 */
+	private function catalogPoints(array $totals): array {
+		$points = [];
+		foreach ($totals as $catalog => $count) {
+			$points[] = ['labels' => ['catalog' => (string)$catalog], 'value' => (int)$count];
 		}
 
-		if ($viewPoints === []) {
-			$viewPoints[] = ['labels' => ['catalog' => ''], 'value' => 0];
+		if ($points === []) {
+			$points[] = ['labels' => ['catalog' => ''], 'value' => 0];
 		}
 
-		$samples[] = new MetricSample(
-			name: 'publication_views_total',
-			type: 'counter',
-			help: 'Total counted publication views by catalog',
-			samples: $viewPoints
-		);
-
-		$downloadPoints = [];
-		foreach ($usage['download'] as $catalog => $count) {
-			$downloadPoints[] = ['labels' => ['catalog' => (string)$catalog], 'value' => (int)$count];
-		}
-
-		if ($downloadPoints === []) {
-			$downloadPoints[] = ['labels' => ['catalog' => ''], 'value' => 0];
-		}
-
-		$samples[] = new MetricSample(
-			name: 'file_downloads_total',
-			type: 'counter',
-			help: 'Total counted file downloads by catalog',
-			samples: $downloadPoints
-		);
-
-		return $samples;
-	}//end metrics()
+		return $points;
+	}//end catalogPoints()
 
 	/**
 	 * Get publication counts grouped by status and catalog, via OR aggregation.

@@ -35,7 +35,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 use OCP\AppFramework\Services\IInitialState;
 use OCP\EventDispatcher\Event;
@@ -85,6 +85,10 @@ class ProvideManifestConfigStateListener implements IEventListener {
 		'woo_register',
 		'woo_batch_schema',
 		'woo_assessment_schema',
+		'service_catalogue_register',
+		'service_catalogue_entry_schema',
+		'case_type_definition_schema',
+		'knowledge_article_schema',
 	];
 
 	/**
@@ -118,14 +122,14 @@ class ProvideManifestConfigStateListener implements IEventListener {
 		}
 
 		$response = $event->getResponse();
-		if ($response->getApp() !== Application::APP_ID
+		if ($response->getApp() !== AppIdentity::APP_ID
 			|| $response->getTemplateName() !== self::SPA_TEMPLATE
 		) {
 			return;
 		}
 
 		foreach (self::MANIFEST_CONFIG_KEYS as $key) {
-			$value = $this->appConfig->getValueString(Application::APP_ID, $key, '');
+			$value = $this->appConfig->getValueString(AppIdentity::APP_ID, $key, '');
 			if ($value !== '') {
 				$this->initialState->provideInitialState($key, $value);
 			}
@@ -137,9 +141,9 @@ class ProvideManifestConfigStateListener implements IEventListener {
 		$this->initialState->provideInitialState(
 			'default_directory_url',
 			$this->appConfig->getValueString(
-				Application::APP_ID,
+				AppIdentity::APP_ID,
 				'default_directory_url',
-				Application::DEFAULT_DIRECTORY_URL
+				AppIdentity::DEFAULT_DIRECTORY_URL
 			)
 		);
 

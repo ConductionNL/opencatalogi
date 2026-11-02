@@ -32,6 +32,7 @@
 namespace OCA\OpenCatalogi\Service;
 
 use Exception;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
@@ -60,7 +61,7 @@ use Symfony\Component\Uid\Uuid;
  * @spec openspec/specs/catalogs/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
  */
-class CatalogiService {
+class CatalogiService implements CatalogiServiceInterface {
 
 	/**
 	 * Properties stripped from the `@self` envelope for anonymous (logged-out)
@@ -728,29 +729,9 @@ class CatalogiService {
 	 */
 	public function invalidateCatalogCacheById(int|string $catalogId): void {
 		try {
-			// Get catalog register and schema for magic mapper routing.
-			// FAIL CLOSED, for the reason spelled out in getCatalogFilters() above:
-			// an empty key is not "no scope", it is a scope of `find(0)` that
-			// resolves nothing and drops the lookup onto the unscoped cross-table
-			// path. Here that would resolve $catalogId in ANY register on the
-			// instance and then invalidate whatever slug came back — a cache
-			// operation driven by a foreign object. The catch below cannot stand in
-			// for this check: the unscoped path SUCCEEDS, so nothing is thrown.
-			$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-			$register = $this->config->getValueString($this->appName, 'catalog_register', '');
-			if ($schema === '' || $register === '') {
-				return;
-			}
-
-			$catalog = $this->getObjectService()->find(
-				id: $catalogId,
-				register: $register,
-				schema: $schema
-			);
-			$catalogData = $catalog->jsonSerialize();
-
-			if (isset($catalogData['slug']) === true) {
-				$this->invalidateCatalogCache(slug: $catalogData['slug']);
+			$slug = $this->catalogSlugById(catalogId: $catalogId);
+			if ($slug !== null) {
+				$this->invalidateCatalogCache(slug: $slug);
 			}
 		} catch (Exception $e) {
 			$this->logger->error(
@@ -797,26 +778,9 @@ class CatalogiService {
 	 */
 	public function warmupCatalogCacheById(int|string $catalogId): void {
 		try {
-			// Get catalog register and schema for magic mapper routing.
-			// FAIL CLOSED — same reasoning as invalidateCatalogCacheById() above:
-			// an empty key resolves $catalogId against every register on the
-			// instance rather than against none, and because that path SUCCEEDS the
-			// catch below never fires.
-			$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-			$register = $this->config->getValueString($this->appName, 'catalog_register', '');
-			if ($schema === '' || $register === '') {
-				return;
-			}
-
-			$catalog = $this->getObjectService()->find(
-				id: $catalogId,
-				register: $register,
-				schema: $schema
-			);
-			$catalogData = $catalog->jsonSerialize();
-
-			if (isset($catalogData['slug']) === true) {
-				$this->warmupCatalogCache(slug: $catalogData['slug']);
+			$slug = $this->catalogSlugById(catalogId: $catalogId);
+			if ($slug !== null) {
+				$this->warmupCatalogCache(slug: $slug);
 			}
 		} catch (Exception $e) {
 			$this->logger->error(
@@ -829,6 +793,38 @@ class CatalogiService {
 		}//end try
 
 	}//end warmupCatalogCacheById()
+
+	/**
+	 * The slug of a catalog, looked up by id in the configured catalog register and schema.
+	 *
+	 * FAIL CLOSED: an unset register or schema is not "no scope". It would resolve
+	 * the id in ANY register on the instance and drive a cache operation from a
+	 * foreign object, and because that path succeeds, no exception would stop it.
+	 * So an unset key answers null without a lookup.
+	 *
+	 * @param integer|string $catalogId The ID of the catalog.
+	 *
+	 * @return mixed The slug, or null when unconfigured or the catalog has none.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function catalogSlugById(int|string $catalogId): mixed {
+		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+		if ($schema === '' || $register === '') {
+			return null;
+		}
+
+		$catalog = $this->getObjectService()->find(
+			id: $catalogId,
+			register: $register,
+			schema: $schema
+		);
+
+		return ($catalog->jsonSerialize()['slug'] ?? null);
+	}//end catalogSlugById()
 
 	/**
 	 * Retrieves a list of all objects for a specific register and schema.

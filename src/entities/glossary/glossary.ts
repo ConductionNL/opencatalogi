@@ -10,7 +10,7 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TGlossary } from './glossary.types'
 
 import { z } from 'zod'
@@ -45,7 +45,7 @@ export class Glossary implements TGlossary {
 		this.keywords = (Array.isArray(data.keywords) && data.keywords) || []
 	}
 
-	public validate(): SafeParseReturnType<TGlossary, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		const schema = z.object({
 			title: z
 				.string()

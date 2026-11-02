@@ -29,7 +29,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Connection;
 
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
@@ -42,14 +43,14 @@ use Throwable;
  *
  * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
  */
-class ConnectionReporter {
+class ConnectionReporter implements ConnectionReporterInterface {
 
 	/**
 	 * The app id integriq keys the rows by.
 	 *
 	 * @var string
 	 */
-	public const APP_ID = Application::APP_ID;
+	public const APP_ID = AppIdentity::APP_ID;
 
 	/**
 	 * Integriq's report event (ADR-041). Named by string so OpenCatalogi stays

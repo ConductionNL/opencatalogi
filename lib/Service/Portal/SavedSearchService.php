@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Portal;
 
+use OCA\OpenCatalogi\Contract\SavedSearchServiceInterface;
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
 use OCA\OpenCatalogi\Service\WooCategory;
@@ -34,7 +35,7 @@ use OCA\OpenCatalogi\Service\WooCategory;
  *
  * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-a-signed-in-resident-saves-a-search-with-a-frequency-req-ssa-001
  */
-class SavedSearchService {
+class SavedSearchService implements SavedSearchServiceInterface {
 
 	/**
 	 * The saved-search schema.

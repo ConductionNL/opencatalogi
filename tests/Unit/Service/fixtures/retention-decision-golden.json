@@ -1,0 +1,527 @@
+{
+    "extend from the stored expiry": {
+        "outcome": {
+            "saved": {
+                "id": "p1",
+                "title": "T",
+                "retentionCategory": "besluit",
+                "retentionExpiresAt": "2030-03-03T00:00:00+00:00",
+                "retentionNote": "Legal hold",
+                "retentionLastEvaluatedAt": "",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "extend",
+                        "by": "officer1",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": "besluit"
+                    }
+                ],
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p1",
+                    "title": "T",
+                    "retentionCategory": "besluit",
+                    "retentionExpiresAt": "2030-03-03T00:00:00+00:00",
+                    "retentionNote": "Legal hold",
+                    "retentionLastEvaluatedAt": "",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "extend",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": "besluit"
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "extend with no stored expiry": {
+        "outcome": {
+            "saved": {
+                "id": "p2",
+                "retentionExpiresAt": "<now+12M>",
+                "retentionNote": "Legal hold",
+                "retentionLastEvaluatedAt": "",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "extend",
+                        "by": "officer1",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": ""
+                    }
+                ],
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p2",
+                    "retentionExpiresAt": "<now+12M>",
+                    "retentionNote": "Legal hold",
+                    "retentionLastEvaluatedAt": "",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "extend",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": ""
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p2",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "extend with an unreadable expiry": {
+        "outcome": {
+            "saved": {
+                "uuid": "p3",
+                "retentionExpiresAt": "<now+6M>",
+                "retentionNote": "Legal hold",
+                "retentionLastEvaluatedAt": "",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "extend",
+                        "by": "officer1",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": ""
+                    }
+                ],
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "uuid": "p3",
+                    "retentionExpiresAt": "<now+6M>",
+                    "retentionNote": "Legal hold",
+                    "retentionLastEvaluatedAt": "",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "extend",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": ""
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p3",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "extend by no months": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "Extend requires a positive number of months"
+        },
+        "calls": [
+            {
+                "find": "p1"
+            }
+        ]
+    },
+    "extend by negative months": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "Extend requires a positive number of months"
+        },
+        "calls": [
+            {
+                "find": "p1"
+            }
+        ]
+    },
+    "depublish": {
+        "outcome": {
+            "saved": {
+                "id": "p1",
+                "title": "T",
+                "retentionCategory": "besluit",
+                "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                "depublicationDate": "<now>",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "depublish",
+                        "by": "officer1",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": "besluit"
+                    }
+                ],
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p1",
+                    "title": "T",
+                    "retentionCategory": "besluit",
+                    "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                    "depublicationDate": "<now>",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "depublish",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": "besluit"
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "archive": {
+        "outcome": {
+            "saved": {
+                "id": "p1",
+                "title": "T",
+                "retentionCategory": "besluit",
+                "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                "status": "archived",
+                "depublicationDate": "<now>",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "archive",
+                        "by": "officer1",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": "besluit"
+                    }
+                ],
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p1",
+                    "title": "T",
+                    "retentionCategory": "besluit",
+                    "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                    "status": "archived",
+                    "depublicationDate": "<now>",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "archive",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": "besluit"
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "dispose with a decision log": {
+        "outcome": {
+            "saved": {
+                "id": "p1",
+                "title": "T",
+                "retentionCategory": "besluit",
+                "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "extend"
+                    },
+                    {
+                        "decision": "dispose",
+                        "by": "officer1",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": "besluit"
+                    }
+                ],
+                "status": "archived",
+                "depublicationDate": "<now>",
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p1",
+                    "title": "T",
+                    "retentionCategory": "besluit",
+                    "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "extend"
+                        },
+                        {
+                            "decision": "dispose",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": "besluit"
+                        }
+                    ],
+                    "status": "archived",
+                    "depublicationDate": "<now>"
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "dispose with a broken decision log": {
+        "outcome": {
+            "saved": {
+                "id": "p1",
+                "title": "T",
+                "retentionCategory": "besluit",
+                "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "dispose",
+                        "by": "officer1",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": "besluit"
+                    }
+                ],
+                "status": "archived",
+                "depublicationDate": "<now>",
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p1",
+                    "title": "T",
+                    "retentionCategory": "besluit",
+                    "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "dispose",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": "besluit"
+                        }
+                    ],
+                    "status": "archived",
+                    "depublicationDate": "<now>"
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "unknown decision": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "Unknown retention decision: shred"
+        },
+        "calls": [
+            {
+                "find": "p1"
+            }
+        ]
+    },
+    "blank rationale": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "A rationale note is mandatory for retention decisions"
+        },
+        "calls": []
+    },
+    "no register configured": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "OpenRegister publication register/schema unavailable"
+        },
+        "calls": []
+    },
+    "no schema configured": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "OpenRegister publication register/schema unavailable"
+        },
+        "calls": []
+    },
+    "no OpenRegister": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "OpenRegister publication register/schema unavailable"
+        },
+        "calls": []
+    },
+    "publication not found": {
+        "outcome": {
+            "refused": "RuntimeException",
+            "message": "Publication not found: p1"
+        },
+        "calls": [
+            {
+                "find": "p1"
+            }
+        ]
+    },
+    "object entity shape": {
+        "outcome": {
+            "saved": {
+                "id": "p9",
+                "object": {
+                    "title": "Inner"
+                },
+                "depublicationDate": "<now>",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "depublish",
+                        "by": "officer1",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": ""
+                    }
+                ],
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p9",
+                    "object": {
+                        "title": "Inner"
+                    },
+                    "depublicationDate": "<now>",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "depublish",
+                            "by": "officer1",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": ""
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p9",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    },
+    "no user": {
+        "outcome": {
+            "saved": {
+                "id": "p1",
+                "title": "T",
+                "retentionCategory": "besluit",
+                "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                "status": "archived",
+                "depublicationDate": "<now>",
+                "retentionDecisionLog": [
+                    {
+                        "decision": "archive",
+                        "by": "system",
+                        "at": "<now>",
+                        "note": "Legal hold",
+                        "basis": "besluit"
+                    }
+                ],
+                "saved": true
+            }
+        },
+        "calls": [
+            {
+                "find": "p1"
+            },
+            {
+                "save": {
+                    "id": "p1",
+                    "title": "T",
+                    "retentionCategory": "besluit",
+                    "retentionExpiresAt": "2030-01-31T00:00:00+00:00",
+                    "status": "archived",
+                    "depublicationDate": "<now>",
+                    "retentionDecisionLog": [
+                        {
+                            "decision": "archive",
+                            "by": "system",
+                            "at": "<now>",
+                            "note": "Legal hold",
+                            "basis": "besluit"
+                        }
+                    ]
+                },
+                "register": "pub-reg",
+                "schema": "pub-sch",
+                "uuid": "p1",
+                "rbac": false,
+                "multitenancy": false
+            }
+        ]
+    }
+}

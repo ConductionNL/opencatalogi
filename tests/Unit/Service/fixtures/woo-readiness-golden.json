@@ -1,0 +1,1643 @@
+{
+    "all pass": {
+        "report": {
+            "verdict": "ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "robots unreachable": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "fail",
+                    "reason": "http-404"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt"
+        ]
+    },
+    "robots without sitemap": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "fail",
+                    "reason": "missing-sitemap-reference"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "skipped",
+                    "reason": "robots-txt-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt"
+        ]
+    },
+    "index unreachable": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "fail",
+                    "reason": "http-500",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "fail",
+                    "reason": "http-500",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml"
+        ]
+    },
+    "index not xml": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "fail",
+                    "reason": "invalid-xml",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-invalid",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-invalid",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-invalid",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "fail",
+                    "reason": "invalid-xml",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-invalid",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-invalid",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-invalid",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml"
+        ]
+    },
+    "index without pages": {
+        "report": {
+            "verdict": "ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo",
+                    "status": "skipped",
+                    "reason": "no-sitemap-pages",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "skipped",
+                    "reason": "no-sitemap-pages",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "skipped",
+                    "reason": "no-sitemap-pages",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second",
+                    "status": "skipped",
+                    "reason": "no-sitemap-pages",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "skipped",
+                    "reason": "no-sitemap-pages",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "skipped",
+                    "reason": "no-sitemap-pages",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml"
+        ]
+    },
+    "pages mixed": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:2",
+                    "status": "fail",
+                    "reason": "no-diwoo-elements",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:3",
+                    "status": "fail",
+                    "reason": "invalid-xml",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:2",
+                    "status": "fail",
+                    "reason": "no-diwoo-elements",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:3",
+                    "status": "fail",
+                    "reason": "invalid-xml",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=3",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=3",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "pages without documents": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "fail",
+                    "reason": "no-diwoo-elements",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "skipped",
+                    "reason": "no-publications-found",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "fail",
+                    "reason": "no-diwoo-elements",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "skipped",
+                    "reason": "no-publications-found",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1"
+        ]
+    },
+    "document unreachable": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "fail",
+                    "reason": "http-404",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "fail",
+                    "reason": "http-404",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "validator invalid": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "fail",
+                    "reason": "diwoo-xsd-invalid",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "fail",
+                    "reason": "diwoo-xsd-invalid",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "validator error": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "fail",
+                    "reason": "diwoo-validation-error",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "fail",
+                    "reason": "diwoo-validation-error",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "validator throws": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "fail",
+                    "reason": "diwoo-validation-error",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "fail",
+                    "reason": "diwoo-validation-error",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "version behind": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "fail",
+                    "reason": "declared-0.9.8-published-0.9.9"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "fail",
+                    "reason": "diwoo-version-behind:0.9.9",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "fail",
+                    "reason": "diwoo-version-behind:0.9.9",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "version unknown": {
+        "report": {
+            "verdict": "ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "skipped",
+                    "reason": "standard-version-unreadable"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "skipped",
+                    "reason": "diwoo-version-unknown",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "skipped",
+                    "reason": "diwoo-version-unknown",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "ssrf blocks the index": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "fail",
+                    "reason": "ssrf-blocked",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "fail",
+                    "reason": "ssrf-blocked",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "skipped",
+                    "reason": "sitemapindex-unreachable",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt"
+        ]
+    },
+    "network error on a page": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "fail",
+                    "reason": "network-error",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:2",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "fail",
+                    "reason": "network-error",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:2",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/doc-2.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/doc-2.pdf"
+        ]
+    },
+    "registration mismatch": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "fail",
+                    "reason": "url-mismatch"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://other.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "registration requested": {
+        "report": {
+            "verdict": "ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "category-sitemap:demo:1",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "diwoo-xsd:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "publication-sample:demo",
+                    "status": "pass",
+                    "catalogSlug": "demo"
+                },
+                {
+                    "id": "sitemapindex:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "category-sitemap:second:1",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "diwoo-xsd:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "publication-sample:second",
+                    "status": "pass",
+                    "catalogSlug": "second"
+                },
+                {
+                    "id": "registration",
+                    "status": "skipped",
+                    "reason": "registration-pending"
+                }
+            ],
+            "registration": {
+                "status": "requested",
+                "registeredUrl": "",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/demo/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/second/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/doc-1.pdf"
+        ]
+    },
+    "no catalogs": {
+        "report": {
+            "verdict": "ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt"
+        ]
+    },
+    "request cap reached": {
+        "report": {
+            "verdict": "not-ready",
+            "baseUrl": "https://example.org",
+            "checks": [
+                {
+                    "id": "diwoo-standard-version",
+                    "status": "pass"
+                },
+                {
+                    "id": "robots-txt",
+                    "status": "pass"
+                },
+                {
+                    "id": "sitemapindex:c1",
+                    "status": "pass",
+                    "catalogSlug": "c1"
+                },
+                {
+                    "id": "category-sitemap:c1:1",
+                    "status": "pass",
+                    "catalogSlug": "c1"
+                },
+                {
+                    "id": "category-sitemap:c1:2",
+                    "status": "pass",
+                    "catalogSlug": "c1"
+                },
+                {
+                    "id": "category-sitemap:c1:3",
+                    "status": "pass",
+                    "catalogSlug": "c1"
+                },
+                {
+                    "id": "diwoo-xsd:c1",
+                    "status": "pass",
+                    "catalogSlug": "c1"
+                },
+                {
+                    "id": "publication-sample:c1",
+                    "status": "pass",
+                    "catalogSlug": "c1"
+                },
+                {
+                    "id": "sitemapindex:c2",
+                    "status": "pass",
+                    "catalogSlug": "c2"
+                },
+                {
+                    "id": "category-sitemap:c2:1",
+                    "status": "pass",
+                    "catalogSlug": "c2"
+                },
+                {
+                    "id": "category-sitemap:c2:2",
+                    "status": "pass",
+                    "catalogSlug": "c2"
+                },
+                {
+                    "id": "category-sitemap:c2:3",
+                    "status": "pass",
+                    "catalogSlug": "c2"
+                },
+                {
+                    "id": "diwoo-xsd:c2",
+                    "status": "pass",
+                    "catalogSlug": "c2"
+                },
+                {
+                    "id": "publication-sample:c2",
+                    "status": "pass",
+                    "catalogSlug": "c2"
+                },
+                {
+                    "id": "sitemapindex:c3",
+                    "status": "pass",
+                    "catalogSlug": "c3"
+                },
+                {
+                    "id": "category-sitemap:c3:1",
+                    "status": "pass",
+                    "catalogSlug": "c3"
+                },
+                {
+                    "id": "category-sitemap:c3:2",
+                    "status": "pass",
+                    "catalogSlug": "c3"
+                },
+                {
+                    "id": "category-sitemap:c3:3",
+                    "status": "pass",
+                    "catalogSlug": "c3"
+                },
+                {
+                    "id": "diwoo-xsd:c3",
+                    "status": "pass",
+                    "catalogSlug": "c3"
+                },
+                {
+                    "id": "publication-sample:c3",
+                    "status": "pass",
+                    "catalogSlug": "c3"
+                },
+                {
+                    "id": "sitemapindex:c4",
+                    "status": "pass",
+                    "catalogSlug": "c4"
+                },
+                {
+                    "id": "category-sitemap:c4:1",
+                    "status": "pass",
+                    "catalogSlug": "c4"
+                },
+                {
+                    "id": "category-sitemap:c4:2",
+                    "status": "pass",
+                    "catalogSlug": "c4"
+                },
+                {
+                    "id": "category-sitemap:c4:3",
+                    "status": "pass",
+                    "catalogSlug": "c4"
+                },
+                {
+                    "id": "diwoo-xsd:c4",
+                    "status": "pass",
+                    "catalogSlug": "c4"
+                },
+                {
+                    "id": "publication-sample:c4",
+                    "status": "pass",
+                    "catalogSlug": "c4"
+                },
+                {
+                    "id": "sitemapindex:c5",
+                    "status": "pass",
+                    "catalogSlug": "c5"
+                },
+                {
+                    "id": "category-sitemap:c5:1",
+                    "status": "pass",
+                    "catalogSlug": "c5"
+                },
+                {
+                    "id": "category-sitemap:c5:2",
+                    "status": "pass",
+                    "catalogSlug": "c5"
+                },
+                {
+                    "id": "category-sitemap:c5:3",
+                    "status": "pass",
+                    "catalogSlug": "c5"
+                },
+                {
+                    "id": "diwoo-xsd:c5",
+                    "status": "pass",
+                    "catalogSlug": "c5"
+                },
+                {
+                    "id": "publication-sample:c5",
+                    "status": "fail",
+                    "reason": "request-cap-reached",
+                    "catalogSlug": "c5"
+                },
+                {
+                    "id": "registration",
+                    "status": "pass"
+                }
+            ],
+            "registration": {
+                "status": "registered",
+                "registeredUrl": "https://example.org",
+                "registeredAt": "2026-01-01"
+            }
+        },
+        "fetched": [
+            "https://example.org/robots.txt",
+            "https://example.org/apps/opencatalogi/api/c1/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/c1/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/c1/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/apps/opencatalogi/api/c1/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=3",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/c2/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/c2/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/c2/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/apps/opencatalogi/api/c2/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=3",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/c3/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/c3/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/c3/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/apps/opencatalogi/api/c3/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=3",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/c4/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/c4/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/c4/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/apps/opencatalogi/api/c4/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=3",
+            "https://example.org/doc-1.pdf",
+            "https://example.org/apps/opencatalogi/api/c5/sitemaps/sitemapindex-diwoo-infocat001.xml",
+            "https://example.org/apps/opencatalogi/api/c5/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=1",
+            "https://example.org/apps/opencatalogi/api/c5/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=2",
+            "https://example.org/apps/opencatalogi/api/c5/sitemaps/sitemapindex-diwoo-infocat001.xml/publications?page=3"
+        ]
+    }
+}

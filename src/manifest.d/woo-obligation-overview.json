@@ -1,0 +1,253 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"_note": "woo-obligation-overview (REQ-WOO-003, board OcWooVerplichtingen). Every widget reads GET /api/obligations, which asks each registered obligationSource through ObligationsRequestedEvent; the library dedups the identical requests. Unread sources are listed with their reason, never counted as zero.",
+	"menu": [
+		{
+			"id": "ObligationsMenu",
+			"label": "Woo obligations",
+			"icon": "FileClockOutline",
+			"route": "Obligations",
+			"section": "settings",
+			"order": 96,
+			"permission": "admin"
+		}
+	],
+	"pages": [
+		{
+			"id": "Obligations",
+			"route": "/obligations",
+			"type": "dashboard",
+			"title": "Woo obligations",
+			"permission": "admin",
+			"config": {
+				"description": "What the Woo requires to be published, from every source system",
+				"widgets": [
+					{
+						"id": "obl-outstanding",
+						"title": "To publish",
+						"type": "stat",
+						"content": {
+							"label": "To publish",
+							"icon": "FileClockOutline",
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/obligations"
+							},
+							"valueField": "outstanding",
+							"caption": "Across every source system",
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							}
+						}
+					},
+					{
+						"id": "obl-due-week",
+						"title": "Due this week",
+						"type": "stat",
+						"content": {
+							"label": "Due this week",
+							"icon": "CalendarWeek",
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/obligations"
+							},
+							"valueField": "dueThisWeek",
+							"caption": "Their term ends within 7 days",
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							}
+						}
+					},
+					{
+						"id": "obl-late",
+						"title": "Late",
+						"type": "stat",
+						"content": {
+							"label": "Late",
+							"icon": "AlertOutline",
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/obligations"
+							},
+							"valueField": "late",
+							"caption": "Past their Woo term",
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							},
+							"variantWhen": [
+								{
+									"op": "gt",
+									"value": 0,
+									"variant": "error"
+								}
+							]
+						}
+					},
+					{
+						"id": "obl-published-month",
+						"title": "Published this month",
+						"type": "stat",
+						"content": {
+							"label": "Published this month",
+							"icon": "CheckCircleOutline",
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/obligations"
+							},
+							"valueField": "publishedThisMonth",
+							"caption": "Obligations met since the 1st",
+							"format": {
+								"style": "decimal",
+								"decimals": 0
+							}
+						}
+					},
+					{
+						"id": "obl-by-source",
+						"title": "Per source system",
+						"type": "record-list",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/obligations",
+								"responsePath": "bySource"
+							},
+							"presentation": "rows",
+							"title": "{title}",
+							"meta": {
+								"parts": [
+									"{appId}",
+									"{outstanding} to publish",
+									"Next term {nextDue|date}"
+								]
+							},
+							"trailing": [
+								"{late} late"
+							],
+							"emptyText": "No source system is registered",
+							"limit": 50
+						}
+					},
+					{
+						"id": "obl-unread",
+						"title": "Sources not read",
+						"type": "record-list",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/obligations",
+								"responsePath": "unreadSources"
+							},
+							"presentation": "rows",
+							"title": "{appId}",
+							"meta": "{reason}",
+							"emptyText": "Every source answered",
+							"limit": 50
+						}
+					},
+					{
+						"id": "obl-list",
+						"title": "Earliest first",
+						"type": "record-list",
+						"content": {
+							"endpointSource": {
+								"url": "/apps/opencatalogi/api/obligations",
+								"responsePath": "obligations"
+							},
+							"presentation": "rows",
+							"title": "{title}",
+							"meta": {
+								"parts": [
+									"{source}",
+									"{category}"
+								]
+							},
+							"trailing": [
+								"{dueDate|date}"
+							],
+							"pill": {
+								"field": "state",
+								"labels": {
+									"late": "Late",
+									"due": "Due",
+									"unknown": "No term",
+									"published": "Published"
+								},
+								"colorMap": {
+									"late": "error",
+									"due": "warning",
+									"unknown": "default",
+									"published": "success"
+								}
+							},
+							"emptyText": "Nothing has to be published",
+							"limit": 100
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "obl-outstanding",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "2",
+						"widgetId": "obl-due-week",
+						"gridX": 3,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "3",
+						"widgetId": "obl-late",
+						"gridX": 6,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "4",
+						"widgetId": "obl-published-month",
+						"gridX": 9,
+						"gridY": 0,
+						"gridWidth": 3,
+						"gridHeight": 2,
+						"showTitle": false
+					},
+					{
+						"id": "5",
+						"widgetId": "obl-unread",
+						"gridX": 0,
+						"gridY": 2,
+						"gridWidth": 12,
+						"gridHeight": 2,
+						"showTitle": true
+					},
+					{
+						"id": "6",
+						"widgetId": "obl-by-source",
+						"gridX": 0,
+						"gridY": 4,
+						"gridWidth": 12,
+						"gridHeight": 4,
+						"showTitle": true
+					},
+					{
+						"id": "7",
+						"widgetId": "obl-list",
+						"gridX": 0,
+						"gridY": 8,
+						"gridWidth": 12,
+						"gridHeight": 7,
+						"showTitle": true
+					}
+				]
+			}
+		}
+	]
+}

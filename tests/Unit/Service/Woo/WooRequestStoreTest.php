@@ -130,7 +130,7 @@ class WooRequestStoreTest extends TestCase {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('isInstalled')->willReturn($installed);
 
-		return new WooRequestStore($config, $container, $appManager);
+		return new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager));
 
 	}//end build()
 

@@ -29,6 +29,7 @@ use OCA\Dossiq\Woo\WooRefusalGroundsUnavailable;
 use OCA\OpenCatalogi\Service\Woo\WithheldDocuments;
 use OCA\OpenCatalogi\Service\Woo\WithheldDocumentStore;
 use OCP\App\IAppManager;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -59,9 +60,16 @@ class WithheldShapedObjectService {
 	/** @var list<string> The uuids deleteObject was called with. */
 	public array $deleted = [];
 
+	/** @var bool Whether find() fails the way an OpenRegister outage does. */
+	public bool $findFails = false;
+
 	public function find(string $id, mixed ...$rest): ?array {
+		if ($this->findFails === true) {
+			throw new RuntimeException('OpenRegister is down');
+		}
+
 		if (in_array($id, $this->publications, true) === false) {
-			throw new RuntimeException('not found');
+			throw new DoesNotExistException('Object not found');
 		}
 
 		return ['id' => $id];
@@ -106,7 +114,20 @@ class WithheldGroundsDouble extends WooRefusalGrounds {
 
 	public bool $unavailable = false;
 
+	/** @var int Calls to byCode(). */
 	public int $calls = 0;
+
+	/** @var int Calls to listWithRetired(). */
+	public int $listCalls = 0;
+
+	public function listWithRetired(): array {
+		$this->listCalls++;
+		if ($this->unavailable === true) {
+			throw new WooRefusalGroundsUnavailable('The Woo refusal grounds cannot be read.');
+		}
+
+		return [self::ground()];
+	}//end listWithRetired()
 
 	public function byCode(string $code): ?array {
 		$this->calls++;
@@ -118,6 +139,15 @@ class WithheldGroundsDouble extends WooRefusalGrounds {
 			return null;
 		}
 
+		return self::ground();
+	}//end byCode()
+
+	/**
+	 * The one ground this list holds.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public static function ground(): array {
 		// dossiq lib/Woo/WooRefusalGrounds.php shape(), lines 212-223 on development.
 		return [
 			'id' => 'g-1',
@@ -133,6 +163,20 @@ class WithheldGroundsDouble extends WooRefusalGrounds {
 			'kind' => 'ground',
 			'citable' => true,
 		];
+	}//end ground()
+}//end class
+
+/**
+ * A dossiq from before `listWithRetired()`: only `byCode()`.
+ */
+class PerCodeGroundsDouble {
+
+	public int $calls = 0;
+
+	public function byCode(string $code): ?array {
+		$this->calls++;
+
+		return $code === '5.1.2.e' ? WithheldGroundsDouble::ground() : null;
 	}//end byCode()
 }//end class
 
@@ -145,7 +189,7 @@ class WithheldDocumentsRecordTest extends TestCase {
 
 	private WithheldShapedObjectService $objects;
 
-	private WithheldGroundsDouble $grounds;
+	private WithheldGroundsDouble|PerCodeGroundsDouble $grounds;
 
 	/** @var list<string> */
 	private array $resolved = [];
@@ -179,7 +223,7 @@ class WithheldDocumentsRecordTest extends TestCase {
 		);
 
 		return new WithheldDocuments(
-			new WithheldDocumentStore($config, $container, $appManager, new NullLogger()),
+			new WithheldDocumentStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager), new NullLogger()),
 			$container,
 			$appManager
 		);
@@ -279,7 +323,59 @@ class WithheldDocumentsRecordTest extends TestCase {
 		$this->assertSame([['position' => 3, 'code' => '5.1.2.e', 'reason' => 'no-publication']], $answer['refused']);
 		$this->assertSame([], $this->objects->rows);
 		$this->assertSame(0, $this->grounds->calls);
+		$this->assertSame(0, $this->grounds->listCalls);
 	}//end testAMissingPublicationRefusesEverything()
+
+	public function testAnOpenRegisterOutageIsNotAMissingPublication(): void {
+		$this->objects->findFails = true;
+		$this->objects->rows = ['old' => ['publication' => self::PUBLICATION, 'position' => 9, 'grounds' => [], 'source' => 'dossiq', 'recordedAt' => 'x']];
+
+		$answer = $this->service()->record(self::PUBLICATION, [['position' => 3, 'grounds' => ['5.1.2.e']]], 'dossiq');
+
+		$this->assertSame([['position' => 3, 'code' => '5.1.2.e', 'reason' => 'unavailable']], $answer['refused']);
+		$this->assertArrayHasKey('old', $this->objects->rows, 'nothing is removed when OpenRegister cannot answer');
+		$this->assertSame(0, $this->grounds->listCalls);
+	}//end testAnOpenRegisterOutageIsNotAMissingPublication()
+
+	public function testDossiqsListIsReadOncePerCall(): void {
+		$entries = [];
+		for ($position = 1; $position <= 300; $position++) {
+			$entries[] = ['position' => $position, 'grounds' => ['5.1.2.e', '5.1.2.e']];
+		}
+
+		$answer = $this->service()->record(self::PUBLICATION, $entries, 'dossiq');
+
+		$this->assertSame(300, $answer['recorded']);
+		$this->assertSame(1, $this->grounds->listCalls);
+		$this->assertSame(0, $this->grounds->calls, 'byCode() is not asked once the list is read');
+		$this->assertSame('Eerbiediging van de persoonlijke levenssfeer', $this->stored()[0]['grounds'][0]['label']);
+	}//end testDossiqsListIsReadOncePerCall()
+
+	public function testADossiqWithoutTheListMethodIsAskedPerCode(): void {
+		$this->grounds = new PerCodeGroundsDouble();
+
+		$answer = $this->service()->record(
+			self::PUBLICATION,
+			[['position' => 3, 'grounds' => ['5.1.2.e']], ['position' => 4, 'grounds' => ['5.2.5']]],
+			'dossiq'
+		);
+
+		$this->assertSame(1, $answer['recorded']);
+		$this->assertSame([['position' => 4, 'code' => '5.2.5', 'reason' => 'unknown-ground']], $answer['refused']);
+		$this->assertSame(2, $this->grounds->calls);
+	}//end testADossiqWithoutTheListMethodIsAskedPerCode()
+
+	public function testASecondEntryForTheSamePositionIsRefusedAsInvalid(): void {
+		$answer = $this->service()->record(
+			self::PUBLICATION,
+			[['position' => 3, 'grounds' => ['5.1.2.e']], ['position' => 3, 'grounds' => ['5.1.2.e']], ['position' => 4, 'grounds' => ['5.1.2.e']]],
+			'dossiq'
+		);
+
+		$this->assertSame(2, $answer['recorded']);
+		$this->assertSame([['position' => 3, 'code' => '5.1.2.e', 'reason' => 'invalid-entry']], $answer['refused']);
+		$this->assertSame([3, 4], array_column($this->stored(), 'position'));
+	}//end testASecondEntryForTheSamePositionIsRefusedAsInvalid()
 
 	public function testAnEmptyCallRemovesTheStoredEntries(): void {
 		$service = $this->service();
@@ -328,6 +424,8 @@ class WithheldDocumentsRecordTest extends TestCase {
 		$this->assertSame(['position', 'grounds'], WithheldDocuments::ENTRY_KEYS);
 		$this->assertSame(['recorded', 'refused'], WithheldDocuments::ANSWER_KEYS);
 		$this->assertSame(['position', 'code', 'reason'], WithheldDocuments::REFUSED_KEYS);
+		$this->assertSame('listWithRetired', WithheldDocuments::GROUNDS_LIST_METHOD, 'dossiq REQ-WRG-007 names listWithRetired() next to byCode()');
+		$this->assertTrue(method_exists(WooRefusalGrounds::class, WithheldDocuments::GROUNDS_LIST_METHOD));
 
 		$answer = $this->service()->record(self::PUBLICATION, [['position' => 4, 'grounds' => ['5.2.5']]], 'dossiq');
 		$this->assertSame(WithheldDocuments::ANSWER_KEYS, array_keys($answer));

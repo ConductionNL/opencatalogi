@@ -241,7 +241,7 @@ function getFieldSpecificErrors(issues) {
 		path: joinPath(issue.path),
 		message: issue.message,
 		code: issue.code,
-		type: issue.type,
+		type: issue.type ?? issue.origin,
 	}))
 }
 

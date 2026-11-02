@@ -77,3 +77,24 @@ Evidence: one driven passer (dimpact-zac) and one documented (atabix).
 - **GIVEN** an imported definition with a property changed locally
 - **WHEN** a resynchronisation would overwrite it
 - **THEN** that property is flagged in the difference.
+
+### Requirement: An administrator sees which catalogue entries need repair (REQ-PSC-104)
+
+The app MUST list, for an administrator, every catalogue entry that is not
+available, with the reason it is unavailable. The list MUST be served on
+`GET /api/service-catalogue/unavailable`, MUST refuse non-administrators, and
+MUST be shown as the "Needs repair" list on the service catalogue page.
+
+> @e2e exclude The list is a manifest widget over the admin endpoint; the endpoint's filter and refusal are covered by ServiceCatalogueControllerTest.
+
+#### Scenario: a broken entry shows up with its reason
+
+- **GIVEN** a catalogue entry marked unavailable with the reason "form removed"
+- **WHEN** an administrator requests the unavailable entries
+- **THEN** that entry MUST be listed with the reason "form removed"
+
+#### Scenario: a non-administrator is refused
+
+- **GIVEN** a signed-in user who is not an administrator
+- **WHEN** they request the unavailable entries
+- **THEN** the request MUST be refused

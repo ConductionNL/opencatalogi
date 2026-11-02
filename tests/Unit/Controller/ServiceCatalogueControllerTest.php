@@ -160,6 +160,28 @@ class ServiceCatalogueControllerTest extends TestCase {
 	}//end testAnUnavailableEntryIsServedRatherThanDropped()
 
 	/**
+	 * The entries are answered again as `results`, the list a list page reads,
+	 * each with its availability.
+	 */
+	public function testTheEntriesAreAnsweredAsResultsWithTheirAvailability(): void {
+		$this->request->method('getParams')->willReturn(['_page' => 1, '_limit' => 20]);
+		$entries = [
+			['id' => 'a', 'title' => 'Parkeervergunning voor bewoners', 'available' => true],
+			['id' => 'b', 'title' => 'Afvalcontainer voor inwoners', 'available' => false, 'unavailableReason' => 'unpublished-case-type'],
+		];
+		$this->catalogueService->method('readCatalogue')->willReturn(
+			['entries' => $entries, 'groups' => [], 'unavailable' => 1, 'total' => 2]
+		);
+
+		$data = $this->controller->index()->getData();
+
+		$this->assertSame($entries, $data['results']);
+		$this->assertSame(2, $data['total']);
+		$this->assertFalse($data['results'][1]['available']);
+
+	}//end testTheEntriesAreAnsweredAsResultsWithTheirAvailability()
+
+	/**
 	 * The national catalogue we could not ask is reported as unreachable.
 	 *
 	 * A 200 with an empty body here is the reading that sends an administrator

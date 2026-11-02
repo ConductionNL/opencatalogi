@@ -22,8 +22,8 @@
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\DirectoryService;
-use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -47,32 +47,32 @@ class DirectorySync extends TimedJob {
 	 *
 	 * @var integer
 	 */
-	public const MIN_INTERVAL_SECONDS = SettingsService::MIN_INTERVAL_SECONDS;
+	public const MIN_INTERVAL_SECONDS = SettingsServiceInterface::MIN_INTERVAL_SECONDS;
 
 	/**
 	 * Maximum allowed interval in seconds (24 hours).
 	 *
 	 * @var integer
 	 */
-	public const MAX_INTERVAL_SECONDS = SettingsService::MAX_INTERVAL_SECONDS;
+	public const MAX_INTERVAL_SECONDS = SettingsServiceInterface::MAX_INTERVAL_SECONDS;
 
 	/**
 	 * Default interval in seconds (1 hour).
 	 *
 	 * @var integer
 	 */
-	public const DEFAULT_INTERVAL_SECONDS = SettingsService::DEFAULT_INTERVAL_SECONDS;
+	public const DEFAULT_INTERVAL_SECONDS = SettingsServiceInterface::DEFAULT_INTERVAL_SECONDS;
 
 	/**
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory for scheduling.
-	 * @param DirectoryService $directoryService The directory service.
+	 * @param DirectoryServiceInterface $directoryService The directory service.
 	 * @param IAppConfig $config App config for reading the sync interval.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly DirectoryService $directoryService,
+		private readonly DirectoryServiceInterface $directoryService,
 		IAppConfig $config,
 	) {
 		parent::__construct(time: $time);

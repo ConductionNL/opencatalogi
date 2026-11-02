@@ -31,6 +31,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeInterface;
+use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -40,7 +41,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-statutory-term-is-armed-when-a-request-is-received-req-wri-002
  */
-class StatutoryTerm {
+class StatutoryTerm implements StatutoryTermInterface {
 
 	/**
 	 * The Woo decision term: four weeks from the day the request was received.

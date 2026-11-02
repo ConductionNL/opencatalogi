@@ -1,0 +1,156 @@
+{
+	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
+	"_note": "retention-review-queue (RET-007; boards OcBewaartermijnen and OcTermijnVerlengen). The publications whose retention term ends within 30 days or has ended, with the per-item and bulk decisions extend term, depublish now and archive. Each opens RetentionDecisionDialog, which posts to /api/retention/publications/{id}/decision; the decision is the action id. The report downloads /api/retention/report.",
+	"menu": [
+		{
+			"id": "RetentionReviewMenu",
+			"label": "Retention review",
+			"icon": "ClockOutline",
+			"route": "RetentionReview",
+			"section": "settings",
+			"order": 95,
+			"permission": "admin"
+		}
+	],
+	"pages": [
+		{
+			"id": "RetentionReview",
+			"route": "/retention",
+			"type": "index",
+			"title": "Retention review",
+			"permission": "admin",
+			"config": {
+				"register": "@resolve:publication_register",
+				"schema": "@resolve:publication_schema",
+				"description": "Publications whose retention term ends within 30 days or has ended",
+				"rowClickToView": false,
+				"quickFilters": [
+					{
+						"label": "Expiring soon",
+						"filter": {
+							"retentionExpiresAt": {
+								"gt": "@now",
+								"lte": "@today+30d"
+							}
+						}
+					},
+					{
+						"label": "Review needed",
+						"filter": {
+							"retentionAction": "review",
+							"retentionExpiresAt": {
+								"lte": "@now"
+							}
+						}
+					},
+					{
+						"label": "Both",
+						"default": true,
+						"filter": {
+							"retentionExpiresAt": {
+								"lte": "@today+30d"
+							}
+						}
+					},
+					{
+						"label": "Archived",
+						"filter": {
+							"status": "archived"
+						}
+					}
+				],
+				"columns": [
+					{
+						"key": "title",
+						"label": "Publication",
+						"sortable": true
+					},
+					{
+						"key": "retentionCategory",
+						"label": "Retention category"
+					},
+					{
+						"key": "retentionExpiresAt",
+						"label": "Expires on",
+						"formatter": "date",
+						"sortable": true
+					},
+					{
+						"key": "retentionAction",
+						"label": "Rule says"
+					},
+					{
+						"key": "retentionTermMonths",
+						"label": "Retention term (months)"
+					}
+				],
+				"sortKey": "retentionExpiresAt",
+				"sortOrder": "asc",
+				"actions": [
+					{
+						"id": "extend",
+						"label": "Extend term",
+						"icon": "CalendarClock",
+						"handler": "openRetentionDecision"
+					},
+					{
+						"id": "depublish",
+						"label": "Depublish now",
+						"icon": "PublishOff",
+						"handler": "openRetentionDecision"
+					},
+					{
+						"id": "archive",
+						"label": "Archive",
+						"icon": "ArchiveOutline",
+						"handler": "openRetentionDecision"
+					}
+				],
+				"bulkActions": [
+					{
+						"id": "extend",
+						"label": "Extend term",
+						"icon": "CalendarClock",
+						"handler": "openRetentionDecision"
+					},
+					{
+						"id": "depublish",
+						"label": "Depublish now",
+						"icon": "PublishOff",
+						"handler": "openRetentionDecision"
+					},
+					{
+						"id": "archive",
+						"label": "Archive",
+						"icon": "ArchiveOutline",
+						"handler": "openRetentionDecision"
+					}
+				],
+				"headerActions": [
+					{
+						"id": "retention-report",
+						"label": "Retention report",
+						"icon": "FileChartOutline",
+						"handler": "downloadRetentionReport"
+					}
+				],
+				"actionToggles": {
+					"showAdd": false,
+					"showViewAction": false,
+					"showEditAction": false,
+					"showCopyAction": false,
+					"showDeleteAction": false,
+					"showMassImport": false,
+					"showMassExport": false,
+					"showMassCopy": false,
+					"showMassDelete": false,
+					"showViewToggle": false,
+					"selectable": true
+				},
+				"footerNote": "Extending a term asks for a note, which stays in the history.",
+				"emptyText": "No publication needs a retention decision",
+				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
+		}
+	]
+}

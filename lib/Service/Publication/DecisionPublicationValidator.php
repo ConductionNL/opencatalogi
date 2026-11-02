@@ -35,13 +35,14 @@ use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DomainException;
+use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
 
 /**
  * Refuses a decision that does not meet its own type's publication rules.
  *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
  */
-class DecisionPublicationValidator {
+class DecisionPublicationValidator implements DecisionPublicationValidatorInterface {
 
 	/**
 	 * Validate a decision against its type, and compute the response date.

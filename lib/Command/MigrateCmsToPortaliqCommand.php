@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Command;
 
-use OCA\OpenCatalogi\Service\CmsMigrationService;
+use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -47,13 +47,13 @@ class MigrateCmsToPortaliqCommand extends Command {
 	/**
 	 * Wire the migration rules.
 	 *
-	 * @param CmsMigrationService $migration The mapping rules and lazy OR access.
+	 * @param CmsMigrationServiceInterface $migration The mapping rules and lazy OR access.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
-	public function __construct(private readonly CmsMigrationService $migration) {
+	public function __construct(private readonly CmsMigrationServiceInterface $migration) {
 		parent::__construct();
 	}//end __construct()
 
@@ -184,7 +184,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	private function read(object $objectService, string $schema, OutputInterface $output): ?array {
 		try {
 			$rows = $objectService->searchObjectsBySlug(
-				CmsMigrationService::SOURCE_REGISTER,
+				CmsMigrationServiceInterface::SOURCE_REGISTER,
 				$schema,
 				['_limit' => 1000],
 				false,
@@ -294,7 +294,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 			// nothing and reports eight failures.
 			$objectService->saveObject(
 				object: $target,
-				register: CmsMigrationService::TARGET_REGISTER,
+				register: CmsMigrationServiceInterface::TARGET_REGISTER,
 				schema: $kind,
 				_rbac: false,
 				_multitenancy: false,

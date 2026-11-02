@@ -1,0 +1,965 @@
+{
+    "catalog register missing": {
+        "calls": [],
+        "config": {
+            "catalog_register": "",
+            "catalog_schema": "8",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "catalog schema missing": {
+        "calls": [],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "container fails": {
+        "calls": [],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "entity and scalar catalogues": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Entity",
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-entity",
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        7
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-array",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "failing save skips to the next": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Applicatielandschap",
+                    "slug": "applicatielandschap",
+                    "registers": [
+                        "21"
+                    ],
+                    "schemas": [
+                        "119",
+                        "105",
+                        "106",
+                        "112",
+                        "110"
+                    ],
+                    "published": "<now, ISO 8601 UTC>"
+                },
+                [],
+                "23",
+                "8",
+                "cat-seed",
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-fail",
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "registers": [
+                        "ghost"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-ok",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[\"ghost\"]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[\"ghost\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "hand-made catalogue with ids": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "id from the top level": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "id": "top-level-id",
+                    "title": "Top",
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "top-level-id",
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "id": 99,
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "99",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "ids are left alone": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "missing and empty scopes": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "None",
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-none",
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-regs",
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-schemas",
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-null",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "no catalogues": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "one side a string": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "registers": "publication",
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "c-half",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "openregister not installed": {
+        "calls": [],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "pending is deduplicated": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[\"stackiq\"]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[\"stackiq\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "publication register missing": {
+        "calls": [],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "publication_register": "",
+            "publication_schema": "7"
+        }
+    },
+    "publication schema missing": {
+        "calls": [],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "publication_register": "23",
+            "publication_schema": ""
+        }
+    },
+    "resolved seed already published once before": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "catalog_seeds_published": "[\"other\",\"applicatielandschap\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "resolved seed published once": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Applicatielandschap",
+                    "slug": "applicatielandschap",
+                    "registers": [
+                        21
+                    ],
+                    "schemas": [
+                        119,
+                        105,
+                        106,
+                        112,
+                        110
+                    ],
+                    "published": "<now, ISO 8601 UTC>"
+                },
+                [],
+                "23",
+                "8",
+                "cat-seed",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_seeds_published",
+                "[\"applicatielandschap\"]"
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "catalog_seeds_published": "[\"applicatielandschap\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "resolved seed with a published date": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "resolved seed with garbage publish memory": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Applicatielandschap",
+                    "slug": "applicatielandschap",
+                    "registers": [
+                        21
+                    ],
+                    "schemas": [
+                        119
+                    ],
+                    "published": "<now, ISO 8601 UTC>"
+                },
+                [],
+                "23",
+                "8",
+                "cat-seed",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_seeds_published",
+                "[\"applicatielandschap\"]"
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "catalog_seeds_published": "[\"applicatielandschap\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "search answers a count": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "seed with a partial register": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Applicatielandschap",
+                    "slug": "applicatielandschap",
+                    "registers": [
+                        "21"
+                    ],
+                    "schemas": [
+                        "119",
+                        "105",
+                        "catalogService",
+                        "connection",
+                        "usage"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "cat-seed",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[\"21\"]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[\"21\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "seed with stackiq is published once": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Applicatielandschap",
+                    "slug": "applicatielandschap",
+                    "registers": [
+                        "21"
+                    ],
+                    "schemas": [
+                        "119",
+                        "105",
+                        "106",
+                        "112",
+                        "110"
+                    ],
+                    "published": "<now, ISO 8601 UTC>"
+                },
+                [],
+                "23",
+                "8",
+                "cat-seed",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_seeds_published",
+                "[\"applicatielandschap\"]"
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "catalog_seeds_published": "[\"applicatielandschap\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "seed without stackiq stays pending": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[\"stackiq\"]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[\"stackiq\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "slugs resolve to ids": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Componenten",
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        "143"
+                    ],
+                    "published": "2026-10-01T00:00:00+00:00",
+                    "updated": "2026-10-02T10:00:00+00:00",
+                    "count": 3,
+                    "note": "2026-10-01 00:00"
+                },
+                [],
+                "23",
+                "8",
+                "c-slugs",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "string scope is left alone": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "unknown slug stays pending": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[\"23\",\"ghost\"]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[\"23\",\"ghost\"]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    }
+}

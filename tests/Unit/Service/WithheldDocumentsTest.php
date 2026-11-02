@@ -28,6 +28,8 @@ use Psr\Log\NullLogger;
  *
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */
 class WithheldDocumentsTest extends TestCase {
 
@@ -76,7 +78,7 @@ class WithheldDocumentsTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn(true);
 
 		return new WithheldFromPublication(
-			store: new WithheldFromPublicationStore(config: $config, container: $container, appManager: $appManager),
+			store: new WithheldFromPublicationStore(config: $config, openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager)),
 			logger: new NullLogger(),
 		);
 	}//end service()

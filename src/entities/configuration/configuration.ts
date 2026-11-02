@@ -1,4 +1,4 @@
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TConfiguration } from './configuration.types'
 
 import { z } from 'zod'
@@ -27,7 +27,7 @@ export class Configuration implements TConfiguration {
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TConfiguration, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/8azwyic71djee-create-listing
 		const schema = z.object({
 			useElastic: z.boolean(),

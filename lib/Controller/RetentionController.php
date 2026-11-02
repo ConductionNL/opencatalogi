@@ -32,7 +32,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\RetentionService;
+use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -52,14 +52,14 @@ class RetentionController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param RetentionService $retentionService The retention service.
+	 * @param RetentionServiceInterface $retentionService The retention service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly RetentionService $retentionService,
+		private readonly RetentionServiceInterface $retentionService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 	) {

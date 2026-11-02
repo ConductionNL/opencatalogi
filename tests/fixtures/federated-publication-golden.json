@@ -1,0 +1,334 @@
+{
+    "local hit with local catalogs": {
+        "result": {
+            "success": true,
+            "data": {
+                "@self": {
+                    "id": "p1",
+                    "slug": "one",
+                    "catalogs": [
+                        {
+                            "id": "c1",
+                            "slug": "woo",
+                            "title": "Woo",
+                            "summary": "Local catalog instance",
+                            "description": null,
+                            "organization": null,
+                            "listed": true
+                        },
+                        {
+                            "id": "c2",
+                            "slug": "from-self",
+                            "title": "Local Catalog",
+                            "summary": "Local catalog instance",
+                            "description": null,
+                            "organization": null,
+                            "listed": false
+                        }
+                    ]
+                },
+                "title": "One"
+            },
+            "status": 200
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "searchObjects": {
+                    "@self": {
+                        "schema": "catalog-schema",
+                        "register": "catalog-register"
+                    }
+                }
+            }
+        ]
+    },
+    "local hit without local catalogs": {
+        "result": {
+            "success": true,
+            "data": {
+                "@self": {
+                    "id": "p1",
+                    "slug": "one"
+                },
+                "title": "One"
+            },
+            "status": 200
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "searchObjects": {
+                    "@self": {
+                        "schema": "catalog-schema",
+                        "register": "catalog-register"
+                    }
+                }
+            }
+        ]
+    },
+    "local hit without self": {
+        "result": {
+            "success": true,
+            "data": {
+                "title": "Bare"
+            },
+            "status": 200
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            }
+        ]
+    },
+    "local hit, aggregation off": {
+        "result": {
+            "success": true,
+            "data": {
+                "@self": {
+                    "id": "p1",
+                    "slug": "one"
+                },
+                "title": "One"
+            },
+            "status": 200
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            }
+        ]
+    },
+    "local hit, aggregation zero": {
+        "result": {
+            "success": true,
+            "data": {
+                "@self": {
+                    "id": "p1",
+                    "slug": "one"
+                },
+                "title": "One"
+            },
+            "status": 200
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            }
+        ]
+    },
+    "empty local answer goes to the peers": {
+        "result": {
+            "success": true,
+            "data": {
+                "id": "f1",
+                "title": "Peer",
+                "sources": {
+                    "name": "Peer A",
+                    "url": "https://peer.a"
+                }
+            },
+            "status": 200,
+            "federated": true
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "getPublication": "pub-1",
+                "config": {
+                    "query_params": []
+                }
+            }
+        ]
+    },
+    "local miss, aggregation off": {
+        "result": {
+            "success": false,
+            "error": "Publication not found",
+            "status": 404
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            }
+        ]
+    },
+    "peer hit with timeouts": {
+        "result": {
+            "success": true,
+            "data": {
+                "id": "f1",
+                "title": "Peer",
+                "sources": {
+                    "name": "Peer A",
+                    "url": "https://peer.a"
+                }
+            },
+            "status": 200,
+            "federated": true
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "getPublication": "pub-1",
+                "config": {
+                    "timeout": 30,
+                    "connect_timeout": 5,
+                    "query_params": {
+                        "timeout": "30",
+                        "connect_timeout": 5,
+                        "_extend": "x"
+                    }
+                }
+            }
+        ]
+    },
+    "peer hit with timeouts at the bounds": {
+        "result": {
+            "success": true,
+            "data": {
+                "id": "f2",
+                "sources": []
+            },
+            "status": 200,
+            "federated": true
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "getPublication": "pub-1",
+                "config": {
+                    "timeout": 120,
+                    "connect_timeout": 30,
+                    "query_params": {
+                        "timeout": 120,
+                        "connect_timeout": "30"
+                    }
+                }
+            }
+        ]
+    },
+    "timeouts out of bounds": {
+        "result": {
+            "success": true,
+            "data": {
+                "id": "f1",
+                "title": "Peer",
+                "sources": {
+                    "name": "Peer A",
+                    "url": "https://peer.a"
+                }
+            },
+            "status": 200,
+            "federated": true
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "getPublication": "pub-1",
+                "config": {
+                    "query_params": {
+                        "timeout": 121,
+                        "connect_timeout": 31,
+                        "_aggregate": "yes"
+                    }
+                }
+            }
+        ]
+    },
+    "timeouts zero or negative": {
+        "result": {
+            "success": true,
+            "data": {
+                "id": "f1",
+                "title": "Peer",
+                "sources": {
+                    "name": "Peer A",
+                    "url": "https://peer.a"
+                }
+            },
+            "status": 200,
+            "federated": true
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "getPublication": "pub-1",
+                "config": {
+                    "query_params": {
+                        "timeout": "0",
+                        "connect_timeout": "-1"
+                    }
+                }
+            }
+        ]
+    },
+    "peer answer without result": {
+        "result": {
+            "success": false,
+            "error": "Publication not found",
+            "status": 404
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "getPublication": "pub-1",
+                "config": {
+                    "query_params": []
+                }
+            }
+        ]
+    },
+    "peer miss": {
+        "result": {
+            "success": false,
+            "error": "Publication not found",
+            "status": 404
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "getPublication": "pub-1",
+                "config": {
+                    "query_params": []
+                }
+            }
+        ]
+    },
+    "peer lookup fails": {
+        "result": {
+            "success": false,
+            "error": "Publication not found",
+            "status": 404
+        },
+        "calls": [
+            {
+                "show": "pub-1"
+            },
+            {
+                "getPublication": "pub-1",
+                "config": {
+                    "query_params": []
+                }
+            }
+        ]
+    }
+}

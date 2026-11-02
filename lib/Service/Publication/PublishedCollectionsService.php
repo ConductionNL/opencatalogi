@@ -33,6 +33,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
+use OCA\OpenCatalogi\Contract\PublishedCollectionsServiceInterface;
 use OCP\IAppConfig;
 
 /**
@@ -40,7 +41,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
  */
-class PublishedCollectionsService {
+class PublishedCollectionsService implements PublishedCollectionsServiceInterface {
 
 	/**
 	 * The config key the published set lives under.

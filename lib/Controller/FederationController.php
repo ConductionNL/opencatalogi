@@ -30,8 +30,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\PublicationService;
-use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -39,30 +39,37 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling federation endpoints.
+ *
+ * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
+	use AnswersCacheably;
+
 	/**
 	 * FederationController constructor.
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param PublicationService $publicationService The publication service.
+	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
+	 * @param ContainerInterface $container The container the cache headers read the session and config from.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param WithheldFromPublication|null $withheld The public withheld list (REQ-WDW-003).
+	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
+		private readonly ContainerInterface $container,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?WithheldFromPublication $withheld = null,
+		private readonly ?WithheldFromPublicationInterface $withheld = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -133,6 +140,7 @@ class FederationController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publication(string $id): JSONResponse {
@@ -151,7 +159,12 @@ class FederationController extends Controller {
 				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
 			}
 
-			return new JSONResponse($result['data'], $result['status']);
+			// The same cache headers publications#show sends: the portal reads a
+			// publication with its schema through this route on every page view,
+			// and an unchanged answer comes back as a 304 without a body.
+			return $this->cacheableForCaller(
+				response: new JSONResponse($result['data'], $result['status'])
+			);
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publication] Failed to retrieve publication',
@@ -263,11 +276,16 @@ class FederationController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @no-admin-idor-exempt PublicationService::attachments() refuses an id outside the configured
+	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
+	 *   anonymous callers get public-group reads only) and lists shared files only (sharedFilesOnly).
+	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
-		return $this->publicationService->attachments(id: $id);
+		return $this->cacheableForCaller(response: $this->publicationService->attachments(id: $id));
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of
@@ -283,6 +301,11 @@ class FederationController extends Controller {
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
+	 *
+	 * @no-admin-idor-exempt PublicationService::download() refuses an id outside the configured
+	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
+	 *   anonymous callers get public-group reads only) before any file is zipped, and OpenRegister's
+	 *   createObjectFilesZip() drops restricted files (FileRestrictionGuard).
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */

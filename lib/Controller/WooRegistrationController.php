@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\WooRegistrationService;
+use OCA\OpenCatalogi\Contract\WooRegistrationServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,12 +48,12 @@ class WooRegistrationController extends Controller {
 	 *
 	 * @param string                 $appName      The app name.
 	 * @param IRequest               $request      The request.
-	 * @param WooRegistrationService $registration The registration service.
+	 * @param WooRegistrationServiceInterface $registration The registration service.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly WooRegistrationService $registration,
+		private readonly WooRegistrationServiceInterface $registration,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

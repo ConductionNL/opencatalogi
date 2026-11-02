@@ -40,10 +40,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\BannerServiceInterface;
+use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\Community\BannerService;
-use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -64,6 +64,7 @@ use Psr\Container\ContainerInterface;
 class NoticeBoardController extends Controller {
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
+	use ReadsPublicationRegister;
 
 	/**
 	 * Constructor.
@@ -73,9 +74,9 @@ class NoticeBoardController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container Server container.
 	 * @param IUserSession $userSession The current session.
-	 * @param BannerService $bannerService The instance banner.
-	 * @param NoticeBoardService $noticeService The notice boards.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param BannerServiceInterface $bannerService The instance banner.
+	 * @param NoticeBoardServiceInterface $noticeService The notice boards.
+	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
 	 */
 	public function __construct(
 		$appName,
@@ -83,52 +84,13 @@ class NoticeBoardController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly ContainerInterface $container,
 		private readonly IUserSession $userSession,
-		private readonly BannerService $bannerService,
-		private readonly NoticeBoardService $noticeService,
-		private readonly ServiceCatalogueService $objects,
+		private readonly BannerServiceInterface $bannerService,
+		private readonly NoticeBoardServiceInterface $noticeService,
+		private readonly ServiceCatalogueServiceInterface $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve a register and schema pair for one of this change's schemas.
-	 *
-	 * @param string $schemaKey The `<thing>_schema` config key.
-	 *
-	 * @return array<string, string> The register and schema identifiers.
-	 */
-	private function configurationFor(string $schemaKey): array {
-		return $this->resolveRegisterConfiguration(registerKey: 'publication_register', schemaKey: $schemaKey);
-
-	}//end configurationFor()
-
-	/**
-	 * Read every object of one schema.
-	 *
-	 * @param string $schemaKey The `<thing>_schema` config key.
-	 * @param array<string, mixed> $filters Extra filters.
-	 *
-	 * @return array<int, array<string, mixed>> The objects.
-	 *
-	 * @throws CatalogueUnreadableException When OpenRegister cannot be reached.
-	 */
-	private function readAll(string $schemaKey, array $filters = []): array {
-		$config = $this->configurationFor(schemaKey: $schemaKey);
-		$query = $filters;
-		$query['@self'] = ['register' => $config['register'], 'schema' => $config['schema']];
-		$query['_limit'] = ($filters['_limit'] ?? 500);
-
-		$result = $this->objects->getObjectService()->searchObjectsPaginated($query, _rbac: false, _multitenancy: false);
-
-		$objects = [];
-		foreach (($result['results'] ?? []) as $object) {
-			$objects[] = $this->asArray(object: $object);
-		}
-
-		return $objects;
-
-	}//end readAll()
 
 	/**
 	 * The banners the signed-in user should see right now.

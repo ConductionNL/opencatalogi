@@ -11,14 +11,14 @@
  */
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TOrganization } from '../organization'
 import type { TListing } from './listing.types'
 
 import { z } from 'zod'
 
 /** @typedef {import('./listing.types').TListing} TListing */
-/** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
+/** @typedef {import('zod').ZodSafeParseResult<unknown>} ZodSafeParseResult */
 
 /**
  * Listing class representing a catalog listing in the system
@@ -84,9 +84,9 @@ export class Listing implements TListing {
 	/**
 	 * Validates the listing data
 	 *
-	 * @return SafeParseReturnType containing validation results
+	 * @return ZodSafeParseResult containing validation results
 	 */
-	public validate(): SafeParseReturnType<TListing, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/8azwyic71djee-create-listing
 		const schema = z.object({
 			catalogusId: z.string(),

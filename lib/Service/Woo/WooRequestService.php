@@ -37,13 +37,14 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\WooRequestServiceInterface;
 
 /**
  * Builds and reads the Woo request record.
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
-class WooRequestService {
+class WooRequestService implements WooRequestServiceInterface {
 
 	/**
 	 * The states a request moves through.
@@ -77,22 +78,8 @@ class WooRequestService {
 	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
 	 */
 	public function receive(array $input, string $receivedBy, ?DateTimeInterface $now = null): array {
-		$asked = trim((string)($input['requestedInformation'] ?? ''));
-		if ($asked === '') {
-			throw new DomainException(
-				message: 'A Woo request has to say what information is asked for. A request for nothing cannot be decided, '
-					. 'and a term counted against it would be counted against nothing.'
-			);
-		}
-
-		$channel = trim((string)($input['channel'] ?? 'web'));
-		if (in_array($channel, self::CHANNELS, true) === false) {
-			throw new DomainException(
-				message: 'The channel "' . $channel . '" is not one of ' . implode(', ', self::CHANNELS)
-					. '. An unknown channel is refused rather than read as the nearest one, because the channel is '
-					. 'what decides how the decision goes back out.'
-			);
-		}
+		$asked = $this->requestedInformation(input: $input);
+		$channel = $this->channel(input: $input);
 
 		$receivedAt = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($now !== null) {
@@ -122,6 +109,53 @@ class WooRequestService {
 		];
 
 	}//end receive()
+
+	/**
+	 * What the request asks for, trimmed.
+	 *
+	 * @param array<string, mixed> $input The intake input.
+	 *
+	 * @return string The requested information.
+	 *
+	 * @throws DomainException When it asks for nothing.
+	 *
+	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
+	 */
+	private function requestedInformation(array $input): string {
+		$asked = trim((string)($input['requestedInformation'] ?? ''));
+		if ($asked === '') {
+			throw new DomainException(
+				message: 'A Woo request has to say what information is asked for. A request for nothing cannot be decided, '
+					. 'and a term counted against it would be counted against nothing.'
+			);
+		}
+
+		return $asked;
+	}//end requestedInformation()
+
+	/**
+	 * The channel the request came in through, trimmed; `web` when none was named.
+	 *
+	 * @param array<string, mixed> $input The intake input.
+	 *
+	 * @return string One of {@see CHANNELS}.
+	 *
+	 * @throws DomainException On a channel that is not one of {@see CHANNELS}.
+	 *
+	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
+	 */
+	private function channel(array $input): string {
+		$channel = trim((string)($input['channel'] ?? 'web'));
+		if (in_array($channel, self::CHANNELS, true) === false) {
+			throw new DomainException(
+				message: 'The channel "' . $channel . '" is not one of ' . implode(', ', self::CHANNELS)
+					. '. An unknown channel is refused rather than read as the nearest one, because the channel is '
+					. 'what decides how the decision goes back out.'
+			);
+		}
+
+		return $channel;
+	}//end channel()
 
 	/**
 	 * Mint a reference the requester can quote.

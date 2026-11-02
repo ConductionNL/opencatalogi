@@ -173,7 +173,7 @@ class PublicationStateServiceTest extends TestCase {
 	 * installed only on request (ADR-111), or they show up in a real
 	 * organisation's public search.
 	 *
-	 * @spec openspec/changes/example-publications-are-demo-data/specs/publications/spec.md#requirement-example-publications-are-demo-data-installed-only-on-request-req-epd-001
+	 * @spec openspec/specs/publications/spec.md#requirement-example-publications-are-demo-data-installed-only-on-request-req-epd-001
 	 */
 	public function testTheInstalledRegisterCarriesNoExamplePublications(): void {
 		$register = json_decode((string)file_get_contents(__DIR__ . '/../../../../lib/Settings/publication_register.json'), true);

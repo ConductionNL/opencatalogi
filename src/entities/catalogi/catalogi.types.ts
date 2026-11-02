@@ -27,4 +27,12 @@ export type TCatalogi = {
 	hasWooSitemap: boolean
 	hasOoapi: boolean
 	showWithheld?: boolean
+	staffAccess?: TCatalogStaffAccess
+}
+
+/** Which staff see and edit a catalogue's publications (catalogue-staff-access). */
+export type TCatalogStaffAccess = {
+	restricted: boolean
+	readGroups: string[]
+	editGroups: string[]
 }

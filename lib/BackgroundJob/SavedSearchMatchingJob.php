@@ -28,7 +28,7 @@ namespace OCA\OpenCatalogi\BackgroundJob;
 
 use DateTimeImmutable;
 use DateTimeZone;
-use OCA\OpenCatalogi\Service\Portal\SavedSearchMatcher;
+use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\TimedJob;
@@ -47,14 +47,14 @@ class SavedSearchMatchingJob extends TimedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory       $time       The time factory.
-	 * @param SavedSearchMatcher $matcher    The matching.
+	 * @param SavedSearchMatcherInterface $matcher    The matching.
 	 * @param IAppManager        $appManager Whether portaliq is installed.
 	 * @param IConfig            $config     The instance time zone.
 	 * @param LoggerInterface    $logger     The logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly SavedSearchMatcher $matcher,
+		private readonly SavedSearchMatcherInterface $matcher,
 		private readonly IAppManager $appManager,
 		private readonly IConfig $config,
 		private readonly LoggerInterface $logger,

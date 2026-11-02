@@ -1,0 +1,620 @@
+{
+    "courses": {
+        "answer": {
+            "items": [
+                {
+                    "courseId": "c-1-a",
+                    "code": "A1",
+                    "name": "Course A"
+                },
+                {
+                    "courseId": "c-1-b",
+                    "name": "Course B"
+                }
+            ],
+            "pageNumber": 1,
+            "pageSize": 50,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 11
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "11"
+                    },
+                    "catalog": "catalog-1",
+                    "_limit": 50,
+                    "_page": 1,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "courses clamp low": {
+        "answer": {
+            "items": [
+                {
+                    "courseId": "c-1-a",
+                    "code": "A1",
+                    "name": "Course A"
+                },
+                {
+                    "courseId": "c-1-b",
+                    "name": "Course B"
+                }
+            ],
+            "pageNumber": 1,
+            "pageSize": 1,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 11
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "11"
+                    },
+                    "catalog": "catalog-1",
+                    "_limit": 1,
+                    "_page": 1,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "courses clamp high": {
+        "answer": {
+            "items": [
+                {
+                    "courseId": "c-3-a",
+                    "code": "A3",
+                    "name": "Course A"
+                },
+                {
+                    "courseId": "c-3-b",
+                    "name": "Course B"
+                }
+            ],
+            "pageNumber": 3,
+            "pageSize": 250,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 11
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "11"
+                    },
+                    "catalog": "catalog-1",
+                    "_limit": 250,
+                    "_page": 3,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "courses unannotated schema": {
+        "answer": {
+            "items": [],
+            "pageNumber": 2,
+            "pageSize": 10,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 15
+            }
+        ]
+    },
+    "courses unreadable schema": {
+        "answer": {
+            "items": [],
+            "pageNumber": 1,
+            "pageSize": 10,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 16
+            }
+        ]
+    },
+    "courses catalog without id": {
+        "answer": {
+            "items": [
+                {
+                    "courseId": "c-1-a",
+                    "code": "A1",
+                    "name": "Course A"
+                },
+                {
+                    "courseId": "c-1-b",
+                    "name": "Course B"
+                }
+            ],
+            "pageNumber": 1,
+            "pageSize": 10,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 11
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "11"
+                    },
+                    "catalog": "",
+                    "_limit": 10,
+                    "_page": 1,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "courses with a next page": {
+        "answer": {
+            "items": [
+                {
+                    "courseId": "c-1-a",
+                    "code": "A1",
+                    "name": "Course A"
+                },
+                {
+                    "courseId": "c-1-b",
+                    "name": "Course B"
+                }
+            ],
+            "pageNumber": 1,
+            "pageSize": 2,
+            "hasNext": true
+        },
+        "asked": [
+            {
+                "schema": 11
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "11"
+                    },
+                    "catalog": "catalog-v",
+                    "_limit": 2,
+                    "_page": 1,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "programs": {
+        "answer": {
+            "items": [
+                {
+                    "programId": "c-2-a",
+                    "code": "A2",
+                    "name": "Course A"
+                },
+                {
+                    "programId": "c-2-b",
+                    "name": "Course B"
+                }
+            ],
+            "pageNumber": 2,
+            "pageSize": 20,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 12
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-2",
+                        "schema": "12"
+                    },
+                    "catalog": "catalog-1",
+                    "_limit": 20,
+                    "_page": 2,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "programs unannotated": {
+        "answer": {
+            "items": [],
+            "pageNumber": 1,
+            "pageSize": 20,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 15
+            }
+        ]
+    },
+    "offerings of a course": {
+        "answer": {
+            "items": [
+                {
+                    "offeringId": "c-1-a"
+                },
+                {
+                    "offeringId": "c-1-b"
+                }
+            ],
+            "pageNumber": 1,
+            "pageSize": 5,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 13
+            },
+            {
+                "search": {
+                    "courseId": "course-9",
+                    "@self": {
+                        "register": "reg-3",
+                        "schema": "13"
+                    },
+                    "catalog": "catalog-1",
+                    "_limit": 5,
+                    "_page": 1,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "offerings of no course": {
+        "answer": {
+            "items": [
+                {
+                    "offeringId": "c-1-a"
+                },
+                {
+                    "offeringId": "c-1-b"
+                }
+            ],
+            "pageNumber": 1,
+            "pageSize": 5,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 13
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-3",
+                        "schema": "13"
+                    },
+                    "catalog": "catalog-1",
+                    "_limit": 5,
+                    "_page": 1,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "offerings of a blank course": {
+        "answer": {
+            "items": [
+                {
+                    "offeringId": "c-1-a"
+                },
+                {
+                    "offeringId": "c-1-b"
+                }
+            ],
+            "pageNumber": 1,
+            "pageSize": 250,
+            "hasNext": false
+        },
+        "asked": [
+            {
+                "schema": 13
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-3",
+                        "schema": "13"
+                    },
+                    "catalog": "catalog-1",
+                    "_limit": 250,
+                    "_page": 1,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "resource found": {
+        "answer": {
+            "courseId": "course-1",
+            "code": "INF101",
+            "name": "Course"
+        },
+        "asked": [
+            {
+                "find": "course-1"
+            },
+            {
+                "schema": 11
+            }
+        ]
+    },
+    "resource of another catalog": {
+        "answer": null,
+        "asked": [
+            {
+                "find": "course-foreign"
+            }
+        ]
+    },
+    "resource of another schema": {
+        "answer": null,
+        "asked": [
+            {
+                "find": "course-otherschema"
+            }
+        ]
+    },
+    "resource on unannotated schema": {
+        "answer": null,
+        "asked": [
+            {
+                "find": "course-plain"
+            },
+            {
+                "schema": 15
+            }
+        ]
+    },
+    "resource missing": {
+        "answer": null,
+        "asked": [
+            {
+                "find": "missing"
+            }
+        ]
+    },
+    "resource lookup fails": {
+        "answer": null,
+        "asked": [
+            {
+                "find": "broken"
+            }
+        ]
+    },
+    "resource without catalog on either side": {
+        "answer": {
+            "offeringId": "course-nocat",
+            "code": "N"
+        },
+        "asked": [
+            {
+                "find": "course-nocat"
+            },
+            {
+                "schema": 11
+            }
+        ]
+    },
+    "organization": {
+        "answer": {
+            "organizationId": "org-1",
+            "name": "Universiteit"
+        },
+        "asked": [
+            {
+                "find": "org-1"
+            },
+            {
+                "schema": 14
+            }
+        ]
+    },
+    "organization none": {
+        "answer": null,
+        "asked": []
+    },
+    "organization blank": {
+        "answer": null,
+        "asked": []
+    },
+    "organization not a string": {
+        "answer": null,
+        "asked": []
+    },
+    "organization missing": {
+        "answer": null,
+        "asked": [
+            {
+                "find": "missing"
+            }
+        ]
+    },
+    "organization unannotated": {
+        "answer": null,
+        "asked": [
+            {
+                "find": "org-1"
+            },
+            {
+                "schema": 15
+            }
+        ]
+    },
+    "organization by id": {
+        "answer": {
+            "organizationId": "org-1",
+            "name": "Universiteit"
+        },
+        "asked": [
+            {
+                "find": "org-1"
+            },
+            {
+                "schema": 14
+            }
+        ]
+    },
+    "organization by other id": {
+        "answer": null,
+        "asked": []
+    },
+    "organization by id without one": {
+        "answer": null,
+        "asked": []
+    },
+    "validate over two pages": {
+        "answer": [
+            {
+                "id": "c-1-b",
+                "missing": [
+                    "code"
+                ]
+            },
+            {
+                "id": "c-2-b",
+                "missing": [
+                    "code"
+                ]
+            }
+        ],
+        "asked": [
+            {
+                "schema": 11
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "11"
+                    },
+                    "catalog": "catalog-v",
+                    "_limit": 250,
+                    "_page": 1,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            },
+            {
+                "schema": 11
+            },
+            {
+                "search": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "11"
+                    },
+                    "catalog": "catalog-v",
+                    "_limit": 250,
+                    "_page": 2,
+                    "_order": {
+                        "@self.created": "asc"
+                    }
+                },
+                "flags": [
+                    true,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "validate unannotated": {
+        "answer": [],
+        "asked": [
+            {
+                "schema": 15
+            }
+        ]
+    }
+}

@@ -28,6 +28,8 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
+
 /**
  * Serializes a DCAT-AP-NL JSON-LD graph to JSON-LD / Turtle / RDF/XML.
  *
@@ -36,18 +38,8 @@ namespace OCA\OpenCatalogi\Service;
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
  */
-class DcatSerializer {
+class DcatSerializer implements DcatSerializerInterface {
 
-	/**
-	 * Supported serialization formats keyed by canonical name.
-	 *
-	 * @var array<string, string> Format name => MIME type.
-	 */
-	public const FORMATS = [
-		'jsonld' => 'application/ld+json',
-		'turtle' => 'text/turtle',
-		'rdfxml' => 'application/rdf+xml',
-	];
 
 	/**
 	 * Resolve the requested serialization format from the `?format=` query

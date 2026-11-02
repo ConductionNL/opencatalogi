@@ -10,8 +10,8 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import type { SafeParseReturnType } from 'zod'
-import type { CatalogStatus, TCatalogi } from './catalogi.types'
+import type { ZodSafeParseResult } from 'zod'
+import type { CatalogStatus, TCatalogi, TCatalogStaffAccess } from './catalogi.types'
 
 import { z } from 'zod'
 
@@ -36,6 +36,7 @@ export class Catalogi implements TCatalogi {
 	public hasWooSitemap!: boolean
 	public hasOoapi!: boolean
 	public showWithheld!: boolean
+	public staffAccess?: TCatalogStaffAccess
 
 	/**
 	 * @param data
@@ -62,10 +63,17 @@ export class Catalogi implements TCatalogi {
 		this.hasWooSitemap = data?.hasWooSitemap || false
 		this.hasOoapi = data?.hasOoapi || false
 		this.showWithheld = data?.showWithheld === true
+		if (data?.staffAccess) {
+			this.staffAccess = {
+				restricted: data.staffAccess.restricted === true,
+				readGroups: [...(data.staffAccess.readGroups || [])],
+				editGroups: [...(data.staffAccess.editGroups || [])],
+			}
+		}
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TCatalogi, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/l89lv7ocvq848-create-catalog
 		const schema = z.object({
 			title: z
@@ -80,7 +88,7 @@ export class Catalogi implements TCatalogi {
 			organization: z.number().or(z.string()).or(z.null()),
 			registers: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			schemas: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
-			filters: z.record(z.unknown()),
+			filters: z.record(z.string(), z.unknown()),
 			slug: z
 				.string()
 				.min(1, 'is verplicht')
@@ -92,6 +100,13 @@ export class Catalogi implements TCatalogi {
 			hasWooSitemap: z.boolean(),
 			hasOoapi: z.boolean(),
 			showWithheld: z.boolean(),
+			staffAccess: z
+				.object({
+					restricted: z.boolean(),
+					readGroups: z.array(z.string()),
+					editGroups: z.array(z.string()),
+				})
+				.optional(),
 		})
 
 		const result = schema.safeParse({

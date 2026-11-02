@@ -15,6 +15,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for PublishedCollectionsService.
  *
  * @covers \OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService
+ * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
  */
 class PublishedCollectionsServiceTest extends TestCase {
 

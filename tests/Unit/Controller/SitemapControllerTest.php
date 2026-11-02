@@ -6,7 +6,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\SitemapController;
 use OCA\OpenCatalogi\Http\XMLResponse;
-use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -17,12 +17,12 @@ use PHPUnit\Framework\TestCase;
 class SitemapControllerTest extends TestCase {
 
 	private IRequest|MockObject $request;
-	private SitemapService|MockObject $sitemapService;
+	private SitemapServiceInterface|MockObject $sitemapService;
 	private SitemapController $controller;
 
 	protected function setUp(): void {
 		$this->request = $this->createMock(IRequest::class);
-		$this->sitemapService = $this->createMock(SitemapService::class);
+		$this->sitemapService = $this->createMock(SitemapServiceInterface::class);
 
 		$this->controller = new SitemapController(
 			'opencatalogi',

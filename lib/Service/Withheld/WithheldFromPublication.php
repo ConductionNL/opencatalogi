@@ -36,6 +36,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Withheld;
 
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -44,7 +45,7 @@ use Throwable;
  *
  * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-the-public-read-of-a-woo-decision-names-what-was-withheld-and-why-req-wdw-003
  */
-class WithheldFromPublication {
+class WithheldFromPublication implements WithheldFromPublicationInterface {
 
 	/**
 	 * Constructor.

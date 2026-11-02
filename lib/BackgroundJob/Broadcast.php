@@ -26,7 +26,7 @@
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\BroadcastService;
+use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
@@ -45,12 +45,12 @@ class Broadcast extends TimedJob {
 	 * Constructor for Broadcast cron job.
 	 *
 	 * @param ITimeFactory $time Time factory for scheduling.
-	 * @param BroadcastService $broadcastService Service for handling broadcasts.
+	 * @param BroadcastServiceInterface $broadcastService Service for handling broadcasts.
 	 * @param LoggerInterface $logger Logger for recording broadcast activities.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly BroadcastService $broadcastService,
+		private readonly BroadcastServiceInterface $broadcastService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

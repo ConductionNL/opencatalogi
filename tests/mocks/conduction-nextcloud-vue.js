@@ -174,7 +174,8 @@ const CnAppNav = {
 
 // Stub of CnIndexPage with the props a wrapper sets; everything else lands in
 // `$attrs`. Renders the `#below-header` slot so a wrapper's header content
-// can be asserted.
+// can be asserted. `selectedObjects`, `onSelect` and `onRefreshEvent` stand in
+// for the selection and reload a wrapper drives.
 const CnIndexPage = {
 	name: 'CnIndexPage',
 	props: {
@@ -189,11 +190,23 @@ const CnIndexPage = {
 	},
 	emits: ['row-click', 'row-aux-click', 'view', 'edit-open'],
 	data() {
-		return { formDialogItem: null }
+		return {
+			formDialogItem: null,
+			selectedObjects: [],
+			refreshCount: 0,
+		}
 	},
 	methods: {
 		openFormDialog(item) {
 			this.formDialogItem = item
+		},
+		onSelect(ids) {
+			this.selectedObjects = this.selectedObjects.filter((row) =>
+				ids.includes(row.id),
+			)
+		},
+		onRefreshEvent() {
+			this.refreshCount += 1
 		},
 	},
 	render() {

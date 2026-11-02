@@ -63,10 +63,14 @@ set on `catalogStore` as the dialog expects.
 
 ## D3. The merge call
 
-`performMerge()` calls `objectStore.mergeObjects('publication', sourceId,
-{ target, object, fileAction, relationAction })`, which posts to
-`/api/objects/{register}/{schema}/{id}/merge` with the body `objects#merge`
-reads (`target` required).
+`performMerge()` posts to `/api/objects/{register}/{schema}/{id}/merge` with
+the body `objects#merge` reads (`target` required), the register and schema
+taken from the source's own `@self`. The lifecycle plugin's
+`mergeObjects('publication', ...)` builds the URL from the registered
+`publication` type, which is wrong for a row of another pair in the same
+catalog, so the dialog calls the endpoint itself. The selection reaches the
+handlers as rows (see `publications-selection-actions` D2), so nothing is
+fetched again.
 
 ## D4. Rights
 

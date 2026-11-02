@@ -1,0 +1,456 @@
+{
+    "pause, works": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "awaiting_clarification",
+                "termTimer": "timer-1",
+                "dueAt": "2026-04-01T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1"
+            },
+            "term": {
+                "timer": "timer-1",
+                "state": "suspended",
+                "dueAt": "2026-04-01T09:00:00+00:00"
+            }
+        },
+        "calls": [
+            [
+                "pause",
+                "timer-1",
+                "Waiting for the requester.",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "awaiting_clarification",
+            "termTimer": "timer-1",
+            "dueAt": "2026-04-01T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1"
+        }
+    },
+    "resume, works": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "in_progress",
+                "termTimer": "timer-1",
+                "dueAt": "2026-04-01T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1"
+            },
+            "term": {
+                "timer": "timer-1",
+                "state": "running",
+                "dueAt": "2026-04-01T09:00:00+00:00"
+            }
+        },
+        "calls": [
+            [
+                "resume",
+                "timer-1",
+                "Waiting for the requester.",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1",
+            "dueAt": "2026-04-01T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1"
+        }
+    },
+    "pause, no reason": {
+        "status": 400,
+        "data": {
+            "error": "reason-required",
+            "message": "Suspending or resuming a term records why."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "resume, no reason": {
+        "status": 400,
+        "data": {
+            "error": "reason-required",
+            "message": "Suspending or resuming a term records why."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "pause, blank reason": {
+        "status": 400,
+        "data": {
+            "error": "reason-required",
+            "message": "Suspending or resuming a term records why."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "resume, blank reason": {
+        "status": 400,
+        "data": {
+            "error": "reason-required",
+            "message": "Suspending or resuming a term records why."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "pause, unknown request": {
+        "status": 404,
+        "data": {
+            "error": "unknown-request"
+        },
+        "calls": [],
+        "stored": null
+    },
+    "resume, unknown request": {
+        "status": 404,
+        "data": {
+            "error": "unknown-request"
+        },
+        "calls": [],
+        "stored": null
+    },
+    "pause, no term": {
+        "status": 409,
+        "data": {
+            "error": "no-term",
+            "message": "This request has no statutory term, so there is nothing to pause."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "  "
+        }
+    },
+    "resume, no term": {
+        "status": 409,
+        "data": {
+            "error": "no-term",
+            "message": "This request has no statutory term, so there is nothing to pause."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "  "
+        }
+    },
+    "pause, term missing": {
+        "status": 409,
+        "data": {
+            "error": "no-term",
+            "message": "This request has no statutory term, so there is nothing to pause."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress"
+        }
+    },
+    "resume, term missing": {
+        "status": 409,
+        "data": {
+            "error": "no-term",
+            "message": "This request has no statutory term, so there is nothing to pause."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress"
+        }
+    },
+    "pause, engine refuses": {
+        "status": 409,
+        "data": {
+            "error": "pause-refused",
+            "message": "its state is not pauseable"
+        },
+        "calls": [
+            [
+                "pause",
+                "timer-1",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "resume, engine refuses": {
+        "status": 409,
+        "data": {
+            "error": "resume-refused",
+            "message": "its state is not resumeable"
+        },
+        "calls": [
+            [
+                "resume",
+                "timer-1",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "pause, engine unavailable": {
+        "status": 503,
+        "data": {
+            "error": "term-engine-unavailable",
+            "message": "no engine"
+        },
+        "calls": [
+            [
+                "pause",
+                "timer-1",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "resume, engine unavailable": {
+        "status": 503,
+        "data": {
+            "error": "term-engine-unavailable",
+            "message": "no engine"
+        },
+        "calls": [
+            [
+                "resume",
+                "timer-1",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "pause, no user": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "awaiting_clarification",
+                "termTimer": "timer-1",
+                "dueAt": "2026-04-01T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1"
+            },
+            "term": {
+                "timer": "timer-1",
+                "state": "suspended",
+                "dueAt": "2026-04-01T09:00:00+00:00"
+            }
+        },
+        "calls": [
+            [
+                "pause",
+                "timer-1",
+                "x",
+                ""
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "awaiting_clarification",
+            "termTimer": "timer-1",
+            "dueAt": "2026-04-01T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1"
+        }
+    },
+    "resume, no user": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "in_progress",
+                "termTimer": "timer-1",
+                "dueAt": "2026-04-01T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1"
+            },
+            "term": {
+                "timer": "timer-1",
+                "state": "running",
+                "dueAt": "2026-04-01T09:00:00+00:00"
+            }
+        },
+        "calls": [
+            [
+                "resume",
+                "timer-1",
+                "x",
+                ""
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1",
+            "dueAt": "2026-04-01T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1"
+        }
+    },
+    "pause, register unresolved": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Register configuration is not set for publication_register / woo_request_schema. Run the OpenCatalogi setup wizard or POST to /api/settings/load to initialise registers and schemas."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "resume, register unresolved": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Register configuration is not set for publication_register / woo_request_schema. Run the OpenCatalogi setup wizard or POST to /api/settings/load to initialise registers and schemas."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "pause, other status": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "awaiting_clarification",
+                "termTimer": "timer-9",
+                "dueAt": "2026-04-01T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1"
+            },
+            "term": {
+                "timer": "timer-9",
+                "state": "suspended",
+                "dueAt": "2026-04-01T09:00:00+00:00"
+            }
+        },
+        "calls": [
+            [
+                "pause",
+                "timer-9",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "awaiting_clarification",
+            "termTimer": "timer-9",
+            "dueAt": "2026-04-01T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1"
+        }
+    },
+    "resume, other status": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "in_progress",
+                "termTimer": "timer-9",
+                "dueAt": "2026-04-01T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1"
+            },
+            "term": {
+                "timer": "timer-9",
+                "state": "running",
+                "dueAt": "2026-04-01T09:00:00+00:00"
+            }
+        },
+        "calls": [
+            [
+                "resume",
+                "timer-9",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-9",
+            "dueAt": "2026-04-01T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1"
+        }
+    }
+}

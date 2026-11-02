@@ -33,6 +33,7 @@ namespace Unit\Service\Publication;
 
 use DateTimeImmutable;
 use DomainException;
+use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
@@ -217,12 +218,14 @@ class CommentPeriodServiceTest extends TestCase {
 
 		$this->expectException(TermRollUnavailableException::class);
 		$service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: 42,
-			legalRemedy: 'zienswijze',
-			announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: false,
-			openedBy: 'alice'
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: 42,
+				legalRemedy: 'zienswijze',
+				announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			)
 		);
 
 	}//end testWithNoEngineTheEndDateIsRefusedNotGuessed()
@@ -272,12 +275,14 @@ class CommentPeriodServiceTest extends TestCase {
 	public function testAPeriodWithNoPublicationIsRefused(): void {
 		$this->expectException(DomainException::class);
 		$this->service->open(
-			publication: [],
-			termDays: 42,
-			legalRemedy: 'zienswijze',
-			announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: false,
-			openedBy: 'alice'
+			request: new CommentPeriodRequest(
+				publication: [],
+				termDays: 42,
+				legalRemedy: 'zienswijze',
+				announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			)
 		);
 
 	}//end testAPeriodWithNoPublicationIsRefused()
@@ -440,12 +445,14 @@ class CommentPeriodServiceTest extends TestCase {
 		string $announcement = 'https://officielebekendmakingen.nl/stcrt-2026-1',
 	): array {
 		return $this->service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: $termDays,
-			legalRemedy: $remedy,
-			announcementUrl: $announcement,
-			automaticWithdrawal: false,
-			openedBy: 'alice',
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: $termDays,
+				legalRemedy: $remedy,
+				announcementUrl: $announcement,
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			),
 			start: new DateTimeImmutable($start)
 		);
 
@@ -510,12 +517,14 @@ class CommentPeriodServiceTest extends TestCase {
 		$this->expectException(\DomainException::class);
 		$this->expectExceptionMessageMatches('/absolute https url/');
 		$this->service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: 42,
-			legalRemedy: 'zienswijze',
-			announcementUrl: 'http://www.officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: false,
-			openedBy: 'alice'
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: 42,
+				legalRemedy: 'zienswijze',
+				announcementUrl: 'http://www.officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			)
 		);
 
 	}//end testAnAnnouncementThatIsNotAbsoluteHttpsIsRefused()
@@ -562,12 +571,14 @@ class CommentPeriodServiceTest extends TestCase {
 		$this->expectException(\DomainException::class);
 		$this->expectExceptionMessageMatches('/end after it starts/');
 		$service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: 42,
-			legalRemedy: 'zienswijze',
-			announcementUrl: 'https://www.officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: false,
-			openedBy: 'alice'
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: 42,
+				legalRemedy: 'zienswijze',
+				announcementUrl: 'https://www.officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			)
 		);
 
 	}//end testAPeriodThatEndsBeforeItStartsIsRefused()

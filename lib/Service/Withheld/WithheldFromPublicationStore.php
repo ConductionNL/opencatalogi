@@ -29,10 +29,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Withheld;
 
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenCatalogi\Service\WooService;
-use OCP\App\IAppManager;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Throwable;
 
@@ -42,6 +42,7 @@ use Throwable;
  * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-the-public-read-of-a-woo-decision-names-what-was-withheld-and-why-req-wdw-003
  */
 class WithheldFromPublicationStore {
+	use ReadsObjectProperties;
 
 	/**
 	 * Rows read per OpenRegister search.
@@ -57,13 +58,11 @@ class WithheldFromPublicationStore {
 	 * Constructor.
 	 *
 	 * @param IAppConfig         $config     Holds the register and schema ids.
-	 * @param ContainerInterface $container  Resolves OpenRegister's ObjectService.
-	 * @param IAppManager        $appManager Says whether OpenRegister is there.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 	) {
 	}//end __construct()
 
@@ -209,7 +208,7 @@ class WithheldFromPublicationStore {
 			_multitenancy: false
 		);
 
-		return array_map(fn (mixed $row): array => $this->asArray(object: $row), array_values((array)($result['results'] ?? [])));
+		return array_map(fn (mixed $row): array => $this->asRecord(object: $row), array_values((array)($result['results'] ?? [])));
 	}//end search()
 
 	/**
@@ -224,7 +223,7 @@ class WithheldFromPublicationStore {
 	 */
 	private function assessment(string $id): array {
 		try {
-			$assessment = $this->asArray(object: $this->objects()->find(id: $id, _rbac: false, _multitenancy: false));
+			$assessment = $this->asRecord(object: $this->objects()->find(id: $id, _rbac: false, _multitenancy: false));
 		} catch (Throwable $e) {
 			throw new RuntimeException('An assessment of the batch could not be read: ' . $e->getMessage(), 0, $e);
 		}
@@ -244,11 +243,11 @@ class WithheldFromPublicationStore {
 	 * @throws RuntimeException When OpenRegister is not available.
 	 */
 	private function objects(): object {
-		if ($this->appManager->isInstalled('openregister') === false) {
+		if ($this->openRegister->isInstalled() === false) {
 			throw new RuntimeException('OpenRegister is not available, so the withheld documents cannot be read.');
 		}
 
-		$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$objects = $this->openRegister->objectService();
 		if (is_object($objects) === false) {
 			throw new RuntimeException('OpenRegister is not available, so the withheld documents cannot be read.');
 		}
@@ -303,30 +302,4 @@ class WithheldFromPublicationStore {
 
 		return array_values(array_map(static fn (mixed $id): string => (string)$id, $raw));
 	}//end ids()
-
-	/**
-	 * An OpenRegister object as a flat array with its id.
-	 *
-	 * @param mixed $object The object.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		$id = ($object['id'] ?? ($object['@self']['id'] ?? ($object['uuid'] ?? null)));
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$object = $object['object'];
-		}
-
-		$object['id'] = $id;
-
-		return $object;
-	}//end asArray()
 }//end class

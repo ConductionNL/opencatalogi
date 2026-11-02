@@ -1,5 +1,8 @@
 <script setup>
+import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { navigationStore, objectStore } from '../../store/store.js'
+
+const { isAdmin } = useIsAdmin()
 </script>
 
 <template>
@@ -154,6 +157,10 @@ import { navigationStore, objectStore } from '../../store/store.js'
 						)
 					}}
 				</NcCheckboxRadioSwitch>
+				<CatalogStaffAccessFields
+					v-if="isAdmin"
+					v-model="catalogi.staffAccess"
+					:disabled="objectStore.isLoading('catalog')" />
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -209,12 +216,14 @@ import {
 } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
+import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
 import { Catalogi } from '../../entities/index.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 export default {
 	name: 'CatalogModal',
 	components: {
+		CatalogStaffAccessFields,
 		NcModal,
 		NcTextField,
 		NcButton,
@@ -242,6 +251,7 @@ export default {
 				hasWooSitemap: false,
 				hasOoapi: false,
 				showWithheld: false,
+				staffAccess: null,
 			},
 
 			selectedOrganization: null,
@@ -343,7 +353,7 @@ export default {
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,
-				filters: {},
+				filters: this.catalogi.filters || {},
 			})
 
 			const result = catalogiItem.validate()
@@ -435,6 +445,7 @@ export default {
 				hasWooSitemap: false,
 				hasOoapi: false,
 				showWithheld: false,
+				staffAccess: null,
 			}
 			this.selectedOrganization = null
 			this.selectedRegisters = []
@@ -463,7 +474,7 @@ export default {
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,
-				filters: {},
+				filters: this.catalogi.filters || {},
 			})
 
 			if (this.isEdit) {

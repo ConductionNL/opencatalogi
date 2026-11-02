@@ -1,0 +1,229 @@
+{
+    "no openregister": {
+        "output": [
+            [
+                "warning",
+                "OpenRegister is not installed \u2014 skipping orphan-directory-listings cleanup"
+            ]
+        ],
+        "deleted": [],
+        "tables": []
+    },
+    "services unresolvable": {
+        "output": [
+            [
+                "warning",
+                "OpenRegister services unavailable \u2014 skipping cleanup: OCA\\OpenRegister\\Db\\SchemaMapper is not registered"
+            ]
+        ],
+        "deleted": [],
+        "tables": []
+    },
+    "schema lookup throws": {
+        "output": [
+            [
+                "warning",
+                "Listing schema lookup failed \u2014 skipping cleanup: schema table locked"
+            ]
+        ],
+        "deleted": [],
+        "tables": []
+    },
+    "no listing schema": {
+        "output": [
+            [
+                "info",
+                "No listing schema found \u2014 nothing to clean up"
+            ]
+        ],
+        "deleted": [],
+        "tables": []
+    },
+    "registers throw": {
+        "output": [
+            [
+                "warning",
+                "Register enumeration failed \u2014 skipping cleanup: register table locked"
+            ]
+        ],
+        "deleted": [],
+        "tables": []
+    },
+    "no registers": {
+        "output": [
+            [
+                "info",
+                "Directory-listings cleanup: deleted 0 orphan row(s), kept 0 valid row(s), 0 failure(s)"
+            ]
+        ],
+        "deleted": [],
+        "tables": []
+    },
+    "no register carries the schema": {
+        "output": [
+            [
+                "info",
+                "Directory-listings cleanup: deleted 0 orphan row(s), kept 0 valid row(s), 0 failure(s)"
+            ]
+        ],
+        "deleted": [],
+        "tables": []
+    },
+    "two registers, mixed rows": {
+        "output": [
+            [
+                "warning",
+                "Failed to delete listing boom: locked row boom"
+            ],
+            [
+                "info",
+                "Directory-listings cleanup: deleted 3 orphan row(s), kept 7 valid row(s), 2 failure(s)"
+            ]
+        ],
+        "deleted": [
+            [
+                "a-1",
+                "1",
+                "7",
+                false,
+                false
+            ],
+            [
+                "a-2",
+                "1",
+                "7",
+                false,
+                false
+            ],
+            [
+                "c-1",
+                "3",
+                "7",
+                false,
+                false
+            ]
+        ],
+        "tables": [
+            [
+                "openregister_table_1_7",
+                "scan"
+            ],
+            [
+                "openregister_table_1_7",
+                "count"
+            ],
+            [
+                "openregister_table_3_7",
+                "scan"
+            ],
+            [
+                "openregister_table_3_7",
+                "count"
+            ]
+        ]
+    },
+    "scan of one table fails": {
+        "output": [
+            [
+                "warning",
+                "Failed to scan openregister_table_1_7: no table openregister_table_1_7"
+            ],
+            [
+                "info",
+                "Directory-listings cleanup: deleted 1 orphan row(s), kept 1 valid row(s), 0 failure(s)"
+            ]
+        ],
+        "deleted": [
+            [
+                "c-1",
+                "3",
+                "7",
+                false,
+                false
+            ]
+        ],
+        "tables": [
+            [
+                "openregister_table_1_7",
+                "scan"
+            ],
+            [
+                "openregister_table_3_7",
+                "scan"
+            ],
+            [
+                "openregister_table_3_7",
+                "count"
+            ]
+        ]
+    },
+    "count fails": {
+        "output": [
+            [
+                "info",
+                "Directory-listings cleanup: deleted 1 orphan row(s), kept 0 valid row(s), 0 failure(s)"
+            ]
+        ],
+        "deleted": [
+            [
+                "a-1",
+                "1",
+                "7",
+                false,
+                false
+            ]
+        ],
+        "tables": [
+            [
+                "openregister_table_1_7",
+                "scan"
+            ],
+            [
+                "openregister_table_1_7",
+                "count"
+            ]
+        ]
+    },
+    "clean table": {
+        "output": [
+            [
+                "info",
+                "Directory-listings cleanup: deleted 0 orphan row(s), kept 3 valid row(s), 0 failure(s)"
+            ]
+        ],
+        "deleted": [],
+        "tables": [
+            [
+                "openregister_table_1_7",
+                "scan"
+            ],
+            [
+                "openregister_table_1_7",
+                "count"
+            ]
+        ]
+    },
+    "every delete fails": {
+        "output": [
+            [
+                "warning",
+                "Failed to delete listing boom: locked row boom"
+            ],
+            [
+                "info",
+                "Directory-listings cleanup: deleted 0 orphan row(s), kept 0 valid row(s), 2 failure(s)"
+            ]
+        ],
+        "deleted": [],
+        "tables": [
+            [
+                "openregister_table_1_7",
+                "scan"
+            ],
+            [
+                "openregister_table_1_7",
+                "count"
+            ]
+        ]
+    }
+}

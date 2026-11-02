@@ -1,0 +1,767 @@
+{
+    "created, errors": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object creation event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 0,
+                    "attachmentsPublished": 0
+                }
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi: Error processing object creation event",
+                {
+                    "error": "first",
+                    "objectId": "new-uuid"
+                }
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi: Error processing object creation event",
+                {
+                    "error": "second",
+                    "objectId": "new-uuid"
+                }
+            ]
+        }
+    ],
+    "created, event service throws": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    }
+                }
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi: Exception in object creation event listener: event service down",
+                {
+                    "exception": "RuntimeException: event service down"
+                }
+            ]
+        }
+    ],
+    "created, future object": [
+        {
+            "retention": {
+                "publicationDate": "2999-01-01T00:00:00+00:00",
+                "title": "Future",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2999-01-01T00:00:00+00:00",
+                    "title": "Future",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object creation event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "created, no @self in data": [
+        {
+            "retention": {
+                "@self": {
+                    "x": 1,
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                },
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live"
+            }
+        },
+        {
+            "events": [
+                {
+                    "@self": {
+                        "x": 1,
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live"
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object creation event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "created, nothing processed": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    }
+                }
+            ]
+        }
+    ],
+    "created, options off": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                }
+            }
+        }
+    ],
+    "created, options unreadable": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                }
+            }
+        },
+        {
+            "error": [
+                "OpenCatalogi: Exception in object creation event listener: options unreadable",
+                {
+                    "exception": "RuntimeException: options unreadable"
+                }
+            ]
+        }
+    ],
+    "created, other event": [],
+    "created, processed": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object creation event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "created, retention fails": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1"
+                }
+            }
+        },
+        {
+            "error": [
+                "OpenCatalogi: failed to stamp retention defaults at publication: retention down",
+                {
+                    "exception": "RuntimeException: retention down"
+                }
+            ]
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object creation event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "updated, became live, objects only": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "updated, depublished now, attachments only": [],
+    "updated, errors": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 0,
+                    "attachmentsPublished": 0
+                }
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi: Error processing object update event",
+                {
+                    "error": "first",
+                    "objectId": "new-uuid"
+                }
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi: Error processing object update event",
+                {
+                    "error": "second",
+                    "objectId": "new-uuid"
+                }
+            ]
+        }
+    ],
+    "updated, event service throws": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi: Exception in object update event listener: event service down",
+                {
+                    "exception": "RuntimeException: event service down"
+                }
+            ]
+        }
+    ],
+    "updated, future object": [],
+    "updated, live, attachments only": [
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "updated, no @self in data": [
+        {
+            "retention": {
+                "@self": {
+                    "x": 1,
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                },
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live"
+            }
+        },
+        {
+            "events": [
+                {
+                    "@self": {
+                        "x": 1,
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    },
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live"
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "updated, no old object, objects only": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "updated, nothing processed": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        }
+    ],
+    "updated, options off": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        }
+    ],
+    "updated, options unreadable": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "error": [
+                "OpenCatalogi: Exception in object update event listener: options unreadable",
+                {
+                    "exception": "RuntimeException: options unreadable"
+                }
+            ]
+        }
+    ],
+    "updated, other event": [],
+    "updated, processed": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "updated, retention fails": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "error": [
+                "OpenCatalogi: failed to stamp retention defaults at publication: retention down",
+                {
+                    "exception": "RuntimeException: retention down"
+                }
+            ]
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "updated, stayed live, objects only": [],
+    "updated, still future, objects only": [],
+    "updated, was depublished, objects only": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": "new-uuid",
+                    "uuid": "new-uuid",
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": "new-uuid",
+                        "uuid": "new-uuid",
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ]
+}

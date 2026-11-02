@@ -24,6 +24,8 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Contract\OoapiPage;
+use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Service\OoapiMappingService;
 use OCA\OpenCatalogi\Service\OoapiService;
 use OCP\App\IAppManager;
@@ -187,7 +189,7 @@ class OoapiServiceTest extends TestCase {
 
 		$this->wireOpenRegister($objectService, $schemaMapper);
 
-		$result = $this->service->listCourses(['id' => 'catalog-1'], 'reg-1', 'schema-1', 1, 50);
+		$result = $this->service->listCourses(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'), new OoapiPage(1, 50));
 
 		$this->assertCount(1, $result['items']);
 		$this->assertSame('course-1', $result['items'][0]['courseId']);
@@ -206,7 +208,7 @@ class OoapiServiceTest extends TestCase {
 
 		$this->wireOpenRegister($objectService, $schemaMapper);
 
-		$result = $this->service->listCourses(['id' => 'catalog-1'], 'reg-1', 'schema-1', 1, 50);
+		$result = $this->service->listCourses(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'), new OoapiPage(1, 50));
 
 		$this->assertSame([], $result['items']);
 	}
@@ -224,7 +226,7 @@ class OoapiServiceTest extends TestCase {
 
 		$this->wireOpenRegister($objectService, $schemaMapper);
 
-		$result = $this->service->getResource(['id' => 'catalog-1'], 'reg-1', 'schema-1', 'course-1', 'courseId');
+		$result = $this->service->getResource(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'), 'course-1', 'courseId');
 
 		$this->assertNull($result);
 	}
@@ -242,7 +244,7 @@ class OoapiServiceTest extends TestCase {
 
 		$this->wireOpenRegister($objectService, $schemaMapper);
 
-		$result = $this->service->getResource(['id' => 'catalog-1'], 'reg-1', 'schema-1', 'course-1', 'courseId');
+		$result = $this->service->getResource(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'), 'course-1', 'courseId');
 
 		$this->assertNotNull($result);
 		$this->assertSame('course-1', $result['courseId']);
@@ -250,12 +252,12 @@ class OoapiServiceTest extends TestCase {
 	}
 
 	public function testRenderOrganizationReturnsNullWhenCatalogHasNoOrganization(): void {
-		$result = $this->service->renderOrganization(['id' => 'catalog-1'], 'reg-1', 'schema-1');
+		$result = $this->service->renderOrganization(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'));
 		$this->assertNull($result);
 	}
 
 	public function testOrganizationByIdReturnsNullWhenIdDoesNotMatchCatalogsOwnOrganization(): void {
-		$result = $this->service->organizationById(['id' => 'catalog-1', 'organization' => 'org-1'], 'org-2', 'reg-1', 'schema-1');
+		$result = $this->service->organizationById(new OoapiScope(['id' => 'catalog-1', 'organization' => 'org-1'], 'reg-1', 'schema-1'), 'org-2');
 		$this->assertNull($result);
 	}
 
@@ -274,7 +276,7 @@ class OoapiServiceTest extends TestCase {
 
 		$this->wireOpenRegister($objectService, $schemaMapper);
 
-		$result = $this->service->organizationById(['id' => 'catalog-1', 'organization' => 'org-1'], 'org-1', 'reg-1', 'schema-1');
+		$result = $this->service->organizationById(new OoapiScope(['id' => 'catalog-1', 'organization' => 'org-1'], 'reg-1', 'schema-1'), 'org-1');
 
 		$this->assertNotNull($result);
 		$this->assertSame('org-1', $result['organizationId']);

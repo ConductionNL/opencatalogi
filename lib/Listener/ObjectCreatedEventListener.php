@@ -29,9 +29,9 @@
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\EventService;
-use OCA\OpenCatalogi\Service\RetentionService;
-use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -51,6 +51,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-3
  */
 class ObjectCreatedEventListener implements IEventListener {
+	use ReportsAutoPublishOutcome;
 	/**
 	 * ObjectCreatedEventListener constructor.
 	 *
@@ -59,15 +60,15 @@ class ObjectCreatedEventListener implements IEventListener {
 	 * object event fires, so nothing here runs at boot, and a unit test can
 	 * hand in its own doubles.
 	 *
-	 * @param RetentionService $retentionService Stamps retention defaults at publication time (RET-004).
-	 * @param SettingsService $settingsService Answers which auto-publishing options are on.
-	 * @param EventService $eventService Applies the auto-publishing side effect.
+	 * @param RetentionServiceInterface $retentionService Stamps retention defaults at publication time (RET-004).
+	 * @param SettingsServiceInterface $settingsService Answers which auto-publishing options are on.
+	 * @param EventServiceInterface $eventService Applies the auto-publishing side effect.
 	 * @param LoggerInterface $logger Logger for both side effects.
 	 */
 	public function __construct(
-		private readonly RetentionService $retentionService,
-		private readonly SettingsService $settingsService,
-		private readonly EventService $eventService,
+		private readonly RetentionServiceInterface $retentionService,
+		private readonly SettingsServiceInterface $settingsService,
+		private readonly EventServiceInterface $eventService,
 		private readonly LoggerInterface $logger,
 	) {
 
@@ -118,30 +119,7 @@ class ObjectCreatedEventListener implements IEventListener {
 			// Process the object creation event through EventService.
 			$result = $this->eventService->handleObjectCreateEvents([$objectData]);
 
-			// Log successful processing for monitoring.
-			if ($result['processed'] > 0) {
-				$this->logger->info(
-					message: 'OpenCatalogi: Processed object creation event',
-					context: [
-						'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
-						'published' => $result['published'],
-						'attachmentsPublished' => $result['attachmentsPublished'],
-					]
-				);
-			}
-
-			// Log any errors that occurred during processing.
-			if (empty($result['errors']) === false) {
-				foreach ($result['errors'] as $error) {
-					$this->logger->error(
-						message: 'OpenCatalogi: Error processing object creation event',
-						context: [
-							'error' => $error,
-							'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
-						]
-					);
-				}
-			}
+			$this->logAutoPublishOutcome(result: $result, about: ['event' => 'creation', 'objectId' => ($objectData['@self']['id'] ?? 'unknown')]);
 		} catch (\Throwable $e) {
 			// Log unexpected errors and continue gracefully. \Throwable, not
 			// \Exception: a missing class or type error is a PHP Error, and an
@@ -195,22 +173,6 @@ class ObjectCreatedEventListener implements IEventListener {
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 */
 	private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array {
-		// Use the ObjectEntity's jsonSerialize method to get array representation.
-		$objectData = $objectEntity->jsonSerialize();
-
-		// Ensure the @self metadata is properly structured.
-		if (isset($objectData['@self']) === false) {
-			$objectData['@self'] = [];
-		}
-
-		// Add essential metadata for event processing.
-		$objectData['@self']['id'] = $objectEntity->getUuid();
-		$objectData['@self']['uuid'] = $objectEntity->getUuid();
-		$objectData['@self']['register'] = $objectEntity->getRegister();
-		$objectData['@self']['schema'] = $objectEntity->getSchema();
-		// Visibility is governed by the object's own publicationDate/depublicationDate
-		// fields (already present via jsonSerialize) under the live OpenRegister RBAC
-		// model (APB-006). The removed object-level @self.published is no longer set.
-		return $objectData;
+		return $this->eventObjectData(objectEntity: $objectEntity);
 	}//end convertObjectEntityToArray()
 }//end class

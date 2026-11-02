@@ -44,6 +44,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
+use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -55,17 +56,8 @@ use Throwable;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class AttachmentMigrationService {
-
-	/**
-	 * The register the publication and document schemas live in.
-	 */
-	public const REGISTER_SLUG = 'publication';
-
-	/**
-	 * The schema being retired.
-	 */
-	public const DOCUMENT_SCHEMA_SLUG = 'document';
+class AttachmentMigrationService implements AttachmentMigrationServiceInterface {
+	use FlattensObjectRows;
 
 	/**
 	 * The schema an attachment ends up hanging from.
@@ -327,39 +319,6 @@ class AttachmentMigrationService {
 			return null;
 		}
 	}//end entityOf()
-
-	/**
-	 * Flatten an object row into a field map with the uuid resolved.
-	 *
-	 * @param mixed $row The row as the reader returned it.
-	 *
-	 * @return array<string, mixed> The fields.
-	 *
-	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
-	 */
-	public function toFields(mixed $row): array {
-		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-			$row = $row->jsonSerialize();
-		}
-
-		if (is_array($row) === false) {
-			return [];
-		}
-
-		$self = ($row['@self'] ?? []);
-		$uuid = '';
-		if (is_array($self) === true) {
-			$uuid = (string)($self['uuid'] ?? ($self['id'] ?? ''));
-		}
-
-		if ($uuid === '') {
-			$uuid = (string)($row['uuid'] ?? ($row['id'] ?? ''));
-		}
-
-		$row['uuid'] = $uuid;
-
-		return $row;
-	}//end toFields()
 	/**
 	 * Resolve an OpenRegister collaborator, or null when it is unavailable.
 	 *

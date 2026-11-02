@@ -25,9 +25,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Portal\PortalAssertionVerifier;
-use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
-use OCA\OpenCatalogi\Service\Portal\CollectionShareService;
+use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
+use OCA\OpenCatalogi\Contract\CollectionShareServiceInterface;
+use OCA\OpenCatalogi\Contract\PortalAssertionVerifierInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -50,17 +50,17 @@ class PortalCollectionController extends Controller {
 	 *
 	 * @param string                   $appName     The app name.
 	 * @param IRequest                 $request     The request.
-	 * @param PortalAssertionVerifier  $verifier    Verifies portaliq's assertion.
-	 * @param CitizenCollectionService $collections The dossiers.
-	 * @param CollectionShareService   $shares      The share links.
+	 * @param PortalAssertionVerifierInterface  $verifier    Verifies portaliq's assertion.
+	 * @param CitizenCollectionServiceInterface $collections The dossiers.
+	 * @param CollectionShareServiceInterface   $shares      The share links.
 	 * @param LoggerInterface          $logger      The logger.
 	 */
 	public function __construct(
 		string $appName,
 		IRequest $request,
-		private readonly PortalAssertionVerifier $verifier,
-		private readonly CitizenCollectionService $collections,
-		private readonly CollectionShareService $shares,
+		private readonly PortalAssertionVerifierInterface $verifier,
+		private readonly CitizenCollectionServiceInterface $collections,
+		private readonly CollectionShareServiceInterface $shares,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(appName: $appName, request: $request);

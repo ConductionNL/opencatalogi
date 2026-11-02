@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -132,7 +132,7 @@ trait AnswersCacheably {
 	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-the-administrator-sets-the-cache-time-req-pac-003
 	 */
 	private function publicCacheCeiling(): int {
-		return SettingsService::PUBLIC_API_CACHE_MAX_SECONDS;
+		return SettingsServiceInterface::PUBLIC_API_CACHE_MAX_SECONDS;
 
 	}//end publicCacheCeiling()
 
