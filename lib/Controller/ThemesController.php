@@ -25,7 +25,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -57,14 +57,14 @@ class ThemesController extends Controller {
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
 	 * @param IAppConfig $config App configuration interface.
-	 * @param OpenRegisterLookup $registers Resolves the configured register pair and OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $registers,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);

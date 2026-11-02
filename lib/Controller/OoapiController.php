@@ -37,7 +37,7 @@ use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiPage;
 use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -75,7 +75,7 @@ class OoapiController extends Controller {
 	 * @param IUserSession $userSession Nextcloud user session (OOAPI-008 auth gate).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param OpenRegisterLookup $registers Resolves the configured register pairs and OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -88,7 +88,7 @@ class OoapiController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly OpenRegisterLookup $registers,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);

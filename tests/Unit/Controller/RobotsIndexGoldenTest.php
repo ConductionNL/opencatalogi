@@ -27,8 +27,8 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Controller\RobotsController;
+use OCA\OpenCatalogi\Controller\SitemapDirectives;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Service\SitemapDirectives;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -40,7 +40,7 @@ use PHPUnit\Framework\TestCase;
  * Golden test for RobotsController::index().
  *
  * @covers \OCA\OpenCatalogi\Controller\RobotsController
- * @covers \OCA\OpenCatalogi\Service\SitemapDirectives
+ * @covers \OCA\OpenCatalogi\Controller\SitemapDirectives
  * @uses   \OCA\OpenCatalogi\Http\TextResponse
  */
 class RobotsIndexGoldenTest extends TestCase {

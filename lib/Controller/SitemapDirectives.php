@@ -3,8 +3,8 @@
 /**
  * Builds the `Sitemap:` lines that robots.txt lists for the catalogues.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -20,9 +20,10 @@
  * @spec openspec/specs/woo-compliance/spec.md
  */
 
-namespace OCA\OpenCatalogi\Service;
+namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
@@ -45,11 +46,11 @@ class SitemapDirectives {
 	/**
 	 * Constructor.
 	 *
-	 * @param OpenRegisterLookup                   $openRegister Whether OpenRegister is installed, and its ObjectService.
+	 * @param OpenRegisterLookupInterface          $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param InformationCategoryRegistryInterface $categories   The information categories, bundled plus local.
 	 */
 	public function __construct(
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 		private readonly InformationCategoryRegistryInterface $categories,
 	) {
 	}//end __construct()

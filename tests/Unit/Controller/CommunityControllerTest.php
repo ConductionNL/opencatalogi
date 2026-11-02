@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\CommunityController;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
@@ -32,7 +33,6 @@ use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
-use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
