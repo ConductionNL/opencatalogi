@@ -386,6 +386,28 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
 	private function schemaLookupFor(array $registers): callable {
+		$registerIds = $this->numericRegisterIds(registers: $registers);
+		if ($registerIds === []) {
+			return $this->globalSchemaId(...);
+		}
+
+		$slugMap = null;
+		return function (string $slug) use (&$slugMap, $registerIds): ?int {
+			$slugMap ??= $this->scopedSchemaSlugMap(registerIds: $registerIds);
+			return ($slugMap[strtolower($slug)] ?? null);
+		};
+	}//end schemaLookupFor()
+
+	/**
+	 * The registers of a catalogue that are given by id, as integers.
+	 *
+	 * @param array<int, mixed> $registers The catalogue's registers, after rewriting.
+	 *
+	 * @return array<int, int> The register ids, in list order.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
+	 */
+	private function numericRegisterIds(array $registers): array {
 		$registerIds = [];
 		foreach ($registers as $register) {
 			if ($this->isNumericId(value: $register) === true) {
@@ -393,31 +415,44 @@ class CatalogiService implements CatalogiServiceInterface {
 			}
 		}
 
-		if ($registerIds === []) {
-			return function (string $slug): ?int {
-				try {
-					return $this->getSchemaMapper()->find($slug)->getId();
-				} catch (\Exception) {
-					return null;
-				}
-			};
+		return $registerIds;
+	}//end numericRegisterIds()
+
+	/**
+	 * The id of the schema with this slug anywhere, for a catalogue without registers.
+	 *
+	 * @param string $slug The schema slug.
+	 *
+	 * @return int|null The schema id, or null when no schema has the slug.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
+	 */
+	private function globalSchemaId(string $slug): ?int {
+		try {
+			return $this->getSchemaMapper()->find($slug)->getId();
+		} catch (\Exception) {
+			return null;
 		}
+	}//end globalSchemaId()
 
-		$slugMap = null;
-		return function (string $slug) use (&$slugMap, $registerIds): ?int {
-			if ($slugMap === null) {
-				$registerMapper = $this->getRegisterMapper();
-				$schemaMapper = $this->getSchemaMapper();
-				$slugMap = (new CatalogScopeSlugResolver())->schemaSlugMap(
-					registerIds: $registerIds,
-					schemaIdsOfRegister: static fn (int $registerId): array => $registerMapper->find($registerId, _rbac: false, _multitenancy: false)->getSchemas(),
-					schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper->find($schemaId, _rbac: false, _multitenancy: false)->getSlug()
-				);
-			}
-
-			return ($slugMap[strtolower($slug)] ?? null);
-		};
-	}//end schemaLookupFor()
+	/**
+	 * Schema id by lower-cased slug, for the schemas the given registers list.
+	 *
+	 * @param array<int, int> $registerIds The catalogue's register ids.
+	 *
+	 * @return array<string, int> The slug map.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
+	 */
+	private function scopedSchemaSlugMap(array $registerIds): array {
+		$registerMapper = $this->getRegisterMapper();
+		$schemaMapper = $this->getSchemaMapper();
+		return (new CatalogScopeSlugResolver())->schemaSlugMap(
+			registerIds: $registerIds,
+			schemaIdsOfRegister: static fn (int $registerId): array => $registerMapper->find($registerId, _rbac: false, _multitenancy: false)->getSchemas(),
+			schemaSlugOf: static fn (int $schemaId): ?string => $schemaMapper->find($schemaId, _rbac: false, _multitenancy: false)->getSlug()
+		);
+	}//end scopedSchemaSlugMap()
 
 	/**
 	 * Determine whether a value is already a numeric integer ID (not a slug).

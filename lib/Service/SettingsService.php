@@ -1903,39 +1903,79 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
 	 */
 	private function catalogScopePatch(CatalogScopeBackfill $run, array $scope): ?array {
-		$data = $scope['data'];
-		$needsRegisters = $this->isEmptyScopeList(value: $scope['registers']);
-		$needsSchemas = $this->isEmptyScopeList(value: $scope['schemas']);
-		$publishNow = $this->shouldPublishResolvedSeed(scope: $scope);
-		$catalogId = ($data['@self']['id'] ?? ($data['id'] ?? null));
-		if (($needsRegisters === false && $needsSchemas === false && $scope['changed'] === false && $publishNow === false)
-			|| $catalogId === null
-		) {
+		$changes = $this->scopeFills(run: $run, scope: $scope) + $this->publicationStamp(scope: $scope);
+		$catalogId = ($scope['data']['@self']['id'] ?? ($scope['data']['id'] ?? null));
+		if (($changes === [] && $scope['changed'] === false) || $catalogId === null) {
 			return null;
 		}
 
-		$merged = $data;
+		$merged = $scope['data'];
 		unset($merged['@self']);
-		if ($needsRegisters === true) {
-			$merged['registers'] = [$run->publicationRegister];
-		}
-
-		if ($needsSchemas === true) {
-			$merged['schemas'] = [$run->publicationSchema];
-		}
-
-		$publishedSlug = null;
-		if ($publishNow === true) {
-			$merged['published'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM);
-			$publishedSlug = (string)$data['slug'];
-		}
 
 		return [
-			'object' => $this->withIsoDateTimes(object: $merged),
+			'object' => $this->withIsoDateTimes(object: array_replace($merged, $changes)),
 			'uuid' => (string)$catalogId,
-			'publishedSlug' => $publishedSlug,
+			'publishedSlug' => $this->publishedSlugOf(catalog: $scope['data'], changes: $changes),
 		];
 	}//end catalogScopePatch()
+
+	/**
+	 * The publication register and schema for each empty scope list of a catalogue.
+	 *
+	 * @param CatalogScopeBackfill                                                       $run   The backfill run.
+	 * @param array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool} $scope The resolved catalogue.
+	 *
+	 * @return array<string, array<int, mixed>> The `registers` and `schemas` fills, each only when empty.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 */
+	private function scopeFills(CatalogScopeBackfill $run, array $scope): array {
+		$fills = [];
+		if ($this->isEmptyScopeList(value: $scope['registers']) === true) {
+			$fills['registers'] = [$run->publicationRegister];
+		}
+
+		if ($this->isEmptyScopeList(value: $scope['schemas']) === true) {
+			$fills['schemas'] = [$run->publicationSchema];
+		}
+
+		return $fills;
+	}//end scopeFills()
+
+	/**
+	 * The `published` date of a seeded catalogue due its one automatic publication, or nothing.
+	 *
+	 * @param array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool} $scope The resolved catalogue.
+	 *
+	 * @return array<string, string> The `published` field, or an empty array.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 */
+	private function publicationStamp(array $scope): array {
+		if ($this->shouldPublishResolvedSeed(scope: $scope) === false) {
+			return [];
+		}
+
+		return ['published' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DATE_ATOM)];
+	}//end publicationStamp()
+
+	/**
+	 * The slug of a catalogue the patch publishes, or null.
+	 *
+	 * @param array<string, mixed> $catalog The catalogue as stored.
+	 * @param array<string, mixed> $changes The fields the patch sets.
+	 *
+	 * @return string|null The slug when the patch sets `published`.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 */
+	private function publishedSlugOf(array $catalog, array $changes): ?string {
+		if (isset($changes['published']) === false) {
+			return null;
+		}
+
+		return (string)$catalog['slug'];
+	}//end publishedSlugOf()
 
 	/**
 	 * Whether a scope list is missing or empty.
@@ -1988,23 +2028,31 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
 	 */
 	private function shouldPublishResolvedSeed(array $scope): bool {
-		$catalog = $scope['data'];
-		$registers = $scope['registers'];
-		$schemas = $scope['schemas'];
-		$slug = ($catalog['slug'] ?? null);
-		$scopeResolver = new CatalogScopeSlugResolver();
+		$slug = ($scope['data']['slug'] ?? null);
 		if (in_array($slug, self::PUBLISH_WHEN_RESOLVED, true) === false
-			|| empty($catalog['published']) === false
-			|| is_array($registers) === false || $registers === []
-			|| is_array($schemas) === false || $schemas === []
-			|| $scopeResolver->hasSlug(entries: $registers) === true
-			|| $scopeResolver->hasSlug(entries: $schemas) === true
+			|| empty($scope['data']['published']) === false
+			|| $this->isIdList(entries: $scope['registers']) === false
+			|| $this->isIdList(entries: $scope['schemas']) === false
 		) {
 			return false;
 		}
 
 		return in_array($slug, $this->publishedSeeds(), true) === false;
 	}//end shouldPublishResolvedSeed()
+
+	/**
+	 * Whether a scope list is a non-empty list of ids only.
+	 *
+	 * @param mixed $entries The registers or schemas of a scope.
+	 *
+	 * @return bool False for a missing or empty list, or one that still holds a slug.
+	 *
+	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 */
+	private function isIdList(mixed $entries): bool {
+		return is_array($entries) === true && $entries !== []
+			&& (new CatalogScopeSlugResolver())->hasSlug(entries: $entries) === false;
+	}//end isIdList()
 
 	/**
 	 * The seeded catalogues already published automatically once.
