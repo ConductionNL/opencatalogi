@@ -1,0 +1,285 @@
+{
+	"sentinels: resolved": {
+		"out": {
+			"version": "1",
+			"pages": [
+				{
+					"id": "a",
+					"config": {
+						"register": "12",
+						"schema": 7
+					}
+				},
+				{
+					"id": "b",
+					"config": {
+						"list": [
+							"12",
+							3,
+							null,
+							[
+								"@resolve:empty_schema"
+							]
+						],
+						"nested": {
+							"deep": {
+								"value": "12",
+								"other": "@resolve:missing_key"
+							}
+						},
+						"bad": "@resolve:Upper",
+						"prefixed": "x@resolve:catalog_register",
+						"flags": [
+							true,
+							false,
+							0
+						],
+						"zero": 0,
+						"no": false,
+						"nil": "@resolve:null_schema",
+						"thrown": "@resolve:throws_register",
+						"again": "@resolve:throws_register"
+					}
+				},
+				{
+					"id": "c"
+				},
+				{
+					"id": "d",
+					"config": "string config"
+				},
+				{
+					"id": "e",
+					"config": null
+				},
+				null,
+				"page-as-string",
+				{
+					"id": "f",
+					"config": []
+				},
+				{
+					"id": "g",
+					"config": "@resolve:catalog_register"
+				}
+			]
+		},
+		"reads": [
+			"opencatalogi:catalog_register",
+			"opencatalogi:catalog_schema",
+			"opencatalogi:empty_schema",
+			"opencatalogi:missing_key",
+			"opencatalogi:zero_schema",
+			"opencatalogi:false_schema",
+			"opencatalogi:null_schema",
+			"opencatalogi:throws_register"
+		],
+		"samePageC": true
+	},
+	"sentinels: no pages": {
+		"version": "2",
+		"pages": []
+	},
+	"sentinels: pages not a list": {
+		"pages": []
+	},
+	"menu: not a list": [],
+	"menu: empty": [],
+	"menu: mixed": [
+		{
+			"id": "catalog-woo",
+			"label": "Woo",
+			"translateLabel": false,
+			"icon": "DatabaseEyeOutline",
+			"route": "Publications",
+			"params": {
+				"catalogSlug": "woo"
+			},
+			"order": 20
+		},
+		{
+			"id": "catalog-7",
+			"label": "7",
+			"translateLabel": false,
+			"icon": "DatabaseEyeOutline",
+			"route": "Publications",
+			"params": {
+				"catalogSlug": "7"
+			},
+			"order": 20
+		},
+		{
+			"id": "catalog-no-title",
+			"label": "no-title",
+			"translateLabel": false,
+			"icon": "DatabaseEyeOutline",
+			"route": "Publications",
+			"params": {
+				"catalogSlug": "no-title"
+			},
+			"order": 20
+		},
+		{
+			"id": "catalog-num-title",
+			"label": "num-title",
+			"translateLabel": false,
+			"icon": "DatabaseEyeOutline",
+			"route": "Publications",
+			"params": {
+				"catalogSlug": "num-title"
+			},
+			"order": 20
+		}
+	],
+	"labels: manifest": {
+		"out": {
+			"pages": [
+				null,
+				{
+					"id": "no-config"
+				},
+				{
+					"id": "no-actions",
+					"config": {
+						"a": 1
+					}
+				},
+				{
+					"id": "actions",
+					"config": {
+						"actions": [
+							{
+								"label": "T(Edit)"
+							},
+							"builtin:edit",
+							null,
+							{
+								"label": 3
+							},
+							{
+								"id": "x"
+							}
+						],
+						"bulkActions": "not a list"
+					}
+				},
+				{
+					"id": "pair",
+					"config": {
+						"bulkActions": [
+							{
+								"label": "T(Publish)"
+							}
+						],
+						"publicationPairConfig": {
+							"actions": [
+								{
+									"label": "T(Pair)"
+								}
+							],
+							"bulkActions": []
+						}
+					}
+				},
+				{
+					"id": "pair-without-actions",
+					"config": {
+						"publicationPairConfig": {
+							"other": true
+						}
+					}
+				}
+			]
+		},
+		"unchanged": [
+			true,
+			true,
+			true,
+			false,
+			false,
+			true
+		]
+	},
+	"labels: no pages": {
+		"a": 1
+	},
+	"labels: undefined": "(undefined)",
+	"selection: modal": {
+		"answer": true,
+		"calls": [
+			[
+				"selected",
+				[
+					{
+						"id": 1
+					}
+				]
+			],
+			[
+				"modal",
+				"m"
+			]
+		]
+	},
+	"selection: dialog": {
+		"answer": true,
+		"calls": [
+			[
+				"selected",
+				[
+					{
+						"id": 1
+					},
+					{
+						"id": 2
+					}
+				]
+			],
+			[
+				"dialog",
+				"d"
+			]
+		]
+	},
+	"selection: both": {
+		"answer": true,
+		"calls": [
+			[
+				"selected",
+				[
+					{
+						"id": 1
+					}
+				]
+			],
+			[
+				"modal",
+				"m"
+			]
+		]
+	},
+	"selection: no target": {
+		"answer": false,
+		"calls": []
+	},
+	"selection: no objects": {
+		"answer": false,
+		"calls": []
+	},
+	"selection: objects missing": {
+		"answer": false,
+		"calls": []
+	},
+	"selection: props missing": {
+		"answer": false,
+		"calls": []
+	},
+	"selection: props null": {
+		"answer": false,
+		"calls": []
+	},
+	"selection: objects without length": {
+		"answer": "threw TypeError",
+		"calls": []
+	}
+}
