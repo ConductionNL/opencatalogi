@@ -32,6 +32,7 @@ declare(strict_types=1);
 namespace Unit\Settings;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
 use PHPUnit\Framework\TestCase;
 
@@ -252,12 +253,14 @@ class WooRequestAndCommentPeriodRegisterTest extends TestCase {
 		// 40 days from a Monday lands on a Saturday, so this payload is the one
 		// that ALSO carries the two roll-explanation properties.
 		$payload = $service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: 40,
-			legalRemedy: 'bezwaar',
-			announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: true,
-			openedBy: 'alice',
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: 40,
+				legalRemedy: 'bezwaar',
+				announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: true,
+				openedBy: 'alice'
+			),
 			start: new DateTimeImmutable('2026-03-02T09:00:00+00:00')
 		);
 

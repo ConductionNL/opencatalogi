@@ -7,6 +7,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Service\SitemapRequest;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -211,7 +212,7 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	// ──────────────────────────────────────────────────────────
-	// isValidSitemapRequest (private, via reflection)
+	// resolveSitemapRequest (private, via reflection)
 	// ──────────────────────────────────────────────────────────
 
 	public function testIsValidSitemapRequestNoSettings(): void {
@@ -220,12 +221,8 @@ class SitemapServiceTest extends TestCase {
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
-		$result = $method->invokeArgs($this->service, [
-			'test-catalog',
-			'sitemapindex-diwoo-infocat001.xml',
-			$objectService,
-		]);
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
+		$result = $method->invoke($this->service, new SitemapRequest('test-catalog', 'sitemapindex-diwoo-infocat001.xml'), $objectService);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
@@ -240,12 +237,8 @@ class SitemapServiceTest extends TestCase {
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
-		$result = $method->invokeArgs($this->service, [
-			'test-catalog',
-			'invalid-category.xml',
-			$objectService,
-		]);
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
+		$result = $method->invoke($this->service, new SitemapRequest('test-catalog', 'invalid-category.xml'), $objectService);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
@@ -289,22 +282,14 @@ class SitemapServiceTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')
 			->willReturn(['results' => [$catalogObj]]);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
 
-		$catalog = null;
-		$schemaId = null;
-		$registerId = null;
+		$request = new SitemapRequest('my-catalog', 'sitemapindex-diwoo-infocat001.xml');
+		$result = $method->invoke($this->service, $request, $objectService);
+		$schemaId = $request->schemaId;
+		$registerId = $request->registerId;
 
-		$result = $method->invokeArgs($this->service, [
-			'my-catalog',
-			'sitemapindex-diwoo-infocat001.xml',
-			$objectService,
-			&$catalog,
-			&$schemaId,
-			&$registerId,
-		]);
-
-		$this->assertTrue($result);
+		$this->assertNull($result);
 		$this->assertEquals('sch-1', $schemaId);
 		$this->assertEquals('reg-woo', $registerId);
 	}
@@ -331,12 +316,8 @@ class SitemapServiceTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')
 			->willReturn(['results' => []]);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
-		$result = $method->invokeArgs($this->service, [
-			'nonexistent-catalog',
-			'sitemapindex-diwoo-infocat001.xml',
-			$objectService,
-		]);
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
+		$result = $method->invoke($this->service, new SitemapRequest('nonexistent-catalog', 'sitemapindex-diwoo-infocat001.xml'), $objectService);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
@@ -370,12 +351,8 @@ class SitemapServiceTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')
 			->willReturn(['results' => [$catalogObj]]);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
-		$result = $method->invokeArgs($this->service, [
-			'my-catalog',
-			'sitemapindex-diwoo-infocat001.xml',
-			$objectService,
-		]);
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
+		$result = $method->invoke($this->service, new SitemapRequest('my-catalog', 'sitemapindex-diwoo-infocat001.xml'), $objectService);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
@@ -414,22 +391,14 @@ class SitemapServiceTest extends TestCase {
 		$objectService->method('searchObjectsPaginated')
 			->willReturn(['results' => [$catalogObj]]);
 
-		$method = $this->getPrivateMethod('isValidSitemapRequest');
+		$method = $this->getPrivateMethod('resolveSitemapRequest');
 
-		$catalog = null;
-		$schemaId = null;
-		$registerId = null;
+		$request = new SitemapRequest('test-slug', 'sitemapindex-diwoo-infocat012.xml');
+		$result = $method->invoke($this->service, $request, $objectService);
+		$schemaId = $request->schemaId;
+		$registerId = $request->registerId;
 
-		$result = $method->invokeArgs($this->service, [
-			'test-slug',
-			'sitemapindex-diwoo-infocat012.xml',
-			$objectService,
-			&$catalog,
-			&$schemaId,
-			&$registerId,
-		]);
-
-		$this->assertTrue($result);
+		$this->assertNull($result);
 		$this->assertEquals('sch-12', $schemaId);
 	}
 
@@ -491,6 +460,32 @@ class SitemapServiceTest extends TestCase {
 		$this->assertEquals('vaststelling', $handling['diwoo:soortHandeling']['#text']);
 		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_641ecd76', $handling['diwoo:soortHandeling']['@resource']);
 		$this->assertEquals('2024-05-10 12:00:00', $handling['diwoo:atTime']);
+	}
+
+	/**
+	 * A publication that names its organisation only by UUID gets the
+	 * organisation's own tooiIdentifier as publisher, looked up once per
+	 * organisation for the whole request (WOO-TOOI-002).
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testThePublisherIsLookedUpOncePerOrganisation(): void {
+		$tooi = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855';
+		$objectService = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjects']);
+		$objectService->expects($this->once())
+			->method('searchObjects')
+			->with(['@self' => ['uuid' => 'org-uuid-123']])
+			->willReturn([['tooiIdentifier' => $tooi]]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$file = ['downloadUrl' => 'https://example.com/files/doc.pdf', 'extension' => 'pdf', 'owner' => 'file-owner'];
+		$method = $this->getPrivateMethod('mapDiwooDocument');
+		foreach (['pub-a', 'pub-b'] as $id) {
+			$publication = ['id' => $id, 'category' => 'infocat014', '@self' => ['created' => '2024-01-15 10:00:00', 'organisation' => 'org-uuid-123']];
+			$doc = $method->invoke($this->service, $publication, $file)['diwoo:Document']['diwoo:DiWoo'];
+			$this->assertSame($tooi, $doc['diwoo:publisher']['@resource'], $id);
+		}
 	}
 
 	/**

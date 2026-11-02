@@ -1,0 +1,60 @@
+{
+    "empty": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<root />\n"
+    },
+    "root from data": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<feed>\n  <a>1</a>\n</feed>\n"
+    },
+    "root tag wins": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<channel>\n  <a>1</a>\n</channel>\n"
+    },
+    "attributes in order, then text": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r z=\"1\" a=\"1\" n=\"\">hallo<kind>x</kind></r>\n"
+    },
+    "attributes not a list": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <attributes>plain</attributes>\n  <b>c</b>\n</r>\n"
+    },
+    "text only, entities": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>A &amp; B 'q' &lt;x&gt;</r>\n"
+    },
+    "carriage return": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <line>een&#xD;\ntwee</line>\n</r>\n"
+    },
+    "at-prefixed keys": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <id>7</id>\n  <type>t</type>\n</r>\n"
+    },
+    "numeric string keys": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <item5>vijf</item5>\n  <x>\n    <item12>twaalf</item12>\n  </x>\n</r>\n"
+    },
+    "scalars": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <int>3</int>\n  <float>1.5</float>\n  <true>1</true>\n  <false></false>\n  <null></null>\n  <empty></empty>\n</r>\n"
+    },
+    "objects": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <stringable>als tekst</stringable>\n  <plain>[Object of class stdClass]</plain>\n</r>\n"
+    },
+    "nested associative": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <a>\n    <b k=\"v\">\n      <c>d</c>\n    </b>\n  </a>\n</r>\n"
+    },
+    "indexed list of arrays": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <item>\n    <n>1</n>\n  </item>\n  <item>t<n>2</n></item>\n  <item>scalar after arrays</item>\n</r>\n"
+    },
+    "indexed list of scalars": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <tag>\n    <item0>a</item0>\n    <item1>b</item1>\n  </tag>\n</r>\n"
+    },
+    "list starting with a scalar": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <tag>\n    <item0>a</item0>\n    <item1>\n      <n>1</n>\n    </item1>\n  </tag>\n</r>\n"
+    },
+    "empty nested": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <a />\n</r>\n"
+    },
+    "deep": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <l1>\n    <l2>\n      <l3>\n        <l4 x=\"y\">diep</l4>\n      </l3>\n    </l2>\n  </l1>\n</r>\n"
+    },
+    "text null": {
+        "error": "DOMException",
+        "message": "Invalid Character Error"
+    },
+    "attribute keys as ints": {
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r a=\"x\" b=\"2.5\">\n  <c>0</c>\n</r>\n"
+    }
+}

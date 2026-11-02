@@ -43,6 +43,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use Exception;
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
 use OCP\App\IAppManager;
@@ -68,11 +69,76 @@ use ZipArchive;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.TooManyMethods) Listing paths are split into small private steps to stay under the unit size and complexity limits.
  *
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
  */
-class PublicationService {
+class PublicationService implements PublicationServiceInterface {
+
+	/**
+	 * The virtual facet for filtering by directory or catalog source.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const array DIRECTORY_FACET = [
+		'type' => 'categorical',
+		'description' => 'Directory/catalog source of the publication',
+		'facet_types' => ['terms'],
+		'has_labels' => true,
+		'sample_values' => [
+			[
+				'value' => 'local',
+				'label' => 'Local OpenCatalogi',
+				'count' => 1,
+			],
+			[
+				'value' => 'directory.opencatalogi.nl',
+				'label' => 'OpenCatalogi Directory',
+				'count' => 1,
+			],
+			[
+				'value' => 'dimpact.commonground.nu',
+				'label' => 'Dimpact',
+				'count' => 1,
+			],
+		],
+	];
+
+	/**
+	 * The virtual facet for filtering by catalog.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const array CATALOGS_FACET = [
+		'type' => 'categorical',
+		'description' => 'Catalog that contains the publication',
+		'facet_types' => ['terms'],
+		'has_labels' => true,
+		'sample_values' => [
+			[
+				'value' => 'default',
+				'label' => 'Default Catalog',
+				'count' => 1,
+			],
+			[
+				'value' => 'test-catalog',
+				'label' => 'Test Catalog',
+				'count' => 1,
+			],
+		],
+	];
+
+	/**
+	 * The result of a single-publication lookup that found nothing.
+	 *
+	 * @var array{success: false, error: string, status: int}
+	 */
+	private const PUBLICATION_NOT_FOUND = [
+		'success' => false,
+		'error' => 'Publication not found',
+		'status' => 404,
+	];
 
 	/**
 	 * The object service instance.
@@ -422,7 +488,7 @@ class PublicationService {
 		}
 
 		if ($catalogId !== null) {
-			$catalogs = [$this->getObjectService()->find($catalogId)];
+			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
 		}
 
 		// Remove duplicate values and assign to class properties.
@@ -445,6 +511,37 @@ class PublicationService {
 
 		return $result;
 	}//end getCatalogFilters()
+
+	/**
+	 * Find one catalog, but only when it lives in the configured catalog register and schema.
+	 *
+	 * OpenRegister's find() falls back to a cross-table lookup for a UUID it cannot
+	 * place in the given schema, so the hint alone does not bound the result: the
+	 * found object's own register and schema are checked as well.
+	 *
+	 * @param string|integer $catalogId The catalog id, UUID or slug.
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 *
+	 * @return array<int, \OCA\OpenRegister\Db\ObjectEntity> The catalog, or an empty list when it is not a catalog.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function findCatalogInScope(string|int $catalogId, array $scope): array {
+		$catalog = $this->getObjectService()->find(
+			id: $catalogId,
+			register: $scope['register'],
+			schema: $scope['schema']
+		);
+
+		if ($catalog === null
+			|| (string)$catalog->getRegister() !== $scope['register']
+			|| (string)$catalog->getSchema() !== $scope['schema']
+		) {
+			return [];
+		}
+
+		return [$catalog];
+	}//end findCatalogInScope()
 
 	/**
 	 * Get the list of available registers.
@@ -479,58 +576,17 @@ class PublicationService {
 	 * @throws \InvalidArgumentException When invalid registers or schemas are requested
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/publications/spec.md
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	private function searchPublications(null|string|int $catalogId = null, ?array $ids = null, ?array $customParams = null): array {
-		// Use custom parameters if provided, otherwise use request parameters.
-		$searchQuery = ($customParams ?? $this->request->getParams());
+		$searchQuery = $this->normaliseSearchQuery(query: ($customParams ?? $this->request->getParams()));
 
-		// @todo this is a temporary fix to map the parameters to _extend format.
-		// Define parameters that should be mapped to _extend format.
-		$parametersToMap = [
-			'extend',
-			'fields',
-			'facets',
-			'order',
-			'page',
-			'limit',
-		];
+		// Directory and catalogs are virtual fields injected at runtime, not database
+		// columns, so their facet requests never reach OpenRegister.
+		$virtualFacets = $this->virtualFacetRequests(query: $searchQuery);
+		$searchQuery = $this->withoutVirtualFacetRequests(query: $searchQuery);
 
-		// Map specified parameters to _extend format and unset originals.
-		foreach ($parametersToMap as $param) {
-			if (isset($searchQuery[$param]) === true) {
-				// Map the parameter to _extend format.
-				$searchQuery['_extend'] = $searchQuery[$param];
-				// Unset the original parameter to prevent conflicts.
-				unset($searchQuery[$param]);
-			}
-		}
-
-		// Bit of route cleanup.
-		unset($searchQuery['id']);
-		unset($searchQuery['_route']);
-
-		// Filter out virtual field facet requests before passing to OpenRegister.
-		// Directory and catalogs are virtual fields injected at runtime, not database columns.
-		$reqDirFacets = false;
-		$reqCatFacets = false;
-
-		if (isset($searchQuery['_facets']['@self']['directory']) === true) {
-			$reqDirFacets = true;
-			unset($searchQuery['_facets']['@self']['directory']);
-		}
-
-		if (isset($searchQuery['_facets']['@self']['catalogs']) === true) {
-			$reqCatFacets = true;
-			unset($searchQuery['_facets']['@self']['catalogs']);
-		}
-
-		// Get the context for the catalog.
 		$context = $this->getCatalogFilters(catalogId: $catalogId);
 
 		// FAIL CLOSED on an empty schema or register scope (WOO-581): an empty
@@ -540,47 +596,8 @@ class PublicationService {
 			return ['results' => [], 'facets' => [], 'total' => 0];
 		}
 
-		// Validate requested registers and schemas against the context.
-		$requestedRegisters = ($searchQuery['@self']['register'] ?? []);
-		$requestedSchemas = ($searchQuery['@self']['schema'] ?? []);
-
-		// Ensure requested registers are part of the context.
-		if (empty($requestedRegisters) === false) {
-			// Normalize to array if a single value is provided.
-			if (is_array($requestedRegisters) === false) {
-				$requestedRegisters = [$requestedRegisters];
-			}
-
-			if (count(array_diff($requestedRegisters, $context['registers'])) > 0) {
-				throw new InvalidArgumentException('Invalid register(s) requested');
-			}
-		}
-
-		// Ensure requested schemas are part of the context.
-		if (empty($requestedSchemas) === false) {
-			// Normalize to array if a single value is provided.
-			if (is_array($requestedSchemas) === false) {
-				$requestedSchemas = [$requestedSchemas];
-			}
-
-			if (count(array_diff($requestedSchemas, $context['schemas'])) > 0) {
-				throw new InvalidArgumentException('Invalid schema(s) requested');
-			}
-		}
-
-		// Get the object service.
+		$scope = $this->narrowedSearchScope(context: $context, query: $searchQuery);
 		$objectService = $this->getObjectService();
-
-		// Overwrite certain values in the existing search query.
-		$registers = $context['registers'];
-		if (empty($requestedRegisters) === false) {
-			$registers = $requestedRegisters;
-		}
-
-		$schemas = $context['schemas'];
-		if (empty($requestedSchemas) === false) {
-			$schemas = $requestedSchemas;
-		}
 
 		// Only the (validated) narrowing above survives; every other scope key the
 		// caller sent goes, or OR's facet path follows it (WOO-581 review round 2).
@@ -588,44 +605,158 @@ class PublicationService {
 		// register: a scalar schema next to a register list sends OR to register 1, or
 		// past the scope to the all-tables `_ids` lookup (WOO-581 review round 3).
 		$searchQuery = CallerScope::strip(query: $searchQuery);
-
 		$searchQuery['_includeDeleted'] = false;
 
-		// Add IDs filter if provided (for uses/used functionality).
+		// IDs filter for the uses/used lookups.
 		if ($ids !== null && empty($ids) === false) {
 			$searchQuery['_ids'] = $ids;
 		}
 
-		// Search objects using the new structure with RBAC enforcement.
-		// _rbac: true ensures schema authorization rules are applied.
-		// _multitenancy: false allows cross-org access for public search results
-		// (RBAC rules determine what each user/anonymous can see).
+		// _rbac: true applies the schema authorization rules; _multitenancy: false
+		// allows cross-org access for public search results (RBAC rules determine
+		// what each user/anonymous can see).
 		$result = array_merge(
 			['results' => [], 'facets' => []],
 			$this->searchObjectsWithinScope(
 				objectService: $objectService,
 				query: $searchQuery,
-				registers: $registers,
-				schemas: $schemas
+				registers: $scope['register'],
+				schemas: $scope['schema']
 			)
 		);
 
 		// Visibility is governed entirely by OpenRegister RBAC (the schemas' conditional
 		// public-read rules with the $now variable), applied above via _rbac: true.
-		// Filter unwanted properties from results.
 		$result['results'] = $this->filterUnwantedProperties(objects: $result['results']);
 
-		// Add virtual field facets if they were requested.
-		if (($reqDirFacets === true || $reqCatFacets === true) && isset($result['facets']) === true) {
+		return $this->withVirtualFacets(result: $result, requested: $virtualFacets);
+	}//end searchPublications()
+
+	/**
+	 * Map the legacy parameters to `_extend` and drop the route keys.
+	 *
+	 * Each of `extend`, `fields`, `facets`, `order`, `page` and `limit` that is set
+	 * moves to `_extend`, the last one winning.
+	 *
+	 * @param array $query The request or custom parameters.
+	 *
+	 * @return array The normalised query.
+	 *
+	 * @todo this is a temporary fix to map the parameters to _extend format.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function normaliseSearchQuery(array $query): array {
+		foreach (['extend', 'fields', 'facets', 'order', 'page', 'limit'] as $param) {
+			if (isset($query[$param]) === true) {
+				$query['_extend'] = $query[$param];
+				unset($query[$param]);
+			}
+		}
+
+		unset($query['id']);
+		unset($query['_route']);
+
+		return $query;
+	}//end normaliseSearchQuery()
+
+	/**
+	 * Which virtual-field facets (directory, catalogs) the query asks for.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array{directory: bool, catalogs: bool} The requested virtual facets.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function virtualFacetRequests(array $query): array {
+		return [
+			'directory' => isset($query['_facets']['@self']['directory']),
+			'catalogs' => isset($query['_facets']['@self']['catalogs']),
+		];
+	}//end virtualFacetRequests()
+
+	/**
+	 * The query without its virtual-field facet requests.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array The query OpenRegister can answer.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function withoutVirtualFacetRequests(array $query): array {
+		foreach (['directory', 'catalogs'] as $virtualField) {
+			if (isset($query['_facets']['@self'][$virtualField]) === true) {
+				unset($query['_facets']['@self'][$virtualField]);
+			}
+		}
+
+		return $query;
+	}//end withoutVirtualFacetRequests()
+
+	/**
+	 * The register and schema scope of a search, narrowed to what the caller asked for.
+	 *
+	 * A requested register or schema (one value or a list) must lie inside the
+	 * catalog context; an empty request keeps the whole context.
+	 *
+	 * @param array $context The catalog context (`registers`, `schemas`).
+	 * @param array $query The search query.
+	 *
+	 * @return array{register: array, schema: array} The scope to search.
+	 *
+	 * @throws InvalidArgumentException When a requested register or schema lies outside the context.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function narrowedSearchScope(array $context, array $query): array {
+		$scope = [
+			'register' => $context['registers'],
+			'schema' => $context['schemas'],
+		];
+
+		foreach ($scope as $key => $allowed) {
+			$requested = ($query['@self'][$key] ?? []);
+			if (empty($requested) === true) {
+				continue;
+			}
+
+			if (is_array($requested) === false) {
+				$requested = [$requested];
+			}
+
+			if (count(array_diff($requested, $allowed)) > 0) {
+				throw new InvalidArgumentException('Invalid ' . $key . '(s) requested');
+			}
+
+			$scope[$key] = $requested;
+		}
+
+		return $scope;
+	}//end narrowedSearchScope()
+
+	/**
+	 * Add the requested virtual-field facets to a search result.
+	 *
+	 * @param array $result The search result.
+	 * @param array{directory: bool, catalogs: bool} $requested The requested virtual facets.
+	 *
+	 * @return array The result, with the virtual facets when any were requested.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function withVirtualFacets(array $result, array $requested): array {
+		if (($requested['directory'] === true || $requested['catalogs'] === true) && isset($result['facets']) === true) {
 			$result['facets'] = $this->addVirtualFieldFacets(
 				existingFacets: $result['facets'],
-				inclDirFacets: $reqDirFacets,
-				inclCatFacets: $reqCatFacets
+				inclDirFacets: $requested['directory'],
+				inclCatFacets: $requested['catalogs']
 			);
 		}
 
 		return $result;
-	}//end searchPublications()
+	}//end withVirtualFacets()
 
 	/**
 	 * Search OpenRegister within the catalogue scope, leaving out the slugs it refuses.
@@ -769,9 +900,8 @@ class PublicationService {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
+	 *
+	 * @spec openspec/specs/federation/spec.md
 	 */
 	private function addVirtualFieldFacets(
 		array $existingFacets,
@@ -784,106 +914,19 @@ class PublicationService {
 				$existingFacets['@self'] = [];
 			}
 
-			// Add directory facets if requested.
 			if ($inclDirFacets === true) {
-				// Get unique directories from the directory service.
-				$uniqueDirectories = $this->directoryService->getUniqueDirectories(availableOnly: true);
-
-				// Add local directory.
-				$directoryBuckets = [
-					[
-						'key' => 'local',
-						'label' => 'local',
-						'results' => 1,
-					],
-				];
-
-				// Add federated directories.
-				foreach ($uniqueDirectories as $directoryUrl) {
-					$directoryName = parse_url($directoryUrl, PHP_URL_HOST);
-					if (empty($directoryName) === true) {
-						$directoryName = $directoryUrl;
-					}
-
-					$directoryBuckets[] = [
-						'key' => $directoryName,
-						'label' => $directoryName,
-						'results' => 1,
-					];
-				}
-
 				$existingFacets['@self']['directory'] = [
 					'type' => 'terms',
-					'buckets' => $directoryBuckets,
+					'buckets' => $this->directoryFacetBuckets(),
 				];
-			}//end if
+			}
 
-			// Add catalog facets if requested.
 			if ($inclCatFacets === true) {
-				$catalogBuckets = [];
-
-				// Get local catalogs.
-				$localCatalogs = $this->getLocalCatalogs();
-				foreach ($localCatalogs as $catalog) {
-					$catalogKey = 'unknown';
-					if (empty($catalog['id']) === false) {
-						$catalogKey = $catalog['id'];
-					} elseif (empty($catalog['title']) === false) {
-						$catalogKey = $catalog['title'];
-					}
-
-					$catalogLabel = 'unknown';
-					if (empty($catalog['title']) === false) {
-						$catalogLabel = $catalog['title'];
-					} elseif (empty($catalog['id']) === false) {
-						$catalogLabel = $catalog['id'];
-					}
-
-					$catalogBuckets[] = [
-						'key' => $catalogKey,
-						'label' => $catalogLabel,
-						'results' => 1,
-					];
-				}//end foreach
-
-				// Get external catalogs from listings.
-				$externalCatalogs = $this->getExternalCatalogsFromListings();
-				foreach ($externalCatalogs as $catalog) {
-					$catalogKey = $catalog['key'];
-					$catalogLabel = $catalog['label'];
-
-					// Check if this catalog is already in our list to avoid duplicates.
-					$exists = false;
-					foreach ($catalogBuckets as $existingCatalog) {
-						if ($existingCatalog['key'] === $catalogKey) {
-							$exists = true;
-							break;
-						}
-					}
-
-					if ($exists === false) {
-						$catalogBuckets[] = [
-							'key' => $catalogKey,
-							'label' => $catalogLabel,
-							'results' => 1,
-						];
-					}
-				}//end foreach
-
-				// If no catalogs found, add a default entry.
-				if (empty($catalogBuckets) === true) {
-					$catalogBuckets[] = [
-						'key' => 'default',
-						'label' => 'Default Catalog',
-						'results' => 1,
-					];
-				}
-
 				$existingFacets['@self']['catalogs'] = [
 					'type' => 'terms',
-					'buckets' => $catalogBuckets,
+					'buckets' => $this->catalogFacetBuckets(),
 				];
-			}//end if
+			}
 
 			return $existingFacets;
 		} catch (\Exception $e) {
@@ -892,6 +935,118 @@ class PublicationService {
 		}//end try
 
 	}//end addVirtualFieldFacets()
+
+	/**
+	 * The directory facet buckets: the local directory, then each federated
+	 * directory by host name.
+	 *
+	 * @return array<int, array{key: string, label: string, results: int}> The buckets.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function directoryFacetBuckets(): array {
+		// Add local directory.
+		$directoryBuckets = [
+			[
+				'key' => 'local',
+				'label' => 'local',
+				'results' => 1,
+			],
+		];
+
+		// Add federated directories.
+		foreach ($this->directoryService->getUniqueDirectories(availableOnly: true) as $directoryUrl) {
+			$directoryName = parse_url($directoryUrl, PHP_URL_HOST);
+			if (empty($directoryName) === true) {
+				$directoryName = $directoryUrl;
+			}
+
+			$directoryBuckets[] = [
+				'key' => $directoryName,
+				'label' => $directoryName,
+				'results' => 1,
+			];
+		}
+
+		return $directoryBuckets;
+
+	}//end directoryFacetBuckets()
+
+	/**
+	 * The catalog facet buckets: the local catalogs, then the external catalogs
+	 * from the directory listings that are not local, or one default bucket when
+	 * there are none.
+	 *
+	 * @return array<int, array{key: mixed, label: mixed, results: int}> The buckets.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function catalogFacetBuckets(): array {
+		$catalogBuckets = array_map(
+			fn ($catalog): array => $this->localCatalogBucket(catalog: $catalog),
+			$this->getLocalCatalogs()
+		);
+
+		foreach ($this->getExternalCatalogsFromListings() as $catalog) {
+			// Skip a catalog that is already in the list.
+			if (in_array($catalog['key'], array_column($catalogBuckets, 'key'), true) === false) {
+				$catalogBuckets[] = [
+					'key' => $catalog['key'],
+					'label' => $catalog['label'],
+					'results' => 1,
+				];
+			}
+		}
+
+		// If no catalogs found, add a default entry.
+		if (empty($catalogBuckets) === true) {
+			$catalogBuckets[] = [
+				'key' => 'default',
+				'label' => 'Default Catalog',
+				'results' => 1,
+			];
+		}
+
+		return $catalogBuckets;
+
+	}//end catalogFacetBuckets()
+
+	/**
+	 * The facet bucket of one local catalog: keyed by id (else title), labelled
+	 * by title (else id), `unknown` when it has neither.
+	 *
+	 * @param mixed $catalog The local catalog.
+	 *
+	 * @return array{key: mixed, label: mixed, results: int} The bucket.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function localCatalogBucket(mixed $catalog): array {
+		$catalogKey = 'unknown';
+		if (empty($catalog['id']) === false) {
+			$catalogKey = $catalog['id'];
+		} elseif (empty($catalog['title']) === false) {
+			$catalogKey = $catalog['title'];
+		}
+
+		$catalogLabel = 'unknown';
+		if (empty($catalog['title']) === false) {
+			$catalogLabel = $catalog['title'];
+		} elseif (empty($catalog['id']) === false) {
+			$catalogLabel = $catalog['id'];
+		}
+
+		return [
+			'key' => $catalogKey,
+			'label' => $catalogLabel,
+			'results' => 1,
+		];
+
+	}//end localCatalogBucket()
 
 	/**
 	 * Retrieves a list of all objects for a specific register and schema
@@ -1336,24 +1491,7 @@ class PublicationService {
 
 			$relations = array_values($relationsArray);
 
-			// Check if relations array is empty.
-			if (empty($relations) === true) {
-				// If relations is empty, return empty paginated response.
-				return new JSONResponse(
-					[
-						'results' => [],
-						'total' => 0,
-						'page' => 1,
-						'pages' => 1,
-						'facets' => [],
-					]
-				);
-			}
-
-			// Use the generic search function with the relation IDs.
-			$result = $this->searchPublications(catalogId: null, ids: $relations);
-
-			return new JSONResponse($result);
+			return $this->relatedPublications(relations: $relations);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], 400);
 		}//end try
@@ -1404,29 +1542,31 @@ class PublicationService {
 			$relationsArray = $objectService->findByRelations($id);
 			$relations = array_map(static fn ($relation) => $relation->getUuid(), $relationsArray);
 
-			// Check if relations array is empty.
-			if (empty($relations) === true) {
-				// If relations is empty, return empty paginated response.
-				return new JSONResponse(
-					[
-						'results' => [],
-						'total' => 0,
-						'page' => 1,
-						'pages' => 1,
-						'facets' => [],
-					]
-				);
-			}
-
-			// Use the generic search function with the relation IDs.
-			$result = $this->searchPublications(catalogId: null, ids: $relations);
-
-			return new JSONResponse($result);
+			return $this->relatedPublications(relations: $relations);
 		} catch (\InvalidArgumentException $e) {
 			return new JSONResponse(['error' => $e->getMessage()], 400);
 		}//end try
 
 	}//end used()
+
+	/**
+	 * The publications among the given related object ids, as one page.
+	 *
+	 * @param array<int, string> $relations The related object ids.
+	 *
+	 * @return JSONResponse The search result, or an empty page when there are no relations.
+	 *
+	 * @throws \InvalidArgumentException When the search refuses its arguments.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function relatedPublications(array $relations): JSONResponse {
+		if (empty($relations) === true) {
+			return new JSONResponse(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []]);
+		}
+
+		return new JSONResponse($this->searchPublications(catalogId: null, ids: $relations));
+	}//end relatedPublications()
 
 	/**
 	 * Get aggregated publications from local and federated sources
@@ -1456,656 +1596,617 @@ class PublicationService {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array {
-		// Performance monitoring - start timing.
 		$startTime = microtime(true);
+		$context = $this->buildListingContext(queryParams: $queryParams, requestParams: $requestParams, baseUrl: $baseUrl);
+		$queryParams = $this->withPagination(queryParams: $queryParams, pagination: $context);
 
-		// Extract pagination parameters.
-		$limit = (int)($queryParams['_limit'] ?? $queryParams['limit'] ?? 20);
-		$page = (int)($queryParams['_page'] ?? $queryParams['page'] ?? 1);
-		$offset = (int)($queryParams['offset'] ?? (($page - 1) * $limit));
-
-		// Ensure minimum values (limit=0 is valid for count/facets-only requests).
-		$limit = max(0, $limit);
-		$page = max(1, $page);
-		$offset = max(0, $offset);
-
-		// Add pagination parameters to query.
-		$queryParams['_limit'] = $limit;
-		$queryParams['_page'] = $page;
-		if ($offset > 0) {
-			$queryParams['_offset'] = $offset;
+		if ($this->hasFederatedSources(aggregate: $context['aggregate']) === false) {
+			return $this->getLocalPublications(queryParams: $queryParams, context: $context);
 		}
 
-		// Check if aggregation is enabled (default: true, unless explicitly set to false).
-		$aggregate = (string)($queryParams['_aggregate'] ?? 'true');
-		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-		// Check if catalog information should be included (performance optimization).
-		$includeCatalogs = isset($queryParams['_include_catalogs']) && $queryParams['_include_catalogs'] !== 'false';
-
-		// Check if faceting is requested.
-		$facetable = $queryParams['_facetable'] ?? null;
-		$shouldIncludeFacets = ($facetable === 'true' || $facetable === true);
-
-		// Check if virtual field facets were specifically requested.
-		$reqDirFacets = isset($queryParams['_facets']['@self']['directory']);
-		$reqCatFacets = isset($queryParams['_facets']['@self']['catalogs']);
-
-		// PERFORMANCE OPTIMIZATION: Ultra-fast path for basic requests
-		// Use ultra-fast path when no special processing is needed.
-		$useUltraFast = !$includeCatalogs && !$reqDirFacets && !$reqCatFacets;
-
-		// Allow explicit control via query parameter.
-		if (isset($queryParams['_ultra_fast']) === true) {
-			$useUltraFast = $queryParams['_ultra_fast'] !== 'false' && $queryParams['_ultra_fast'] !== '0';
-		}
-
-		// If aggregation is disabled, use optimized paths.
-		if ($shouldAggregate === false) {
-			if ($useUltraFast === true) {
-				return $this->getLocalPublicationsUltraFast(
-					queryParams: $queryParams,
-					requestParams: $requestParams,
-					baseUrl: $baseUrl,
-					startTime: microtime(true)
-				);
-			}
-
-			return $this->getLocalPublicationsFast(
-				queryParams: $queryParams,
-				requestParams: $requestParams,
-				baseUrl: $baseUrl,
-				includeCatalogs: $includeCatalogs,
-				reqDirFacets: $reqDirFacets,
-				reqCatFacets: $reqCatFacets
-			);
-		}
-
-		// Check if we have any federated directories to aggregate from.
-		try {
-			$federatedDirectories = $this->directoryService->getUniqueDirectories(availableOnly: true);
-
-			// If no federated directories available, use optimized paths.
-			if (empty($federatedDirectories) === true) {
-				if ($useUltraFast === true) {
-					return $this->getLocalPublicationsUltraFast(
-						queryParams: $queryParams,
-						requestParams: $requestParams,
-						baseUrl: $baseUrl,
-						startTime: microtime(true)
-					);
-				}
-
-				return $this->getLocalPublicationsFast(
-					queryParams: $queryParams,
-					requestParams: $requestParams,
-					baseUrl: $baseUrl,
-					includeCatalogs: $includeCatalogs,
-					reqDirFacets: $reqDirFacets,
-					reqCatFacets: $reqCatFacets
-				);
-			}
-		} catch (\Exception $e) {
-			// If we can't get directories info, fall back to optimized local paths.
-			if ($useUltraFast === true) {
-				return $this->getLocalPublicationsUltraFast(
-					queryParams: $queryParams,
-					requestParams: $requestParams,
-					baseUrl: $baseUrl,
-					startTime: microtime(true)
-				);
-			}
-
-			return $this->getLocalPublicationsFast(
-				queryParams: $queryParams,
-				requestParams: $requestParams,
-				baseUrl: $baseUrl,
-				includeCatalogs: $includeCatalogs,
-				reqDirFacets: $reqDirFacets,
-				reqCatFacets: $reqCatFacets
-			);
-		}//end try
-
-		// Note: @self.schema and @self.register are now provided at response @self level,
-		// not duplicated in each result. No need to add them to _extend.
-		// Get local publications first.
-		$localResponse = $this->index(catalogId: null, customParams: $queryParams);
-		$localData = json_decode($localResponse->render(), true);
-
-		// Add catalog and directory information to local publications
-		// @todo This adds ~200ms overhead - consider making optional via query parameter.
-		$localResults = ($localData['results'] ?? []);
-		if (empty($localResults) === false) {
-			$localCatalogs = $this->getLocalCatalogs();
-			foreach ($localResults as &$publication) {
-				if (isset($publication['@self']) === false || is_array($publication['@self']) === false) {
-					$publication['@self'] = [];
-				}
-
-				// Add directory information for faceting.
-				$publication['@self']['directory'] = 'local';
-
-				// Add catalog information if available.
-				if (empty($localCatalogs) === false) {
-					$publication['@self']['catalogs'] = $localCatalogs;
-				}
-			}
-
-			unset($publication);
-			// Break the reference.
-		}//end if
-
-		// Calculate pagination info.
-		$totalResults = ($localData['total'] ?? 0);
-		$totalPages = 1;
-		if ($limit > 0) {
-			$totalPages = max(1, ceil($totalResults / $limit));
-		}
-
-		// Initialize response structure with pagination.
-		$responseData = [
-			'results' => $localResults,
-			'total' => $totalResults,
-			'limit' => $limit,
-			'offset' => $offset,
-			'page' => $page,
-			'pages' => $totalPages,
-		];
-
-		// Add pagination links.
-		if ($page < $totalPages) {
-			$nextParams = $requestParams;
-			$nextParams['_page'] = ($page + 1);
-			$responseData['next'] = $baseUrl . '?' . http_build_query($nextParams);
-		}
-
-		if ($page > 1) {
-			$prevParams = $requestParams;
-			$prevParams['_page'] = ($page - 1);
-			$responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
-		}
-
-		// Add facets and facetable from local service if present.
-		if (isset($localData['facets']) === true) {
-			// Check if facets are nested (unwrap if needed).
-			$facetsData = $localData['facets'];
-			if (isset($facetsData['facets']) === true && is_array($facetsData['facets']) === true) {
-				$facetsData = $facetsData['facets'];
-			}
-
-			// Add virtual field facets if they were requested.
-			if ($reqDirFacets === true || $reqCatFacets === true) {
-				$facetsData = $this->addVirtualFieldFacets(
-					existingFacets: $facetsData,
-					inclDirFacets: $reqDirFacets,
-					inclCatFacets: $reqCatFacets
-				);
-			}
-
-			$responseData['facets'] = $facetsData;
-		} elseif ($reqDirFacets === true || $reqCatFacets === true) {
-			// If virtual field facets were requested but no other facets exist, create them.
-			$responseData['facets'] = $this->addVirtualFieldFacets(
-				existingFacets: [],
-				inclDirFacets: $reqDirFacets,
-				inclCatFacets: $reqCatFacets
-			);
-		}//end if
-
-		if (isset($localData['facetable']) === true) {
-			$responseData['facetable'] = $this->mergeFacetableData(
-				localFacetable: $localData['facetable'],
-				federatedFacetable: []
-			);
-		} elseif ($shouldIncludeFacets === true) {
-			// If faceting is requested but no facetable data exists, create basic structure.
-			$responseData['facetable'] = $this->mergeFacetableData(localFacetable: [], federatedFacetable: []);
-		}
+		// The local-only page is the answer when the federated sources fail.
+		$localData = $this->fetchLocalPublicationData(queryParams: $queryParams);
+		$responseData = $this->buildLocalAggregateListing(localData: $localData, context: $context);
 
 		try {
-			/*
-			 * AGGREGATION PAGINATION FIX
-			 *
-			 * When aggregating results from multiple sources (local + federated), we cannot
-			 * simply request the same page from each source and merge the results, because:
-			 *
-			 * 1. Each source has different data, so page 2 from Source A + page 2 from Source B
-			 *    does not equal page 2 of the merged dataset
-			 * 2. This causes inconsistent totals between pages (e.g., page 1 shows total=22,
-			 *    page 2 shows total=20)
-			 * 3. Users may see missing results or empty pages
-			 *
-			 * SOLUTION:
-			 * 1. Calculate how many items we need: requestedPage * itemsPerPage
-			 * 2. Request that many items from page 1 of ALL sources
-			 * 3. Merge and deduplicate all collected results
-			 * 4. Apply pagination to the merged dataset to get the correct slice
-			 *
-			 * Example: User requests page 2 with limit 20
-			 * - We request 40 items (2*20) from page 1 of each source
-			 * - Merge all results, remove duplicates
-			 * - Take items 21-40 from the merged list (page 2)
-			 *
-			 * This ensures consistent pagination and totals across all pages.
-			 */
-
-			// For aggregation, we need to collect enough data from all sources
-			// to properly paginate the merged results
-			// Calculate how many items we need to collect from each source
-			// to ensure we have enough data for the requested page
-			// Example: page 3 with limit 10 = need 30 items to get items 21-30.
-			$itemsNeeded = ($page * $limit);
-
-			// Prepare query parameters for fetching from sources.
-			$localQueryParams = $queryParams;
-			$federatedQueryParams = $queryParams;
-
-			// For local results: request from page 1 with enough items.
-			$localQueryParams['_page'] = 1;
-			$localQueryParams['_limit'] = $itemsNeeded;
-			unset($localQueryParams['_offset']);
-			// Remove offset to start from beginning
-			// For federated results: request from page 1 with enough items.
-			$federatedQueryParams['_page'] = 1;
-			$federatedQueryParams['_limit'] = $itemsNeeded;
-			unset($federatedQueryParams['_offset']);
-			// Remove offset to start from beginning
-			// Get local results with modified parameters
-			// Pass the modified parameters directly to the service.
-			$allLocalResponse = $this->index(catalogId: null, customParams: $localQueryParams);
-			$allLocalData = json_decode($allLocalResponse->render(), true);
-
-			// Add catalog and directory information to local publications
-			// @todo This adds ~200ms overhead - consider making optional via query parameter.
-			$allLocalResults = ($allLocalData['results'] ?? []);
-			if (empty($allLocalResults) === false) {
-				$localCatalogs = $this->getLocalCatalogs();
-				foreach ($allLocalResults as &$publication) {
-					if (isset($publication['@self']) === false || is_array($publication['@self']) === false) {
-						$publication['@self'] = [];
-					}
-
-					$publication['@self']['directory'] = 'local';
-
-					if (empty($localCatalogs) === false) {
-						$publication['@self']['catalogs'] = $localCatalogs;
-					}
-				}
-
-				unset($publication);
-				// Break the reference.
-			}//end if
-
-			// Get federated results with modified parameters
-			// Prepare query parameters for federation - exclude
-			// pagination and directory filter params since
-			// aggregation handles those.
-			$fedFilterParams = array_filter(
-				$federatedQueryParams,
-				function ($key) {
-					// Exclude pagination parameters since aggregation handles those.
-					if (in_array($key, ['_limit', '_page', '_offset', 'offset']) === true) {
-						return false;
-					}
-
-					// Exclude virtual field facet filters when querying external directories
-					// since these are handled locally after aggregation.
-					if (strpos($key, '_facets[@self][directory]') !== false) {
-						return false;
-					}
-
-					if (strpos($key, '_facets[directory]') !== false) {
-						return false;
-					}
-
-					if (strpos($key, '_facets[@self][catalogs]') !== false) {
-						return false;
-					}
-
-					if (strpos($key, '_facets[catalogs]') !== false) {
-						return false;
-					}
-
-					return true;
-				},
-				ARRAY_FILTER_USE_KEY
-			);
-
-			// Also filter out virtual field facets from the nested _facets array structure.
-			if (isset($fedFilterParams['_facets']['@self']['directory']) === true) {
-				unset($fedFilterParams['_facets']['@self']['directory']);
-			}
-
-			if (isset($fedFilterParams['_facets']['@self']['catalogs']) === true) {
-				unset($fedFilterParams['_facets']['@self']['catalogs']);
-			}
-
-			// Pass query parameters in the format expected by DirectoryService.
-			$fedGuzzleConfig = ['query_params' => $fedFilterParams];
-
-			$federationResult = $this->directoryService->getPublications($fedGuzzleConfig);
-
-			// Merge local and federated results.
-			$allResults = array_merge(
-				$allLocalResults,
-				($federationResult['results'] ?? [])
-			);
-
-			// Remove duplicates based on ID.
-			$uniqueResults = [];
-			$seenIds = [];
-			foreach ($allResults as $result) {
-				$id = ($result['id'] ?? $result['uuid'] ?? uniqid());
-				if (isset($seenIds[$id]) === false) {
-					$uniqueResults[] = $result;
-					$seenIds[$id] = true;
-				}
-			}
-
-			$totalResults = (($federationResult['total'] ?? 0) + $localData['total']);
-
-			// Apply ordering to the merged and deduplicated results
-			// This is crucial for aggregation because each source may have different ordering,
-			// so we need to re-sort the combined dataset according to the requested criteria
-			// Supports formats like: _order[@self.created]=DESC, _order[title]=ASC, etc.
-			$uniqueResults = $this->applyCumulativeOrdering(results: $uniqueResults, queryParams: $queryParams);
-
-			// Apply pagination to the merged results.
-			$totalPages = 1;
-			if ($limit > 0) {
-				$totalPages = max(1, ceil($totalResults / $limit));
-			}
-
-			// Calculate the correct slice for this page.
-			$startIndex = (($page - 1) * $limit);
-			$paginatedResults = array_slice($uniqueResults, $startIndex, $limit);
-
-			// Update response with paginated combined data.
-			$responseData = [
-				'results' => $paginatedResults,
-				'total' => $totalResults,
-				'limit' => $limit,
-				'offset' => $startIndex,
-				'page' => $page,
-				'pages' => $totalPages,
-			];
-
-			// Update pagination links.
-			if ($page < $totalPages) {
-				$nextParams = $requestParams;
-				$nextParams['_page'] = ($page + 1);
-				$responseData['next'] = $baseUrl . '?' . http_build_query($nextParams);
-			}
-
-			if ($page > 1) {
-				$prevParams = $requestParams;
-				$prevParams['_page'] = ($page - 1);
-				$responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
-			}
-
-			// Merge facets and facetable data if present.
-			if (isset($allLocalData['facets']) === true || isset($federationResult['facets']) === true) {
-				$localFacets = ($allLocalData['facets'] ?? []);
-				$federatedFacets = ($federationResult['facets'] ?? []);
-
-				// Check if facets are nested and unwrap if needed.
-				if (isset($localFacets['facets']) === true && is_array($localFacets['facets']) === true) {
-					$localFacets = $localFacets['facets'];
-				}
-
-				if (isset($federatedFacets['facets']) === true && is_array($federatedFacets['facets']) === true) {
-					$federatedFacets = $federatedFacets['facets'];
-				}
-
-				$mergedFacets = $this->mergeFacetsData(localFacets: $localFacets, federatedFacets: $federatedFacets);
-
-				// Add virtual field facets if they were requested.
-				if ($reqDirFacets === true || $reqCatFacets === true) {
-					$mergedFacets = $this->addVirtualFieldFacets(
-						existingFacets: $mergedFacets,
-						inclDirFacets: $reqDirFacets,
-						inclCatFacets: $reqCatFacets
-					);
-				}
-
-				$responseData['facets'] = $mergedFacets;
-			} elseif ($reqDirFacets === true || $reqCatFacets === true) {
-				// If virtual field facets were requested but no other facets exist, create them.
-				$responseData['facets'] = $this->addVirtualFieldFacets(
-					existingFacets: [],
-					inclDirFacets: $reqDirFacets,
-					inclCatFacets: $reqCatFacets
-				);
-			}//end if
-
-			if (isset($allLocalData['facetable']) === true || isset($federationResult['facetable']) === true) {
-				$responseData['facetable'] = $this->mergeFacetableData(
-					localFacetable: ($allLocalData['facetable'] ?? []),
-					federatedFacetable: ($federationResult['facetable'] ?? [])
-				);
-			} elseif ($shouldIncludeFacets === true) {
-				$responseData['facetable'] = $this->mergeFacetableData(localFacetable: [], federatedFacetable: []);
-			}
-
-			// Performance monitoring for aggregated results.
-			$executionTime = ((microtime(true) - $startTime) * 1000);
-			// Convert to milliseconds.
-			$responseData['_performance'] = [
-				'execution_time_ms' => round($executionTime, 2),
-				'fast_path' => false,
-				'federation' => true,
-				'cached_catalogs' => $this->cachedLocalCatalogs !== null,
-				'cached_filters' => !empty($this->cachedCatalogFilters),
-			];
-
-			return $responseData;
+			$responseData = $this->buildFederatedListing(queryParams: $queryParams, localTotal: ($localData['total'] ?? 0), context: $context);
+			$responseData['_performance'] = $this->aggregationPerformance(startTime: $startTime, federated: true);
 		} catch (\Exception $e) {
-			// If aggregation fails, return local results only
-			// Performance monitoring for fallback case.
-			$executionTime = ((microtime(true) - $startTime) * 1000);
-			$responseData['_performance'] = [
-				'execution_time_ms' => round($executionTime, 2),
-				'fast_path' => false,
-				'federation' => false,
-				'error' => 'Federation failed, returned local only',
-				'cached_catalogs' => $this->cachedLocalCatalogs !== null,
-				'cached_filters' => !empty($this->cachedCatalogFilters),
-			];
-			return $responseData;
-		}//end try
+			$responseData['_performance'] = $this->aggregationPerformance(startTime: $startTime, federated: false);
+		}
 
+		return $responseData;
 	}//end getAggregatedPublications()
 
 	/**
-	 * Get local publications without federation overhead (performance optimized)
+	 * Resolve the clamped pagination and the switches of a listing request.
 	 *
-	 * This is a fast path method that skips expensive federation operations when:
-	 * - Aggregation is disabled (_aggregate=false)
-	 * - No federated directories are available
-	 * - Only local catalog data is needed
+	 * @param array  $queryParams   The request query.
+	 * @param array  $requestParams The original request parameters, for the pagination links.
+	 * @param string $baseUrl       The base URL of the pagination links.
 	 *
-	 * Optimizations applied:
-	 * - Single database query for publications
-	 * - Optional catalog information (controlled via _include_catalogs parameter)
-	 * - Minimal virtual field facet processing
-	 * - Direct pagination without aggregation logic
+	 * @return array Limit, page, offset, the listing switches, requestParams and baseUrl.
 	 *
-	 * @param array $queryParams Query parameters for filtering, pagination, ordering, etc.
-	 * @param array $requestParams Original request parameters for building pagination links
-	 * @param string $baseUrl Base URL for building pagination links
-	 * @param boolean $includeCatalogs Whether to include catalog information in @self
-	 * @param boolean $reqDirFacets Whether directory facets were requested
-	 * @param boolean $reqCatFacets Whether catalog facets were requested
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function buildListingContext(array $queryParams, array $requestParams, string $baseUrl): array {
+		$pagination = $this->readPagination(queryParams: $queryParams);
+
+		return [
+			'limit' => max(0, $pagination['limit']),
+			'page' => max(1, $pagination['page']),
+			'offset' => max(0, $pagination['offset']),
+			'requestParams' => $requestParams,
+			'baseUrl' => $baseUrl,
+		] + $this->readListingOptions(queryParams: $queryParams);
+	}//end buildListingContext()
+
+	/**
+	 * The local page of an aggregated listing, its results stamped as local.
+	 *
+	 * @param array $localData The decoded local index response.
+	 * @param array $context   Pagination, listing switches, request params and base URL.
+	 *
+	 * @return array The listing response.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function buildLocalAggregateListing(array $localData, array $context): array {
+		$responseData = $this->buildListingPage(
+			results: $this->tagLocalResults(results: ($localData['results'] ?? []), markDirectory: true, withCatalogs: true),
+			total: ($localData['total'] ?? 0),
+			offset: $context['offset'],
+			context: $context
+		);
+		$responseData = $this->withListingFacets(responseData: $responseData, facets: $this->unwrapFacetsOf(data: $localData), context: $context);
+
+		return $this->withMergedFacetable(responseData: $responseData, sources: [$localData, []], include: $context['includeFacets']);
+	}//end buildLocalAggregateListing()
+
+	/**
+	 * Read the limit, page and offset of a listing request, unclamped.
+	 *
+	 * @param array $queryParams The request query.
+	 *
+	 * @return array{limit: int, page: int, offset: int}
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function readPagination(array $queryParams): array {
+		$limit = (int)($queryParams['_limit'] ?? $queryParams['limit'] ?? 20);
+		$page = (int)($queryParams['_page'] ?? $queryParams['page'] ?? 1);
+
+		return [
+			'limit' => $limit,
+			'page' => $page,
+			'offset' => (int)($queryParams['offset'] ?? (($page - 1) * $limit)),
+		];
+	}//end readPagination()
+
+	/**
+	 * Write the resolved pagination back into the query as `_limit`, `_page` and `_offset`.
+	 *
+	 * @param array $queryParams The request query.
+	 * @param array $pagination  The resolved limit, page and offset.
+	 *
+	 * @return array The query with its pagination keys set.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function withPagination(array $queryParams, array $pagination): array {
+		$queryParams['_limit'] = $pagination['limit'];
+		$queryParams['_page'] = $pagination['page'];
+		if ($pagination['offset'] > 0) {
+			$queryParams['_offset'] = $pagination['offset'];
+		}
+
+		return $queryParams;
+	}//end withPagination()
+
+	/**
+	 * Read the switches of a listing request: aggregation, catalog info, facets and the ultra-fast path.
+	 *
+	 * @param array $queryParams The request query.
+	 *
+	 * @return array<string, bool>
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function readListingOptions(array $queryParams): array {
+		$aggregate = (string)($queryParams['_aggregate'] ?? 'true');
+		$facetable = $queryParams['_facetable'] ?? null;
+		$options = [
+			'aggregate' => $aggregate !== 'false' && $aggregate !== '0',
+			'includeCatalogs' => isset($queryParams['_include_catalogs']) && $queryParams['_include_catalogs'] !== 'false',
+			'includeFacets' => ($facetable === 'true' || $facetable === true),
+			'reqDirFacets' => isset($queryParams['_facets']['@self']['directory']),
+			'reqCatFacets' => isset($queryParams['_facets']['@self']['catalogs']),
+		];
+		$options['useUltraFast'] = $this->readUltraFastSwitch(queryParams: $queryParams, options: $options);
+
+		return $options;
+	}//end readListingOptions()
+
+	/**
+	 * Decide the ultra-fast path: on when nothing needs local enrichment, unless `_ultra_fast` says otherwise.
+	 *
+	 * @param array $queryParams The request query.
+	 * @param array $options     The other listing switches.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function readUltraFastSwitch(array $queryParams, array $options): bool {
+		if (isset($queryParams['_ultra_fast']) === true) {
+			return $queryParams['_ultra_fast'] !== 'false' && $queryParams['_ultra_fast'] !== '0';
+		}
+
+		return !$options['includeCatalogs'] && !$options['reqDirFacets'] && !$options['reqCatFacets'];
+	}//end readUltraFastSwitch()
+
+	/**
+	 * Whether a listing should aggregate: asked for, and at least one federated directory is available.
+	 *
+	 * A failing directory lookup counts as no directories.
+	 *
+	 * @param bool $aggregate Whether the request asked for aggregation.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function hasFederatedSources(bool $aggregate): bool {
+		if ($aggregate === false) {
+			return false;
+		}
+
+		try {
+			return empty($this->directoryService->getUniqueDirectories(availableOnly: true)) === false;
+		} catch (\Exception $e) {
+			return false;
+		}
+	}//end hasFederatedSources()
+
+	/**
+	 * Serve a listing from local publications only, on the ultra-fast or the fast path.
+	 *
+	 * @param array $queryParams The paginated request query.
+	 * @param array $context     Pagination, listing switches, request params and base URL.
+	 *
+	 * @return array The listing response.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function getLocalPublications(array $queryParams, array $context): array {
+		if ($context['useUltraFast'] === true) {
+			return $this->getLocalPublicationsUltraFast(
+				queryParams: $queryParams,
+				requestParams: $context['requestParams'],
+				baseUrl: $context['baseUrl'],
+				startTime: microtime(true)
+			);
+		}
+
+		return $this->getLocalPublicationsFast(queryParams: $queryParams, context: $context);
+	}//end getLocalPublications()
+
+	/**
+	 * Run the local index for a query and decode its response.
+	 *
+	 * @param array $queryParams The query to pass to index().
+	 *
+	 * @return array The decoded response data.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function fetchLocalPublicationData(array $queryParams): array {
+		$response = $this->index(catalogId: null, customParams: $queryParams);
+
+		return (json_decode($response->render(), true) ?? []);
+	}//end fetchLocalPublicationData()
+
+	/**
+	 * Stamp local results with their origin: `@self.directory = local` and the local catalogs.
+	 *
+	 * @param array $results       The local results.
+	 * @param bool  $markDirectory Whether to set `@self.directory`.
+	 * @param bool  $withCatalogs  Whether to set `@self.catalogs` (only when there are local catalogs).
+	 *
+	 * @return array The stamped results.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function tagLocalResults(array $results, bool $markDirectory, bool $withCatalogs): array {
+		if (empty($results) === true) {
+			return $results;
+		}
+
+		$catalogs = [];
+		if ($withCatalogs === true) {
+			$catalogs = $this->getLocalCatalogs();
+		}
+
+		foreach ($results as &$publication) {
+			if (isset($publication['@self']) === false || is_array($publication['@self']) === false) {
+				$publication['@self'] = [];
+			}
+
+			if ($markDirectory === true) {
+				$publication['@self']['directory'] = 'local';
+			}
+
+			if (empty($catalogs) === false) {
+				$publication['@self']['catalogs'] = $catalogs;
+			}
+		}
+
+		unset($publication);
+
+		return $results;
+	}//end tagLocalResults()
+
+	/**
+	 * Build the paginated envelope of a listing: results, totals and next/prev links.
+	 *
+	 * @param array     $results The results of this page.
+	 * @param int|float $total   The total number of results.
+	 * @param int       $offset  The offset reported for this page.
+	 * @param array     $context Holds limit, page, requestParams and baseUrl.
+	 *
+	 * @return array The envelope.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function buildListingPage(array $results, $total, int $offset, array $context): array {
+		$totalPages = 1;
+		if ($context['limit'] > 0) {
+			$totalPages = max(1, ceil($total / $context['limit']));
+		}
+
+		$responseData = [
+			'results' => $results,
+			'total' => $total,
+			'limit' => $context['limit'],
+			'offset' => $offset,
+			'page' => $context['page'],
+			'pages' => $totalPages,
+		];
+
+		$links = [
+			'next' => ($context['page'] + 1),
+			'prev' => ($context['page'] - 1),
+		];
+		if ($context['page'] >= $totalPages) {
+			unset($links['next']);
+		}
+
+		if ($context['page'] <= 1) {
+			unset($links['prev']);
+		}
+
+		foreach ($links as $rel => $targetPage) {
+			$linkParams = $context['requestParams'];
+			$linkParams['_page'] = $targetPage;
+			$responseData[$rel] = $context['baseUrl'] . '?' . http_build_query($linkParams);
+		}
+
+		return $responseData;
+	}//end buildListingPage()
+
+	/**
+	 * The facets of a search response, unwrapped from a nested `facets.facets`, or null when absent.
+	 *
+	 * @param array $data A search response.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function unwrapFacetsOf(array $data) {
+		if (isset($data['facets']) === false) {
+			return null;
+		}
+
+		return $this->unwrapFacets(facets: $data['facets']);
+	}//end unwrapFacetsOf()
+
+	/**
+	 * Unwrap facets nested as `facets.facets`.
+	 *
+	 * @param mixed $facets Facets as returned by a search.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function unwrapFacets($facets) {
+		if (isset($facets['facets']) === true && is_array($facets['facets']) === true) {
+			return $facets['facets'];
+		}
+
+		return $facets;
+	}//end unwrapFacets()
+
+	/**
+	 * Set the response facets, adding the virtual directory and catalog facets when requested.
+	 *
+	 * @param array      $responseData The response.
+	 * @param mixed|null $facets       The facets to set, or null when the sources had none.
+	 * @param array      $context      Holds reqDirFacets and reqCatFacets.
+	 *
+	 * @return array The response.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function withListingFacets(array $responseData, $facets, array $context): array {
+		$virtual = ($context['reqDirFacets'] === true || $context['reqCatFacets'] === true);
+		if ($facets === null && $virtual === false) {
+			return $responseData;
+		}
+
+		if ($virtual === true) {
+			$facets = $this->addVirtualFieldFacets(
+				existingFacets: ($facets ?? []),
+				inclDirFacets: $context['reqDirFacets'],
+				inclCatFacets: $context['reqCatFacets']
+			);
+		}
+
+		$responseData['facets'] = $facets;
+
+		return $responseData;
+	}//end withListingFacets()
+
+	/**
+	 * Set the merged facetable metadata of a local and a federated source.
+	 *
+	 * @param array $responseData The response.
+	 * @param array $sources      The local and the federated search response, in that order.
+	 * @param bool  $include      Whether facetable metadata was requested.
+	 *
+	 * @return array The response.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function withMergedFacetable(array $responseData, array $sources, bool $include): array {
+		$local = ($sources[0]['facetable'] ?? null);
+		$federated = ($sources[1]['facetable'] ?? null);
+		if ($local === null && $federated === null && $include === false) {
+			return $responseData;
+		}
+
+		$responseData['facetable'] = $this->mergeFacetableData(
+			localFacetable: ($local ?? []),
+			federatedFacetable: ($federated ?? [])
+		);
+
+		return $responseData;
+	}//end withMergedFacetable()
+
+	/**
+	 * Build one page of the merged local and federated listing.
+	 *
+	 * Every source is asked for page one with page × limit items, the merged set is
+	 * de-duplicated and re-ordered, and then the requested page is sliced out. Asking
+	 * each source for the same page would give totals and pages that do not add up.
+	 *
+	 * @param array     $queryParams The paginated request query.
+	 * @param int|float $localTotal  The local total from the first local query.
+	 * @param array     $context     Pagination, listing switches, request params and base URL.
+	 *
+	 * @return array The listing response.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function buildFederatedListing(array $queryParams, $localTotal, array $context): array {
+		$sourceParams = $queryParams;
+		$sourceParams['_page'] = 1;
+		$sourceParams['_limit'] = ($context['page'] * $context['limit']);
+		unset($sourceParams['_offset']);
+
+		$allLocalData = $this->fetchLocalPublicationData(queryParams: $sourceParams);
+		$localResults = $this->tagLocalResults(results: ($allLocalData['results'] ?? []), markDirectory: true, withCatalogs: true);
+		$federationResult = $this->directoryService->getPublications(
+			guzzleConfig: ['query_params' => $this->buildFederatedQueryParams(queryParams: $sourceParams)]
+		);
+
+		$merged = $this->applyCumulativeOrdering(
+			results: $this->uniqueById(results: array_merge($localResults, ($federationResult['results'] ?? []))),
+			queryParams: $queryParams
+		);
+		$startIndex = (($context['page'] - 1) * $context['limit']);
+		$responseData = $this->buildListingPage(
+			results: array_slice($merged, $startIndex, $context['limit']),
+			total: (($federationResult['total'] ?? 0) + $localTotal),
+			offset: $startIndex,
+			context: $context
+		);
+
+		$responseData = $this->withListingFacets(
+			responseData: $responseData,
+			facets: $this->mergeSourceFacets(localData: $allLocalData, federationResult: $federationResult),
+			context: $context
+		);
+
+		return $this->withMergedFacetable(responseData: $responseData, sources: [$allLocalData, $federationResult], include: $context['includeFacets']);
+	}//end buildFederatedListing()
+
+	/**
+	 * The merged facets of the local and the federated source, or null when neither has facets.
+	 *
+	 * @param array $localData        The local search response.
+	 * @param array $federationResult The federated search response.
+	 *
+	 * @return mixed
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function mergeSourceFacets(array $localData, array $federationResult) {
+		if (isset($localData['facets']) === false && isset($federationResult['facets']) === false) {
+			return null;
+		}
+
+		return $this->mergeFacetsData(
+			localFacets: $this->unwrapFacets(facets: ($localData['facets'] ?? [])),
+			federatedFacets: $this->unwrapFacets(facets: ($federationResult['facets'] ?? []))
+		);
+	}//end mergeSourceFacets()
+
+	/**
+	 * The query for federated directories: without pagination and without the virtual facet filters.
+	 *
+	 * Aggregation paginates itself, and the directory and catalog facets are computed locally.
+	 *
+	 * @param array $queryParams The source query.
+	 *
+	 * @return array The query to send to the directories.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function buildFederatedQueryParams(array $queryParams): array {
+		$federated = array_filter(
+			$queryParams,
+			function ($key) {
+				return $this->isFederatedQueryKey(key: $key);
+			},
+			ARRAY_FILTER_USE_KEY
+		);
+
+		foreach (['directory', 'catalogs'] as $virtualFacet) {
+			if (isset($federated['_facets']['@self'][$virtualFacet]) === true) {
+				unset($federated['_facets']['@self'][$virtualFacet]);
+			}
+		}
+
+		return $federated;
+	}//end buildFederatedQueryParams()
+
+	/**
+	 * Whether a query key is passed on to federated directories.
+	 *
+	 * @param int|string $key The query key.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function isFederatedQueryKey($key): bool {
+		if (in_array($key, ['_limit', '_page', '_offset', 'offset']) === true) {
+			return false;
+		}
+
+		foreach (['_facets[@self][directory]', '_facets[directory]', '_facets[@self][catalogs]', '_facets[catalogs]'] as $virtualFacet) {
+			if (strpos((string)$key, $virtualFacet) !== false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end isFederatedQueryKey()
+
+	/**
+	 * Drop results whose `id` (or `uuid`) was already seen; results without either are all kept.
+	 *
+	 * @param array $results The merged results.
+	 *
+	 * @return array The de-duplicated results.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function uniqueById(array $results): array {
+		$unique = [];
+		$seenIds = [];
+		foreach ($results as $result) {
+			$id = ($result['id'] ?? $result['uuid'] ?? uniqid());
+			if (isset($seenIds[$id]) === false) {
+				$unique[] = $result;
+				$seenIds[$id] = true;
+			}
+		}
+
+		return $unique;
+	}//end uniqueById()
+
+	/**
+	 * The `_performance` block of an aggregated listing.
+	 *
+	 * @param float $startTime The request start time.
+	 * @param bool  $federated Whether the federated sources answered.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function aggregationPerformance(float $startTime, bool $federated): array {
+		$performance = [
+			'execution_time_ms' => round(((microtime(true) - $startTime) * 1000), 2),
+			'fast_path' => false,
+			'federation' => $federated,
+		];
+		if ($federated === false) {
+			$performance['error'] = 'Federation failed, returned local only';
+		}
+
+		$performance['cached_catalogs'] = $this->cachedLocalCatalogs !== null;
+		$performance['cached_filters'] = !empty($this->cachedCatalogFilters);
+
+		return $performance;
+	}//end aggregationPerformance()
+
+	/**
+	 * Get local publications without federation overhead.
+	 *
+	 * Used when aggregation is off or no federated directory is available, and the
+	 * request needs catalog information or the virtual facets. Without either it
+	 * hands over to the ultra-fast path.
+	 *
+	 * @param array $queryParams The paginated request query.
+	 * @param array $context     Listing switches, request params and base URL.
 	 *
 	 * @return array Response data containing publications, pagination info, and optionally facets
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function getLocalPublicationsFast(
-		array $queryParams,
-		array $requestParams,
-		string $baseUrl,
-		bool $includeCatalogs,
-		bool $reqDirFacets,
-		bool $reqCatFacets,
-	): array {
-		// Performance monitoring - start timing.
+	private function getLocalPublicationsFast(array $queryParams, array $context): array {
 		$startTime = microtime(true);
-		$timings = [
-			'setup' => 0,
-			'query' => 0,
-			'processing' => 0,
-		];
+		$timings = ['setup' => $this->elapsedMs(since: $startTime), 'query' => 0, 'processing' => 0];
 
-		// Setup timing start.
-		$setupStart = microtime(true);
-
-		// Note: @self.schema and @self.register are now provided at response @self level,
-		// not duplicated in each result. No need to add them to _extend.
-		$timings['setup'] = ((microtime(true) - $setupStart) * 1000);
-
-		// ULTRA-FAST PATH: Skip all middleware and call ObjectService directly.
-		if ($includeCatalogs === false && $reqDirFacets === false && $reqCatFacets === false) {
+		$enrich = ($context['includeCatalogs'] === true || $context['reqDirFacets'] === true || $context['reqCatFacets'] === true);
+		if ($enrich === false) {
 			return $this->getLocalPublicationsUltraFast(
 				queryParams: $queryParams,
-				requestParams: $requestParams,
-				baseUrl: $baseUrl,
+				requestParams: $context['requestParams'],
+				baseUrl: $context['baseUrl'],
 				startTime: $startTime
 			);
 		}
 
-		// Query timing start.
 		$queryStart = microtime(true);
+		$localData = $this->fetchLocalPublicationData(queryParams: $queryParams);
+		$timings['query'] = $this->elapsedMs(since: $queryStart);
 
-		// Get local publications with a single optimized query.
-		$localResponse = $this->index(catalogId: null, customParams: $queryParams);
-		$localData = json_decode($localResponse->render(), true);
+		$responseData = $this->buildFastListing(localData: $localData, queryParams: $queryParams, context: $context);
 
-		$timings['query'] = ((microtime(true) - $queryStart) * 1000);
-
-		// Extract pagination parameters for response structure.
-		$limit = (int)($queryParams['_limit'] ?? $queryParams['limit'] ?? 20);
-		$page = (int)($queryParams['_page'] ?? $queryParams['page'] ?? 1);
-		$offset = (int)($queryParams['offset'] ?? (($page - 1) * $limit));
-
-		// Get local results.
-		$localResults = ($localData['results'] ?? []);
-
-		// Add catalog and directory information only if requested or needed for faceting.
-		if (($includeCatalogs === true || $reqDirFacets === true || $reqCatFacets === true)
-			&& empty($localResults) === false
-		) {
-			// Get local catalogs only if needed.
-			$localCatalogs = [];
-			if ($includeCatalogs === true) {
-				$localCatalogs = $this->getLocalCatalogs();
-			}
-
-			foreach ($localResults as &$publication) {
-				if (isset($publication['@self']) === false || is_array($publication['@self']) === false) {
-					$publication['@self'] = [];
-				}
-
-				if ($reqDirFacets === true) {
-					$publication['@self']['directory'] = 'local';
-				}
-
-				if ($includeCatalogs === true && empty($localCatalogs) === false) {
-					$publication['@self']['catalogs'] = $localCatalogs;
-				}
-			}//end foreach
-
-			unset($publication);
-			// Break the reference.
-		}//end if
-
-		// Calculate pagination info.
-		$totalResults = ($localData['total'] ?? 0);
-		$totalPages = 1;
-		if ($limit > 0) {
-			$totalPages = max(1, ceil($totalResults / $limit));
-		}
-
-		// Build response structure with pagination.
-		$responseData = [
-			'results' => $localResults,
-			'total' => $totalResults,
-			'limit' => $limit,
-			'offset' => $offset,
-			'page' => $page,
-			'pages' => $totalPages,
-		];
-
-		// Add pagination links.
-		if ($page < $totalPages) {
-			$nextParams = $requestParams;
-			$nextParams['_page'] = ($page + 1);
-			$responseData['next'] = $baseUrl . '?' . http_build_query($nextParams);
-		}
-
-		if ($page > 1) {
-			$prevParams = $requestParams;
-			$prevParams['_page'] = ($page - 1);
-			$responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
-		}
-
-		// Add facets from local service if present.
-		if (isset($localData['facets']) === true) {
-			// Check if facets are nested (unwrap if needed).
-			$facetsData = $localData['facets'];
-			if (isset($facetsData['facets']) === true && is_array($facetsData['facets']) === true) {
-				$facetsData = $facetsData['facets'];
-			}
-
-			// Add virtual field facets only if they were requested.
-			if ($reqDirFacets === true || $reqCatFacets === true) {
-				$facetsData = $this->addVirtualFieldFacets(
-					existingFacets: $facetsData,
-					inclDirFacets: $reqDirFacets,
-					inclCatFacets: $reqCatFacets
-				);
-			}
-
-			$responseData['facets'] = $facetsData;
-		} elseif ($reqDirFacets === true || $reqCatFacets === true) {
-			// If virtual field facets were requested but no other facets exist, create them.
-			$responseData['facets'] = $this->addVirtualFieldFacets(
-				existingFacets: [],
-				inclDirFacets: $reqDirFacets,
-				inclCatFacets: $reqCatFacets
-			);
-		}//end if
-
-		// Add facetable metadata if present in local response.
-		if (isset($localData['facetable']) === true) {
-			$responseData['facetable'] = $localData['facetable'];
-		}
-
-		// Processing timing start.
-		$processingStart = microtime(true);
-		$timings['processing'] = ((microtime(true) - $processingStart) * 1000);
-
-		// Performance monitoring - calculate execution time.
-		$executionTime = ((microtime(true) - $startTime) * 1000);
-		// Convert to milliseconds.
+		$timings['processing'] = $this->elapsedMs(since: microtime(true));
 		$responseData['_performance'] = [
-			'execution_time_ms' => round($executionTime, 2),
+			'execution_time_ms' => round($this->elapsedMs(since: $startTime), 2),
 			'fast_path' => true,
 			'ultra_fast_path' => false,
-			'include_catalogs' => $includeCatalogs,
+			'include_catalogs' => $context['includeCatalogs'],
 			'cached_catalogs' => $this->cachedLocalCatalogs !== null,
 			'timings' => $timings,
 		];
@@ -2114,32 +2215,68 @@ class PublicationService {
 	}//end getLocalPublicationsFast()
 
 	/**
+	 * The fast-path listing envelope of a local index response.
+	 *
+	 * @param array $localData   The decoded local index response.
+	 * @param array $queryParams The paginated request query.
+	 * @param array $context     Listing switches, request params and base URL.
+	 *
+	 * @return array
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function buildFastListing(array $localData, array $queryParams, array $context): array {
+		$pageContext = $this->readPagination(queryParams: $queryParams) + $context;
+		$results = $this->tagLocalResults(
+			results: ($localData['results'] ?? []),
+			markDirectory: $context['reqDirFacets'],
+			withCatalogs: $context['includeCatalogs']
+		);
+		$responseData = $this->buildListingPage(
+			results: $results,
+			total: ($localData['total'] ?? 0),
+			offset: $pageContext['offset'],
+			context: $pageContext
+		);
+		$responseData = $this->withListingFacets(responseData: $responseData, facets: $this->unwrapFacetsOf(data: $localData), context: $context);
+		if (isset($localData['facetable']) === true) {
+			$responseData['facetable'] = $localData['facetable'];
+		}
+
+		return $responseData;
+	}//end buildFastListing()
+
+	/**
+	 * Milliseconds elapsed since a microtime(true) timestamp.
+	 *
+	 * @param float $since The start timestamp.
+	 *
+	 * @return float
+	 *
+	 * @spec exclude Timing helper for the `_performance` blocks; carries no behaviour of its own.
+	 */
+	private function elapsedMs(float $since): float {
+		return ((microtime(true) - $since) * 1000);
+	}//end elapsedMs()
+
+	/**
 	 * Get local publications with ultra-fast path (minimal overhead)
 	 *
 	 * This method bypasses ALL middleware overhead and calls ObjectService directly.
 	 * Use when no catalog info, facets, or additional processing is needed.
 	 *
-	 * Optimizations:
-	 * - Direct ObjectService call (no searchPublications() overhead)
-	 * - Skip catalog filter validation
-	 * - Skip virtual field processing
-	 * - Minimal response structure building
-	 *
-	 * @param array $queryParams Query parameters
-	 * @param array $requestParams Original request parameters for pagination links
-	 * @param string $baseUrl Base URL for building pagination links
-	 * @param float $startTime Start time for performance monitoring
+	 * @param array  $queryParams   Query parameters
+	 * @param array  $requestParams Original request parameters for pagination links
+	 * @param string $baseUrl       Base URL for building pagination links
+	 * @param float  $startTime     Start time for performance monitoring
 	 *
 	 * @return array Minimal response with publications and pagination
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/federation/spec.md
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
 	 */
 	private function getLocalPublicationsUltraFast(
 		array $queryParams,
@@ -2147,254 +2284,206 @@ class PublicationService {
 		string $baseUrl,
 		float $startTime,
 	): array {
-
-		$timings = [
-			'setup' => 0,
-			'objectservice' => 0,
-			'response' => 0,
-		];
-
-		// Setup timing.
+		$timings = ['setup' => 0, 'objectservice' => 0, 'response' => 0];
 		$setupStart = microtime(true);
+		$pageContext = $this->readPagination(queryParams: $queryParams) + ['requestParams' => $requestParams, 'baseUrl' => $baseUrl];
 
-		// Extract pagination parameters.
-		$limit = (int)($queryParams['_limit'] ?? $queryParams['limit'] ?? 20);
-		$page = (int)($queryParams['_page'] ?? $queryParams['page'] ?? 1);
-		$offset = (int)($queryParams['offset'] ?? (($page - 1) * $limit));
-
-		// FAIL CLOSED on an unconfigured catalog scope, exactly as
-		// getCatalogFilters() does — see resolveCatalogScope(). This is the fast
-		// path that deliberately bypasses getCatalogFilters(), so it has to carry
-		// the same refusal; without it the bypass is also a bypass of the guard.
-		$scope = $this->resolveCatalogScope();
-		if ($scope === null) {
-			return [
-				'results' => [],
-				'total' => 0,
-				'limit' => $limit,
-				'offset' => $offset,
-				'page' => $page,
-				'pages' => 1,
-			];
+		// FAIL CLOSED on an unconfigured catalog scope, as getCatalogFilters() does: this
+		// path bypasses the full search, so it has to carry the same refusal.
+		if ($this->resolveCatalogScope() === null) {
+			return $this->emptyListingPage(pagination: $pageContext);
 		}
 
-		$schema = $scope['schema'];
-		$register = $scope['register'];
+		$timings['setup'] = $this->elapsedMs(since: $setupStart);
+		$contextStart = microtime(true);
+		$catalogContext = $this->readUltraFastCatalogContext();
 
-		$timings['setup'] = ((microtime(true) - $setupStart) * 1000);
-
-		// Catalog context timing.
-		$catalogContextStart = microtime(true);
-
-		// Build search query properly - preserve all original parameters.
-		$searchQuery = $queryParams;
-
-		// Get the proper catalog context (use cached version).
-		$cacheKey = 'all';
-		if (isset($this->cachedCatalogFilters[$cacheKey]) === true) {
-			$cached = $this->cachedCatalogFilters[$cacheKey];
-			$this->availableRegisters = $cached['availableRegisters'];
-			$this->availableSchemas = $cached['availableSchemas'];
-			$catalogContext = $cached['result'];
-		}
-
-		if (isset($this->cachedCatalogFilters[$cacheKey]) === false) {
-			// Quick catalog context setup without full getCatalogFilters overhead.
-			$query = [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-			];
-
-			try {
-				$catalogs = $this->getObjectService()->searchObjects($query);
-				$uniqueRegisters = [];
-				$uniqueSchemas = [];
-
-				foreach ($catalogs as $catalog) {
-					$catalog = $catalog->jsonSerialize();
-					if (isset($catalog['registers']) === true && is_array($catalog['registers']) === true) {
-						$uniqueRegisters = array_merge($uniqueRegisters, $catalog['registers']);
-					}
-
-					if (isset($catalog['schemas']) === true && is_array($catalog['schemas']) === true) {
-						$uniqueSchemas = array_merge($uniqueSchemas, $catalog['schemas']);
-					}
-				}
-
-				$this->availableRegisters = array_unique($uniqueRegisters);
-				$this->availableSchemas = $this->guardSchemaScope(schemas: array_unique($uniqueSchemas));
-
-				$catalogContext = [
-					'registers' => array_values($this->availableRegisters),
-					'schemas' => array_values($this->availableSchemas),
-				];
-
-				$this->cachedCatalogFilters[$cacheKey] = [
-					'result' => $catalogContext,
-					'availableRegisters' => $this->availableRegisters,
-					'availableSchemas' => $this->availableSchemas,
-				];
-			} catch (\Exception $e) {
-				// FAIL CLOSED (WOO-581 review): this used to fall back to the configured
-				// catalog register/schema, unguarded — so a transient catalog-lookup
-				// failure made this public endpoint search the CATALOG schema where
-				// publications belong. An empty scope returns the empty page below.
-				$this->availableRegisters = [];
-				$this->availableSchemas = [];
-				$catalogContext = [
-					'registers' => [],
-					'schemas' => [],
-				];
-			}//end try
-		}//end if
-
-		// FAIL CLOSED on an empty schema or register scope (WOO-581): nothing
-		// configured, or every schema dropped by guardSchemaScope(). An empty
+		// FAIL CLOSED on an empty schema or register scope (WOO-581): an empty
 		// `@self.schema` must never be read as "no schema filter", nor an empty
-		// register list as "every register" (review round 4).
+		// register list as "every register".
 		if (empty($catalogContext['schemas']) === true || empty($catalogContext['registers']) === true) {
-			return [
-				'results' => [],
-				'total' => 0,
-				'limit' => $limit,
-				'offset' => $offset,
-				'page' => $page,
-				'pages' => 1,
-			];
+			return $this->emptyListingPage(pagination: $pageContext);
 		}
 
-		// The scope is the guarded catalog union, never the caller's (WOO-581 review
-		// round 2): the rows already followed the server's `@self.schema`, but OR's
-		// facet path reads `@self.schemas ?? _schemas` first, so a caller's keys
-		// steered the facets to any schema. See CallerScope::strip().
-		// See searchPublications() for why the scope goes through writeScope().
-		$searchQuery = CallerScope::strip(query: $searchQuery);
+		$timings['catalog_context'] = $this->elapsedMs(since: $contextStart);
+		$searchStart = microtime(true);
+		$result = $this->searchUltraFast(queryParams: $queryParams, catalogContext: $catalogContext);
+		$timings['objectservice'] = $this->elapsedMs(since: $searchStart);
 
-		$searchQuery['_includeDeleted'] = false;
+		$responseStart = microtime(true);
+		$responseData = $this->buildUltraFastResponse(result: $result, queryParams: $queryParams, pageContext: $pageContext);
+		$timings['response'] = $this->elapsedMs(since: $responseStart);
 
-		// Clean up unwanted parameters.
-		unset($searchQuery['id'], $searchQuery['_route']);
+		$responseData['_performance'] = $this->ultraFastPerformance(queryParams: $queryParams, startTime: $startTime, timings: $timings);
 
-		$timings['catalog_context'] = ((microtime(true) - $catalogContextStart) * 1000);
+		return $responseData;
+	}//end getLocalPublicationsUltraFast()
 
-		// ObjectService timing.
-		$objectServiceStart = microtime(true);
+	/**
+	 * The empty first-page answer of a listing that refuses to search.
+	 *
+	 * @param array $pagination The limit, page and offset of the request.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function emptyListingPage(array $pagination): array {
+		return [
+			'results' => [],
+			'total' => 0,
+			'limit' => $pagination['limit'],
+			'offset' => $pagination['offset'],
+			'page' => $pagination['page'],
+			'pages' => 1,
+		];
+	}//end emptyListingPage()
 
-		// Call ObjectService directly - bypass all middleware. RBAC governs visibility
-		// (_rbac: true); _multitenancy: false so cross-org public reads resolve, matching
-		// searchPublications(). No extra published filtering — the schemas' conditional
-		// public-read rules (with $now) already gate published-vs-draft for anonymous callers.
-		$objectService = $this->getObjectService();
-		$result = $this->searchObjectsWithinScope(
-			objectService: $objectService,
-			query: $searchQuery,
+	/**
+	 * The catalog register/schema union for the ultra-fast path, failing closed on a lookup error.
+	 *
+	 * A failing catalog lookup must not fall back to the configured catalog
+	 * register/schema (WOO-581): that would search the catalog schema itself.
+	 *
+	 * @return array{registers: array, schemas: array}
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function readUltraFastCatalogContext(): array {
+		try {
+			return $this->getCatalogFilters();
+		} catch (\Exception $e) {
+			$this->availableRegisters = [];
+			$this->availableSchemas = [];
+
+			return [
+				'registers' => [],
+				'schemas' => [],
+			];
+		}
+	}//end readUltraFastCatalogContext()
+
+	/**
+	 * Search the catalog union directly on ObjectService, bypassing searchPublications().
+	 *
+	 * @param array $queryParams    The request query.
+	 * @param array $catalogContext The guarded catalog register/schema union.
+	 *
+	 * @return array The ObjectService result.
+	 *
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function searchUltraFast(array $queryParams, array $catalogContext): array {
+		return $this->searchObjectsWithinScope(
+			objectService: $this->getObjectService(),
+			query: $this->buildUltraFastQuery(queryParams: $queryParams),
 			registers: $catalogContext['registers'],
 			schemas: $catalogContext['schemas']
 		);
+	}//end searchUltraFast()
 
-		$timings['objectservice'] = ((microtime(true) - $objectServiceStart) * 1000);
+	/**
+	 * The ObjectService query of the ultra-fast path.
+	 *
+	 * The scope is the guarded catalog union, never the caller's (WOO-581): OR's facet
+	 * path reads `@self.schemas ?? _schemas` first, so caller keys are stripped.
+	 *
+	 * @param array $queryParams The request query.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+	 */
+	private function buildUltraFastQuery(array $queryParams): array {
+		$searchQuery = CallerScope::strip(query: $queryParams);
+		$searchQuery['_includeDeleted'] = false;
+		unset($searchQuery['id'], $searchQuery['_route']);
 
-		// Response building timing.
-		$responseStart = microtime(true);
+		return $searchQuery;
+	}//end buildUltraFastQuery()
 
-		// Handle virtual field facet processing if needed (before unwrapping).
-		$reqDirFacets = isset($queryParams['_facets']['@self']['directory']);
-		$reqCatFacets = isset($queryParams['_facets']['@self']['catalogs']);
-
-		if (isset($result['facets']) === true && ($reqDirFacets === true || $reqCatFacets === true)) {
-			// Need to unwrap facets first, then add virtual fields, then the unwrapping logic will handle it consistently.
-			$facetsForProcessing = $result['facets'];
-			if (isset($facetsForProcessing['facets']) === true && is_array($facetsForProcessing['facets']) === true) {
-				$facetsForProcessing = $facetsForProcessing['facets'];
-			}
-
-			$facetsForProcessing = $this->addVirtualFieldFacets(
-				existingFacets: $facetsForProcessing,
-				inclDirFacets: $reqDirFacets,
-				inclCatFacets: $reqCatFacets
-			);
-			$result['facets'] = $facetsForProcessing;
-		}
-
-		// Skip filtering for maximum performance if requested.
-		$skipFiltering = isset($queryParams['_skip_filtering']) && $queryParams['_skip_filtering'] !== 'false';
-
-		$filteredResults = ($result['results'] ?? []);
-		if ($skipFiltering === false) {
-			// Filter unwanted properties from results (minimal processing).
-			$filteredResults = $this->filterUnwantedProperties(objects: $filteredResults);
-		}
-
-		// Calculate pagination info.
-		$totalResults = ($result['total'] ?? 0);
-		$totalPages = 1;
-		if ($limit > 0) {
-			$totalPages = max(1, ceil($totalResults / $limit));
-		}
-
-		// Build minimal response structure.
-		$responseData = [
-			'results' => $filteredResults,
-			'total' => $totalResults,
-			'limit' => $limit,
-			'offset' => $offset,
-			'page' => $page,
-			'pages' => $totalPages,
+	/**
+	 * Read the ultra-fast switches: skip result filtering, and the requested virtual facets.
+	 *
+	 * @param array $queryParams The request query.
+	 *
+	 * @return array{skipFiltering: bool, reqDirFacets: bool, reqCatFacets: bool}
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function readUltraFastSwitches(array $queryParams): array {
+		return [
+			'skipFiltering' => isset($queryParams['_skip_filtering']) && $queryParams['_skip_filtering'] !== 'false',
+			'reqDirFacets' => isset($queryParams['_facets']['@self']['directory']),
+			'reqCatFacets' => isset($queryParams['_facets']['@self']['catalogs']),
 		];
+	}//end readUltraFastSwitches()
 
-		// Add pagination links only if needed.
-		if ($page < $totalPages) {
-			$nextParams = $requestParams;
-			$nextParams['_page'] = ($page + 1);
-			$responseData['next'] = $baseUrl . '?' . http_build_query($nextParams);
+	/**
+	 * Build the ultra-fast listing envelope from an ObjectService result.
+	 *
+	 * @param array $result      The ObjectService result.
+	 * @param array $queryParams The request query.
+	 * @param array $pageContext Pagination, request params and base URL.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function buildUltraFastResponse(array $result, array $queryParams, array $pageContext): array {
+		$switches = $this->readUltraFastSwitches(queryParams: $queryParams);
+
+		$results = ($result['results'] ?? []);
+		if ($switches['skipFiltering'] === false) {
+			$results = $this->filterUnwantedProperties(objects: $results);
 		}
 
-		if ($page > 1) {
-			$prevParams = $requestParams;
-			$prevParams['_page'] = ($page - 1);
-			$responseData['prev'] = $baseUrl . '?' . http_build_query($prevParams);
-		}
-
-		// Add facets if present (already processed and unwrapped above if needed).
+		$responseData = $this->buildListingPage(results: $results, total: ($result['total'] ?? 0), offset: $pageContext['offset'], context: $pageContext);
 		if (isset($result['facets']) === true) {
-			$facetsData = $result['facets'];
-			// Only unwrap if virtual field processing didn't already handle it.
-			if ($reqDirFacets === false && $reqCatFacets === false) {
-				// Check if facets are nested and unwrap if needed (same logic as original).
-				if (isset($facetsData['facets']) === true && is_array($facetsData['facets']) === true) {
-					$facetsData = $facetsData['facets'];
-				}
-			}
-
-			$responseData['facets'] = $facetsData;
+			$responseData = $this->withListingFacets(
+				responseData: $responseData,
+				facets: $this->unwrapFacets(facets: $result['facets']),
+				context: $switches
+			);
 		}
 
 		if (isset($result['facetable']) === true) {
 			$responseData['facetable'] = $result['facetable'];
 		}
 
-		$timings['response'] = ((microtime(true) - $responseStart) * 1000);
+		return $responseData;
+	}//end buildUltraFastResponse()
 
-		// Performance monitoring.
-		$executionTime = ((microtime(true) - $startTime) * 1000);
-		$responseData['_performance'] = [
-			'execution_time_ms' => round($executionTime, 2),
+	/**
+	 * The `_performance` block of the ultra-fast path.
+	 *
+	 * @param array $queryParams The request query.
+	 * @param float $startTime   The request start time.
+	 * @param array $timings     The measured phase timings.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function ultraFastPerformance(array $queryParams, float $startTime, array $timings): array {
+		$switches = $this->readUltraFastSwitches(queryParams: $queryParams);
+
+		return [
+			'execution_time_ms' => round($this->elapsedMs(since: $startTime), 2),
 			'fast_path' => true,
 			'ultra_fast_path' => true,
 			'include_catalogs' => false,
 			'cached_catalogs' => false,
 			'bypassed_middleware' => true,
-			'skipped_filtering' => $skipFiltering,
-			'processed_virtual_facets' => $reqDirFacets || $reqCatFacets,
+			'skipped_filtering' => $switches['skipFiltering'],
+			'processed_virtual_facets' => $switches['reqDirFacets'] || $switches['reqCatFacets'],
 			'cached_catalog_filters' => isset($this->cachedCatalogFilters['all']),
-
 			'timings' => $timings,
 		];
-
-		return $responseData;
-	}//end getLocalPublicationsUltraFast()
+	}//end ultraFastPerformance()
 
 	/**
 	 * Get local catalog information for adding to publication @self.catalogs property.
@@ -2411,63 +2500,24 @@ class PublicationService {
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	private function getLocalCatalogs(): array {
-		// Return cached result if available.
 		if ($this->cachedLocalCatalogs !== null) {
 			return $this->cachedLocalCatalogs;
 		}
 
 		try {
-			// Get catalog configuration from settings.
-			$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-			$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-			if (empty($catalogSchema) === true || empty($catalogRegister) === true) {
+			$query = $this->localCatalogQuery();
+			if ($query === null) {
 				return [];
 			}
 
-			// Setup query for finding catalogs.
-			$query = [
-				'@self' => [
-					'schema' => $catalogSchema,
-					'register' => $catalogRegister,
-				],
-			];
-
-			// Get all catalogs using ObjectService.
-			$objectService = $this->getObjectService();
-			$catalogs = $objectService->searchObjects($query);
-
-			// Convert catalog objects to arrays and filter for public use.
 			$catalogArray = [];
-			foreach ($catalogs as $catalog) {
-				$catalogData = $catalog;
-				if ($catalog instanceof \OCP\AppFramework\Db\Entity) {
-					$catalogData = $catalog->jsonSerialize();
-				}
-
-				// Extract the relevant catalog information. `slug` is
-				// authoritative for URL routing on both sides of the federation
-				// (see FederationSearch.onResultClick: `#/publications/<slug>/<id>`)
-				// — omitting it breaks click-through on any peer consuming this
-				// response because the client falls back to the peer app-root
-				// rather than the specific publication detail page (WOO-522).
-				$catalogInfo = [
-					'id' => ($catalogData['id'] ?? ''),
-					'slug' => ($catalogData['slug'] ?? $catalogData['@self']['slug'] ?? ''),
-					'title' => ($catalogData['title'] ?? 'Local Catalog'),
-					'summary' => ($catalogData['summary'] ?? 'Local catalog instance'),
-					'description' => $catalogData['description'] ?? null,
-					'organization' => $catalogData['organization'] ?? null,
-					'listed' => $catalogData['listed'] ?? false,
-				];
-
-				// Only include non-empty catalog info.
+			foreach ($this->getObjectService()->searchObjects($query) as $catalog) {
+				$catalogInfo = $this->localCatalogInfo(catalog: $catalog);
 				if (empty($catalogInfo['id']) === false) {
 					$catalogArray[] = $catalogInfo;
 				}
-			}//end foreach
+			}
 
-			// Cache the result before returning.
 			$this->cachedLocalCatalogs = $catalogArray;
 			return $catalogArray;
 		} catch (\Exception $e) {
@@ -2477,6 +2527,54 @@ class PublicationService {
 		}//end try
 
 	}//end getLocalCatalogs()
+
+	/**
+	 * The search query for this instance's catalogs.
+	 *
+	 * @return array|null The query, or null when the catalog schema or register is not configured.
+	 */
+	private function localCatalogQuery(): ?array {
+		$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+		if (empty($catalogSchema) === true || empty($catalogRegister) === true) {
+			return null;
+		}
+
+		return [
+			'@self' => [
+				'schema' => $catalogSchema,
+				'register' => $catalogRegister,
+			],
+		];
+	}//end localCatalogQuery()
+
+	/**
+	 * The public summary of one local catalog.
+	 *
+	 * `slug` is authoritative for URL routing on both sides of the federation
+	 * (see FederationSearch.onResultClick: `#/publications/<slug>/<id>`); a peer
+	 * without it falls back to the app root instead of the publication (WOO-522).
+	 *
+	 * @param mixed $catalog The catalog entity or its data.
+	 *
+	 * @return array The catalog's id, slug, title, summary, description, organization and listed flag.
+	 */
+	private function localCatalogInfo(mixed $catalog): array {
+		$catalogData = $catalog;
+		if ($catalog instanceof \OCP\AppFramework\Db\Entity) {
+			$catalogData = $catalog->jsonSerialize();
+		}
+
+		return [
+			'id' => ($catalogData['id'] ?? ''),
+			'slug' => ($catalogData['slug'] ?? $catalogData['@self']['slug'] ?? ''),
+			'title' => ($catalogData['title'] ?? 'Local Catalog'),
+			'summary' => ($catalogData['summary'] ?? 'Local catalog instance'),
+			'description' => $catalogData['description'] ?? null,
+			'organization' => $catalogData['organization'] ?? null,
+			'listed' => $catalogData['listed'] ?? false,
+		];
+	}//end localCatalogInfo()
 
 	/**
 	 * Simple merge function for facets data from multiple sources.
@@ -2522,50 +2620,11 @@ class PublicationService {
 
 		// Add directory facet for filtering by catalog source
 		// This will be populated dynamically based on available directories.
-		$mergedFacetable['@self']['directory'] = [
-			'type' => 'categorical',
-			'description' => 'Directory/catalog source of the publication',
-			'facet_types' => ['terms'],
-			'has_labels' => true,
-			'sample_values' => [
-				[
-					'value' => 'local',
-					'label' => 'Local OpenCatalogi',
-					'count' => 1,
-				],
-				[
-					'value' => 'directory.opencatalogi.nl',
-					'label' => 'OpenCatalogi Directory',
-					'count' => 1,
-				],
-				[
-					'value' => 'dimpact.commonground.nu',
-					'label' => 'Dimpact',
-					'count' => 1,
-				],
-			],
-		];
+		$mergedFacetable['@self']['directory'] = self::DIRECTORY_FACET;
 
 		// Add catalogs facet for filtering by catalog
 		// This will be populated dynamically based on available catalogs.
-		$mergedFacetable['@self']['catalogs'] = [
-			'type' => 'categorical',
-			'description' => 'Catalog that contains the publication',
-			'facet_types' => ['terms'],
-			'has_labels' => true,
-			'sample_values' => [
-				[
-					'value' => 'default',
-					'label' => 'Default Catalog',
-					'count' => 1,
-				],
-				[
-					'value' => 'test-catalog',
-					'label' => 'Test Catalog',
-					'count' => 1,
-				],
-			],
-		];
+		$mergedFacetable['@self']['catalogs'] = self::CATALOGS_FACET;
 
 		return $mergedFacetable;
 	}//end mergeFacetableData()
@@ -2730,38 +2789,18 @@ class PublicationService {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getFederatedPublication(string $id, array $queryParams = []): array {
-		// Try to get the publication locally first.
 		$localResponse = $this->show(id: $id);
 		$localData = json_decode($localResponse->render(), true);
 
-		// If found locally, return it (unless we want to also search federally for additional data).
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
+
 		if ($localResponse->getStatus() === 200 && empty($localData) === false) {
-			// Check if aggregation is enabled for enrichment.
-			$aggregate = ($queryParams['_aggregate'] ?? 'true');
-			$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-			if ($shouldAggregate === false) {
-				return [
-					'success' => true,
-					'data' => $localData,
-					'status' => 200,
-				];
-			}
-
-			// Add local catalog information to @self.catalogs for local publications
-			// @todo This adds ~200ms overhead - consider making optional via query parameter.
-			if (isset($localData['@self']) === true && is_array($localData['@self']) === true) {
-				$localCatalogs = $this->getLocalCatalogs();
-				if (empty($localCatalogs) === false) {
-					$localData['@self']['catalogs'] = $localCatalogs;
-				}
+			if ($shouldAggregate === true) {
+				$localData = $this->withLocalCatalogs(publication: $localData);
 			}
 
 			return [
@@ -2769,79 +2808,102 @@ class PublicationService {
 				'data' => $localData,
 				'status' => 200,
 			];
-		}//end if
-
-		// Check if aggregation is enabled for federation search.
-		$aggregate = ($queryParams['_aggregate'] ?? 'true');
-		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-		// If aggregation is disabled and not found locally, return 404.
-		if ($shouldAggregate === false) {
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
 		}
 
-		try {
-			// Search in federated catalogs.
-			$guzzleConfig = [];
+		if ($shouldAggregate === false) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
 
-			// Allow timeout configuration via query parameter.
-			if (isset($queryParams['timeout']) === true) {
-				$timeout = (int)$queryParams['timeout'];
-				if ($timeout > 0 && $timeout <= 120) {
-					// Max 2 minutes.
-					$guzzleConfig['timeout'] = $timeout;
-				}
-			}
-
-			// Allow connect timeout configuration via query parameter.
-			if (isset($queryParams['connect_timeout']) === true) {
-				$connectTimeout = (int)$queryParams['connect_timeout'];
-				if ($connectTimeout > 0 && $connectTimeout <= 30) {
-					// Max 30 seconds.
-					$guzzleConfig['connect_timeout'] = $connectTimeout;
-				}
-			}
-
-			// Pass through current query parameters (DirectoryService will handle _aggregate and _extend).
-			$guzzleConfig['query_params'] = $queryParams;
-
-			// Get publication from directory service.
-			$federatedResult = $this->directoryService->getPublication($id, $guzzleConfig);
-
-			if (empty($federatedResult) === false && isset($federatedResult['result']) === true) {
-				// Merge the result with source information.
-				$responseData = $federatedResult['result'];
-				$responseData['sources'] = ($federatedResult['source'] ?? []);
-
-				// `federated` marks a peer's publication: it is not this instance's to describe.
-				return [
-					'success' => true,
-					'data' => $responseData,
-					'status' => 200,
-					'federated' => true,
-				];
-			}
-
-			// Not found in federated catalogs either, return 404.
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
-		} catch (\Exception $e) {
-			// If federation search fails, return the original local response (likely 404).
-			return [
-				'success' => false,
-				'error' => 'Publication not found',
-				'status' => 404,
-			];
-		}//end try
-
+		return $this->fetchFederatedPublication(id: $id, queryParams: $queryParams);
 	}//end getFederatedPublication()
+
+	/**
+	 * Add this instance's catalogs to the `@self.catalogs` of a local publication.
+	 *
+	 * @param array $publication The local publication.
+	 *
+	 * @return array The publication, with its catalogs when it has an `@self` and any catalog exists.
+	 *
+	 * @todo This adds ~200ms overhead - consider making optional via query parameter.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function withLocalCatalogs(array $publication): array {
+		if (isset($publication['@self']) === false || is_array($publication['@self']) === false) {
+			return $publication;
+		}
+
+		$localCatalogs = $this->getLocalCatalogs();
+		if (empty($localCatalogs) === false) {
+			$publication['@self']['catalogs'] = $localCatalogs;
+		}
+
+		return $publication;
+	}//end withLocalCatalogs()
+
+	/**
+	 * Look a publication up in the federated catalogs.
+	 *
+	 * A failing lookup reads as not found.
+	 *
+	 * @param string $id The ID of the publication.
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return array The peer's publication with its sources, marked `federated`, or the not-found result.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function fetchFederatedPublication(string $id, array $queryParams): array {
+		try {
+			$federatedResult = $this->directoryService->getPublication($id, $this->federationRequestConfig(queryParams: $queryParams));
+		} catch (\Exception $e) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
+
+		if (empty($federatedResult) === true || isset($federatedResult['result']) === false) {
+			return self::PUBLICATION_NOT_FOUND;
+		}
+
+		$responseData = $federatedResult['result'];
+		$responseData['sources'] = ($federatedResult['source'] ?? []);
+
+		// `federated` marks a peer's publication: it is not this instance's to describe.
+		return [
+			'success' => true,
+			'data' => $responseData,
+			'status' => 200,
+			'federated' => true,
+		];
+	}//end fetchFederatedPublication()
+
+	/**
+	 * The request config for a federated lookup.
+	 *
+	 * `timeout` (at most 120 s) and `connect_timeout` (at most 30 s) are taken from
+	 * the query when positive and in bounds; the query itself is passed through for
+	 * DirectoryService to read `_aggregate` and `_extend` from.
+	 *
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return array The Guzzle config.
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	private function federationRequestConfig(array $queryParams): array {
+		$guzzleConfig = [];
+		foreach (['timeout' => 120, 'connect_timeout' => 30] as $option => $maximum) {
+			if (isset($queryParams[$option]) === true) {
+				$seconds = (int)$queryParams[$option];
+				if ($seconds > 0 && $seconds <= $maximum) {
+					$guzzleConfig[$option] = $seconds;
+				}
+			}
+		}
+
+		$guzzleConfig['query_params'] = $queryParams;
+
+		return $guzzleConfig;
+	}//end federationRequestConfig()
 
 	/**
 	 * Get publications that use this publication with federation support
@@ -2864,78 +2926,53 @@ class PublicationService {
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getFederatedUsed(string $id, array $queryParams = []): array {
-		// Check if aggregation is enabled (default: true, unless explicitly set to false).
-		$aggregate = ($queryParams['_aggregate'] ?? 'true');
-		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-		// Get local results first.
-		$localResponse = $this->used(id: $id);
-		$localData = json_decode($localResponse->render(), true);
-
-		// If aggregation is disabled, return only local results.
-		if ($shouldAggregate === false) {
-			return [
-				'success' => true,
-				'data' => $localData,
-				'status' => 200,
-			];
+		$localData = json_decode($this->used(id: $id)->render(), true);
+		if ($this->aggregationRequested(queryParams: $queryParams) === false) {
+			return $this->successResult(data: $localData);
 		}
 
 		try {
-			// Get optional Guzzle configuration from query parameters.
-			$guzzleConfig = [];
-
-			// Allow timeout configuration via query parameter.
-			if (isset($queryParams['timeout']) === true) {
-				$timeout = (int)$queryParams['timeout'];
-				if ($timeout > 0 && $timeout <= 120) {
-					// Max 2 minutes.
-					$guzzleConfig['timeout'] = $timeout;
-				}
-			}
-
-			// Allow connect timeout configuration via query parameter.
-			if (isset($queryParams['connect_timeout']) === true) {
-				$connectTimeout = (int)$queryParams['connect_timeout'];
-				if ($connectTimeout > 0 && $connectTimeout <= 30) {
-					// Max 30 seconds.
-					$guzzleConfig['connect_timeout'] = $connectTimeout;
-				}
-			}
-
-			// Pass through current query parameters (DirectoryService will handle _aggregate and _extend).
-			$guzzleConfig['query_params'] = $queryParams;
-
-			// Get federated results from directory service.
-			$federatedResults = $this->directoryService->getUsed($id, $guzzleConfig);
-
-			// Merge local and federated results.
-			$mergedResults = [
-				'results' => array_merge(
-					($localData['results'] ?? []),
-					($federatedResults['results'] ?? [])
-				),
-				'sources' => array_merge(
-					['local' => 'Local OpenCatalogi instance'],
-					($federatedResults['sources'] ?? [])
-				),
-			];
-
-			return [
-				'success' => true,
-				'data' => $mergedResults,
-				'status' => 200,
-			];
+			$federatedResults = $this->directoryService->getUsed($id, $this->federationRequestConfig(queryParams: $queryParams));
 		} catch (\Exception $e) {
 			// If federation fails, return local results.
-			return [
-				'success' => true,
-				'data' => $localData,
-				'status' => 200,
-			];
-		}//end try
+			return $this->successResult(data: $localData);
+		}
+
+		return $this->successResult(
+			data: [
+				'results' => array_merge(($localData['results'] ?? []), ($federatedResults['results'] ?? [])),
+				'sources' => array_merge(['local' => 'Local OpenCatalogi instance'], ($federatedResults['sources'] ?? [])),
+			]
+		);
 
 	}//end getFederatedUsed()
+
+	/**
+	 * Whether the query asks for federated results: `_aggregate` is on unless it is `false` or `0`.
+	 *
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return bool True when peers should be asked too.
+	 */
+	private function aggregationRequested(array $queryParams): bool {
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		return $aggregate !== 'false' && $aggregate !== '0';
+	}//end aggregationRequested()
+
+	/**
+	 * The successful result shape of a federated lookup.
+	 *
+	 * @param mixed $data The response data.
+	 *
+	 * @return array The result with status 200.
+	 */
+	private function successResult(mixed $data): array {
+		return [
+			'success' => true,
+			'data' => $data,
+			'status' => 200,
+		];
+	}//end successResult()
 
 	/**
 	 * Get publications that this publication uses with federation support

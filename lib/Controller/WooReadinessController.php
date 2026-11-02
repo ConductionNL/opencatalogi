@@ -29,8 +29,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
-use OCA\OpenCatalogi\Service\WooReadinessService;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -49,16 +49,16 @@ class WooReadinessController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param WooReadinessService $wooReadinessService The readiness self-check service.
-	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a check met, or nothing when absent.
+	 * @param HarvesterReadinessServiceInterface $wooReadinessService The readiness self-check service.
+	 * @param ConnectionReporterInterface|null $connectionReporter Tells integriq what a check met, or nothing when absent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly WooReadinessService $wooReadinessService,
-		private readonly ?ConnectionReporter $connectionReporter = null,
+		private readonly HarvesterReadinessServiceInterface $wooReadinessService,
+		private readonly ?ConnectionReporterInterface $connectionReporter = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

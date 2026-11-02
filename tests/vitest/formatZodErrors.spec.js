@@ -9,6 +9,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
+import { z } from 'zod'
 import { createZodErrorHandler } from '../../src/services/formatZodErrors.js'
 
 // A representative Zod-style failure result with three issues across two paths.
@@ -130,5 +131,19 @@ describe('createZodErrorHandler — success path', () => {
 		expect(h.errorSummary).toEqual({})
 		expect(h.getError('anything')).toBeUndefined()
 		expect(h.getErrors('anything')).toEqual([])
+	})
+})
+
+describe('createZodErrorHandler on a real zod result', () => {
+	it('maps a failed safeParse to path, message, code and type', () => {
+		const result = z
+			.object({ name: z.string().min(1, 'naam is verplicht') })
+			.safeParse({ name: '' })
+		const h = createZodErrorHandler(result)
+		expect(h.success).toBe(false)
+		expect(h.getError('name')).toBe('naam is verplicht')
+		expect(h.fieldSpecificErrors).toEqual([
+			{ path: 'name', message: 'naam is verplicht', code: 'too_small', type: 'string' },
+		])
 	})
 })

@@ -31,7 +31,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
+use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
 use OCA\OpenRegister\Event\ObjectUpdatedEvent;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventListener;
@@ -72,12 +72,12 @@ class PortalAccountRemovedListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param CitizenCollectionService $collections Deletes the resident's objects.
+	 * @param CitizenCollectionServiceInterface $collections Deletes the resident's objects.
 	 * @param ContainerInterface       $container   Resolves OpenRegister's mappers.
 	 * @param LoggerInterface          $logger      The logger.
 	 */
 	public function __construct(
-		private readonly CitizenCollectionService $collections,
+		private readonly CitizenCollectionServiceInterface $collections,
 		private readonly ContainerInterface $container,
 		private readonly LoggerInterface $logger,
 	) {
@@ -99,33 +99,95 @@ class PortalAccountRemovedListener implements IEventListener {
 		}
 
 		try {
-			$old = $event->getOldObject();
-			$new = $event->getNewObject();
-			if ($old === null || $this->isPortalAccount(register: (string)$new->getRegister(), schema: (string)$new->getSchema()) === false) {
-				return;
-			}
-
-			$newData = $new->getObject();
-			$oldData = $old->getObject();
-			if (($newData['status'] ?? null) !== self::REMOVED || ($oldData['status'] ?? null) === self::REMOVED) {
-				return;
-			}
-
-			$subjectRef = (string)($newData['subjectRef'] ?? '');
-			if ($subjectRef === '') {
-				$subjectRef = (string)($oldData['subjectRef'] ?? '');
-			}
-
-			$deleted = $this->collections->removeEverythingOf(owner: $subjectRef);
-			$this->logger->info('OpenCatalogi: removed a closed portal account\'s dossiers and saved searches', ['deleted' => $deleted]);
+			$this->cleanUpAfter(event: $event);
 		} catch (Throwable $e) {
 			$this->logger->warning(
 				'OpenCatalogi: could not clean up after a removed portal account; the removal itself stands',
 				['reason' => $e->getMessage()]
 			);
-		}//end try
+		}
 
 	}//end handle()
+
+	/**
+	 * Delete the resident's dossiers and saved searches when this update removed their account.
+	 *
+	 * @param ObjectUpdatedEvent $event The event.
+	 *
+	 * @return void
+	 */
+	private function cleanUpAfter(ObjectUpdatedEvent $event): void {
+		$subjectRef = $this->removedAccountOwner(event: $event);
+		if ($subjectRef === null) {
+			return;
+		}
+
+		$deleted = $this->collections->removeEverythingOf(owner: $subjectRef);
+		$this->logger->info('OpenCatalogi: removed a closed portal account\'s dossiers and saved searches', ['deleted' => $deleted]);
+
+	}//end cleanUpAfter()
+
+	/**
+	 * The subject of a portal account this update moved to removed.
+	 *
+	 * @param ObjectUpdatedEvent $event The event.
+	 *
+	 * @return string|null The account's subjectRef, or null when the update is no account removal.
+	 */
+	private function removedAccountOwner(ObjectUpdatedEvent $event): ?string {
+		$old = $event->getOldObject();
+		$new = $event->getNewObject();
+		if ($old === null || $this->isPortalAccount(register: (string)$new->getRegister(), schema: (string)$new->getSchema()) === false) {
+			return null;
+		}
+
+		$newData = $new->getObject();
+		$oldData = $old->getObject();
+		if ($this->isRemoval(newData: $newData, oldData: $oldData) === false) {
+			return null;
+		}
+
+		$subjectRef = $this->subjectRefOf(newData: $newData, oldData: $oldData);
+		if ($subjectRef === '') {
+			$this->logger->warning('OpenCatalogi: a portal account removal did not keep its subject; nothing was deleted');
+			return null;
+		}
+
+		return $subjectRef;
+
+	}//end removedAccountOwner()
+
+	/**
+	 * Whether the status moved to removed with this update.
+	 *
+	 * @param array<string, mixed> $newData The account after the update.
+	 * @param array<string, mixed> $oldData The account before it.
+	 *
+	 * @return bool
+	 */
+	private function isRemoval(array $newData, array $oldData): bool {
+		return ($newData['status'] ?? null) === self::REMOVED && ($oldData['status'] ?? null) !== self::REMOVED;
+
+	}//end isRemoval()
+
+	/**
+	 * The account's stored subjectRef, when the update leaves it unchanged.
+	 *
+	 * @param array<string, mixed> $newData The account after the update.
+	 * @param array<string, mixed> $oldData The account before it.
+	 *
+	 * @return string The subjectRef, empty when there is none or the update changes it.
+	 */
+	private function subjectRefOf(array $newData, array $oldData): string {
+		$subjectRef = (string)($oldData['subjectRef'] ?? '');
+		$newSubject = (string)($newData['subjectRef'] ?? '');
+		if ($newSubject !== '' && $newSubject !== $subjectRef) {
+			return '';
+		}
+
+		return $subjectRef;
+
+	}//end subjectRefOf()
 
 	/**
 	 * Whether a register and schema, as ids or slugs, are portaliq's accounts.

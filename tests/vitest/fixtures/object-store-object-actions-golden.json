@@ -1,0 +1,4492 @@
+{
+	"publishObject [] item ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"publish_o1",
+				true
+			],
+			[
+				"error",
+				"publish_o1",
+				null
+			],
+			[
+				"loading",
+				"publish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"publishObject [] item notOk": {
+		"thrown": "Failed to publish object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"publish_o1",
+				true
+			],
+			[
+				"error",
+				"publish_o1",
+				null
+			],
+			[
+				"error",
+				"publish_o1",
+				"Failed to publish object: 409 Conflict"
+			],
+			[
+				"loading",
+				"publish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error publishing object:",
+				"Failed to publish object: 409 Conflict"
+			]
+		]
+	},
+	"publishObject [] item network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"publish_o1",
+				true
+			],
+			[
+				"error",
+				"publish_o1",
+				null
+			],
+			[
+				"error",
+				"publish_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"publish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error publishing object:",
+				"offline"
+			]
+		]
+	},
+	"publishObject [] selfId ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"publish_o1",
+				true
+			],
+			[
+				"error",
+				"publish_o1",
+				null
+			],
+			[
+				"loading",
+				"publish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"publishObject [] selfId notOk": {
+		"thrown": "Failed to publish object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"publish_o1",
+				true
+			],
+			[
+				"error",
+				"publish_o1",
+				null
+			],
+			[
+				"error",
+				"publish_o1",
+				"Failed to publish object: 409 Conflict"
+			],
+			[
+				"loading",
+				"publish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error publishing object:",
+				"Failed to publish object: 409 Conflict"
+			]
+		]
+	},
+	"publishObject [] selfId network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"publish_o1",
+				true
+			],
+			[
+				"error",
+				"publish_o1",
+				null
+			],
+			[
+				"error",
+				"publish_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"publish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error publishing object:",
+				"offline"
+			]
+		]
+	},
+	"publishObject [] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"publishObject [] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"publishObject [] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"publishObject [] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"publishObject [] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"publishObject [] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"depublishObject [] item ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"depublish_o1",
+				true
+			],
+			[
+				"error",
+				"depublish_o1",
+				null
+			],
+			[
+				"loading",
+				"depublish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"depublishObject [] item notOk": {
+		"thrown": "Failed to depublish object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"depublish_o1",
+				true
+			],
+			[
+				"error",
+				"depublish_o1",
+				null
+			],
+			[
+				"error",
+				"depublish_o1",
+				"Failed to depublish object: 409 Conflict"
+			],
+			[
+				"loading",
+				"depublish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error depublishing object:",
+				"Failed to depublish object: 409 Conflict"
+			]
+		]
+	},
+	"depublishObject [] item network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"depublish_o1",
+				true
+			],
+			[
+				"error",
+				"depublish_o1",
+				null
+			],
+			[
+				"error",
+				"depublish_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"depublish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error depublishing object:",
+				"offline"
+			]
+		]
+	},
+	"depublishObject [] selfId ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"depublish_o1",
+				true
+			],
+			[
+				"error",
+				"depublish_o1",
+				null
+			],
+			[
+				"loading",
+				"depublish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"depublishObject [] selfId notOk": {
+		"thrown": "Failed to depublish object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"depublish_o1",
+				true
+			],
+			[
+				"error",
+				"depublish_o1",
+				null
+			],
+			[
+				"error",
+				"depublish_o1",
+				"Failed to depublish object: 409 Conflict"
+			],
+			[
+				"loading",
+				"depublish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error depublishing object:",
+				"Failed to depublish object: 409 Conflict"
+			]
+		]
+	},
+	"depublishObject [] selfId network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"depublish_o1",
+				true
+			],
+			[
+				"error",
+				"depublish_o1",
+				null
+			],
+			[
+				"error",
+				"depublish_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"depublish_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error depublishing object:",
+				"offline"
+			]
+		]
+	},
+	"depublishObject [] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"depublishObject [] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"depublishObject [] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"depublishObject [] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"depublishObject [] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"depublishObject [] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"unlockObject [] item ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"unlock_o1",
+				true
+			],
+			[
+				"error",
+				"unlock_o1",
+				null
+			],
+			[
+				"loading",
+				"unlock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"unlockObject [] item notOk": {
+		"thrown": "Failed to unlock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"unlock_o1",
+				true
+			],
+			[
+				"error",
+				"unlock_o1",
+				null
+			],
+			[
+				"error",
+				"unlock_o1",
+				"Failed to unlock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"unlock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error unlocking object:",
+				"Failed to unlock object: 409 Conflict"
+			]
+		]
+	},
+	"unlockObject [] item network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"unlock_o1",
+				true
+			],
+			[
+				"error",
+				"unlock_o1",
+				null
+			],
+			[
+				"error",
+				"unlock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"unlock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error unlocking object:",
+				"offline"
+			]
+		]
+	},
+	"unlockObject [] selfId ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"unlock_o1",
+				true
+			],
+			[
+				"error",
+				"unlock_o1",
+				null
+			],
+			[
+				"loading",
+				"unlock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"unlockObject [] selfId notOk": {
+		"thrown": "Failed to unlock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"unlock_o1",
+				true
+			],
+			[
+				"error",
+				"unlock_o1",
+				null
+			],
+			[
+				"error",
+				"unlock_o1",
+				"Failed to unlock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"unlock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error unlocking object:",
+				"Failed to unlock object: 409 Conflict"
+			]
+		]
+	},
+	"unlockObject [] selfId network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"unlock_o1",
+				true
+			],
+			[
+				"error",
+				"unlock_o1",
+				null
+			],
+			[
+				"error",
+				"unlock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"unlock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error unlocking object:",
+				"offline"
+			]
+		]
+	},
+	"unlockObject [] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"unlockObject [] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"unlockObject [] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"unlockObject [] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"unlockObject [] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"unlockObject [] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] item ok": {
+		"returned": {
+			"id": "o1",
+			"saved": true
+		},
+		"fetchCalls": [],
+		"calls": [
+			[
+				"loading",
+				"validate_o1",
+				true
+			],
+			[
+				"error",
+				"validate_o1",
+				null
+			],
+			[
+				"saveObject",
+				{
+					"id": "o1",
+					"@self": {
+						"register": 7,
+						"schema": {
+							"id": 9
+						}
+					}
+				},
+				{
+					"register": 7,
+					"schema": 9
+				}
+			],
+			[
+				"loading",
+				"validate_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"saved": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] item notOk": {
+		"thrown": "save failed",
+		"fetchCalls": [],
+		"calls": [
+			[
+				"loading",
+				"validate_o1",
+				true
+			],
+			[
+				"error",
+				"validate_o1",
+				null
+			],
+			[
+				"saveObject",
+				{
+					"id": "o1",
+					"@self": {
+						"register": 7,
+						"schema": {
+							"id": 9
+						}
+					}
+				},
+				{
+					"register": 7,
+					"schema": 9
+				}
+			],
+			[
+				"error",
+				"validate_o1",
+				"save failed"
+			],
+			[
+				"loading",
+				"validate_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error validating object:",
+				"save failed"
+			]
+		]
+	},
+	"validateObject [] item network": {
+		"returned": {
+			"id": "o1",
+			"saved": true
+		},
+		"fetchCalls": [],
+		"calls": [
+			[
+				"loading",
+				"validate_o1",
+				true
+			],
+			[
+				"error",
+				"validate_o1",
+				null
+			],
+			[
+				"saveObject",
+				{
+					"id": "o1",
+					"@self": {
+						"register": 7,
+						"schema": {
+							"id": 9
+						}
+					}
+				},
+				{
+					"register": 7,
+					"schema": 9
+				}
+			],
+			[
+				"loading",
+				"validate_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"saved": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] selfId ok": {
+		"returned": {
+			"id": "o1",
+			"saved": true
+		},
+		"fetchCalls": [],
+		"calls": [
+			[
+				"loading",
+				"validate_o1",
+				true
+			],
+			[
+				"error",
+				"validate_o1",
+				null
+			],
+			[
+				"saveObject",
+				{
+					"@self": {
+						"id": "o1",
+						"register": "7",
+						"schema": "9"
+					}
+				},
+				{
+					"register": "7",
+					"schema": "9"
+				}
+			],
+			[
+				"loading",
+				"validate_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"saved": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] selfId notOk": {
+		"thrown": "save failed",
+		"fetchCalls": [],
+		"calls": [
+			[
+				"loading",
+				"validate_o1",
+				true
+			],
+			[
+				"error",
+				"validate_o1",
+				null
+			],
+			[
+				"saveObject",
+				{
+					"@self": {
+						"id": "o1",
+						"register": "7",
+						"schema": "9"
+					}
+				},
+				{
+					"register": "7",
+					"schema": "9"
+				}
+			],
+			[
+				"error",
+				"validate_o1",
+				"save failed"
+			],
+			[
+				"loading",
+				"validate_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error validating object:",
+				"save failed"
+			]
+		]
+	},
+	"validateObject [] selfId network": {
+		"returned": {
+			"id": "o1",
+			"saved": true
+		},
+		"fetchCalls": [],
+		"calls": [
+			[
+				"loading",
+				"validate_o1",
+				true
+			],
+			[
+				"error",
+				"validate_o1",
+				null
+			],
+			[
+				"saveObject",
+				{
+					"@self": {
+						"id": "o1",
+						"register": "7",
+						"schema": "9"
+					}
+				},
+				{
+					"register": "7",
+					"schema": "9"
+				}
+			],
+			[
+				"loading",
+				"validate_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"saved": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"validateObject [] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [] item ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [] item notOk": {
+		"thrown": "Failed to lock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"Failed to lock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"Failed to lock object: 409 Conflict"
+			]
+		]
+	},
+	"lockObject [] item network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"offline"
+			]
+		]
+	},
+	"lockObject [] selfId ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [] selfId notOk": {
+		"thrown": "Failed to lock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"Failed to lock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"Failed to lock object: 409 Conflict"
+			]
+		]
+	},
+	"lockObject [] selfId network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"offline"
+			]
+		]
+	},
+	"lockObject [] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\"] item ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\"}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\"] item notOk": {
+		"thrown": "Failed to lock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\"}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"Failed to lock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"Failed to lock object: 409 Conflict"
+			]
+		]
+	},
+	"lockObject [\"review\"] item network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\"}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"offline"
+			]
+		]
+	},
+	"lockObject [\"review\"] selfId ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\"}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\"] selfId notOk": {
+		"thrown": "Failed to lock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\"}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"Failed to lock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"Failed to lock object: 409 Conflict"
+			]
+		]
+	},
+	"lockObject [\"review\"] selfId network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\"}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"offline"
+			]
+		]
+	},
+	"lockObject [\"review\"] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\"] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\"] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\"] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\"] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\"] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [null,600] item ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [null,600] item notOk": {
+		"thrown": "Failed to lock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"Failed to lock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"Failed to lock object: 409 Conflict"
+			]
+		]
+	},
+	"lockObject [null,600] item network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"offline"
+			]
+		]
+	},
+	"lockObject [null,600] selfId ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [null,600] selfId notOk": {
+		"thrown": "Failed to lock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"Failed to lock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"Failed to lock object: 409 Conflict"
+			]
+		]
+	},
+	"lockObject [null,600] selfId network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"offline"
+			]
+		]
+	},
+	"lockObject [null,600] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [null,600] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [null,600] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [null,600] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [null,600] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [null,600] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\",600] item ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\",\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\",600] item notOk": {
+		"thrown": "Failed to lock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\",\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"Failed to lock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"Failed to lock object: 409 Conflict"
+			]
+		]
+	},
+	"lockObject [\"review\",600] item network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\",\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"offline"
+			]
+		]
+	},
+	"lockObject [\"review\",600] selfId ok": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\",\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1",
+				"updated": true
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\",600] selfId notOk": {
+		"thrown": "Failed to lock object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\",\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"Failed to lock object: 409 Conflict"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"Failed to lock object: 409 Conflict"
+			]
+		]
+	},
+	"lockObject [\"review\",600] selfId network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
+				{
+					"method": "POST",
+					"headers": {
+						"Content-Type": "application/json"
+					},
+					"body": "{\"process\":\"review\",\"duration\":600}"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"lock_o1",
+				true
+			],
+			[
+				"error",
+				"lock_o1",
+				null
+			],
+			[
+				"error",
+				"lock_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"lock_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error locking object:",
+				"offline"
+			]
+		]
+	},
+	"lockObject [\"review\",600] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\",600] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\",600] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\",600] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\",600] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"lockObject [\"review\",600] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject [] item ok": {
+		"returned": true,
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1",
+				{
+					"method": "DELETE"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"delete_o1",
+				true
+			],
+			[
+				"error",
+				"delete_o1",
+				null
+			],
+			[
+				"loading",
+				"delete_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject [] item notOk": {
+		"thrown": "Failed to delete object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1",
+				{
+					"method": "DELETE"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"delete_o1",
+				true
+			],
+			[
+				"error",
+				"delete_o1",
+				null
+			],
+			[
+				"error",
+				"delete_o1",
+				"Failed to delete object: 409 Conflict"
+			],
+			[
+				"loading",
+				"delete_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error deleting object:",
+				"Failed to delete object: 409 Conflict"
+			]
+		]
+	},
+	"deleteObject [] item network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1",
+				{
+					"method": "DELETE"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"delete_o1",
+				true
+			],
+			[
+				"error",
+				"delete_o1",
+				null
+			],
+			[
+				"error",
+				"delete_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"delete_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error deleting object:",
+				"offline"
+			]
+		]
+	},
+	"deleteObject [] selfId ok": {
+		"returned": true,
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1",
+				{
+					"method": "DELETE"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"delete_o1",
+				true
+			],
+			[
+				"error",
+				"delete_o1",
+				null
+			],
+			[
+				"loading",
+				"delete_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject [] selfId notOk": {
+		"thrown": "Failed to delete object: 409 Conflict",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1",
+				{
+					"method": "DELETE"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"delete_o1",
+				true
+			],
+			[
+				"error",
+				"delete_o1",
+				null
+			],
+			[
+				"error",
+				"delete_o1",
+				"Failed to delete object: 409 Conflict"
+			],
+			[
+				"loading",
+				"delete_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error deleting object:",
+				"Failed to delete object: 409 Conflict"
+			]
+		]
+	},
+	"deleteObject [] selfId network": {
+		"thrown": "offline",
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1",
+				{
+					"method": "DELETE"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"delete_o1",
+				true
+			],
+			[
+				"error",
+				"delete_o1",
+				null
+			],
+			[
+				"error",
+				"delete_o1",
+				"offline"
+			],
+			[
+				"loading",
+				"delete_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": [
+			[
+				"Error deleting object:",
+				"offline"
+			]
+		]
+	},
+	"deleteObject [] noSchema ok": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject [] noSchema notOk": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject [] noSchema network": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject [] badIds ok": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject [] badIds notOk": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject [] badIds network": {
+		"thrown": "Could not extract register or schema ID",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject byType": {
+		"returned": true,
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o1",
+				{
+					"method": "DELETE"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"delete_o1",
+				true
+			],
+			[
+				"error",
+				"delete_o1",
+				null
+			],
+			[
+				"loading",
+				"delete_o1",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject byType missing": {
+		"thrown": "Cannot delete publication gone: object not loaded in the store",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"deleteObject null": {
+		"thrown": "Object must have id, register, and schema information",
+		"fetchCalls": [],
+		"calls": [],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	},
+	"publishObject other active": {
+		"returned": {
+			"id": "o1",
+			"updated": true
+		},
+		"fetchCalls": [
+			[
+				"/index.php/apps/openregister/api/objects/7/9/o3/publish",
+				{
+					"method": "POST"
+				}
+			]
+		],
+		"calls": [
+			[
+				"loading",
+				"publish_o3",
+				true
+			],
+			[
+				"error",
+				"publish_o3",
+				null
+			],
+			[
+				"loading",
+				"publish_o3",
+				false
+			]
+		],
+		"activeObjects": {
+			"publication": {
+				"id": "o1"
+			},
+			"catalog": {
+				"id": "c1"
+			}
+		},
+		"selectedObjects": [
+			{
+				"id": "o1"
+			},
+			{
+				"@self": {
+					"id": "o2"
+				}
+			}
+		],
+		"consoleError": []
+	}
+}

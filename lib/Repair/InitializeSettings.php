@@ -24,8 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Repair;
 
-use OCA\OpenCatalogi\AppInfo\Application;
-use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -105,10 +105,26 @@ class InitializeSettings implements IRepairStep {
 		$output->info('Loading OpenCatalogi configuration...');
 		$output->advance(1);
 
+		$this->importConfiguration(output: $output);
+		$this->verifyOutcome(output: $output);
+
+		$output->advance(1);
+		$output->finishProgress();
+
+	}//end run()
+
+	/**
+	 * Import the app's registers, schemas and objects, reporting a failure without throwing.
+	 *
+	 * @param IOutput $output Repair output.
+	 *
+	 * @return void
+	 */
+	private function importConfiguration(IOutput $output): void {
 		try {
 			// Get the settings service and load configuration.
 			// The import is idempotent.
-			$settingsService = $this->container->get(SettingsService::class);
+			$settingsService = $this->container->get(SettingsServiceInterface::class);
 			$result = $settingsService->loadSettings(force: false);
 
 			$registerCount = count($result['registers'] ?? []);
@@ -124,10 +140,20 @@ class InitializeSettings implements IRepairStep {
 			$output->warning('Failed to load configuration: ' . $e->getMessage());
 			$this->logger->error(
 				'OpenCatalogi configuration import threw during the install repair step',
-				['app' => Application::APP_ID, 'exception' => $e]
+				['app' => AppIdentity::APP_ID, 'exception' => $e]
 			);
 		}//end try
 
+	}//end importConfiguration()
+
+	/**
+	 * Warn loudly when the import left the app without register configuration.
+	 *
+	 * @param IOutput $output Repair output.
+	 *
+	 * @return void
+	 */
+	private function verifyOutcome(IOutput $output): void {
 		// VERIFY THE OUTCOME. THE STEP RUNNING IS NOT THE OUTCOME.
 		//
 		// This app shipped a whole release cycle in which the configuration was
@@ -156,14 +182,11 @@ class InitializeSettings implements IRepairStep {
 			$this->logger->error(
 				'OpenCatalogi install completed with no register configuration — '
 				. self::OUTCOME_KEY . ' is still empty after the import repair step.',
-				['app' => Application::APP_ID]
+				['app' => AppIdentity::APP_ID]
 			);
 		}
 
-		$output->advance(1);
-		$output->finishProgress();
-
-	}//end run()
+	}//end verifyOutcome()
 
 
 	/**
@@ -174,6 +197,6 @@ class InitializeSettings implements IRepairStep {
 	 * @spec exclude Outcome probe for the install repair step; reads one config key, no domain behaviour.
 	 */
 	private function configuredAlready(): bool {
-		return $this->config->getValueString(Application::APP_ID, self::OUTCOME_KEY, '') !== '';
+		return $this->config->getValueString(AppIdentity::APP_ID, self::OUTCOME_KEY, '') !== '';
 	}//end configuredAlready()
 }//end class

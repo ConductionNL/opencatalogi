@@ -24,9 +24,9 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -71,10 +71,10 @@ class SearchController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param PublicationService $publicationService The publication service.
+	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IUserSession $userSession The user session.
 	 * @param IL10N $l10n The localization service.
-	 * @param PublicationQueryService $queryService Public search assembly helper (WOO-506).
+	 * @param PublicationQueryServiceInterface $queryService Public search assembly helper (WOO-506).
 	 * @param ContainerInterface $container DI container, to resolve OpenRegister's ObjectService.
 	 * @param IAppManager $appManager The app manager.
 	 * @param LoggerInterface $logger PSR-3 logger.
@@ -84,10 +84,10 @@ class SearchController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
-		private readonly PublicationQueryService $queryService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,
@@ -207,6 +207,11 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::show() refuses an
+	 *   id outside the configured catalog scope (isObjectInCatalogScope()), and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
+	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-a-single-publication-by-id-from-local-or-federated-sources-fed-002
 	 */
 	#[NoAdminRequired]
@@ -230,6 +235,11 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::attachments()
+	 *   refuses an id outside the catalog scope, lists shared files only, and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
+	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-publication-attachments-from-local-or-federated-sources-fed-005
 	 */
 	#[NoAdminRequired]
@@ -252,6 +262,11 @@ class SearchController extends Controller {
 	 * @return DataDownloadResponse|JSONResponse The download response.
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::download() refuses
+	 *   an id outside the catalog scope, drops restricted files (FileRestrictionGuard), and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
 	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-download-publication-files-from-local-or-federated-sources-fed-006
 	 */
@@ -277,6 +292,11 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::uses() refuses an
+	 *   id outside the catalog scope and resolves related objects with RBAC on, and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
+	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-outgoing-relations-uses-with-federation-support-fed-003
 	 */
 	#[NoAdminRequired]
@@ -300,6 +320,11 @@ class SearchController extends Controller {
 	 * @return JSONResponse A JSON response containing the referenced objects.
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::used() refuses an
+	 *   id outside the catalog scope and resolves related objects with RBAC on, and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
 	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-incoming-relations-used-by-with-federation-support-fed-004
 	 */

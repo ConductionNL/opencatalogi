@@ -27,6 +27,8 @@ use Unit\Service\PublicReadObjectService;
  * One publication's rows, its batch's assessments in order, and the catalogues holding it.
  *
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */
 class WithheldFromPublicationStoreTest extends TestCase {
 
@@ -48,7 +50,7 @@ class WithheldFromPublicationStoreTest extends TestCase {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('isInstalled')->willReturn($installed);
 
-		return new WithheldFromPublicationStore(config: $appConfig, container: $container, appManager: $appManager);
+		return new WithheldFromPublicationStore(config: $appConfig, openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager));
 	}//end store()
 
 	public function testStoredEntriesAreThisPublicationsOnly(): void {

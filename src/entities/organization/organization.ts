@@ -10,13 +10,13 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TOrganization } from './organization.types'
 
 import { z } from 'zod'
 
 /** @typedef {import('./organization.types').TOrganization} TOrganization */
-/** @typedef {import('zod').SafeParseReturnType<any, any>} SafeParseReturnType */
+/** @typedef {import('zod').ZodSafeParseResult<unknown>} ZodSafeParseResult */
 
 /**
  * Organization class representing an organization in the system
@@ -103,9 +103,9 @@ export class Organization implements TOrganization {
 	/**
 	 * Validates the organization data
 	 *
-	 * @return SafeParseReturnType containing validation results
+	 * @return ZodSafeParseResult containing validation results
 	 */
-	public validate(): SafeParseReturnType<TOrganization, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/ewlydzkylhygj-create-organization
 		const schema = z.object({
 			name: z.string().min(1, 'is verplicht'),
@@ -131,10 +131,6 @@ export class Organization implements TOrganization {
 			image: z.string(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

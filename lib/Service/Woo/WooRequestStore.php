@@ -29,9 +29,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
-use OCP\App\IAppManager;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCP\IAppConfig;
-use Psr\Container\ContainerInterface;
 use RuntimeException;
 
 /**
@@ -39,7 +40,8 @@ use RuntimeException;
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
-class WooRequestStore {
+class WooRequestStore implements InformationRequestStoreInterface {
+	use ReadsObjectProperties;
 
 	/**
 	 * How many requests the terms report reads.
@@ -59,13 +61,11 @@ class WooRequestStore {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Holds the register and schema identifiers.
-	 * @param ContainerInterface $container Server container, for the consumed OR ObjectService.
-	 * @param IAppManager $appManager Answers whether OpenRegister is installed.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookup $openRegister,
 	) {
 
 	}//end __construct()
@@ -81,17 +81,17 @@ class WooRequestStore {
 	 */
 	private function objects(): object {
 		if ($this->objectService === null) {
-			// ADR-083: ask the app manager before reaching into the container, so
+			// ADR-083: ask whether OpenRegister is installed before resolving it, so
 			// an instance without OpenRegister gets a named refusal instead of a
 			// container error nobody can act on.
-			if ($this->appManager->isInstalled('openregister') === false) {
+			if ($this->openRegister->isInstalled() === false) {
 				throw new RuntimeException(
 					message: 'OpenRegister is not installed, so Woo requests cannot be read or written.'
 				);
 			}
 
 			try {
-				$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+				$this->objectService = $this->openRegister->objectService();
 			} catch (\Throwable $e) {
 				throw new RuntimeException(
 					message: 'OpenRegister is unavailable, so Woo requests cannot be read or written.',
@@ -224,33 +224,4 @@ class WooRequestStore {
 		return $requests;
 
 	}//end all()
-
-	/**
-	 * Read an object's properties, whatever shape OpenRegister returned.
-	 *
-	 * @param mixed $object The result.
-	 *
-	 * @return array<string, mixed> The properties.
-	 *
-	 * @spec exclude pure shape adaptation over the consumed OR ObjectService.
-	 */
-	private function asArray(mixed $object): array {
-		if (is_object($object) === true && method_exists($object, 'jsonSerialize') === true) {
-			$object = $object->jsonSerialize();
-		}
-
-		if (is_array($object) === false) {
-			return [];
-		}
-
-		if (isset($object['object']) === true && is_array($object['object']) === true) {
-			$properties = $object['object'];
-			$properties['id'] = ($object['id'] ?? ($properties['id'] ?? null));
-
-			return $properties;
-		}
-
-		return $object;
-
-	}//end asArray()
 }//end class

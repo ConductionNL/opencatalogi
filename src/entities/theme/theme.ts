@@ -1,4 +1,4 @@
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TTheme } from './theme.types'
 
 import { z } from 'zod'
@@ -45,7 +45,7 @@ export class Theme implements TTheme {
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TTheme, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/hpksgr0u1cwj8-theme
 		const schema = z.object({
 			title: z.string().min(1, 'is verplicht'),
@@ -60,10 +60,6 @@ export class Theme implements TTheme {
 			sort: z.number(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

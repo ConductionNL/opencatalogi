@@ -1,7 +1,8 @@
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TAttachment } from './attachment.types'
 
 import { z } from 'zod'
+import { languageSchema } from '../languageSchema.js'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
@@ -50,38 +51,66 @@ export class Attachment implements TAttachment {
 
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	private hydrate(data: TAttachment) {
+		this.hydrateText(data)
+		this.hydrateFile(data)
+		this.hydrateMeta(data)
+	}
+
+	/**
+	 * Fill the id, texts, labels and status.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateText(data: TAttachment) {
 		this.id = data.id?.toString() || ''
 		this.reference = data.reference || ''
 		this.title = data.title || ''
 		this.summary = data.summary || ''
 		this.description = data.description || ''
 		this.labels = data.labels || []
+		this.status = (data.status as TStatus) || 'Concept'
+	}
+
+	/**
+	 * Fill the file location, type, size and version.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateFile(data: TAttachment) {
 		this.accessUrl = data.accessUrl || ''
 		this.downloadUrl = data.downloadUrl || ''
-		this.status = (data.status as TStatus) || 'Concept'
 		this.type = data.type || ''
 		this.extension = data.extension || ''
 		this.size = data.size || ''
+		this.versionOf = data.versionOf || ''
+		this.hash = data.hash || ''
+	}
+
+	/**
+	 * Fill anonymization, language, dates and license. An array where an object belongs counts as missing.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateMeta(data: TAttachment) {
 		this.anonymization = (!Array.isArray(data.anonymization)
 			&& data.anonymization) || {
 			anonymized: false,
 			results: '',
 		}
-
 		this.language = (!Array.isArray(data.language) && data.language) || {
 			code: '',
 			level: '',
 		}
-
-		this.versionOf = data.versionOf || ''
-		this.hash = data.hash || ''
 		this.published = data.published || null
 		this.modified = data.modified || ''
 		this.license = data.license || ''
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TAttachment, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/lsigtx7cafbr7-create-attachment
 		const schema = z.object({
 			reference: z.string().max(255, 'kan niet langer dan 255 zijn'),
@@ -104,23 +133,7 @@ export class Attachment implements TAttachment {
 				anonymized: z.boolean().or(z.enum(['true', 'false'])), // because the backend turns booleans into strings for some stupid reason
 				results: z.string().max(2500, 'kan niet langer dan 2500 zijn'),
 			}),
-			language: z.object({
-				// this regex checks if the code has either 2 or 3 characters per group, and the -aaa after the first is optional
-				code: z
-					.string()
-					.regex(
-						/^([a-z]{2,3})(-[a-z]{2,3})?$/g,
-						'is niet een geldige ISO 639-1 code (e.g. en-us)',
-					)
-					.or(z.literal('')),
-				level: z
-					.string()
-					.regex(
-						/^(A|B|C)(1|2)$/g,
-						'is niet een geldige CEFRL level (e.g. A1)',
-					)
-					.or(z.literal('')),
-			}),
+			language: languageSchema(),
 			versionOf: z.string(),
 			published: z
 				.string()
@@ -129,10 +142,6 @@ export class Attachment implements TAttachment {
 			license: z.string(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

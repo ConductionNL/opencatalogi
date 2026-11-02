@@ -364,15 +364,105 @@ class PublicationServiceTest extends TestCase {
 			'registers' => ['reg-specific'],
 			'schemas' => ['sch-specific'],
 		]);
+		$catalog->setRegister('register-1');
+		$catalog->setSchema('schema-1');
 
 		// searchObjects returns all, but find returns the specific one
 		$objectService->method('searchObjects')->willReturn([]);
-		$objectService->method('find')->with('catalog-42')->willReturn($catalog);
+		$objectService->expects($this->once())->method('find')
+			->with('catalog-42', [], false, 'register-1', 'schema-1')
+			->willReturn($catalog);
 
 		$result = $this->service->getCatalogFilters('catalog-42');
 
 		$this->assertSame(['reg-specific'], $result['registers']);
 		$this->assertSame(['sch-specific'], $result['schemas']);
+	}
+
+	/**
+	 * An object outside the catalog register or schema does not act as a catalog.
+	 *
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public static function provideObjectsOutsideTheCatalogSchema(): array {
+		return [
+			'other schema' => ['register-1', 'schema-2'],
+			'other register' => ['register-2', 'schema-1'],
+			'other register and schema' => ['register-2', 'schema-2'],
+		];
+	}
+
+	/**
+	 * @dataProvider provideObjectsOutsideTheCatalogSchema
+	 */
+	public function testGetCatalogFiltersIgnoresAnObjectOutsideTheCatalogSchema(string $register, string $schema): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$other = $this->createSerializableObject([
+			'registers' => ['reg-other'],
+			'schemas' => ['sch-other'],
+		]);
+		$other->setRegister($register);
+		$other->setSchema($schema);
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn($other);
+
+		$result = $this->service->getCatalogFilters('not-a-catalog');
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $result);
+		$this->assertSame([], $this->service->getAvailableRegisters());
+		$this->assertSame([], $this->service->getAvailableSchemas());
+	}
+
+	public function testGetCatalogFiltersIsEmptyWhenTheCatalogIsNotFound(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn(null);
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $this->service->getCatalogFilters('missing'));
+	}
+
+	public function testIndexWithAnObjectOutsideTheCatalogSchemaFindsNothing(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$other = $this->createSerializableObject([
+			'registers' => ['reg-other'],
+			'schemas' => ['sch-other'],
+		]);
+		$other->setRegister('register-9');
+		$other->setSchema('schema-9');
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn($other);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$this->request->method('getParams')->willReturn([]);
+
+		$response = $this->service->index('not-a-catalog');
+		$this->assertSame(['results' => [], 'facets' => [], 'total' => 0], $response->getData());
 	}
 
 	public function testGetCatalogFiltersCachesResults(): void {
@@ -504,6 +594,8 @@ class PublicationServiceTest extends TestCase {
 			'registers' => ['reg-1'],
 			'schemas' => ['sch-1'],
 		]);
+		$catalog->setRegister('register-1');
+		$catalog->setSchema('schema-1');
 		$objectService->method('searchObjects')->willReturn([]);
 		$objectService->method('find')
 			->willReturn($catalog);
@@ -1024,6 +1116,7 @@ class PublicationServiceTest extends TestCase {
 		$this->assertSame(0, $data['total']);
 		$this->assertSame(1, $data['page']);
 		$this->assertSame(1, $data['pages']);
+		$this->assertSame(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []], $data);
 	}
 
 	public function testUsesReturnsRelatedObjects(): void {
@@ -1135,6 +1228,7 @@ class PublicationServiceTest extends TestCase {
 		$data = json_decode($response->render(), true);
 		$this->assertSame([], $data['results']);
 		$this->assertSame(0, $data['total']);
+		$this->assertSame(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []], $data);
 	}
 
 	public function testUsedReturnsReferencingObjects(): void {
@@ -3073,11 +3167,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			['_page' => 1],
-			'http://example.com/api',
-			true,  // includeCatalogs
-			true,  // reqDirFacets
-			true   // reqCatFacets
+			[
+				'requestParams' => ['_page' => 1],
+				'baseUrl' => 'http://example.com/api',
+				'includeCatalogs' => true,
+				'reqDirFacets' => true,
+				'reqCatFacets' => true,
+			]
 		);
 
 		$this->assertArrayHasKey('results', $result);
@@ -3116,11 +3212,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			false, // includeCatalogs
-			false, // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => false,
+				'reqDirFacets' => false,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('results', $result);
@@ -3167,11 +3265,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 2],
-			['_page' => 2],
-			'http://example.com/api',
-			true,  // includeCatalogs
-			false, // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => ['_page' => 2],
+				'baseUrl' => 'http://example.com/api',
+				'includeCatalogs' => true,
+				'reqDirFacets' => false,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('next', $result);
@@ -3212,11 +3312,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 0, '_page' => 1],
-			[],
-			'',
-			true,  // includeCatalogs
-			false, // reqDirFacets
-			true   // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => true,
+				'reqDirFacets' => false,
+				'reqCatFacets' => true,
+			]
 		);
 
 		$this->assertSame(0, $result['limit']);
@@ -3254,11 +3356,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			false, // includeCatalogs
-			true,  // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => false,
+				'reqDirFacets' => true,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('facets', $result);
@@ -3298,11 +3402,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			true,  // includeCatalogs
-			true,  // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => true,
+				'reqDirFacets' => true,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('facets', $result);
@@ -3874,6 +3980,23 @@ class PublicationServiceTest extends TestCase {
 		$this->assertCount(2, $titles);
 		$this->assertContains('A', $titles);
 		$this->assertContains('B', $titles);
+	}
+
+	public function testApplyCumulativeOrderingKeepsEqualRowsInPlace(): void {
+		$method = new \ReflectionMethod(PublicationService::class, 'applyCumulativeOrdering');
+		$method->setAccessible(true);
+
+		$results = [
+			['title' => 'B', 'score' => 1],
+			['title' => 'A', 'score' => 1],
+			['title' => 'C', 'score' => 1],
+		];
+
+		$ordered = $method->invoke($this->service, $results, [
+			'_order' => ['score' => 'DESC'],
+		]);
+
+		$this->assertSame(['B', 'A', 'C'], array_column($ordered, 'title'));
 	}
 
 	// =======================================================================

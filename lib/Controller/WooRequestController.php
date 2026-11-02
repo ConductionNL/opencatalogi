@@ -34,11 +34,11 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
-use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
+use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
-use OCA\OpenCatalogi\Service\Woo\WooRequestService;
-use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -61,15 +61,23 @@ use OCP\IUserSession;
 class WooRequestController extends Controller {
 
 	/**
+	 * The status a request moves to after its term is paused or resumed.
+	 */
+	private const array STATUS_AFTER = [
+		'pause' => 'awaiting_clarification',
+		'resume' => 'in_progress',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param WooRequestService $requests Builds and reads the request record.
-	 * @param WooRequestStore $store Reads and writes the stored requests.
-	 * @param StatutoryTerm $terms Arms, extends, pauses and reads the statutory term.
+	 * @param InformationRequestServiceInterface $requests Builds and reads the request record.
+	 * @param InformationRequestStoreInterface $store Reads and writes the stored requests.
+	 * @param StatutoryTermInterface $terms Arms, extends, pauses and reads the statutory term.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -78,9 +86,9 @@ class WooRequestController extends Controller {
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly WooRequestService $requests,
-		private readonly WooRequestStore $store,
-		private readonly StatutoryTerm $terms,
+		private readonly InformationRequestServiceInterface $requests,
+		private readonly InformationRequestStoreInterface $store,
+		private readonly StatutoryTermInterface $terms,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -171,11 +179,23 @@ class WooRequestController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		$requestId = (string)($saved['id'] ?? '');
+		return $this->armReceivedRequest(saved: $saved);
 
+	}//end receive()
+
+	/**
+	 * Arm the statutory term of a stored request and answer with its receipt.
+	 *
+	 * @param array<string, mixed> $saved The stored request.
+	 *
+	 * @return JSONResponse The request with its term, or the receipt that says no term runs.
+	 *
+	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-the-requester-is-told-the-reference-and-the-due-date-at-intake-req-wri-005
+	 */
+	private function armReceivedRequest(array $saved): JSONResponse {
 		try {
 			$term = $this->terms->arm(
-				requestUuid: $requestId,
+				requestUuid: (string)($saved['id'] ?? ''),
 				reference: (string)($saved['reference'] ?? ''),
 				receivedAt: new DateTimeImmutable((string)($saved['receivedAt'] ?? 'now')),
 				actor: $this->actor()
@@ -196,10 +216,25 @@ class WooRequestController extends Controller {
 			);
 		}
 
+		return $this->storeArmedRequest(saved: $saved, term: $term);
+
+	}//end armReceivedRequest()
+
+	/**
+	 * Store a request with its armed term under its own id and answer with the receipt.
+	 *
+	 * @param array<string, mixed> $saved The stored request.
+	 * @param array<string, mixed> $term The armed term.
+	 *
+	 * @return JSONResponse The request, its term and its receipt, or the 503.
+	 *
+	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-the-requester-is-told-the-reference-and-the-due-date-at-intake-req-wri-005
+	 */
+	private function storeArmedRequest(array $saved, array $term): JSONResponse {
 		try {
 			$stored = $this->store->save(
 				record: $this->requests->withTerm(request: $saved, term: $term),
-				uuid: $requestId
+				uuid: (string)($saved['id'] ?? '')
 			);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
@@ -214,7 +249,7 @@ class WooRequestController extends Controller {
 			Http::STATUS_CREATED
 		);
 
-	}//end receive()
+	}//end storeArmedRequest()
 
 	/**
 	 * The intake body, read off the request.
@@ -361,7 +396,7 @@ class WooRequestController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function pause(string $requestId): JSONResponse {
-		return $this->move(requestId: $requestId, operation: 'pause', status: 'awaiting_clarification');
+		return $this->move(requestId: $requestId, operation: 'pause');
 
 	}//end pause()
 
@@ -376,7 +411,7 @@ class WooRequestController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function resume(string $requestId): JSONResponse {
-		return $this->move(requestId: $requestId, operation: 'resume', status: 'in_progress');
+		return $this->move(requestId: $requestId, operation: 'resume');
 
 	}//end resume()
 
@@ -419,14 +454,14 @@ class WooRequestController extends Controller {
 	 * Suspend or resume the term, and move the request's status with it.
 	 *
 	 * @param string $requestId The request.
-	 * @param string $operation Either pause or resume.
-	 * @param string $status The status the request moves to.
+	 * @param string $operation Either pause or resume; it decides the status
+	 *                          the request moves to.
 	 *
 	 * @return JSONResponse The term, or the refusal.
 	 *
 	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-the-term-pauses-while-clarification-is-awaited-req-wri-004
 	 */
-	private function move(string $requestId, string $operation, string $status): JSONResponse {
+	private function move(string $requestId, string $operation): JSONResponse {
 		$reason = trim((string)$this->request->getParam('reason', ''));
 		if ($reason === '') {
 			return new JSONResponse(
@@ -469,7 +504,7 @@ class WooRequestController extends Controller {
 		}
 
 		$updated = $this->requests->withTerm(request: $loaded, term: $term);
-		$updated['status'] = $status;
+		$updated['status'] = self::STATUS_AFTER[$operation];
 
 		return $this->persist(request: $updated, requestId: $requestId, term: $term);
 

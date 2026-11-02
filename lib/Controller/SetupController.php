@@ -30,11 +30,11 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\BroadcastService;
-use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
-use OCA\OpenCatalogi\Service\DemoDataService;
-use OCA\OpenCatalogi\Service\DirectoryService;
-use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -82,6 +82,7 @@ class SetupController extends Controller {
 	 */
 	private const WRITABLE_CONFIG_KEYS = [
 		'default_catalog_scope',
+		'default_catalog_groups',
 		'default_directory_url',
 		self::DATASET_KEY,
 	];
@@ -117,15 +118,15 @@ class SetupController extends Controller {
 	 * @param string $appName The app id.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param SettingsService $settingsService Settings service (register import).
-	 * @param DemoDataService $demoDataService Demo dataset import (ADR-111 rule 4).
-	 * @param DirectoryService $directoryService Directory service (federation sync).
-	 * @param BroadcastService $broadcastService Broadcast service (announce self to a directory).
+	 * @param SettingsServiceInterface $settingsService Settings service (register import).
+	 * @param DemoDataServiceInterface $demoDataService Demo dataset import (ADR-111 rule 4).
+	 * @param DirectoryServiceInterface $directoryService Directory service (federation sync).
+	 * @param BroadcastServiceInterface $broadcastService Broadcast service (announce self to a directory).
 	 * @param ContainerInterface $container Container, to resolve OpenRegister ObjectService.
 	 * @param IL10N $l10n Localization.
 	 * @param LoggerInterface $logger Logger.
 	 * @param IUserSession $userSession Current user session (login guard).
-	 * @param ConnectionReporter|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
+	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
@@ -133,15 +134,15 @@ class SetupController extends Controller {
 		string $appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly SettingsService $settingsService,
-		private readonly DemoDataService $demoDataService,
-		private readonly DirectoryService $directoryService,
-		private readonly BroadcastService $broadcastService,
+		private readonly SettingsServiceInterface $settingsService,
+		private readonly DemoDataServiceInterface $demoDataService,
+		private readonly DirectoryServiceInterface $directoryService,
+		private readonly BroadcastServiceInterface $broadcastService,
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly IUserSession $userSession,
-		private readonly ?ConnectionReporter $connectionReporter = null,
+		private readonly ?ConnectionReporterInterface $connectionReporter = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -288,7 +289,7 @@ class SetupController extends Controller {
 			case 'load-demo-data':
 				return $this->loadDataset();
 			case 'install-demo-data':
-				return $this->installDemoData(dataset: DemoDataService::DEMO_DATASET);
+				return $this->installDemoData(dataset: DemoDataServiceInterface::DEMO_DATASET);
 			case 'skip-demo-data':
 				return $this->skipDemoData();
 			case 'reload-settings':
@@ -345,8 +346,8 @@ class SetupController extends Controller {
 			);
 		}
 
-		if ($picked === DemoDataService::NONE_DATASET) {
-			$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		if ($picked === DemoDataServiceInterface::NONE_DATASET) {
+			$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 			$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 			return new JSONResponse(
@@ -435,7 +436,7 @@ class SetupController extends Controller {
 	private function skipDemoData(): JSONResponse {
 		// Skipping IS choosing "None", so both keys are written: an older
 		// runbook may read either one.
-		$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataService::NONE_DATASET);
+		$this->config->setValueString($this->appName, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
 		$this->config->setValueString($this->appName, self::DEMO_DATA_DECIDED_KEY, 'skipped');
 
 		return new JSONResponse(
@@ -504,6 +505,44 @@ class SetupController extends Controller {
 			return new JSONResponse(['success' => false, 'message' => $this->l10n->t('Configure the catalog register and schema first.')]);
 		}
 
+		return $this->saveFirstCatalog(objectService: $objectService, target: ['register' => $register, 'schema' => $schema]);
+	}//end createFirstCatalog()
+
+	/**
+	 * Store the first catalog in the catalog register and schema, then mark onboarding done.
+	 *
+	 * @param object $objectService OpenRegister's ObjectService.
+	 * @param array<string, string> $target The catalog `register` and `schema`.
+	 *
+	 * @return JSONResponse The result.
+	 */
+	private function saveFirstCatalog(object $objectService, array $target): JSONResponse {
+		$catalog = $this->firstCatalogObject();
+		try {
+			$objectService->saveObject(
+				object: $catalog,
+				register: $target['register'],
+				schema: $target['schema'],
+				_rbac: false,
+				_multitenancy: false,
+			);
+		} catch (\Exception $e) {
+			$this->logger->error('Setup create-first-catalog failed: ' . $e->getMessage(), ['app' => $this->appName]);
+			return new JSONResponse(['success' => false, 'message' => $e->getMessage()]);
+		}
+
+		// Onboarding has produced a catalog; record it so the gate clears for good.
+		$this->config->setValueString($this->appName, 'onboarding_completed_version', (string)self::SETUP_VERSION);
+
+		return new JSONResponse(['success' => true, 'message' => $this->l10n->t('Your first catalog was created.')]);
+	}//end saveFirstCatalog()
+
+	/**
+	 * The first catalog: listed for a public default scope, staff-restricted for a private one.
+	 *
+	 * @return array<string, mixed> The catalog object.
+	 */
+	private function firstCatalogObject(): array {
 		// Resolve the publication register/schema that this catalog should
 		// scope. Both values are already required for a working install (the
 		// publish flow depends on them), so a missing value here is a config
@@ -520,9 +559,38 @@ class SetupController extends Controller {
 			'listed' => ($scope === 'public'),
 			'status' => 'development',
 		];
-		// Read each key immediately above the check that handles its empty case.
-		// These two used to be read at the top of the method, thirteen lines up,
-		// which separated them from the only thing that makes an empty value safe.
+		if ($scope === 'private') {
+			$catalogObject['staffAccess'] = $this->privateStaffAccess();
+		}
+
+		return $this->withPublicationScope(catalogObject: $catalogObject);
+	}//end firstCatalogObject()
+
+	/**
+	 * Staff access for a private first catalog: the groups named in `default_catalog_groups`.
+	 *
+	 * "Private (explicitly granted groups only)" restricts the catalogue's staff
+	 * access to those groups (comma separated); none named leaves it to
+	 * administrators until groups are granted.
+	 *
+	 * @return array<string, mixed> The staff access.
+	 */
+	private function privateStaffAccess(): array {
+		$groups = array_values(array_filter(array_map('trim', explode(',', $this->config->getValueString($this->appName, 'default_catalog_groups', '')))));
+
+		return ['restricted' => true, 'readGroups' => $groups, 'editGroups' => $groups];
+	}//end privateStaffAccess()
+
+	/**
+	 * A catalog object scoped to the configured publication register and schema, when they are set (WOO-529).
+	 *
+	 * Each key is read immediately above the check that handles its empty case.
+	 *
+	 * @param array<string, mixed> $catalogObject The catalog object.
+	 *
+	 * @return array<string, mixed> The scoped catalog object.
+	 */
+	private function withPublicationScope(array $catalogObject): array {
 		$publicationRegister = $this->config->getValueString($this->appName, 'publication_register', '');
 		if ($publicationRegister !== '') {
 			$catalogObject['registers'] = [$publicationRegister];
@@ -533,24 +601,8 @@ class SetupController extends Controller {
 			$catalogObject['schemas'] = [$publicationSchema];
 		}
 
-		try {
-			$objectService->saveObject(
-				object: $catalogObject,
-				register: $register,
-				schema: $schema,
-				_rbac: false,
-				_multitenancy: false,
-			);
-		} catch (\Exception $e) {
-			$this->logger->error('Setup create-first-catalog failed: ' . $e->getMessage(), ['app' => $this->appName]);
-			return new JSONResponse(['success' => false, 'message' => $e->getMessage()]);
-		}
-
-		// Onboarding has produced a catalog; record it so the gate clears for good.
-		$this->config->setValueString($this->appName, 'onboarding_completed_version', (string)self::SETUP_VERSION);
-
-		return new JSONResponse(['success' => true, 'message' => $this->l10n->t('Your first catalog was created.')]);
-	}//end createFirstCatalog()
+		return $catalogObject;
+	}//end withPublicationScope()
 
 	/**
 	 * Connect to the federated network — pull peer listings AND announce this instance.

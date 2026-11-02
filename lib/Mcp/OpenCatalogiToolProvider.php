@@ -27,7 +27,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Mcp;
 
-use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenRegister\Mcp\IMcpToolProvider;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -137,12 +137,12 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	/**
 	 * Constructor for OpenCatalogiToolProvider.
 	 *
-	 * @param PublicationService $publicationService The publication service (search / show / attachments).
+	 * @param PublicationServiceInterface $publicationService The publication service (search / show / attachments).
 	 * @param IUserSession $userSession The current user session (caller context).
 	 * @param LoggerInterface $logger The PSR-3 logger.
 	 */
 	public function __construct(
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 	) {
@@ -210,11 +210,45 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	 * @param array<string, mixed> $args Tool arguments.
 	 *
 	 * @return array<string, mixed>
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
 	private function handleSearchCatalog(array $args): array {
+		$request = $this->searchCatalogRequest(args: $args);
+		if (isset($request['error']) === true) {
+			return $request;
+		}
+
+		try {
+			$response = $this->publicationService->index(
+				catalogId: $request['catalogId'],
+				customParams: $request['customParams']
+			);
+		} catch (\Throwable $e) {
+			$this->logger->error(
+				'OpenCatalogi MCP: searchCatalog failed',
+				['caller' => $this->callerUid(), 'exception' => $e->getMessage()]
+			);
+			return $this->error(
+				code: 'internal_error',
+				message: 'Failed to search publications. See server log for details.'
+			);
+		}//end try
+
+		$data = $this->jsonResponseData(response: $response);
+		if (is_array($data) === true && isset($data['error']) === true) {
+			return $this->error(code: 'invalid_arguments', message: (string)$data['error']);
+		}
+
+		return $this->searchCatalogResult(query: $request['customParams']['_search'], data: $data);
+	}//end handleSearchCatalog()
+
+	/**
+	 * The validated searchCatalog arguments as an index() call, or the argument error.
+	 *
+	 * @param array<string, mixed> $args Tool arguments.
+	 *
+	 * @return array<string, mixed> `catalogId` and `customParams`, or an `error` answer.
+	 */
+	private function searchCatalogRequest(array $args): array {
 		$query = $args['query'] ?? null;
 		if (is_string($query) === false || trim($query) === '') {
 			return $this->error(
@@ -234,38 +268,41 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 			}
 		}
 
-		$catalogId = null;
-		if (isset($args['catalog']) === true
-			&& is_string($args['catalog']) === true
-			&& trim($args['catalog']) !== ''
-		) {
-			$catalogId = trim($args['catalog']);
-		}
-
-		$customParams = [
-			'_search' => trim($query),
-			'_limit' => $limit,
-			'_page' => 1,
+		return [
+			'catalogId' => $this->catalogArgument(args: $args),
+			'customParams' => [
+				'_search' => trim($query),
+				'_limit' => $limit,
+				'_page' => 1,
+			],
 		];
+	}//end searchCatalogRequest()
 
-		try {
-			$response = $this->publicationService->index(catalogId: $catalogId, customParams: $customParams);
-		} catch (\Throwable $e) {
-			$this->logger->error(
-				'OpenCatalogi MCP: searchCatalog failed',
-				['caller' => $this->callerUid(), 'exception' => $e->getMessage()]
-			);
-			return $this->error(
-				code: 'internal_error',
-				message: 'Failed to search publications. See server log for details.'
-			);
-		}//end try
-
-		$data = $this->jsonResponseData(response: $response);
-		if (is_array($data) === true && isset($data['error']) === true) {
-			return $this->error(code: 'invalid_arguments', message: (string)$data['error']);
+	/**
+	 * The trimmed `catalog` argument, or null when it is absent, blank or not a string.
+	 *
+	 * @param array<string, mixed> $args Tool arguments.
+	 *
+	 * @return string|null
+	 */
+	private function catalogArgument(array $args): ?string {
+		$catalog = ($args['catalog'] ?? null);
+		if (is_string($catalog) === false || trim($catalog) === '') {
+			return null;
 		}
 
+		return trim($catalog);
+	}//end catalogArgument()
+
+	/**
+	 * The searchCatalog answer: at most RESULTS_CAP publications with their sources.
+	 *
+	 * @param string $query The trimmed query.
+	 * @param mixed $data The index() response data.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function searchCatalogResult(string $query, mixed $data): array {
 		$results = [];
 		if (is_array($data) === true && isset($data['results']) === true && is_array($data['results']) === true) {
 			$results = $data['results'];
@@ -276,13 +313,12 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 
 		$sources = [];
 		foreach ($results as $publication) {
-			$publicationArray = $this->toArray(item: $publication);
-			$sources[] = $this->buildSource(publication: $publicationArray);
+			$sources[] = $this->buildSource(publication: $this->toArray(item: $publication));
 		}
 
 		$result = [
 			'success' => true,
-			'query' => trim($query),
+			'query' => $query,
 			'publications' => $results,
 			'sources' => $sources,
 		];
@@ -293,7 +329,7 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		}
 
 		return $result;
-	}//end handleSearchCatalog()
+	}//end searchCatalogResult()
 
 	/**
 	 * Handle opencatalogi.getPublication.
@@ -308,9 +344,6 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	 * @param array<string, mixed> $args Tool arguments.
 	 *
 	 * @return array<string, mixed>
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
 	private function handleGetPublication(array $args): array {
 		$id = $args['id'] ?? null;
@@ -327,48 +360,104 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		try {
 			$response = $this->publicationService->show(id: $id);
 		} catch (\Throwable $e) {
-			// Find() throws when the RBAC read check denies access; honour that verdict.
-			$this->logger->info(
-				'OpenCatalogi MCP: getPublication denied or failed',
-				['caller' => $this->callerUid(), 'id' => $id, 'exception' => $e->getMessage()]
-			);
-			return $this->error(
-				code: 'forbidden',
-				message: 'You are not allowed to read this publication, or it does not exist.'
-			);
-		}//end try
+			return $this->deniedPublication(id: $id, exception: $e);
+		}
 
-		$statusCode = $response->getStatus();
 		$data = $this->jsonResponseData(response: $response);
-
-		$hasError = (is_array($data) === true && isset($data['error']) === true);
-		if ($statusCode === Http::STATUS_NOT_FOUND || ($hasError === true && $statusCode >= 400)) {
-			$code = 'not_found';
-			if ($statusCode === Http::STATUS_FORBIDDEN) {
-				$code = 'forbidden';
-			}
-
-			$message = 'Publication not found.';
-			if ($hasError === true) {
-				$message = (string)$data['error'];
-			}
-
-			return $this->error(code: $code, message: $message);
+		$refusal = $this->showRefusal(statusCode: $response->getStatus(), data: $data);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$publication = $this->toArray(item: $data);
 
 		// Best-effort: fetch the attachment list. Failures here do not fail the whole tool call.
-		$attachments = $this->fetchAttachments(id: $id);
-
 		return [
 			'success' => true,
 			'publication' => $publication,
-			'attachments' => $attachments,
+			'attachments' => $this->fetchAttachments(id: $id),
 			'sources' => [$this->buildSource(publication: $publication)],
 		];
 
 	}//end handleGetPublication()
+
+	/**
+	 * The forbidden envelope for a publication read that threw, logged with the caller.
+	 *
+	 * The RBAC read check in find() throws on a denial; that verdict is honoured.
+	 *
+	 * @param string $id The publication id.
+	 * @param \Throwable $exception What show() threw.
+	 *
+	 * @return array<string, mixed> The forbidden envelope.
+	 */
+	private function deniedPublication(string $id, \Throwable $exception): array {
+		$this->logger->info(
+			'OpenCatalogi MCP: getPublication denied or failed',
+			['caller' => $this->callerUid(), 'id' => $id, 'exception' => $exception->getMessage()]
+		);
+
+		return $this->error(
+			code: 'forbidden',
+			message: 'You are not allowed to read this publication, or it does not exist.'
+		);
+
+	}//end deniedPublication()
+
+	/**
+	 * The error envelope for a show() answer that refuses the publication, or null.
+	 *
+	 * A 404 refuses; so does any 4xx or 5xx whose body carries an `error`, and
+	 * then that error is the message. A 403 is `forbidden`, anything else `not_found`.
+	 *
+	 * @param int $statusCode The answer's status.
+	 * @param mixed $data The answer's body.
+	 *
+	 * @return array<string, mixed>|null The error envelope, or null when the publication is answered.
+	 */
+	private function showRefusal(int $statusCode, mixed $data): ?array {
+		$error = $this->errorOf(data: $data);
+		if ($this->refuses(statusCode: $statusCode, hasError: ($error !== null)) === false) {
+			return null;
+		}
+
+		$code = 'not_found';
+		if ($statusCode === Http::STATUS_FORBIDDEN) {
+			$code = 'forbidden';
+		}
+
+		return $this->error(code: $code, message: ($error ?? 'Publication not found.'));
+
+	}//end showRefusal()
+
+	/**
+	 * Whether a show() answer refuses the publication: a 404, or an error body on a 4xx or 5xx.
+	 *
+	 * @param int $statusCode The answer's status.
+	 * @param bool $hasError Whether the body carries an `error`.
+	 *
+	 * @return bool True when the answer refuses.
+	 */
+	private function refuses(int $statusCode, bool $hasError): bool {
+		return ($statusCode === Http::STATUS_NOT_FOUND || ($hasError === true && $statusCode >= 400));
+
+	}//end refuses()
+
+	/**
+	 * The `error` an answer body carries, as text, or null when it carries none.
+	 *
+	 * @param mixed $data The answer's body.
+	 *
+	 * @return string|null The error.
+	 */
+	private function errorOf(mixed $data): ?string {
+		if (is_array($data) === false || isset($data['error']) === false) {
+			return null;
+		}
+
+		return (string)$data['error'];
+
+	}//end errorOf()
 
 	// =========================================================================
 	// Private helpers

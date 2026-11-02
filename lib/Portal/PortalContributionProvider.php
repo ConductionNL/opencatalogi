@@ -36,15 +36,16 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Portal;
 
-use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
-use OCA\OpenCatalogi\Service\Woo\WooRequestIntake;
+use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
+use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
 
 /**
  * Declares what a resident may see and do in opencatalogi through the portal.
  *
  * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-opencatalogi-contributes-dossiers-to-the-portal-for-citizen-and-client-req-ccol-006
  */
-class PortalContributionProvider {
+class PortalContributionProvider implements PortalContributionProviderInterface {
 
 	/**
 	 * The register both schemas live in.
@@ -61,10 +62,6 @@ class PortalContributionProvider {
 	 */
 	public const SAVED_SEARCH_SCHEMA = 'savedSearch';
 
-	/**
-	 * The rule key of a saved-search notice (contract C3).
-	 */
-	public const RULE_SAVED_SEARCH_MATCHED = 'opencatalogi.savedSearch.matched';
 
 	/**
 	 * The menu heading over the resident's dossiers and saved searches (portaliq `group`).
@@ -95,15 +92,60 @@ class PortalContributionProvider {
 	 * only for `dossierItems()`, which portaliq calls after its own scoped read,
 	 * and the Woo intake only for `receiveWooRequest()`.
 	 *
-	 * @param CitizenCollectionService|null $collections The dossiers.
-	 * @param WooRequestIntake|null $wooRequests Mints a Woo request and arms its term.
+	 * @param CitizenCollectionServiceInterface|null $collections The dossiers.
+	 * @param InformationRequestIntakeInterface|null $wooRequests Mints a Woo request and arms its term.
+	 * @param ServiceStatusIndex|null $statusIndex The service status, for the public index.
 	 */
 	public function __construct(
-		private readonly ?CitizenCollectionService $collections=null,
-		private readonly ?WooRequestIntake $wooRequests=null,
+		private readonly ?CitizenCollectionServiceInterface $collections=null,
+		private readonly ?InformationRequestIntakeInterface $wooRequests=null,
+		private readonly ?ServiceStatusIndex $statusIndex=null,
 	) {
 
 	}//end __construct()
+
+	/**
+	 * The public index a portal's visitors read: the service status.
+	 *
+	 * Portaliq calls this without a session, for every portal; the status is
+	 * the same for each.
+	 *
+	 * @param string $portal The portal slug.
+	 *
+	 * @return array<int, array<string, mixed>> The index items.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 *
+	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+	 */
+	public function getPublicIndex(string $portal): array {
+		if ($this->statusIndex === null) {
+			return [];
+		}
+
+		return $this->statusIndex->items();
+
+	}//end getPublicIndex()
+
+	/**
+	 * The kinds of the public index, with the columns a site table can show.
+	 *
+	 * @param string $portal The portal slug.
+	 *
+	 * @return array<int, array<string, mixed>> The kinds.
+	 *
+	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
+	 *
+	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
+	 */
+	public function getPublicIndexKinds(string $portal): array {
+		if ($this->statusIndex === null) {
+			return [];
+		}
+
+		return [$this->statusIndex->kind()];
+
+	}//end getPublicIndexKinds()
 
 	/**
 	 * Receive a Woo request a citizen sent through a portal form.
@@ -122,7 +164,7 @@ class PortalContributionProvider {
 	public function receiveWooRequest(array $answers, string $receivedAt=''): array {
 		if ($this->wooRequests === null) {
 			return [
-				'outcome' => WooRequestIntake::OUTCOME_UNAVAILABLE,
+				'outcome' => InformationRequestIntakeInterface::OUTCOME_UNAVAILABLE,
 				'requestId' => '',
 				'reference' => '',
 				'dueAt' => '',

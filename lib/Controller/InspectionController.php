@@ -33,9 +33,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
-use OCA\OpenCatalogi\Service\Publication\InspectionService;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -57,6 +57,7 @@ use Psr\Container\ContainerInterface;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 class InspectionController extends Controller {
+	use AnswersCrossOriginRequests;
 	use ResolvesRegisterConfiguration;
 
 	/**
@@ -68,8 +69,8 @@ class InspectionController extends Controller {
 	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param InspectionService $inspectionService The inspection windows.
-	 * @param ServiceCatalogueService $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param InspectionServiceInterface $inspectionService The inspection windows.
+	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -80,35 +81,12 @@ class InspectionController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly InspectionService $inspectionService,
-		private readonly ServiceCatalogueService $objects,
+		private readonly InspectionServiceInterface $inspectionService,
+		private readonly ServiceCatalogueServiceInterface $objects,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value.
-	 *
-	 * @return string The header value.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(array_map('trim', explode(',', $configured)), static fn (string $e): bool => $e !== '')
-		);
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-
-	}//end resolveAllowedOrigin()
 
 	/**
 	 * Answer a CORS preflight.

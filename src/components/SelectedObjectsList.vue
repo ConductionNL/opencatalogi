@@ -1,4 +1,5 @@
 <script setup>
+import { resolveSelectedObjects } from '../services/selectedObjects.js'
 import { objectStore } from '../store/store.js'
 </script>
 
@@ -158,44 +159,7 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-7 */
 		selectedObjects() {
-			// If explicit objects are provided via props, prefer them.
-			if (this.objects && Array.isArray(this.objects)) {
-				return this.objects
-			}
-
-			// Try to resolve selected attachments (IDs) to full attachment objects
-			const selectedAttachmentIds = objectStore.selectedAttachments || []
-			if (
-				Array.isArray(selectedAttachmentIds)
-				&& selectedAttachmentIds.length > 0
-			) {
-				// Prefer reading from collections maintained in the store
-				const attachmentsCollection =
-					objectStore.collections
-					&& objectStore.collections.publicationAttachments
-						? objectStore.collections.publicationAttachments
-						: typeof objectStore.getCollection === 'function'
-							? objectStore.getCollection('publicationAttachments')
-							: null
-
-				const attachments =
-					attachmentsCollection?.results || attachmentsCollection || []
-				if (Array.isArray(attachments) && attachments.length > 0) {
-					return attachments.filter((att) =>
-						selectedAttachmentIds.includes(att.id),
-					)
-				}
-			}
-
-			// Fall back to object selections if they exist and non-empty
-			if (
-				Array.isArray(objectStore.selectedObjects)
-				&& objectStore.selectedObjects.length > 0
-			) {
-				return objectStore.selectedObjects
-			}
-
-			return []
+			return resolveSelectedObjects(this.objects, objectStore)
 		},
 	},
 

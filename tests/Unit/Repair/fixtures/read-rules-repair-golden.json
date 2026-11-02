@@ -1,0 +1,352 @@
+{
+    "every shape": [
+        {
+            "set": 1,
+            "authorization": {
+                "read": [
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$gte": "$now"
+                            }
+                        }
+                    },
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$exists": false
+                            }
+                        }
+                    },
+                    "authenticated"
+                ]
+            }
+        },
+        {
+            "update": 1
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 1) upgraded to two-rule shape"
+        },
+        {
+            "logger": "WOO-536 repair: schema authorization updated",
+            "context": {
+                "schema": "publication",
+                "schemaId": 1,
+                "changes": [
+                    "upgraded to two-rule shape"
+                ]
+            }
+        },
+        {
+            "set": 2,
+            "authorization": {
+                "read": [
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$gte": "$now"
+                            }
+                        }
+                    },
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$exists": false
+                            }
+                        }
+                    }
+                ],
+                "update": [
+                    {
+                        "group": "x",
+                        "match": {
+                            "depublicationDate": 1,
+                            "other": 2
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "update": 2
+        },
+        {
+            "info": "WOO-536: schema 'document' (id 2) Dutch keys translated (WOO-573) + upgraded to two-rule shape"
+        },
+        {
+            "logger": "WOO-536 repair: schema authorization updated",
+            "context": {
+                "schema": "document",
+                "schemaId": 2,
+                "changes": [
+                    "Dutch keys translated (WOO-573)",
+                    "upgraded to two-rule shape"
+                ]
+            }
+        },
+        {
+            "warning": "WOO-573: schema 'document' (id 3) — Dutch key dropped at read[0].publicatiedatum because the English key already exists; verify the two conditions agreed"
+        },
+        {
+            "set": 3,
+            "authorization": {
+                "read": [
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$gte": "$now"
+                            }
+                        }
+                    },
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$exists": false
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "update": 3
+        },
+        {
+            "info": "WOO-536: schema 'document' (id 3) Dutch keys translated (WOO-573) + upgraded to two-rule shape"
+        },
+        {
+            "logger": "WOO-536 repair: schema authorization updated",
+            "context": {
+                "schema": "document",
+                "schemaId": 3,
+                "changes": [
+                    "Dutch keys translated (WOO-573)",
+                    "upgraded to two-rule shape"
+                ]
+            }
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 4) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "warning": "WOO-536: schema 'publication' (id 5) has no authorization block — skipping (anonymous read rules missing)"
+        },
+        {
+            "set": 7,
+            "authorization": {
+                "read": [
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            }
+                        }
+                    }
+                ],
+                "update": [
+                    {
+                        "group": "x",
+                        "match": {
+                            "depublicationDate": 1,
+                            "other": 2
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "update": 7
+        },
+        {
+            "info": "WOO-536: schema 'catalog' (id 7) Dutch keys translated (WOO-573)"
+        },
+        {
+            "logger": "WOO-536 repair: schema authorization updated",
+            "context": {
+                "schema": "catalog",
+                "schemaId": 7,
+                "changes": [
+                    "Dutch keys translated (WOO-573)"
+                ]
+            }
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 9) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 10) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 11) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 12) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536 read-rule backfill: 4 schema(s) updated, 8 skipped (no Dutch keys, already correct or customised)"
+        }
+    ],
+    "update fails": [
+        {
+            "set": 1,
+            "authorization": {
+                "read": [
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$gte": "$now"
+                            }
+                        }
+                    },
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$exists": false
+                            }
+                        }
+                    },
+                    "authenticated"
+                ]
+            }
+        },
+        {
+            "update": 1
+        },
+        {
+            "warning": "WOO-536: failed to update schema 'publication' (id 1): database locked"
+        },
+        {
+            "set": 2,
+            "authorization": {
+                "read": [
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$gte": "$now"
+                            }
+                        }
+                    },
+                    {
+                        "group": "public",
+                        "match": {
+                            "publicationDate": {
+                                "$lte": "$now"
+                            },
+                            "depublicationDate": {
+                                "$exists": false
+                            }
+                        }
+                    }
+                ],
+                "update": [
+                    {
+                        "group": "x",
+                        "match": {
+                            "depublicationDate": 1,
+                            "other": 2
+                        }
+                    }
+                ]
+            }
+        },
+        {
+            "update": 2
+        },
+        {
+            "warning": "WOO-536: failed to update schema 'document' (id 2): database locked"
+        },
+        {
+            "info": "WOO-536 read-rule backfill: 0 schema(s) updated, 2 skipped (no Dutch keys, already correct or customised)"
+        }
+    ],
+    "openregister disabled": [
+        {
+            "warning": "OpenRegister app is not enabled - skipping WOO-536 read-rule backfill"
+        }
+    ],
+    "mapper unavailable": [
+        {
+            "warning": "OpenRegister SchemaMapper unavailable - skipping WOO-536 read-rule backfill: no mapper"
+        }
+    ],
+    "no schemas": [
+        {
+            "info": "WOO-536 read-rule backfill: 0 schema(s) updated, 0 skipped (no Dutch keys, already correct or customised)"
+        }
+    ],
+    "more read shapes": [
+        {
+            "info": "WOO-536: schema 'publication' (id 21) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 22) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 23) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 24) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 25) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 26) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536 read-rule backfill: 0 schema(s) updated, 6 skipped (no Dutch keys, already correct or customised)"
+        }
+    ],
+    "no conditional rule": [
+        {
+            "info": "WOO-536: schema 'publication' (id 31) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 32) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536: schema 'publication' (id 33) already on two-rule shape or admin-customised — skipping"
+        },
+        {
+            "info": "WOO-536 read-rule backfill: 0 schema(s) updated, 3 skipped (no Dutch keys, already correct or customised)"
+        }
+    ]
+}

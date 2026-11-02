@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Portal;
 
+use OCA\OpenCatalogi\Contract\PortalAssertionVerifierInterface;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
 
@@ -38,12 +39,8 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
  */
-class PortalAssertionVerifier {
+class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 
-	/**
-	 * The header portaliq attaches the assertion to.
-	 */
-	public const HEADER = 'X-Portal-Subject';
 
 	/**
 	 * The only accepted JWS algorithm.
@@ -93,9 +90,6 @@ class PortalAssertionVerifier {
 	 * @return array<string, mixed>|null The claims when every check passes.
 	 *
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity) One early return per check on an auth boundary.
-	 * @SuppressWarnings(PHPMD.NPathComplexity)      The checks are sequential early returns.
 	 */
 	public function verify(string $jwt): ?array {
 		$secret = $this->secret();
@@ -103,51 +97,200 @@ class PortalAssertionVerifier {
 			return $this->reject(reason: 'no usable signing secret');
 		}
 
-		$parts = explode('.', $jwt);
-		if (count($parts) !== 3 || in_array('', $parts, true) === true) {
-			return $this->reject(reason: 'malformed structure');
+		$claims = $this->signedClaims(jwt: $jwt, secret: $secret);
+		if (is_string($claims) === true) {
+			return $this->reject(reason: $claims);
 		}
 
-		[$headerPart, $claimsPart, $signaturePart] = $parts;
-
-		$header = json_decode($this->b64UrlDecode(encoded: $headerPart), true);
-		if (is_array($header) === false || ($header['alg'] ?? '') !== self::ALG) {
-			return $this->reject(reason: 'unexpected algorithm');
-		}
-
-		$expected = $this->b64UrlEncode(bytes: hash_hmac('sha256', $headerPart.'.'.$claimsPart, $secret, true));
-		if (hash_equals($expected, $signaturePart) === false) {
-			return $this->reject(reason: 'signature mismatch');
-		}
-
-		$claims = json_decode($this->b64UrlDecode(encoded: $claimsPart), true);
-		if (is_array($claims) === false) {
-			return $this->reject(reason: 'malformed claims');
-		}
-
-		if (($claims['use'] ?? '') !== self::USE_ASSERTION || ($claims['iss'] ?? '') !== self::ISSUER) {
-			return $this->reject(reason: 'not a portaliq assertion');
-		}
-
-		$now = time();
-		$exp = ($claims['exp'] ?? null);
-		$iat = ($claims['iat'] ?? null);
-		if (is_int($exp) === false || $exp <= $now) {
-			return $this->reject(reason: 'expired or missing exp');
-		}
-
-		if (is_int($iat) === false || $iat > ($now + self::IAT_LEEWAY) || $iat > $exp) {
-			return $this->reject(reason: 'implausible iat');
-		}
-
-		$sub = ($claims['sub'] ?? null);
-		if (is_string($sub) === false || $sub === '') {
-			return $this->reject(reason: 'missing subject');
+		$reason = $this->claimsRejection(claims: $claims);
+		if ($reason !== null) {
+			return $this->reject(reason: $reason);
 		}
 
 		return $claims;
 
 	}//end verify()
+
+	/**
+	 * The claims of a well-formed HS256 assertion whose signature holds, or why not.
+	 *
+	 * @param string $jwt The raw header value.
+	 * @param string $secret The signing secret.
+	 *
+	 * @return array<string, mixed>|string The decoded claims, or the rejection reason.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function signedClaims(string $jwt, string $secret): array|string {
+		$parts = explode('.', $jwt);
+		$reason = $this->structureRejection(parts: $parts);
+		if ($reason !== null) {
+			return $reason;
+		}
+
+		if ($this->signatureHolds(parts: $parts, secret: $secret) === false) {
+			return 'signature mismatch';
+		}
+
+		$claims = json_decode($this->b64UrlDecode(encoded: $parts[1]), true);
+		if (is_array($claims) === false) {
+			return 'malformed claims';
+		}
+
+		return $claims;
+
+	}//end signedClaims()
+
+	/**
+	 * Why the three parts of an assertion are not a well-formed HS256 token, or null when they are.
+	 *
+	 * @param array<int, string> $parts The token split on dots.
+	 *
+	 * @return string|null The rejection reason, or null.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function structureRejection(array $parts): ?string {
+		if (count($parts) !== 3 || in_array('', $parts, true) === true) {
+			return 'malformed structure';
+		}
+
+		return $this->algorithmRejection(headerPart: $parts[0]);
+
+	}//end structureRejection()
+
+	/**
+	 * Why an encoded header does not name HS256, or null when it does.
+	 *
+	 * @param string $headerPart The encoded header.
+	 *
+	 * @return string|null The rejection reason, or null.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function algorithmRejection(string $headerPart): ?string {
+		$header = json_decode($this->b64UrlDecode(encoded: $headerPart), true);
+		if (is_array($header) === false || ($header['alg'] ?? '') !== self::ALG) {
+			return 'unexpected algorithm';
+		}
+
+		return null;
+
+	}//end algorithmRejection()
+
+	/**
+	 * Whether the signature part is the HS256 signature of the header and claims parts.
+	 *
+	 * Compared in constant time.
+	 *
+	 * @param array<int, string> $parts The header, claims and signature parts.
+	 * @param string $secret The signing secret.
+	 *
+	 * @return bool True when the signature holds.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function signatureHolds(array $parts, string $secret): bool {
+		$expected = $this->b64UrlEncode(bytes: hash_hmac('sha256', $parts[0] . '.' . $parts[1], $secret, true));
+
+		return hash_equals($expected, $parts[2]);
+
+	}//end signatureHolds()
+
+	/**
+	 * Why verified claims are not a live portaliq assertion for a subject, or null when they are.
+	 *
+	 * The checks run in a fixed order, so the first failing one names the reason.
+	 *
+	 * @param array<string, mixed> $claims The decoded claims.
+	 *
+	 * @return string|null The rejection reason, or null.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function claimsRejection(array $claims): ?string {
+		return ($this->issuerRejection(claims: $claims)
+			?? $this->lifetimeRejection(claims: $claims)
+			?? $this->subjectRejection(claims: $claims));
+
+	}//end claimsRejection()
+
+	/**
+	 * Why the claims are not a portaliq assertion, or null when they are.
+	 *
+	 * @param array<string, mixed> $claims The decoded claims.
+	 *
+	 * @return string|null The rejection reason, or null.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function issuerRejection(array $claims): ?string {
+		if (($claims['use'] ?? '') !== self::USE_ASSERTION || ($claims['iss'] ?? '') !== self::ISSUER) {
+			return 'not a portaliq assertion';
+		}
+
+		return null;
+
+	}//end issuerRejection()
+
+	/**
+	 * Why the `exp` claim does not describe a live assertion, or the `iat` check's verdict.
+	 *
+	 * @param array<string, mixed> $claims The decoded claims.
+	 *
+	 * @return string|null The rejection reason, or null.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function lifetimeRejection(array $claims): ?string {
+		$now = time();
+		$exp = ($claims['exp'] ?? null);
+		if (is_int($exp) === false || $exp <= $now) {
+			return 'expired or missing exp';
+		}
+
+		return $this->issuedAtRejection(claims: $claims, now: $now);
+
+	}//end lifetimeRejection()
+
+	/**
+	 * Why the `iat` claim is implausible, or null: in the future past the leeway, or after `exp`.
+	 *
+	 * @param array<string, mixed> $claims The decoded claims, with an integer `exp`.
+	 * @param int $now The time the lifetime is checked at.
+	 *
+	 * @return string|null The rejection reason, or null.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function issuedAtRejection(array $claims, int $now): ?string {
+		$iat = ($claims['iat'] ?? null);
+		if (is_int($iat) === false || $iat > ($now + self::IAT_LEEWAY) || $iat > $claims['exp']) {
+			return 'implausible iat';
+		}
+
+		return null;
+
+	}//end issuedAtRejection()
+
+	/**
+	 * Why the claims name no subject, or null when they do.
+	 *
+	 * @param array<string, mixed> $claims The decoded claims.
+	 *
+	 * @return string|null The rejection reason, or null.
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
+	 */
+	private function subjectRejection(array $claims): ?string {
+		$sub = ($claims['sub'] ?? null);
+		if (is_string($sub) === false || $sub === '') {
+			return 'missing subject';
+		}
+
+		return null;
+
+	}//end subjectRejection()
 
 	/**
 	 * The subject reference of a verified assertion, or null.

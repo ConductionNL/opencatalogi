@@ -35,9 +35,18 @@ if (class_exists(WooRefusalGroundsUnavailable::class) === false) {
 
 if (class_exists(WooRefusalGrounds::class) === false) {
 	/**
-	 * dossiq's list, reduced to the one method opencatalogi calls.
+	 * dossiq's list, reduced to the two methods opencatalogi calls.
 	 */
 	class WooRefusalGrounds {
+
+		/**
+		 * Every ground, retired ones included.
+		 *
+		 * @return list<array<string, mixed>> The grounds.
+		 */
+		public function listWithRetired(): array {
+			return [];
+		}
 
 		/**
 		 * One ground by its code, retired or not.

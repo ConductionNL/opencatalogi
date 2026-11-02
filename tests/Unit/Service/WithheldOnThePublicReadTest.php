@@ -19,6 +19,7 @@ use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
 use OCA\OpenCatalogi\Service\UsageCounterService;
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore;
 use OCP\App\IAppManager;
@@ -88,8 +89,15 @@ class PublicReadObjectService {
  *
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @covers \OCA\OpenCatalogi\Controller\FederationController
+ * @uses \OCA\OpenCatalogi\Controller\CorsSettings
+ * @uses \OCA\OpenCatalogi\Controller\CatalogSlugQuery
+ * @uses \OCA\OpenCatalogi\Controller\FoundPublication
+ * @uses \OCA\OpenCatalogi\Controller\PublicationRead
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Contract\PublicationUsage
  */
 class WithheldOnThePublicReadTest extends TestCase {
 
@@ -131,7 +139,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn(true);
 
 		$this->withheld = new WithheldFromPublication(
-			store: new WithheldFromPublicationStore(config: $config, container: $container, appManager: $appManager),
+			store: new WithheldFromPublicationStore(config: $config, openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager)),
 			logger: new NullLogger(),
 		);
 	}//end setUp()
@@ -175,7 +183,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			fn (string $id): object => ($id === WithheldFromPublication::class ? $this->withheld : $this->objects)
+			fn (string $id): object => ($id === WithheldFromPublicationInterface::class ? $this->withheld : $this->objects)
 		);
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);
@@ -324,7 +332,7 @@ class WithheldOnThePublicReadTest extends TestCase {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn('');
 		$this->withheld = new WithheldFromPublication(
-			store: new WithheldFromPublicationStore(config: $config, container: $this->createMock(ContainerInterface::class), appManager: $this->createMock(IAppManager::class)),
+			store: new WithheldFromPublicationStore(config: $config, openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class))),
 			logger: new NullLogger(),
 		);
 

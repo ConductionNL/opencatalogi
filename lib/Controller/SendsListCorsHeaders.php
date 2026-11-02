@@ -1,0 +1,75 @@
+<?php
+
+/**
+ * OpenCatalogi CORS headers of the controllers with configurable CORS settings.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
+declare(strict_types=1);
+
+namespace OCA\OpenCatalogi\Controller;
+
+use OCP\AppFramework\Http\Response;
+
+/**
+ * Add the CORS headers built from the controller's own methods, headers and max age.
+ *
+ * Consuming controllers MUST expose a `CorsSettings $cors` property and a
+ * `resolveAllowedOrigin()` method.
+ *
+ * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+ */
+trait SendsListCorsHeaders {
+	/**
+	 * Add the origin, methods and headers a public answer carries.
+	 *
+	 * @param T $response The response.
+	 *
+	 * @return T The same response.
+	 *
+	 * @template T of Response
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	private function withListCorsHeaders(Response $response): Response {
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
+		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
+
+		return $response;
+	}//end withListCorsHeaders()
+
+	/**
+	 * Add every preflight header: origin, methods, max age, headers and no credentials.
+	 *
+	 * @param T $response The response.
+	 *
+	 * @return T The same response.
+	 *
+	 * @template T of Response
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	private function withListPreflightHeaders(Response $response): Response {
+		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$response->addHeader('Access-Control-Allow-Methods', $this->cors->methods);
+		$response->addHeader('Access-Control-Max-Age', (string)$this->cors->maxAge);
+		$response->addHeader('Access-Control-Allow-Headers', $this->cors->allowedHeaders);
+		$response->addHeader('Access-Control-Allow-Credentials', 'false');
+
+		return $response;
+	}//end withListPreflightHeaders()
+}//end trait

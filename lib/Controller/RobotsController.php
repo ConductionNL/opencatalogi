@@ -24,17 +24,16 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Http\TextResponse;
-use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
-use OCP\App\IAppManager;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use RuntimeException;
 
@@ -43,6 +42,8 @@ use RuntimeException;
  *
  * @psalm-suppress                                 UnusedClass
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ *
+ * @spec openspec/specs/woo-compliance/spec.md
  */
 class RobotsController extends Controller {
 
@@ -58,22 +59,20 @@ class RobotsController extends Controller {
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param SettingsService $settingsService The settings service.
-	 * @param ContainerInterface $container The container for DI.
-	 * @param IAppManager $appManager The app manager.
+	 * @param SettingsServiceInterface $settingsService The settings service.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param IURLGenerator $urlGenerator The URL generator.
 	 * @param IL10N $l10n The localization service.
-	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
+	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly SettingsService $settingsService,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly SettingsServiceInterface $settingsService,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IL10N $l10n,
-		private readonly WooCategoryRegistry $categories,
+		private readonly InformationCategoryRegistryInterface $categories,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -104,9 +103,30 @@ class RobotsController extends Controller {
 			);
 		}
 
+		$catalogs = $this->sitemapCatalogs(configuration: $settings['configuration']);
+		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
+
+		// A crawler that honours robots may fetch the sitemaps and the documents
+		// they list; every line ends in a real line break (REQ-WIH-001).
+		$text = "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n";
+		foreach ($catalogs as $catalog) {
+			$text .= $this->sitemapLines(catalog: $catalog, baseUrl: $baseUrl);
+		}
+
+		return new TextResponse(text: $text);
+	}//end index()
+
+	/**
+	 * The catalogues that publish a Woo sitemap, as the public group may read them.
+	 *
+	 * @param array<string, mixed> $configuration The app configuration with the catalog register and schema.
+	 *
+	 * @return array<int, object> The catalogues.
+	 */
+	private function sitemapCatalogs(array $configuration): array {
 		$searchQuery = [];
-		$searchQuery['@self']['register'] = $settings['configuration']['catalog_register'];
-		$searchQuery['@self']['schema'] = $settings['configuration']['catalog_schema'];
+		$searchQuery['@self']['register'] = $configuration['catalog_register'];
+		$searchQuery['@self']['schema'] = $configuration['catalog_schema'];
 		// Only catalogues that publish a Woo sitemap (REQ-WIH-001).
 		$searchQuery['hasWooSitemap'] = true;
 
@@ -120,28 +140,32 @@ class RobotsController extends Controller {
 
 		// Visibility governed by RBAC on the search above (_rbac: true) — robots.txt
 		// references only catalogs the public group may read.
-		$catalogs = ($catalogResult['results'] ?? []);
+		return ($catalogResult['results'] ?? []);
+	}//end sitemapCatalogs()
 
-		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
-
-		// A crawler that honours robots may fetch the sitemaps and the documents
-		// they list; every line ends in a real line break (REQ-WIH-001).
-		$text = "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n";
-		foreach ($catalogs as $catalog) {
-			$slug = $catalog->getSlug();
-			if (is_string($slug) === false || $slug === '' || $this->publishesWoo(catalog: $catalog) === false) {
-				continue;
-			}
-
-			// One line per category the registry serves, so a category an operator
-			// added as data is crawled without a code change (REQ-WIC-001).
-			foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
-				$text .= "Sitemap: $baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode\n";
-			}
+	/**
+	 * The sitemap lines of one catalogue, empty when it has no slug or no Woo sitemap.
+	 *
+	 * @param object $catalog The catalogue.
+	 * @param string $baseUrl The base URL without a trailing slash.
+	 *
+	 * @return string One line per category the registry serves.
+	 */
+	private function sitemapLines(object $catalog, string $baseUrl): string {
+		$slug = $catalog->getSlug();
+		if (is_string($slug) === false || $slug === '' || $this->publishesWoo(catalog: $catalog) === false) {
+			return '';
 		}
 
-		return new TextResponse(text: $text);
-	}//end index()
+		// One line per category the registry serves, so a category an operator
+		// added as data is crawled without a code change (REQ-WIC-001).
+		$lines = '';
+		foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
+			$lines .= "Sitemap: $baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode\n";
+		}
+
+		return $lines;
+	}//end sitemapLines()
 
 	/**
 	 * Whether a catalogue publishes a Woo sitemap.
@@ -160,7 +184,6 @@ class RobotsController extends Controller {
 		}
 
 		return (($data['hasWooSitemap'] ?? false) === true);
-
 	}//end publishesWoo()
 
 	/**
@@ -174,8 +197,8 @@ class RobotsController extends Controller {
 	 *       ObjectService from the container; pure framework plumbing, no domain behavior.
 	 */
 	public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		if ($this->openRegister->isInstalled() === true) {
+			$this->objectService = $this->openRegister->objectService();
 
 			return $this->objectService;
 		}

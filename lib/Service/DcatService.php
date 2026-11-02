@@ -28,6 +28,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -40,10 +41,11 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.TooManyMethods) Document building is split into small private steps to stay under the unit size and complexity limits.
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
  */
-class DcatService {
+class DcatService implements DcatServiceInterface {
 
 	/**
 	 * Page-size ceiling — identical to the sitemap ceiling (WOO-005).
@@ -231,118 +233,216 @@ class DcatService {
 	 *
 	 * @return array<string, mixed> The JSON-LD document plus `_meta` (lastModified, etag, count).
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.ExcessiveMethodLength)
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
-	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
 	 */
 	public function buildCatalogDocument(array $catalog, string $catalogSlug, int $page = 1, array &$violations = []): array {
 		$page = max(1, $page);
+		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: $catalogSlug);
+		$result = $this->searchCatalogPage(scope: $scope, page: $page);
+		$hasNext = (($result['next'] ?? null) !== null);
 
-		$registers = $this->idList(raw: ($catalog['registers'] ?? []));
+		$collected = $this->mapCatalogDatasets(publications: ($result['results'] ?? []), scope: $scope);
+		array_push($violations, ...$collected['violations']);
+
+		$graph = array_merge([$this->buildCatalogNode(catalog: $catalog, scope: $scope, datasetRefs: $collected['refs'])], $collected['datasets']);
+		$paged = $this->buildHydraPage(catalogIri: $scope['catalogIri'], page: $page, hasNext: $hasNext);
+		if ($paged !== null) {
+			$graph[] = $paged;
+		}
+
+		$document = [
+			'@context' => $this->mappingService->context(),
+			'@graph' => $graph,
+		];
+		$document['_meta'] = $this->buildCatalogMeta(
+			etagKey: ($catalog['id'] ?? $catalogSlug),
+			count: count($collected['datasets']),
+			maxModified: $collected['maxModified'],
+			paging: ['page' => $page, 'hasNext' => $hasNext]
+		);
+
+		return $document;
+	}//end buildCatalogDocument()
+
+	/**
+	 * Resolve what a catalog document is built from: scope, defaults, schema mappings and options.
+	 *
+	 * @param array<string, mixed> $catalog     The catalog object.
+	 * @param string               $catalogSlug The catalog slug.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+	 */
+	private function resolveCatalogScope(array $catalog, string $catalogSlug): array {
 		$schemas = $this->idList(raw: ($catalog['schemas'] ?? []));
-		$defaults = $this->resolveDefaults(catalog: $catalog);
-
-		$schemaMappings = $this->resolveSchemaMappings(schemaIds: $schemas);
-		$schemaHvds = $this->resolveSchemaHvds(schemaIds: $schemas);
 		$catalogHvdDefault = ($catalog['dcatHvdCategory'] ?? null);
 		if (is_string($catalogHvdDefault) === false) {
 			$catalogHvdDefault = null;
 		}
 
-		// PQM-002: attach W3C DQV quality measurements only when the catalog opts in.
-		$dqvExposure = filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN);
+		return [
+			'catalogSlug' => $catalogSlug,
+			'catalogIri' => $this->catalogEndpointUrl(catalogSlug: $catalogSlug),
+			'registers' => $this->idList(raw: ($catalog['registers'] ?? [])),
+			'schemas' => $schemas,
+			'defaults' => $this->resolveDefaults(catalog: $catalog),
+			'schemaMappings' => $this->resolveSchemaMappings(schemaIds: $schemas),
+			'schemaHvds' => $this->resolveSchemaHvds(schemaIds: $schemas),
+			'catalogHvdDefault' => $catalogHvdDefault,
+			// PQM-002: attach W3C DQV quality measurements only when the catalog opts in.
+			'dqvExposure' => filter_var(($catalog['dqvExposure'] ?? false), FILTER_VALIDATE_BOOLEAN),
+		];
+	}//end resolveCatalogScope()
 
-		// FAIL CLOSED on an empty scope: an empty `@self.schema` must never be
-		// read as "no schema filter", nor no register as "every register" (review
-		// round 4). Zero datasets, same envelope (WOO-581).
-		$result = ['results' => [], 'next' => null];
-		if ($schemas !== [] && $registers !== []) {
-			// One schema in one register → scalar fast path; anything else keeps the
-			// lists OR's routers read (WOO-581 review rounds 3-5, CallerScope::writeScope()).
-			$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
-			$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $registers, schemas: $schemas);
-			$searchQuery['_order']['updated'] = 'desc';
-
-			$objectService = $this->getObjectService();
-			// RBAC governs visibility (PUB-001 / WOO-001): anonymous callers receive only
-			// publicly visible (published, not depublished) objects. No DCAT-local filtering.
-			$result = $objectService->searchObjectsPaginated(
-				query: $searchQuery,
-				_rbac: true,
-				_multitenancy: false,
-				deleted: false
-			);
+	/**
+	 * Search one page of the catalog's publications, newest first.
+	 *
+	 * FAILS CLOSED on an empty scope: no schema or no register yields zero datasets,
+	 * never a register-wide search (WOO-581). RBAC governs visibility (PUB-001 /
+	 * WOO-001): anonymous callers receive only publicly visible objects.
+	 *
+	 * @param array $scope The resolved catalog scope.
+	 * @param int   $page  The 1-based page number.
+	 *
+	 * @return array The paginated search result.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-only-publicly-visible-objects-appear-in-the-feed-dcat-003
+	 */
+	private function searchCatalogPage(array $scope, int $page): array {
+		if ($scope['schemas'] === [] || $scope['registers'] === []) {
+			return ['results' => [], 'next' => null];
 		}
 
-		$publications = ($result['results'] ?? []);
-		$hasNext = (($result['next'] ?? null) !== null);
+		// One schema in one register is the scalar fast path; anything else keeps the
+		// lists OR's routers read (CallerScope::writeScope()).
+		$searchQuery = ['_limit' => self::MAX_PER_PAGE, '_page' => $page];
+		$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $scope['registers'], schemas: $scope['schemas']);
+		$searchQuery['_order']['updated'] = 'desc';
 
-		$fileService = $this->getFileService();
+		return $this->getObjectService()->searchObjectsPaginated(
+			query: $searchQuery,
+			_rbac: true,
+			_multitenancy: false,
+			deleted: false
+		);
+	}//end searchCatalogPage()
 
-		$catalogIri = $this->catalogEndpointUrl(catalogSlug: $catalogSlug);
-		$datasets = [];
-		$datasetRefs = [];
-		$maxModified = 0;
+	/**
+	 * Map a page of publications to DCAT datasets, skipping schemas that opted out.
+	 *
+	 * @param array $publications The publications of this page.
+	 * @param array $scope        The resolved catalog scope.
+	 *
+	 * @return array{datasets: array, refs: array, maxModified: int, violations: array<int, array<string, mixed>>}
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+	 */
+	private function mapCatalogDatasets(array $publications, array $scope): array {
+		$scope['fileService'] = $this->getFileService();
+		$collected = ['datasets' => [], 'refs' => [], 'maxModified' => 0, 'violations' => []];
 		foreach ($publications as $publication) {
 			$publication = $this->toArray(item: $publication);
-
 			$schemaId = (int)($publication['@self']['schema'] ?? 0);
-			// Skip schemas that opted out of DCAT entirely.
-			if (array_key_exists($schemaId, $schemaMappings) === true && $schemaMappings[$schemaId] === null) {
+			if (array_key_exists($schemaId, $scope['schemaMappings']) === true && $scope['schemaMappings'][$schemaId] === null) {
 				continue;
 			}
 
-			$mapping = ($schemaMappings[$schemaId] ?? DcatMappingService::DEFAULT_MAPPING);
-
-			$uuid = (string)($publication['@self']['uuid'] ?? $publication['id'] ?? '');
-			$datasetIri = $this->datasetIri(catalogSlug: $catalogSlug, uuid: $uuid);
-
-			// Fetch published attachments (searchObjectsPaginated omits files), mirroring SitemapService.
-			$files = [];
-			try {
-				$files = ($fileService->formatFiles($fileService->getFiles(object: ($publication['id'] ?? $uuid)))['results'] ?? []);
-			} catch (\Throwable $e) {
-				$this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
-			}
-
-			$dataset = $this->mappingService->mapDataset(
-				publication: $publication,
-				mapping: $mapping,
-				files: $files,
-				datasetIri: $datasetIri,
-				defaults: $defaults,
-				hvd: ($schemaHvds[$schemaId] ?? null),
-				catalogHvdDefault: $catalogHvdDefault,
-				violations: $violations
-			);
-
-			// PQM-002: additive DQV measurements, only when the catalog opts in.
-			if ($dqvExposure === true && $this->qualityService !== null) {
-				$score = $this->qualityService->scoreDataset($dataset);
-				$dataset['dqv:hasQualityMeasurement'] = $this->qualityService->dqvMeasurements($score);
-			}
-
-			$datasets[] = $dataset;
-			$datasetRefs[] = ['@id' => $datasetIri];
+			$source = $this->datasetSource(publication: $publication, scope: $scope);
+			$collected['datasets'][] = $this->mapCatalogDataset(source: $source, scope: $scope);
+			$collected['refs'][] = ['@id' => $source->datasetIri];
+			array_push($collected['violations'], ...$source->violations);
 
 			$modified = strtotime((string)($publication['@self']['updated'] ?? $publication['publicationDate'] ?? ''));
-			if ($modified !== false && $modified > $maxModified) {
-				$maxModified = $modified;
+			if ($modified !== false && $modified > $collected['maxModified']) {
+				$collected['maxModified'] = $modified;
 			}
-		}//end foreach
+		}
 
-		// Declare the profile we target, so a harvester and our own validator read the
-		// same version. The feed used to name no profile version at all, which left the
-		// mandatory-property checklist with nothing to be a checklist of.
+		return $collected;
+	}//end mapCatalogDatasets()
+
+	/**
+	 * One publication with its dataset IRI and its published attachments.
+	 *
+	 * The paginated search omits files, so they are fetched here, as SitemapService
+	 * does; a failing lookup yields a dataset without distributions.
+	 *
+	 * @param array $publication The publication.
+	 * @param array $scope       The resolved catalog scope, with the file service.
+	 *
+	 * @return DcatDatasetSource
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+	 */
+	private function datasetSource(array $publication, array $scope): DcatDatasetSource {
+		$uuid = (string)($publication['@self']['uuid'] ?? $publication['id'] ?? '');
+
+		$files = [];
+		try {
+			$fileService = $scope['fileService'];
+			$files = ($fileService->formatFiles($fileService->getFiles(object: ($publication['id'] ?? $uuid)))['results'] ?? []);
+		} catch (\Throwable $e) {
+			$this->logger->debug('[DcatService] Could not load files for publication', ['uuid' => $uuid, 'error' => $e->getMessage()]);
+		}
+
+		return new DcatDatasetSource(
+			publication: $publication,
+			datasetIri: $this->datasetIri(catalogSlug: $scope['catalogSlug'], uuid: $uuid),
+			files: $files
+		);
+	}//end datasetSource()
+
+	/**
+	 * Map one publication to a DCAT dataset; its violations are left on the source.
+	 *
+	 * @param DcatDatasetSource $source The publication, its IRI and its attachments.
+	 * @param array             $scope  The resolved catalog scope.
+	 *
+	 * @return array The dataset node.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+	 */
+	private function mapCatalogDataset(DcatDatasetSource $source, array $scope): array {
+		$schemaId = (int)($source->publication['@self']['schema'] ?? 0);
+		$profile = new DcatMappingProfile(
+			mapping: ($scope['schemaMappings'][$schemaId] ?? DcatMappingService::DEFAULT_MAPPING),
+			defaults: $scope['defaults'],
+			hvd: ($scope['schemaHvds'][$schemaId] ?? null),
+			catalogHvdDefault: $scope['catalogHvdDefault']
+		);
+		$dataset = $this->mappingService->mapDataset(source: $source, profile: $profile);
+
+		// PQM-002: additive DQV measurements, only when the catalog opts in.
+		if ($scope['dqvExposure'] === true && $this->qualityService !== null) {
+			$dataset['dqv:hasQualityMeasurement'] = $this->qualityService->dqvMeasurements($this->qualityService->scoreDataset($dataset));
+		}
+
+		return $dataset;
+	}//end mapCatalogDataset()
+
+	/**
+	 * The dcat:Catalog node, declaring the DCAT-AP-NL profile it targets.
+	 *
+	 * The declared profile lets a harvester and our own validator read the same version.
+	 *
+	 * @param array $catalog     The catalog object.
+	 * @param array $scope       The resolved catalog scope.
+	 * @param array $datasetRefs The `@id` references of the datasets on this page.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-per-catalog-dcat-ap-nl-document-endpoint-dcat-001
+	 */
+	private function buildCatalogNode(array $catalog, array $scope, array $datasetRefs): array {
 		$catalogNode = [
-			'@id' => $catalogIri,
+			'@id' => $scope['catalogIri'],
 			'@type' => 'dcat:Catalog',
-			'dct:title' => ($catalog['title'] ?? $catalogSlug),
+			'dct:title' => ($catalog['title'] ?? $scope['catalogSlug']),
 			'dct:conformsTo' => ['@id' => StandardsVersionService::DCAT_AP_NL_PROFILE],
 			'dcat:dataset' => $datasetRefs,
 		];
@@ -351,51 +451,71 @@ class DcatService {
 			$catalogNode['dct:description'] = $catalog['description'];
 		}
 
+		$defaults = $scope['defaults'];
 		$publisher = $this->mappingService->buildPublisher(organisation: ($defaults['organisation'] ?? null), defaults: $defaults);
 		if ($publisher !== null) {
 			$catalogNode['dct:publisher'] = $publisher;
 		}
 
-		$graph = array_merge([$catalogNode], $datasets);
+		return $catalogNode;
+	}//end buildCatalogNode()
 
-		// Hydra paging.
-		if ($page > 1 || $hasNext === true) {
-			$paged = [
-				'@id' => "$catalogIri?page=$page",
-				'@type' => 'hydra:PagedCollection',
-			];
-			if ($hasNext === true) {
-				$paged['hydra:next'] = ['@id' => "$catalogIri?page=" . ($page + 1)];
-			}
-
-			if ($page > 1) {
-				$paged['hydra:previous'] = ['@id' => "$catalogIri?page=" . ($page - 1)];
-			}
-
-			$graph[] = $paged;
+	/**
+	 * The Hydra paging node, or null for a single page.
+	 *
+	 * @param string $catalogIri The catalog endpoint URL.
+	 * @param int    $page       The 1-based page number.
+	 * @param bool   $hasNext    Whether a next page exists.
+	 *
+	 * @return array|null
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
+	 */
+	private function buildHydraPage(string $catalogIri, int $page, bool $hasNext): ?array {
+		if ($page <= 1 && $hasNext === false) {
+			return null;
 		}
 
-		$document = [
-			'@context' => $this->mappingService->context(),
-			'@graph' => $graph,
+		$paged = [
+			'@id' => "$catalogIri?page=$page",
+			'@type' => 'hydra:PagedCollection',
 		];
+		if ($hasNext === true) {
+			$paged['hydra:next'] = ['@id' => "$catalogIri?page=" . ($page + 1)];
+		}
 
+		if ($page > 1) {
+			$paged['hydra:previous'] = ['@id' => "$catalogIri?page=" . ($page - 1)];
+		}
+
+		return $paged;
+	}//end buildHydraPage()
+
+	/**
+	 * The `_meta` block: Last-Modified from the newest dataset (or now), ETag, count and paging.
+	 *
+	 * @param mixed $etagKey     The catalog id, or its slug.
+	 * @param int   $count       The number of datasets on this page.
+	 * @param int   $maxModified The newest dataset timestamp, 0 when none is known.
+	 * @param array $paging      The page number and whether a next page exists.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-harvester-grade-pagination-and-caching-dcat-008
+	 */
+	private function buildCatalogMeta($etagKey, int $count, int $maxModified, array $paging): array {
 		$lastModified = gmdate('D, d M Y H:i:s') . ' GMT';
 		if ($maxModified > 0) {
 			$lastModified = gmdate('D, d M Y H:i:s', $maxModified) . ' GMT';
 		}
 
-		$etag = '"' . md5(($catalog['id'] ?? $catalogSlug) . ':' . count($datasets) . ':' . $maxModified . ':' . $page) . '"';
-
-		$document['_meta'] = [
+		return [
 			'lastModified' => $lastModified,
-			'etag' => $etag,
-			'count' => count($datasets),
-			'hasNext' => $hasNext,
+			'etag' => '"' . md5($etagKey . ':' . $count . ':' . $maxModified . ':' . $paging['page']) . '"',
+			'count' => $count,
+			'hasNext' => $paging['hasNext'],
 		];
-
-		return $document;
-	}//end buildCatalogDocument()
+	}//end buildCatalogMeta()
 
 	/**
 	 * Build the instance-level DCAT document listing every DCAT-enabled catalog.
@@ -406,10 +526,48 @@ class DcatService {
 	 */
 	public function buildInstanceDocument(): array {
 		$catalogs = $this->getDcatEnabledCatalogs();
+		$graph = $this->instanceCatalogNodes(catalogs: $catalogs);
 
-		$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
-		$instanceIri = "$base/apps/opencatalogi/api/dcat";
+		$rootNode = $this->withInstanceTerms(
+			rootNode: $this->instanceRootNode(graph: $graph),
+			publisher: $this->instancePublisher(catalogs: $catalogs)
+		);
 
+		return [
+			'@context' => $this->mappingService->context(),
+			'@graph' => array_merge([$rootNode], $graph),
+			'_meta' => self::instanceMeta(count: count($graph)),
+		];
+	}//end buildInstanceDocument()
+
+	/**
+	 * The `_meta` block of the instance document.
+	 *
+	 * @param integer $count The number of catalog nodes.
+	 *
+	 * @return array<string, mixed> The meta block.
+	 *
+	 * @spec exclude Internal meta step of buildInstanceDocument().
+	 */
+	private static function instanceMeta(int $count): array {
+		return [
+			'lastModified' => gmdate('D, d M Y H:i:s') . ' GMT',
+			'etag' => '"' . md5('instance:' . $count) . '"',
+			'count' => $count,
+			'hasNext' => false,
+		];
+	}//end instanceMeta()
+
+	/**
+	 * One catalog node per DCAT-enabled catalog that has a slug.
+	 *
+	 * @param array<int, array> $catalogs The DCAT-enabled catalogs.
+	 *
+	 * @return array<int, array<string, mixed>> The catalog nodes.
+	 *
+	 * @spec exclude Internal graph step of buildInstanceDocument().
+	 */
+	private function instanceCatalogNodes(array $catalogs): array {
 		$graph = [];
 		foreach ($catalogs as $catalog) {
 			$slug = (string)($catalog['slug'] ?? '');
@@ -417,39 +575,74 @@ class DcatService {
 				continue;
 			}
 
-			$graph[] = [
-				'@id' => $this->catalogEndpointUrl(catalogSlug: $slug),
-				'@type' => 'dcat:Catalog',
-				'dct:title' => ($catalog['title'] ?? $slug),
-				'foaf:homepage' => ['@id' => $this->catalogEndpointUrl(catalogSlug: $slug)],
-			];
+			$endpoint = $this->catalogEndpointUrl(catalogSlug: $slug);
+			$graph[] = ['@id' => $endpoint, '@type' => 'dcat:Catalog', 'dct:title' => ($catalog['title'] ?? $slug), 'foaf:homepage' => ['@id' => $endpoint]];
 		}
 
-		// Instance-level publisher, completed from the configured owning Organisation
-		// via the DCAT-005 fallback chain. When no instance-level publisher is
-		// configured, fall back to the first DCAT-enabled catalog's owning Organisation.
+		return $graph;
+	}//end instanceCatalogNodes()
+
+	/**
+	 * The instance-level publisher, completed via the DCAT-005 fallback chain.
+	 *
+	 * The configured instance publisher comes first; the first DCAT-enabled
+	 * catalog's owning Organisation fills what it leaves open.
+	 *
+	 * @param array<int, array> $catalogs The DCAT-enabled catalogs.
+	 *
+	 * @return array|null The publisher node, or null.
+	 *
+	 * @spec exclude Internal publisher step of buildInstanceDocument().
+	 */
+	private function instancePublisher(array $catalogs): ?array {
 		$organisation = null;
 		if ($catalogs !== []) {
-			$catDefaults = $this->resolveDefaults(catalog: $catalogs[0]);
-			$organisation = ($catDefaults['organisation'] ?? null);
+			$organisation = ($this->resolveDefaults(catalog: $catalogs[0])['organisation'] ?? null);
 		}
 
 		$defaults = [
 			'publisherName' => $this->appConfig->getValueString('opencatalogi', 'dcat_publisher_name', ''),
 			'publisherUri' => $this->appConfig->getValueString('opencatalogi', 'dcat_publisher_uri', ''),
 		];
-		$publisher = $this->mappingService->buildPublisher($organisation, $defaults);
+		return $this->mappingService->buildPublisher($organisation, $defaults);
+	}//end instancePublisher()
 
-		// DONL harvest-source metadata (DCAT-NPF-001): the source catalog node MUST
-		// carry publisher, license, contactPoint, modified and homepage.
-		$rootNode = [
-			'@id' => $instanceIri,
+	/**
+	 * The instance catalog node that lists every catalog node.
+	 *
+	 * @param array<int, array<string, mixed>> $graph The catalog nodes.
+	 *
+	 * @return array<string, mixed> The root node.
+	 *
+	 * @spec exclude Internal root step of buildInstanceDocument().
+	 */
+	private function instanceRootNode(array $graph): array {
+		$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+
+		return [
+			'@id' => "$base/apps/opencatalogi/api/dcat",
 			'@type' => 'dcat:Catalog',
 			'dct:title' => $this->appConfig->getValueString('opencatalogi', 'dcat_instance_title', 'OpenCatalogi'),
 			'dct:modified' => gmdate('Y-m-d\TH:i:sP'),
 			'foaf:homepage' => ['@id' => $this->appConfig->getValueString('opencatalogi', 'dcat_instance_homepage', $base)],
 			'dcat:catalog' => array_map(static fn ($node) => ['@id' => $node['@id']], $graph),
 		];
+	}//end instanceRootNode()
+
+	/**
+	 * Add the DONL harvest-source terms to the instance root node (DCAT-NPF-001).
+	 *
+	 * The source catalog node carries publisher, license and contactPoint when
+	 * they resolve to a value.
+	 *
+	 * @param array<string, mixed> $rootNode The root node.
+	 * @param array|null $publisher The instance publisher, or null.
+	 *
+	 * @return array<string, mixed> The root node with its terms.
+	 *
+	 * @spec exclude Internal harvest-source step of buildInstanceDocument().
+	 */
+	private function withInstanceTerms(array $rootNode, ?array $publisher): array {
 		if ($publisher !== null) {
 			$rootNode['dct:publisher'] = $publisher;
 		}
@@ -464,21 +657,8 @@ class DcatService {
 			$rootNode['dcat:contactPoint'] = ['@type' => 'vcard:Organization', 'vcard:fn' => $contactPoint];
 		}
 
-		$document = [
-			'@context' => $this->mappingService->context(),
-			'@graph' => array_merge([$rootNode], $graph),
-		];
-
-		$etag = '"' . md5('instance:' . count($graph)) . '"';
-		$document['_meta'] = [
-			'lastModified' => gmdate('D, d M Y H:i:s') . ' GMT',
-			'etag' => $etag,
-			'count' => count($graph),
-			'hasNext' => false,
-		];
-
-		return $document;
-	}//end buildInstanceDocument()
+		return $rootNode;
+	}//end withInstanceTerms()
 
 	/**
 	 * Validate a catalog's feed against the DCAT-AP-NL mandatory-property checklist.

@@ -35,8 +35,10 @@ use Throwable;
  * `{position, grounds}`; every other key, a title first of all, is dropped
  * before anything is stored, so this path cannot leak what was withheld.
  *
- * The grounds are looked up in dossiq's own list (`WooRefusalGrounds::byCode()`)
- * and stored as dossiq answered, so the public read never guesses a label.
+ * The grounds are looked up in dossiq's own list, read once per call through
+ * `WooRefusalGrounds::listWithRetired()` (or `byCode()` per code on a dossiq
+ * without it), and stored as dossiq answered, so the public read never guesses
+ * a label and one call never mixes two versions of the list.
  * When that list cannot be reached, nothing is stored or removed and the
  * vendored snapshot is NOT read: a label from a stale copy is worse than none.
  *
@@ -57,6 +59,13 @@ class WithheldDocuments {
 	 * @var string
 	 */
 	public const GROUNDS_UNAVAILABLE_CLASS = 'OCA\Dossiq\Woo\WooRefusalGroundsUnavailable';
+
+	/**
+	 * dossiq's method that answers the whole list, retired grounds included.
+	 *
+	 * @var string
+	 */
+	public const GROUNDS_LIST_METHOD = 'listWithRetired';
 
 	/**
 	 * The keys an entry is reduced to before it is read.
@@ -94,6 +103,8 @@ class WithheldDocuments {
 
 	public const REASON_INVALID_ENTRY = 'invalid-entry';
 
+	public const REASON_UNAVAILABLE = 'unavailable';
+
 	/**
 	 * Constructor.
 	 *
@@ -122,7 +133,12 @@ class WithheldDocuments {
 	public function record(string $publicationId, array $entries, string $source): array {
 		$entries = array_map(fn (mixed $entry): array => $this->reduce(entry: $entry), array_values($entries));
 
-		if ($this->store->publicationExists(publicationId: $publicationId) === false) {
+		$exists = $this->store->publicationExists(publicationId: $publicationId);
+		if ($exists === null) {
+			return $this->refuseAll(entries: $entries, reason: self::REASON_UNAVAILABLE);
+		}
+
+		if ($exists === false) {
 			return $this->refuseAll(entries: $entries, reason: self::REASON_NO_PUBLICATION);
 		}
 
@@ -131,18 +147,8 @@ class WithheldDocuments {
 			return $this->refuseAll(entries: $entries, reason: self::REASON_GROUNDS_UNAVAILABLE);
 		}
 
-		$accepted = [];
-		$refused = [];
 		try {
-			foreach ($entries as $entry) {
-				$resolved = $this->resolve(grounds: $grounds, entry: $entry);
-				if (isset($resolved['refused']) === true) {
-					$refused[] = $resolved['refused'];
-					continue;
-				}
-
-				$accepted[] = $resolved['entry'];
-			}
+			[$accepted, $refused] = $this->resolveAll(grounds: $grounds, entries: $entries);
 		} catch (Throwable $e) {
 			if ($this->isUnavailable(error: $e) === false) {
 				throw $e;
@@ -184,21 +190,110 @@ class WithheldDocuments {
 	}//end reduce()
 
 	/**
+	 * Resolve every entry, accepting each position once.
+	 *
+	 * @param object|null                                       $grounds dossiq's WooRefusalGrounds.
+	 * @param list<array{position: int, grounds: list<string>}> $entries The reduced entries.
+	 *
+	 * @return array{0: list<array<string, mixed>>, 1: list<array{position: int, code: string, reason: string}>} Accepted and refused.
+	 *
+	 * @throws Throwable When dossiq's list cannot be read.
+	 */
+	private function resolveAll(?object $grounds, array $entries): array {
+		$lookup = $this->lookup(grounds: $grounds, entries: $entries);
+		$accepted = [];
+		$refused = [];
+		$positions = [];
+		foreach ($entries as $entry) {
+			$resolved = $this->resolve(lookup: $lookup, entry: $entry);
+			if (isset($resolved['refused']) === false && isset($positions[$entry['position']]) === true) {
+				$resolved = ['refused' => ['position' => $entry['position'], 'code' => $entry['grounds'][0], 'reason' => self::REASON_INVALID_ENTRY]];
+			}
+
+			if (isset($resolved['refused']) === true) {
+				$refused[] = $resolved['refused'];
+				continue;
+			}
+
+			$positions[$entry['position']] = true;
+			$accepted[] = $resolved['entry'];
+		}
+
+		return [$accepted, $refused];
+	}//end resolveAll()
+
+	/**
+	 * dossiq's list read once and keyed by code, or null to ask `byCode()` per code.
+	 *
+	 * One read per call keeps a decision with hundreds of withheld documents from
+	 * reading the grounds register hundreds of times, and keeps every label of one
+	 * call from the same version of the list. A dossiq without `listWithRetired()`
+	 * is still asked per code.
+	 *
+	 * @param object|null                                       $grounds dossiq's WooRefusalGrounds.
+	 * @param list<array{position: int, grounds: list<string>}> $entries The reduced entries.
+	 *
+	 * @return array<string, array<string, mixed>>|null
+	 *
+	 * @throws Throwable When dossiq's list cannot be read; record() turns its WooRefusalGroundsUnavailable into a refusal.
+	 */
+	private function index(?object $grounds, array $entries): ?array {
+		if ($grounds === null || $entries === [] || method_exists($grounds, self::GROUNDS_LIST_METHOD) === false) {
+			return null;
+		}
+
+		$byCode = [];
+		foreach ((array)$grounds->{self::GROUNDS_LIST_METHOD}() as $ground) {
+			if (is_array($ground) === false || is_string($ground['code'] ?? null) === false) {
+				continue;
+			}
+
+			$byCode[$ground['code']] ??= $ground;
+		}
+
+		return $byCode;
+	}//end index()
+
+	/**
+	 * How one code is looked up: in dossiq's list read once, or through
+	 * `byCode()` when that list cannot be read in one go. Null without dossiq.
+	 *
+	 * @param object|null $grounds dossiq's WooRefusalGrounds.
+	 * @param list<array{position: int, grounds: list<string>}> $entries The reduced entries.
+	 *
+	 * @return \Closure(string): mixed|null
+	 *
+	 * @throws Throwable When dossiq's list cannot be read.
+	 */
+	private function lookup(?object $grounds, array $entries): ?\Closure {
+		if ($grounds === null) {
+			return null;
+		}
+
+		$byCode = $this->index(grounds: $grounds, entries: $entries);
+		if ($byCode === null) {
+			return static fn (string $code): mixed => $grounds->byCode($code);
+		}
+
+		return static fn (string $code): mixed => ($byCode[$code] ?? null);
+	}//end lookup()
+
+	/**
 	 * Resolve one entry's codes through dossiq's list.
 	 *
-	 * @param object|null                                 $grounds dossiq's WooRefusalGrounds.
-	 * @param array{position: int, grounds: list<string>} $entry   The reduced entry.
+	 * @param (\Closure(string): mixed)|null $lookup How a code is looked up, or null without dossiq.
+	 * @param array{position: int, grounds: list<string>} $entry The reduced entry.
 	 *
 	 * @return array<string, mixed> `['entry' => ...]` or `['refused' => ...]`.
 	 */
-	private function resolve(?object $grounds, array $entry): array {
-		if ($entry['position'] < 1 || $entry['grounds'] === [] || $grounds === null) {
+	private function resolve(?\Closure $lookup, array $entry): array {
+		if ($entry['position'] < 1 || $entry['grounds'] === [] || $lookup === null) {
 			return ['refused' => ['position' => $entry['position'], 'code' => (string)($entry['grounds'][0] ?? ''), 'reason' => self::REASON_INVALID_ENTRY]];
 		}
 
 		$stored = [];
 		foreach ($entry['grounds'] as $code) {
-			$ground = $grounds->byCode($code);
+			$ground = $lookup($code);
 			if (is_array($ground) === false) {
 				return ['refused' => ['position' => $entry['position'], 'code' => $code, 'reason' => self::REASON_UNKNOWN_GROUND]];
 			}

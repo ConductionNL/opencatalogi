@@ -603,6 +603,26 @@ to the current output.
 - **AND** the returned metric values MUST match the pre-change values for the
   same data.
 
+### Requirement: staff pages MUST show only the active organisation's catalogues and publications
+
+Staff pages MUST read catalogues and publications through the OpenRegister
+objects API, which scopes every list to the user's active organisation. One
+installation MUST be able to hold the catalogues of several organisations, and
+a staff member MUST see only those of the organisation they work for. Public
+reads stay unscoped, because published content is meant for everyone.
+
+#### Scenario: two organisations on one installation
+
+- **GIVEN** organisation A and organisation B each own one catalogue on the same installation
+- **WHEN** a staff member whose active organisation is A opens the catalogues page
+- **THEN** only the catalogue of organisation A MUST be listed
+
+#### Scenario: public reads are not scoped
+
+- **GIVEN** both catalogues hold a published publication
+- **WHEN** an anonymous reader calls the public catalogue API of each catalogue
+- **THEN** both publications MUST be served
+
 ## Breaking Changes
 
 The following API surfaces change from silent fallthrough to hard errors when this

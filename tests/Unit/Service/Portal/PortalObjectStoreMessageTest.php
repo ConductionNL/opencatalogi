@@ -61,10 +61,9 @@ class PortalObjectStoreMessageTest extends TestCase {
 		$apps->method('isInstalled')->willReturn(true);
 
 		return new PortalObjectStore(
-			container: $container,
+			openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $apps),
 			publications: new PublicationQueryService(container: $this->createMock(ContainerInterface::class)),
-			logger: new NullLogger(),
-			appManager: $apps
+			logger: new NullLogger()
 		);
 	}
 

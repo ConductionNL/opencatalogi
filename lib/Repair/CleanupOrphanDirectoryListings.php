@@ -99,77 +99,129 @@ class CleanupOrphanDirectoryListings implements IRepairStep
      */
     public function run(IOutput $output): void
     {
+        $services = $this->openRegisterServices(output: $output);
+        if ($services === null) {
+            return;
+        }
+
+        $tables = $this->listingTables(services: $services, output: $output);
+        if ($tables === null) {
+            return;
+        }
+
+        $sweep = new OrphanListingSweep(objectService: $services['objectService'], output: $output);
+        foreach ($tables as $table) {
+            $this->cleanRegister(table: $table, sweep: $sweep);
+        }
+
+        $output->info($sweep->summary());
+
+    }//end run()
+
+    /**
+     * OpenRegister's schema mapper, register mapper and object service.
+     *
+     * @param IOutput $output The output interface.
+     *
+     * @return array<string, object>|null The services, or null when OpenRegister is absent.
+     */
+    private function openRegisterServices(IOutput $output): ?array
+    {
         if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
             $output->warning('OpenRegister is not installed — skipping orphan-directory-listings cleanup');
-            return;
+            return null;
         }
 
         try {
-            $schemaMapper   = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
-            $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
-            $objectService  = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+            return [
+                'schemaMapper'   => $this->container->get('OCA\OpenRegister\Db\SchemaMapper'),
+                'registerMapper' => $this->container->get('OCA\OpenRegister\Db\RegisterMapper'),
+                'objectService'  => $this->container->get('OCA\OpenRegister\Service\ObjectService'),
+            ];
         } catch (\Throwable $e) {
             $output->warning('OpenRegister services unavailable — skipping cleanup: '.$e->getMessage());
-            return;
+            return null;
         }
 
-        // Resolve the listing schema by slug scoped to this app so a foreign
-        // register that happens to also ship a `listing` slug never leaks in.
+    }//end openRegisterServices()
+
+    /**
+     * The listing table of every register that carries this app's listing schema.
+     *
+     * A fleet may have several registers (e.g. per tenant), so every register is checked.
+     *
+     * @param array<string, object> $services The OpenRegister services.
+     * @param IOutput               $output   The output interface.
+     *
+     * @return ListingTable[]|null The tables, or null when the lookup failed.
+     */
+    private function listingTables(array $services, IOutput $output): ?array
+    {
+        $schemaId = $this->listingSchemaId(schemaMapper: $services['schemaMapper'], output: $output);
+        if ($schemaId === null) {
+            return null;
+        }
+
+        try {
+            $registers = $services['registerMapper']->findAll();
+        } catch (\Throwable $e) {
+            $output->warning('Register enumeration failed — skipping cleanup: '.$e->getMessage());
+            return null;
+        }
+
+        return $this->tablesCarrying(registers: $registers, schemaId: $schemaId);
+
+    }//end listingTables()
+
+    /**
+     * The listing table of each register that carries the listing schema.
+     *
+     * @param iterable<object> $registers OpenRegister registers.
+     * @param integer          $schemaId  The listing schema id.
+     *
+     * @return ListingTable[]
+     */
+    private function tablesCarrying(iterable $registers, int $schemaId): array
+    {
+        $tables = [];
+        foreach ($registers as $register) {
+            if (in_array($schemaId, array_map('intval', ($register->getSchemas() ?? [])), true) === true) {
+                $tables[] = new ListingTable(registerId: (int) $register->getId(), schemaId: $schemaId);
+            }
+        }
+
+        return $tables;
+
+    }//end tablesCarrying()
+
+    /**
+     * The id of this app's listing schema.
+     *
+     * The slug is scoped to this app, so a foreign register that also ships a
+     * `listing` slug never leaks in.
+     *
+     * @param object  $schemaMapper OpenRegister's schema mapper.
+     * @param IOutput $output       The output interface.
+     *
+     * @return integer|null The schema id, or null when there is none or the lookup failed.
+     */
+    private function listingSchemaId(object $schemaMapper, IOutput $output): ?int
+    {
         try {
             $schema = $schemaMapper->findByApplicationAndSlug(self::LISTING_SCHEMA_SLUG, self::APP_ID);
         } catch (\Throwable $e) {
             $output->warning('Listing schema lookup failed — skipping cleanup: '.$e->getMessage());
-            return;
+            return null;
         }
 
         if ($schema === null) {
             $output->info('No listing schema found — nothing to clean up');
-            return;
+            return null;
         }
 
-        $schemaId = (int) $schema->getId();
+        return (int) $schema->getId();
 
-        // Find every register that carries this schema; typically 1, but a fleet may
-        // have multiple registers (e.g. per-tenant) so we sweep across all of them.
-        try {
-            $registers = $registerMapper->findAll();
-        } catch (\Throwable $e) {
-            $output->warning('Register enumeration failed — skipping cleanup: '.$e->getMessage());
-            return;
-        }
-
-        $totalDeleted = 0;
-        $totalKept    = 0;
-        $totalFailed  = 0;
-
-        foreach ($registers as $register) {
-            $registerSchemas = array_map('intval', ($register->getSchemas() ?? []));
-            if (in_array($schemaId, $registerSchemas, true) === false) {
-                continue;
-            }
-
-            $tally = $this->cleanRegister(
-                registerId: (int) $register->getId(),
-                schemaId: $schemaId,
-                objectService: $objectService,
-                output: $output
-            );
-
-            $totalDeleted += $tally['deleted'];
-            $totalKept    += $tally['kept'];
-            $totalFailed  += $tally['failed'];
-        }//end foreach
-
-        $output->info(
-                sprintf(
-            'Directory-listings cleanup: deleted %d orphan row(s), kept %d valid row(s), %d failure(s)',
-            $totalDeleted,
-            $totalKept,
-            $totalFailed
-        )
-                );
-
-    }//end run()
+    }//end listingSchemaId()
 
     /**
      * Delete the orphan listing rows in one register's listing table.
@@ -184,60 +236,25 @@ class CleanupOrphanDirectoryListings implements IRepairStep
      * leave every later register uncleaned, which is the failure mode this step
      * exists to prevent.
      *
-     * @param int     $registerId    The register whose listing table to clean.
-     * @param int     $schemaId      The resolved listing schema id.
-     * @param object  $objectService OpenRegister's ObjectService.
-     * @param IOutput $output        Repair output channel.
+     * @param ListingTable       $table The listing table to clean.
+     * @param OrphanListingSweep $sweep The sweep that deletes and tallies.
      *
-     * @return array{deleted: int, kept: int, failed: int} Per-register tally.
+     * @return void
      */
-    private function cleanRegister(int $registerId, int $schemaId, object $objectService, IOutput $output): array
+    private function cleanRegister(ListingTable $table, OrphanListingSweep $sweep): void
     {
-        $tableName = sprintf('openregister_table_%d_%d', $registerId, $schemaId);
-        $tally     = [
-            'deleted' => 0,
-            'kept'    => 0,
-            'failed'  => 0,
-        ];
-
         try {
-            $rows = $this->fetchOrphanRows(tableName: $tableName);
+            $rows = $this->fetchOrphanRows(tableName: $table->name());
         } catch (\Throwable $e) {
-            $output->warning(sprintf('Failed to scan %s: %s', $tableName, $e->getMessage()));
-            return $tally;
+            $sweep->output->warning(sprintf('Failed to scan %s: %s', $table->name(), $e->getMessage()));
+            return;
         }
 
         foreach ($rows as $row) {
-            // No `?? null`: fetchOrphanRows() selects `_uuid` explicitly and
-            // declares `array{_uuid: string, ...}`, so phpstan rightly calls the
-            // coalesce dead code. The empty() guard stays — the column is
-            // selected, but a blank value would still make deleteObject()
-            // address nothing, and that row is counted as a failure rather than
-            // silently skipped.
-            $uuid = $row['_uuid'];
-            if (empty($uuid) === true) {
-                $tally['failed']++;
-                continue;
-            }
+            $sweep->delete(table: $table, row: $row);
+        }
 
-            try {
-                $objectService->deleteObject(
-                    uuid: (string) $uuid,
-                    register: (string) $registerId,
-                    schema: (string) $schemaId,
-                    _rbac: false,
-                    _multitenancy: false
-                );
-                $tally['deleted']++;
-            } catch (\Throwable $e) {
-                $tally['failed']++;
-                $output->warning(sprintf('Failed to delete listing %s: %s', (string) $uuid, $e->getMessage()));
-            }
-        }//end foreach
-
-        $tally['kept'] = $this->countValidRows(tableName: $tableName);
-
-        return $tally;
+        $sweep->kept += $this->countValidRows(tableName: $table->name());
 
     }//end cleanRegister()
 

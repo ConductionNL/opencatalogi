@@ -148,7 +148,7 @@ class WooRequestControllerTest extends TestCase {
 			$l10n,
 			$userSession,
 			new WooRequestService(),
-			new WooRequestStore($config, $container, $this->appManager(installed: true)),
+			new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $this->appManager(installed: true))),
 			$this->terms
 		);
 
@@ -544,7 +544,7 @@ class WooRequestControllerTest extends TestCase {
 		}
 
 		if ($store === null) {
-			$store = new WooRequestStore($config, $container, $this->appManager(installed: true));
+			$store = new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $this->appManager(installed: true)));
 		}
 
 		return new WooRequestController(

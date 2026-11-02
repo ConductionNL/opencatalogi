@@ -218,6 +218,13 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			-->
 			<step>OCA\OpenCatalogi\Repair\WOO536RepairReadRules</step>
 			<!--
+				Writes each catalogue's staff access onto the schemas it covers
+				(catalogue-staff-access). After InitializeSettings and the read-rule
+				backfill, either of which may reset a schema's authorization to the
+				bundled one. Idempotent: a schema whose rules already match is not written.
+			-->
+			<step>OCA\OpenCatalogi\Repair\RecomputeCatalogAccess</step>
+			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.
 

@@ -31,6 +31,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCP\Http\Client\IClientService;
 
 /**
@@ -38,7 +39,7 @@ use OCP\Http\Client\IClientService;
  *
  * @spec openspec/specs/woo-compliance/spec.md
  */
-class StandardsVersionService {
+class StandardsVersionService implements StandardsVersionServiceInterface {
 
 	/**
 	 * The status returned when the declared version matches the published one.

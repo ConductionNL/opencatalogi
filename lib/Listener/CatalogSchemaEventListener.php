@@ -26,7 +26,7 @@
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -51,12 +51,12 @@ class CatalogSchemaEventListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param CatalogiService $catalogiService Service used to compute rewritten registers/schemas.
+	 * @param CatalogiServiceInterface $catalogiService Service used to compute rewritten registers/schemas.
 	 * @param LoggerInterface $logger Logger for event-handling diagnostics.
 	 * @param IAppConfig $appConfig App configuration for catalog schema/register routing.
 	 */
 	public function __construct(
-		private readonly CatalogiService $catalogiService,
+		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly LoggerInterface $logger,
 		private readonly IAppConfig $appConfig,
 	) {
@@ -81,23 +81,7 @@ class CatalogSchemaEventListener implements IEventListener {
 		}
 
 		try {
-			$objectEntity = $this->getEntityFromEvent(event: $event);
-			if ($objectEntity === null) {
-				return;
-			}
-
-			$catalogSchema = $this->appConfig->getValueString('opencatalogi', 'catalog_schema', '');
-			$catalogRegister = $this->appConfig->getValueString('opencatalogi', 'catalog_register', '');
-
-			if ($objectEntity->getSchema() !== $catalogSchema
-				|| $objectEntity->getRegister() !== $catalogRegister
-			) {
-				return;
-			}
-
-			$object = $objectEntity->getObject() ?? [];
-			$modified = $this->catalogiService->computeRewrittenRegistersAndSchemas($object);
-
+			$modified = $this->catalogRewrites(event: $event);
 			if ($modified === []) {
 				return;
 			}
@@ -116,6 +100,39 @@ class CatalogSchemaEventListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * The rewritten registers and schemas of the catalog an event saves.
+	 *
+	 * @param Event $event The pre-save event.
+	 *
+	 * @return array<string, mixed> The keys to rewrite, or none when the object is no catalog.
+	 */
+	private function catalogRewrites(Event $event): array {
+		$objectEntity = $this->getEntityFromEvent(event: $event);
+		if ($objectEntity === null || $this->isCatalog(objectEntity: $objectEntity) === false) {
+			return [];
+		}
+
+		return $this->catalogiService->computeRewrittenRegistersAndSchemas($objectEntity->getObject() ?? []);
+
+	}//end catalogRewrites()
+
+	/**
+	 * Whether an object lives in the configured catalog schema and register.
+	 *
+	 * @param ObjectEntity $objectEntity The object.
+	 *
+	 * @return bool
+	 */
+	private function isCatalog(ObjectEntity $objectEntity): bool {
+		$catalogSchema = $this->appConfig->getValueString('opencatalogi', 'catalog_schema', '');
+		$catalogRegister = $this->appConfig->getValueString('opencatalogi', 'catalog_register', '');
+
+		return $objectEntity->getSchema() === $catalogSchema
+			&& $objectEntity->getRegister() === $catalogRegister;
+
+	}//end isCatalog()
 
 	/**
 	 * Pull the catalog entity out of either supported pre-save event.

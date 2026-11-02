@@ -34,6 +34,8 @@ function catalog(slug, registers, schemas) {
  * @param {object} [options.publicationPairConfig] Props for the publication pair only.
  * @param {object} [options.otherPairConfig] Props for any other page pair only.
  * @param {object} [options.sidebar] The CnIndexPage sidebar config.
+ * @param {object} [options.actionToggles] The page's show toggles.
+ * @param {object} [options.handlers] The app's handler map, as CnAppRoot provides it.
  * @return {{wrapper: object, route: object, router: object}} The mounted page and its route doubles.
  */
 function mountPage({
@@ -44,6 +46,8 @@ function mountPage({
 	publicationPairConfig = undefined,
 	otherPairConfig = undefined,
 	sidebar = undefined,
+	actionToggles = { showAdd: true, selectable: true },
+	handlers = {},
 } = {}) {
 	const route = reactive({ params: { catalogSlug: slug }, query })
 	const router = {
@@ -62,11 +66,12 @@ function mountPage({
 			publicationPairConfig,
 			otherPairConfig,
 			sidebar,
-			actionToggles: { showAdd: true, selectable: true },
+			actionToggles,
 			documentationUrl: 'https://example.org/docs',
 			onRowClick: jest.fn(),
 		},
 		global: {
+			provide: { cnCustomComponents: handlers },
 			mocks: {
 				t: (app, text, vars = {}) =>
 					text.replace(/{(\w+)}/g, (match, key) => vars[key] ?? match),
@@ -553,5 +558,103 @@ describe('CatalogPublicationsIndex', () => {
 		expect(wrapper.vm.lookedUpCatalog).toBeNull()
 		expect(indexPage(wrapper).props('schema')).toBe('184')
 		expect(indexPage(wrapper).vm.$.vnode.key).toBe('code:19:184')
+	})
+	describe('selection bar actions', () => {
+		const bulkActions = [
+			{
+				id: 'lock',
+				label: 'Lock',
+				handler: 'openSelectionDialog',
+				props: { dialog: 'massLockObjects' },
+			},
+			{ id: 'export', label: 'Export', handler: 'emit' },
+		]
+		const row = (id) => ({ id, '@self': { id, register: 19, schema: 173 } })
+
+		afterEach(() => {
+			navigationStore.setModal(false)
+			navigationStore.setDialog(false)
+		})
+
+		it('calls a named handler with the selected rows and the action props', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [173])]
+			const openSelectionDialog = jest.fn(() => true)
+			const { wrapper } = mountPage({
+				publicationPairConfig: { bulkActions },
+				handlers: { openSelectionDialog },
+			})
+			await flushPromises()
+
+			const page = indexPage(wrapper)
+			page.vm.selectedObjects = [row('a'), row('b'), row('c')]
+			const [lock, exportAction] = page.vm.$attrs.bulkActions
+			expect(exportAction).toEqual(bulkActions[1])
+			expect(typeof lock.handler).toBe('function')
+
+			lock.handler({ actionId: 'lock', selectedIds: ['a', 'c'], count: 2 })
+
+			expect(openSelectionDialog).toHaveBeenCalledWith({
+				actionId: 'lock',
+				selectedIds: ['a', 'c'],
+				count: 2,
+				objects: [row('a'), row('c')],
+				props: { dialog: 'massLockObjects' },
+			})
+		})
+
+		it('reloads the list and clears the selection when the opened dialog closes', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [173])]
+			const openSelectionDialog = jest.fn(() => {
+				navigationStore.setDialog('massLockObjects')
+				return true
+			})
+			const { wrapper } = mountPage({
+				publicationPairConfig: { bulkActions },
+				handlers: { openSelectionDialog },
+			})
+			await flushPromises()
+
+			const page = indexPage(wrapper)
+			page.vm.selectedObjects = [row('a')]
+			page.vm.$attrs.bulkActions[0].handler({ selectedIds: ['a'], count: 1 })
+			await flushPromises()
+			expect(page.vm.refreshCount).toBe(0)
+
+			navigationStore.setDialog(false)
+			await flushPromises()
+
+			expect(page.vm.refreshCount).toBe(1)
+			expect(page.vm.selectedObjects).toEqual([])
+		})
+
+		it('does not reload after a handler that opened nothing', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [173])]
+			const { wrapper } = mountPage({
+				publicationPairConfig: { bulkActions },
+				handlers: { openSelectionDialog: jest.fn(() => false) },
+			})
+			await flushPromises()
+
+			const page = indexPage(wrapper)
+			page.vm.$attrs.bulkActions[0].handler({ selectedIds: [], count: 0 })
+			navigationStore.setDialog('massValidateObjects')
+			await flushPromises()
+			navigationStore.setDialog(false)
+			await flushPromises()
+
+			expect(page.vm.refreshCount).toBe(0)
+		})
+
+		it('hides the selection actions when the page has no delete action', async () => {
+			objectStore.menuCatalogs = [catalog('woo', [19], [173])]
+			const { wrapper } = mountPage({
+				publicationPairConfig: { bulkActions },
+				actionToggles: { selectable: true, showDeleteAction: false },
+				handlers: { openSelectionDialog: jest.fn() },
+			})
+			await flushPromises()
+
+			expect(indexPage(wrapper).vm.$attrs.bulkActions).toEqual([])
+		})
 	})
 })

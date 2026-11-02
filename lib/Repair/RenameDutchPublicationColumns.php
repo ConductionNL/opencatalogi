@@ -58,6 +58,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Repair;
 
 use OCP\DB\Exception;
+use OCP\DB\IPreparedStatement;
 use OCP\IDBConnection;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -142,38 +143,11 @@ class RenameDutchPublicationColumns implements IRepairStep {
 
 		$renamed = 0;
 		$copied = 0;
-
 		foreach ($tables as $table) {
-			$columns = $this->columnsOf(table: $table);
-
-			foreach (self::COLUMN_MAP as $old => $new) {
-				if (in_array($old, $columns, true) === false) {
-					// Already migrated, or this schema never had the property.
-					continue;
-				}
-
-				$qTable = $this->quote(identifier: $table);
-				$qOld = $this->quote(identifier: $old);
-				$qNew = $this->quote(identifier: $new);
-
-				if (in_array($new, $columns, true) === false) {
-					$sql = 'ALTER TABLE ' . $qTable . ' RENAME COLUMN ' . $qOld . ' TO ' . $qNew;
-					if ($this->exec(sql: $sql) === true) {
-						$renamed++;
-					}
-
-					continue;
-				}
-
-				// The mapper already added an empty English column: back-fill and
-				// leave the Dutch one, so this stays reversible.
-				$sql = 'UPDATE ' . $qTable . ' SET ' . $qNew . ' = ' . $qOld
-					. ' WHERE ' . $qNew . ' IS NULL AND ' . $qOld . ' IS NOT NULL';
-				if ($this->exec(sql: $sql) === true) {
-					$copied++;
-				}
-			}//end foreach
-		}//end foreach
+			$counts = $this->migrateTable(table: $table);
+			$renamed += $counts['renamed'];
+			$copied += $counts['copied'];
+		}
 
 		$output->info(
 			'RenameDutchPublicationColumns: ' . $renamed . ' column(s) renamed, '
@@ -183,15 +157,93 @@ class RenameDutchPublicationColumns implements IRepairStep {
 	}//end run()
 
 	/**
+	 * Move the Dutch columns of one shard table to their English names.
+	 *
+	 * A column is renamed when its English name is absent, and back-filled into
+	 * the English column when both exist.
+	 *
+	 * @param string $table Table name.
+	 *
+	 * @return array{renamed: int, copied: int} The columns renamed and back-filled.
+	 */
+	private function migrateTable(string $table): array {
+		$columns = $this->columnsOf(table: $table);
+		$counts = ['renamed' => 0, 'copied' => 0];
+
+		foreach (self::COLUMN_MAP as $old => $new) {
+			if (in_array($old, $columns, true) === false) {
+				// Already migrated, or this schema never had the property.
+				continue;
+			}
+
+			// When the mapper already added an empty English column, back-fill
+			// and leave the Dutch one, so this stays reversible.
+			$kind = 'copied';
+			if (in_array($new, $columns, true) === false) {
+				$kind = 'renamed';
+			}
+
+			if ($this->exec(sql: $this->migrationSql(table: $table, column: [$old, $new, $kind])) === true) {
+				$counts[$kind]++;
+			}
+		}
+
+		return $counts;
+
+	}//end migrateTable()
+
+	/**
+	 * The statement that renames or back-fills one column.
+	 *
+	 * @param string $table Table name.
+	 * @param array{0: string, 1: string, 2: string} $column The old name, the new name and `renamed` or `copied`.
+	 *
+	 * @return string The SQL.
+	 */
+	private function migrationSql(string $table, array $column): string {
+		[$old, $new, $kind] = $column;
+		$qTable = $this->quote(identifier: $table);
+		$qOld = $this->quote(identifier: $old);
+		$qNew = $this->quote(identifier: $new);
+
+		if ($kind === 'renamed') {
+			return 'ALTER TABLE ' . $qTable . ' RENAME COLUMN ' . $qOld . ' TO ' . $qNew;
+		}
+
+		return 'UPDATE ' . $qTable . ' SET ' . $qNew . ' = ' . $qOld
+			. ' WHERE ' . $qNew . ' IS NULL AND ' . $qOld . ' IS NOT NULL';
+
+	}//end migrationSql()
+
+	/**
 	 * Resolve the shard tables for the affected schemas, across every register.
 	 *
 	 * @return array<int, string>
 	 */
 	private function shardTables(): array {
+		$ids = $this->schemaIds();
+		if ($ids === []) {
+			return [];
+		}
+
+		$stmt = $this->listShardCandidates();
+		if ($stmt === null) {
+			return [];
+		}
+
+		return $this->shardsOfSchemas(stmt: $stmt, ids: $ids);
+	}//end shardTables()
+
+	/**
+	 * The ids of the affected schemas.
+	 *
+	 * @return array<int, mixed> The ids, or none when they cannot be read.
+	 */
+	private function schemaIds(): array {
 		$placeholders = implode(',', array_fill(0, count(self::SCHEMA_TITLES), '?'));
 
 		try {
-			$ids = $this->db->executeQuery(
+			return $this->db->executeQuery(
 				'SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (' . $placeholders . ')',
 				self::SCHEMA_TITLES
 			)->fetchAll(\PDO::FETCH_COLUMN);
@@ -202,11 +254,14 @@ class RenameDutchPublicationColumns implements IRepairStep {
 			);
 			return [];
 		}
+	}//end schemaIds()
 
-		if ($ids === []) {
-			return [];
-		}
-
+	/**
+	 * The executed statement listing every openregister shard table.
+	 *
+	 * @return IPreparedStatement|null The statement, or null when the tables cannot be listed.
+	 */
+	private function listShardCandidates(): ?IPreparedStatement {
 		// Table discovery goes through information_schema, NOT IDBConnection.
 		// OCP\IDBConnection exposes neither getSchema() nor getPrefix(); both
 		// exist only on the concrete OC\DB\Connection. Calling them is a runtime
@@ -224,9 +279,21 @@ class RenameDutchPublicationColumns implements IRepairStep {
 				'RenameDutchPublicationColumns: could not list tables; skipping.',
 				['exception' => $e->getMessage()]
 			);
-			return [];
+			return null;
 		}
 
+		return $stmt;
+	}//end listShardCandidates()
+
+	/**
+	 * The listed tables that are shards of one of the schemas.
+	 *
+	 * @param IPreparedStatement $stmt The executed table listing.
+	 * @param array<int, mixed> $ids The schema ids.
+	 *
+	 * @return array<int, string>
+	 */
+	private function shardsOfSchemas(IPreparedStatement $stmt, array $ids): array {
 		$suffixes = [];
 		foreach ($ids as $id) {
 			$suffixes[] = '_' . ((int)$id);
@@ -241,7 +308,7 @@ class RenameDutchPublicationColumns implements IRepairStep {
 		}
 
 		return array_values(array_unique($tables));
-	}//end shardTables()
+	}//end shardsOfSchemas()
 
 	/**
 	 * Whether a table name is an openregister shard ending in one of the ids.
