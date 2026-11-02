@@ -18,7 +18,7 @@
  * @param {{get: (url: string) => Promise<{data: object}>}} http An axios-like client.
  * @param {(path: string) => string} generateUrl Builds an app URL from a path.
  * @return {Promise<Array<{id: string, body: string, severity: string, dismissable: boolean}>>}
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
  */
 export async function loadInstanceBanners(http, generateUrl) {
 	let data
@@ -52,7 +52,7 @@ export async function loadInstanceBanners(http, generateUrl) {
  * @param {(path: string) => string} generateUrl Builds an app URL from a path.
  * @param {string} bannerId The banner's id.
  * @return {Promise<void>}
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
  */
 export async function dismissInstanceBanner(http, generateUrl, bannerId) {
 	await http.post(generateUrl('/api/banners/dismiss'), { banner: bannerId })
@@ -63,7 +63,7 @@ export async function dismissInstanceBanner(http, generateUrl, bannerId) {
  *
  * @param {string} severity One of info, warning, critical.
  * @return {string} The NcNoteCard type.
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
  */
 export function noteTypeFor(severity) {
 	if (severity === 'critical') return 'error'

@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
  */
 
 declare(strict_types=1);
@@ -42,7 +42,7 @@ use OCA\OpenCatalogi\Contract\BannerServiceInterface;
 /**
  * Decides which banners one user sees right now.
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
  */
 class BannerService implements BannerServiceInterface {
 
@@ -62,7 +62,7 @@ class BannerService implements BannerServiceInterface {
 	 *
 	 * @throws DomainException When it carries no body, no readable period, or an unknown severity.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function validate(array $banner): array {
 		if (trim((string)($banner['body'] ?? '')) === '') {
@@ -107,7 +107,7 @@ class BannerService implements BannerServiceInterface {
 	 *
 	 * @return boolean True while it should be shown.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function isCurrent(array $banner, ?DateTimeInterface $now = null): bool {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
@@ -135,7 +135,7 @@ class BannerService implements BannerServiceInterface {
 	 *
 	 * @return array<int, array<string, mixed>> The banners for this user.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 	 */
 	public function forUser(array $banners, array $dismissedIds, ?DateTimeInterface $now = null): array {
 		$dismissed = array_flip(array_map('strval', $dismissedIds));

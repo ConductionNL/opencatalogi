@@ -33,7 +33,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 
 declare(strict_types=1);
@@ -54,7 +54,7 @@ use OCP\IRequest;
 /**
  * What is published outward, how it is announced, and how a reader checks it.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md
  */
 class PublicationDisclosureController extends Controller {
 	/**
@@ -80,7 +80,7 @@ class PublicationDisclosureController extends Controller {
 	 *
 	 * @return JSONResponse What was composed and what each destination answered.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function announce(): JSONResponse {
@@ -129,7 +129,7 @@ class PublicationDisclosureController extends Controller {
 	 *
 	 * @return JSONResponse The configured set.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function publishedCollections(): JSONResponse {
@@ -149,7 +149,7 @@ class PublicationDisclosureController extends Controller {
 	 *
 	 * @return JSONResponse The outcome.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-which-collections-are-published-and-on-what-conditions-is-configured-req-pin-108
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function savePublishedCollections(): JSONResponse {

@@ -26,7 +26,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use DateTimeZone;
 /**
  * What must be published, what is, and what is late, across every source.
  *
- * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
+ * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
  */
 class ObligationOverviewService {
 
@@ -66,7 +66,7 @@ class ObligationOverviewService {
 	 *     sourcesRegistered: integer
 	 * }
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
 	 */
 	public function assemble(array $sources, array $obligationsBySource, ?DateTimeInterface $now = null): array {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
@@ -137,7 +137,7 @@ class ObligationOverviewService {
 	 *
 	 * @return string One of published, late, due, unknown.
 	 *
-	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
+	 * @spec openspec/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
 	 */
 	public function stateOf(array $obligation, DateTimeInterface $now): string {
 		if (trim((string)($obligation['publishedAt'] ?? '')) !== '') {

@@ -30,7 +30,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
  * Consuming controllers MUST also use ResolvesRegisterConfiguration and
  * ReadsOpenRegisterResults, and expose a `ServiceCatalogueServiceInterface $objects`.
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  */
 trait ReadsPublicationRegister {
 	/**
@@ -40,7 +40,7 @@ trait ReadsPublicationRegister {
 	 *
 	 * @return array<string, string> The register and schema identifiers.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+	 * @spec openspec/specs/public-and-community-surface/spec.md
 	 */
 	private function configurationFor(string $schemaKey): array {
 		return $this->resolveRegisterConfiguration(registerKey: 'publication_register', schemaKey: $schemaKey);
@@ -56,7 +56,7 @@ trait ReadsPublicationRegister {
 	 *
 	 * @throws CatalogueUnreadableException When OpenRegister cannot be reached.
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+	 * @spec openspec/specs/public-and-community-surface/spec.md
 	 */
 	private function readAll(string $schemaKey, array $filters = []): array {
 		$config = $this->configurationFor(schemaKey: $schemaKey);

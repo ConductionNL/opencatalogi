@@ -54,11 +54,17 @@ reason.
 ## The feed
 
 `GET /api/feeds/{catalogSlug}` is a catalogue's published and updated records
-plus its current notices, as Atom, readable without an account. A ketenpartner
-who wants to watch without a webhook reads this.
+plus the current notices on its own boards, as Atom, readable without an
+account. A ketenpartner who wants to watch without a webhook reads this. The
+newest 50 records come first. A catalogue that does not exist, or that is not
+public, answers 404.
 
-The access check is the publication's, run per entry, not a rule of the feed's
-own. A draft is absent because it is not published. Two access decisions
+The feed shows what an anonymous reader may read under the publication
+schema's own read rules, inside the catalogue: the same check as
+`/api/{catalogSlug}`. It is the same for every caller, so an administrator who
+opens the feed sees what a ketenpartner sees. A draft is absent because no
+public read rule admits a record without a publication date in the past. A
+record type without read rules is left out entirely. Two access decisions
 disagree eventually, so there is only one.
 
 ## The markup endpoint

@@ -81,7 +81,7 @@ export default {
 		 *
 		 * @param {object} banner The banner.
 		 * @return {Promise<void>}
-		 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+		 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
 		 */
 		async dismiss(banner) {
 			this.dismissing = banner.id

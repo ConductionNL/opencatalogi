@@ -21,7 +21,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
+ * @spec openspec/specs/public-and-community-surface/spec.md
  *
  * @covers \OCA\OpenCatalogi\Controller\CommunityController
  * @covers \OCA\OpenCatalogi\Controller\NoticeBoardController

@@ -28,7 +28,7 @@
  *
  * @link https://www.OpenCatalogi.nl
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
  */
 
 declare(strict_types=1);
@@ -40,7 +40,7 @@ use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
 /**
  * Renders this app's markup dialect to HTML, and stores nothing.
  *
- * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
+ * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
  */
 class MarkupRenderService implements MarkupRenderServiceInterface {
 
@@ -69,7 +69,7 @@ class MarkupRenderService implements MarkupRenderServiceInterface {
 	 *
 	 * @return array{html: string, truncated: boolean}
 	 *
-	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
+	 * @spec openspec/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
 	 */
 	public function render(string $markup): array {
 		$truncated = false;
