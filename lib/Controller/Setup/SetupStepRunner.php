@@ -3,8 +3,8 @@
 /**
  * Dispatches a setup action id to the step that runs it.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service\Setup
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller\Setup
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Setup;
+namespace OCA\OpenCatalogi\Controller\Setup;
 
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCP\AppFramework\Http\JSONResponse;

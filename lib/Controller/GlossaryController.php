@@ -25,7 +25,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
@@ -58,7 +58,7 @@ class GlossaryController extends Controller {
 	 * @param string $appName The name of the app
 	 * @param IRequest $request The request object
 	 * @param IAppConfig $config App configuration interface
-	 * @param OpenRegisterLookup $registers Resolves the configured register pair and OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localization service
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
@@ -68,7 +68,7 @@ class GlossaryController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $registers,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly IL10N $l10n,
 		private readonly CorsSettings $cors = new CorsSettings(),
 	) {

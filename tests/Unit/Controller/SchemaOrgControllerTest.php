@@ -83,7 +83,7 @@ class SchemaOrgControllerTest extends TestCase {
 		$this->controller = new SchemaOrgController(
 			'opencatalogi',
 			$this->request,
-			new \OCA\OpenCatalogi\Service\SchemaOrgCatalogDocument($this->schemaOrgService, $this->catalogiService, $this->queryService),
+			new \OCA\OpenCatalogi\Controller\SchemaOrgCatalogDocument($this->schemaOrgService, $this->catalogiService, $this->queryService),
 			$this->l10n,
 			$this->logger,
 			null

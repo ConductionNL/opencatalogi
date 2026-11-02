@@ -44,7 +44,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for how the robots and search controllers reach OpenRegister.
  *
  * @covers \OCA\OpenCatalogi\Controller\RobotsController
- * @covers \OCA\OpenCatalogi\Service\SitemapDirectives
+ * @covers \OCA\OpenCatalogi\Controller\SitemapDirectives
  * @covers \OCA\OpenCatalogi\Controller\SearchController
  * @uses   \OCA\OpenCatalogi\Controller\AnswersCacheably
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
@@ -231,7 +231,8 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
-		$robots = new RobotsController('opencatalogi', $request, $settings, $urls, $l10n, new \OCA\OpenCatalogi\Service\SitemapDirectives(new OpenRegisterLookup($container, $appManager), $categories));
+		$sitemaps = new \OCA\OpenCatalogi\Controller\SitemapDirectives(new OpenRegisterLookup($container, $appManager), $categories);
+		$robots = new RobotsController('opencatalogi', $request, $settings, $urls, $l10n, $sitemaps);
 		if ($endpoint === 'robots-accessor') {
 			$first = $robots->getObjectService();
 			$second = $robots->getObjectService();

@@ -33,7 +33,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -63,7 +63,7 @@ class CommentPeriodController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param OpenRegisterLookup $registers Resolves the configured register pairs and OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param CommentPeriodServiceInterface $periods Opens periods and derives their state.
@@ -71,7 +71,7 @@ class CommentPeriodController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly OpenRegisterLookup $registers,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly CommentPeriodServiceInterface $periods,

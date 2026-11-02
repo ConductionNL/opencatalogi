@@ -30,9 +30,9 @@ use OCA\OpenCatalogi\Contract\BannerServiceInterface;
 use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\NoticeBoardController;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -48,11 +48,11 @@ use ReflectionNamedType;
  * Golden test for the banner endpoints.
  *
  * @covers \OCA\OpenCatalogi\Controller\NoticeBoardController
+ * @covers \OCA\OpenCatalogi\Controller\BannerDismissals
  * @uses   \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
  * @uses   \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
- * @uses   \OCA\OpenCatalogi\Service\RegisterAccess
- * @covers \OCA\OpenCatalogi\Service\BannerDismissals
+ * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 class BannerDismissalsGoldenTest extends TestCase {
@@ -199,7 +199,7 @@ class BannerDismissalsGoldenTest extends TestCase {
 					new OpenRegisterLookup($this->container(config: $config), $this->createMock(IAppManager::class)),
 					$this->catalogue(case: $case)
 				),
-				'OCA\\OpenCatalogi\\Service\\BannerDismissals' => new $typeName($config, $banners),
+				'OCA\\OpenCatalogi\\Controller\\BannerDismissals' => new $typeName($config, $banners),
 			};
 		}
 

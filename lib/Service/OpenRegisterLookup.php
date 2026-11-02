@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -41,7 +42,7 @@ use RuntimeException;
  *
  * @spec exclude pure framework plumbing: the runtime-guarded OpenRegister dependency (ADR-083).
  */
-class OpenRegisterLookup {
+class OpenRegisterLookup implements OpenRegisterLookupInterface {
 
 	/**
 	 * Constructor.
