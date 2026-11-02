@@ -290,6 +290,11 @@ class FederationController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @no-admin-idor-exempt PublicationService::download() refuses an id outside the configured
+	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
+	 *   anonymous callers get public-group reads only) before any file is zipped, and OpenRegister's
+	 *   createObjectFilesZip() drops restricted files (FileRestrictionGuard).
+	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]

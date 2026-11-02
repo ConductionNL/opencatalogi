@@ -129,6 +129,12 @@ class StatsController extends Controller {
 	 *
 	 * @NoAdminRequired
 	 *
+	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
+	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on), so a catalog the
+	 *   caller may not read is a 404. The catalog roll-up reads only usage counters labelled with that
+	 *   catalog: aggregates (publication, day, kind, count) that PublicationsController records
+	 *   when it serves a public read, never object data.
+	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function catalog(string $slug): JSONResponse {
@@ -279,6 +285,12 @@ class StatsController extends Controller {
 	 * @return DataDownloadResponse|JSONResponse The CSV download, or an error.
 	 *
 	 * @NoAdminRequired
+	 *
+	 * @no-admin-idor-exempt requires a session user; the catalog is resolved by
+	 *   CatalogiService::getCatalogBySlug() (OpenRegister searchObjects, RBAC on), so a catalog the
+	 *   caller may not read is a 404. The CSV export reads only usage counters labelled with that
+	 *   catalog: aggregates (publication, day, kind, count) that PublicationsController records
+	 *   when it serves a public read, never object data.
 	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
