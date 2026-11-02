@@ -24,6 +24,12 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Service\Setup\SetupActions;
+use OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupStatusReport;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
@@ -45,6 +51,11 @@ use RuntimeException;
  * Golden test for the create-first-catalog setup action.
  *
  * @covers \OCA\OpenCatalogi\Controller\SetupController
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupActions
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupFederationSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupStatusReport
  */
 class SetupFirstCatalogGoldenTest extends TestCase {
 
@@ -189,7 +200,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 			}
 		);
 
-		return new SetupController(
+		return self::setupController(
 			'opencatalogi',
 			$this->createMock(IRequest::class),
 			$config,
@@ -234,4 +245,55 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 		return $named;
 
 	}//end passedArguments()
+
+	/**
+	 * A SetupController wired over the given collaborators the way the container wires it.
+	 *
+	 * @param string                           $appName   The app id.
+	 * @param IRequest                         $request   The request.
+	 * @param IAppConfig                       $config    App configuration.
+	 * @param SettingsServiceInterface         $settings  Settings service.
+	 * @param DemoDataServiceInterface         $demo      Demo data service.
+	 * @param DirectoryServiceInterface        $directory Directory service.
+	 * @param BroadcastServiceInterface        $broadcast Broadcast service.
+	 * @param ContainerInterface               $container Container.
+	 * @param IL10N                            $l10n      Localization.
+	 * @param LoggerInterface                  $logger    Logger.
+	 * @param IUserSession                     $session   User session.
+	 * @param ConnectionReporterInterface|null $reporter  Connection reporter.
+	 *
+	 * @return SetupController The controller.
+	 */
+	private static function setupController(
+		string $appName,
+		IRequest $request,
+		IAppConfig $config,
+		SettingsServiceInterface $settings,
+		DemoDataServiceInterface $demo,
+		DirectoryServiceInterface $directory,
+		BroadcastServiceInterface $broadcast,
+		ContainerInterface $container,
+		IL10N $l10n,
+		LoggerInterface $logger,
+		IUserSession $session,
+		?ConnectionReporterInterface $reporter = null,
+	): SetupController {
+		$catalog = new SetupCatalogSteps($config, $container, $settings, $l10n, $logger);
+		return new SetupController(
+			$appName,
+			$request,
+			$l10n,
+			$session,
+			new SetupStatusReport($config, $demo, $directory, $catalog),
+			new SetupActions(
+				$config,
+				$l10n,
+				$catalog,
+				new SetupDemoDataSteps($config, $demo, $request, $l10n, $logger),
+				new SetupFederationSteps($directory, $broadcast, $l10n, $logger),
+				$reporter
+			)
+		);
+
+	}//end setupController()
 }//end class

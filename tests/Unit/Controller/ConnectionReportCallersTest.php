@@ -28,6 +28,16 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Service\Setup\SetupActions;
+use OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupStatusReport;
 use OCA\OpenCatalogi\Controller\SettingsController;
 use OCA\OpenCatalogi\Controller\SetupController;
 use OCA\OpenCatalogi\Controller\WooReadinessController;
@@ -59,6 +69,11 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\WooReadinessController
  * @covers \OCA\OpenCatalogi\Controller\SettingsController
  * @covers \OCA\OpenCatalogi\Controller\SetupController
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupActions
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupFederationSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupStatusReport
  * @covers \OCA\OpenCatalogi\Service\BroadcastService
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
  * @uses \OCA\OpenCatalogi\Service\Broadcast\BroadcastResult
@@ -225,7 +240,7 @@ class ConnectionReportCallersTest extends TestCase {
 			->with(['default_directory_url'])
 			->willReturn(['directory']);
 
-		$controller = new SetupController(
+		$controller = self::setupController(
 			'opencatalogi',
 			$request,
 			$this->createMock(IAppConfig::class),
@@ -384,4 +399,55 @@ class ConnectionReportCallersTest extends TestCase {
 
 		$this->assertSame(1, $result['failed_directories']);
 	}//end testADirectorySyncReportsItsResult()
+
+	/**
+	 * A SetupController wired over the given collaborators the way the container wires it.
+	 *
+	 * @param string                           $appName   The app id.
+	 * @param IRequest                         $request   The request.
+	 * @param IAppConfig                       $config    App configuration.
+	 * @param SettingsServiceInterface         $settings  Settings service.
+	 * @param DemoDataServiceInterface         $demo      Demo data service.
+	 * @param DirectoryServiceInterface        $directory Directory service.
+	 * @param BroadcastServiceInterface        $broadcast Broadcast service.
+	 * @param ContainerInterface               $container Container.
+	 * @param IL10N                            $l10n      Localization.
+	 * @param LoggerInterface                  $logger    Logger.
+	 * @param IUserSession                     $session   User session.
+	 * @param ConnectionReporterInterface|null $reporter  Connection reporter.
+	 *
+	 * @return SetupController The controller.
+	 */
+	private static function setupController(
+		string $appName,
+		IRequest $request,
+		IAppConfig $config,
+		SettingsServiceInterface $settings,
+		DemoDataServiceInterface $demo,
+		DirectoryServiceInterface $directory,
+		BroadcastServiceInterface $broadcast,
+		ContainerInterface $container,
+		IL10N $l10n,
+		LoggerInterface $logger,
+		IUserSession $session,
+		?ConnectionReporterInterface $reporter = null,
+	): SetupController {
+		$catalog = new SetupCatalogSteps($config, $container, $settings, $l10n, $logger);
+		return new SetupController(
+			$appName,
+			$request,
+			$l10n,
+			$session,
+			new SetupStatusReport($config, $demo, $directory, $catalog),
+			new SetupActions(
+				$config,
+				$l10n,
+				$catalog,
+				new SetupDemoDataSteps($config, $demo, $request, $l10n, $logger),
+				new SetupFederationSteps($directory, $broadcast, $l10n, $logger),
+				$reporter
+			)
+		);
+
+	}//end setupController()
 }//end class

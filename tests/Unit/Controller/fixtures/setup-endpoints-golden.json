@@ -3485,5 +3485,598 @@
             "publication_register": "5",
             "publication_schema": "6"
         }
+    },
+    "status scope chosen but no catalog": {
+        "answers": [
+            {
+                "call": [
+                    "status"
+                ],
+                "status": 200,
+                "data": {
+                    "version": 3,
+                    "completed": false,
+                    "registersReady": true,
+                    "datasets": [
+                        {
+                            "id": "demo",
+                            "title": "Demo"
+                        },
+                        {
+                            "id": "woo",
+                            "title": "Woo"
+                        },
+                        {
+                            "id": "none",
+                            "title": "None"
+                        }
+                    ],
+                    "steps": {
+                        "welcome": {
+                            "done": true
+                        },
+                        "demo-data": {
+                            "done": false
+                        },
+                        "catalog-scope": {
+                            "done": true
+                        },
+                        "create-catalog": {
+                            "done": false
+                        },
+                        "connect-federation": {
+                            "done": false
+                        },
+                        "sync-all-directories": {
+                            "done": false
+                        },
+                        "done": {
+                            "done": false
+                        }
+                    }
+                }
+            }
+        ],
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "default_catalog_scope",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "onboarding_completed_version",
+                    ""
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_schema",
+                    ""
+                ]
+            },
+            [
+                "defaultDirectory"
+            ],
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "7",
+                            "schema": "8"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "demo_data_decided",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "demo_dataset",
+                    ""
+                ]
+            },
+            [
+                "listChoices"
+            ]
+        ],
+        "config": {
+            "catalog_register": "1",
+            "catalog_schema": "2",
+            "default_catalog_scope": "public",
+            "listing_register": "7",
+            "listing_schema": "8",
+            "publication_register": "5",
+            "publication_schema": "6"
+        }
+    },
+    "status catalog without a scope": {
+        "answers": [
+            {
+                "call": [
+                    "status"
+                ],
+                "status": 200,
+                "data": {
+                    "version": 3,
+                    "completed": false,
+                    "registersReady": true,
+                    "datasets": [
+                        {
+                            "id": "demo",
+                            "title": "Demo"
+                        },
+                        {
+                            "id": "woo",
+                            "title": "Woo"
+                        },
+                        {
+                            "id": "none",
+                            "title": "None"
+                        }
+                    ],
+                    "steps": {
+                        "welcome": {
+                            "done": true
+                        },
+                        "demo-data": {
+                            "done": false
+                        },
+                        "catalog-scope": {
+                            "done": false
+                        },
+                        "create-catalog": {
+                            "done": true
+                        },
+                        "connect-federation": {
+                            "done": false
+                        },
+                        "sync-all-directories": {
+                            "done": false
+                        },
+                        "done": {
+                            "done": false
+                        }
+                    }
+                }
+            }
+        ],
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "default_catalog_scope",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "onboarding_completed_version",
+                    ""
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_schema",
+                    ""
+                ]
+            },
+            [
+                "defaultDirectory"
+            ],
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "7",
+                            "schema": "8"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "demo_data_decided",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "demo_dataset",
+                    ""
+                ]
+            },
+            [
+                "listChoices"
+            ]
+        ],
+        "config": {
+            "catalog_register": "1",
+            "catalog_schema": "2",
+            "listing_register": "7",
+            "listing_schema": "8",
+            "publication_register": "5",
+            "publication_schema": "6"
+        }
+    },
+    "status listing of another directory only": {
+        "answers": [
+            {
+                "call": [
+                    "status"
+                ],
+                "status": 200,
+                "data": {
+                    "version": 3,
+                    "completed": false,
+                    "registersReady": true,
+                    "datasets": [
+                        {
+                            "id": "demo",
+                            "title": "Demo"
+                        },
+                        {
+                            "id": "woo",
+                            "title": "Woo"
+                        },
+                        {
+                            "id": "none",
+                            "title": "None"
+                        }
+                    ],
+                    "steps": {
+                        "welcome": {
+                            "done": true
+                        },
+                        "demo-data": {
+                            "done": false
+                        },
+                        "catalog-scope": {
+                            "done": false
+                        },
+                        "create-catalog": {
+                            "done": false
+                        },
+                        "connect-federation": {
+                            "done": false
+                        },
+                        "sync-all-directories": {
+                            "done": false
+                        },
+                        "done": {
+                            "done": false
+                        }
+                    }
+                }
+            }
+        ],
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "default_catalog_scope",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "onboarding_completed_version",
+                    ""
+                ]
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "listing_schema",
+                    ""
+                ]
+            },
+            [
+                "defaultDirectory"
+            ],
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "7",
+                            "schema": "8"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "demo_data_decided",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "demo_dataset",
+                    ""
+                ]
+            },
+            [
+                "listChoices"
+            ]
+        ],
+        "config": {
+            "catalog_register": "1",
+            "catalog_schema": "2",
+            "listing_register": "7",
+            "listing_schema": "8",
+            "publication_register": "5",
+            "publication_schema": "6"
+        }
+    },
+    "federation when only the announce fails": {
+        "answers": [
+            {
+                "call": [
+                    "action",
+                    "connect-federation"
+                ],
+                "status": 200,
+                "data": {
+                    "success": true,
+                    "message": "T:Fetched 1 new and 0 updated listing(s) from the directory. T:This instance could not be announced to the directory (it may not be reachable from the directory host). Federation still works one-way; retry later or announce it manually.",
+                    "details": {
+                        "listings_created": 1,
+                        "listings_updated": 0,
+                        "advertised": false,
+                        "directory_url": "https://directory.example/api/directory"
+                    }
+                }
+            }
+        ],
+        "log": [
+            [
+                "defaultDirectory"
+            ],
+            {
+                "syncDirectory": "https://directory.example/api/directory"
+            },
+            {
+                "broadcast": "https://directory.example/api/directory"
+            },
+            {
+                "warning": "Setup connect-federation advertise failed: broadcast down",
+                "context": {
+                    "app": "opencatalogi"
+                }
+            }
+        ],
+        "config": {
+            "catalog_register": "1",
+            "catalog_schema": "2",
+            "listing_register": "7",
+            "listing_schema": "8",
+            "publication_register": "5",
+            "publication_schema": "6"
+        }
     }
 }

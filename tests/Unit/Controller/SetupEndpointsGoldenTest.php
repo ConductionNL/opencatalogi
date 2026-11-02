@@ -24,6 +24,11 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Service\Setup\SetupActions;
+use OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Service\Setup\SetupStatusReport;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
@@ -47,6 +52,11 @@ use RuntimeException;
  * Golden test for the setup endpoints.
  *
  * @covers \OCA\OpenCatalogi\Controller\SetupController
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupActions
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupFederationSteps
+ * @covers \OCA\OpenCatalogi\Service\Setup\SetupStatusReport
  */
 class SetupEndpointsGoldenTest extends TestCase {
 
@@ -89,6 +99,10 @@ class SetupEndpointsGoldenTest extends TestCase {
 			'status listings not a list' => [['config' => self::WIRED, 'listings' => 4, 'calls' => [['status']]]],
 			'status openregister missing' => [['config' => self::WIRED, 'openregister' => false, 'calls' => [['status']]]],
 			'status completed version and decided demo' => [['config' => self::WIRED + ['onboarding_completed_version' => '3', 'demo_data_decided' => 'skipped', 'default_catalog_scope' => 'private'], 'calls' => [['status']]]],
+			'status scope chosen but no catalog' => [['config' => self::WIRED + ['default_catalog_scope' => 'public'], 'calls' => [['status']]]],
+			'status catalog without a scope' => [['config' => self::WIRED, 'catalogs' => [['id' => 1]], 'calls' => [['status']]]],
+			'status listing of another directory only' => [['config' => self::WIRED, 'listings' => [['object' => ['directory' => 'https://other.example']]], 'calls' => [['status']]]],
+			'federation when only the announce fails' => [['fail' => ['broadcast'], 'calls' => [['action', 'connect-federation']]]],
 			'status picked dataset only' => [['config' => ['demo_dataset' => 'demo'], 'calls' => [['status']]]],
 			'config writes whitelisted keys' => [['params' => ['default_catalog_scope' => 'private', 'default_catalog_groups' => 'a,b', 'demo_dataset' => 7, 'catalog_register' => 'x', 'other' => 'y'], 'calls' => [['config']]]],
 			'config writes nothing' => [['params' => ['other' => 'y'], 'calls' => [['config']]]],
@@ -366,7 +380,7 @@ class SetupEndpointsGoldenTest extends TestCase {
 	 * @return SetupController The controller.
 	 */
 	private function build(array $collaborators): SetupController {
-		return new SetupController(
+		return self::setupController(
 			'opencatalogi',
 			$collaborators['request'],
 			$collaborators['config'],
@@ -441,4 +455,55 @@ class SetupEndpointsGoldenTest extends TestCase {
 		};
 
 	}//end row()
+
+	/**
+	 * A SetupController wired over the given collaborators the way the container wires it.
+	 *
+	 * @param string                           $appName   The app id.
+	 * @param IRequest                         $request   The request.
+	 * @param IAppConfig                       $config    App configuration.
+	 * @param SettingsServiceInterface         $settings  Settings service.
+	 * @param DemoDataServiceInterface         $demo      Demo data service.
+	 * @param DirectoryServiceInterface        $directory Directory service.
+	 * @param BroadcastServiceInterface        $broadcast Broadcast service.
+	 * @param ContainerInterface               $container Container.
+	 * @param IL10N                            $l10n      Localization.
+	 * @param LoggerInterface                  $logger    Logger.
+	 * @param IUserSession                     $session   User session.
+	 * @param ConnectionReporterInterface|null $reporter  Connection reporter.
+	 *
+	 * @return SetupController The controller.
+	 */
+	private static function setupController(
+		string $appName,
+		IRequest $request,
+		IAppConfig $config,
+		SettingsServiceInterface $settings,
+		DemoDataServiceInterface $demo,
+		DirectoryServiceInterface $directory,
+		BroadcastServiceInterface $broadcast,
+		ContainerInterface $container,
+		IL10N $l10n,
+		LoggerInterface $logger,
+		IUserSession $session,
+		?ConnectionReporterInterface $reporter = null,
+	): SetupController {
+		$catalog = new SetupCatalogSteps($config, $container, $settings, $l10n, $logger);
+		return new SetupController(
+			$appName,
+			$request,
+			$l10n,
+			$session,
+			new SetupStatusReport($config, $demo, $directory, $catalog),
+			new SetupActions(
+				$config,
+				$l10n,
+				$catalog,
+				new SetupDemoDataSteps($config, $demo, $request, $l10n, $logger),
+				new SetupFederationSteps($directory, $broadcast, $l10n, $logger),
+				$reporter
+			)
+		);
+
+	}//end setupController()
 }//end class
