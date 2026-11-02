@@ -21,7 +21,7 @@ The catalog schema SHALL have `staffAccess` with `restricted` (boolean, default 
 When a catalogue's `staffAccess`, `schemas` or `filters` change, or a catalogue is deleted, the system SHALL recompute the `authorization` of every schema involved from all catalogues that cover it: a restricted catalogue SHALL contribute rules for its read groups to `read` and for its edit groups to `read`, `create`, `update` and `delete`, each with the catalogue's filters as `match`; an unrestricted catalogue SHALL contribute the signed-in rule, narrowed to its filters when it has filters. The public read rules SHALL be kept. OpenCatalogi SHALL NOT check staff access itself.
 
 #### Scenario: Only the Woo team edits Woo requests
-<!-- @e2e exclude Enforcement is OpenRegister's; proven by CatalogAccessEnforcementTest::testAUserOutsideTheEditGroupsIsRefused against OpenRegister. -->
+<!-- @e2e exclude Enforcement is OpenRegister's; the rules OpenCatalogi writes are proven by CatalogAccessServiceTest::testARestrictedCatalogueWritesGroupRulesWithItsFilters. An OpenRegister-backed enforcement test is still open (tasks.md 1.4). -->
 - **GIVEN** a catalogue "Woo requests" over schema publication with filter `wooCategory: infocat014`, restricted, edit group `woo-team`
 - **WHEN** a signed-in user outside `woo-team` updates a draft publication with that category
 - **THEN** OpenRegister refuses the update

@@ -111,7 +111,7 @@ class CommunityController extends Controller {
 	 * @return JSONResponse The response, with its headers.
 	 */
 	private function withCors(JSONResponse $response): JSONResponse {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
@@ -239,6 +239,10 @@ class CommunityController extends Controller {
 	 *
 	 * @return Response The Atom document, or a refusal.
 	 *
+	 * @no-admin-idor-exempt public by design: an anonymous Atom feed. Only records a publication
+	 *   rule publishes reach it, projected for anonymous readers (AtomFeedService::entries() via
+	 *   PublicationRuleService::projectList() → publishes() + projectForAnonymous()), and only current notices.
+	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
@@ -272,7 +276,7 @@ class CommunityController extends Controller {
 		);
 
 		$response = new DataDisplayResponse($atom, Http::STATUS_OK, ['Content-Type' => 'application/atom+xml; charset=UTF-8']);
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 
 		return $response;
 

@@ -8,9 +8,9 @@
  * Origin, and compares the origin it names with the expected table: the
  * wildcard default, blank and padded settings, allowlisted and unlisted
  * callers, empty entries, case-sensitive matching and a missing app config.
- * Every controller ignores blank allowlist entries. The list controllers
- * also read the caller from the server's HTTP_ORIGIN when the Origin header
- * is empty.
+ * Every controller ignores blank allowlist entries and reads the caller
+ * from the server's HTTP_ORIGIN when the Origin header is empty, through
+ * the one ResolvesAllowedOrigin trait.
  * The GET-only read controllers also pin their CORS header set.
  *
  * @category Test
@@ -37,6 +37,7 @@
  * @covers \OCA\OpenCatalogi\Controller\ListingsController
  * @covers \OCA\OpenCatalogi\Controller\OoapiController
  * @covers \OCA\OpenCatalogi\Controller\PublicationRulesController
+ * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @covers \OCA\OpenCatalogi\Controller\SchemaOrgController
  * @covers \OCA\OpenCatalogi\Controller\ServiceCatalogueController
  * @covers \OCA\OpenCatalogi\Controller\ThemesController
@@ -44,6 +45,7 @@
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginRequests
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginListRequests
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginReadRequests
+ * @covers \OCA\OpenCatalogi\Controller\ResolvesAllowedOrigin
  */
 
 declare(strict_types=1);
@@ -60,6 +62,7 @@ use OCA\OpenCatalogi\Controller\InspectionController;
 use OCA\OpenCatalogi\Controller\ListingsController;
 use OCA\OpenCatalogi\Controller\OoapiController;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
+use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Controller\SchemaOrgController;
 use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Controller\ThemesController;
@@ -88,19 +91,9 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		ListingsController::class,
 		OoapiController::class,
 		PublicationRulesController::class,
+		PublicationsController::class,
 		SchemaOrgController::class,
 		ServiceCatalogueController::class,
-		ThemesController::class,
-	];
-
-	/**
-	 * Controllers that fall back to the server's HTTP_ORIGIN.
-	 */
-	private const LIST_RULE = [
-		CatalogiController::class,
-		DirectoryController::class,
-		GlossaryController::class,
-		ListingsController::class,
 		ThemesController::class,
 	];
 
@@ -110,6 +103,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		DcatController::class,
 		DirectoryController::class,
 		OoapiController::class,
+		PublicationsController::class,
 		SchemaOrgController::class,
 	];
 
@@ -131,9 +125,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	/**
 	 * Configured allowlist, caller origin and the expected header value.
 	 *
-	 * The fourth value, when present, is what the list controllers answer.
-	 *
-	 * @return array<string, array{0: string, 1: string, 2: string, 3?: string}>
+	 * @return array<string, array{0: string, 1: string, 2: string}>
 	 */
 	public static function origins(): array {
 		$pair = 'https://a.nl,https://b.nl';
@@ -150,6 +142,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 			'padded entries are trimmed' => [' , https://a.nl ,  https://b.nl , ', 'https://b.nl', 'https://b.nl'],
 			'padded entries, unlisted caller' => [' , https://a.nl , ', 'https://c.nl', 'https://a.nl'],
 			'blank first entry, no caller' => [',https://a.nl', '', 'https://a.nl'],
+			'blank first entry, unlisted caller' => [',https://a.nl', 'https://evil.nl', 'https://a.nl'],
 			'blank middle entry, unlisted caller' => ['https://a.nl,,https://b.nl', 'https://c.nl', 'https://a.nl'],
 			'only separators' => [',, ,', 'https://a.nl', '*'],
 			'matching is case sensitive' => ['https://A.nl', 'https://a.nl', 'https://A.nl'],
@@ -166,17 +159,16 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	 * @param string $configured The cors_allowed_origins setting.
 	 * @param string $origin The caller's Origin header.
 	 * @param string $expected The expected Access-Control-Allow-Origin value.
-	 * @param string $listRule The list controllers' value, when it differs.
 	 *
 	 * @return void
 	 */
 	#[DataProvider('origins')]
-	public function testEveryControllerNamesTheSameOrigin(string $configured, string $origin, string $expected, ?string $listRule = null): void {
+	public function testEveryControllerNamesTheSameOrigin(string $configured, string $origin, string $expected): void {
 		$want = [];
 		$got = [];
 		foreach (self::CONTROLLERS as $class) {
 			$controller = $this->build($class, $this->config($configured), $origin);
-			$want[$class] = (in_array($class, self::LIST_RULE, true) === true ? ($listRule ?? $expected) : $expected);
+			$want[$class] = $expected;
 			$got[$class] = (new ReflectionMethod($controller, 'resolveAllowedOrigin'))->invoke($controller);
 		}
 
@@ -185,7 +177,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	}//end testEveryControllerNamesTheSameOrigin()
 
 	/**
-	 * Only the list controllers read the caller from the server's HTTP_ORIGIN.
+	 * Every controller reads the caller from the server's HTTP_ORIGIN when the Origin header is empty.
 	 *
 	 * @return void
 	 */
@@ -194,7 +186,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		$got = [];
 		foreach (self::CONTROLLERS as $class) {
 			$controller = $this->build($class, $this->config('https://a.nl,https://b.nl'), '', 'https://b.nl');
-			$want[$class] = (in_array($class, self::LIST_RULE, true) === true ? 'https://b.nl' : 'https://a.nl');
+			$want[$class] = 'https://b.nl';
 			$got[$class] = (new ReflectionMethod($controller, 'resolveAllowedOrigin'))->invoke($controller);
 		}
 
@@ -226,6 +218,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 			$this->assertSame(
 				[
 					'Access-Control-Allow-Origin' => 'https://b.nl',
+					'Vary' => 'Origin',
 					'Access-Control-Allow-Methods' => 'GET, OPTIONS',
 					'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
 				],
@@ -235,6 +228,44 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 		}
 
 	}//end testReadOnlyHeaderSet()
+
+	/**
+	 * Every controller sends `Vary: Origin` with an allowlisted origin, and keeps an existing Vary.
+	 *
+	 * @return void
+	 */
+	public function testAnAllowlistedOriginVariesOnOrigin(): void {
+		foreach (self::CONTROLLERS as $class) {
+			$controller = $this->build($class, $this->config('https://a.nl,https://b.nl'), 'https://b.nl');
+			$response = new Response();
+			$response->addHeader('Vary', 'Accept');
+			(new ReflectionMethod($controller, 'addAllowedOriginHeaders'))->invoke($controller, $response);
+
+			$this->assertSame('https://b.nl', $response->getHeaders()['Access-Control-Allow-Origin'], $class);
+			$this->assertSame('Accept, Origin', $response->getHeaders()['Vary'], $class);
+
+			(new ReflectionMethod($controller, 'addAllowedOriginHeaders'))->invoke($controller, $response);
+			$this->assertSame('Accept, Origin', $response->getHeaders()['Vary'], $class . ' twice');
+		}
+
+	}//end testAnAllowlistedOriginVariesOnOrigin()
+
+	/**
+	 * The wildcard does not depend on the caller, so no Vary is added.
+	 *
+	 * @return void
+	 */
+	public function testTheWildcardDoesNotVary(): void {
+		foreach (self::CONTROLLERS as $class) {
+			$controller = $this->build($class, $this->config('*'), 'https://b.nl');
+			$response = new Response();
+			(new ReflectionMethod($controller, 'addAllowedOriginHeaders'))->invoke($controller, $response);
+
+			$this->assertSame('*', $response->getHeaders()['Access-Control-Allow-Origin'], $class);
+			$this->assertArrayNotHasKey('Vary', $response->getHeaders(), $class);
+		}
+
+	}//end testTheWildcardDoesNotVary()
 
 	/**
 	 * The read-only preflight adds the max age and refuses credentials.
@@ -253,6 +284,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 				'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
 				'Access-Control-Max-Age' => '1728000',
 				'Access-Control-Allow-Credentials' => 'false',
+				'Vary' => 'Origin',
 			] as $name => $value) {
 				$this->assertSame($value, $headers[$name] ?? null, $class . ' ' . $name);
 			}
