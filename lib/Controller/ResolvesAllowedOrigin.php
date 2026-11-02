@@ -108,6 +108,8 @@ trait ResolvesAllowedOrigin {
 		foreach ($response->getHeaders() as $name => $value) {
 			if (strcasecmp((string)$name, 'Vary') === 0) {
 				$current[] = (string)$value;
+				// OCP documents "null will delete it" but types $value as string.
+				// @phpstan-ignore argument.type
 				$response->addHeader((string)$name, null);
 			}
 		}
