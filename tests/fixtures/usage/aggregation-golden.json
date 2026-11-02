@@ -1,0 +1,706 @@
+{
+    "aggregate: mixed": {
+        "series": {
+            "views": 18,
+            "downloads": 11,
+            "series": [
+                {
+                    "date": "2026-04-29",
+                    "views": 8,
+                    "downloads": 0
+                },
+                {
+                    "date": "2026-04-30",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "date": "2026-05-01",
+                    "views": 1,
+                    "downloads": 5
+                },
+                {
+                    "date": "2026-05-02",
+                    "views": 7,
+                    "downloads": 0
+                },
+                {
+                    "date": "2026-05-03",
+                    "views": 2,
+                    "downloads": 4
+                },
+                {
+                    "date": "2026-05-04",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "date": "2026-05-05",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "date": "2026-05-06",
+                    "views": 0,
+                    "downloads": 2
+                }
+            ],
+            "countingStart": "2026-04-29"
+        },
+        "catalog": {
+            "views": 27,
+            "downloads": 11,
+            "topViewed": [
+                {
+                    "publication": "p3",
+                    "views": 15,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p5",
+                    "views": 9,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p2",
+                    "views": 3,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 9
+                },
+                {
+                    "publication": "p4",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p6",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p7",
+                    "views": 0,
+                    "downloads": 2
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 9
+                },
+                {
+                    "publication": "p7",
+                    "views": 0,
+                    "downloads": 2
+                },
+                {
+                    "publication": "p2",
+                    "views": 3,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p3",
+                    "views": 15,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p4",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p5",
+                    "views": 9,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p6",
+                    "views": 0,
+                    "downloads": 0
+                }
+            ]
+        },
+        "catalog top 1": {
+            "views": 27,
+            "downloads": 11,
+            "topViewed": [
+                {
+                    "publication": "p3",
+                    "views": 15,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 9
+                }
+            ]
+        },
+        "catalog top 0": {
+            "views": 27,
+            "downloads": 11,
+            "topViewed": [
+                {
+                    "publication": "p3",
+                    "views": 15,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 9
+                }
+            ]
+        }
+    },
+    "aggregate: none": {
+        "series": {
+            "views": 0,
+            "downloads": 0,
+            "series": [],
+            "countingStart": null
+        },
+        "catalog": {
+            "views": 0,
+            "downloads": 0,
+            "topViewed": [],
+            "topDownloaded": []
+        },
+        "catalog top 1": {
+            "views": 0,
+            "downloads": 0,
+            "topViewed": [],
+            "topDownloaded": []
+        },
+        "catalog top 0": {
+            "views": 0,
+            "downloads": 0,
+            "topViewed": [],
+            "topDownloaded": []
+        }
+    },
+    "aggregate: one view": {
+        "series": {
+            "views": 3,
+            "downloads": 0,
+            "series": [
+                {
+                    "date": "2026-05-01",
+                    "views": 3,
+                    "downloads": 0
+                }
+            ],
+            "countingStart": "2026-05-01"
+        },
+        "catalog": {
+            "views": 3,
+            "downloads": 0,
+            "topViewed": [
+                {
+                    "publication": "p1",
+                    "views": 3,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 3,
+                    "downloads": 0
+                }
+            ]
+        },
+        "catalog top 1": {
+            "views": 3,
+            "downloads": 0,
+            "topViewed": [
+                {
+                    "publication": "p1",
+                    "views": 3,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 3,
+                    "downloads": 0
+                }
+            ]
+        },
+        "catalog top 0": {
+            "views": 3,
+            "downloads": 0,
+            "topViewed": [
+                {
+                    "publication": "p1",
+                    "views": 3,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 3,
+                    "downloads": 0
+                }
+            ]
+        }
+    },
+    "aggregate: only unknown kinds": {
+        "series": {
+            "views": 0,
+            "downloads": 0,
+            "series": [
+                {
+                    "date": "2026-05-01",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "date": "2026-05-02",
+                    "views": 0,
+                    "downloads": 0
+                }
+            ],
+            "countingStart": "2026-05-01"
+        },
+        "catalog": {
+            "views": 0,
+            "downloads": 0,
+            "topViewed": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p2",
+                    "views": 0,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 0
+                },
+                {
+                    "publication": "p2",
+                    "views": 0,
+                    "downloads": 0
+                }
+            ]
+        },
+        "catalog top 1": {
+            "views": 0,
+            "downloads": 0,
+            "topViewed": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 0
+                }
+            ]
+        },
+        "catalog top 0": {
+            "views": 0,
+            "downloads": 0,
+            "topViewed": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "p1",
+                    "views": 0,
+                    "downloads": 0
+                }
+            ]
+        }
+    },
+    "aggregate: ties": {
+        "series": {
+            "views": 4,
+            "downloads": 2,
+            "series": [
+                {
+                    "date": "2026-05-01",
+                    "views": 4,
+                    "downloads": 2
+                }
+            ],
+            "countingStart": "2026-05-01"
+        },
+        "catalog": {
+            "views": 4,
+            "downloads": 2,
+            "topViewed": [
+                {
+                    "publication": "b",
+                    "views": 2,
+                    "downloads": 0
+                },
+                {
+                    "publication": "a",
+                    "views": 2,
+                    "downloads": 1
+                },
+                {
+                    "publication": "c",
+                    "views": 0,
+                    "downloads": 1
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "a",
+                    "views": 2,
+                    "downloads": 1
+                },
+                {
+                    "publication": "c",
+                    "views": 0,
+                    "downloads": 1
+                },
+                {
+                    "publication": "b",
+                    "views": 2,
+                    "downloads": 0
+                }
+            ]
+        },
+        "catalog top 1": {
+            "views": 4,
+            "downloads": 2,
+            "topViewed": [
+                {
+                    "publication": "b",
+                    "views": 2,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "a",
+                    "views": 2,
+                    "downloads": 1
+                }
+            ]
+        },
+        "catalog top 0": {
+            "views": 4,
+            "downloads": 2,
+            "topViewed": [
+                {
+                    "publication": "b",
+                    "views": 2,
+                    "downloads": 0
+                }
+            ],
+            "topDownloaded": [
+                {
+                    "publication": "a",
+                    "views": 2,
+                    "downloads": 1
+                }
+            ]
+        }
+    },
+    "crawler: blank, browser": false,
+    "crawler: blank, configured": true,
+    "crawler: blank, configured padded": false,
+    "crawler: blank, curl": true,
+    "crawler: blank, empty": true,
+    "crawler: blank, googlebot": true,
+    "crawler: blank, null": true,
+    "crawler: blank, spaces": true,
+    "crawler: blank, upper headless": true,
+    "crawler: extra, browser": false,
+    "crawler: extra, configured": true,
+    "crawler: extra, configured padded": true,
+    "crawler: extra, curl": true,
+    "crawler: extra, empty": true,
+    "crawler: extra, googlebot": true,
+    "crawler: extra, null": true,
+    "crawler: extra, spaces": true,
+    "crawler: extra, upper headless": true,
+    "crawler: shipped, browser": false,
+    "crawler: shipped, configured": true,
+    "crawler: shipped, configured padded": false,
+    "crawler: shipped, curl": true,
+    "crawler: shipped, empty": true,
+    "crawler: shipped, googlebot": true,
+    "crawler: shipped, null": true,
+    "crawler: shipped, spaces": true,
+    "crawler: shipped, upper headless": true,
+    "instance: before all": {
+        "views": 0,
+        "downloads": 0,
+        "series": [],
+        "countingStart": "2026-04-29",
+        "from": "2026-01-01",
+        "to": "2026-01-31"
+    },
+    "instance: from missing": {
+        "views": 10,
+        "downloads": 11,
+        "series": [
+            {
+                "date": "2026-05-01",
+                "views": 1,
+                "downloads": 5
+            },
+            {
+                "date": "2026-05-02",
+                "views": 7,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-03",
+                "views": 2,
+                "downloads": 4
+            },
+            {
+                "date": "2026-05-04",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-05",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-06",
+                "views": 0,
+                "downloads": 2
+            }
+        ],
+        "countingStart": "2026-04-29",
+        "from": "2026-05-01",
+        "to": "2026-05-30"
+    },
+    "instance: from not a day": {
+        "views": 10,
+        "downloads": 11,
+        "series": [
+            {
+                "date": "2026-05-01",
+                "views": 1,
+                "downloads": 5
+            },
+            {
+                "date": "2026-05-02",
+                "views": 7,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-03",
+                "views": 2,
+                "downloads": 4
+            },
+            {
+                "date": "2026-05-04",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-05",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-06",
+                "views": 0,
+                "downloads": 2
+            }
+        ],
+        "countingStart": "2026-04-29",
+        "from": "2026-05-01",
+        "to": "2026-05-30"
+    },
+    "instance: from overflows": {
+        "views": 0,
+        "downloads": 0,
+        "series": [],
+        "countingStart": "2026-04-29",
+        "from": "2026-03-02",
+        "to": "2026-03-31"
+    },
+    "instance: from short form": {
+        "views": 10,
+        "downloads": 11,
+        "series": [
+            {
+                "date": "2026-05-01",
+                "views": 1,
+                "downloads": 5
+            },
+            {
+                "date": "2026-05-02",
+                "views": 7,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-03",
+                "views": 2,
+                "downloads": 4
+            },
+            {
+                "date": "2026-05-04",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-05",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-06",
+                "views": 0,
+                "downloads": 2
+            }
+        ],
+        "countingStart": "2026-04-29",
+        "from": "2026-05-01",
+        "to": "2026-05-30"
+    },
+    "instance: inside": {
+        "views": 10,
+        "downloads": 9,
+        "series": [
+            {
+                "date": "2026-05-01",
+                "views": 1,
+                "downloads": 5
+            },
+            {
+                "date": "2026-05-02",
+                "views": 7,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-03",
+                "views": 2,
+                "downloads": 4
+            }
+        ],
+        "countingStart": "2026-04-29",
+        "from": "2026-05-01",
+        "to": "2026-05-03"
+    },
+    "instance: single day": {
+        "views": 2,
+        "downloads": 4,
+        "series": [
+            {
+                "date": "2026-05-03",
+                "views": 2,
+                "downloads": 4
+            }
+        ],
+        "countingStart": "2026-04-29",
+        "from": "2026-05-03",
+        "to": "2026-05-03"
+    },
+    "instance: to not a day": {
+        "views": 10,
+        "downloads": 11,
+        "series": [
+            {
+                "date": "2026-05-01",
+                "views": 1,
+                "downloads": 5
+            },
+            {
+                "date": "2026-05-02",
+                "views": 7,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-03",
+                "views": 2,
+                "downloads": 4
+            },
+            {
+                "date": "2026-05-04",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-05",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-06",
+                "views": 0,
+                "downloads": 2
+            }
+        ],
+        "countingStart": "2026-04-29",
+        "from": "2026-05-01",
+        "to": "TODAY"
+    },
+    "instance: to overflows": {
+        "views": 10,
+        "downloads": 11,
+        "series": [
+            {
+                "date": "2026-05-01",
+                "views": 1,
+                "downloads": 5
+            },
+            {
+                "date": "2026-05-02",
+                "views": 7,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-03",
+                "views": 2,
+                "downloads": 4
+            },
+            {
+                "date": "2026-05-04",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-05",
+                "views": 0,
+                "downloads": 0
+            },
+            {
+                "date": "2026-05-06",
+                "views": 0,
+                "downloads": 2
+            }
+        ],
+        "countingStart": "2026-04-29",
+        "from": "2026-05-01",
+        "to": "TODAY"
+    }
+}

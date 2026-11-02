@@ -73,6 +73,16 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	private const CONFIG_CRAWLERS = 'usage_counter_crawlers';
 
 	/**
+	 * The series column each counted kind adds to.
+	 *
+	 * @var array<string, string>
+	 */
+	private const KIND_COLUMNS = [
+		self::KIND_VIEW => 'views',
+		self::KIND_DOWNLOAD => 'downloads',
+	];
+
+	/**
 	 * Shipped default known-crawler substrings (case-insensitive match on UA).
 	 *
 	 * Search engines, monitoring probes, and the DCAT/sitemap harvesters whose
@@ -149,19 +159,27 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 */
 	public function isCrawler(?string $userAgent): bool {
 		$userAgent = trim((string)$userAgent);
-		if ($userAgent === '') {
-			return true;
-		}
+		return $userAgent === '' || $this->matchesCrawler(agent: strtolower($userAgent)) === true;
+	}//end isCrawler()
 
-		$needle = strtolower($userAgent);
+	/**
+	 * Whether a lower-cased user agent contains one of the crawler substrings.
+	 *
+	 * @param string $agent The trimmed, lower-cased user agent.
+	 *
+	 * @return boolean True when a non-empty crawler substring occurs in it.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function matchesCrawler(string $agent): bool {
 		foreach ($this->getCrawlerList() as $pattern) {
-			if ($pattern !== '' && str_contains($needle, $pattern) === true) {
+			if ($pattern !== '' && str_contains($agent, $pattern) === true) {
 				return true;
 			}
 		}
 
 		return false;
-	}//end isCrawler()
+	}//end matchesCrawler()
 
 	/**
 	 * Resolve the configured crawler substring list (shipped default + config).
@@ -208,19 +226,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 */
 	public function increment(PublicationUsage $usage, ?string $userAgent = null): bool {
 		try {
-			$count = new UsageCount(publicationId: $usage->publicationId, kind: $usage->kind);
-			$count->catalog = $usage->catalog;
-
-			// Best-effort bot filtering — evaluated in memory, UA discarded (ANA-003).
-			if ($count->isCountable() === false
-				|| $this->isCrawler(userAgent: $userAgent) === true
-				|| $this->bindCounterStore(count: $count) === false
-			) {
-				return false;
-			}
-
-			$this->saveCount(count: $count);
-			return true;
+			return $this->record(usage: $usage, userAgent: $userAgent);
 		} catch (\Throwable $e) {
 			// ANA-001: a counting failure MUST be logged and swallowed, never
 			// propagated. The user-agent is deliberately NOT included (ANA-003).
@@ -235,6 +241,32 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		}//end try
 
 	}//end increment()
+
+	/**
+	 * Count one usage unless it is not countable, comes from a crawler, or has no counter store.
+	 *
+	 * @param PublicationUsage $usage     The publication, kind and catalog being counted.
+	 * @param string|null      $userAgent Request UA, evaluated for crawler-skip only.
+	 *
+	 * @return boolean True when a count was recorded.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function record(PublicationUsage $usage, ?string $userAgent): bool {
+		$count = new UsageCount(publicationId: $usage->publicationId, kind: $usage->kind);
+		$count->catalog = $usage->catalog;
+
+		// Best-effort bot filtering — evaluated in memory, UA discarded (ANA-003).
+		if ($count->isCountable() === false
+			|| $this->isCrawler(userAgent: $userAgent) === true
+			|| $this->bindCounterStore(count: $count) === false
+		) {
+			return false;
+		}
+
+		$this->saveCount(count: $count);
+		return true;
+	}//end record()
 
 	/**
 	 * Point a count at the counter store: the object service, register and schema.
@@ -464,13 +496,8 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 */
 	public function aggregateInstanceSeries(?string $from = null, ?string $to = null): array {
 		$utc = new DateTimeZone('UTC');
-		if ($to === null || $this->isDay(value: $to) === false) {
-			$to = (new DateTimeImmutable('today', $utc))->format('Y-m-d');
-		}
-
-		if ($from === null || $this->isDay(value: $from) === false) {
-			$from = (new DateTimeImmutable($to, $utc))->modify('-29 days')->format('Y-m-d');
-		}
+		$to = $this->dayOr(value: $to, fallback: (new DateTimeImmutable('today', $utc))->format('Y-m-d'));
+		$from = $this->dayOr(value: $from, fallback: (new DateTimeImmutable($to, $utc))->modify('-29 days')->format('Y-m-d'));
 
 		// One OR query: the unfiltered set yields the counting start, the
 		// windowed subset yields the series and totals.
@@ -478,16 +505,28 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		$countingStart = $this->aggregateSeries(rows: $rows)['countingStart'];
 		$windowed = $this->aggregateSeries(rows: $this->filterByRange(rows: $rows, from: $from, to: $to));
 
-		return [
-			'views' => $windowed['views'],
-			'downloads' => $windowed['downloads'],
-			'series' => $windowed['series'],
-			'countingStart' => $countingStart,
-			'from' => $from,
-			'to' => $to,
-		];
+		return array_replace($windowed, ['countingStart' => $countingStart, 'from' => $from, 'to' => $to]);
 
 	}//end aggregateInstanceSeries()
+
+	/**
+	 * The value when it is a well-formed calendar day, otherwise the fallback.
+	 *
+	 * @param string|null $value    The candidate day.
+	 * @param string      $fallback The day to use instead.
+	 *
+	 * @return string The day.
+	 *
+	 * @spec exclude Input-shape guard for aggregateInstanceSeries(); the window
+	 *       contract is asserted through that method.
+	 */
+	private function dayOr(?string $value, string $fallback): string {
+		if ($value === null || $this->isDay(value: $value) === false) {
+			return $fallback;
+		}
+
+		return $value;
+	}//end dayOr()
 
 	/**
 	 * Whether a string is a well-formed calendar day (Y-m-d).
@@ -527,47 +566,68 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function aggregateSeries(array $rows): array {
-		$byDate = [];
-		$views = 0;
-		$downloads = 0;
+		$byDate = $this->tally(rows: $rows, key: 'date');
 		$countingStart = null;
-
-		foreach ($rows as $row) {
-			$row = $this->normaliseCounter(row: $row);
-			$date = (string)($row['date'] ?? '');
-			$kind = (string)($row['kind'] ?? '');
-			$count = max(0, (int)($row['count'] ?? 0));
-			if ($date === '') {
-				continue;
-			}
-
-			if ($countingStart === null || $date < $countingStart) {
-				$countingStart = $date;
-			}
-
-			if (isset($byDate[$date]) === false) {
-				$byDate[$date] = ['date' => $date, 'views' => 0, 'downloads' => 0];
-			}
-
-			if ($kind === self::KIND_VIEW) {
-				$byDate[$date]['views'] += $count;
-				$views += $count;
-			} elseif ($kind === self::KIND_DOWNLOAD) {
-				$byDate[$date]['downloads'] += $count;
-				$downloads += $count;
-			}
-		}//end foreach
+		if ($byDate !== []) {
+			$countingStart = min(array_column($byDate, 'date'));
+		}
 
 		ksort($byDate);
 
 		return [
-			'views' => $views,
-			'downloads' => $downloads,
+			'views' => array_sum(array_column($byDate, 'views')),
+			'downloads' => array_sum(array_column($byDate, 'downloads')),
 			'series' => array_values($byDate),
 			'countingStart' => $countingStart,
 		];
 
 	}//end aggregateSeries()
+
+	/**
+	 * Sum the view and download counts of the rows per value of one field.
+	 *
+	 * Rows without a value for the field are skipped; a row of another kind
+	 * still opens its bucket. Negative and non-numeric counts count as 0.
+	 *
+	 * @param array<int, mixed> $rows Counter rows (arrays or ObjectEntity).
+	 * @param string            $key  The field to group by (`date`, `publication`).
+	 *
+	 * @return array<string, array<string, mixed>> One bucket per value, in first-seen order.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function tally(array $rows, string $key): array {
+		$buckets = [];
+		foreach ($rows as $row) {
+			$row = $this->normaliseCounter(row: $row);
+			$value = (string)($row[$key] ?? '');
+			if ($value !== '') {
+				$bucket = ($buckets[$value] ?? [$key => $value, 'views' => 0, 'downloads' => 0]);
+				$buckets[$value] = $this->addCount(bucket: $bucket, row: $row);
+			}
+		}
+
+		return $buckets;
+	}//end tally()
+
+	/**
+	 * Add a row's count to the bucket column of its kind; other kinds add nothing.
+	 *
+	 * @param array<string, mixed> $bucket The bucket with `views` and `downloads`.
+	 * @param array<string, mixed> $row    The normalised counter row.
+	 *
+	 * @return array<string, mixed> The bucket.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function addCount(array $bucket, array $row): array {
+		$column = (self::KIND_COLUMNS[(string)($row['kind'] ?? '')] ?? null);
+		if ($column !== null) {
+			$bucket[$column] += max(0, (int)($row['count'] ?? 0));
+		}
+
+		return $bucket;
+	}//end addCount()
 
 	/**
 	 * Aggregate catalog counter rows into totals and top-N rankings.
@@ -584,33 +644,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 */
 	public function aggregateCatalog(array $rows, int $top = 10): array {
 		$top = max(1, $top);
-		$byPub = [];
-		$totalViews = 0;
-		$totalDownl = 0;
-
-		foreach ($rows as $row) {
-			$row = $this->normaliseCounter(row: $row);
-			$pub = (string)($row['publication'] ?? '');
-			$kind = (string)($row['kind'] ?? '');
-			$count = max(0, (int)($row['count'] ?? 0));
-			if ($pub === '') {
-				continue;
-			}
-
-			if (isset($byPub[$pub]) === false) {
-				$byPub[$pub] = ['publication' => $pub, 'views' => 0, 'downloads' => 0];
-			}
-
-			if ($kind === self::KIND_VIEW) {
-				$byPub[$pub]['views'] += $count;
-				$totalViews += $count;
-			} elseif ($kind === self::KIND_DOWNLOAD) {
-				$byPub[$pub]['downloads'] += $count;
-				$totalDownl += $count;
-			}
-		}//end foreach
-
-		$entries = array_values($byPub);
+		$entries = array_values($this->tally(rows: $rows, key: 'publication'));
 
 		$byViews = $entries;
 		usort($byViews, static fn (array $a, array $b): int => ($b['views'] <=> $a['views']));
@@ -619,8 +653,8 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		usort($byDownloads, static fn (array $a, array $b): int => ($b['downloads'] <=> $a['downloads']));
 
 		return [
-			'views' => $totalViews,
-			'downloads' => $totalDownl,
+			'views' => array_sum(array_column($entries, 'views')),
+			'downloads' => array_sum(array_column($entries, 'downloads')),
 			'topViewed' => array_slice($byViews, 0, $top),
 			'topDownloaded' => array_slice($byDownloads, 0, $top),
 		];
@@ -643,24 +677,30 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		$out = [];
 		foreach ($rows as $row) {
 			$row = $this->normaliseCounter(row: $row);
-			$date = (string)($row['date'] ?? '');
-			if ($date === '') {
-				continue;
+			if ($this->inDayRange(date: (string)($row['date'] ?? ''), range: [$from, $to]) === true) {
+				$out[] = $row;
 			}
-
-			if ($from !== null && $date < $from) {
-				continue;
-			}
-
-			if ($to !== null && $date > $to) {
-				continue;
-			}
-
-			$out[] = $row;
 		}
 
 		return $out;
 	}//end filterByRange()
+
+	/**
+	 * Whether a day lies within an inclusive range whose ends may be open.
+	 *
+	 * @param string                           $date  The row's day; '' is never in range.
+	 * @param array{0: ?string, 1: ?string}    $range The start and end day, null for an open end.
+	 *
+	 * @return boolean True when the day is set and inside the range.
+	 *
+	 * @spec exclude Pure date-range predicate for filterByRange(); the range contract is
+	 *       asserted through getPublicationStats()/getCatalogStats().
+	 */
+	private function inDayRange(string $date, array $range): bool {
+		return $date !== ''
+			&& ($range[0] === null || $date >= $range[0])
+			&& ($range[1] === null || $date <= $range[1]);
+	}//end inDayRange()
 
 	/**
 	 * Normalise an OR object (ObjectEntity or array) to a flat counter array.
