@@ -141,6 +141,24 @@ class DepublicationGoldenTest extends TestCase {
 	}//end testActionMatchesTheRecording()
 
 	/**
+	 * An unset register answers 503 with a detail that names the setting and holds no server path.
+	 *
+	 * @return void
+	 */
+	public function testAnUnsetRegisterAnswersWithoutAServerPath(): void {
+		$case = ['action' => 'depublish', 'fail' => 'config', 'params' => ['publication' => ['id' => 'p-1']]];
+		$response = $this->controller(case: $case)->depublish();
+		$detail = (string)($response->getData()['detail'] ?? '');
+
+		$this->assertSame(expected: 503, actual: $response->getStatus());
+		$this->assertSame(expected: 'register_not_configured', actual: $response->getData()['error']);
+		$this->assertStringContainsString(needle: 'publication_register', haystack: $detail);
+		$this->assertStringNotContainsString(needle: '.php', haystack: $detail);
+		$this->assertStringNotContainsString(needle: dirname(path: __DIR__, levels: 3), haystack: $detail);
+
+	}//end testAnUnsetRegisterAnswersWithoutAServerPath()
+
+	/**
 	 * The controller over recording doubles for one case.
 	 *
 	 * @param array<string, mixed> $case The case.

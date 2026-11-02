@@ -178,11 +178,12 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 		$register = $appConfig->getValueString(AppIdentity::APP_ID, $registerKey, '');
 		$schema = $appConfig->getValueString(AppIdentity::APP_ID, $schemaKey, '');
 
-		if ($register === '' || $schema === '') {
-			throw new MissingConfigException(
-				'Register configuration is not set for ' . $registerKey . ' / ' . $schemaKey
-				. '. Run the OpenCatalogi setup wizard or POST to /api/settings/load to initialise registers and schemas.'
-			);
+		if ($register === '') {
+			throw new MissingConfigException(appId: AppIdentity::APP_ID, configKey: $registerKey);
+		}
+
+		if ($schema === '') {
+			throw new MissingConfigException(appId: AppIdentity::APP_ID, configKey: $schemaKey);
 		}
 
 		return [
