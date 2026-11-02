@@ -41,9 +41,9 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
 use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -56,7 +56,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * The public and community surface.
@@ -77,13 +76,12 @@ class CommunityController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param StatusPageServiceInterface $statusService The status page.
 	 * @param AtomFeedServiceInterface $feedService The catalogue feed.
 	 * @param MarkupRenderServiceInterface $markupService The markup renderer.
-	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -91,13 +89,12 @@ class CommunityController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly StatusPageServiceInterface $statusService,
 		private readonly AtomFeedServiceInterface $feedService,
 		private readonly MarkupRenderServiceInterface $markupService,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly RegisterAccess $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -212,7 +209,7 @@ class CommunityController extends Controller {
 
 		try {
 			$config = $this->configurationFor(schemaKey: 'service_status_schema');
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $status,
 				extend: [],
 				register: $config['register'],

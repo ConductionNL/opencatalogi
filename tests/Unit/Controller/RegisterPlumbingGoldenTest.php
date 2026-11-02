@@ -78,6 +78,8 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\ThemesController
  * @covers \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
  * @covers \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
+ * @covers \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @covers \OCA\OpenCatalogi\Service\RegisterAccess
  * @uses   \OCA\OpenCatalogi\Contract\CommentPeriodRequest
  * @uses   \OCA\OpenCatalogi\Controller\CorsAllowlist
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings

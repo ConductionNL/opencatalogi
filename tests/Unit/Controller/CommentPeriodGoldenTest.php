@@ -27,8 +27,10 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Controller\CommentPeriodController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -361,6 +363,6 @@ class CommentPeriodGoldenTest extends TestCase {
 			}
 		);
 
-		return new CommentPeriodController('opencatalogi', $request, $container, $l10n, $session, $periods);
+		return new CommentPeriodController('opencatalogi', $request, new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $l10n, $session, $periods);
 	}//end controller()
 }//end class

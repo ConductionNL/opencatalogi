@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -45,7 +46,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * Opens comment periods and answers their public state.
@@ -63,7 +63,7 @@ class CommentPeriodController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param ContainerInterface $container Server container.
+	 * @param OpenRegisterLookup $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param CommentPeriodServiceInterface $periods Opens periods and derives their state.
@@ -71,7 +71,7 @@ class CommentPeriodController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookup $registers,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly CommentPeriodServiceInterface $periods,
@@ -104,7 +104,7 @@ class CommentPeriodController extends Controller {
 	 */
 	private function objects(): ?object {
 		try {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			return $this->registers->objectService();
 		} catch (\Throwable $e) {
 			return null;
 		}

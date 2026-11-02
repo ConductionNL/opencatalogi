@@ -31,6 +31,8 @@ use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Controller\OoapiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\OoapiService;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IL10N;
@@ -72,7 +74,7 @@ class OoapiControllerTest extends TestCase {
 			$this->userSession,
 			$l10n,
 			$this->createMock(LoggerInterface::class),
-			$this->container,
+			new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)),
 			null
 		);
 	}

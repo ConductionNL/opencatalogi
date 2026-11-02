@@ -35,8 +35,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -65,8 +65,8 @@ class PublicationStateController extends Controller {
 	 * @param PublicationStateServiceInterface $states       The visibility state and the record per move.
 	 * @param PublicationRights       $rights       The update right on one publication.
 	 * @param DepublicationServiceInterface    $depublisher  Sends the withdrawals.
-	 * @param ContainerInterface      $container    Server container, for the register resolver and OpenRegister's file service.
-	 * @param ServiceCatalogueServiceInterface $objects      The OpenRegister reader.
+	 * @param ContainerInterface      $container    Server container, for OpenRegister's file service.
+	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService.
 	 */
 	public function __construct(
 		$appName,
@@ -77,7 +77,7 @@ class PublicationStateController extends Controller {
 		private readonly PublicationRights $rights,
 		private readonly DepublicationServiceInterface $depublisher,
 		private readonly ContainerInterface $container,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly RegisterAccess $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -343,7 +343,7 @@ class PublicationStateController extends Controller {
 				registerKey: 'publication_register',
 				schemaKey: 'depublication_schema'
 			);
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $this->states->storable(depublication: $depublication),
 				extend: [],
 				register: $configuration['register'],
@@ -388,7 +388,7 @@ class PublicationStateController extends Controller {
 		);
 
 		try {
-			return $this->objects->getObjectService()->find(
+			return $this->registers->getObjectService()->find(
 				id: $id,
 				register: $configuration['register'],
 				schema: $configuration['schema'],
@@ -421,7 +421,7 @@ class PublicationStateController extends Controller {
 		);
 		unset($record['id']);
 
-		$this->objects->getObjectService()->saveObject(
+		$this->registers->getObjectService()->saveObject(
 			object: $record,
 			register: $configuration['register'],
 			schema: $configuration['schema'],

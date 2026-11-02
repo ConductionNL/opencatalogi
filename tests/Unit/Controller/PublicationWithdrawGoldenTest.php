@@ -28,9 +28,12 @@ use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\PublicationStateController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -168,6 +171,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			}
 		);
 
+		$container = $this->container(case: $case, calls: $calls);
 		$controller = new PublicationStateController(
 			'opencatalogi',
 			$request,
@@ -176,8 +180,8 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			$this->states(case: $case, calls: $calls),
 			$rights,
 			$this->depublisher(case: $case, calls: $calls),
-			$this->container(case: $case, calls: $calls),
-			$this->objects(case: $case, calls: $calls)
+			$container,
+			new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $this->objects(case: $case, calls: $calls))
 		);
 
 		return $controller;
