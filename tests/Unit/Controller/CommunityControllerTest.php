@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\CommunityController;
+use OCA\OpenCatalogi\Controller\CommunityPages;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
@@ -91,10 +92,7 @@ class CommunityControllerTest extends TestCase {
 			$this->config,
 			$l10n,
 			$this->userSession,
-			new StatusPageService(),
-			new AtomFeedService(new PublicationRuleService(), new NoticeBoardService()),
-			new MarkupRenderService(),
-			new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
+			new CommunityPages(new StatusPageService(), new AtomFeedService(new PublicationRuleService(), new NoticeBoardService()), new MarkupRenderService(), new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects))
 		);
 
 	}//end setUp()
@@ -260,6 +258,21 @@ class CommunityControllerTest extends TestCase {
 	/**
 	 * The preflight answers the browser without reading anything.
 	 */
+	/**
+	 * The feed names its own URL as its id, and carries the catalogue as its title.
+	 */
+	public function testTheFeedNamesItsOwnUrlAndCatalogue(): void {
+		$this->objects->method('getObjectService')->willReturn($this->readWriteStore());
+		$this->request->method('getRequestUri')->willReturn('/apps/opencatalogi/api/feed/woo');
+
+		$response = $this->controller->feed('woo');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertStringContainsString('<id>/apps/opencatalogi/api/feed/woo</id>', $response->render());
+		$this->assertStringContainsString('woo', $response->render());
+
+	}//end testTheFeedNamesItsOwnUrlAndCatalogue()
+
 	public function testThePreflightAnswersWithoutReadingAnything(): void {
 		$response = $this->controller->preflightedCors();
 
