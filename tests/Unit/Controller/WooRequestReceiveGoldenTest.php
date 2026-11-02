@@ -28,6 +28,7 @@ use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
+use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
@@ -43,6 +44,7 @@ use RuntimeException;
  * Golden test for receiving a Woo request.
  *
  * @covers \OCA\OpenCatalogi\Controller\WooRequestController
+ * @covers \OCA\OpenCatalogi\Controller\RequestRecords
  */
 class WooRequestReceiveGoldenTest extends TestCase {
 
@@ -193,6 +195,6 @@ class WooRequestReceiveGoldenTest extends TestCase {
 			}
 		);
 
-		return new WooRequestController('opencatalogi', $request, $l10n, $session, $requests, $store, $terms);
+		return new WooRequestController('opencatalogi', $request, $l10n, $session, new RequestRecords($requests, $store), $terms);
 	}//end controller()
 }//end class
