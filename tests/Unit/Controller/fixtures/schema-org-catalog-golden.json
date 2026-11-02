@@ -1,0 +1,359 @@
+{
+    "found, guarded and built": {
+        "status": 200,
+        "data": {
+            "@type": "DataCatalog",
+            "name": "Open"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/ld+json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ],
+            [
+                "applyCatalogReadRuleGuard",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                }
+            ],
+            [
+                "buildCatalogNode",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public"
+                    ]
+                },
+                "open"
+            ]
+        ]
+    },
+    "found, guard passes through": {
+        "status": 200,
+        "data": {
+            "@type": "DataCatalog"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/ld+json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ],
+            [
+                "applyCatalogReadRuleGuard",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                }
+            ],
+            [
+                "buildCatalogNode",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                },
+                "open"
+            ]
+        ]
+    },
+    "unknown slug": {
+        "status": 404,
+        "data": {
+            "error": "T:Catalog not found"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ]
+        ]
+    },
+    "slug lookup throws": {
+        "status": 500,
+        "data": {
+            "error": "T:Internal server error"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ],
+            [
+                "logger.error",
+                "[SchemaOrgController::catalog] Failed to build schema.org catalog document",
+                {
+                    "catalogSlug": "open",
+                    "error": "lookup failed"
+                }
+            ]
+        ]
+    },
+    "guard throws": {
+        "status": 500,
+        "data": {
+            "error": "T:Internal server error"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ],
+            [
+                "applyCatalogReadRuleGuard",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                }
+            ],
+            [
+                "logger.error",
+                "[SchemaOrgController::catalog] Failed to build schema.org catalog document",
+                {
+                    "catalogSlug": "open",
+                    "error": "guard failed"
+                }
+            ]
+        ]
+    },
+    "node builder throws": {
+        "status": 500,
+        "data": {
+            "error": "T:Internal server error"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ],
+            [
+                "applyCatalogReadRuleGuard",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                }
+            ],
+            [
+                "buildCatalogNode",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                },
+                "open"
+            ],
+            [
+                "logger.error",
+                "[SchemaOrgController::catalog] Failed to build schema.org catalog document",
+                {
+                    "catalogSlug": "open",
+                    "error": "node failed"
+                }
+            ]
+        ]
+    },
+    "origin allowed by the allowlist": {
+        "status": 200,
+        "data": {
+            "@type": "DataCatalog"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/ld+json",
+            "Access-Control-Allow-Origin": "https://portal.example",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ],
+            [
+                "applyCatalogReadRuleGuard",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                }
+            ],
+            [
+                "buildCatalogNode",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                },
+                "open"
+            ]
+        ]
+    },
+    "origin outside the allowlist": {
+        "status": 200,
+        "data": [],
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/ld+json",
+            "Access-Control-Allow-Origin": "https://portal.example",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ],
+            [
+                "applyCatalogReadRuleGuard",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                }
+            ],
+            [
+                "buildCatalogNode",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                },
+                "open"
+            ]
+        ]
+    },
+    "other slug text": {
+        "status": 200,
+        "data": {
+            "n": 1
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+            "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+            "X-Robots-Tag": "noindex, nofollow",
+            "Content-Type": "application/ld+json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET, OPTIONS",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "Gemeente-Zuid"
+            ],
+            [
+                "applyCatalogReadRuleGuard",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                }
+            ],
+            [
+                "buildCatalogNode",
+                {
+                    "id": "c-1",
+                    "slug": "open",
+                    "schemas": [
+                        "s-public",
+                        "s-private"
+                    ]
+                },
+                "Gemeente-Zuid"
+            ]
+        ]
+    }
+}
