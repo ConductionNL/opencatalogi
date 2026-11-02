@@ -24,13 +24,13 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
-use OCA\OpenCatalogi\Service\Setup\SetupActions;
-use OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps;
-use OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps;
-use OCA\OpenCatalogi\Service\Setup\SetupFederationSteps;
-use OCA\OpenCatalogi\Service\Setup\SetupSettingsStep;
-use OCA\OpenCatalogi\Service\Setup\SetupStepRunner;
-use OCA\OpenCatalogi\Service\Setup\SetupStatusReport;
+use OCA\OpenCatalogi\Controller\Setup\SetupActions;
+use OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep;
+use OCA\OpenCatalogi\Controller\Setup\SetupStepRunner;
+use OCA\OpenCatalogi\Controller\Setup\SetupStatusReport;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
@@ -54,13 +54,13 @@ use RuntimeException;
  * Golden test for the setup endpoints.
  *
  * @covers \OCA\OpenCatalogi\Controller\SetupController
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupActions
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupCatalogSteps
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupDemoDataSteps
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupFederationSteps
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupSettingsStep
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupStatusReport
- * @covers \OCA\OpenCatalogi\Service\Setup\SetupStepRunner
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupActions
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupStatusReport
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupStepRunner
  */
 class SetupEndpointsGoldenTest extends TestCase {
 

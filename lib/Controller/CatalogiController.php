@@ -27,7 +27,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Service\CallerScope;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
@@ -54,7 +54,7 @@ class CatalogiController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param CatalogiServiceInterface $catalogiService The catalogi service.
 	 * @param IAppConfig $config App configuration interface.
-	 * @param OpenRegisterLookup $registers Resolves the configured register pair and OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -64,7 +64,7 @@ class CatalogiController extends Controller {
 		IRequest $request,
 		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $registers,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);

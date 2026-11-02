@@ -3,8 +3,8 @@
 /**
  * The setup steps that connect to the default directory and synchronise every directory.
  *
- * @category Service
- * @package  OCA\OpenCatalogi\Service\Setup
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller\Setup
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Setup;
+namespace OCA\OpenCatalogi\Controller\Setup;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;

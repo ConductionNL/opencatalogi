@@ -36,7 +36,6 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
-use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;

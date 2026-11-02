@@ -79,8 +79,8 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
  * @covers \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
  * @covers \OCA\OpenCatalogi\Service\OpenRegisterLookup
- * @covers \OCA\OpenCatalogi\Service\RegisterAccess
- * @covers \OCA\OpenCatalogi\Service\BannerDismissals
+ * @covers \OCA\OpenCatalogi\Controller\RegisterAccess
+ * @covers \OCA\OpenCatalogi\Controller\BannerDismissals
  * @uses   \OCA\OpenCatalogi\Contract\CommentPeriodRequest
  * @uses   \OCA\OpenCatalogi\Controller\CorsAllowlist
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
@@ -295,9 +295,9 @@ class RegisterPlumbingGoldenTest extends TestCase {
 				},
 				]
 			),
-			'OCA\\OpenCatalogi\\Service\\OpenRegisterLookup' => new $type($this->collaborator(type: ContainerInterface::class), $this->collaborator(type: IAppManager::class)),
-			'OCA\\OpenCatalogi\\Service\\BannerDismissals' => new $type($this->collaborator(type: IAppConfig::class), $this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\BannerServiceInterface')),
-			'OCA\\OpenCatalogi\\Service\\RegisterAccess' => new $type($this->collaborator(type: 'OCA\\OpenCatalogi\\Service\\OpenRegisterLookup'), $this->collaborator(type: ServiceCatalogueServiceInterface::class)),
+			'OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface' => new \OCA\OpenCatalogi\Service\OpenRegisterLookup($this->collaborator(type: ContainerInterface::class), $this->collaborator(type: IAppManager::class)),
+			'OCA\\OpenCatalogi\\Controller\\BannerDismissals' => new $type($this->collaborator(type: IAppConfig::class), $this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\BannerServiceInterface')),
+			'OCA\\OpenCatalogi\\Controller\\RegisterAccess' => new $type($this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface'), $this->collaborator(type: ServiceCatalogueServiceInterface::class)),
 			default => $this->double(type: $type, label: (new ReflectionClass(explode('#', $type)[0]))->getShortName(), depth: 0),
 		};
 

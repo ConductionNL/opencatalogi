@@ -30,7 +30,7 @@ use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\DepublicationController;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Service\RegisterAccess;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -48,7 +48,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\DepublicationController
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
- * @uses   \OCA\OpenCatalogi\Service\RegisterAccess
+ * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
  */
 class DepublicationGoldenTest extends TestCase {
 

@@ -38,7 +38,7 @@ use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -69,7 +69,7 @@ class ServiceCatalogueController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param OpenRegisterLookup $registers Resolves the configured register pairs and OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localisation.
 	 * @param ServiceCatalogueServiceInterface $catalogueService The catalogue reader.
 	 * @param CaseTypeCatalogueServiceInterface $caseTypeService The case type importer.
@@ -81,7 +81,7 @@ class ServiceCatalogueController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $registers,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly IL10N $l10n,
 		private readonly ServiceCatalogueServiceInterface $catalogueService,
 		private readonly CaseTypeCatalogueServiceInterface $caseTypeService,

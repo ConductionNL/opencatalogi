@@ -43,7 +43,7 @@ use OCA\OpenCatalogi\Controller\CommunityController;
 use OCA\OpenCatalogi\Controller\NoticeBoardController;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
-use OCA\OpenCatalogi\Service\RegisterAccess;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IRequest;

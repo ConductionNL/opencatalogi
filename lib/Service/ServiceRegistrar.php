@@ -48,6 +48,7 @@ use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
 use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
@@ -177,6 +178,7 @@ class ServiceRegistrar {
 		BannerServiceInterface::class => BannerService::class,
 		PublishedCollectionsServiceInterface::class => PublishedCollectionsService::class,
 		SitemapServiceInterface::class => SitemapService::class,
+		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
 	];
 
 	/**

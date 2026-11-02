@@ -273,5 +273,10 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\SitemapServiceInterface",
         "OCA\\OpenCatalogi\\Service\\SitemapService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface",
+        "OCA\\OpenCatalogi\\Service\\OpenRegisterLookup"
     ]
 ]

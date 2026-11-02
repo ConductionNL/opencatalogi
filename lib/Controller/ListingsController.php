@@ -33,7 +33,7 @@ namespace OCA\OpenCatalogi\Controller;
 use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -65,7 +65,7 @@ class ListingsController extends Controller {
 	 * @param string $appName The name of the app
 	 * @param IRequest $request The request object
 	 * @param IAppConfig $config The app configuration
-	 * @param OpenRegisterLookup $registers Resolves the configured register pair and OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param DirectoryServiceInterface $directoryService The directory service
 	 * @param IL10N $l10n Localization service
 	 * @param IUserSession $userSession The user session
@@ -75,7 +75,7 @@ class ListingsController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $registers,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly DirectoryServiceInterface $directoryService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
