@@ -201,6 +201,8 @@ class SetupDemoDataSteps {
 	 * wrong on a production instance.
 	 *
 	 * @return JSONResponse The outcome.
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function skipDemoData(): JSONResponse {
 		// Skipping IS choosing "None", so both keys are written: an older

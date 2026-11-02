@@ -81,6 +81,8 @@ class SetupCatalogSteps {
 	 * Re-import the register configuration (config-check remediation).
 	 *
 	 * @return JSONResponse The result.
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function reloadSettings(): JSONResponse {
 		try {
@@ -116,6 +118,8 @@ class SetupCatalogSteps {
 	 * is already configured against (WOO-529).
 	 *
 	 * @return JSONResponse The result.
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function createFirstCatalog(): JSONResponse {
 		if ($this->catalogExists() === true) {
@@ -206,7 +210,8 @@ class SetupCatalogSteps {
 	 * @return array<string, mixed> The staff access.
 	 */
 	private function privateStaffAccess(): array {
-		$groups = array_values(array_filter(array_map('trim', explode(',', $this->config->getValueString(AppIdentity::APP_ID, 'default_catalog_groups', '')))));
+		$configured = $this->config->getValueString(AppIdentity::APP_ID, 'default_catalog_groups', '');
+		$groups = array_values(array_filter(array_map('trim', explode(',', $configured))));
 
 		return ['restricted' => true, 'readGroups' => $groups, 'editGroups' => $groups];
 	}//end privateStaffAccess()
@@ -238,6 +243,8 @@ class SetupCatalogSteps {
 	 * Whether all required publishing registers/schemas are configured.
 	 *
 	 * @return boolean True when every required key is non-empty.
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function registersConfigured(): bool {
 		foreach (self::REQUIRED_REGISTER_KEYS as $key) {
@@ -256,6 +263,8 @@ class SetupCatalogSteps {
 	 * re-triggering on an instance whose catalogs were later removed.
 	 *
 	 * @return boolean True when a catalog is present or onboarding is done.
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function catalogExists(): bool {
 		if ($this->config->getValueString(AppIdentity::APP_ID, 'onboarding_completed_version', '') === (string)self::SETUP_VERSION) {
@@ -290,6 +299,8 @@ class SetupCatalogSteps {
 	 * Resolve the OpenRegister ObjectService from the container.
 	 *
 	 * @return \OCA\OpenRegister\Service\ObjectService|null The service, or null when unavailable.
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
 		try {

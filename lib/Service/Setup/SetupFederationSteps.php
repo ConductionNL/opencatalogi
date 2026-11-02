@@ -75,6 +75,8 @@ class SetupFederationSteps {
 	 * fresh over time regardless of this step's outcome.
 	 *
 	 * @return JSONResponse The result envelope (success, message, details).
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function connectFederation(): JSONResponse {
 		$directoryUrl = $this->directoryService->getDefaultDirectoryUrl();
@@ -133,6 +135,8 @@ class SetupFederationSteps {
 	 * an admin can retry from the settings page if needed.
 	 *
 	 * @return JSONResponse The result envelope (success, message, details).
+	 *
+	 * @spec openspec/specs/first-time-setup/spec.md#requirement-setup-server-contract-endpoints-onb-005
 	 */
 	public function syncAllDirectories(): JSONResponse {
 		try {
