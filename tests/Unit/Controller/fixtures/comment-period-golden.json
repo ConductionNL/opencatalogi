@@ -380,7 +380,7 @@
         "status": 503,
         "data": {
             "error": "register_not_configured",
-            "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
         },
         "calls": [
             {
@@ -679,7 +679,7 @@
         "status": 503,
         "data": {
             "error": "register_not_configured",
-            "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+            "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
         },
         "calls": [
             {

@@ -231,7 +231,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"catalog_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -395,7 +395,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"catalog_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -1009,7 +1009,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"comment_period_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -1145,7 +1145,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -1312,7 +1312,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"comment_period_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -1430,7 +1430,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -1869,7 +1869,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_rule_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -2102,7 +2102,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -2692,7 +2692,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_status_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -2828,7 +2828,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -3090,7 +3090,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_status_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -3237,7 +3237,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -3736,7 +3736,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"glossary_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -3887,7 +3887,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"glossary_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -4292,7 +4292,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"glossary_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -4431,7 +4431,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"glossary_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -5003,7 +5003,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"inspection_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -5139,7 +5139,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -5630,7 +5630,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"listing_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -5745,7 +5745,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"listing_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -6164,7 +6164,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"listing_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -6296,7 +6296,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"listing_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -6649,7 +6649,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"listing_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -6762,7 +6762,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"listing_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -7098,7 +7098,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"listing_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -7228,7 +7228,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"listing_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -7402,7 +7402,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"instance_banner_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -7542,7 +7542,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -10358,7 +10358,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -10470,7 +10470,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -10617,7 +10617,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -10729,7 +10729,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -10876,7 +10876,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -10988,7 +10988,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -11135,7 +11135,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -11247,7 +11247,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -11421,7 +11421,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"case_type_definition_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -11533,7 +11533,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_catalogue_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -11766,7 +11766,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"case_type_definition_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -11901,7 +11901,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_catalogue_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -12366,7 +12366,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_catalogue_entry_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -12526,7 +12526,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_catalogue_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -12891,7 +12891,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"case_type_definition_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -13004,7 +13004,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_catalogue_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -13264,7 +13264,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_catalogue_entry_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -13400,7 +13400,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"service_catalogue_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -13640,7 +13640,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"theme_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -13791,7 +13791,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"theme_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -14152,7 +14152,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"theme_schema\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
@@ -14269,7 +14269,7 @@
             "status": 503,
             "data": {
                 "error": "register_not_configured",
-                "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed and at least 2 expected"
+                "detail": "Resolver config key \"theme_register\" is not set for app \"opencatalogi\" and no default was provided."
             },
             "headers": {
                 "Cache-Control": "no-cache, no-store, must-revalidate",
