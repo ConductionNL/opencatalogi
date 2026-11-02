@@ -295,9 +295,18 @@ class RegisterPlumbingGoldenTest extends TestCase {
 				},
 				]
 			),
-			'OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface' => new \OCA\OpenCatalogi\Service\OpenRegisterLookup($this->collaborator(type: ContainerInterface::class), $this->collaborator(type: IAppManager::class)),
-			'OCA\\OpenCatalogi\\Controller\\BannerDismissals' => new $type($this->collaborator(type: IAppConfig::class), $this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\BannerServiceInterface')),
-			'OCA\\OpenCatalogi\\Controller\\RegisterAccess' => new $type($this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface'), $this->collaborator(type: ServiceCatalogueServiceInterface::class)),
+			'OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface' => new \OCA\OpenCatalogi\Service\OpenRegisterLookup(
+				$this->collaborator(type: ContainerInterface::class),
+				$this->collaborator(type: IAppManager::class)
+			),
+			'OCA\\OpenCatalogi\\Controller\\BannerDismissals' => new $type(
+				$this->collaborator(type: IAppConfig::class),
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\BannerServiceInterface')
+			),
+			'OCA\\OpenCatalogi\\Controller\\RegisterAccess' => new $type(
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface'),
+				$this->collaborator(type: ServiceCatalogueServiceInterface::class)
+			),
 			default => $this->double(type: $type, label: (new ReflectionClass(explode('#', $type)[0]))->getShortName(), depth: 0),
 		};
 

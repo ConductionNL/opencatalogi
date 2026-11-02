@@ -56,7 +56,10 @@ class ListControllersNeedOpenRegisterTest extends TestCase {
 				$args[] = match (true) {
 					$param->getName() === 'appName' => 'opencatalogi',
 					$name === IAppManager::class => $appManager,
-					$name === OpenRegisterLookupInterface::class => new OpenRegisterLookup($this->createMock(ContainerInterface::class), $appManager),
+					$name === OpenRegisterLookupInterface::class => new OpenRegisterLookup(
+						$this->createMock(originalClassName: ContainerInterface::class),
+						$appManager
+					),
 					$param->isDefaultValueAvailable() === true => $param->getDefaultValue(),
 					default => $this->createMock($name),
 				};

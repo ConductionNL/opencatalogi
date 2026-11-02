@@ -231,7 +231,8 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
-		$robots = new RobotsController('opencatalogi', $request, $settings, $urls, $l10n, new \OCA\OpenCatalogi\Controller\SitemapDirectives(new OpenRegisterLookup($container, $appManager), $categories));
+		$sitemaps = new \OCA\OpenCatalogi\Controller\SitemapDirectives(new OpenRegisterLookup($container, $appManager), $categories);
+		$robots = new RobotsController('opencatalogi', $request, $settings, $urls, $l10n, $sitemaps);
 		if ($endpoint === 'robots-accessor') {
 			$first = $robots->getObjectService();
 			$second = $robots->getObjectService();

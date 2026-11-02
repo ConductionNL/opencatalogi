@@ -48,11 +48,11 @@ use ReflectionNamedType;
  * Golden test for the banner endpoints.
  *
  * @covers \OCA\OpenCatalogi\Controller\NoticeBoardController
+ * @covers \OCA\OpenCatalogi\Controller\BannerDismissals
  * @uses   \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
  * @uses   \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
- * @covers \OCA\OpenCatalogi\Controller\BannerDismissals
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 class BannerDismissalsGoldenTest extends TestCase {
