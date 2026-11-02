@@ -33,7 +33,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCP\AppFramework\Controller;
@@ -43,7 +42,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * The publication's visibility, and the three moves an editor makes on it.
@@ -61,22 +59,16 @@ class PublicationStateController extends Controller {
 	 * @param IRequest                $request      The request.
 	 * @param IL10N                   $l10n         Localisation.
 	 * @param IUserSession            $userSession  The current session.
-	 * @param PublicationStateServiceInterface $states       The visibility state and the record per move.
 	 * @param PublicationRights       $rights       The update right on one publication.
-	 * @param DepublicationServiceInterface    $depublisher  Sends the withdrawals.
-	 * @param ContainerInterface      $container    Server container, for OpenRegister's file service.
-	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService.
+	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationStateServiceInterface $states,
 		private readonly PublicationRights $rights,
-		private readonly DepublicationServiceInterface $depublisher,
-		private readonly ContainerInterface $container,
-		private readonly RegisterAccess $registers,
+		private readonly PublicationTransitions $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -108,7 +100,7 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
-		return new JSONResponse(['state' => $this->states->stateOf(publication: $this->asArray(object: $publication))]);
+		return new JSONResponse(['state' => $this->registers->stateOf(publication: $this->asArray(object: $publication))]);
 
 	}//end visibility()
 
@@ -129,13 +121,13 @@ class PublicationStateController extends Controller {
 		}
 
 		$properties = $this->asArray(object: $publication);
-		$state = $this->states->stateOf(publication: $properties);
+		$state = $this->registers->stateOf(publication: $properties);
 		if ($state === PublicationStateServiceInterface::STATE_PUBLIC || $state === PublicationStateServiceInterface::STATE_ARCHIVED) {
 			return $this->conflict(state: $state);
 		}
 
 		try {
-			$this->save(id: $id, record: $this->states->publishedRecord(publication: $properties));
+			$this->save(id: $id, record: $this->registers->publishedRecord(publication: $properties));
 		} catch (\Throwable $e) {
 			return $this->refused(e: $e);
 		}
@@ -183,11 +175,13 @@ class PublicationStateController extends Controller {
 		}
 
 		return $this->record(
-			depublication: $this->depublisher->depublish(
-				publication: array_replace($properties, ['id' => $id]),
-				reason: $this->reason(),
-				depublishedBy: $this->actor(),
-				channels: $this->channelsFor(state: $state, properties: $properties)
+			depublication: $this->registers->depublish(
+				withdrawal: [
+					'publication' => array_replace($properties, ['id' => $id]),
+					'reason' => $this->reason(),
+					'depublishedBy' => $this->actor(),
+					'channels' => $this->channelsFor(state: $state, properties: $properties),
+				]
 			)
 		);
 
@@ -205,13 +199,13 @@ class PublicationStateController extends Controller {
 	 * @return string|JSONResponse The state it was in, or 409 for another state, or the save refusal.
 	 */
 	private function takeDown(string $id, array $properties): string|JSONResponse {
-		$state = $this->states->stateOf(publication: $properties);
+		$state = $this->registers->stateOf(publication: $properties);
 		if ($state !== PublicationStateServiceInterface::STATE_PUBLIC && $state !== PublicationStateServiceInterface::STATE_SCHEDULED) {
 			return $this->conflict(state: $state);
 		}
 
 		try {
-			$this->save(id: $id, record: $this->states->withdrawnRecord(publication: $properties));
+			$this->save(id: $id, record: $this->registers->withdrawnRecord(publication: $properties));
 		} catch (\Throwable $e) {
 			return $this->refused(e: $e);
 		}
@@ -233,7 +227,7 @@ class PublicationStateController extends Controller {
 			return [];
 		}
 
-		return $this->states->channelsReached(publication: $properties);
+		return $this->registers->channelsReached(publication: $properties);
 
 	}//end channelsFor()
 
@@ -273,20 +267,21 @@ class PublicationStateController extends Controller {
 			return $this->reasonMissing();
 		}
 
-		try {
-			$this->container->get('OCA\OpenRegister\Service\FileService')->unpublishFile(object: $publication, filePath: (int)$fileId);
-		} catch (\Throwable $e) {
+		$notWithdrawn = $this->registers->unpublishFile(publication: $publication, fileId: (int)$fileId);
+		if ($notWithdrawn !== null) {
 			return new JSONResponse(
-				data: ['error' => 'file-not-withdrawn', 'message' => $e->getMessage()],
+				data: ['error' => 'file-not-withdrawn', 'message' => $notWithdrawn],
 				statusCode: Http::STATUS_NOT_FOUND
 			);
 		}
 
-		$depublication = $this->depublisher->depublish(
-			publication: ['id' => $id],
-			reason: $reason,
-			depublishedBy: $this->actor(),
-			channels: []
+		$depublication = $this->registers->depublish(
+			withdrawal: [
+				'publication' => ['id' => $id],
+				'reason' => $reason,
+				'depublishedBy' => $this->actor(),
+				'channels' => [],
+			]
 		);
 		$depublication['file'] = $fileId;
 
@@ -343,7 +338,7 @@ class PublicationStateController extends Controller {
 				schemaKey: 'depublication_schema'
 			);
 			$saved = $this->registers->getObjectService()->saveObject(
-				object: $this->states->storable(depublication: $depublication),
+				object: $this->registers->storable(depublication: $depublication),
 				extend: [],
 				register: $configuration['register'],
 				schema: $configuration['schema']
@@ -360,7 +355,7 @@ class PublicationStateController extends Controller {
 		}
 
 		$stored = $this->asArray(object: $saved);
-		$outstanding = $this->depublisher->outstandingChannels(depublication: $depublication);
+		$outstanding = $this->registers->outstandingChannels(depublication: $depublication);
 
 		return new JSONResponse(
 			[
