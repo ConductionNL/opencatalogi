@@ -51,10 +51,12 @@ class RobotsControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->settingsService,
-			new \OCA\OpenCatalogi\Service\OpenRegisterLookup($this->container, $this->appManager),
 			$this->urlGenerator,
 			$this->l10n,
-			$categories
+			new \OCA\OpenCatalogi\Controller\SitemapDirectives(
+				new \OCA\OpenCatalogi\Service\OpenRegisterLookup($this->container, $this->appManager),
+				$categories
+			)
 		);
 	}
 

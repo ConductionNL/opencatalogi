@@ -195,44 +195,78 @@ class XMLResponse extends Response {
 	 *
 	 * @psalm-param DOMElement $element
 	 * @psalm-param array<string, mixed> $data
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	private function buildXmlElement(DOMElement $element, array $data): void {
-		// Process attributes first and maintain their order.
-		if (isset($data['@attributes']) === true && is_array($data['@attributes']) === true) {
-			foreach ($data['@attributes'] as $attrKey => $attrValue) {
-				// Convert attribute value to string and set it.
-				$element->setAttribute($attrKey, (string)$attrValue);
-			}
+		$data = $this->applyAttributes(element: $element, data: $data);
+		$data = $this->applyText(element: $element, data: $data);
 
-			unset($data['@attributes']);
-		}
-
-		// Process text content.
-		if (isset($data['#text']) === true) {
-			$element->appendChild($this->createSafeTextNode(element: $element, text: (string)$data['#text']));
-			unset($data['#text']);
-		}
-
-		// Process child elements.
 		foreach ($data as $key => $value) {
-			// Normalize key name.
-			$key = ltrim($key, '@');
-			if (is_numeric($key) === true) {
-				$key = "item$key";
-			}
-
+			$name = $this->childName(key: $key);
 			foreach ($this->childValues(value: $value) as $item) {
-				$childElement = $element->ownerDocument->createElement($key);
+				$childElement = $element->ownerDocument->createElement($name);
 				if ($childElement !== false) {
 					$element->appendChild($childElement);
 					$this->fillElement(element: $childElement, data: $item);
 				}
 			}
-		}//end foreach
+		}
 
 	}//end buildXmlElement()
+
+	/**
+	 * Set the `@attributes` of the data on the element, in their order.
+	 *
+	 * @param DOMElement $element The element to populate
+	 * @param array<string, mixed> $data The data to convert
+	 *
+	 * @return array<string, mixed> The data without `@attributes` once they are set.
+	 */
+	private function applyAttributes(DOMElement $element, array $data): array {
+		if (isset($data['@attributes']) === false || is_array($data['@attributes']) === false) {
+			return $data;
+		}
+
+		foreach ($data['@attributes'] as $attrKey => $attrValue) {
+			$element->setAttribute($attrKey, (string)$attrValue);
+		}
+
+		unset($data['@attributes']);
+
+		return $data;
+	}//end applyAttributes()
+
+	/**
+	 * Append the `#text` of the data to the element.
+	 *
+	 * @param DOMElement $element The element to populate
+	 * @param array<string, mixed> $data The data to convert
+	 *
+	 * @return array<string, mixed> The data without `#text` once it is appended.
+	 */
+	private function applyText(DOMElement $element, array $data): array {
+		if (isset($data['#text']) === true) {
+			$element->appendChild($this->createSafeTextNode(element: $element, text: (string)$data['#text']));
+			unset($data['#text']);
+		}
+
+		return $data;
+	}//end applyText()
+
+	/**
+	 * The element name for a key: without leading `@`, and `item<n>` for a numeric key.
+	 *
+	 * @param int|string $key The key.
+	 *
+	 * @return string The element name.
+	 */
+	private function childName(int|string $key): string {
+		$key = ltrim((string)$key, '@');
+		if (is_numeric($key) === true) {
+			return "item$key";
+		}
+
+		return $key;
+	}//end childName()
 
 	/**
 	 * The values a key becomes elements for: one per item of an indexed list
@@ -248,7 +282,6 @@ class XMLResponse extends Response {
 		}
 
 		return [$value];
-
 	}//end childValues()
 
 	/**

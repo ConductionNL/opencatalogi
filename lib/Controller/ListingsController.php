@@ -32,8 +32,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
-use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -47,10 +47,8 @@ use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Controller for handling Listing-related operations.
@@ -67,8 +65,7 @@ class ListingsController extends Controller {
 	 * @param string $appName The name of the app
 	 * @param IRequest $request The request object
 	 * @param IAppConfig $config The app configuration
-	 * @param ContainerInterface $container Server container for dependency injection
-	 * @param IAppManager $appManager App manager for checking installed apps
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param DirectoryServiceInterface $directoryService The directory service
 	 * @param IL10N $l10n Localization service
 	 * @param IUserSession $userSession The user session
@@ -78,8 +75,7 @@ class ListingsController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly DirectoryServiceInterface $directoryService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
@@ -96,11 +92,7 @@ class ListingsController extends Controller {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 */
 	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		}
-
-		throw new RuntimeException('OpenRegister service is not available.');
+		return $this->registers->installedObjectService();
 	}//end getObjectService()
 
 	/**

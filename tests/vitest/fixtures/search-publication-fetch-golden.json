@@ -1,0 +1,525 @@
+{
+	"getPublication.ok": {
+		"returned": {
+			"id": "abc-1",
+			"results": [
+				1,
+				2
+			]
+		},
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-1",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": []
+	},
+	"getPublication.notOk": {
+		"thrown": "Failed to fetch publication: 500 Server Error",
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-2",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			]
+		]
+	},
+	"getPublication.networkFailure": {
+		"thrown": "network down",
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-3",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			]
+		]
+	},
+	"getPublication.missingId": {
+		"thrown": "Publication ID is required",
+		"fetchCalls": [],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationUses.ok": {
+		"returned": {
+			"id": "abc-1",
+			"results": [
+				1,
+				2
+			]
+		},
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-1/uses",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationUses.notOk": {
+		"thrown": "Failed to fetch publication uses: 500 Server Error",
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-2/uses",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			]
+		]
+	},
+	"getPublicationUses.networkFailure": {
+		"thrown": "network down",
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-3/uses",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationUses.missingId": {
+		"thrown": "Publication ID is required",
+		"fetchCalls": [],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationUsed.ok": {
+		"returned": {
+			"id": "abc-1",
+			"results": [
+				1,
+				2
+			]
+		},
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-1/used",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationUsed.notOk": {
+		"thrown": "Failed to fetch publication used: 500 Server Error",
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-2/used",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			],
+			[
+				"Error fetching publication used:",
+				"Failed to fetch publication used: 500 Server Error"
+			]
+		]
+	},
+	"getPublicationUsed.networkFailure": {
+		"thrown": "network down",
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-3/used",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			],
+			[
+				"Error fetching publication used:",
+				"Failed to fetch publication used: 500 Server Error"
+			],
+			[
+				"Error fetching publication used:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationUsed.missingId": {
+		"thrown": "Publication ID is required",
+		"fetchCalls": [],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			],
+			[
+				"Error fetching publication used:",
+				"Failed to fetch publication used: 500 Server Error"
+			],
+			[
+				"Error fetching publication used:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationAttachments.ok": {
+		"returned": {
+			"id": "abc-1",
+			"results": [
+				1,
+				2
+			]
+		},
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-1/attachments",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			],
+			[
+				"Error fetching publication used:",
+				"Failed to fetch publication used: 500 Server Error"
+			],
+			[
+				"Error fetching publication used:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationAttachments.notOk": {
+		"thrown": "Failed to fetch publication attachments: 500 Server Error",
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-2/attachments",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			],
+			[
+				"Error fetching publication used:",
+				"Failed to fetch publication used: 500 Server Error"
+			],
+			[
+				"Error fetching publication used:",
+				"network down"
+			],
+			[
+				"Error fetching publication attachments:",
+				"Failed to fetch publication attachments: 500 Server Error"
+			]
+		]
+	},
+	"getPublicationAttachments.networkFailure": {
+		"thrown": "network down",
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications/abc-3/attachments",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			],
+			[
+				"Error fetching publication used:",
+				"Failed to fetch publication used: 500 Server Error"
+			],
+			[
+				"Error fetching publication used:",
+				"network down"
+			],
+			[
+				"Error fetching publication attachments:",
+				"Failed to fetch publication attachments: 500 Server Error"
+			],
+			[
+				"Error fetching publication attachments:",
+				"network down"
+			]
+		]
+	},
+	"getPublicationAttachments.missingId": {
+		"thrown": "Publication ID is required",
+		"fetchCalls": [],
+		"consoleError": [
+			[
+				"Error fetching publication:",
+				"Failed to fetch publication: 500 Server Error"
+			],
+			[
+				"Error fetching publication:",
+				"network down"
+			],
+			[
+				"Error fetching publication uses:",
+				"Failed to fetch publication uses: 500 Server Error"
+			],
+			[
+				"Error fetching publication uses:",
+				"network down"
+			],
+			[
+				"Error fetching publication used:",
+				"Failed to fetch publication used: 500 Server Error"
+			],
+			[
+				"Error fetching publication used:",
+				"network down"
+			],
+			[
+				"Error fetching publication attachments:",
+				"Failed to fetch publication attachments: 500 Server Error"
+			],
+			[
+				"Error fetching publication attachments:",
+				"network down"
+			]
+		]
+	}
+}

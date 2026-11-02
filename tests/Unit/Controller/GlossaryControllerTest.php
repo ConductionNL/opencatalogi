@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\GlossaryController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -42,8 +43,7 @@ class GlossaryControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->l10n
 		);
 	}

@@ -1,0 +1,481 @@
+{
+    "found with attachments": {
+        "answer": {
+            "success": true,
+            "publication": {
+                "id": "p-1",
+                "title": "Besluit",
+                "@self": {
+                    "uuid": "p-1"
+                }
+            },
+            "attachments": [
+                {
+                    "name": "a.pdf"
+                },
+                {
+                    "name": "b.pdf"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "p-1",
+                    "url": "/apps/opencatalogi/publications/p-1",
+                    "label": "Besluit"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "attachments under files": {
+        "answer": {
+            "success": true,
+            "publication": {
+                "id": "p-1",
+                "title": "Besluit",
+                "@self": {
+                    "uuid": "p-1"
+                }
+            },
+            "attachments": [
+                {
+                    "name": "c.pdf"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "p-1",
+                    "url": "/apps/opencatalogi/publications/p-1",
+                    "label": "Besluit"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "attachments a plain list": {
+        "answer": {
+            "success": true,
+            "publication": {
+                "id": "p-1",
+                "title": "Besluit",
+                "@self": {
+                    "uuid": "p-1"
+                }
+            },
+            "attachments": [
+                {
+                    "name": "d.pdf"
+                }
+            ],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "p-1",
+                    "url": "/apps/opencatalogi/publications/p-1",
+                    "label": "Besluit"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "attachments refused": {
+        "answer": {
+            "success": true,
+            "publication": {
+                "id": "p-1",
+                "title": "Besluit",
+                "@self": {
+                    "uuid": "p-1"
+                }
+            },
+            "attachments": [],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "p-1",
+                    "url": "/apps/opencatalogi/publications/p-1",
+                    "label": "Besluit"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "attachments throw": {
+        "answer": {
+            "success": true,
+            "publication": {
+                "id": "p-1",
+                "title": "Besluit",
+                "@self": {
+                    "uuid": "p-1"
+                }
+            },
+            "attachments": [],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "p-1",
+                    "url": "/apps/opencatalogi/publications/p-1",
+                    "label": "Besluit"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "info",
+                "OpenCatalogi MCP: getPublication attachments lookup failed",
+                {
+                    "caller": "alice",
+                    "id": "p-1",
+                    "exception": "attachments down"
+                }
+            ]
+        ]
+    },
+    "no id": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Required argument \"id\" is missing or empty."
+            }
+        },
+        "calls": []
+    },
+    "id not a string": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Required argument \"id\" is missing or empty."
+            }
+        },
+        "calls": []
+    },
+    "blank id": {
+        "answer": {
+            "error": {
+                "code": "invalid_arguments",
+                "message": "Required argument \"id\" is missing or empty."
+            }
+        },
+        "calls": []
+    },
+    "show throws, anonymous": {
+        "answer": {
+            "error": {
+                "code": "forbidden",
+                "message": "You are not allowed to read this publication, or it does not exist."
+            }
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "info",
+                "OpenCatalogi MCP: getPublication denied or failed",
+                {
+                    "caller": "anonymous",
+                    "id": "p-1",
+                    "exception": "show down"
+                }
+            ]
+        ]
+    },
+    "show throws, for a user": {
+        "answer": {
+            "error": {
+                "code": "forbidden",
+                "message": "You are not allowed to read this publication, or it does not exist."
+            }
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "info",
+                "OpenCatalogi MCP: getPublication denied or failed",
+                {
+                    "caller": "bob",
+                    "id": "p-1",
+                    "exception": "show down"
+                }
+            ]
+        ]
+    },
+    "not found without body": {
+        "answer": {
+            "error": {
+                "code": "not_found",
+                "message": "Publication not found."
+            }
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "not found with error": {
+        "answer": {
+            "error": {
+                "code": "not_found",
+                "message": "Gone"
+            }
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "forbidden with error": {
+        "answer": {
+            "error": {
+                "code": "forbidden",
+                "message": "Denied"
+            }
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "forbidden without error is answered": {
+        "answer": {
+            "success": true,
+            "publication": {
+                "title": "x"
+            },
+            "attachments": [],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "",
+                    "url": "/apps/opencatalogi/publications/",
+                    "label": "x"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "server error with error": {
+        "answer": {
+            "error": {
+                "code": "not_found",
+                "message": "Boom"
+            }
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "error key on a 200 is answered": {
+        "answer": {
+            "success": true,
+            "publication": {
+                "error": "odd",
+                "id": "p-1"
+            },
+            "attachments": [],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "p-1",
+                    "url": "/apps/opencatalogi/publications/p-1",
+                    "label": "Publication"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "error key on a 399 is answered": {
+        "answer": {
+            "success": true,
+            "publication": {
+                "error": "odd"
+            },
+            "attachments": [],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "",
+                    "url": "/apps/opencatalogi/publications/",
+                    "label": "Publication"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "error key on a 400": {
+        "answer": {
+            "error": {
+                "code": "not_found",
+                "message": "7"
+            }
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    },
+    "show answers a string": {
+        "answer": {
+            "success": true,
+            "publication": [],
+            "attachments": [],
+            "sources": [
+                {
+                    "type": "opencatalogi.publication",
+                    "uuid": "",
+                    "url": "/apps/opencatalogi/publications/",
+                    "label": "Publication"
+                }
+            ]
+        },
+        "calls": [
+            [
+                "show",
+                [
+                    "p-1"
+                ]
+            ],
+            [
+                "attachments",
+                [
+                    "p-1"
+                ]
+            ]
+        ]
+    }
+}

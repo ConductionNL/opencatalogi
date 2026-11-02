@@ -99,57 +99,129 @@ class CleanupOrphanDirectoryListings implements IRepairStep
      */
     public function run(IOutput $output): void
     {
-        if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
-            $output->warning('OpenRegister is not installed — skipping orphan-directory-listings cleanup');
+        $services = $this->openRegisterServices(output: $output);
+        if ($services === null) {
             return;
         }
 
-        try {
-            $schemaMapper   = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
-            $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
-            $objectService  = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (\Throwable $e) {
-            $output->warning('OpenRegister services unavailable — skipping cleanup: '.$e->getMessage());
+        $tables = $this->listingTables(services: $services, output: $output);
+        if ($tables === null) {
             return;
         }
 
-        // Resolve the listing schema by slug scoped to this app so a foreign
-        // register that happens to also ship a `listing` slug never leaks in.
-        try {
-            $schema = $schemaMapper->findByApplicationAndSlug(self::LISTING_SCHEMA_SLUG, self::APP_ID);
-        } catch (\Throwable $e) {
-            $output->warning('Listing schema lookup failed — skipping cleanup: '.$e->getMessage());
-            return;
-        }
-
-        if ($schema === null) {
-            $output->info('No listing schema found — nothing to clean up');
-            return;
-        }
-
-        $schemaId = (int) $schema->getId();
-
-        // Find every register that carries this schema; typically 1, but a fleet may
-        // have multiple registers (e.g. per-tenant) so we sweep across all of them.
-        try {
-            $registers = $registerMapper->findAll();
-        } catch (\Throwable $e) {
-            $output->warning('Register enumeration failed — skipping cleanup: '.$e->getMessage());
-            return;
-        }
-
-        $sweep = new OrphanListingSweep(objectService: $objectService, output: $output);
-        foreach ($registers as $register) {
-            $registerSchemas = array_map('intval', ($register->getSchemas() ?? []));
-            if (in_array($schemaId, $registerSchemas, true) === true) {
-                $table = new ListingTable(registerId: (int) $register->getId(), schemaId: $schemaId);
-                $this->cleanRegister(table: $table, sweep: $sweep);
-            }
+        $sweep = new OrphanListingSweep(objectService: $services['objectService'], output: $output);
+        foreach ($tables as $table) {
+            $this->cleanRegister(table: $table, sweep: $sweep);
         }
 
         $output->info($sweep->summary());
 
     }//end run()
+
+    /**
+     * OpenRegister's schema mapper, register mapper and object service.
+     *
+     * @param IOutput $output The output interface.
+     *
+     * @return array<string, object>|null The services, or null when OpenRegister is absent.
+     */
+    private function openRegisterServices(IOutput $output): ?array
+    {
+        if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
+            $output->warning('OpenRegister is not installed — skipping orphan-directory-listings cleanup');
+            return null;
+        }
+
+        try {
+            return [
+                'schemaMapper'   => $this->container->get('OCA\OpenRegister\Db\SchemaMapper'),
+                'registerMapper' => $this->container->get('OCA\OpenRegister\Db\RegisterMapper'),
+                'objectService'  => $this->container->get('OCA\OpenRegister\Service\ObjectService'),
+            ];
+        } catch (\Throwable $e) {
+            $output->warning('OpenRegister services unavailable — skipping cleanup: '.$e->getMessage());
+            return null;
+        }
+
+    }//end openRegisterServices()
+
+    /**
+     * The listing table of every register that carries this app's listing schema.
+     *
+     * A fleet may have several registers (e.g. per tenant), so every register is checked.
+     *
+     * @param array<string, object> $services The OpenRegister services.
+     * @param IOutput               $output   The output interface.
+     *
+     * @return ListingTable[]|null The tables, or null when the lookup failed.
+     */
+    private function listingTables(array $services, IOutput $output): ?array
+    {
+        $schemaId = $this->listingSchemaId(schemaMapper: $services['schemaMapper'], output: $output);
+        if ($schemaId === null) {
+            return null;
+        }
+
+        try {
+            $registers = $services['registerMapper']->findAll();
+        } catch (\Throwable $e) {
+            $output->warning('Register enumeration failed — skipping cleanup: '.$e->getMessage());
+            return null;
+        }
+
+        return $this->tablesCarrying(registers: $registers, schemaId: $schemaId);
+
+    }//end listingTables()
+
+    /**
+     * The listing table of each register that carries the listing schema.
+     *
+     * @param iterable<object> $registers OpenRegister registers.
+     * @param integer          $schemaId  The listing schema id.
+     *
+     * @return ListingTable[]
+     */
+    private function tablesCarrying(iterable $registers, int $schemaId): array
+    {
+        $tables = [];
+        foreach ($registers as $register) {
+            if (in_array($schemaId, array_map('intval', ($register->getSchemas() ?? [])), true) === true) {
+                $tables[] = new ListingTable(registerId: (int) $register->getId(), schemaId: $schemaId);
+            }
+        }
+
+        return $tables;
+
+    }//end tablesCarrying()
+
+    /**
+     * The id of this app's listing schema.
+     *
+     * The slug is scoped to this app, so a foreign register that also ships a
+     * `listing` slug never leaks in.
+     *
+     * @param object  $schemaMapper OpenRegister's schema mapper.
+     * @param IOutput $output       The output interface.
+     *
+     * @return integer|null The schema id, or null when there is none or the lookup failed.
+     */
+    private function listingSchemaId(object $schemaMapper, IOutput $output): ?int
+    {
+        try {
+            $schema = $schemaMapper->findByApplicationAndSlug(self::LISTING_SCHEMA_SLUG, self::APP_ID);
+        } catch (\Throwable $e) {
+            $output->warning('Listing schema lookup failed — skipping cleanup: '.$e->getMessage());
+            return null;
+        }
+
+        if ($schema === null) {
+            $output->info('No listing schema found — nothing to clean up');
+            return null;
+        }
+
+        return (int) $schema->getId();
+
+    }//end listingSchemaId()
 
     /**
      * Delete the orphan listing rows in one register's listing table.

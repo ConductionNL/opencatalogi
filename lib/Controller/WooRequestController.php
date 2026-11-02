@@ -35,8 +35,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
-use OCA\OpenCatalogi\Contract\WooRequestServiceInterface;
-use OCA\OpenCatalogi\Contract\WooRequestStoreInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -75,8 +75,8 @@ class WooRequestController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param WooRequestServiceInterface $requests Builds and reads the request record.
-	 * @param WooRequestStoreInterface $store Reads and writes the stored requests.
+	 * @param InformationRequestServiceInterface $requests Builds and reads the request record.
+	 * @param InformationRequestStoreInterface $store Reads and writes the stored requests.
 	 * @param StatutoryTermInterface $terms Arms, extends, pauses and reads the statutory term.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -86,8 +86,8 @@ class WooRequestController extends Controller {
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly WooRequestServiceInterface $requests,
-		private readonly WooRequestStoreInterface $store,
+		private readonly InformationRequestServiceInterface $requests,
+		private readonly InformationRequestStoreInterface $store,
 		private readonly StatutoryTermInterface $terms,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -179,11 +179,23 @@ class WooRequestController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		$requestId = (string)($saved['id'] ?? '');
+		return $this->armReceivedRequest(saved: $saved);
 
+	}//end receive()
+
+	/**
+	 * Arm the statutory term of a stored request and answer with its receipt.
+	 *
+	 * @param array<string, mixed> $saved The stored request.
+	 *
+	 * @return JSONResponse The request with its term, or the receipt that says no term runs.
+	 *
+	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-the-requester-is-told-the-reference-and-the-due-date-at-intake-req-wri-005
+	 */
+	private function armReceivedRequest(array $saved): JSONResponse {
 		try {
 			$term = $this->terms->arm(
-				requestUuid: $requestId,
+				requestUuid: (string)($saved['id'] ?? ''),
 				reference: (string)($saved['reference'] ?? ''),
 				receivedAt: new DateTimeImmutable((string)($saved['receivedAt'] ?? 'now')),
 				actor: $this->actor()
@@ -204,10 +216,25 @@ class WooRequestController extends Controller {
 			);
 		}
 
+		return $this->storeArmedRequest(saved: $saved, term: $term);
+
+	}//end armReceivedRequest()
+
+	/**
+	 * Store a request with its armed term under its own id and answer with the receipt.
+	 *
+	 * @param array<string, mixed> $saved The stored request.
+	 * @param array<string, mixed> $term The armed term.
+	 *
+	 * @return JSONResponse The request, its term and its receipt, or the 503.
+	 *
+	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-the-requester-is-told-the-reference-and-the-due-date-at-intake-req-wri-005
+	 */
+	private function storeArmedRequest(array $saved, array $term): JSONResponse {
 		try {
 			$stored = $this->store->save(
 				record: $this->requests->withTerm(request: $saved, term: $term),
-				uuid: $requestId
+				uuid: (string)($saved['id'] ?? '')
 			);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
@@ -222,7 +249,7 @@ class WooRequestController extends Controller {
 			Http::STATUS_CREATED
 		);
 
-	}//end receive()
+	}//end storeArmedRequest()
 
 	/**
 	 * The intake body, read off the request.

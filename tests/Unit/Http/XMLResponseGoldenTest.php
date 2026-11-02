@@ -65,6 +65,8 @@ class XMLResponseGoldenTest extends TestCase {
 			'indexed list of scalars' => [['tag' => ['a', 'b']], 'r'],
 			'list starting with a scalar' => [['tag' => ['a', ['n' => '1']]], 'r'],
 			'empty nested' => [['a' => []], 'r'],
+			'text null' => [['#text' => null, 'b' => 'c'], 'r'],
+			'attribute keys as ints' => [['@attributes' => ['a' => 'x', 'b' => 2.5], 'c' => ['@attributes' => [], '#text' => 0]], 'r'],
 			'deep' => [['l1' => ['l2' => ['l3' => [['l4' => ['#text' => 'diep', '@attributes' => ['x' => 'y']]]]]]], 'r'],
 		];
 

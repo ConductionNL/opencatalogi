@@ -94,6 +94,8 @@ class PublicReadObjectService {
  * @covers \OCA\OpenCatalogi\Controller\FederationController
  * @uses \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses \OCA\OpenCatalogi\Controller\CatalogSlugQuery
+ * @uses \OCA\OpenCatalogi\Controller\FoundPublication
+ * @uses \OCA\OpenCatalogi\Controller\PublicationRead
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses \OCA\OpenCatalogi\Contract\PublicationUsage
  */

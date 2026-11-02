@@ -8,3 +8,4 @@
 - OcPublicatieVerwijderen https://identity.conduction.nl/screens/board?id=opencatalogi/OcPublicatieVerwijderen
 - OcOrganisatie https://identity.conduction.nl/screens/board?id=opencatalogi/OcOrganisatie
 - OcPublicatiesSchemas https://identity.conduction.nl/screens/board?id=opencatalogi/OcPublicatiesSchemas
+- No screen in this app: pub-trash: the Deleted page belongs to openregister

@@ -627,106 +627,142 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * @return array Array of registers with enriched schema data.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	private function enrichRegistersWithSchemas(array $registers): array {
 		try {
-			// Get the schema mapper to fetch full schema objects.
 			$schemaMapper = $this->getSchemaMapper();
 			if ($schemaMapper === null) {
-				// If we can't get the schema mapper, return registers as-is.
 				return $registers;
 			}
 
-			// Normalise every register to its array form once, so the schema-ID
-			// sweep below and the enrichment pass agree on the same shape.
-			$registerArrays = [];
-			foreach ($registers as $register) {
-				$registerArray = (array)$register;
-				if (is_object($register) === true && method_exists($register, 'jsonSerialize') === true) {
-					$registerArray = $register->jsonSerialize();
-				}
+			$registerArrays = array_map(fn ($register) => self::entityArray(entity: $register), $registers);
 
-				$registerArrays[] = $registerArray;
-			}
+			$schemaMap = self::referencedSchemas(schemaMapper: $schemaMapper, registerArrays: $registerArrays);
 
-			// Collect the distinct numeric schema IDs referenced by ALL registers, then
-			// resolve them in ONE batched query. Resolving per-ID inside the register
-			// loop issued a `find()` per schema — on this instance that is 2,814 queries
-			// for 348 registers on every settings request, and dominated the ~11s the
-			// endpoint took to respond.
-			$idsToResolve = [];
-			foreach ($registerArrays as $registerArray) {
-				$schemaIds = $registerArray['schemas'] ?? [];
-				if (is_array($schemaIds) === false) {
-					continue;
-				}
-
-				foreach ($schemaIds as $schemaId) {
-					if (is_numeric($schemaId) === true) {
-						$idsToResolve[(int)$schemaId] = true;
-					}
-				}
-			}
-
-			// The batched lookup chunks its IN() list and returns a map keyed by
-			// schema ID. It reads the table directly, matching the _rbac: false /
-			// _multitenancy: false posture the per-ID find() call used here before.
-			$schemaMap = [];
-			if (empty($idsToResolve) === false) {
-				$schemaMap = $schemaMapper->findMultipleOptimized(ids: array_keys($idsToResolve));
-			}
-
-			$enrichedRegisters = [];
-
-			foreach ($registerArrays as $registerArray) {
-				// Get schema IDs from the register.
-				$schemaIds = $registerArray['schemas'] ?? [];
-
-				// If schemas is not an array or is empty, keep as-is.
-				if (is_array($schemaIds) === false || empty($schemaIds) === true) {
-					$enrichedRegisters[] = $registerArray;
-					continue;
-				}
-
-				// Replace each schema ID with the full schema object from the batch.
-				$fullSchemas = [];
-				foreach ($schemaIds as $schemaId) {
-					// Skip if not a number (already an object).
-					if (is_numeric($schemaId) === false) {
-						$fullSchemas[] = $schemaId;
-						continue;
-					}
-
-					// A schema ID with no row is silently dropped, as before.
-					$schema = $schemaMap[(int)$schemaId] ?? null;
-					if ($schema === null) {
-						continue;
-					}
-
-					// Convert schema entity to array.
-					$schemaArray = (array)$schema;
-					if (is_object($schema) === true && method_exists($schema, 'jsonSerialize') === true) {
-						$schemaArray = $schema->jsonSerialize();
-					}
-
-					$fullSchemas[] = $schemaArray;
-				}//end foreach
-
-				// Replace schema IDs with full schema objects.
-				$registerArray['schemas'] = $fullSchemas;
-				$enrichedRegisters[] = $registerArray;
-			}//end foreach
-
-			return $enrichedRegisters;
+			return array_map(fn (array $register) => self::withFullSchemas(registerArray: $register, schemaMap: $schemaMap), $registerArrays);
 		} catch (\Exception $e) {
-			// If enrichment fails, return registers as-is.
 			return $registers;
 		}//end try
 
 	}//end enrichRegistersWithSchemas()
+
+	/**
+	 * An entity as an array: its jsonSerialize() form, or the array cast.
+	 *
+	 * @param mixed $entity The entity, object or array.
+	 *
+	 * @return array The array form.
+	 *
+	 * @spec exclude Internal shape step of enrichRegistersWithSchemas().
+	 */
+	private static function entityArray(mixed $entity): array {
+		if (is_object($entity) === true && method_exists($entity, 'jsonSerialize') === true) {
+			return $entity->jsonSerialize();
+		}
+
+		return (array)$entity;
+
+	}//end entityArray()
+
+	/**
+	 * The schemas the registers reference, by id, from one batched query.
+	 *
+	 * A find() per ID was 2,814 queries for 348 registers on every settings
+	 * request. The batched lookup reads the table directly, matching the
+	 * _rbac: false / _multitenancy: false posture of the per-ID find().
+	 *
+	 * @param \OCA\OpenRegister\Db\SchemaMapper $schemaMapper The schema mapper.
+	 * @param array<int, array> $registerArrays The registers in array form.
+	 *
+	 * @return array The resolved schemas by id.
+	 *
+	 * @spec exclude Internal lookup step of enrichRegistersWithSchemas().
+	 */
+	private static function referencedSchemas(\OCA\OpenRegister\Db\SchemaMapper $schemaMapper, array $registerArrays): array {
+		$idsToResolve = self::referencedSchemaIds(registerArrays: $registerArrays);
+		if (empty($idsToResolve) === true) {
+			return [];
+		}
+
+		return $schemaMapper->findMultipleOptimized(ids: $idsToResolve);
+
+	}//end referencedSchemas()
+
+	/**
+	 * The distinct numeric schema ids the registers reference, in first-seen order.
+	 *
+	 * @param array<int, array> $registerArrays The registers in array form.
+	 *
+	 * @return array<int, int> The schema ids.
+	 *
+	 * @spec exclude Internal collection step of enrichRegistersWithSchemas().
+	 */
+	private static function referencedSchemaIds(array $registerArrays): array {
+		$idsToResolve = [];
+		foreach ($registerArrays as $registerArray) {
+			$schemaIds = $registerArray['schemas'] ?? [];
+			if (is_array($schemaIds) === false) {
+				continue;
+			}
+
+			foreach (array_filter($schemaIds, 'is_numeric') as $schemaId) {
+				$idsToResolve[(int)$schemaId] = true;
+			}
+		}
+
+		return array_keys($idsToResolve);
+
+	}//end referencedSchemaIds()
+
+	/**
+	 * A register with its schema ids replaced by the resolved schemas.
+	 *
+	 * A register without a schema list keeps it as it is.
+	 *
+	 * @param array $registerArray The register in array form.
+	 * @param array $schemaMap The resolved schemas by id.
+	 *
+	 * @return array The register.
+	 *
+	 * @spec exclude Internal enrichment step of enrichRegistersWithSchemas().
+	 */
+	private static function withFullSchemas(array $registerArray, array $schemaMap): array {
+		$schemaIds = $registerArray['schemas'] ?? [];
+		if (is_array($schemaIds) === false || empty($schemaIds) === true) {
+			return $registerArray;
+		}
+
+		$registerArray['schemas'] = self::resolvedSchemas(schemaIds: $schemaIds, schemaMap: $schemaMap);
+		return $registerArray;
+
+	}//end withFullSchemas()
+
+	/**
+	 * Schema ids replaced by their resolved schemas.
+	 *
+	 * A non-numeric entry is kept as it is; an id with no row is dropped.
+	 *
+	 * @param array $schemaIds The schema ids.
+	 * @param array $schemaMap The resolved schemas by id.
+	 *
+	 * @return array The schemas.
+	 *
+	 * @spec exclude Internal enrichment step of enrichRegistersWithSchemas().
+	 */
+	private static function resolvedSchemas(array $schemaIds, array $schemaMap): array {
+		$fullSchemas = [];
+		foreach ($schemaIds as $schemaId) {
+			if (is_numeric($schemaId) === false) {
+				$fullSchemas[] = $schemaId;
+			} elseif (isset($schemaMap[(int)$schemaId]) === true) {
+				$fullSchemas[] = self::entityArray(entity: $schemaMap[(int)$schemaId]);
+			}
+		}
+
+		return $fullSchemas;
+
+	}//end resolvedSchemas()
 
 	/**
 	 * Keep only the known national channels that name a source slug.
@@ -1024,123 +1060,13 @@ class SettingsService implements SettingsServiceInterface {
 	 * @throws \RuntimeException If settings loading fails.
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	public function loadSettings(bool $force = false): array {
 		try {
-			// Get the absolute path to the app directory.
-			$appPath = $this->appManager->getAppPath(AppIdentity::APP_ID);
-
-			// Build absolute path to the configuration file.
-			$absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
-
-			// Check if file exists.
-			if (file_exists($absoluteFilePath) === false) {
-				throw new RuntimeException("Configuration file not found: {$absoluteFilePath}");
-			}
-
-			// Read the JSON file content.
-			$jsonContent = file_get_contents($absoluteFilePath);
-			if ($jsonContent === false) {
-				throw new RuntimeException("Failed to read configuration file: {$absoluteFilePath}");
-			}
-
-			// Parse JSON.
-			$data = json_decode($jsonContent, true);
-			if (json_last_error() !== JSON_ERROR_NONE) {
-				throw new RuntimeException('Invalid JSON in configuration file: ' . json_last_error_msg());
-			}
-
-			// ADR-037: merge modular register fragments from Settings/register.d/*.json.
-			// Each OpenSpec change drops its own fragment file instead of editing this
-			// monolith, so concurrent builds touch disjoint files (no merge conflicts).
-			// OpenAPI `components.schemas` / `paths` are keyed objects, so disjoint
-			// fragments union cleanly by key.
-			$fragmentDir = $appPath . '/lib/Settings/register.d';
-			if (is_dir($fragmentDir) === true) {
-				$fragmentFiles = glob($fragmentDir . '/*.json');
-				sort($fragmentFiles);
-				foreach ($fragmentFiles as $fragmentFile) {
-					$fragmentContent = file_get_contents($fragmentFile);
-					if ($fragmentContent === false) {
-						continue;
-					}
-
-					$fragmentData = json_decode($fragmentContent, true);
-					if (json_last_error() !== JSON_ERROR_NONE) {
-						// Skip malformed fragment; the monolith import still succeeds.
-						continue;
-					}
-
-					$data = self::deepMergeConfig(base: $data, overlay: $fragmentData);
-				}
-			}//end if
-
-			// ADR-037 guard: a fragment that declares a schema but forgets to list it
-			// under `components.registers.publication.schemas` gets the schema created
-			// and then orphaned — no register holds it, so no magic table is provisioned
-			// and the app's `{type}_register`/`{type}_schema` pair points at a register
-			// without that schema (how OOAPI course/program/offering broke). This
-			// pipeline only ever provisions one register, so attach the strays.
-			$data = self::attachOrphanSchemasToPublicationRegister(data: $data);
-
-			// Calculate relative path from Nextcloud root for sourceUrl tracking.
-			// appPath is something like /var/www/html/apps-extra/opencatalogi
-			// We need to get the part after the Nextcloud root.
-			$nextcloudRoot = dirname(dirname(dirname($appPath)));
-			// Go up from apps-extra/opencatalogi to root.
-			$relativeFilePath = str_replace($nextcloudRoot . '/', '', $absoluteFilePath);
-
-			// Fallback: if path calculation fails, use the standard relative path.
-			if (str_starts_with($relativeFilePath, 'apps-extra/') === false
-				&& str_starts_with($relativeFilePath, 'apps/') === false
-			) {
-				$relativeFilePath = 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
-			}
-
-			// Set the sourceUrl in the data if not already set.
-			// This allows the cron job to track the file location.
-			if (isset($data['x-openregister']) === false) {
-				$data['x-openregister'] = [];
-			}
-
-			if (isset($data['x-openregister']['sourceUrl']) === false) {
-				$data['x-openregister']['sourceUrl'] = $relativeFilePath;
-			}
-
-			if (isset($data['x-openregister']['sourceType']) === false) {
-				$data['x-openregister']['sourceType'] = 'local';
-			}
-
-			// Get the configuration service.
-			$configurationService = $this->getConfigurationService();
-
-			// Get the current app version. dynamically.
-			$currentAppVersion = $this->appManager->getAppVersion(AppIdentity::APP_ID);
-
-			// The fragment digest is NOT folded into the version any more.
-			//
-			// ADR-037 originally appended `+frag.<md5>` so OpenRegister's
-			// version-gated import would re-import when a register.d fragment
-			// changed. That made the decision depend on how two md5 hashes SORT:
-			// version_compare treats `+…` as further version parts and compares
-			// them lexically, not as semver build metadata. Unchanged content
-			// re-imported roughly half the time, and a real change was skipped
-			// the other half — caught only by the content-differs fallback.
-			//
-			// OpenRegister now hashes the merged configuration itself and skips
-			// on hash equality, so a changed fragment is detected there, from the
-			// data, without this app encoding anything into a version string.
-			// The version means what it says again: the app's version.
-			//
-			// Use importFromApp to import the configuration data directly.
-			// This avoids the file path resolution issue in importFromFilePath.
-			$result = $configurationService->importFromApp(
-				appId: AppIdentity::APP_ID,
-				data: $data,
-				version: $currentAppVersion,
+			$result = $this->importConfiguration(
+				data: $this->readRegisterConfiguration(appPath: $this->appManager->getAppPath(AppIdentity::APP_ID)),
 				force: $force
 			);
 
@@ -1153,14 +1079,8 @@ class SettingsService implements SettingsServiceInterface {
 			// never get attached to the already-existing register. Reconcile additively.
 			$this->registerSchemaLink->reconcile($result);
 
-			// WOO-529: the seed data in publication_register.json creates the
-			// default "Publications" catalog with unset `registers`/`schemas`
-			// because the numeric IDs are only known AFTER importFromApp() has
-			// returned. Without those arrays PublicationService::getCatalogFilters()
-			// has no scope to union and every publish flow (federation search,
-			// create-publication modal) sees zero rows. Backfill now that the
-			// IDs are resolved, so a fresh install lands directly in a working
-			// state instead of the WOO-527 "not configured" empty state.
+			// WOO-529: the seeded default catalog gets its `registers`/`schemas`
+			// only now that importFromApp() has resolved the numeric IDs.
 			$this->backfillCatalogScopes();
 
 			return $result;
@@ -1169,6 +1089,205 @@ class SettingsService implements SettingsServiceInterface {
 		}//end try
 
 	}//end loadSettings()
+
+	/**
+	 * Import the configuration payload into OpenRegister for this app.
+	 *
+	 * OpenRegister hashes the merged configuration and skips an import whose
+	 * hash is unchanged, so the version passed is the app's own version.
+	 *
+	 * @param array<mixed> $data The configuration payload.
+	 * @param boolean $force Whether to import regardless of version checks.
+	 *
+	 * @return array The import result.
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
+	 *
+	 * @spec exclude Internal import step of loadSettings().
+	 */
+	private function importConfiguration(array $data, bool $force): array {
+		return $this->getConfigurationService()->importFromApp(
+			appId: AppIdentity::APP_ID,
+			data: $data,
+			version: $this->appManager->getAppVersion(AppIdentity::APP_ID),
+			force: $force
+		);
+
+	}//end importConfiguration()
+
+	/**
+	 * Read publication_register.json with its register.d fragments merged in.
+	 *
+	 * Schemas no register declares are attached to the publication register, and
+	 * the file location is recorded as the payload's source for the cron job.
+	 *
+	 * @param string $appPath The absolute app directory.
+	 *
+	 * @return array<mixed> The configuration payload to import.
+	 * @throws \RuntimeException If the file is missing, unreadable or not valid JSON.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function readRegisterConfiguration(string $appPath): array {
+		$absoluteFilePath = $appPath . '/lib/Settings/publication_register.json';
+
+		$data = self::mergeRegisterFragments(
+			data: self::readConfigurationFile(path: $absoluteFilePath),
+			fragmentDir: $appPath . '/lib/Settings/register.d'
+		);
+
+		// ADR-037 guard: a fragment that declares a schema but forgets to list it
+		// under `components.registers.publication.schemas` gets the schema created
+		// and then orphaned — no register holds it, so no magic table is provisioned
+		// and the app's `{type}_register`/`{type}_schema` pair points at a register
+		// without that schema (how OOAPI course/program/offering broke). This
+		// pipeline only ever provisions one register, so attach the strays.
+		$data = self::attachOrphanSchemasToPublicationRegister(data: $data);
+
+		return self::withSourceTracking(
+			data: $data,
+			sourceUrl: self::relativeSourcePath(appPath: $appPath, absoluteFilePath: $absoluteFilePath)
+		);
+
+	}//end readRegisterConfiguration()
+
+	/**
+	 * Read and decode a JSON configuration file.
+	 *
+	 * @param string $path The absolute file path.
+	 *
+	 * @return mixed The decoded JSON.
+	 * @throws \RuntimeException If the file is missing, unreadable or not valid JSON.
+	 *
+	 * @spec exclude Internal read step of readRegisterConfiguration().
+	 */
+	private static function readConfigurationFile(string $path): mixed {
+		if (file_exists($path) === false) {
+			throw new RuntimeException("Configuration file not found: {$path}");
+		}
+
+		$jsonContent = file_get_contents($path);
+		if ($jsonContent === false) {
+			throw new RuntimeException("Failed to read configuration file: {$path}");
+		}
+
+		$data = json_decode($jsonContent, true);
+		if (json_last_error() !== JSON_ERROR_NONE) {
+			throw new RuntimeException('Invalid JSON in configuration file: ' . json_last_error_msg());
+		}
+
+		return $data;
+
+	}//end readConfigurationFile()
+
+	/**
+	 * Merge the modular register fragments onto the base config (ADR-037).
+	 *
+	 * Each OpenSpec change drops its own fragment file instead of editing the
+	 * monolith, so concurrent builds touch disjoint files. Fragments merge in
+	 * file name order; an unreadable or malformed fragment is skipped.
+	 *
+	 * @param mixed $data The base config.
+	 * @param string $fragmentDir The fragment directory.
+	 *
+	 * @return mixed The merged config.
+	 *
+	 * @spec exclude Internal merge step of readRegisterConfiguration().
+	 */
+	private static function mergeRegisterFragments(mixed $data, string $fragmentDir): mixed {
+		foreach (self::fragmentFiles(directory: $fragmentDir) as $fragmentFile) {
+			$fragmentContent = file_get_contents($fragmentFile);
+			if ($fragmentContent === false) {
+				continue;
+			}
+
+			$fragmentData = json_decode($fragmentContent, true);
+			if (json_last_error() !== JSON_ERROR_NONE) {
+				continue;
+			}
+
+			$data = self::deepMergeConfig(base: $data, overlay: $fragmentData);
+		}
+
+		return $data;
+
+	}//end mergeRegisterFragments()
+
+	/**
+	 * The JSON fragment files of a directory, sorted by name.
+	 *
+	 * @param string $directory The fragment directory.
+	 *
+	 * @return array<int, string> The file paths, none when the directory is absent.
+	 *
+	 * @spec exclude Internal listing step of mergeRegisterFragments().
+	 */
+	private static function fragmentFiles(string $directory): array {
+		if (is_dir($directory) === false) {
+			return [];
+		}
+
+		$fragmentFiles = glob($directory . '/*.json');
+		sort($fragmentFiles);
+		return $fragmentFiles;
+
+	}//end fragmentFiles()
+
+	/**
+	 * The configuration file's path relative to the Nextcloud root.
+	 *
+	 * The root is taken as three levels above the app directory; when that
+	 * does not give an `apps-extra/` or `apps/` path, the standard one is used.
+	 *
+	 * @param string $appPath The absolute app directory.
+	 * @param string $absoluteFilePath The absolute configuration file path.
+	 *
+	 * @return string The relative path.
+	 *
+	 * @spec exclude Internal path step of readRegisterConfiguration().
+	 */
+	private static function relativeSourcePath(string $appPath, string $absoluteFilePath): string {
+		$nextcloudRoot = dirname(dirname(dirname($appPath)));
+		$relativeFilePath = str_replace($nextcloudRoot . '/', '', $absoluteFilePath);
+
+		if (str_starts_with($relativeFilePath, 'apps-extra/') === false
+			&& str_starts_with($relativeFilePath, 'apps/') === false
+		) {
+			return 'apps-extra/opencatalogi/lib/Settings/publication_register.json';
+		}
+
+		return $relativeFilePath;
+
+	}//end relativeSourcePath()
+
+	/**
+	 * Set the payload's source url and type where it does not declare them.
+	 *
+	 * The cron job reads them to track the file location.
+	 *
+	 * @param array<mixed> $data The configuration payload.
+	 * @param string $sourceUrl The relative file path.
+	 *
+	 * @return array<mixed> The payload with its source set.
+	 *
+	 * @spec exclude Internal source step of readRegisterConfiguration().
+	 */
+	private static function withSourceTracking(array $data, string $sourceUrl): array {
+		if (isset($data['x-openregister']) === false) {
+			$data['x-openregister'] = [];
+		}
+
+		if (isset($data['x-openregister']['sourceUrl']) === false) {
+			$data['x-openregister']['sourceUrl'] = $sourceUrl;
+		}
+
+		if (isset($data['x-openregister']['sourceType']) === false) {
+			$data['x-openregister']['sourceType'] = 'local';
+		}
+
+		return $data;
+
+	}//end withSourceTracking()
 
 	/**
 	 * Deep-merge a register fragment onto the base config (ADR-037).

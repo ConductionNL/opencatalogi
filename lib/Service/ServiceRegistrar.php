@@ -42,12 +42,19 @@ use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
+use OCA\OpenCatalogi\Contract\IndexRegistrationServiceInterface;
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
 use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
 use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
@@ -66,15 +73,9 @@ use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
+use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
-use OCA\OpenCatalogi\Contract\WooCategoryRegistryInterface;
-use OCA\OpenCatalogi\Contract\WooReadinessServiceInterface;
-use OCA\OpenCatalogi\Contract\WooRegistrationServiceInterface;
-use OCA\OpenCatalogi\Contract\WooRequestIntakeInterface;
-use OCA\OpenCatalogi\Contract\WooRequestServiceInterface;
-use OCA\OpenCatalogi\Contract\WooRequestStoreInterface;
-use OCA\OpenCatalogi\Contract\WooServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
@@ -129,11 +130,11 @@ class ServiceRegistrar {
 		PublicationQueryServiceInterface::class => PublicationQueryService::class,
 		SettingsServiceInterface::class => SettingsService::class,
 		RetentionServiceInterface::class => RetentionService::class,
-		WooServiceInterface::class => WooService::class,
+		TransparencyWorkflowServiceInterface::class => WooService::class,
 		CatalogiServiceInterface::class => CatalogiService::class,
 		DcatServiceInterface::class => DcatService::class,
 		UsageCounterServiceInterface::class => UsageCounterService::class,
-		WooReadinessServiceInterface::class => WooReadinessService::class,
+		HarvesterReadinessServiceInterface::class => WooReadinessService::class,
 		BroadcastServiceInterface::class => BroadcastService::class,
 		SchemaOrgServiceInterface::class => SchemaOrgService::class,
 		NationalIndexServiceInterface::class => NationalIndexService::class,
@@ -153,23 +154,23 @@ class ServiceRegistrar {
 		ObligationReadServiceInterface::class => ObligationReadService::class,
 		AttachmentMigrationServiceInterface::class => AttachmentMigrationService::class,
 		ServiceCatalogueServiceInterface::class => ServiceCatalogueService::class,
-		WooCategoryRegistryInterface::class => WooCategoryRegistry::class,
+		InformationCategoryRegistryInterface::class => WooCategoryRegistry::class,
 		CmsMigrationServiceInterface::class => CmsMigrationService::class,
-		WooRequestServiceInterface::class => WooRequestService::class,
+		InformationRequestServiceInterface::class => WooRequestService::class,
 		StandardsVersionServiceInterface::class => StandardsVersionService::class,
 		CaseTypeCatalogueServiceInterface::class => CaseTypeCatalogueService::class,
-		WooRegistrationServiceInterface::class => WooRegistrationService::class,
+		IndexRegistrationServiceInterface::class => WooRegistrationService::class,
 		SavedSearchServiceInterface::class => SavedSearchService::class,
 		DemoDataServiceInterface::class => DemoDataService::class,
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
-		WooRequestStoreInterface::class => WooRequestStore::class,
+		InformationRequestStoreInterface::class => WooRequestStore::class,
 		PlooiDeliveryServiceInterface::class => PlooiDeliveryService::class,
 		MarkupRenderServiceInterface::class => MarkupRenderService::class,
 		DepublicationServiceInterface::class => DepublicationService::class,
 		InspectionServiceInterface::class => InspectionService::class,
 		StatusPageServiceInterface::class => StatusPageService::class,
 		AtomFeedServiceInterface::class => AtomFeedService::class,
-		WooRequestIntakeInterface::class => WooRequestIntake::class,
+		InformationRequestIntakeInterface::class => WooRequestIntake::class,
 		PublicationStateServiceInterface::class => PublicationStateService::class,
 		CollectionShareServiceInterface::class => CollectionShareService::class,
 		NoticeBoardServiceInterface::class => NoticeBoardService::class,
@@ -177,6 +178,7 @@ class ServiceRegistrar {
 		BannerServiceInterface::class => BannerService::class,
 		PublishedCollectionsServiceInterface::class => PublishedCollectionsService::class,
 		SitemapServiceInterface::class => SitemapService::class,
+		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
 	];
 
 	/**

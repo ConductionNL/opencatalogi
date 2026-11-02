@@ -1,0 +1,554 @@
+{
+    "received and armed": {
+        "status": 201,
+        "data": {
+            "request": {
+                "reference": "WOO-1",
+                "receivedBy": "ambtenaar",
+                "id": "req-1",
+                "receivedAt": "2026-03-02T10:00:00+00:00",
+                "term": {
+                    "timer": "t-1",
+                    "due": "2026-04-01"
+                }
+            },
+            "term": {
+                "timer": "t-1",
+                "due": "2026-04-01"
+            },
+            "receipt": {
+                "reference": "WOO-1",
+                "due": "2026-04-01"
+            }
+        },
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "web"
+                    },
+                    "ambtenaar"
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar"
+                    },
+                    ""
+                ]
+            },
+            {
+                "arm": [
+                    "req-1",
+                    "WOO-1",
+                    "2026-03-02T10:00:00+00:00",
+                    "ambtenaar"
+                ]
+            },
+            {
+                "withTerm": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar",
+                        "id": "req-1",
+                        "receivedAt": "2026-03-02T10:00:00+00:00"
+                    },
+                    {
+                        "timer": "t-1",
+                        "due": "2026-04-01"
+                    }
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar",
+                        "id": "req-1",
+                        "receivedAt": "2026-03-02T10:00:00+00:00",
+                        "term": {
+                            "timer": "t-1",
+                            "due": "2026-04-01"
+                        }
+                    },
+                    "req-1"
+                ]
+            },
+            {
+                "receipt": {
+                    "reference": "WOO-1",
+                    "receivedBy": "ambtenaar",
+                    "id": "req-1",
+                    "receivedAt": "2026-03-02T10:00:00+00:00",
+                    "term": {
+                        "timer": "t-1",
+                        "due": "2026-04-01"
+                    }
+                }
+            }
+        ]
+    },
+    "a forged receivedBy and actor are ignored": {
+        "status": 201,
+        "data": {
+            "request": {
+                "reference": "WOO-1",
+                "receivedBy": "ambtenaar",
+                "id": "req-1",
+                "receivedAt": "2026-03-02T10:00:00+00:00",
+                "term": {
+                    "timer": "t-1",
+                    "due": "2026-04-01"
+                }
+            },
+            "term": {
+                "timer": "t-1",
+                "due": "2026-04-01"
+            },
+            "receipt": {
+                "reference": "WOO-1",
+                "due": "2026-04-01"
+            }
+        },
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "post"
+                    },
+                    "ambtenaar"
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar"
+                    },
+                    ""
+                ]
+            },
+            {
+                "arm": [
+                    "req-1",
+                    "WOO-1",
+                    "2026-03-02T10:00:00+00:00",
+                    "ambtenaar"
+                ]
+            },
+            {
+                "withTerm": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar",
+                        "id": "req-1",
+                        "receivedAt": "2026-03-02T10:00:00+00:00"
+                    },
+                    {
+                        "timer": "t-1",
+                        "due": "2026-04-01"
+                    }
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar",
+                        "id": "req-1",
+                        "receivedAt": "2026-03-02T10:00:00+00:00",
+                        "term": {
+                            "timer": "t-1",
+                            "due": "2026-04-01"
+                        }
+                    },
+                    "req-1"
+                ]
+            },
+            {
+                "receipt": {
+                    "reference": "WOO-1",
+                    "receivedBy": "ambtenaar",
+                    "id": "req-1",
+                    "receivedAt": "2026-03-02T10:00:00+00:00",
+                    "term": {
+                        "timer": "t-1",
+                        "due": "2026-04-01"
+                    }
+                }
+            }
+        ]
+    },
+    "not logged in": {
+        "status": 401,
+        "data": {
+            "error": "Not logged in"
+        },
+        "calls": []
+    },
+    "refused": {
+        "status": 400,
+        "data": {
+            "error": "request-refused",
+            "message": "no information asked"
+        },
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "web"
+                    },
+                    "ambtenaar"
+                ]
+            }
+        ]
+    },
+    "first save fails": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Register configuration is not set for woo_request_register"
+        },
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "web"
+                    },
+                    "ambtenaar"
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar"
+                    },
+                    ""
+                ]
+            }
+        ]
+    },
+    "saved without id or dates": {
+        "status": 201,
+        "data": {
+            "request": {
+                "term": {
+                    "timer": "t-1",
+                    "due": "2026-04-01"
+                },
+                "id": "req-1",
+                "receivedAt": "2026-03-02T10:00:00+00:00"
+            },
+            "term": {
+                "timer": "t-1",
+                "due": "2026-04-01"
+            },
+            "receipt": {
+                "reference": null,
+                "due": "2026-04-01"
+            }
+        },
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "web"
+                    },
+                    "ambtenaar"
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar"
+                    },
+                    ""
+                ]
+            },
+            {
+                "arm": [
+                    "",
+                    "",
+                    "now",
+                    "ambtenaar"
+                ]
+            },
+            {
+                "withTerm": [
+                    [],
+                    {
+                        "timer": "t-1",
+                        "due": "2026-04-01"
+                    }
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "term": {
+                            "timer": "t-1",
+                            "due": "2026-04-01"
+                        }
+                    },
+                    ""
+                ]
+            },
+            {
+                "receipt": {
+                    "term": {
+                        "timer": "t-1",
+                        "due": "2026-04-01"
+                    },
+                    "id": "req-1",
+                    "receivedAt": "2026-03-02T10:00:00+00:00"
+                }
+            }
+        ]
+    },
+    "term engine unavailable": {
+        "status": 202,
+        "data": {
+            "request": {
+                "reference": "WOO-1",
+                "receivedBy": "ambtenaar",
+                "id": "req-1",
+                "receivedAt": "2026-03-02T10:00:00+00:00"
+            },
+            "receipt": {
+                "reference": "WOO-1",
+                "due": null
+            },
+            "error": "term-not-armed",
+            "message": "engine down"
+        },
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "web"
+                    },
+                    "ambtenaar"
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar"
+                    },
+                    ""
+                ]
+            },
+            {
+                "arm": [
+                    "req-1",
+                    "WOO-1",
+                    "2026-03-02T10:00:00+00:00",
+                    "ambtenaar"
+                ]
+            },
+            {
+                "receipt": {
+                    "reference": "WOO-1",
+                    "receivedBy": "ambtenaar",
+                    "id": "req-1",
+                    "receivedAt": "2026-03-02T10:00:00+00:00"
+                }
+            }
+        ]
+    },
+    "term refused": {
+        "status": 202,
+        "data": {
+            "request": {
+                "reference": "WOO-1",
+                "receivedBy": "ambtenaar",
+                "id": "req-1",
+                "receivedAt": "2026-03-02T10:00:00+00:00"
+            },
+            "receipt": {
+                "reference": "WOO-1",
+                "due": null
+            },
+            "error": "term-not-armed",
+            "message": "no working days"
+        },
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "web"
+                    },
+                    "ambtenaar"
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar"
+                    },
+                    ""
+                ]
+            },
+            {
+                "arm": [
+                    "req-1",
+                    "WOO-1",
+                    "2026-03-02T10:00:00+00:00",
+                    "ambtenaar"
+                ]
+            },
+            {
+                "receipt": {
+                    "reference": "WOO-1",
+                    "receivedBy": "ambtenaar",
+                    "id": "req-1",
+                    "receivedAt": "2026-03-02T10:00:00+00:00"
+                }
+            }
+        ]
+    },
+    "term throws something else": {
+        "thrown": "RuntimeException: unexpected",
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "web"
+                    },
+                    "ambtenaar"
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar"
+                    },
+                    ""
+                ]
+            },
+            {
+                "arm": [
+                    "req-1",
+                    "WOO-1",
+                    "2026-03-02T10:00:00+00:00",
+                    "ambtenaar"
+                ]
+            }
+        ]
+    },
+    "second save fails": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Register configuration is not set for woo_request_register"
+        },
+        "calls": [
+            {
+                "receive": [
+                    {
+                        "requestedInformation": "Besluiten 2025",
+                        "requesterName": "Jan",
+                        "requesterEmail": "jan@example.nl",
+                        "requesterPhone": "",
+                        "requesterAddress": "",
+                        "channel": "web"
+                    },
+                    "ambtenaar"
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar"
+                    },
+                    ""
+                ]
+            },
+            {
+                "arm": [
+                    "req-1",
+                    "WOO-1",
+                    "2026-03-02T10:00:00+00:00",
+                    "ambtenaar"
+                ]
+            },
+            {
+                "withTerm": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar",
+                        "id": "req-1",
+                        "receivedAt": "2026-03-02T10:00:00+00:00"
+                    },
+                    {
+                        "timer": "t-1",
+                        "due": "2026-04-01"
+                    }
+                ]
+            },
+            {
+                "save": [
+                    {
+                        "reference": "WOO-1",
+                        "receivedBy": "ambtenaar",
+                        "id": "req-1",
+                        "receivedAt": "2026-03-02T10:00:00+00:00",
+                        "term": {
+                            "timer": "t-1",
+                            "due": "2026-04-01"
+                        }
+                    },
+                    "req-1"
+                ]
+            }
+        ]
+    }
+}

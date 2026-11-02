@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Contract\WooReadinessServiceInterface;
+use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
 use Psr\Log\LoggerInterface;
@@ -44,12 +44,12 @@ class WooReadinessCheckNow extends QueuedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory        $time      The time factory.
-	 * @param WooReadinessServiceInterface $readiness The readiness check.
+	 * @param HarvesterReadinessServiceInterface $readiness The readiness check.
 	 * @param LoggerInterface     $logger    Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly WooReadinessServiceInterface $readiness,
+		private readonly HarvesterReadinessServiceInterface $readiness,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

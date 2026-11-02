@@ -43,7 +43,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\OpenCatalogi\Contract\WooServiceInterface;
+use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
 use OCP\IAppConfig;
@@ -60,7 +60,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength) Long workflow steps are split into small documented
  *   private methods; the docblocks of those steps push the class past the line threshold.
  */
-class WooService implements WooServiceInterface {
+class WooService implements TransparencyWorkflowServiceInterface {
 	use ReadsObjectProperties;
 
 	/**

@@ -25,6 +25,7 @@ namespace Unit\Repair;
 use OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings;
 use OCP\App\IAppManager;
 use OCP\DB\IResult;
+use OCP\DB\QueryBuilder\ICompositeExpression;
 use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\DB\QueryBuilder\IFunctionBuilder;
 use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -52,6 +53,13 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
      * @var array<string, list<mixed>>
      */
     private array $log = [];
+
+    /**
+     * The SQL text of each composite predicate, by object id.
+     *
+     * @var array<int, string>
+     */
+    private array $composites = [];
 
     /**
      * The recorded worlds.
@@ -109,6 +117,14 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
                     'registers' => [1 => [7]],
                     'orphans'   => ['openregister_table_1_7' => []],
                     'valid'     => ['openregister_table_1_7' => 3],
+                ],
+            ],
+            'another listing schema id'     => [
+                [
+                    'schemaId'  => '12',
+                    'registers' => [1 => [7], 4 => [12, 7]],
+                    'orphans'   => ['openregister_table_4_12' => [['_uuid' => 'd-1']]],
+                    'valid'     => ['openregister_table_4_12' => 1],
                 ],
             ],
             'every delete fails'            => [
@@ -208,8 +224,8 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
         $registers = ($world['registers'] ?? []);
         $log       = &$this->log;
 
-        $schemaMapper = new class($fail) {
-            public function __construct(private string $fail)
+        $schemaMapper = new class($fail, (string) ($world['schemaId'] ?? '7')) {
+            public function __construct(private string $fail, private string $schemaId)
             {
             }
 
@@ -223,14 +239,14 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
                     return null;
                 }
 
-                return new class($slug.'@'.$app) {
-                    public function __construct(private string $key)
+                return new class($slug.'@'.$app, $this->schemaId) {
+                    public function __construct(private string $key, private string $id)
                     {
                     }
 
                     public function getId(): string
                     {
-                        return ($this->key === 'listing@opencatalogi') ? '7' : '0';
+                        return ($this->key === 'listing@opencatalogi') ? $this->id : '0';
                     }
                 };
             }
@@ -334,9 +350,9 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
      */
     private function queryBuilder(array $world): IQueryBuilder
     {
-        $query = ['count' => false, 'table' => ''];
+        $query = ['count' => false, 'table' => '', 'where' => []];
         $qb    = $this->createMock(IQueryBuilder::class);
-        $qb->method('expr')->willReturn($this->createMock(IExpressionBuilder::class));
+        $qb->method('expr')->willReturn($this->recordingExpressions());
         $qb->method('func')->willReturn($this->createMock(IFunctionBuilder::class));
         $qb->method('createNamedParameter')->willReturnArgument(0);
         $qb->method('select')->willReturnCallback(
@@ -351,11 +367,20 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
                 return $qb;
             }
         );
-        $qb->method('where')->willReturnSelf();
-        $qb->method('andWhere')->willReturnSelf();
+        foreach (['where', 'andWhere'] as $method) {
+            $qb->method($method)->willReturnCallback(
+                function (...$predicates) use (&$query, $qb): IQueryBuilder {
+                    foreach ($predicates as $predicate) {
+                        $query['where'][] = $this->predicateText($predicate);
+                    }
+
+                    return $qb;
+                }
+            );
+        }
         $qb->method('executeQuery')->willReturnCallback(
             function () use (&$query, $world): IResult {
-                $this->log['tables'][] = [$query['table'], ($query['count'] === true) ? 'count' : 'scan'];
+                $this->log['tables'][] = [$query['table'], ($query['count'] === true) ? 'count' : 'scan', implode(' AND ', $query['where'])];
                 $source = ($query['count'] === true) ? ($world['valid'] ?? []) : ($world['orphans'] ?? []);
                 if (array_key_exists($query['table'], $source) === false) {
                     throw new \RuntimeException('no table '.$query['table']);
@@ -375,4 +400,44 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
         return $qb;
 
     }//end queryBuilder()
+
+    /**
+     * An expression builder that answers each predicate as its SQL text.
+     *
+     * @return IExpressionBuilder
+     */
+    private function recordingExpressions(): IExpressionBuilder
+    {
+        $expr = $this->createMock(IExpressionBuilder::class);
+        $expr->method('isNull')->willReturnCallback(static fn ($x): string => $x.' IS NULL');
+        $expr->method('like')->willReturnCallback(static fn ($x, $y): string => $x." LIKE '".$y."'");
+        $expr->method('notLike')->willReturnCallback(static fn ($x, $y): string => $x." NOT LIKE '".$y."'");
+        $expr->method('orX')->willReturnCallback(
+            function (...$parts): ICompositeExpression {
+                $composite = $this->createMock(ICompositeExpression::class);
+                $this->composites[spl_object_id($composite)] = '('.implode(' OR ', array_map(fn ($p): string => $this->predicateText($p), $parts)).')';
+                return $composite;
+            }
+        );
+
+        return $expr;
+
+    }//end recordingExpressions()
+
+    /**
+     * The SQL text of a predicate built by the recording expression builder.
+     *
+     * @param mixed $predicate A string or a composite from orX().
+     *
+     * @return string
+     */
+    private function predicateText(mixed $predicate): string
+    {
+        if (is_object($predicate) === true) {
+            return ($this->composites[spl_object_id($predicate)] ?? 'unknown');
+        }
+
+        return (string) $predicate;
+
+    }//end predicateText()
 }//end class

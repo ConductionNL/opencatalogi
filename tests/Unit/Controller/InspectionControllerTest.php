@@ -27,9 +27,12 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\InspectionController;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -96,11 +99,10 @@ class InspectionControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
 			$this->l10n,
 			$this->userSession,
 			new InspectionService(),
-			$this->objects
+			new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
 		);
 
 	}//end setUp()

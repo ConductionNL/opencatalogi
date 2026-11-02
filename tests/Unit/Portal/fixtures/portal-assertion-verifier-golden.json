@@ -1,0 +1,324 @@
+{
+    "valid": {
+        "accepted": true,
+        "sub": "subject-1",
+        "log": []
+    },
+    "iat at the leeway edge": {
+        "accepted": true,
+        "sub": "subject-1",
+        "log": []
+    },
+    "iat past the leeway": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "implausible iat"
+                }
+            ]
+        ]
+    },
+    "iat after exp": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "implausible iat"
+                }
+            ]
+        ]
+    },
+    "iat as text": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "implausible iat"
+                }
+            ]
+        ]
+    },
+    "iat missing": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "implausible iat"
+                }
+            ]
+        ]
+    },
+    "exp now": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "expired or missing exp"
+                }
+            ]
+        ]
+    },
+    "exp as text": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "expired or missing exp"
+                }
+            ]
+        ]
+    },
+    "exp missing, subject missing too": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "expired or missing exp"
+                }
+            ]
+        ]
+    },
+    "session token": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "not a portaliq assertion"
+                }
+            ]
+        ]
+    },
+    "other issuer": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "not a portaliq assertion"
+                }
+            ]
+        ]
+    },
+    "no use claim": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "not a portaliq assertion"
+                }
+            ]
+        ]
+    },
+    "empty subject": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "missing subject"
+                }
+            ]
+        ]
+    },
+    "numeric subject": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "missing subject"
+                }
+            ]
+        ]
+    },
+    "alg none": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "unexpected algorithm"
+                }
+            ]
+        ]
+    },
+    "no alg": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "unexpected algorithm"
+                }
+            ]
+        ]
+    },
+    "header not json": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "unexpected algorithm"
+                }
+            ]
+        ]
+    },
+    "claims not json": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "malformed claims"
+                }
+            ]
+        ]
+    },
+    "claims a scalar": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "malformed claims"
+                }
+            ]
+        ]
+    },
+    "other secret": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "signature mismatch"
+                }
+            ]
+        ]
+    },
+    "tampered signature": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "signature mismatch"
+                }
+            ]
+        ]
+    },
+    "subject swapped after signing": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "signature mismatch"
+                }
+            ]
+        ]
+    },
+    "two parts": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "malformed structure"
+                }
+            ]
+        ]
+    },
+    "four parts": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "malformed structure"
+                }
+            ]
+        ]
+    },
+    "empty part": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "malformed structure"
+                }
+            ]
+        ]
+    },
+    "empty string": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "malformed structure"
+                }
+            ]
+        ]
+    },
+    "verifier secret too short": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "no usable signing secret"
+                }
+            ]
+        ]
+    },
+    "verifier secret empty": {
+        "accepted": false,
+        "sub": null,
+        "log": [
+            [
+                "OpenCatalogi: portal assertion rejected",
+                {
+                    "reason": "no usable signing secret"
+                }
+            ]
+        ]
+    }
+}

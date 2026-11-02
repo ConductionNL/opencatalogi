@@ -1,0 +1,226 @@
+{
+    "empty payload": {
+        "outcome": {
+            "result": []
+        },
+        "lookups": []
+    },
+    "only numeric ids": {
+        "outcome": {
+            "result": []
+        },
+        "lookups": []
+    },
+    "register slugs": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    20,
+                    21
+                ]
+            }
+        },
+        "lookups": [
+            "register publicaties rbac=true mt=true"
+        ]
+    },
+    "register slugs with keys": {
+        "outcome": {
+            "result": {
+                "registers": {
+                    "a": 21,
+                    "b": "20"
+                }
+            }
+        },
+        "lookups": [
+            "register stackiq rbac=true mt=true"
+        ]
+    },
+    "register not found": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "Register ghost not found."
+        },
+        "lookups": [
+            "register ghost rbac=true mt=true"
+        ]
+    },
+    "register lookup fails otherwise": {
+        "outcome": {
+            "exception": "OCP\\AppFramework\\Db\\DoesNotExistException",
+            "message": "broken table"
+        },
+        "lookups": [
+            "register broken rbac=true mt=true"
+        ]
+    },
+    "registers not a list": {
+        "outcome": {
+            "result": []
+        },
+        "lookups": []
+    },
+    "registers null": {
+        "outcome": {
+            "result": []
+        },
+        "lookups": []
+    },
+    "schema slug inside the register": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    20
+                ],
+                "schemas": [
+                    33,
+                    34,
+                    34
+                ]
+            }
+        },
+        "lookups": [
+            "register publicaties rbac=true mt=true",
+            "register 20 rbac=false mt=false",
+            "schema 33 rbac=false mt=false",
+            "schema 34 rbac=false mt=false"
+        ]
+    },
+    "schema slug inside a numeric register": {
+        "outcome": {
+            "result": {
+                "schemas": [
+                    9
+                ]
+            }
+        },
+        "lookups": [
+            "register 21 rbac=false mt=false",
+            "schema 9 rbac=false mt=false"
+        ]
+    },
+    "schema slug outside the registers": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "Schema document not found."
+        },
+        "lookups": [
+            "register 21 rbac=false mt=false",
+            "schema 9 rbac=false mt=false"
+        ]
+    },
+    "schema slug without registers": {
+        "outcome": {
+            "result": {
+                "schemas": [
+                    40,
+                    "40"
+                ]
+            }
+        },
+        "lookups": [
+            "schema loose rbac=true mt=true"
+        ]
+    },
+    "schema slug without registers, not found": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "Schema nothing not found."
+        },
+        "lookups": [
+            "schema nothing rbac=true mt=true"
+        ]
+    },
+    "schema slug with slug-only registers": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    null
+                ],
+                "schemas": [
+                    40
+                ]
+            }
+        },
+        "lookups": [
+            "register nope-numeric rbac=true mt=true",
+            "schema loose rbac=true mt=true"
+        ]
+    },
+    "schemas not a list": {
+        "outcome": {
+            "result": []
+        },
+        "lookups": []
+    },
+    "schemas with keys": {
+        "outcome": {
+            "result": {
+                "schemas": {
+                    "x": 34,
+                    "y": 33
+                }
+            }
+        },
+        "lookups": [
+            "register 20 rbac=false mt=false",
+            "schema 33 rbac=false mt=false",
+            "schema 34 rbac=false mt=false"
+        ]
+    },
+    "registers string, schemas list": {
+        "outcome": {
+            "exception": "TypeError",
+            "message": "OCA\\OpenCatalogi\\Service\\CatalogiService::schemaLookupFor(): Argument #1 ($registers) must be of type array, string given"
+        },
+        "lookups": []
+    },
+    "unchanged keys dropped": {
+        "outcome": {
+            "result": {
+                "schemas": [
+                    34
+                ]
+            }
+        },
+        "lookups": [
+            "register 20 rbac=false mt=false",
+            "schema 33 rbac=false mt=false",
+            "schema 34 rbac=false mt=false"
+        ]
+    },
+    "same slug twice": {
+        "outcome": {
+            "result": {
+                "schemas": [
+                    33,
+                    33
+                ]
+            }
+        },
+        "lookups": [
+            "register 20 rbac=false mt=false",
+            "schema 33 rbac=false mt=false",
+            "schema 34 rbac=false mt=false"
+        ]
+    },
+    "numeric-looking register slug": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    22
+                ]
+            }
+        },
+        "lookups": [
+            "register 22.0 rbac=true mt=true"
+        ]
+    },
+    "registers string, schemas string": {
+        "outcome": {
+            "result": []
+        },
+        "lookups": []
+    }
+}

@@ -1,0 +1,1902 @@
+{
+	"attachment mock 0": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"attachment mock 1": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"attachment mock 2": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"accessUrl"
+					],
+					"code": "invalid_format",
+					"message": "is niet een url"
+				},
+				{
+					"path": [
+						"language",
+						"code"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige ISO 639-1 code (e.g. en-us)"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"accessUrl"
+					],
+					"code": "invalid_format",
+					"message": "is niet een url"
+				},
+				{
+					"path": [
+						"language",
+						"code"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige ISO 639-1 code (e.g. en-us)"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				}
+			]
+		}
+	],
+	"attachment empty": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"attachment wrong": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 255 zijn"
+				},
+				{
+					"path": [
+						"description"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2555 zijn"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"anonymization",
+						"anonymized"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"anonymization",
+						"results"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2500 zijn"
+				},
+				{
+					"path": [
+						"language",
+						"code"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige ISO 639-1 code (e.g. en-us)"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				},
+				{
+					"path": [
+						"published"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige date-time"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 255 zijn"
+				},
+				{
+					"path": [
+						"description"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2555 zijn"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"anonymization",
+						"anonymized"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"anonymization",
+						"results"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2500 zijn"
+				},
+				{
+					"path": [
+						"language",
+						"code"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige ISO 639-1 code (e.g. en-us)"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				},
+				{
+					"path": [
+						"published"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige date-time"
+				}
+			]
+		}
+	],
+	"attachment near miss": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 255 zijn"
+				},
+				{
+					"path": [
+						"description"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2555 zijn"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"anonymization",
+						"anonymized"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"anonymization",
+						"results"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2500 zijn"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				},
+				{
+					"path": [
+						"published"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige date-time"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 255 zijn"
+				},
+				{
+					"path": [
+						"description"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2555 zijn"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"anonymization",
+						"anonymized"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"anonymization",
+						"results"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2500 zijn"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				},
+				{
+					"path": [
+						"published"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige date-time"
+				}
+			]
+		}
+	],
+	"catalogi mock 0": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"catalogi mock 1": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"catalogi empty": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"registers"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"schemas"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "invalid_format",
+					"message": "moet alleen kleine letters, cijfers en koppeltekens bevatten"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"registers"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"schemas"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "invalid_format",
+					"message": "moet alleen kleine letters, cijfers en koppeltekens bevatten"
+				}
+			]
+		}
+	],
+	"catalogi wrong": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 255 zijn"
+				},
+				{
+					"path": [
+						"description"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2555 zijn"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"development\"|\"beta\"|\"stable\"|\"obsolete\""
+				},
+				{
+					"path": [
+						"registers"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"schemas"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "invalid_format",
+					"message": "moet alleen kleine letters, cijfers en koppeltekens bevatten"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 255 zijn"
+				},
+				{
+					"path": [
+						"description"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2555 zijn"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"development\"|\"beta\"|\"stable\"|\"obsolete\""
+				},
+				{
+					"path": [
+						"registers"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"schemas"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "invalid_format",
+					"message": "moet alleen kleine letters, cijfers en koppeltekens bevatten"
+				}
+			]
+		}
+	],
+	"catalogi near miss": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 255 zijn"
+				},
+				{
+					"path": [
+						"description"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2555 zijn"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"development\"|\"beta\"|\"stable\"|\"obsolete\""
+				},
+				{
+					"path": [
+						"registers"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"schemas"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "invalid_format",
+					"message": "moet alleen kleine letters, cijfers en koppeltekens bevatten"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 255 zijn"
+				},
+				{
+					"path": [
+						"description"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2555 zijn"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"development\"|\"beta\"|\"stable\"|\"obsolete\""
+				},
+				{
+					"path": [
+						"registers"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"schemas"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"slug"
+					],
+					"code": "invalid_format",
+					"message": "moet alleen kleine letters, cijfers en koppeltekens bevatten"
+				}
+			]
+		}
+	],
+	"configuration mock 0": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"configuration mock 1": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"configuration mock 2": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"useElastic"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected boolean, received string"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"useElastic"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected boolean, received string"
+				}
+			]
+		}
+	],
+	"configuration empty": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"configuration wrong": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"configuration near miss": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"organization mock 0": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"organization mock 1": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"organization mock 2": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"name"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"name"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		}
+	],
+	"organization empty": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"name"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"name"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		}
+	],
+	"organization wrong": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"name"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"rsin"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige RSIN nummer"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"name"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"rsin"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige RSIN nummer"
+				}
+			]
+		}
+	],
+	"organization near miss": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"name"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"rsin"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige RSIN nummer"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"name"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"rsin"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige RSIN nummer"
+				}
+			]
+		}
+	],
+	"publication mock 0": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"publication mock 1": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"publication mock 2": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"register"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"register"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				}
+			]
+		}
+	],
+	"publication empty": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"catalog"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"register"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"schema"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"catalog"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"register"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"schema"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				}
+			]
+		}
+	],
+	"publication wrong": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"image"
+					],
+					"code": "invalid_format",
+					"message": "is niet een url"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"anonymization",
+						"anonymized"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected boolean, received string"
+				},
+				{
+					"path": [
+						"anonymization",
+						"results"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2500 zijn"
+				},
+				{
+					"path": [
+						"language",
+						"code"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige ISO 639-1 code (e.g. en-us)"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				},
+				{
+					"path": [
+						"published"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"modified"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"archive",
+						"date"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"catalog"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"register"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"schema"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"image"
+					],
+					"code": "invalid_format",
+					"message": "is niet een url"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"anonymization",
+						"anonymized"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected boolean, received string"
+				},
+				{
+					"path": [
+						"anonymization",
+						"results"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2500 zijn"
+				},
+				{
+					"path": [
+						"language",
+						"code"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige ISO 639-1 code (e.g. en-us)"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				},
+				{
+					"path": [
+						"published"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"modified"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"archive",
+						"date"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"catalog"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"register"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"schema"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				}
+			]
+		}
+	],
+	"publication near miss": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"image"
+					],
+					"code": "invalid_format",
+					"message": "is niet een url"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"anonymization",
+						"anonymized"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected boolean, received string"
+				},
+				{
+					"path": [
+						"anonymization",
+						"results"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2500 zijn"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				},
+				{
+					"path": [
+						"published"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"modified"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"archive",
+						"date"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"catalog"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"register"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"schema"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"image"
+					],
+					"code": "invalid_format",
+					"message": "is niet een url"
+				},
+				{
+					"path": [
+						"status"
+					],
+					"code": "invalid_value",
+					"message": "Invalid option: expected one of \"Concept\"|\"Published\"|\"Withdrawn\"|\"Archived\"|\"Revised\"|\"Rejected\""
+				},
+				{
+					"path": [
+						"anonymization",
+						"anonymized"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected boolean, received string"
+				},
+				{
+					"path": [
+						"anonymization",
+						"results"
+					],
+					"code": "too_big",
+					"message": "kan niet langer dan 2500 zijn"
+				},
+				{
+					"path": [
+						"language",
+						"level"
+					],
+					"code": "invalid_format",
+					"message": "is niet een geldige CEFRL level (e.g. A1)"
+				},
+				{
+					"path": [
+						"published"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"modified"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"archive",
+						"date"
+					],
+					"code": "invalid_format",
+					"message": "Invalid ISO datetime"
+				},
+				{
+					"path": [
+						"catalog"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"register"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				},
+				{
+					"path": [
+						"schema"
+					],
+					"code": "invalid_union",
+					"message": "Invalid input"
+				}
+			]
+		}
+	],
+	"publicationType mock 0": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"publicationType mock 1": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"publicationType mock 2": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"required"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected array, received string"
+				},
+				{
+					"path": [
+						"source"
+					],
+					"code": "invalid_format",
+					"message": "is niet een url"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"required"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected array, received string"
+				},
+				{
+					"path": [
+						"source"
+					],
+					"code": "invalid_format",
+					"message": "is niet een url"
+				}
+			]
+		}
+	],
+	"publicationType empty": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		}
+	],
+	"publicationType wrong": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"properties"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected record, received string"
+				},
+				{
+					"path": [
+						"archive",
+						"valuation"
+					],
+					"code": "invalid_value",
+					"message": "kan alleen 'b', 'v', of 'n' zijn"
+				},
+				{
+					"path": [
+						"archive",
+						"class"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected number, received undefined"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"properties"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected record, received string"
+				},
+				{
+					"path": [
+						"archive",
+						"valuation"
+					],
+					"code": "invalid_value",
+					"message": "kan alleen 'b', 'v', of 'n' zijn"
+				},
+				{
+					"path": [
+						"archive",
+						"class"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected number, received undefined"
+				}
+			]
+		}
+	],
+	"publicationType near miss": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"properties"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected record, received string"
+				},
+				{
+					"path": [
+						"archive",
+						"valuation"
+					],
+					"code": "invalid_value",
+					"message": "kan alleen 'b', 'v', of 'n' zijn"
+				},
+				{
+					"path": [
+						"archive",
+						"class"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected number, received undefined"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				},
+				{
+					"path": [
+						"properties"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected record, received string"
+				},
+				{
+					"path": [
+						"archive",
+						"valuation"
+					],
+					"code": "invalid_value",
+					"message": "kan alleen 'b', 'v', of 'n' zijn"
+				},
+				{
+					"path": [
+						"archive",
+						"class"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected number, received undefined"
+				}
+			]
+		}
+	],
+	"theme mock 0": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"theme mock 1": [
+		{
+			"success": true,
+			"issues": []
+		},
+		{
+			"success": true,
+			"issues": []
+		}
+	],
+	"theme mock 2": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		}
+	],
+	"theme empty": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				},
+				{
+					"path": [
+						"summary"
+					],
+					"code": "too_small",
+					"message": "is verplicht"
+				}
+			]
+		}
+	],
+	"theme wrong": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				}
+			]
+		}
+	],
+	"theme near miss": [
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				}
+			]
+		},
+		{
+			"success": false,
+			"issues": [
+				{
+					"path": [
+						"title"
+					],
+					"code": "invalid_type",
+					"message": "Invalid input: expected string, received number"
+				}
+			]
+		}
+	]
+}

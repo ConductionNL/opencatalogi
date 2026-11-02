@@ -18,6 +18,8 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\PublicationStateController;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -26,6 +28,7 @@ use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -162,7 +165,7 @@ class PublicationStateControllerTest extends TestCase {
 			$this->rights,
 			new DepublicationService($this->index, $this->createMock(LoggerInterface::class)),
 			$container,
-			$objects
+			new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)
 		);
 	}
 

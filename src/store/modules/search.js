@@ -17,6 +17,57 @@ import { generateOcsUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 
 /**
+ * GET a JSON body, throwing when the response is not ok.
+ *
+ * @param {string} url The URL to fetch.
+ * @param {string} label What is fetched, for the error message.
+ * @return {Promise<object>} The parsed body.
+ * @spec openspec/specs/search/spec.md
+ */
+async function getJson(url, label) {
+	const response = await fetch(url, {
+		method: 'GET',
+		headers: {
+			'Content-Type': 'application/json',
+			Accept: 'application/json',
+		},
+	})
+	if (!response.ok) {
+		throw new Error(
+			`Failed to fetch ${label}: ${response.status} ${response.statusText}`,
+		)
+	}
+	return await response.json()
+}
+
+/**
+ * Fetch a federation publication, or one of its sub-resources.
+ *
+ * @param {string} id The publication ID.
+ * @param {string} [part] The sub-resource (`uses`, `used`, `attachments`), if any.
+ * @return {Promise<object>} The parsed body.
+ * @spec openspec/specs/search/spec.md
+ */
+async function getFederationPublication(id, part = '') {
+	if (!id) {
+		throw new Error('Publication ID is required')
+	}
+	const label = part ? `publication ${part}` : 'publication'
+	const suffix = part ? `/${part}` : ''
+	try {
+		return await getJson(
+			generateOcsUrl(
+				`/apps/opencatalogi/api/federation/publications/${id}${suffix}`,
+			),
+			label,
+		)
+	} catch (error) {
+		console.error(`Error fetching ${label}:`, error)
+		throw error
+	}
+}
+
+/**
  * Search store for handling publication search operations
  *
  * Provides functionality for:
@@ -539,34 +590,7 @@ export const useSearchStore = defineStore('search', {
 		 * @spec openspec/specs/search/spec.md
 		 */
 		async getPublication(id) {
-			if (!id) {
-				throw new Error('Publication ID is required')
-			}
-
-			try {
-				const url = generateOcsUrl(
-					`/apps/opencatalogi/api/federation/publications/${id}`,
-				)
-
-				const response = await fetch(url, {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						Accept: 'application/json',
-					},
-				})
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to fetch publication: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				return await response.json()
-			} catch (error) {
-				console.error('Error fetching publication:', error)
-				throw error
-			}
+			return getFederationPublication(id)
 		},
 
 		/**
@@ -580,34 +604,7 @@ export const useSearchStore = defineStore('search', {
 		 * @spec openspec/specs/search/spec.md
 		 */
 		async getPublicationUses(id) {
-			if (!id) {
-				throw new Error('Publication ID is required')
-			}
-
-			try {
-				const url = generateOcsUrl(
-					`/apps/opencatalogi/api/federation/publications/${id}/uses`,
-				)
-
-				const response = await fetch(url, {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						Accept: 'application/json',
-					},
-				})
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to fetch publication uses: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				return await response.json()
-			} catch (error) {
-				console.error('Error fetching publication uses:', error)
-				throw error
-			}
+			return getFederationPublication(id, 'uses')
 		},
 
 		/**
@@ -621,34 +618,7 @@ export const useSearchStore = defineStore('search', {
 		 * @spec openspec/specs/search/spec.md
 		 */
 		async getPublicationUsed(id) {
-			if (!id) {
-				throw new Error('Publication ID is required')
-			}
-
-			try {
-				const url = generateOcsUrl(
-					`/apps/opencatalogi/api/federation/publications/${id}/used`,
-				)
-
-				const response = await fetch(url, {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						Accept: 'application/json',
-					},
-				})
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to fetch publication used: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				return await response.json()
-			} catch (error) {
-				console.error('Error fetching publication used:', error)
-				throw error
-			}
+			return getFederationPublication(id, 'used')
 		},
 
 		/**
@@ -662,34 +632,7 @@ export const useSearchStore = defineStore('search', {
 		 * @spec openspec/specs/search/spec.md
 		 */
 		async getPublicationAttachments(id) {
-			if (!id) {
-				throw new Error('Publication ID is required')
-			}
-
-			try {
-				const url = generateOcsUrl(
-					`/apps/opencatalogi/api/federation/publications/${id}/attachments`,
-				)
-
-				const response = await fetch(url, {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						Accept: 'application/json',
-					},
-				})
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to fetch publication attachments: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				return await response.json()
-			} catch (error) {
-				console.error('Error fetching publication attachments:', error)
-				throw error
-			}
+			return getFederationPublication(id, 'attachments')
 		},
 	},
 })
