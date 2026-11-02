@@ -81,6 +81,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @covers \OCA\OpenCatalogi\Controller\RegisterAccess
  * @covers \OCA\OpenCatalogi\Controller\BannerDismissals
+ * @covers \OCA\OpenCatalogi\Controller\InspectionRecords
  * @uses   \OCA\OpenCatalogi\Contract\CommentPeriodRequest
  * @uses   \OCA\OpenCatalogi\Controller\CorsAllowlist
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
@@ -302,6 +303,10 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			'OCA\\OpenCatalogi\\Controller\\BannerDismissals' => new $type(
 				$this->collaborator(type: IAppConfig::class),
 				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\BannerServiceInterface')
+			),
+			'OCA\\OpenCatalogi\\Controller\\InspectionRecords' => new $type(
+				$this->collaborator(type: InspectionServiceInterface::class),
+				$this->collaborator(type: 'OCA\\OpenCatalogi\\Controller\\RegisterAccess')
 			),
 			'OCA\\OpenCatalogi\\Controller\\RegisterAccess' => new $type(
 				$this->collaborator(type: 'OCA\\OpenCatalogi\\Contract\\OpenRegisterLookupInterface'),

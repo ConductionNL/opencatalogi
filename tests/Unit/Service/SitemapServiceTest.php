@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapRequest;
@@ -108,14 +110,12 @@ class SitemapServiceTest extends TestCase {
 		);
 
 		$this->service = new SitemapService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
-			$this->urlGenerator,
-			$this->config,
+			new InstanceSettings($this->urlGenerator, $this->config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories,
+			$this->wooCategories
 		);
 	}
 
@@ -1248,11 +1248,9 @@ class SitemapServiceTest extends TestCase {
 		$tooi = new \OCA\OpenCatalogi\Service\TooiVocabularyService();
 
 		return new SitemapService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
-			$this->urlGenerator,
-			$this->config,
+			new InstanceSettings($this->urlGenerator, $this->config),
 			$tooi,
 			$this->queryService,
 			new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
@@ -1260,7 +1258,7 @@ class SitemapServiceTest extends TestCase {
 				$registrySettings,
 				$this->createMock(\Psr\Log\LoggerInterface::class),
 				new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission($tooi),
-			),
+			)
 		);
 	}
 
@@ -1301,14 +1299,12 @@ class SitemapServiceTest extends TestCase {
 			->willReturnMap([['opencatalogi', 'sitemap_max_per_page', 1000, 250]]);
 
 		$service = new SitemapService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
-			$this->urlGenerator,
-			$config,
+			new InstanceSettings($this->urlGenerator, $config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories,
+			$this->wooCategories
 		);
 
 		$reflection = new \ReflectionClass($service);
@@ -1322,14 +1318,12 @@ class SitemapServiceTest extends TestCase {
 		$config->method('getValueInt')->willReturn(0);
 
 		$service = new SitemapService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
-			$this->urlGenerator,
-			$config,
+			new InstanceSettings($this->urlGenerator, $config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories,
+			$this->wooCategories
 		);
 
 		$reflection = new \ReflectionClass($service);
