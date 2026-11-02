@@ -26,6 +26,7 @@
  * @covers \OCA\OpenCatalogi\Controller\CommunityController
  * @covers \OCA\OpenCatalogi\Controller\NoticeBoardController
  * @covers \OCA\OpenCatalogi\Controller\PublicationRulesController
+ * @covers \OCA\OpenCatalogi\Controller\PublicationRuleChecks
  * @covers \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
  * @covers \OCA\OpenCatalogi\Controller\ReadsOpenRegisterResults
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginRequests
@@ -38,9 +39,12 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
+use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\CommunityController;
 use OCA\OpenCatalogi\Controller\NoticeBoardController;
+use OCA\OpenCatalogi\Controller\PublicationRuleChecks;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -177,6 +181,10 @@ class CommunityReadsGoldenTest extends TestCase {
 				$name === IAppConfig::class => $config,
 				$name === ContainerInterface::class => $container,
 				$name === ServiceCatalogueServiceInterface::class => $objects,
+				$name === PublicationRuleChecks::class => new PublicationRuleChecks(
+					$this->createMock(PublicationRuleServiceInterface::class),
+					$this->createMock(DecisionPublicationValidatorInterface::class)
+				),
 				$name === RegisterAccess::class => new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects),
 				default => $this->createMock($name),
 			};
