@@ -1,0 +1,1098 @@
+{
+	"usesWithPagination": {
+		"results": [
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p1",
+				"uses",
+				{
+					"_extend": "@self.schema"
+				},
+				{
+					"pub": 1
+				}
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p1",
+					"uses",
+					{},
+					{
+						"pub": 1
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_uses",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setPagination",
+				[
+					"publication_uses",
+					{
+						"total": 41,
+						"page": 1,
+						"pages": 3,
+						"limit": 20,
+						"next": null,
+						"prev": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_uses",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"publication": {
+					"uses": {
+						"total": 41,
+						"results": [
+							1
+						]
+					}
+				}
+			},
+			"pagination": {
+				"publication_uses": {
+					"total": 41,
+					"page": 1,
+					"pages": 3,
+					"limit": 20,
+					"next": null,
+					"prev": null
+				}
+			},
+			"loading": {
+				"publication_p1_uses": false
+			},
+			"success": {
+				"publication": null
+			},
+			"errors": {
+				"publication": null
+			}
+		}
+	},
+	"usedPageOnly": {
+		"results": [
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p1",
+				"used",
+				{
+					"extend": "x",
+					"_extend": "x"
+				},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p1",
+					"used",
+					{
+						"extend": "x"
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_used",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setPagination",
+				[
+					"publication_used",
+					{
+						"total": 0,
+						"page": 2,
+						"pages": 0,
+						"limit": 20,
+						"next": null,
+						"prev": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_used",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"publication": {
+					"used": {
+						"page": 2
+					}
+				}
+			},
+			"pagination": {
+				"publication_used": {
+					"total": 0,
+					"page": 2,
+					"pages": 0,
+					"limit": 20,
+					"next": null,
+					"prev": null
+				}
+			},
+			"loading": {
+				"publication_p1_used": false
+			},
+			"success": {
+				"publication": null
+			},
+			"errors": {
+				"publication": null
+			}
+		}
+	},
+	"filesNoPagination": {
+		"results": [
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"catalog",
+				"c1",
+				"files",
+				{
+					"_limit": 5
+				},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"catalog",
+					"c1",
+					"files",
+					{
+						"_limit": 5
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"catalog_c1_files",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"catalog",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"catalog_c1_files",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"catalog": {
+					"files": {
+						"items": [
+							1,
+							2
+						]
+					}
+				}
+			},
+			"pagination": {},
+			"loading": {
+				"catalog_c1_files": false
+			},
+			"success": {
+				"catalog": null
+			},
+			"errors": {
+				"catalog": null
+			}
+		}
+	},
+	"logsWithResults": {
+		"results": [
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p2",
+				"logs",
+				{},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p2",
+					"logs"
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p2_logs",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setPagination",
+				[
+					"publication_logs",
+					{
+						"total": 1,
+						"page": 1,
+						"pages": 1,
+						"limit": 20,
+						"next": null,
+						"prev": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p2_logs",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"publication": {
+					"logs": [
+						{
+							"id": "l"
+						}
+					]
+				}
+			},
+			"pagination": {
+				"publication_logs": {
+					"total": 1,
+					"page": 1,
+					"pages": 1,
+					"limit": 20,
+					"next": null,
+					"prev": null
+				}
+			},
+			"loading": {
+				"publication_p2_logs": false
+			},
+			"success": {
+				"publication": null
+			},
+			"errors": {
+				"publication": null
+			}
+		}
+	},
+	"logsWithoutResults": {
+		"results": [
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p2",
+				"logs",
+				{},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p2",
+					"logs"
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p2_logs",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p2_logs",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"publication": {
+					"logs": []
+				}
+			},
+			"pagination": {},
+			"loading": {
+				"publication_p2_logs": false
+			},
+			"success": {
+				"publication": null
+			},
+			"errors": {
+				"publication": null
+			}
+		}
+	},
+	"logsNullResults": {
+		"results": [
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p2",
+				"logs",
+				{},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p2",
+					"logs"
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p2_logs",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setPagination",
+				[
+					"publication_logs",
+					{
+						"total": 0,
+						"page": 1,
+						"pages": 0,
+						"limit": 20,
+						"next": null,
+						"prev": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p2_logs",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"publication": {
+					"logs": []
+				}
+			},
+			"pagination": {
+				"publication_logs": {
+					"total": 0,
+					"page": 1,
+					"pages": 0,
+					"limit": 20,
+					"next": null,
+					"prev": null
+				}
+			},
+			"loading": {
+				"publication_p2_logs": false
+			},
+			"success": {
+				"publication": null
+			},
+			"errors": {
+				"publication": null
+			}
+		}
+	},
+	"twoKindsSameType": {
+		"results": [
+			{
+				"returned": null
+			},
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p1",
+				"logs",
+				{},
+				null
+			],
+			[
+				"publication",
+				"p1",
+				"uses",
+				{
+					"limit": 10,
+					"_extend": "@self.schema"
+				},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			],
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p1",
+					"logs"
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_logs",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setPagination",
+				[
+					"publication_logs",
+					{
+						"total": 0,
+						"page": 1,
+						"pages": 0,
+						"limit": 20,
+						"next": null,
+						"prev": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_logs",
+					false
+				]
+			],
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p1",
+					"uses",
+					{
+						"limit": 10
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_uses",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setPagination",
+				[
+					"publication_uses",
+					{
+						"total": 0,
+						"page": 1,
+						"pages": 0,
+						"limit": 10,
+						"next": null,
+						"prev": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_uses",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"publication": {
+					"logs": [],
+					"uses": {
+						"total": 0
+					}
+				}
+			},
+			"pagination": {
+				"publication_logs": {
+					"total": 0,
+					"page": 1,
+					"pages": 0,
+					"limit": 20,
+					"next": null,
+					"prev": null
+				},
+				"publication_uses": {
+					"total": 0,
+					"page": 1,
+					"pages": 0,
+					"limit": 10,
+					"next": null,
+					"prev": null
+				}
+			},
+			"loading": {
+				"publication_p1_logs": false,
+				"publication_p1_uses": false
+			},
+			"success": {
+				"publication": null
+			},
+			"errors": {
+				"publication": null
+			}
+		}
+	},
+	"noSettings": {
+		"results": [
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 1,
+		"urlArgs": [
+			[
+				"publication",
+				"p1",
+				"uses",
+				{
+					"_extend": "@self.schema"
+				},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p1",
+					"uses"
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_uses",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_uses",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"publication": {
+					"uses": {
+						"results": []
+					}
+				}
+			},
+			"pagination": {},
+			"loading": {
+				"publication_p1_uses": false
+			},
+			"success": {
+				"publication": null
+			},
+			"errors": {
+				"publication": null
+			}
+		}
+	},
+	"notOk": {
+		"results": [
+			{
+				"thrown": "Error: Failed to fetch files for publication"
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p1",
+				"files",
+				{},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p1",
+					"files"
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_files",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": false,
+						"error": "Failed to fetch files for publication"
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_files",
+					false
+				]
+			]
+		],
+		"error": [
+			[
+				"Error fetching files for publication:",
+				"Error: Failed to fetch files for publication"
+			]
+		],
+		"state": {
+			"relatedData": {},
+			"pagination": {},
+			"loading": {
+				"publication_p1_files": false
+			},
+			"success": {
+				"publication": false
+			},
+			"errors": {
+				"publication": "Failed to fetch files for publication"
+			}
+		}
+	},
+	"throws": {
+		"results": [
+			{
+				"thrown": "Error: network down"
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p1",
+				"used",
+				{
+					"_extend": "@self.schema"
+				},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p1",
+					"used"
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_used",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": false,
+						"error": "network down"
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_used",
+					false
+				]
+			]
+		],
+		"error": [
+			[
+				"Error fetching used for publication:",
+				"Error: network down"
+			]
+		],
+		"state": {
+			"relatedData": {},
+			"pagination": {},
+			"loading": {
+				"publication_p1_used": false
+			},
+			"success": {
+				"publication": false
+			},
+			"errors": {
+				"publication": "network down"
+			}
+		}
+	},
+	"totalUndefinedPageNull": {
+		"results": [
+			{
+				"returned": null
+			}
+		],
+		"fetchSettings": 0,
+		"urlArgs": [
+			[
+				"publication",
+				"p1",
+				"uses",
+				{
+					"_extend": "@self.schema"
+				},
+				null
+			]
+		],
+		"fetchCalls": [
+			[
+				"/url"
+			]
+		],
+		"actions": [
+			[
+				"fetchRelatedData",
+				[
+					"publication",
+					"p1",
+					"uses"
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_uses",
+					true
+				]
+			],
+			[
+				"setState",
+				[
+					"publication",
+					{
+						"success": null,
+						"error": null
+					}
+				]
+			],
+			[
+				"setPagination",
+				[
+					"publication_uses",
+					{
+						"total": 0,
+						"page": 1,
+						"pages": 0,
+						"limit": 20,
+						"next": null,
+						"prev": null
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					"publication_p1_uses",
+					false
+				]
+			]
+		],
+		"error": [],
+		"state": {
+			"relatedData": {
+				"publication": {
+					"uses": {
+						"page": null
+					}
+				}
+			},
+			"pagination": {
+				"publication_uses": {
+					"total": 0,
+					"page": 1,
+					"pages": 0,
+					"limit": 20,
+					"next": null,
+					"prev": null
+				}
+			},
+			"loading": {
+				"publication_p1_uses": false
+			},
+			"success": {
+				"publication": null
+			},
+			"errors": {
+				"publication": null
+			}
+		}
+	}
+}
