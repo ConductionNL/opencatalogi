@@ -53,6 +53,7 @@ use RuntimeException;
  * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\DcatAssurance
  * @uses \OCA\OpenCatalogi\Service\DcatMappingService
+ * @uses \OCA\OpenCatalogi\Service\DcatDistributionMapper
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
  * @uses \OCA\OpenCatalogi\Service\DcatDatasetSource
  * @uses \OCA\OpenCatalogi\Service\DcatMappingProfile
