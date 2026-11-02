@@ -42,8 +42,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -52,7 +52,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * Depublication and its acknowledgements. Every write here is admin-gated.
@@ -71,8 +70,7 @@ class DepublicationController extends Controller {
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param DepublicationServiceInterface $depublicationService Taking a publication back.
-	 * @param ContainerInterface $container Server container, for the register resolver.
-	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
 	 */
 	public function __construct(
 		$appName,
@@ -80,8 +78,7 @@ class DepublicationController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly DepublicationServiceInterface $depublicationService,
-		private readonly ContainerInterface $container,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly RegisterAccess $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -176,7 +173,7 @@ class DepublicationController extends Controller {
 	 */
 	private function storeDepublication(array $depublication): JSONResponse {
 		try {
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $depublication,
 				extend: [],
 				register: $this->depublicationConfiguration()['register'],
@@ -296,7 +293,7 @@ class DepublicationController extends Controller {
 	private function findDepublication(string $id): array|JSONResponse {
 		try {
 			$config = $this->depublicationConfiguration();
-			$objectService = $this->objects->getObjectService();
+			$objectService = $this->registers->getObjectService();
 			$depublication = $this->asArray(
 				object: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'])
 			);
@@ -344,7 +341,7 @@ class DepublicationController extends Controller {
 	 */
 	private function storeAcknowledgement(array $found): JSONResponse {
 		try {
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $found['depublication'],
 				extend: [],
 				register: $found['config']['register'],

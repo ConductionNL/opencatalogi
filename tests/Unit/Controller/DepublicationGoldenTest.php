@@ -29,6 +29,9 @@ use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\DepublicationController;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\RegisterAccess;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -44,6 +47,8 @@ use RuntimeException;
  *
  * @covers \OCA\OpenCatalogi\Controller\DepublicationController
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses   \OCA\OpenCatalogi\Service\RegisterAccess
  */
 class DepublicationGoldenTest extends TestCase {
 
@@ -186,7 +191,7 @@ class DepublicationGoldenTest extends TestCase {
 			}
 		);
 
-		return new DepublicationController('opencatalogi', $request, $l10n, $session, $this->service(case: $case), $container, $objects);
+		return new DepublicationController('opencatalogi', $request, $l10n, $session, $this->service(case: $case), new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects));
 	}//end controller()
 
 	/**

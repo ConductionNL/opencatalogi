@@ -34,8 +34,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\RegisterAccess;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -47,7 +47,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * Opens inspection windows and answers the inspection link.
@@ -66,11 +65,10 @@ class InspectionController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param InspectionServiceInterface $inspectionService The inspection windows.
-	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -78,11 +76,10 @@ class InspectionController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly InspectionServiceInterface $inspectionService,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly RegisterAccess $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -163,7 +160,7 @@ class InspectionController extends Controller {
 
 		try {
 			$config = $this->inspectionConfiguration();
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $inspection,
 				extend: [],
 				register: $config['register'],
@@ -201,7 +198,7 @@ class InspectionController extends Controller {
 		try {
 			$config = $this->inspectionConfiguration();
 			$inspection = $this->asArray(
-				object: $this->objects->getObjectService()->find(
+				object: $this->registers->getObjectService()->find(
 					id: $id,
 					register: $config['register'],
 					schema: $config['schema']
