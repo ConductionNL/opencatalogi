@@ -27,6 +27,7 @@
  *
  * @covers \OCA\OpenCatalogi\Controller\CatalogiController
  * @covers \OCA\OpenCatalogi\Controller\DirectoryController
+ * @uses \OCA\OpenCatalogi\Controller\ListCorsPolicy
  * @covers \OCA\OpenCatalogi\Controller\GlossaryController
  * @covers \OCA\OpenCatalogi\Controller\ThemesController
  * @covers \OCA\OpenCatalogi\Controller\ServiceCatalogueController
@@ -47,6 +48,7 @@ use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Controller\CorsSettings;
 use OCA\OpenCatalogi\Controller\DirectoryController;
 use OCA\OpenCatalogi\Controller\GlossaryController;
+use OCA\OpenCatalogi\Controller\ListCorsPolicy;
 use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Controller\ThemesController;
 use OCP\AppFramework\Http\JSONResponse;
@@ -189,6 +191,7 @@ class ListCorsHeadersGoldenTest extends TestCase {
 			$name = ($type instanceof ReflectionNamedType ? $type->getName() : null);
 			$args[] = match (true) {
 				$param->getName() === 'appName' => 'opencatalogi',
+				$name === ListCorsPolicy::class => new ListCorsPolicy($config, $customCors === true ? new CorsSettings('GET, X-METHODS', 'X-Headers', 42) : new CorsSettings()),
 				$customCors === true && $name === CorsSettings::class => new CorsSettings('GET, X-METHODS', 'X-Headers', 42),
 				$name === IRequest::class => $request,
 				$name === IAppConfig::class => $config,
