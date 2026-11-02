@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
@@ -147,8 +148,7 @@ class WooRequestControllerTest extends TestCase {
 			$this->request,
 			$l10n,
 			$userSession,
-			new WooRequestService(),
-			new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $this->appManager(installed: true))),
+			new RequestRecords(new WooRequestService(), new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $this->appManager(installed: true)))),
 			$this->terms
 		);
 
@@ -552,8 +552,7 @@ class WooRequestControllerTest extends TestCase {
 			$this->request,
 			$l10n,
 			$userSession,
-			new WooRequestService(),
-			$store,
+			new RequestRecords(new WooRequestService(), $store),
 			$this->terms
 		);
 
