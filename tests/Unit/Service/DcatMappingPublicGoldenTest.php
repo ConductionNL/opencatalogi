@@ -30,6 +30,7 @@
  * @spec openspec/specs/dcat-ap-harvest/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\DcatMappingService
+ * @covers \OCA\OpenCatalogi\Service\DcatDistributionMapper
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
  * @uses \OCA\OpenCatalogi\Service\DcatDatasetSource
  * @uses \OCA\OpenCatalogi\Service\DcatMappingProfile
@@ -155,6 +156,12 @@ class DcatMappingPublicGoldenTest extends TestCase {
 			'theme on object not a url' => [['publication' => ['tooiThemaUri' => 'onderwijs', 'category' => 'Onderwijs']]],
 			'theme uri on object' => [['publication' => ['themeUri' => 'http://x/theme', 'category' => 'whatever']]],
 			'theme not scalar' => [['publication' => ['category' => ['a']]]],
+			'theme uri not a string' => [['publication' => ['tooiThemaUri' => ['http://x/theme'], 'category' => 'Onderwijs']]],
+			'empty lists left out' => [['publication' => ['tags' => [], 'category' => [], 'title' => '']]],
+			'empty list on a plain path' => [['publication' => ['extra' => [], 'more' => ['a', 'b']], 'mapping' => ['dct:alternative' => 'extra', 'dct:relation' => 'more']]],
+			'theme through a list path' => [['publication' => ['themes' => ['Onderwijs', 3, '']], 'mapping' => ['dcat:theme' => 'themes[]']]],
+			'theme list path with a scalar' => [['publication' => ['themes' => 'Onderwijs'], 'mapping' => ['dcat:theme' => 'themes[]']]],
+			'hvd block without category property' => [['publication' => ['' => 'statistics'], 'hvd' => ['legislation' => 'https://eli/x']]],
 		];
 
 	}//end datasets()
@@ -221,7 +228,7 @@ class DcatMappingPublicGoldenTest extends TestCase {
 	public function testDatasetMatchesTheRecording(array $case): void {
 		$source = new DcatDatasetSource(publication: $case['publication'], datasetIri: 'https://host/api/cat/dataset', files: []);
 		$profile = new DcatMappingProfile(
-			mapping: DcatMappingService::DEFAULT_MAPPING,
+			mapping: ($case['mapping'] ?? DcatMappingService::DEFAULT_MAPPING),
 			defaults: ($case['defaults'] ?? []),
 			hvd: ($case['hvd'] ?? null),
 			catalogHvdDefault: ($case['catalogHvdDefault'] ?? null)

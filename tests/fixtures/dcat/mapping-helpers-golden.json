@@ -166,6 +166,43 @@
         },
         "violations": []
     },
+    "dataset: empty list on a plain path": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dct:relation": [
+                "a",
+                "b"
+            ],
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: empty lists left out": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd block without category property": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
     "dataset: hvd custom legislation": {
         "dataset": {
             "@id": "https://host/api/cat/dataset",
@@ -361,6 +398,20 @@
         },
         "violations": []
     },
+    "dataset: theme list path with a scalar": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": {
+                "@id": "http://publications.europa.eu/resource/authority/data-theme/EDUC"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
     "dataset: theme not scalar": {
         "dataset": {
             "@id": "https://host/api/cat/dataset",
@@ -379,6 +430,35 @@
         ]
     },
     "dataset: theme on object not a url": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": {
+                "@id": "http://publications.europa.eu/resource/authority/data-theme/EDUC"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: theme through a list path": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": [
+                "Onderwijs",
+                "3"
+            ],
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: theme uri not a string": {
         "dataset": {
             "@id": "https://host/api/cat/dataset",
             "@type": "dcat:Dataset",

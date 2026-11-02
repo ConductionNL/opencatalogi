@@ -48,6 +48,7 @@ use Psr\Log\LoggerInterface;
  * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\DcatAssurance
  * @uses \OCA\OpenCatalogi\Service\DcatMappingService
+ * @uses \OCA\OpenCatalogi\Service\DcatDistributionMapper
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
  */
 class DcatInstanceDocumentGoldenTest extends TestCase {
