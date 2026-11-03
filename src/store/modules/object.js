@@ -122,6 +122,76 @@ function relatedPagination(data, params, dataType) {
 }
 
 /**
+ * GET one kind of related data, throwing when the response is not ok.
+ *
+ * @param {string} url - The related-data URL
+ * @param {{type: string, dataType: string}} request - The object type and the kind of related data
+ * @return {Promise<object>} The parsed answer
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
+async function fetchRelatedJson(url, request) {
+	const response = await fetch(url)
+	if (!response.ok) {
+		throw new Error(`Failed to fetch ${request.dataType} for ${request.type}`)
+	}
+	return await response.json()
+}
+
+/**
+ * What is stored for an answer: the results array of an audit trail, the
+ * whole answer for anything else.
+ *
+ * @param {string} dataType - The kind of related data
+ * @param {object} data - The API answer
+ * @return {object|Array} The value to store
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
+function relatedValue(dataType, data) {
+	return dataType === 'logs' ? data.results || [] : data
+}
+
+/**
+ * Store a related-data answer, and its pagination when the answer has any.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, dataType: string, params: object, data: object}} related - The request and its answer
+ * @return {void}
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
+function storeRelatedData(store, { type, dataType, params, data }) {
+	if (!store.relatedData[type]) {
+		store.relatedData[type] = {}
+	}
+	if (data.total !== undefined || data.page !== undefined) {
+		store.setPagination(
+			`${type}_${dataType}`,
+			relatedPagination(data, params, dataType),
+		)
+	}
+	store.relatedData[type][dataType] = relatedValue(dataType, data)
+}
+
+/**
+ * Fetch one kind of related data of an object and store it, loading the
+ * settings first when they are not there yet.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, id: string, dataType: string, params: object, publicationData: object|null}} request - What to fetch
+ * @return {Promise<void>}
+ * @spec openspec/specs/generic-object-modals/spec.md
+ */
+async function loadRelatedData(store, request) {
+	const { type, id, dataType, params, publicationData } = request
+	if (!store.settings) {
+		await store.fetchSettings()
+	}
+	const query = relatedQueryParams(dataType, params)
+	const url = store._constructApiUrl(type, id, dataType, query, publicationData)
+	const data = await fetchRelatedJson(url, request)
+	storeRelatedData(store, { type, dataType, params, data })
+}
+
+/**
  * Whether a collection fetch reloads the whole collection rather than one
  * paged, sorted or searched slice of it.
  *
@@ -1524,53 +1594,19 @@ export const useObjectStore = defineStore('object', {
 			params = {},
 			publicationData = null,
 		) {
-			this.setLoading(`${type}_${id}_${dataType}`, true)
+			const loadingKey = `${type}_${id}_${dataType}`
+			const request = { type, id, dataType, params, publicationData }
+			this.setLoading(loadingKey, true)
 			this.setState(type, { success: null, error: null })
 
 			try {
-				if (!this.settings) {
-					await this.fetchSettings()
-				}
-
-				const queryParams = relatedQueryParams(dataType, params)
-
-				const response = await fetch(
-					this._constructApiUrl(
-						type,
-						id,
-						dataType,
-						queryParams,
-						publicationData,
-					),
-				)
-				if (!response.ok)
-					throw new Error(`Failed to fetch ${dataType} for ${type}`)
-
-				const data = await response.json()
-				if (!this.relatedData[type]) {
-					this.relatedData[type] = {}
-				}
-
-				// Update pagination info for related data
-				if (data.total !== undefined || data.page !== undefined) {
-					this.setPagination(
-						`${type}_${dataType}`,
-						relatedPagination(data, params, dataType),
-					)
-				}
-
-				// For audit trails, store the results array
-				if (dataType === 'logs') {
-					this.relatedData[type][dataType] = data.results || []
-				} else {
-					this.relatedData[type][dataType] = data
-				}
+				await loadRelatedData(this, request)
 			} catch (error) {
 				console.error(`Error fetching ${dataType} for ${type}:`, error)
 				this.setState(type, { success: false, error: error.message })
 				throw error
 			} finally {
-				this.setLoading(`${type}_${id}_${dataType}`, false)
+				this.setLoading(loadingKey, false)
 			}
 		},
 

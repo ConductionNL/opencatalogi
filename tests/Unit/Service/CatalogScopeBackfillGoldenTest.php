@@ -199,6 +199,12 @@ class CatalogScopeBackfillGoldenTest extends TestCase {
 				'stackiq' => true,
 				'catalogs' => [self::seed(['registers' => [21], 'schemas' => [119], 'published' => '2026-01-01T00:00:00+00:00'])],
 			]],
+			'resolved seed with empty registers' => [[
+				'catalogs' => [self::seed(['registers' => [], 'schemas' => [119]])],
+			]],
+			'resolved seed with empty schemas' => [[
+				'catalogs' => [self::seed(['registers' => [21], 'schemas' => []])],
+			]],
 			'hand-made catalogue with ids' => [[
 				'stackiq' => true,
 				'catalogs' => [self::seed(['slug' => 'mijn-catalogus', 'registers' => [21], 'schemas' => [119]])],
