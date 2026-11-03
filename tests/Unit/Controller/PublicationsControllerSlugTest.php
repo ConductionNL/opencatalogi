@@ -32,6 +32,7 @@ use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
+use Unit\Support\ServerAwareRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -104,7 +105,7 @@ class PublicationsControllerSlugTest extends TestCase {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(fn (string $app, string $key, string $default = '') => $default);
 
-		$request = $this->request = $this->createMock(IRequest::class);
+		$request = $this->request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getParams')->willReturn([]);
 		$request->server = [];
 

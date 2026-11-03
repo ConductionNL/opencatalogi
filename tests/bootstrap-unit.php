@@ -356,3 +356,6 @@ foreach (['ConnectionStatusReportedEvent', 'ConnectionRefreshRequestedEvent'] as
 }
 
 unset($integriqStubEvent);
+
+// IRequest double base for the controller tests (needs the OCP autoloader above).
+require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';
