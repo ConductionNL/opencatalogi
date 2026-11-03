@@ -300,6 +300,8 @@ class OoapiServiceTest extends TestCase {
 
 	/**
 	 * The single read asks find() for the id with no extension and every other argument at its default.
+	 *
+	 * @return void
 	 */
 	public function testTheSingleReadPassesOnlyTheIdAndNoExtension(): void {
 		$calls = [];
@@ -308,7 +310,8 @@ class OoapiServiceTest extends TestCase {
 			function (...$arguments) use (&$calls): \OCA\OpenRegister\Db\ObjectEntity {
 				$named = [];
 				foreach ((new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'find'))->getParameters() as $index => $parameter) {
-					if (array_key_exists($index, $arguments) === true && ($parameter->isDefaultValueAvailable() === false || $arguments[$index] !== $parameter->getDefaultValue() || $parameter->getName() === '_extend')) {
+					$passed = array_key_exists($index, $arguments);
+					if ($passed === true && ($parameter->isDefaultValueAvailable() === false || $arguments[$index] !== $parameter->getDefaultValue() || $parameter->getName() === '_extend')) {
 						$named[$parameter->getName()] = $arguments[$index];
 					}
 				}
@@ -325,6 +328,8 @@ class OoapiServiceTest extends TestCase {
 
 	/**
 	 * The catalog comparison is strict: an id that only matches after type juggling is another catalog.
+	 *
+	 * @return void
 	 */
 	public function testACatalogIdOfAnotherTypeIsAnotherCatalog(): void {
 		$cases = [
@@ -348,6 +353,8 @@ class OoapiServiceTest extends TestCase {
 
 	/**
 	 * A failing read is logged with the id and reads as absent.
+	 *
+	 * @return void
 	 */
 	public function testAFailingReadIsLoggedAndReadsAsAbsent(): void {
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
