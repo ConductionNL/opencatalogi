@@ -327,8 +327,8 @@ class SitemapDocumentMapper {
 	 * Resolve the TOOI organisatie identifier for a publication's owning organisation.
 	 *
 	 * Prefers a publication-level `tooiIdentifier`, then a `@self.organisation` value
-	 * that is already a TOOI id URI, and finally the organisation object's own
-	 * `tooiIdentifier` property. Returns null when none resolves.
+	 * that is already a TOOI id URI, and finally the TOOI identifier of the
+	 * OpenRegister organisation. Returns null when none resolves.
 	 *
 	 * @param array<string, mixed> $publication The publication object.
 	 * @param array<string, mixed> $organisation The organisation row, empty when there is none.
@@ -376,45 +376,27 @@ class SitemapDocumentMapper {
 	}//end organisationRow()
 
 	/**
-	 * Fetch an organisation via OpenRegister by its UUID, outside RBAC and multitenancy.
+	 * Read an OpenRegister organisation's name and TOOI identifier by its UUID.
+	 *
+	 * `@self.organisation` names an OpenRegister organisation, not an object, so it
+	 * is read through the OrganisationMapper. Only the name and the TOOI identifier
+	 * leave this method.
 	 *
 	 * @param string $organisation The organisation UUID.
 	 *
-	 * @return array<string, mixed> The organisation, or empty when unresolved/unavailable.
+	 * @return array{name?: mixed, tooiIdentifier?: mixed} The organisation, or empty when unresolved or unavailable.
 	 *
-	 * @spec exclude Object-lookup plumbing for the DIWOO publisher binding.
+	 * @spec exclude Organisation-lookup plumbing for the DIWOO publisher binding.
 	 */
 	private function fetchOrganisation(string $organisation): array {
 		try {
-			$objectService = $this->openRegister->installedService('OCA\OpenRegister\Service\ObjectService', 'OpenRegister service is not available.');
-			$results = $objectService->searchObjects(query: ['@self' => ['uuid' => $organisation]], _rbac: false, _multitenancy: false);
+			$found = $this->openRegister
+				->installedService('OCA\OpenRegister\Db\OrganisationMapper', 'OpenRegister organisations are not available.')
+				->findByUuid($organisation);
+
+			return ['name' => $found->getName(), 'tooiIdentifier' => $found->getTooi()];
 		} catch (\Throwable $e) {
 			return [];
 		}
-
-		if (is_array($results) === false || empty($results) === true) {
-			return [];
-		}
-
-		return self::rowData(row: $results[0]);
 	}//end fetchOrganisation()
-
-	/**
-	 * A search row as an array: itself, its jsonSerialize(), or empty.
-	 *
-	 * @param mixed $row The row.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private static function rowData(mixed $row): array {
-		if (is_array($row) === true) {
-			return $row;
-		}
-
-		if (method_exists($row, 'jsonSerialize') === true) {
-			return $row->jsonSerialize();
-		}
-
-		return [];
-	}//end rowData()
 }//end class

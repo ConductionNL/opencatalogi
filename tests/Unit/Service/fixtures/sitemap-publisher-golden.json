@@ -40,64 +40,7 @@
         ],
         "lookups": [
             {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
-                },
-                "_rbac": false,
-                "_multitenancy": false
-            }
-        ]
-    },
-    "organisation as entity row": {
-        "runs": [
-            {
-                "publisher": {
-                    "#text": "Gemeente Entiteit",
-                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0363"
-                },
-                "violations": [
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "officieleTitel",
-                        "reason": "publication has no title"
-                    },
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "informatiecategorie",
-                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
-                    }
-                ]
-            },
-            {
-                "publisher": {
-                    "#text": "Gemeente Entiteit",
-                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0363"
-                },
-                "violations": [
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "officieleTitel",
-                        "reason": "publication has no title"
-                    },
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "informatiecategorie",
-                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
-                    }
-                ]
-            }
-        ],
-        "lookups": [
-            {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
-                },
-                "_rbac": false,
-                "_multitenancy": false
+                "findByUuid": "org-uuid-1"
             }
         ]
     },
@@ -152,13 +95,7 @@
         ],
         "lookups": [
             {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
-                },
-                "_rbac": false,
-                "_multitenancy": false
+                "findByUuid": "org-uuid-1"
             }
         ]
     },
@@ -213,78 +150,11 @@
         ],
         "lookups": [
             {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
-                },
-                "_rbac": false,
-                "_multitenancy": false
+                "findByUuid": "org-uuid-1"
             }
         ]
     },
-    "organisation with a non-text name": {
-        "runs": [
-            {
-                "publisher": {
-                    "#text": "",
-                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
-                },
-                "violations": [
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "publisher",
-                        "reason": "organisation has no name"
-                    },
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "officieleTitel",
-                        "reason": "publication has no title"
-                    },
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "informatiecategorie",
-                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
-                    }
-                ]
-            },
-            {
-                "publisher": {
-                    "#text": "",
-                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
-                },
-                "violations": [
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "publisher",
-                        "reason": "organisation has no name"
-                    },
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "officieleTitel",
-                        "reason": "publication has no title"
-                    },
-                    {
-                        "documentLoc": "https://example.com/a.pdf",
-                        "axis": "informatiecategorie",
-                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
-                    }
-                ]
-            }
-        ],
-        "lookups": [
-            {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
-                },
-                "_rbac": false,
-                "_multitenancy": false
-            }
-        ]
-    },
-    "a padded name, two rows": {
+    "organisation with a padded name": {
         "runs": [
             {
                 "publisher": {
@@ -325,13 +195,113 @@
         ],
         "lookups": [
             {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation without TOOI id": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht"
                 },
-                "_rbac": false,
-                "_multitenancy": false
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation with a TOOI code, not a TOOI id": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
             }
         ]
     },
@@ -394,13 +364,7 @@
         ],
         "lookups": [
             {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
-                },
-                "_rbac": false,
-                "_multitenancy": false
+                "findByUuid": "org-uuid-1"
             }
         ]
     },
@@ -463,13 +427,7 @@
         ],
         "lookups": [
             {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
-                },
-                "_rbac": false,
-                "_multitenancy": false
+                "findByUuid": "org-uuid-1"
             }
         ]
     },
@@ -514,13 +472,7 @@
         ],
         "lookups": [
             {
-                "query": {
-                    "@self": {
-                        "uuid": "org-uuid-1"
-                    }
-                },
-                "_rbac": false,
-                "_multitenancy": false
+                "findByUuid": "org-uuid-1"
             }
         ]
     },
