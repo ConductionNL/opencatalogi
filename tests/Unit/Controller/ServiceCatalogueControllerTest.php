@@ -233,7 +233,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
 				return $this->definition;
 			}
 		};
@@ -305,7 +305,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
 				if ($this->stored === []) {
 					throw new \RuntimeException('no such object: ' . $id);
 				}
@@ -336,6 +336,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 				string $register = '',
 				string $schema = '',
 				string $uuid = '',
+				bool $_rbac = true,
 			): array {
 				if ($uuid !== '') {
 					$object['id'] = $uuid;

@@ -53,6 +53,10 @@ use OCP\IUserSession;
 /**
  * The banners and the notice boards.
  *
+ * The board and notice schemas name group admin, which leaves out the delegated
+ * administrators the saves' admin-setting check lets in. That check is the gate,
+ * so the saves skip RBAC.
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
  * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
@@ -165,7 +169,8 @@ class NoticeBoardController extends Controller {
 				extend: [],
 				register: $config['register'],
 				schema: $config['schema'],
-				uuid: (string)($board['id'] ?? '')
+				uuid: (string)($board['id'] ?? ''),
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'board-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
@@ -219,7 +224,8 @@ class NoticeBoardController extends Controller {
 				extend: [],
 				register: $config['register'],
 				schema: $config['schema'],
-				uuid: (string)($notice['id'] ?? '')
+				uuid: (string)($notice['id'] ?? ''),
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'notice-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);

@@ -89,7 +89,11 @@ class InspectionRecords {
 	}//end resolveLink()
 
 	/**
-	 * Store an inspection in the configured register and schema.
+	 * Store an inspection in the configured register and schema, without RBAC.
+	 *
+	 * The inspection schema names group admin, which leaves out the delegated
+	 * administrators the route's admin-setting check lets in. That check is the
+	 * gate, so the save skips RBAC.
 	 *
 	 * @param array<string, mixed> $inspection The inspection to save.
 	 *
@@ -105,7 +109,8 @@ class InspectionRecords {
 			object: $inspection,
 			extend: [],
 			register: $config['register'],
-			schema: $config['schema']
+			schema: $config['schema'],
+			_rbac: false
 		);
 
 	}//end store()

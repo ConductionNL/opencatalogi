@@ -201,7 +201,11 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
+				if ($_rbac === true) {
+					throw new \LogicException('The resynchronisation reads without RBAC');
+				}
+
 				if ($this->stored === null) {
 					throw new \RuntimeException('no such object: ' . $id);
 				}
@@ -214,7 +218,11 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, array $extend, string $register, string $schema, string $uuid): array {
+			public function saveObject(array $object, array $extend, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+				if ($_rbac === true) {
+					throw new \LogicException('The resynchronisation saves without RBAC');
+				}
+
 				$this->log[] = ['save' => [$object, [$register, $schema, $uuid]]];
 				return $object;
 			}
