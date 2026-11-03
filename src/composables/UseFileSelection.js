@@ -55,38 +55,21 @@ export function useFileSelection(options) {
 	//   - relatedData.publication.files is what ViewObject fetches and renders
 	//   - collections.publicationAttachments is what PublicationDetail / a prior
 	//     upload populates
+	const readRelatedFiles = () =>
+		objectStore.getRelatedData
+		&& objectStore.getRelatedData('publication', 'files')
+	const readAttachmentCollection = () =>
+		objectStore.getCollection
+		&& objectStore.getCollection('publicationAttachments')
 	const getExistingNames = () => {
 		const queued = Array.isArray(filesList.value)
 			? filesList.value.map((f) => f.name)
 			: []
-		const attached = []
-		try {
-			const related =
-				objectStore.getRelatedData
-				&& objectStore.getRelatedData('publication', 'files')
-			const relatedResults = Array.isArray(related?.results)
-				? related.results
-				: []
-			for (const f of relatedResults) {
-				if (f?.name) attached.push(f.name)
-				else if (f?.title) attached.push(f.title)
-			}
-		} catch (_) {
-			/* ignore */
-		}
-		try {
-			const attCol =
-				objectStore.getCollection
-				&& objectStore.getCollection('publicationAttachments')
-			const colResults = Array.isArray(attCol?.results) ? attCol.results : []
-			for (const f of colResults) {
-				if (f?.name) attached.push(f.name)
-				else if (f?.title) attached.push(f.title)
-			}
-		} catch (_) {
-			/* ignore */
-		}
-		return new Set([...queued, ...attached])
+		return new Set([
+			...queued,
+			...attachedNames(readRelatedFiles),
+			...attachedNames(readAttachmentCollection),
+		])
 	}
 
 	// Wrap a raw File into a new File with tags/status metadata.
@@ -108,41 +91,15 @@ export function useFileSelection(options) {
 		return newFile
 	}
 
-	// Handling of files drop
-	const onDrop = (files) => {
-		if (!files || files.length === 0) {
-			return
-		}
-		if (files instanceof FileList) {
-			files = Array.from(files)
-		}
+	// Normalise a drop to an array, cut to one file unless multiple are allowed.
+	const dropToList = (files) => {
+		const list = files instanceof FileList ? Array.from(files) : files
+		return list.length > 1 && !allowMultiple ? [list[0]] : list
+	}
 
-		if (files.length > 1 && !allowMultiple) {
-			files = [files[0]]
-		}
-
-		// Cross-session + within-session duplicate filter. Applies to every
-		// drop path (initial, additive, single-file) so the rule is uniform.
-		const existingNames = getExistingNames()
-		const rejected = []
-		const accepted = []
-		for (const file of files) {
-			if (existingNames.has(file.name)) {
-				rejected.push(file.name)
-			} else {
-				accepted.push(file)
-				// Block subsequent files in the same drop from re-adding the
-				// same name (defensive — duplicates within a single drop).
-				existingNames.add(file.name)
-			}
-		}
-		rejectedDuplicates.value = {
-			names: rejected,
-			seq: rejectedDuplicates.value.seq + 1,
-		}
-
-		const wrapped = accepted.map(wrapFile)
-
+	// Add to the queue when multiple files are allowed and some are queued,
+	// otherwise replace it (an empty drop keeps the queue).
+	const queueFiles = (wrapped) => {
 		if (
 			allowMultiple
 			&& Array.isArray(filesList.value)
@@ -152,6 +109,26 @@ export function useFileSelection(options) {
 		} else {
 			filesList.value = wrapped.length > 0 ? wrapped : filesList.value
 		}
+	}
+
+	// Handling of files drop
+	const onDrop = (files) => {
+		if (!files || files.length === 0) {
+			return
+		}
+
+		// Cross-session + within-session duplicate filter. Applies to every
+		// drop path (initial, additive, single-file) so the rule is uniform.
+		const { accepted, rejected } = splitDuplicates(
+			dropToList(files),
+			getExistingNames(),
+		)
+		rejectedDuplicates.value = {
+			names: rejected,
+			seq: rejectedDuplicates.value.seq + 1,
+		}
+
+		queueFiles(accepted.map(wrapFile))
 
 		onFileDrop && onFileDrop()
 		onFileSelect && onFileSelect()
@@ -211,4 +188,55 @@ export function useFileSelection(options) {
 		setTags,
 		rejectedDuplicates,
 	}
+}
+
+/**
+ * The names of attached files from one store source; an entry without a name
+ * falls back to its title. A source that throws contributes the names read
+ * before it threw.
+ *
+ * @param {() => (object|null|undefined)} readSource Returns an object with a `results` list.
+ * @return {Array<string>} The names.
+ */
+function attachedNames(readSource) {
+	const names = []
+	try {
+		for (const f of resultsOf(readSource())) {
+			const name = f?.name || f?.title
+			if (name) names.push(name)
+		}
+	} catch (_) {
+		/* ignore */
+	}
+	return names
+}
+
+/**
+ * @param {object|null|undefined} source A store collection or related-data entry.
+ * @return {Array} Its `results`, or an empty list when that is not a list.
+ */
+function resultsOf(source) {
+	return Array.isArray(source?.results) ? source.results : []
+}
+
+/**
+ * Split dropped files into those to queue and the names to reject because
+ * they exist already or repeat earlier in the same drop.
+ *
+ * @param {Array<File>} files The dropped files.
+ * @param {Set<string>} existingNames Names that block a file; extended with each accepted name.
+ * @return {{accepted: Array<File>, rejected: Array<string>}} The split.
+ */
+function splitDuplicates(files, existingNames) {
+	const rejected = []
+	const accepted = []
+	for (const file of files) {
+		if (existingNames.has(file.name)) {
+			rejected.push(file.name)
+		} else {
+			accepted.push(file)
+			existingNames.add(file.name)
+		}
+	}
+	return { accepted, rejected }
 }
