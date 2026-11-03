@@ -74,57 +74,63 @@ class ObligationOverviewService {
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
-		$obligations = [];
-		$unread = [];
-		$read = 0;
-		$registered = 0;
-
+		$tally = ['obligations' => [], 'unread' => [], 'read' => 0, 'registered' => 0, 'now' => $moment];
 		foreach ($sources as $source) {
-			if ((bool)($source['enabled'] ?? true) === false) {
-				continue;
-			}
-
-			$registered++;
-			$appId = (string)($source['appId'] ?? '');
-			$answer = ($obligationsBySource[$appId] ?? null);
-
-			if ($answer instanceof \Throwable) {
-				$unread[] = ['appId' => $appId, 'reason' => $answer->getMessage()];
-				continue;
-			}
-
-			if (is_array($answer) === false) {
-				$unread[] = ['appId' => $appId, 'reason' => 'This source was never asked.'];
-				continue;
-			}
-
-			$read++;
-			foreach ($answer as $obligation) {
-				if (is_array($obligation) === false) {
-					continue;
-				}
-
-				$obligation['source'] = $appId;
-				$obligation['state'] = $this->stateOf(obligation: $obligation, now: $moment);
-				$obligations[] = $obligation;
+			if ((bool)($source['enabled'] ?? true) === true) {
+				$appId = (string)($source['appId'] ?? '');
+				$tally = $this->readSource(tally: $tally, answered: ['appId' => $appId, 'answer' => ($obligationsBySource[$appId] ?? null)]);
 			}
 		}
 
+		$obligations = $tally['obligations'];
 		$published = count(array_filter($obligations, static fn (array $row): bool => $row['state'] === 'published'));
-		$late = count(array_filter($obligations, static fn (array $row): bool => $row['state'] === 'late'));
 
 		return [
 			'total' => count($obligations),
 			'published' => $published,
-			'late' => $late,
+			'late' => count(array_filter($obligations, static fn (array $row): bool => $row['state'] === 'late')),
 			'outstanding' => (count($obligations) - $published),
-			'unreadSources' => $unread,
+			'unreadSources' => $tally['unread'],
 			'obligations' => $obligations,
-			'sourcesRead' => $read,
-			'sourcesRegistered' => $registered,
+			'sourcesRead' => $tally['read'],
+			'sourcesRegistered' => $tally['registered'],
 		];
 
 	}//end assemble()
+
+	/**
+	 * The tally with one registered source read: its obligations with their state, or
+	 * the source listed as unread when it failed or was never asked.
+	 *
+	 * @param array{obligations: array, unread: array, read: int, registered: int, now: DateTimeInterface} $tally The tally so far.
+	 * @param array{appId: string, answer: mixed} $answered The source and what it answered.
+	 *
+	 * @return array{obligations: array, unread: array, read: int, registered: int, now: DateTimeInterface}
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
+	 */
+	private function readSource(array $tally, array $answered): array {
+		$tally['registered']++;
+		$answer = $answered['answer'];
+		if ($answer instanceof \Throwable) {
+			$tally['unread'][] = ['appId' => $answered['appId'], 'reason' => $answer->getMessage()];
+			return $tally;
+		}
+
+		if (is_array($answer) === false) {
+			$tally['unread'][] = ['appId' => $answered['appId'], 'reason' => 'This source was never asked.'];
+			return $tally;
+		}
+
+		$tally['read']++;
+		foreach (array_filter($answer, 'is_array') as $obligation) {
+			$obligation['source'] = $answered['appId'];
+			$obligation['state'] = $this->stateOf(obligation: $obligation, now: $tally['now']);
+			$tally['obligations'][] = $obligation;
+		}
+
+		return $tally;
+	}//end readSource()
 
 	/**
 	 * Where one obligation stands.
