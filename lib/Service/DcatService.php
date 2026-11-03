@@ -652,21 +652,8 @@ class DcatService implements DcatServiceInterface {
 	public function validateCatalog(array $catalog, string $catalogSlug): array {
 		$document = $this->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: 1);
 		$violations = $this->assurance->profileVersionViolations();
-		foreach ($this->serializer->graphNodes($document) as $node) {
-			if (($node['@type'] ?? '') !== 'dcat:Dataset') {
-				continue;
-			}
 
-			$missing = $this->mandatoryViolations(node: $node);
-			if (empty($missing) === false) {
-				$violations[] = [
-					'iri' => ($node['@id'] ?? ''),
-					'missing' => $missing,
-				];
-			}
-		}
-
-		return $violations;
+		return array_merge($violations, $this->datasetViolations(document: $document, tag: []));
 	}//end validateCatalog()
 
 	/**
@@ -705,21 +692,11 @@ class DcatService implements DcatServiceInterface {
 			violations: $themeViolations
 		);
 
-		$violations = array_merge($this->assurance->profileVersionViolations(), $themeViolations);
-		foreach ($this->serializer->graphNodes($document) as $node) {
-			if (($node['@type'] ?? '') !== 'dcat:Dataset') {
-				continue;
-			}
-
-			$missing = $this->mandatoryViolations(node: $node);
-			if (empty($missing) === false) {
-				$violations[] = [
-					'iri' => ($node['@id'] ?? ''),
-					'axis' => 'mandatory',
-					'missing' => $missing,
-				];
-			}
-		}
+		$violations = array_merge(
+			$this->assurance->profileVersionViolations(),
+			$themeViolations,
+			$this->datasetViolations(document: $document, tag: ['axis' => 'mandatory'])
+		);
 
 		return [
 			'sourceUrl' => $this->harvestSourceUrl(),
@@ -728,6 +705,32 @@ class DcatService implements DcatServiceInterface {
 		];
 
 	}//end validateForDonl()
+
+	/**
+	 * One violation per dataset in a document that lacks a mandatory property.
+	 *
+	 * @param array<string, mixed> $document The JSON-LD catalog document.
+	 * @param array<string, string> $tag     Keys every violation carries between its iri and what is missing.
+	 *
+	 * @return array<int, array<string, mixed>> The violations.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
+	 */
+	private function datasetViolations(array $document, array $tag): array {
+		$violations = [];
+		foreach ($this->serializer->graphNodes($document) as $node) {
+			$missing = [];
+			if (($node['@type'] ?? '') === 'dcat:Dataset') {
+				$missing = $this->mandatoryViolations(node: $node);
+			}
+
+			if ($missing !== []) {
+				$violations[] = ['iri' => ($node['@id'] ?? '')] + $tag + ['missing' => $missing];
+			}
+		}
+
+		return $violations;
+	}//end datasetViolations()
 
 	/**
 	 * Determine the DCAT-AP-NL mandatory properties missing from a dataset node.
@@ -764,18 +767,8 @@ class DcatService implements DcatServiceInterface {
 			return [];
 		}
 
-		$query = [
-			'@self' => ['register' => $register, 'schema' => $schema],
-			'hasDcat' => true,
-			'_limit' => self::MAX_PER_PAGE,
-		];
-
-		$result = $this->getObjectService()->searchObjectsPaginated(
-			query: $query,
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+		$query = ['@self' => ['register' => $register, 'schema' => $schema], 'hasDcat' => true, '_limit' => self::MAX_PER_PAGE];
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
 
 		$catalogs = [];
 		foreach (($result['results'] ?? []) as $catalog) {
