@@ -591,51 +591,71 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	 *
 	 * @return array<int, array<string, string>> The dataset reference nodes.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
-	 *
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	private function listVisiblePublicationRefs(array $catalog, string $catalogSlug): array {
 		$objectService = $this->getObjectService();
-		if ($objectService === null) {
+		$searchQuery = $this->catalogScopeQuery(catalog: $catalog);
+		if ($objectService === null || $searchQuery === null) {
 			return [];
 		}
-
-		$registers = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
-		$schemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
-		if ($registers === [] || $schemas === []) {
-			return [];
-		}
-
-		// One schema in one register → scalar fast path; anything else keeps the lists
-		// OR's multi-schema route reads (WOO-581 review round 4, CallerScope::writeScope()).
-		$searchQuery = CallerScope::writeScope(query: ['_limit' => self::MAX_PER_PAGE], registers: $registers, schemas: $schemas);
 
 		try {
-			$result = $objectService->searchObjectsPaginated(
-				query: $searchQuery,
-				_rbac: true,
-				_multitenancy: false,
-				deleted: false
-			);
+			$result = $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false, deleted: false);
 		} catch (\Throwable $e) {
 			$this->logger->debug('[SchemaOrgService] Catalog dataset listing failed', ['catalog' => $catalogSlug, 'error' => $e->getMessage()]);
 			return [];
 		}
 
+		return $this->datasetRefs(publications: ($result['results'] ?? []), catalogSlug: $catalogSlug);
+	}//end listVisiblePublicationRefs()
+
+	/**
+	 * The search over the catalog's registers and schemas, or null when either list is empty.
+	 *
+	 * One schema in one register takes OR's scalar fast path; anything else keeps the
+	 * lists OR's multi-schema route reads (WOO-581 review round 4, CallerScope::writeScope()).
+	 *
+	 * @param array<string, mixed> $catalog The catalog object.
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure static function.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function catalogScopeQuery(array $catalog): ?array {
+		$registers = $this->normaliseIdList(raw: ($catalog['registers'] ?? []));
+		$schemas = $this->normaliseIdList(raw: ($catalog['schemas'] ?? []));
+		if ($registers === [] || $schemas === []) {
+			return null;
+		}
+
+		return CallerScope::writeScope(query: ['_limit' => self::MAX_PER_PAGE], registers: $registers, schemas: $schemas);
+	}//end catalogScopeQuery()
+
+	/**
+	 * The `{@id}` dataset refs of the publications found, skipping any without a uuid or id.
+	 *
+	 * @param iterable $publications The search results.
+	 * @param string   $catalogSlug  The catalog slug.
+	 *
+	 * @return array<int, array<string, string>>
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function datasetRefs(iterable $publications, string $catalogSlug): array {
 		$refs = [];
-		foreach (($result['results'] ?? []) as $publication) {
+		foreach ($publications as $publication) {
 			$publication = $this->toArray(item: $publication);
 			$uuid = (string)($publication['@self']['uuid'] ?? $publication['id'] ?? '');
-			if ($uuid === '') {
-				continue;
+			if ($uuid !== '') {
+				$refs[] = ['@id' => $this->dcatService->datasetIri($catalogSlug, $uuid)];
 			}
-
-			$refs[] = ['@id' => $this->dcatService->datasetIri($catalogSlug, $uuid)];
 		}
 
 		return $refs;
-	}//end listVisiblePublicationRefs()
+	}//end datasetRefs()
 
 	/**
 	 * Normalise a catalog register/schema list (array or JSON string) to integer IDs.
@@ -647,26 +667,15 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	 * @spec exclude ID-list normalisation plumbing.
 	 */
 	private function normaliseIdList(array|string|null $raw): array {
-		if ($raw === null) {
+		if (is_string($raw) === true) {
+			$raw = json_decode($raw, true);
+		}
+
+		if (is_array($raw) === false) {
 			return [];
 		}
 
-		if (is_string($raw) === true) {
-			$decoded = json_decode($raw, true);
-			$raw = [];
-			if (is_array($decoded) === true) {
-				$raw = $decoded;
-			}
-		}
-
-		$ids = [];
-		foreach ($raw as $value) {
-			if (is_numeric($value) === true) {
-				$ids[] = (int)$value;
-			}
-		}
-
-		return $ids;
+		return array_map('intval', array_values(array_filter($raw, 'is_numeric')));
 	}//end normaliseIdList()
 
 	/**
