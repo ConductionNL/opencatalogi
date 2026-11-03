@@ -41,10 +41,10 @@ class CommunityPages {
 	/**
 	 * Constructor.
 	 *
-	 * @param StatusPageServiceInterface   $statusService The status page.
-	 * @param AtomFeedServiceInterface     $feedService   The catalogue feed.
+	 * @param StatusPageServiceInterface $statusService The status page.
+	 * @param AtomFeedServiceInterface $feedService The catalogue feed.
 	 * @param MarkupRenderServiceInterface $markupService The markup renderer.
-	 * @param RegisterAccess               $registers     The configured register pairs and the ObjectService.
+	 * @param RegisterAccess $registers The configured register pairs and the ObjectService.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -60,8 +60,8 @@ class CommunityPages {
 	/**
 	 * The status page as an anonymous reader sees it.
 	 *
-	 * @param array $components     The stored statuses.
-	 * @param int   $stalenessHours How long a state stays current.
+	 * @param array $components The stored statuses.
+	 * @param int $stalenessHours How long a state stays current.
 	 *
 	 * @return array The components and their states.
 	 *
@@ -69,7 +69,6 @@ class CommunityPages {
 	 */
 	public function renderStatus(array $components, int $stalenessHours): array {
 		return $this->statusService->render(components: $components, stalenessHours: $stalenessHours);
-
 	}//end renderStatus()
 
 	/**
@@ -123,6 +122,5 @@ class CommunityPages {
 	 */
 	public function renderMarkup(string $markup): array {
 		return $this->markupService->render(markup: $markup);
-
 	}//end renderMarkup()
 }//end class

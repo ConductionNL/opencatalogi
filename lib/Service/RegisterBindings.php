@@ -39,7 +39,7 @@ class RegisterBindings {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig         $config    App configuration.
+	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container Server container for resolving OpenRegister.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
@@ -67,7 +67,6 @@ class RegisterBindings {
 		}
 
 		return $value;
-
 	}//end configuredId()
 
 	/**
@@ -83,6 +82,5 @@ class RegisterBindings {
 	 */
 	public function service(string $serviceId): mixed {
 		return $this->container->get($serviceId);
-
 	}//end service()
 }//end class

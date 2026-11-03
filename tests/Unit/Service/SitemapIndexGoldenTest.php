@@ -161,7 +161,9 @@ class SitemapIndexGoldenTest extends TestCase {
 			/**
 			 * @param array<string, mixed> $data The row.
 			 */
-			public function __construct(private array $data) {
+			public function __construct(
+				private array $data,
+			) {
 			}
 
 			/**
@@ -209,7 +211,9 @@ class SitemapIndexGoldenTest extends TestCase {
 				/**
 				 * @param array<string, mixed> $object The catalog data.
 				 */
-				public function __construct(private array $object) {
+				public function __construct(
+					private array $object,
+				) {
 				}
 
 				/**
@@ -277,7 +281,6 @@ class SitemapIndexGoldenTest extends TestCase {
 		$response = $service->buildSitemapIndex('the-catalog', 'sitemapindex-diwoo-infocat001.xml');
 
 		return ['status' => $response->getStatus(), 'body' => $response->render(), 'calls' => $calls];
-
 	}//end index()
 
 	/**

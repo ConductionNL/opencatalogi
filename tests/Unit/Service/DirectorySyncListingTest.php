@@ -108,7 +108,7 @@ class DirectorySyncListingTest extends TestCase {
 	 * Assert the time-stamped keys are ISO 8601 and replace them with a marker.
 	 *
 	 * @param array $object The saved object.
-	 * @param array $keys   The keys holding "now".
+	 * @param array $keys The keys holding "now".
 	 *
 	 * @return array
 	 */

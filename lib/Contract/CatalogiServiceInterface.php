@@ -26,7 +26,6 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCP\AppFramework\Http\JSONResponse;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use RuntimeException;
 
 /**
  * Contract of CatalogiService, for callers in other components.

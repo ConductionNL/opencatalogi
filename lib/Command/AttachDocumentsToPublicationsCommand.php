@@ -132,7 +132,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Read every document and migrate it.
 	 *
-	 * @param InputInterface  $input  Console input.
+	 * @param InputInterface $input Console input.
 	 * @param OutputInterface $output Console output stream.
 	 *
 	 * @return int Symfony command exit code.
@@ -224,8 +224,8 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Read every document, or null when they cannot be read.
 	 *
-	 * @param object          $objectService The OpenRegister ObjectService.
-	 * @param OutputInterface $output        Console output stream.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param OutputInterface $output Console output stream.
 	 *
 	 * @return array<int, mixed>|null The documents, or null on failure.
 	 *
@@ -252,8 +252,8 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Migrate one document.
 	 *
-	 * @param mixed               $document The document row.
-	 * @param array<string,mixed> $run      The run: `services` from openRegisterServices(), `dryRun`, `keepDocuments` and `output`.
+	 * @param mixed $document The document row.
+	 * @param array<string,mixed> $run The run: `services` from openRegisterServices(), `dryRun`, `keepDocuments` and `output`.
 	 *
 	 * @return array{migrated:int, files:int, skipped:int, failed:int} The tally for this document.
 	 *
@@ -428,8 +428,8 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Report which publication a document goes to, how many files it has and the window it carries.
 	 *
-	 * @param array<string,mixed> $doc    The document, with its publication, metadata and files.
-	 * @param OutputInterface     $output Console output stream.
+	 * @param array<string,mixed> $doc The document, with its publication, metadata and files.
+	 * @param OutputInterface $output Console output stream.
 	 *
 	 * @return void
 	 *
@@ -471,8 +471,8 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Move one file from the document onto its publication and carry the metadata over.
 	 *
-	 * @param object              $file The file.
-	 * @param array<string,mixed> $doc  The document, with its publication, metadata and the run's services.
+	 * @param object $file The file.
+	 * @param array<string,mixed> $doc The document, with its publication, metadata and the run's services.
 	 *
 	 * @return void
 	 */
@@ -519,8 +519,8 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Carry a document's description, labels and publication window onto the moved file.
 	 *
-	 * @param object $file   The moved file.
-	 * @param array  $target The OpenRegister FileMapper and the document's file metadata.
+	 * @param object $file The moved file.
+	 * @param array $target The OpenRegister FileMapper and the document's file metadata.
 	 *
 	 * @return void
 	 */
@@ -580,7 +580,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 * Write one line from the message table.
 	 *
 	 * @param OutputInterface $output The console output.
-	 * @param array           $line   The message key, then its arguments.
+	 * @param array $line The message key, then its arguments.
 	 *
 	 * @return void
 	 */

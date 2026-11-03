@@ -427,7 +427,6 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		}
 
 		return $this->error(code: $code, message: ($error ?? 'Publication not found.'));
-
 	}//end showRefusal()
 
 	/**
@@ -440,7 +439,6 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	 */
 	private function refuses(int $statusCode, bool $hasError): bool {
 		return ($statusCode === Http::STATUS_NOT_FOUND || ($hasError === true && $statusCode >= 400));
-
 	}//end refuses()
 
 	/**
@@ -456,7 +454,6 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		}
 
 		return (string)$data['error'];
-
 	}//end errorOf()
 
 	// =========================================================================

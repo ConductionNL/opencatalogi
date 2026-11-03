@@ -243,7 +243,7 @@ class XMLResponse extends Response {
 	 * a map, or whose name is no valid attribute name, stays a child element.
 	 *
 	 * @param DOMElement $element The element.
-	 * @param array      $data    The element's data.
+	 * @param array $data The element's data.
 	 *
 	 * @return array The data without the keys written as attributes.
 	 */

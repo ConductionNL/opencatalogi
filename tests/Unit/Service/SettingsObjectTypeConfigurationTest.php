@@ -80,13 +80,16 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 	 * An entity-shaped object with an id and a serialised form.
 	 *
 	 * @param array $data The serialised entity.
-	 * @param int   $id   The id.
+	 * @param int $id The id.
 	 *
 	 * @return object
 	 */
 	private function entity(array $data, int $id = 0): object {
 		return new class($data, $id) {
-			public function __construct(private array $data, private int $id) {
+			public function __construct(
+				private array $data,
+				private int $id,
+			) {
 			}
 
 			public function jsonSerialize(): array {
@@ -103,7 +106,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 	 * A mocked OpenRegister entity of the given class with only an id.
 	 *
 	 * @param string $class The entity class.
-	 * @param int    $id    The id.
+	 * @param int $id The id.
 	 *
 	 * @return MockObject
 	 */

@@ -46,9 +46,9 @@ class ObligationController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                $appName     The app name.
-	 * @param IRequest              $request     The request.
-	 * @param IL10N                 $l10n        Localisation.
+	 * @param string $appName The app name.
+	 * @param IRequest $request The request.
+	 * @param IL10N $l10n Localisation.
 	 * @param ObligationReadServiceInterface $readService Reads the sources.
 	 */
 	public function __construct(
@@ -75,7 +75,7 @@ class ObligationController extends Controller {
 		} catch (\RuntimeException $e) {
 			return new JSONResponse(
 				data: [
-					'error'   => 'sources-unreadable',
+					'error' => 'sources-unreadable',
 					'message' => $this->l10n->t('The obligation sources could not be read, so this is not an overview of nothing.'),
 				],
 				statusCode: Http::STATUS_SERVICE_UNAVAILABLE

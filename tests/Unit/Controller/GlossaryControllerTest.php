@@ -12,11 +12,11 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use Unit\Support\ServerAwareRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Unit tests for GlossaryController.
@@ -208,12 +208,12 @@ class GlossaryControllerTest extends TestCase {
 				['opencatalogi', 'cors_allowed_origins', '*', '*'],
 			]);
 		$this->request->method('getParams')->willReturn([
-				'_schemas' => [56],
-				'_registers' => [99],
-				'_schema' => 56,
-				'schema' => 56,
-				'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
-			]);
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+		]);
 		$this->request->server = [];
 
 		$this->assertEquals(200, $this->controller->index()->getStatus());

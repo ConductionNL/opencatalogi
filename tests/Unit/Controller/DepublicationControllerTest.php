@@ -161,7 +161,9 @@ class DepublicationControllerTest extends TestCase {
 			/**
 			 * @param array<string, array<string, mixed>> $stored Objects by id.
 			 */
-			public function __construct(private array $stored) {
+			public function __construct(
+				private array $stored,
+			) {
 			}
 
 			public function find(string $id, string $register, string $schema): array {

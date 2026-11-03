@@ -60,7 +60,6 @@ class WooRequestIntake implements InformationRequestIntakeInterface {
 	 */
 	public const OUTCOME_REFUSED = 'refused';
 
-
 	/**
 	 * Who the stored request says registered it.
 	 */
@@ -142,7 +141,6 @@ class WooRequestIntake implements InformationRequestIntakeInterface {
 		}
 
 		return $this->outcome(outcome: self::OUTCOME_ARMED, requestId: $requestId, reference: $reference, dueAt: $dueAt);
-
 	}//end receive()
 
 	/**
@@ -180,7 +178,7 @@ class WooRequestIntake implements InformationRequestIntakeInterface {
 	 *
 	 * @spec exclude internal helper, shapes the answer.
 	 */
-	private function outcome(string $outcome, string $requestId='', string $reference='', string $dueAt='', string $message=''): array {
+	private function outcome(string $outcome, string $requestId = '', string $reference = '', string $dueAt = '', string $message = ''): array {
 		return [
 			'outcome' => $outcome,
 			'requestId' => $requestId,

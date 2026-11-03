@@ -73,7 +73,6 @@ use RuntimeException;
 class PublicationsController extends Controller {
 	use AnswersCacheably;
 
-
 	/**
 	 * Maximum number of extend entries accepted on public read endpoints.
 	 *
@@ -210,9 +209,9 @@ class PublicationsController extends Controller {
 	 * answer into a 304, and ANA-001 says a `304 Not Modified` MUST NOT be counted.
 	 * Counted before it, every revalidation by a browser or CDN was a view.
 	 *
-	 * @param JSONResponse $response      The detail answer.
-	 * @param string       $publicationId The publication's id.
-	 * @param string       $catalogSlug   The catalogue the publication was read through.
+	 * @param JSONResponse $response The detail answer.
+	 * @param string $publicationId The publication's id.
+	 * @param string $catalogSlug The catalogue the publication was read through.
 	 *
 	 * @return JSONResponse The answer with its cache headers, or the 304 that replaces it.
 	 */
@@ -223,7 +222,6 @@ class PublicationsController extends Controller {
 		}
 
 		return $response;
-
 	}//end countedView()
 
 	/**
@@ -620,7 +618,6 @@ class PublicationsController extends Controller {
 		$this->addCorsHeaders(response: $response);
 
 		return $this->cacheableForCaller(response: $response);
-
 	}//end emptyCatalogEnvelope()
 
 	/**
@@ -677,7 +674,6 @@ class PublicationsController extends Controller {
 		$this->addCorsHeaders(response: $response);
 
 		return $this->cacheableForCaller(response: $response);
-
 	}//end catalogPublications()
 
 	/**
@@ -702,7 +698,6 @@ class PublicationsController extends Controller {
 		$requestParams['_extend'] = $safeExtend;
 
 		return $requestParams;
-
 	}//end publicListParams()
 
 	/**
@@ -729,7 +724,6 @@ class PublicationsController extends Controller {
 		);
 
 		return $result;
-
 	}//end withoutEmptyValues()
 
 	/**
@@ -753,7 +747,6 @@ class PublicationsController extends Controller {
 		}
 
 		return $item;
-
 	}//end withoutEmptyItemValues()
 
 	/**
@@ -920,7 +913,6 @@ class PublicationsController extends Controller {
 		}
 
 		return $this->sanitizePublicExtend(extend: $extend);
-
 	}//end publicExtendFromRequest()
 
 	/**
@@ -955,7 +947,6 @@ class PublicationsController extends Controller {
 		}
 
 		return $this->answerFound(read: $read, found: $found);
-
 	}//end showPublication()
 
 	/**
@@ -990,7 +981,6 @@ class PublicationsController extends Controller {
 		// Everything downstream (withheld list, view counter) keys on the
 		// publication UUID, not on the slug the URL carried.
 		return new FoundPublication(object: $object, publicationId: (string)$object->getUuid());
-
 	}//end findPublication()
 
 	/**
@@ -1022,7 +1012,6 @@ class PublicationsController extends Controller {
 		}
 
 		return $this->findByUuidAtLocation(objectService: $objectService, query: $query);
-
 	}//end findByUuidInCatalogScope()
 
 	/**
@@ -1056,7 +1045,6 @@ class PublicationsController extends Controller {
 		}
 
 		return $objects[0];
-
 	}//end findByUuidAtLocation()
 
 	/**
@@ -1111,7 +1099,6 @@ class PublicationsController extends Controller {
 		}
 
 		return $this->renderedPublication(read: $read, found: $found);
-
 	}//end answerFound()
 
 	/**
@@ -1144,7 +1131,6 @@ class PublicationsController extends Controller {
 			]
 		);
 		return false;
-
 	}//end inCatalogScope()
 
 	/**
@@ -1191,7 +1177,6 @@ class PublicationsController extends Controller {
 		$this->addCorsHeaders(response: $response);
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
-
 	}//end renderedPublication()
 
 	/**
@@ -1214,7 +1199,6 @@ class PublicationsController extends Controller {
 		$response->addHeader('Content-Type', 'application/ld+json');
 
 		return $response;
-
 	}//end schemaOrgResponse()
 
 	/**
@@ -1503,7 +1487,7 @@ class PublicationsController extends Controller {
 			// they get the read-rule guard too (WOO-581 review round 2). OR counts every
 			// related object before it cuts the page: fetch the whole list and let the guard
 			// cut the caller's page after filtering, for an exact `total` (round 3).
-			$page = ['limit' => max(0, (int) ($queryParams['_limit'] ?? 30)), 'offset' => max(0, (int) ($queryParams['_offset'] ?? 0))];
+			$page = ['limit' => max(0, (int)($queryParams['_limit'] ?? 30)), 'offset' => max(0, (int)($queryParams['_offset'] ?? 0))];
 			$queryParams = array_merge($queryParams, ['_limit' => PHP_INT_MAX, '_offset' => 0]);
 			$result = $objectService->getObjectUses(
 				objectId: $id,

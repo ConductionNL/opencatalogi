@@ -71,7 +71,6 @@ final class SearchQueryTranslator {
 	 */
 	public static function translateSearchParams(array $params): array {
 		return self::periodToRange(params: self::renameFilters(params: $params));
-
 	}//end translateSearchParams()
 
 	/**
@@ -95,7 +94,6 @@ final class SearchQueryTranslator {
 		}
 
 		return $params;
-
 	}//end renameFilters()
 
 	/**
@@ -113,7 +111,6 @@ final class SearchQueryTranslator {
 		}
 
 		return $params;
-
 	}//end periodToRange()
 
 	/**
@@ -122,8 +119,8 @@ final class SearchQueryTranslator {
 	 * The period field is always removed; an empty or null value, or a range that is not
 	 * a list of bounds, adds nothing.
 	 *
-	 * @param array<string, mixed>        $params The search parameters.
-	 * @param array{0: string, 1: string} $bound  The period field and its range operator.
+	 * @param array<string, mixed> $params The search parameters.
+	 * @param array{0: string, 1: string} $bound The period field and its range operator.
 	 *
 	 * @return array<string, mixed> The parameters.
 	 *
@@ -144,7 +141,6 @@ final class SearchQueryTranslator {
 
 		$params['publicationDate'] = $range;
 		return $params;
-
 	}//end withPeriodBound()
 
 	/**
@@ -166,7 +162,6 @@ final class SearchQueryTranslator {
 		}
 
 		return self::translateSearchParams(params: array_merge($params, self::savedFilters(query: $query)));
-
 	}//end fromSavedQuery()
 
 	/**
@@ -192,7 +187,6 @@ final class SearchQueryTranslator {
 		}
 
 		return $carried;
-
 	}//end savedFilters()
 
 	/**
@@ -206,6 +200,5 @@ final class SearchQueryTranslator {
 	 */
 	private static function filled(mixed $value): bool {
 		return $value !== '' && $value !== [];
-
 	}//end filled()
 }//end class

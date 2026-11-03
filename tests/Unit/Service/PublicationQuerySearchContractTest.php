@@ -50,7 +50,10 @@ class CouncilSearchObjectService {
 	 * @param array<int, array<string, mixed>> $rows The stored publications.
 	 * @param array<string, mixed> $schema The PublicationPayload schema.
 	 */
-	public function __construct(private array $rows, private array $schema) {
+	public function __construct(
+		private array $rows,
+		private array $schema,
+	) {
 	}
 
 	public function runAsAnonymous(callable $operation): mixed {
@@ -164,7 +167,9 @@ class PublicationQuerySearchContractTest extends TestCase {
 		$store = new CouncilSearchObjectService($this->councilPublications(), $this->schema);
 		$catalog = $catalog + ['slug' => 'raad', 'listed' => true, 'published' => '2020-01-01T00:00:00+00:00', 'registers' => [1], 'schemas' => [1]];
 		$catalogi = new class($catalog) {
-			public function __construct(private array $catalog) {
+			public function __construct(
+				private array $catalog,
+			) {
 			}
 
 			public function getCatalogBySlug(string $slug): ?array {

@@ -80,7 +80,7 @@ class FakePortalObjectStore extends PortalObjectStore {
 		return ($this->objects[$schema][$id] ?? null);
 	}
 
-	public function save(string $schema, array $data, ?string $id=null): array {
+	public function save(string $schema, array $data, ?string $id = null): array {
 		if (($this->failSaves[$schema] ?? false) === true) {
 			throw new RuntimeException('save failed');
 		}
@@ -94,7 +94,7 @@ class FakePortalObjectStore extends PortalObjectStore {
 		$data['id'] = $id;
 		$this->objects[$schema][$id] = $data;
 		$this->saves[] = ['schema' => $schema, 'data' => $data];
-		$this->writes[] = 'save:'.$schema;
+		$this->writes[] = 'save:' . $schema;
 		return $data;
 	}
 
@@ -154,14 +154,14 @@ class FakePortalObjectStore extends PortalObjectStore {
 	/**
 	 * Put a publication in the store.
 	 *
-	 * @param string      $id    The uuid.
-	 * @param string      $title The title.
-	 * @param string      $from  The publication date.
+	 * @param string $id The uuid.
+	 * @param string $title The title.
+	 * @param string $from The publication date.
 	 * @param string|null $until The depublication date.
 	 *
 	 * @return void
 	 */
-	public function publication(string $id, string $title, string $from='-1 day', ?string $until=null): void {
+	public function publication(string $id, string $title, string $from = '-1 day', ?string $until = null): void {
 		$this->objects['publication'][$id] = [
 			'id' => $id,
 			'title' => $title,

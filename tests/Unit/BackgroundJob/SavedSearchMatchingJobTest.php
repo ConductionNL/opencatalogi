@@ -36,8 +36,8 @@ class SavedSearchMatchingJobTest extends TestCase {
 	/**
 	 * Run the job's protected run().
 	 *
-	 * @param SavedSearchMatcher $matcher   The matcher.
-	 * @param bool               $installed Whether portaliq is installed.
+	 * @param SavedSearchMatcher $matcher The matcher.
+	 * @param bool $installed Whether portaliq is installed.
 	 *
 	 * @return void
 	 */
@@ -67,7 +67,7 @@ class SavedSearchMatchingJobTest extends TestCase {
 	}
 
 	public function testTheJobIsRegistered(): void {
-		$info = (string)file_get_contents(dirname(__DIR__, 3).'/appinfo/info.xml');
+		$info = (string)file_get_contents(dirname(__DIR__, 3) . '/appinfo/info.xml');
 		$this->assertStringContainsString('<job>OCA\OpenCatalogi\BackgroundJob\SavedSearchMatchingJob</job>', $info);
 	}
 }

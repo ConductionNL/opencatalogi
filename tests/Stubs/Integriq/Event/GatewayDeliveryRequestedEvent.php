@@ -150,7 +150,7 @@ class GatewayDeliveryRequestedEvent extends Event {
 	 * Refuse the request.
 	 *
 	 * @param string $reason What the requester is told.
-	 * @param string $code   unknown-gateway or invalid-request.
+	 * @param string $code unknown-gateway or invalid-request.
 	 *
 	 * @return void
 	 *

@@ -35,11 +35,11 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 class DirectoryPeerFetchTest extends TestCase {
-	private const OWN   = 'https://me.example.org/apps/opencatalogi/api/directory';
-	private const PEER  = 'https://peer.example.org/apps/opencatalogi/api/publications';
+	private const OWN = 'https://me.example.org/apps/opencatalogi/api/directory';
+	private const PEER = 'https://peer.example.org/apps/opencatalogi/api/publications';
 	private const OTHER = 'https://other.example.org/apps/opencatalogi/api/federation/publications';
-	private const DOWN  = 'https://down.example.org/api/publications';
-	private const LAN   = 'http://10.1.2.3/api/publications';
+	private const DOWN = 'https://down.example.org/api/publications';
+	private const LAN = 'http://10.1.2.3/api/publications';
 
 	private DirectoryService $service;
 
