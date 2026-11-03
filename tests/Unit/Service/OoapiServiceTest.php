@@ -239,7 +239,7 @@ class OoapiServiceTest extends TestCase {
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$objectService->method('find')->willReturn(
-			$this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'schema' => 'schema-1'], 'catalog' => 'catalog-1', 'code' => 'INF101', 'name' => 'Course'])
+			$this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'register' => 'reg-1', 'schema' => 'schema-1'], 'catalog' => 'catalog-1', 'code' => 'INF101', 'name' => 'Course'])
 		);
 
 		$this->wireOpenRegister($objectService, $schemaMapper);
@@ -281,5 +281,45 @@ class OoapiServiceTest extends TestCase {
 		$this->assertNotNull($result);
 		$this->assertSame('org-1', $result['organizationId']);
 		$this->assertSame('Universiteit van Amsterdam', $result['name']);
+	}
+
+	/**
+	 * A single resource is served only for its own catalog, register and schema,
+	 * and never for a scope whose catalog has no id.
+	 *
+	 * @return void
+	 */
+	public function testASingleResourceOutsideTheRegisterOrWithoutACatalogIdReadsAsAbsent(): void {
+		$cases = [
+			'own register' => [['id' => 'catalog-1'], ['catalog' => 'catalog-1', 'register' => 'reg-1'], true],
+			'catalog id of another type' => [['id' => 7], ['catalog' => '7', 'register' => 'reg-1'], false],
+			'another register' => [['id' => 'catalog-1'], ['catalog' => 'catalog-1', 'register' => 'reg-9'], false],
+			'no register on the object' => [['id' => 'catalog-1'], ['catalog' => 'catalog-1', 'register' => null], false],
+			'catalog without id, object without catalog' => [['title' => 'x'], ['catalog' => null, 'register' => 'reg-1'], false],
+			'empty catalog id, empty object catalog' => [['id' => ''], ['catalog' => '', 'register' => 'reg-1'], false],
+			'null catalog id, object catalog null' => [['id' => null], ['catalog' => null, 'register' => 'reg-1'], false],
+		];
+		foreach ($cases as $name => [$catalog, $object, $served]) {
+			$this->setUp();
+			$schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
+			$schema->method('jsonSerialize')->willReturn(['x-ooapi' => ['resource' => 'course']]);
+			$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+			$schemaMapper->method('find')->willReturn($schema);
+			$data = ['@self' => ['uuid' => 'course-1', 'schema' => 'schema-1'], 'code' => 'INF101'];
+			if ($object['register'] !== null) {
+				$data['@self']['register'] = $object['register'];
+			}
+
+			if ($object['catalog'] !== null) {
+				$data['catalog'] = $object['catalog'];
+			}
+
+			$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+			$objectService->method('find')->willReturn($this->makeObjectEntity($data));
+			$this->wireOpenRegister($objectService, $schemaMapper);
+
+			$result = $this->service->getResource(new OoapiScope($catalog, 'reg-1', 'schema-1'), 'course-1', 'courseId');
+			$this->assertSame($served, $result !== null, $name);
+		}
 	}
 }
