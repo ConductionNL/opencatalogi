@@ -233,6 +233,9 @@ class RegisterSchemaLinkService
      *
      * @param mixed $schema The candidate entry from the import result.
      *
+     * The accessors are checked with is_callable(): on an OpenRegister entity
+     * getSlug() is a magic accessor, which method_exists() does not see.
+     *
      * @return boolean True when both getId() and getSlug() are callable.
      *
      * @spec exclude Shape guard over an untyped cross-app payload.
@@ -240,8 +243,8 @@ class RegisterSchemaLinkService
     private function isUsableSchema(mixed $schema): bool
     {
         return is_object($schema) === true
-            && method_exists($schema, 'getId') === true
-            && method_exists($schema, 'getSlug') === true;
+            && is_callable([$schema, 'getId']) === true
+            && is_callable([$schema, 'getSlug']) === true;
 
     }//end isUsableSchema()
 
@@ -326,7 +329,7 @@ class RegisterSchemaLinkService
     private function isPublicationRegister(mixed $register): bool
     {
         return is_object($register) === true
-            && method_exists($register, 'getSlug') === true
+            && is_callable([$register, 'getSlug']) === true
             && $register->getSlug() === self::PUBLICATION_REGISTER_SLUG;
 
     }//end isPublicationRegister()
