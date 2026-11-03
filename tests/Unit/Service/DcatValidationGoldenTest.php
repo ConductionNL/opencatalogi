@@ -94,21 +94,14 @@ class DcatValidationGoldenTest extends TestCase {
 		$urls = $this->createMock(IURLGenerator::class);
 		$urls->method('getBaseUrl')->willReturn('https://host');
 
-		$service = new class(
-			new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)),
-			new DcatMappingService(new DcatVocabularyService()),
-			new DcatSerializer(),
-			new InstanceSettings($urls, $this->createMock(IAppConfig::class)),
-			$this->createMock(LoggerInterface::class),
-			new DcatAssurance($versions)
-		) extends DcatService {
+		$service = new class(new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)), new DcatMappingService(new DcatVocabularyService()), new DcatSerializer(), new InstanceSettings($urls, $this->createMock(IAppConfig::class)), $this->createMock(LoggerInterface::class), new DcatAssurance($versions)) extends DcatService {
 			/**
 			 * The served document: the catalog's `graph`, and its `themes` as theme violations.
 			 *
-			 * @param array<string, mixed> $catalog     The catalog.
-			 * @param string               $catalogSlug The slug.
-			 * @param int                  $page        The page.
-			 * @param array                $violations  The theme violations, appended to.
+			 * @param array<string, mixed> $catalog The catalog.
+			 * @param string $catalogSlug The slug.
+			 * @param int $page The page.
+			 * @param array $violations The theme violations, appended to.
 			 *
 			 * @return array<string, mixed> The document.
 			 */

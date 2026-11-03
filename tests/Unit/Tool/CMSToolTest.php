@@ -121,7 +121,7 @@ class CMSToolTest extends TestCase {
 	}
 
 	public function testGetFunctionsMatchesThePublishedDefinitions(): void {
-		$expected = json_decode((string)file_get_contents(__DIR__.'/fixtures/cms-tool-functions.json'), true);
+		$expected = json_decode((string)file_get_contents(__DIR__ . '/fixtures/cms-tool-functions.json'), true);
 
 		$this->assertSame($expected, $this->tool->getFunctions());
 	}

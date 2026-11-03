@@ -65,7 +65,7 @@ class CommentPeriodFakeObjectService {
 		$schema = null,
 		?string $uuid = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true
+		bool $_multitenancy = true,
 	): array {
 		$this->counter++;
 		$object['id'] = 'period-' . $this->counter;
@@ -99,16 +99,16 @@ class CommentPeriodControllerTest extends TestCase {
 	/**
 	 * Build the controller.
 	 *
-	 * @param bool   $registerAvailable Whether the container binds the ObjectService.
-	 * @param string $configured        What the register and schema keys answer.
-	 * @param bool   $signedIn          Whether a user is signed in.
+	 * @param bool $registerAvailable Whether the container binds the ObjectService.
+	 * @param string $configured What the register and schema keys answer.
+	 * @param bool $signedIn Whether a user is signed in.
 	 *
 	 * @return CommentPeriodController The controller.
 	 */
 	private function build(
 		bool $registerAvailable = true,
 		string $configured = '42',
-		bool $signedIn = true
+		bool $signedIn = true,
 	): CommentPeriodController {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn($configured);

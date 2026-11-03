@@ -331,7 +331,7 @@ class CatalogScopeBackfillGoldenTest extends TestCase {
 				mixed $schema = null,
 				?string $uuid = null,
 				bool $_rbac = true,
-				bool $_multitenancy = true
+				bool $_multitenancy = true,
 			) use (&$calls, $failSave): ObjectEntity {
 				if (is_array($object) === true && isset($object['published']) === true
 					&& preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\+00:00$/', (string)$object['published']) === 1
@@ -423,6 +423,5 @@ class CatalogScopeBackfillGoldenTest extends TestCase {
 
 		ksort($appConfig);
 		return ['calls' => $calls, 'config' => $appConfig];
-
 	}//end backfill()
 }//end class

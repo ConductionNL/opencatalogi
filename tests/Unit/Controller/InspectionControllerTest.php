@@ -119,7 +119,9 @@ class InspectionControllerTest extends TestCase {
 	 */
 	private function storedInspection(array $inspection): void {
 		$objectService = new class($inspection) {
-			public function __construct(private readonly array $inspection) {
+			public function __construct(
+				private readonly array $inspection,
+			) {
 			}
 
 			public function find(string $id, string $register, string $schema): array {
@@ -252,7 +254,7 @@ class InspectionControllerTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $object The object to store.
-			 * @param array<int, string>   $extend Unused here.
+			 * @param array<int, string> $extend Unused here.
 			 *
 			 * @return array<string, mixed> The stored object.
 			 */
@@ -425,10 +427,10 @@ class InspectionControllerTest extends TestCase {
 			/**
 			 * Answer the saved inspection inside an OpenRegister envelope.
 			 *
-			 * @param array<string, mixed> $object   The inspection.
-			 * @param array<int, string>   $extend   Unused here.
-			 * @param string               $register Unused here.
-			 * @param string               $schema   Unused here.
+			 * @param array<string, mixed> $object The inspection.
+			 * @param array<int, string> $extend Unused here.
+			 * @param string $register Unused here.
+			 * @param string $schema Unused here.
 			 *
 			 * @return array<string, mixed> The envelope.
 			 */

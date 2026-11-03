@@ -44,7 +44,6 @@ class DepublicationAndIndexTest extends TestCase {
 	 */
 	private function at(string $when): DateTimeImmutable {
 		return new DateTimeImmutable($when, new DateTimeZone('UTC'));
-
 	}//end at()
 
 	/**
@@ -70,7 +69,6 @@ class DepublicationAndIndexTest extends TestCase {
 		);
 
 		return $index;
-
 	}//end answeringIndex()
 
 	public function testOneActionTakesItDownEverywhereAndRecordsWhoAndWhy(): void {

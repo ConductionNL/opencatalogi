@@ -139,8 +139,8 @@ class StatsControllerTest extends TestCase {
 	 * The configured catalogs span registers 30 and 31 and schemas 6 and 7, so
 	 * `pub-1` (31/7) is in scope and `pub-elsewhere` (99/99) is not.
 	 *
-	 * @param array<int, string>   $readable The uuids the caller may read.
-	 * @param array<string, mixed> $extra    Further container entries.
+	 * @param array<int, string> $readable The uuids the caller may read.
+	 * @param array<string, mixed> $extra Further container entries.
 	 */
 	private function wire(array $readable, array $extra = []): void {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);

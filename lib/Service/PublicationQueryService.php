@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Service for publication query building and response shaping.
  *
@@ -43,2549 +44,2439 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength)
  * @SuppressWarnings(PHPMD.TooManyMethods) Small private steps keep each unit short; they are not a public surface.
  */
-class PublicationQueryService implements PublicationQueryServiceInterface
-{
-
-    /**
-     * Order fields that exist in every magic-mapper table.
-     *
-     * Used when filtering _order for multi-register searches.
-     *
-     * @var array<string>
-     */
-    private const UNIVERSAL_ORDER_FIELDS = [
-        '_uuid',
-        '_created',
-        '_updated',
-        '_name',
-        '_description',
-        '_summary',
-        '_relevance',
-    ];
-
-    /**
-     * Hard cap on `_limit` for the anonymous public FTS surface.
-     *
-     * Review #147 🟡 (unauthenticated DoS): without a cap, an anonymous
-     * `?_limit=1000000&_content=true` fanned out unbounded into OR's
-     * chunk-search path, giving a public CPU/memory amplifier. 100 rows
-     * per page matches typical faceted-search UI needs; callers with a
-     * legitimate higher-throughput need MUST paginate.
-     *
-     * @var integer
-     */
-    public const PUBLIC_LIMIT_MAX = 100;
-
-    /**
-     * Whether the missing-runAsAnonymous() warning has been logged this request.
-     *
-     * @var bool
-     */
-    private bool $warnedAboutMissingAnonymousScope = false;
-
-
-    /**
-     * Constructor.
-     *
-     * @param ContainerInterface   $container   DI container
-     * @param IUserSession|null    $userSession User session — consumed by {@see isAnonymous()},
-     *                                          which the public `/publications/{id}/uses` and
-     *                                          `/used-by` endpoints use to gate visibility on
-     *                                          non-public root objects. Auto-wired at runtime.
-     * @param IAppConfig|null      $config      App config; used by the catalog-enumeration path to locate the catalog register/schema.
-     * @param LoggerInterface|null $logger      Logger — surfaces the fail-closed empty-envelope branch so silent
-     *                                          catalog-scope resolution failure is observable in production (WOO-536).
-     */
-    public function __construct(
-        private readonly ContainerInterface $container,
-        private readonly ?IUserSession $userSession=null,
-        private readonly ?IAppConfig $config=null,
-        private readonly ?LoggerInterface $logger=null,
-    ) {
-
-    }//end __construct()
-
-    /**
-     * Assemble the public full-text search result envelope (SCH-PFTS-001,
-     * SCH-PFTS-CAT-001..003).
-     *
-     * Delegates entirely to OR's `ObjectService::searchObjectsPaginated` across the
-     * (register × schema) set derived from the catalog scope. Matches from every
-     * schema in every catalog the caller may see are merged into a single flat array
-     * discriminated by `@self.schema` slug, resolved dynamically via SchemaMapper. A
-     * document row's linked publication is embedded via a per-document
-     * `_relations_contains` refinement; documents whose linked publication is not
-     * publicly visible are dropped (transitive visibility).
-     *
-     * Visibility is enforced in SQL by OR's schema-level RBAC, evaluated as an
-     * anonymous caller for every session (SCH-PFTS-001): the read runs inside OR's
-     * `runAsAnonymous()`, so only `public`-group read rules decide what comes back
-     * and a signed-in administrator sees exactly what an anonymous caller sees.
-     * See the Stap 1 comment inside this method (WOO-578; the interim WOO-551
-     * behaviour applies only on an OpenRegister without that primitive).
-     *
-     * Scope resolution:
-     *   1. `_catalog=<slug>` — that catalog's registers + schemas (SCH-PFTS-CAT-001).
-     *   2. `_catalogi[]=…` — union across the resolved catalogs.
-     *   3. no param — union of `listed: true` + `published` catalogs (SCH-PFTS-CAT-002).
-     * A caller's own `_schema`/`_registers`/`fq`/`catalogSlug` cannot widen scope past
-     * the catalog boundary — those are stripped before forwarding to OR.
-     *
-     * Content-search: this ships metadata search across schema properties + `@self`
-     * metadata. When `_content=true` is set, OR's `_content_search` flag is forwarded
-     * to widen matching to document body text (WOO-517 add-on). Extraction is owned
-     * by OR's TextExtractionService + ChunkMapper.
-     *
-     * @param array  $queryParams   Raw request query parameters from IRequest::getParams().
-     *                              Recognised keys: `_content` (opt-in body-text search),
-     *                              `_catalog` (single catalog slug), `_catalogi[]` (multi
-     *                              catalog union).
-     * @param object $objectService OpenRegister ObjectService instance (already resolved from container).
-     *
-     * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
-     *
-     * @spec openspec/changes/fix-fts-catalog-model-alignment/specs/search/spec.md
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @SuppressWarnings(PHPMD.StaticAccess) SearchRangeGuard::malformedParameter() is a pure function over the query.
-     */
-    public function assemblePublicSearchResults(array $queryParams, object $objectService): array
-    {
-        // A range bound that is neither a date nor a number would reach
-        // OpenRegister and come back as an empty result that reads as "nothing
-        // found". Refuse it by name instead (REQ-SCF-002).
-        $malformed = SearchRangeGuard::malformedParameter(queryParams: $queryParams);
-        if ($malformed !== null) {
-            throw new MalformedSearchParameterException(parameter: $malformed);
-        }
-
-        // ONE anonymous scope around the WHOLE assembly, not just the object reads.
-        // Scope resolution asks OpenRegister's SchemaMapper and RegisterMapper which
-        // schemas and registers exist, and those honour multitenancy by default — so
-        // with a session in play they answer from the caller's active organisation.
-        // Wrapping only the object reads left that door open: a signed-in caller
-        // could resolve a WIDER scope than an anonymous one before the anonymous read
-        // ever started, and see rows an anonymous caller does not. That is exactly
-        // what SCH-PFTS-001 forbids. One scope over the whole method closes the
-        // question for every read on this path, including ones added later.
-        //
-        // The inner `evaluateAsAnonymous()` calls stay: the scope is a depth counter,
-        // so nesting composes, and they keep the guarantee attached to each read for
-        // anyone who calls those helpers from somewhere else.
-        return $this->evaluateAsAnonymous(
-            objectService: $objectService,
-            operation: fn (): array => $this->assembleSearchResultsAsAnonymous(
-                queryParams: $queryParams,
-                objectService: $objectService
-            )
-        );
-
-    }//end assemblePublicSearchResults()
-
-
-    /**
-     * The body of {@see assemblePublicSearchResults()}, always run inside the
-     * anonymous evaluation scope that method opens.
-     *
-     * Private on purpose: calling it directly would skip the scope and reinstate
-     * the WOO-551 drift this ticket exists to remove.
-     *
-     * @param array  $queryParams   Raw request query parameters.
-     * @param object $objectService OpenRegister ObjectService instance.
-     *
-     * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
-     *
-     * @psalm-param   array<string, mixed> $queryParams
-     * @phpstan-param array<string, mixed> $queryParams
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function assembleSearchResultsAsAnonymous(array $queryParams, object $objectService): array
-    {
-        $scope = $this->guardedCatalogScope(queryParams: $queryParams);
-        if ($scope === null) {
-            return [
-                'results' => [],
-                'total'   => 0,
-            ];
-        }
-
-        $run = new PublicSearchAssembly(objectService: $objectService, scope: $scope);
-        // Opt-in content-search (WOO-517): widen matching to include
-        // OR-extracted document body text. Default false — omitted/false is
-        // byte-identical to the WOO-506 baseline, so existing consumers see zero
-        // drift. Read before buildSearchQuery() so the raw `_content` key can be
-        // stripped from the forwarded query below (it is OC's own flag name, not
-        // OR's — OR's equivalent is `_content_search`).
-        $run->contentSearch = filter_var(
-            value: ($queryParams['_content'] ?? false),
-            filter: FILTER_VALIDATE_BOOLEAN
-        );
-        $run->searchQuery = $this->forwardedSearchQuery(queryParams: $queryParams, run: $run);
-
-        // Stap 1 — OR's schema-level RBAC, evaluated AS AN ANONYMOUS CALLER.
-        // SCH-PFTS-001 (WOO-536) promises uniform visibility on this public
-        // endpoint: a signed-in administrator sees exactly what an anonymous
-        // caller sees. The `_rbac_as_public: true` toggle that enforced this was
-        // removed on OR (`31687c6f3`) and WOO-551 accepted the drift to keep the
-        // endpoint alive. WOO-578 brings the guarantee back through OR's
-        // `runAsAnonymous()`: the session subject is cleared for the duration of
-        // the call, so the admin bypass, the `_owner` grant and group rules never
-        // enter the evaluation and only the `public` read rules decide.
-        // `_rbac: true` stays — the public rules ARE the filter.
-        $candidateResult = $this->evaluateAsAnonymous(
-            objectService: $objectService,
-            operation: static fn (): array => $objectService->searchObjectsPaginated(
-                query: $run->searchQuery,
-                _rbac: true,
-                _multitenancy: false
-            )
-        );
-
-        $this->prepareRowShaping(run: $run);
-
-        foreach (($candidateResult['results'] ?? []) as $candidate) {
-            $this->collectCandidateRow(candidate: $candidate, run: $run);
-        }
-
-        return $this->searchEnvelope(candidateResult: $candidateResult, run: $run);
-
-    }//end assembleSearchResultsAsAnonymous()
-
-
-    /**
-     * The catalogue scope of the search with the read-rule guard applied, or null
-     * when the search must answer with the empty envelope.
-     *
-     * @param array $queryParams Raw request query parameters.
-     *
-     * @return array{registers: array<int>, schemas: array<int>}|null The guarded scope, or null.
-     *
-     * @psalm-param   array<string, mixed> $queryParams
-     * @phpstan-param array<string, mixed> $queryParams
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function guardedCatalogScope(array $queryParams): ?array
-    {
-        // Stap 2 — Catalog-derived scope (SCH-PFTS-CAT-001..003).
-        // Replaces the pre-WOO-536 app-config-derived scope (publication_register /
-        // publication_schema / document_schema) with a catalog-model union so
-        // /api/search covers every (register × schema) the caller may see.
-        $scope = $this->resolveCatalogScope(queryParams: $queryParams);
-
-        // SCH-PFTS-CAT-002 guard (WOO-574, tasks.md 3.5 of the WOO-536 change):
-        // a schema whose `authorization` block is EMPTY is filtered by
-        // MagicRbacHandler down to owner-admits OR not-private only, so on this
-        // surface every non-private row of it would be exposed. (A non-empty block
-        // that merely omits `read` already fails closed there — it is dropped too,
-        // for a uniform scope, not because it leaks. Full account on
-        // {@see dropSchemasWithoutReadRules()}.) Drop those schemas from the scope
-        // and warn the operator. The guard used to apply to anonymous callers only,
-        // with signed-in callers left to OR's session RBAC (WOO-551 semantics).
-        // Since WOO-578 every read on this endpoint is evaluated as an anonymous
-        // caller, so the guard holds for every caller: a schema that is open for
-        // want of rules is open for nobody here.
-        //
-        // THE SIBLING GAPS. `/api/{catalogSlug}` and its five sibling routes
-        // (PublicationsController) used to build their scope from
-        // `$catalog['schemas']` without this guard; WOO-580 routed them through
-        // `applyCatalogReadRuleGuard()`. WOO-581 did the same for
-        // `/api/catalogs/{slug}/dcat` and `/schema`, and routed the two readers
-        // that build a UNION over all catalogs — `/api/federation/publications`
-        // and `/api/catalogi/{id}` — through `applySchemaScopeReadRuleGuard()`,
-        // as it did the WOO sitemap: that picks its schema by woo-register
-        // category but admits it on `$catalog['schemas']` membership, so it is a
-        // reader of the same source. OOAPI is not guarded here and needs no guard:
-        // `requireAuthenticatedConsumer()` refuses anonymous callers, and this
-        // guard is anonymous-only.
-        //
-        // A GUARDED SCOPE IS ONLY A GUARD IF IT IS THE SCOPE OR SEARCHES. A
-        // caller's `schema=` / `register=` / `@self[schema]=` used to reach OR as
-        // `@self.schema`, which wins over the guarded `_schemas`; every public list
-        // route now runs the request query through `CallerScope::strip()` first.
-        if (empty($scope['schemas']) === false) {
-            $scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
-        }
-
-        if (empty($scope['schemas']) === true) {
-            // Fail-closed: no schemas in scope — either an explicit _catalog / _catalogi[]
-            // resolved to nothing, or the deployment has no listed+published catalogs.
-            $this->logger?->warning(
-                'PublicationQueryService::assemblePublicSearchResults returning empty envelope — no schemas in resolved catalog scope',
-                [
-                    '_catalog'  => ($queryParams['_catalog']  ?? null),
-                    '_catalogi' => ($queryParams['_catalogi'] ?? null),
-                ]
-            );
-            return null;
-        }
-
-        // ADR-083 preflight: OR is an optional dependency for this path. Establish
-        // that SchemaMapper is loadable BEFORE we touch $objectService — every OR
-        // call downstream ($objectService->buildSearchQuery, ->searchObjectsPaginated,
-        // and the container->get(SchemaMapper) below) assumes the package is present.
-        // If it isn't, return the same empty envelope shape as the no-scope branch
-        // so the endpoint stays uniform for the anonymous caller.
-        if (class_exists('OCA\\OpenRegister\\Db\\SchemaMapper') === false) {
-            $this->logger?->warning(
-                'PublicationQueryService: OpenRegister SchemaMapper unavailable — returning empty envelope',
-                []
-            );
-            return null;
-        }
-
-        return $scope;
-
-    }//end guardedCatalogScope()
-
-
-    /**
-     * The search query forwarded to OpenRegister: the caller's query with every
-     * scope-widening parameter stripped and the guarded catalogue scope applied.
-     *
-     * @param array           $queryParams Raw request query parameters.
-     * @param PublicSearchAssembly $run         The search being assembled.
-     *
-     * @return array<string, mixed> The forwarded query.
-     *
-     * @psalm-param   array<string, mixed> $queryParams
-     * @phpstan-param array<string, mixed> $queryParams
-     *
-     * @spec openspec/specs/search/spec.md
-     * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
-     */
-    private function forwardedSearchQuery(array $queryParams, PublicSearchAssembly $run): array
-    {
-        $searchQuery = $run->objectService->buildSearchQuery($queryParams);
-        // Q7 Interpretation A: strip any client-supplied scope-widening params so a
-        // request cannot bypass the catalog-derived scope. This preserves the
-        // pre-WOO-536 discipline that clients cannot inject their own register/schema
-        // set past the resolved catalog boundary. This used to strip only `_schema` and
-        // `_registers`; `?schema=<S>&register=<R>` reached OR as `@self.schema`, won the
-        // precedence chain and bypassed the SCH-PFTS-CAT-002 guard (WOO-581 review).
-        $searchQuery = CallerScope::strip(query: $searchQuery);
-        unset($searchQuery['catalogSlug'], $searchQuery['fq']);
-        unset($searchQuery['_content']);
-        // OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
-        unset($searchQuery['_catalog'], $searchQuery['_catalogi']);
-
-        $searchQuery = $this->applyResolvedScope(searchQuery: $searchQuery, scope: $run->scope);
-
-        if ($run->contentSearch === true) {
-            $searchQuery = $this->widenForContentSearch(searchQuery: $searchQuery, registerIds: $run->scope['registers']);
-        }
-
-        return $searchQuery;
-
-    }//end forwardedSearchQuery()
-
-
-    /**
-     * Apply the resolved catalogue scope and the public `_limit` cap to a forwarded query.
-     *
-     * @param array $searchQuery The forwarded query.
-     * @param array $scope       The guarded catalogue scope.
-     *
-     * @return array<string, mixed> The query with scope and cap applied.
-     *
-     * @psalm-param   array<string, mixed> $searchQuery
-     * @phpstan-param array<string, mixed> $searchQuery
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function applyResolvedScope(array $searchQuery, array $scope): array
-    {
-        // Apply the resolved scope. Single-register: use `_register` for the magic-mapper
-        // fast path. Multi-register: pass `_registers[]` and explicitly nullify `_register`
-        // to prevent ObjectService from auto-setting it.
-        $searchQuery['_schemas'] = $scope['schemas'];
-        if (count($scope['registers']) === 1) {
-            $searchQuery['_register'] = $scope['registers'][0];
-        } else if (empty($scope['registers']) === false) {
-            $searchQuery['_registers'] = $scope['registers'];
-            $searchQuery['_register']  = null;
-        }
-        $searchQuery['_includeDeleted'] = false;
-
-        // Clamp `_limit` to a hard maximum (review #147 🟡 unauthenticated DoS —
-        // no cap allowed anonymous `?_limit=1000000&_content=true` to fan out
-        // unbounded into OR's chunk-search path). The cap is enforced HERE, not
-        // in the controller, so every entry point that reaches this assembler
-        // is covered (`SearchController::index()` is the only one today, but
-        // any future entrypoint automatically inherits the cap). 100 mirrors
-        // typical faceted-search page sizes; callers wanting more MUST paginate.
-        $requestedLimit = ($searchQuery['_limit'] ?? null);
-        if (is_numeric($requestedLimit) === true && (int) $requestedLimit > self::PUBLIC_LIMIT_MAX) {
-            $searchQuery['_limit'] = self::PUBLIC_LIMIT_MAX;
-        }
-
-        return $searchQuery;
-
-    }//end applyResolvedScope()
-
-
-    /**
-     * Turn on OpenRegister's body-text search and widen the schemas to the document
-     * schemas of the registers in scope (WOO-517).
-     *
-     * @param array $searchQuery The forwarded query, already scoped.
-     * @param array $registerIds The registers in scope.
-     *
-     * @return array<string, mixed> The query with content search on.
-     *
-     * @psalm-param   array<string, mixed> $searchQuery
-     * @phpstan-param array<string, mixed> $searchQuery
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function widenForContentSearch(array $searchQuery, array $registerIds): array
-    {
-        // Forward to OR's opt-in chunk-search fan-out (expose-content-search-in
-        // -object-service). OR already dedupes its own metadata-match + chunk-match
-        // union on object id before returning; the `@self.id` dedup below is an
-        // additional guarantee at the OC assembly layer.
-        $searchQuery['_content_search'] = true;
-
-        // AND WIDEN THE SCOPE TO THE DOCUMENT SCHEMA, or the fan-out returns
-        // nothing it is allowed to keep.
-        //
-        // A catalog is wired at the publication register + PUBLICATION schema, so
-        // `$scope['schemas']` is publication-only. OR's chunk arm applies that same
-        // scope to each resolved chunk owner, and a body-text chunk belongs to a
-        // DOCUMENT. Measured on the dev instance 2026-09-02 with a freshly seeded,
-        // publicly visible publication + document + .txt, extraction confirmed:
-        //
-        //   SCOPECHECK objReg=31 objSchema=1114 scope={"registers":[31],
-        //              "schemas":[1113]} match=false
-        //
-        // so every document match was discarded inside OR and this assembler never
-        // saw a row: `{"results":[],"total":1}`. That is WOO-517's
-        // "a body-text-only match surfaces via ?_content=true" failing, and it is
-        // the silent drop resolveDocumentPublicationSummary()'s docblock already
-        // warned about, one layer further out.
-        //
-        // Scoped to `_content=true` on purpose: without it the schemas stay
-        // publication-only, so a document still MUST NOT surface on the
-        // metadata-only path. The document rows this admits are still gated by the
-        // transitive-visibility check in the row loop below, which drops any
-        // document whose linked publication is not publicly visible.
-        $documentSchemaIds = $this->resolveDocumentSchemaIds(
-            registerIds: $registerIds,
-            schemas: $searchQuery['_schemas']
-        );
-        // The widening runs AFTER the SCH-PFTS-CAT-002 guard, so the schemas it
-        // adds get the same guard; the transitive check below is defence in
-        // depth, not the control (WOO-581 review round 2).
-        if ($documentSchemaIds !== []) {
-            $documentSchemaIds = $this->dropSchemasWithoutReadRules(schemaIds: $documentSchemaIds);
-        }
-
-        if ($documentSchemaIds !== []) {
-            $searchQuery['_schemas'] = array_values(
-                array_unique(array_merge($searchQuery['_schemas'], $documentSchemaIds))
-            );
-        }
-
-        return $searchQuery;
-
-    }//end widenForContentSearch()
-
-
-    /**
-     * Resolve what the row loop needs once the candidates are in: the SchemaMapper,
-     * the publication schema in scope and the register document refinements run in.
-     *
-     * @param PublicSearchAssembly $run The search being assembled.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function prepareRowShaping(PublicSearchAssembly $run): void
-    {
-        // Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
-        // two-element hardcoded map; per-request cache so multi-schema search doesn't hit
-        // the DB per row. Availability preflight for OR ran at the top of this method.
-        $run->schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
-
-        // Track the publication schema for document→publication refinement (Stap 5a).
-        // Shares the outer $schemaSlugById cache so the pre-loop scan doubles as a
-        // warm-up for the row-loop lookups (M3 — no duplicate mapper hits).
-        $run->publicationSchemaId = $this->resolvePublicationSchemaId(
-            schemaMapper: $run->schemaMapper,
-            scopeSchemas: $run->scope['schemas'],
-            schemaSlugById: $run->schemaSlugById
-        );
-        // Track a single register for per-document refinement queries. Falls back to null
-        // when the scope spans multiple registers — refinement then goes through the
-        // multi-schema path via the query dict.
-        if (count($run->scope['registers']) === 1) {
-            $run->refinementRegisterId = $run->scope['registers'][0];
-        }
-
-    }//end prepareRowShaping()
-
-
-    /**
-     * Keep one candidate row, or count it as dropped.
-     *
-     * Stap 4 — Removed the isObjectPublic() PHP post-filter. Visibility is now
-     * enforced in SQL by OR's schema authorization (RBA-PUBLIC-001..004). OR's
-     * `total` and `facets` therefore reflect visible-only counts by construction —
-     * no undercount workaround, no facet stripping.
-     *
-     * @param mixed           $candidate The candidate as OpenRegister returned it.
-     * @param PublicSearchAssembly $run       The search being assembled.
-     *
-     * @return void
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function collectCandidateRow(mixed $candidate, PublicSearchAssembly $run): void
-    {
-        $rowArray = $candidate;
-        if (is_array($rowArray) === false) {
-            $rowArray = $rowArray->jsonSerialize();
-        }
-
-        // Dedup on @self.id: a document matching on BOTH metadata and body text must
-        // appear exactly once. Rows without a resolvable id (defensive — should not
-        // occur) are never deduped. Marker is stamped AFTER per-row validation so a
-        // first candidate that fails validation cannot silently suppress a later
-        // same-id candidate that would have passed. Dedup drops do NOT count against
-        // `total` — they collapse a single logical hit that OR double-counted, so
-        // OR's total remains the correct upper bound.
-        $objectId = ($rowArray['@self']['id'] ?? ($rowArray['id'] ?? null));
-        if ($objectId !== null && isset($run->seenObjectIds[$objectId]) === true) {
-            return;
-        }
-
-        $rowArray = $this->shapeCandidateRow(rowArray: $rowArray, run: $run);
-        if ($rowArray === null) {
-            $run->droppedCount++;
-            return;
-        }
-
-        if ($objectId !== null) {
-            $run->seenObjectIds[$objectId] = true;
-        }
-
-        $run->rows[] = $rowArray;
-
-    }//end collectCandidateRow()
-
-
-    /**
-     * Shape one candidate row for the public envelope, or return null to drop it.
-     *
-     * @param array           $rowArray The candidate row.
-     * @param PublicSearchAssembly $run      The search being assembled.
-     *
-     * @return array|null The shaped row, or null when it must be dropped.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function shapeCandidateRow(array $rowArray, PublicSearchAssembly $run): ?array
-    {
-        $schemaId = $this->extractSchemaId(rowArray: $rowArray);
-        if ($schemaId === null) {
-            return null;
-        }
-
-        $schemaSlug = $this->cachedSchemaSlug(schemaId: $schemaId, run: $run);
-        if ($schemaSlug === null) {
-            return null;
-        }
-
-        $rowArray['@self']['schema'] = $schemaSlug;
-
-        // RET-006 belt-and-braces: `status: 'archived'` is a terminal-hidden state
-        // that MUST NOT appear on any public surface, regardless of publish/depublish
-        // dates. The schema-level SQL RBAC does not include a status-check (would need
-        // a `status: {$ne: archived}` clause on the read-rules; that clause interacts
-        // badly with legacy rows where `status` is NULL — SQL treats `NULL != x` as
-        // unknown, which would silently drop pre-status-migration rows). Enforcing here
-        // in PHP is deterministic and safe for legacy data.
-        if (($rowArray['status'] ?? null) === 'archived') {
-            return null;
-        }
-
-        // Strip any raw chunk-search fields OR might have attached to the row.
-        // Defence-in-depth: OR already resolves each chunk hit to its owning
-        // ObjectEntity, so these fields should never be present.
-        unset(
-            $rowArray['_snippet'],
-            $rowArray['snippet'],
-            $rowArray['chunk'],
-            $rowArray['chunk_id'],
-            $rowArray['chunkId'],
-            $rowArray['score'],
-            $rowArray['_score']
-        );
-
-        if ($schemaSlug === 'document') {
-            return $this->withLinkedPublication(rowArray: $rowArray, run: $run);
-        }
-
-        return $rowArray;
-
-    }//end shapeCandidateRow()
-
-
-    /**
-     * The slug of a schema, looked up through the SchemaMapper once per request.
-     *
-     * @param int             $schemaId The schema id.
-     * @param PublicSearchAssembly $run      The search being assembled.
-     *
-     * @return string|null The slug, or null when the lookup failed.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function cachedSchemaSlug(int $schemaId, PublicSearchAssembly $run): ?string
-    {
-        if (isset($run->schemaSlugById[$schemaId]) === false) {
-            try {
-                $run->schemaSlugById[$schemaId] = $run->schemaMapper->find($schemaId)->getSlug();
-            } catch (\Throwable $e) {
-                $this->logger?->warning('WOO-536: schema slug lookup failed', ['schemaId' => $schemaId, 'error' => $e->getMessage()]);
-                $run->schemaSlugById[$schemaId] = null;
-            }
-        }
-
-        return $run->schemaSlugById[$schemaId];
-
-    }//end cachedSchemaSlug()
-
-
-    /**
-     * Embed a document row's linked publication, or return null when that
-     * publication is missing or not publicly visible (transitive visibility).
-     *
-     * Without a publication schema in scope the row is returned unchanged.
-     *
-     * @param array           $rowArray The document row.
-     * @param PublicSearchAssembly $run      The search being assembled.
-     *
-     * @return array|null The row with its publication, or null to drop it.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function withLinkedPublication(array $rowArray, PublicSearchAssembly $run): ?array
-    {
-        if ($run->publicationSchemaId === null) {
-            return $rowArray;
-        }
-
-        $publicationSummary = $this->resolveDocumentPublicationSummary(documentRow: $rowArray, run: $run);
-
-        if ($publicationSummary === null || $publicationSummary['public'] !== true) {
-            // No linked publication OR linked publication is not publicly
-            // visible under schema-level RBAC — drop the document row
-            // (transitive visibility).
-            return null;
-        }
-
-        $rowArray['publication'] = $publicationSummary['summary'];
-        return $rowArray;
-
-    }//end withLinkedPublication()
-
-
-    /**
-     * The result envelope: the rows kept, the reconciled total, and OpenRegister's
-     * facets when it returned them.
-     *
-     * @param array           $candidateResult OpenRegister's paginated search result.
-     * @param PublicSearchAssembly $run             The search being assembled.
-     *
-     * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function searchEnvelope(array $candidateResult, PublicSearchAssembly $run): array
-    {
-        $envelope = [
-            'results' => $run->rows,
-            'total'   => $this->reconciledTotal(candidateResult: $candidateResult, run: $run),
-        ];
-
-        if (isset($candidateResult['facets']) === true) {
-            $envelope['facets'] = $candidateResult['facets'];
-        }
-        if (isset($candidateResult['facetable']) === true) {
-            $envelope['facetable'] = $candidateResult['facetable'];
-        }
-        return $envelope;
-
-    }//end searchEnvelope()
-
-
-    /**
-     * The envelope `total`: OpenRegister's global count reconciled with the rows
-     * this page dropped.
-     *
-     * @param array           $candidateResult OpenRegister's paginated search result.
-     * @param PublicSearchAssembly $run             The search being assembled.
-     *
-     * @return int The total to report.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function reconciledTotal(array $candidateResult, PublicSearchAssembly $run): int
-    {
-        // Stap 4 — Envelope `total` reconciles OR's global count with the PHP drops.
-        //
-        // OR's `total` is the GLOBAL count of candidate rows matching the query
-        // across every page (needed so paginated consumers can compute `has_more`).
-        // Most drops are already applied at the SQL layer via OR's schema-level
-        // RBAC — but the row-loop still filters two classes OR cannot see:
-        //   1. `status: 'archived'` (belt-and-braces RET-006, no schema-side rule)
-        //   2. Transitive visibility on documents whose linked publication is not
-        //      publicly visible (N4a — `_content=true` chunk-hits are the common
-        //      trigger; OR's schema RBAC gates the document but not its parent
-        //      publication).
-        // Both drops leak "invisible" rows into OR's `total`. Sending OR's raw
-        // total when we dropped rows on THIS page would ship `total > count(rows)`
-        // with no way for the caller to reconcile — the SCH-PFTS-004 bug pattern.
-        //
-        // Compromise without an OR schema change: subtract per-page drops from
-        // OR's total, floored at `count($rows)` so the envelope never claims
-        // fewer visible items than it actually shipped. This preserves the
-        // pagination signal (total > count(rows) still means "more pages") while
-        // guaranteeing total ≥ count(rows) on every page. It is a per-page
-        // approximation: later pages may drop more rows and shrink `total`
-        // further, so a UI polling forward will see `total` decrease monotonically
-        // as invisible candidates are filtered out — acceptable for a public
-        // FTS surface where the exact global count is not a hard requirement.
-        //
-        // The architecturally clean fix (push transitive visibility down to
-        // OR's schema RBAC) needs an OR schema change and cross-schema `read`
-        // rules; tracked as follow-up.
-        $orTotal        = (int) ($candidateResult['total'] ?? count($run->rows));
-        $adjustedTotal  = max(count($run->rows), ($orTotal - $run->droppedCount));
-
-        // WOO-577: OR's count query and its row stream can disagree. OR dedupes
-        // the metadata-match + chunk-match union on object id before returning
-        // `results`, but `total` stays the undeduplicated chunk-join count, so a
-        // `_content=true` query can answer `total: 8` while handing back NOTHING.
-        // Measured on acato and reproduced on the NC 32 rig (OpenCatalogi
-        // 1.0.9-woo-2 + OpenRegister 1.1.5): `_search=Nextcloud&_content=true`
-        // → `{"total": 8, "results": []}`.
-        //
-        // Only the FIRST page's "no rows at all" case is corrected here, and
-        // deliberately so. On page one, `results: []` with `total > 0` and no local
-        // drops is impossible for an honest backend — there is no offset that could
-        // explain it — so it is the `total: X, results: []` shape the envelope
-        // comment above already calls out as the SCH-PFTS-004 bug pattern, and
-        // reporting 0 is the truthful answer.
-        //
-        // ON ANY LATER PAGE THE SAME SHAPE IS ORDINARY. A caller that asks for
-        // `_offset=40` of 31 real matches gets `{results: [], total: 31}` from a
-        // perfectly healthy search — that is what running out of rows looks like.
-        // Zeroing there would make `total` collapse from 31 to 0 on the last page
-        // of every paginated query, and a UI that redraws its count from each
-        // response would show "0 results" at the end of a search that found 31.
-        // The observed WOO-577 desync reproduced on the default first page, so
-        // scoping the correction there loses nothing and costs no honest caller.
-        //
-        // Pages that DO carry rows keep OR's total untouched, so the "more pages"
-        // signal survives; whether that number itself should be deduplicated is
-        // answered in OR's count (openregister#3856), not in a per-page guess here.
-        if ($run->rows === [] && $run->droppedCount === 0 && $orTotal > 0 && $this->isFirstPage(searchQuery: $run->searchQuery) === true) {
-            $this->logger?->warning(
-                'WOO-577: OpenRegister reported a total without returning any rows on the first page; '
-                . 'reporting 0 so the envelope does not advertise unreachable results',
-                [
-                    'orTotal' => $orTotal,
-                    'search' => ($run->searchQuery['_search'] ?? null),
-                    'contentSearch' => $run->contentSearch,
-                    'schemas' => $run->searchQuery['_schemas'],
-                ]
-            );
-            $adjustedTotal = 0;
-        }
-
-        return $adjustedTotal;
-
-    }//end reconciledTotal()
-
-    /**
-     * Whether the request addresses the first page of the result set.
-     *
-     * Absent pagination params, `_offset: 0`, or `_page: 1` all mean "start at the
-     * beginning". Anything else may legitimately land past the end of the results,
-     * where an empty page with a non-zero total is ordinary rather than a backend
-     * disagreement (WOO-577). A `_page` without a `_limit` cannot be resolved to an
-     * offset here, so anything above 1 counts as NOT the first page — the
-     * conservative direction, since the cost of guessing wrong is a wrong `total`.
-     *
-     * @param array $searchQuery The query as forwarded to OpenRegister.
-     *
-     * @return bool True when this is the first page.
-     *
-     * @psalm-param   array<string, mixed> $searchQuery
-     * @phpstan-param array<string, mixed> $searchQuery
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function isFirstPage(array $searchQuery): bool
-    {
-        $offset = ($searchQuery['_offset'] ?? null);
-        if ($offset !== null && (int) $offset !== 0) {
-            return false;
-        }
-
-        $page = ($searchQuery['_page'] ?? null);
-        if ($page !== null && (int) $page > 1) {
-            return false;
-        }
-
-        return true;
-
-    }//end isFirstPage()
-
-
-    /**
-     * Drop every schema that has no `authorization.read` rules from the anonymous scope.
-     *
-     * TWO SHAPES, ONE OF WHICH IS THE LEAK. OpenRegister handles them differently
-     * — see MagicRbacHandler::buildRbacConditionsSql():
-     *   - `authorization` EMPTY or absent: `bypass => false`, but the only
-     *     conditions are owner-admits OR not-private. An anonymous caller
-     *     therefore reads every NON-PRIVATE row of the schema. This is the
-     *     exposure, and it is not an unconditional bypass.
-     *   - `authorization` NON-EMPTY but without a `read` action: OpenRegister
-     *     FAILS CLOSED ("Action not configured on a non-empty authorization
-     *     block"), so an anonymous caller already gets nothing.
-     * Both are dropped here — the first because it leaks, the second so the
-     * anonymous scope is uniform rather than because it is unsafe — and a
-     * warning names the schema (SCH-PFTS-CAT-002). Fail-closed: when the mapper
-     * cannot be consulted the whole scope collapses to empty, which the caller
-     * turns into the empty envelope.
-     *
-     * Trade-off: OR resolves authorization with a register-level cascade; a
-     * schema that inherits its rules from the register is dropped here too
-     * because only the schema-level block is inspected. Configure the read
-     * rules on the schema itself to include it in anonymous search.
-     *
-     * @param int[] $schemaIds Schema ids in the resolved catalog scope.
-     *
-     * @return int[] The ids whose schema carries non-empty `authorization.read` rules.
-     *
-     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
-     */
-    private function dropSchemasWithoutReadRules(array $schemaIds): array
-    {
-        try {
-            $schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
-        } catch (\Throwable $e) {
-            $this->logger?->warning(
-                'WOO-574: SchemaMapper unavailable for the read-rule guard — anonymous scope emptied',
-                ['error' => $e->getMessage()]
-            );
-            return [];
-        }
-
-        $kept = [];
-        foreach ($schemaIds as $schemaId) {
-            try {
-                $schema        = $schemaMapper->find((int) $schemaId);
-                $authorization = $schema->getAuthorization();
-                $slug          = (string) $schema->getSlug();
-            } catch (\Throwable $e) {
-                $this->logger?->warning(
-                    'WOO-574: schema lookup failed in the read-rule guard — schema excluded from anonymous scope',
-                    ['schemaId' => $schemaId, 'error' => $e->getMessage()]
-                );
-                continue;
-            }
-
-            if (is_array($authorization) === false || empty($authorization['read']) === true) {
-                $this->logger?->warning(
-                    'WOO-574: schema has no authorization.read rules — excluded from anonymous search (SCH-PFTS-CAT-002)',
-                    ['schemaId' => $schemaId, 'schema' => $slug]
-                );
-                continue;
-            }//end if
-
-            $kept[] = (int) $schemaId;
-        }//end foreach
-
-        return $kept;
-
-    }//end dropSchemasWithoutReadRules()
-
-    /**
-     * Apply the SCH-PFTS-CAT-002 read-rule guard to a catalog's schema scope.
-     *
-     * Same DROP as `/api/search` (WOO-574), on a different surface — but no
-     * longer the same RULE: since WOO-578 that endpoint applies it to every
-     * caller, while this guard is anonymous-only (see ANONYMOUS ONLY below).
-     * Which schemas it removes, and which half of that set is the actual leak
-     * rather than a schema OpenRegister already refuses, is set out on
-     * {@see dropSchemasWithoutReadRules()}.
-     * `assemblePublicSearchResults()` has dropped those schemas since WOO-574,
-     * but that method only serves `/api/search`. The
-     * per-catalog routes (`/api/{catalogSlug}` and its `/{id}`, `/uses`,
-     * `/used`, `/attachments`, `/download` siblings) are `#[PublicPage]` too and
-     * build their scope straight from the catalog, so the guard never reached
-     * them and the leak stayed open there (WOO-580).
-     *
-     * Guarding the CATALOG rather than each query is what makes this one rule
-     * instead of six: every one of those routes reads `$catalog['schemas']`,
-     * directly or through {@see buildCatalogSearchQuery()} /
-     * {@see findObjectInCatalog()}, and each already fails closed on an empty
-     * schema list. Handing them a guarded catalog therefore also keeps the
-     * `@catalog.schemas` block in the response from naming a schema the caller
-     * may not read.
-     *
-     * "THE CATALOG IS GUARDED" IS NOT "EVERY READER OF ITS SCHEMAS IS
-     * GUARDED". This guards the catalog ITS CALLER hands in. Its callers are
-     * the six routes in
-     * {@see \OCA\OpenCatalogi\Controller\PublicationsController} plus, since
-     * WOO-581, `/api/catalogs/{slug}/dcat`
-     * ({@see \OCA\OpenCatalogi\Controller\DcatController::catalog()}) and
-     * `/api/catalogs/{slug}/schema`
-     * ({@see \OCA\OpenCatalogi\Controller\SchemaOrgController::catalog()}).
-     * Readers that build a UNION over every catalog instead of taking one
-     * catalog go through {@see applySchemaScopeReadRuleGuard()}:
-     * `/api/federation/publications` and `/api/catalogi/{id}`. A new reader of
-     * `$catalog['schemas']` on a public route needs one of the two; grep for
-     * the source, not the route family — that is how WOO-580 and WOO-581 were
-     * each found after the previous fix.
-     *
-     * ANONYMOUS ONLY, deliberately — and since WOO-578 that is a DIFFERENCE
-     * from `/api/search`, not a match. That endpoint drops rule-less schemas
-     * unconditionally now, and (where the installed OpenRegister carries the
-     * primitive) evaluates every read inside its `runAsAnonymous()`, so its own
-     * SCH-PFTS-CAT-002 guard holds for signed-in callers too. These per-catalog routes keep session RBAC,
-     * and that is the surface WOO-578 leaves staff when it narrows
-     * `/api/search`; widening the guard here would close that door in the same
-     * move.
-     *
-     * @param array $catalog Catalog data array (keys: schemas, registers).
-     *
-     * @return array The catalog with `schemas` normalised to int[] and, for an
-     *               anonymous caller, filtered to the schemas that carry read rules.
-     *
-     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
-     */
-    public function applyCatalogReadRuleGuard(array $catalog): array
-    {
-        $schemas = ($catalog['schemas'] ?? []);
-        if (is_string($schemas) === true) {
-            $schemas = (json_decode($schemas, true) ?? []);
-        }
-
-        if (is_array($schemas) === false) {
-            $schemas = [];
-        }
-
-        $schemas = array_values(array_map('intval', array_filter($schemas, 'is_numeric')));
-
-        $catalog['schemas'] = $this->applySchemaScopeReadRuleGuard(schemaIds: $schemas);
-
-        return $catalog;
-
-    }//end applyCatalogReadRuleGuard()
-
-    /**
-     * Apply the SCH-PFTS-CAT-002 read-rule guard to a bare schema-id scope.
-     *
-     * The same anonymous-only drop as {@see applyCatalogReadRuleGuard()}, for
-     * the readers that do not hold one catalog but a UNION of the schema lists
-     * of every catalog on the instance (WOO-581):
-     * {@see \OCA\OpenCatalogi\Service\PublicationService::getCatalogFilters()}
-     * (and its fast-path twin), which serve `/api/federation/publications`, and
-     * {@see \OCA\OpenCatalogi\Service\CatalogiService::getCatalogFilters()},
-     * which serves `/api/catalogi/{id}`. Both are `#[PublicPage]`, both searched
-     * with `_rbac: true` over an unguarded union, and on both an anonymous
-     * caller read the full record of a schema without an `authorization` block.
-     * The WOO sitemap ({@see \OCA\OpenCatalogi\Service\SitemapService}) runs
-     * its single category schema through it too. Through getCatalogFilters() it
-     * also covers `/api/federation/publications/{id}` and its `/uses`, `/used`,
-     * `/attachments` and `/download` siblings.
-     *
-     * A signed-in caller gets the list back UNTOUCHED — not even normalised —
-     * so session-RBAC behaviour on these paths does not move. An anonymous
-     * caller gets int ids, with every schema lacking read rules removed (see
-     * {@see dropSchemasWithoutReadRules()} for which of those is the actual
-     * leak). The caller MUST treat an empty result as "nothing to search", not
-     * as "no schema filter".
-     *
-     * @param array $schemaIds Schema ids (int or numeric string) in the scope.
-     *
-     * @return array The scope, filtered for an anonymous caller.
-     *
-     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
-     */
-    public function applySchemaScopeReadRuleGuard(array $schemaIds): array
-    {
-        if ($this->isAnonymous() === false || empty($schemaIds) === true) {
-            return $schemaIds;
-        }
-
-        $schemaIds = array_values(array_map('intval', array_filter($schemaIds, 'is_numeric')));
-
-        return $this->dropSchemasWithoutReadRules(schemaIds: $schemaIds);
-
-    }//end applySchemaScopeReadRuleGuard()
-
-    /**
-     * Apply the SCH-PFTS-CAT-002 read-rule guard to the ROWS of a relation result.
-     *
-     * `/api/{catalogSlug}/{id}/uses` and `/used` guard their root object, then hand
-     * off to OpenRegister's relation handler, which loads the related objects from
-     * every register × schema and filters them by schema RBAC only — and RBAC reads
-     * an empty `authorization` block as open (WOO-581 review round 2). Those rows
-     * are legitimately outside the catalog's schema list (a publication's documents
-     * live in the document schema), so catalog membership is the wrong filter; the
-     * leak class is. For an anonymous caller every row whose schema lacks read rules
-     * (or carries no numeric schema id) is dropped. A signed-in caller keeps every
-     * row (and only gets the page cut when `$page` is given).
-     *
-     * `total` needs the whole list. OR's `getUses()` counts every related object and
-     * then slices the page, so lowering `total` by the rows dropped from one page
-     * still counted the hidden rows on the other pages — and walking `_offset`
-     * showed where they sat (WOO-581 review round 3). With `$page` the envelope is
-     * the caller's FULL relation list (fetched with `_offset` 0 and no limit): the
-     * guard runs over all of it, `total` becomes the number of rows kept, and the
-     * page is cut here. Without `$page` — `getUsedBy()`, whose `total` is already
-     * page-local — `total` is lowered by the rows dropped from the page, which is
-     * exact there.
-     *
-     * @param array                                   $result An OpenRegister relation envelope (`results`, `total`, …).
-     * @param array{limit: int, offset: int}|null     $page   The caller's page when `$result` holds the full list.
-     *
-     * @return array The envelope with the guarded rows.
-     *
-     * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
-     */
-    public function applyReadRuleGuardToRows(array $result, ?array $page = null): array
-    {
-        $rows = ($result['results'] ?? null);
-        if (is_array($rows) === false || ($page === null && $this->isAnonymous() === false)) {
-            return $result;
-        }
-
-        // A signed-in caller keeps every row; only the page is cut (when asked).
-        $keptRows = array_values($rows);
-        if ($this->isAnonymous() === true) {
-            $rowSchemas = array_map(fn (mixed $row): ?int => $this->rowSchemaId(row: $row), $keptRows);
-            $kept       = array_flip(
-                $this->applySchemaScopeReadRuleGuard(schemaIds: array_values(array_unique(array_filter($rowSchemas, 'is_int'))))
-            );
-            $keptRows   = array_values(
-                array_filter(
-                    $keptRows,
-                    static fn (int $index): bool => $rowSchemas[$index] !== null && isset($kept[$rowSchemas[$index]]) === true,
-                    ARRAY_FILTER_USE_KEY
-                )
-            );
-        }
-
-        $result['results'] = $keptRows;
-        if ($page !== null) {
-            $result['total']   = count($keptRows);
-            $result['results'] = array_slice($keptRows, $page['offset'], $page['limit']);
-            $result['limit']   = $page['limit'];
-            $result['offset']  = $page['offset'];
-            return $result;
-        }
-
-        $dropped = (count($rows) - count($keptRows));
-        if ($dropped > 0 && is_numeric($result['total'] ?? null) === true) {
-            $result['total'] = max(count($keptRows), ((int) $result['total'] - $dropped));
-        }
-
-        return $result;
-
-    }//end applyReadRuleGuardToRows()
-
-    /**
-     * The numeric schema id of a result row (array or serialisable entity).
-     *
-     * @param mixed $row A result row.
-     *
-     * @return int|null The schema id, or null when the row carries none.
-     *
-     * @spec exclude Private helper of applyReadRuleGuardToRows(); no behaviour of its own.
-     */
-    private function rowSchemaId(mixed $row): ?int
-    {
-        if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
-            $row = $row->jsonSerialize();
-        }
-
-        $schemaId = null;
-        if (is_array($row) === true) {
-            $schemaId = ($row['@self']['schema'] ?? null);
-        }
-
-        if (is_numeric($schemaId) === false) {
-            return null;
-        }
-
-        return (int) $schemaId;
-
-    }//end rowSchemaId()
-
-    /**
-     * Resolve the register + schema union that /api/search covers for this request.
-     *
-     * Central discriminator for SCH-PFTS-CAT-001..003:
-     *   1. Explicit `_catalog` (single slug) → that catalog's registers + schemas.
-     *   2. Explicit `_catalogi[]` (array of slugs) → union across the resolved catalogs.
-     *   3. No param → union across every catalog where `listed: true` AND `published`
-     *      is in the past. This is the SCH-PFTS-CAT-002 default that mirrors the
-     *      pre-WOO-536 anon-visible scope discipline (#733 cross-catalog leak,
-     *      #734 anonymous DoS — both stay closed under this rule).
-     *
-     * Unknown slugs are silently dropped from the union so a typo does not fail the
-     * whole request. The caller MUST inspect the returned `schemas` array and
-     * fail-closed if empty (empty envelope).
-     *
-     * @param array $queryParams Raw request query dict.
-     *
-     * @return array{registers: int[], schemas: int[]}
-     *
-     * @spec openspec/specs/search/spec.md
-     *
-     * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalogue.
-     */
-    private function resolveCatalogScope(array $queryParams): array
-    {
-        $catalogiService = null;
-        try {
-            $catalogiService = $this->container->get('OCA\\OpenCatalogi\\Service\\CatalogiService');
-        } catch (\Throwable $e) {
-            $this->logger?->warning('WOO-536: CatalogiService unavailable', ['error' => $e->getMessage()]);
-            return ['registers' => [], 'schemas' => []];
-        }
-
-        $singleCatalog = ($queryParams['_catalog'] ?? null);
-        $multiCatalog  = ($queryParams['_catalogi'] ?? []);
-
-        // 1. Explicit single-catalog scope.
-        if (is_string($singleCatalog) === true && $singleCatalog !== '') {
-            $catalog = $this->publicCatalogBySlug(catalogiService: $catalogiService, slug: $singleCatalog);
-            if ($catalog === null) {
-                return ['registers' => [], 'schemas' => []];
-            }
-
-            return CatalogScopeIds::forCatalog(catalog: $catalog);
-        }
-
-        // 2. Explicit multi-catalog union; unknown and unpublished slugs drop out silently.
-        if (is_array($multiCatalog) === true && empty($multiCatalog) === false) {
-            return $this->unionCatalogScopes(
-                catalogs: $this->publicCatalogsBySlugs(catalogiService: $catalogiService, slugs: $multiCatalog)
-            );
-        }
-
-        // 3. Default — union of listed+published catalogs.
-        return $this->unionCatalogScopes(
-            catalogs: $this->listListedPublishedCatalogs(catalogiService: $catalogiService)
-        );
-
-    }//end resolveCatalogScope()
-
-    /**
-     * A catalog by slug, or null when it does not exist or is not published yet.
-     *
-     * C2: an unpublished catalog must be indistinguishable from a non-existent
-     * one on the public endpoint — else anonymous callers could probe for drafts
-     * by slug-guessing. `getCatalogBySlug` uses `_rbac:false`, so the published
-     * predicate is re-applied here.
-     *
-     * @param object $catalogiService The CatalogiService.
-     * @param string $slug            The catalog slug.
-     *
-     * @return array|null The catalog, or null.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function publicCatalogBySlug(object $catalogiService, string $slug): ?array
-    {
-        $catalog = $catalogiService->getCatalogBySlug($slug);
-        if ($catalog === null || $this->isCatalogPubliclyAvailable(catalog: $catalog) === false) {
-            return null;
-        }
-
-        return $catalog;
-
-    }//end publicCatalogBySlug()
-
-    /**
-     * The published catalogs among the given slugs, in order; other entries drop out.
-     *
-     * @param object $catalogiService The CatalogiService.
-     * @param array  $slugs           The requested slugs; non-string and empty entries are skipped.
-     *
-     * @return array The catalogs.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function publicCatalogsBySlugs(object $catalogiService, array $slugs): array
-    {
-        $catalogs = [];
-        foreach ($slugs as $slug) {
-            if (is_string($slug) === false || $slug === '') {
-                continue;
-            }
-
-            $catalog = $this->publicCatalogBySlug(catalogiService: $catalogiService, slug: $slug);
-            if ($catalog !== null) {
-                $catalogs[] = $catalog;
-            }
-        }
-
-        return $catalogs;
-
-    }//end publicCatalogsBySlugs()
-
-    /**
-     * The union of the register and schema ids of the given catalogs, without duplicates.
-     *
-     * @param array $catalogs The catalogs.
-     *
-     * @return array{registers: int[], schemas: int[]}
-     *
-     * @spec openspec/specs/search/spec.md
-     *
-     * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalogue.
-     */
-    private function unionCatalogScopes(array $catalogs): array
-    {
-        $regs    = [];
-        $schemas = [];
-        foreach ($catalogs as $catalog) {
-            $scope   = CatalogScopeIds::forCatalog(catalog: $catalog);
-            $regs    = array_merge($regs, $scope['registers']);
-            $schemas = array_merge($schemas, $scope['schemas']);
-        }
-
-        return [
-            'registers' => array_values(array_unique($regs)),
-            'schemas'   => array_values(array_unique($schemas)),
-        ];
-
-    }//end unionCatalogScopes()
-
-    /**
-     * Enumerate catalogs eligible for the anonymous default scope: `listed: true`
-     * AND `published` is set to a datetime in the past (or absent — treated as
-     * "not yet published" and excluded).
-     *
-     * Uses `CatalogiService::getObjectService()` to hit the catalog register directly
-     * with `_rbac: false` — the catalog's OWN authorization determines its visibility
-     * via the `listed` + `published` predicate here, not RBAC on the catalog register.
-     *
-     * @param object $catalogiService The OC CatalogiService (resolved via container).
-     *
-     * @return array<int, array> List of catalog jsonSerialize() arrays.
-     */
-    private function listListedPublishedCatalogs(object $catalogiService): array
-    {
-        try {
-            $objectService = $catalogiService->getObjectService();
-            if ($objectService === null) {
-                return [];
-            }
-            $catalogRegister = ($this->config?->getValueString('opencatalogi', 'catalog_register', '') ?? '');
-            $catalogSchema   = ($this->config?->getValueString('opencatalogi', 'catalog_schema', '') ?? '');
-            if ($catalogRegister === '' || $catalogSchema === '') {
-                $this->logger?->warning(
-                    'WOO-536: catalog_register or catalog_schema app-config is not set — /api/search default scope will be empty',
-                    ['catalog_register' => $catalogRegister, 'catalog_schema' => $catalogSchema]
-                );
-                return [];
-            }
-
-            // Note: `searchObjects` is the non-paginated variant used for the
-            // catalog enumeration below. The PHP `published <= now` check further
-            // down covers the visibility branch that RBAC would otherwise encode.
-            // `listed:true` is a business-scope filter not carried by the schema
-            // read-rules, so the query needs it explicitly.
-            $catalogs = $objectService->searchObjects(
-                query: [
-                    '@self' => [
-                        'register' => $catalogRegister,
-                        'schema'   => $catalogSchema,
-                    ],
-                    'listed' => true,
-                ],
-                _rbac: false,
-                _multitenancy: false,
-            );
-        } catch (\Throwable $e) {
-            $this->logger?->warning('WOO-536: enumerating listed+published catalogs failed', ['error' => $e->getMessage()]);
-            return [];
-        }
-
-        $out = [];
-        foreach ($catalogs as $catalogEntity) {
-            try {
-                if (is_array($catalogEntity) === true) {
-                    $c = $catalogEntity;
-                } else {
-                    $c = $catalogEntity->jsonSerialize();
-                }
-            } catch (\Throwable $e) {
-                continue;
-            }
-            if ($this->isCatalogPubliclyAvailable(catalog: $c) === false) {
-                continue;
-            }
-            $out[] = $c;
-        }
-        return $out;
-
-    }//end listListedPublishedCatalogs()
-
-    /**
-     * Predicate: a catalog is publicly available when its `published` field
-     * exists AND parses AND is on or before "now". Extracted so the explicit-slug
-     * paths in {@see resolveCatalogScope()} and the default-scope enumeration in
-     * {@see listListedPublishedCatalogs()} apply the same rule.
-     *
-     * @param array $catalog The catalog jsonSerialize()d array.
-     *
-     * @return bool True when the catalog is publicly available (published in past).
-     */
-    private function isCatalogPubliclyAvailable(array $catalog): bool
-    {
-        $published = ($catalog['published'] ?? null);
-        if (is_string($published) === false || $published === '') {
-            return false;
-        }
-        try {
-            return new DateTimeImmutable($published) <= new DateTimeImmutable('now');
-        } catch (\Throwable $e) {
-            return false;
-        }
-
-    }//end isCatalogPubliclyAvailable()
-
-    /**
-     * Whether the current caller is anonymous (no logged-in user).
-     *
-     * Consumed by {@see \OCA\OpenCatalogi\Controller\PublicationsController::getUses}
-     * and `::getUsedBy` to gate anonymous access to relationship endpoints on
-     * non-public root objects. Fail-closed: treats an unavailable session as
-     * anonymous so the stricter visibility rule applies.
-     *
-     * @return boolean True when no user session is available or no user is logged in.
-     *
-     * @spec exclude Visibility helper for the public relation-endpoint published-predicate guard.
-     */
-    public function isAnonymous(): bool
-    {
-        if ($this->userSession === null) {
-            // Fail closed: when the session is unavailable, treat the caller as anonymous
-            // so the published-predicate guard applies the stricter visibility rule.
-            return true;
-        }
-
-        return $this->userSession->getUser() === null;
-
-    }//end isAnonymous()
-
-    /**
-     * Determine whether an object is publicly visible (published and not depublished).
-     *
-     * Mirrors the live OpenRegister RBAC visibility model (APB-006), the same rule
-     * the public publications API and the frontend `publicationStatus` helpers use:
-     * an object is public when its own `publicationDate` field is set and is at or
-     * before "now", and either carries no `depublicationDate` or one still in the
-     * future. The removed object-level `@self.published` predicate is not consulted.
-     *
-     * @param array $objectData The serialized object data (own fields + `@self` envelope).
-     *
-     * @return boolean True when the object is currently published.
-     *
-     * @spec openspec/specs/auto-publishing/spec.md#APB-006
-     */
-    public function isObjectPublic(array $objectData): bool
-    {
-        $publicationDate   = ($objectData['publicationDate'] ?? null);
-        $depublicationDate = ($objectData['depublicationDate'] ?? null);
-
-        if ($publicationDate === null || $publicationDate === '') {
-            return false;
-        }
-
-        $now           = time();
-        $publishedTime = strtotime((string) $publicationDate);
-        if ($publishedTime === false || $publishedTime > $now) {
-            return false;
-        }
-
-        if ($depublicationDate === null || $depublicationDate === '') {
-            return true;
-        }
-
-        $depublishedTime = strtotime((string) $depublicationDate);
-        return ($depublishedTime === false || $depublishedTime > $now);
-
-    }//end isObjectPublic()
-
-    /**
-     * The `document` schema ids carried by the scope's registers.
-     *
-     * A catalog is wired at the publication register + publication schema, so the
-     * resolved scope names the publication schema only. Body text lives on
-     * DOCUMENTS, so a content search has to admit their schema or OR's chunk arm
-     * resolves owners it is then obliged to discard.
-     *
-     * Reads the register's own schema list rather than scanning every schema on
-     * the instance: a document schema that no register in scope carries is not a
-     * document this search may return, and widening past the catalog boundary is
-     * exactly what the `unset()` of client-supplied `_schemas` above prevents.
-     *
-     * @param array<int, int|string> $registerIds The scope's register ids.
-     * @param array<int, int|string> $schemas     Schema ids already in scope.
-     *
-     * @return array<int, int> The document schema ids not already in scope.
-     *
-     * @spec openspec/changes/add-document-content-search/tasks.md#task-3
-     */
-    private function resolveDocumentSchemaIds(array $registerIds, array $schemas): array
-    {
-        if ($registerIds === []) {
-            return [];
-        }
-
-        try {
-            $registerMapper = $this->container->get('OCA\\OpenRegister\\Db\\RegisterMapper');
-            $schemaMapper   = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
-        } catch (\Throwable $e) {
-            $this->logger?->warning(
-                'WOO-517: could not resolve OR mappers for document-schema widening',
-                ['error' => $e->getMessage()]
-            );
-            return [];
-        }
-
-        $already = [];
-        foreach ($schemas as $sid) {
-            $already[(int) $sid] = true;
-        }
-
-        $found = [];
-        foreach ($registerIds as $registerId) {
-            foreach ($this->documentSchemaIdsOfRegister(
-                registerMapper: $registerMapper,
-                schemaMapper: $schemaMapper,
-                registerId: (int) $registerId
-            ) as $sid) {
-                if (isset($already[$sid]) === false) {
-                    $found[$sid] = true;
-                }
-            }
-        }
-
-        return array_keys($found);
-
-    }//end resolveDocumentSchemaIds()
-
-
-    /**
-     * The schema ids one register carries that are slugged `document`.
-     *
-     * Split out of {@see resolveDocumentSchemaIds()} to keep both within the
-     * complexity budget; a register that cannot be read, or a schema whose slug
-     * cannot be resolved, contributes nothing rather than failing the search.
-     *
-     * @param object $registerMapper OR RegisterMapper.
-     * @param object $schemaMapper   OR SchemaMapper.
-     * @param int    $registerId     The register to read.
-     *
-     * @return array<int, int> The document schema ids this register carries.
-     *
-     * @spec openspec/changes/add-document-content-search/tasks.md#task-3
-     */
-    private function documentSchemaIdsOfRegister(object $registerMapper, object $schemaMapper, int $registerId): array
-    {
-        try {
-            $register = $registerMapper->find($registerId);
-        } catch (\Throwable $e) {
-            return [];
-        }
-
-        $ids = [];
-        foreach ($register->getSchemas() as $sid) {
-            $sidInt = (int) $sid;
-            if ($sidInt === 0) {
-                continue;
-            }
-
-            try {
-                $slug = $schemaMapper->find($sidInt)->getSlug();
-            } catch (\Throwable $e) {
-                continue;
-            }
-
-            if ($slug === 'document') {
-                $ids[] = $sidInt;
-            }
-        }
-
-        return $ids;
-
-    }//end documentSchemaIdsOfRegister()
-
-
-    /**
-     * Find the `publication` schema id inside the resolved scope so document rows can
-     * be enriched with their linked publication summary. When the scope does not
-     * include the publication schema (e.g. a catalog-scoped search across only
-     * `besluit` + `verzoek`), returns null and document→publication refinement is
-     * simply skipped for that request.
-     *
-     * Populates `$schemaSlugById` for every scope schema visited (even after the
-     * `publication` match is found), so the row-loop's later slug lookups reuse
-     * the same per-request cache instead of re-hitting the mapper (M3).
-     *
-     * @param object                  $schemaMapper   OR SchemaMapper.
-     * @param int[]                   $scopeSchemas   Schema ids in the resolved scope.
-     * @param array<int, string|null> $schemaSlugById Per-request slug cache (by reference).
-     *                                                Callers must annotate their local
-     *                                                `[]` with an inline `@var` tag so
-     *                                                phpstan tracks the type across the
-     *                                                pass-by-ref boundary.
-     *
-     * @return int|null Publication schema id when present in scope, null otherwise.
-     */
-    private function resolvePublicationSchemaId(object $schemaMapper, array $scopeSchemas, array &$schemaSlugById): ?int
-    {
-        $publicationSchemaId = null;
-        foreach ($scopeSchemas as $sid) {
-            $sidInt = (int) $sid;
-            if (array_key_exists($sidInt, $schemaSlugById) === true) {
-                $slug = $schemaSlugById[$sidInt];
-            } else {
-                try {
-                    // $schemaMapper is typed `object` (OR is an optional dep, resolved
-                    // via the container), so phpstan can't infer getSlug()'s return
-                    // type — normalise to string|null (keep the `array<int, string|null>`
-                    // shape of the by-ref cache intact).
-                    $rawSlug = $schemaMapper->find($sidInt)->getSlug();
-                    if (is_string($rawSlug) === true) {
-                        $slug = $rawSlug;
-                    } else {
-                        $slug = null;
-                    }
-                } catch (\Throwable $e) {
-                    $schemaSlugById[$sidInt] = null;
-                    continue;
-                }
-                $schemaSlugById[$sidInt] = $slug;
-            }
-            if ($slug === 'publication' && $publicationSchemaId === null) {
-                $publicationSchemaId = $sidInt;
-            }
-        }
-        return $publicationSchemaId;
-
-    }//end resolvePublicationSchemaId()
-
-    /**
-     * Extract the numeric schema id from a serialized object row's `@self.schema`.
-     *
-     * @param array $rowArray The serialized object row.
-     *
-     * @return integer|null The schema id, or null when absent/non-numeric.
-     *
-     * @spec exclude Row-shape plumbing; no domain behavior of its own.
-     */
-    private function extractSchemaId(array $rowArray): ?int
-    {
-        $schema = ($rowArray['@self']['schema'] ?? ($rowArray['schema'] ?? null));
-        if (is_array($schema) === true) {
-            $schema = ($schema['id'] ?? null);
-        }
-
-        if ($schema === null || is_numeric($schema) === false) {
-            return null;
-        }
-
-        return (int) $schema;
-
-    }//end extractSchemaId()
-
-    /**
-     * Resolve the linked publication's `{id, slug, title}` summary for a document row.
-     *
-     * Looks the linked publication up by slug (denormalised on the document's own
-     * `publication.slug` property) so the response can carry the publication's real
-     * UUID even though the authored document payload only carries `slug` + `title`
-     * (design.md "Seed publications" — the UUID does not exist until import). Results
-     * are cached per request so a page of documents linking the same publication only
-     * issues one lookup per unique slug.
-     *
-     * Stap 5a (WOO-536): replaces the denormalised `publication.slug` string lookup
-     * with a per-document `_relations_contains` query on the publication schema. The
-     * OR-side relation graph is authoritative, so a slug rename no longer detaches
-     * documents from the envelope.
-     *
-     * The query runs under OR's schema-level RBAC. Anonymous callers see only the
-     * public-group-eligible linked publication. If OR returns nothing, the linked
-     * publication either does not exist, is not public under the caller's effective
-     * context, or the document is genuinely unlinked — all three collapse to "drop the
-     * row" (transitive visibility). The read runs as an anonymous caller for every
-     * session (WOO-578), so "the caller's effective context" is always the public one.
-     *
-     * N4b (WOO-536 plan): a document related to multiple publications resolves to the
-     * OLDEST-by-created linked publication (most stable link — does not change as new
-     * publications are added). Documented as a known approximation.
-     *
-     * The run carries the publication register (null when the outer scope spans
-     * multiple registers, so the query falls back to the multi-schema search path),
-     * the publication schema in scope, and two per-request caches: document uuid to
-     * summary, and publication slug to summary. The slug cache prevents an
-     * O(N × 500) scan regression when N documents on one page share the same
-     * `_relations['publication.slug']`.
-     *
-     * @param array                $documentRow The document row (post `@self.schema` rewrite).
-     * @param PublicSearchAssembly $run         The search being assembled.
-     *
-     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
-     *
-     * @spec openspec/changes/fix-fts-catalog-model-alignment/tasks.md
-     */
-    private function resolveDocumentPublicationSummary(array $documentRow, PublicSearchAssembly $run): ?array
-    {
-        $documentUuid = ($documentRow['@self']['id'] ?? ($documentRow['id'] ?? null));
-        if (is_string($documentUuid) === false || $documentUuid === '') {
-            return null;
-        }
-
-        if (array_key_exists($documentUuid, $run->publicationCache) === true) {
-            return $run->publicationCache[$documentUuid];
-        }
-
-        $summary = $this->publicationFromCarriedLinks(documentRow: $documentRow, run: $run);
-        if ($summary === null) {
-            $summary = $this->publicationFromRefinement(documentUuid: $documentUuid, run: $run);
-        }
-
-        $run->publicationCache[$documentUuid] = $summary;
-        return $summary;
-
-    }//end resolveDocumentPublicationSummary()
-
-
-    /**
-     * The first publication a document's carried links resolve to, tried in the
-     * order {@see carriedPublicationLinks()} lists them.
-     *
-     * @param array                $documentRow The document row.
-     * @param PublicSearchAssembly $run         The search being assembled.
-     *
-     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function publicationFromCarriedLinks(array $documentRow, PublicSearchAssembly $run): ?array
-    {
-        foreach ($this->carriedPublicationLinks(documentRow: $documentRow) as $link) {
-            $summary = $this->publicationByLink(link: $link, run: $run);
-            if ($summary !== null) {
-                return $summary;
-            }
-        }
-
-        return null;
-
-    }//end publicationFromCarriedLinks()
-
-
-    /**
-     * The links to its publication a document row carries, in lookup order, as
-     * `[kind, value]` pairs where kind is `id` or `slug`. Empty values are left out.
-     *
-     * @param array $documentRow The document row.
-     *
-     * @return array<int, array{0: string, 1: string}> The links.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function carriedPublicationLinks(array $documentRow): array
-    {
-        // M1 fast-path: if the document row already carries a resolvable
-        // `publication.id`, verify it points at a publicly-visible publication
-        // via a targeted find() rather than fanning out into a relations query
-        // per row. This eliminates the N+1 for well-formed documents seeded
-        // with a denormalised publication summary. On any miss (missing id,
-        // find() fails, or find() returns a non-public row), fall through to
-        // the `_relations_contains` path below — the authoritative relation
-        // graph remains the source of truth for divergent cases.
-        $links = [['id', ($documentRow['publication']['id'] ?? null)]];
-
-        // M1b: the carried summary may name the publication by SLUG and not by
-        // id. That is the shape the fleet actually writes — a document is
-        // created with `publication: {slug, title}` — and before this branch
-        // existed it matched nothing: M1 above reads `publication.id`, M2 below
-        // reads the `_relations` array rather than this property, and the
-        // refinement query at the end asks the INVERSE question (a publication
-        // whose relations contain this document), which document→publication
-        // writes never answer.
-        //
-        // So a well-formed public document dropped out of every content-search
-        // result, silently: the row is discarded by the `publicationSummary
-        // === null` guard in assemblePublicSearchResults(), and an empty result
-        // set is indistinguishable from "nothing matched".
-        $links[] = ['slug', ($documentRow['publication']['slug'] ?? null)];
-
-        // M2 fast-path: legacy documents store the linked publication in their
-        // OWN `_relations` array — either as `publication` (UUID form, canonical)
-        // or `publication.slug` (denormalised form, WOO-506 seed shape). Fase 5
-        // Robert-plan assumed publication.documents[] (inverse), but the fleet
-        // seed and existing writes point document→publication, not the other
-        // way around. Query the publication schema by id or slug and let the
-        // schema-level RBAC decide visibility.
-        $relations = ($documentRow['@self']['relations'] ?? ($documentRow['_relations'] ?? []));
-        if (is_array($relations) === true) {
-            $links[] = ['id', ($relations['publication'] ?? null)];
-            $links[] = ['slug', ($relations['publication.slug'] ?? null)];
-        }
-
-        return array_values(
-            array_filter(
-                $links,
-                static fn (array $link): bool => is_string($link[1]) === true && $link[1] !== ''
-            )
-        );
-
-    }//end carriedPublicationLinks()
-
-
-    /**
-     * Resolve one carried link: an id through the fast-path find, a slug through
-     * the per-request slug cache.
-     *
-     * @param array                $link The `[kind, value]` pair.
-     * @param PublicSearchAssembly $run  The search being assembled.
-     *
-     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
-     *
-     * @psalm-param   array{0: string, 1: string} $link
-     * @phpstan-param array{0: string, 1: string} $link
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function publicationByLink(array $link, PublicSearchAssembly $run): ?array
-    {
-        if ($link[0] === 'id') {
-            return $this->tryFastPathPublicationLookup(publicationId: $link[1], run: $run);
-        }
-
-        if (array_key_exists($link[1], $run->slugCache) === false) {
-            $run->slugCache[$link[1]] = $this->tryPublicationSlugLookup(publicationSlug: $link[1], run: $run);
-        }
-
-        return $run->slugCache[$link[1]];
-
-    }//end publicationByLink()
-
-
-    /**
-     * The publication whose relations contain the document, oldest first, or null
-     * when the refinement fails or finds none.
-     *
-     * @param string               $documentUuid The document's uuid.
-     * @param PublicSearchAssembly $run          The search being assembled.
-     *
-     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function publicationFromRefinement(string $documentUuid, PublicSearchAssembly $run): ?array
-    {
-        $rows = $this->refinedPublicationRows(documentUuid: $documentUuid, run: $run);
-        if ($rows === null) {
-            return null;
-        }
-
-        if (empty($rows) === true) {
-        // N4a: no publicly-visible linked publication → drop the document.
-            $this->logger?->info(
-                'WOO-536: document has no publicly-visible linked publication',
-                ['documentUuid' => $documentUuid]
-            );
-            return null;
-        }
-
-        if (count($rows) > 1) {
-        // N4b: multi-linked document — the oldest-by-created wins (documented
-        // approximation, most stable link). Fires on every hit-per-page, so
-        // debug (not info) keeps log volume sane on hot public deployments.
-            $this->logger?->debug(
-                'WOO-536: document linked to multiple publications; using oldest-by-created',
-                ['documentUuid' => $documentUuid, 'count' => count($rows)]
-            );
-        }
-
-        return $this->refinedPublicationSummary(publication: $rows[0]);
-
-    }//end publicationFromRefinement()
-
-
-    /**
-     * The `{id, slug, title}` summary of the publication a refinement returned.
-     *
-     * @param mixed $publication The publication row, as an array or a serialisable entity.
-     *
-     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function refinedPublicationSummary(mixed $publication): array
-    {
-        if (is_array($publication) === false) {
-            $publication = $publication->jsonSerialize();
-        }
-
-        return [
-            'summary' => [
-                'id'    => (string) ($publication['@self']['id'] ?? ($publication['id'] ?? '')),
-                'slug'  => (string) ($publication['@self']['slug'] ?? ($publication['slug'] ?? '')),
-                'title' => (string) ($publication['title'] ?? ''),
-            ],
-            'public'  => true,
-        ];
-
-    }//end refinedPublicationSummary()
-
-
-    /**
-     * The publication rows whose relations contain the document, or null when the
-     * refinement query failed (logged).
-     *
-     * @param string               $documentUuid The document's uuid.
-     * @param PublicSearchAssembly $run          The search being assembled.
-     *
-     * @return array|null The matching rows, or null on failure.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function refinedPublicationRows(string $documentUuid, PublicSearchAssembly $run): ?array
-    {
-        $objectService = $run->objectService;
-
-        // Build the per-document refinement query. Under OR's schema-level RBAC,
-        // anonymous callers only see publications the `public` group is allowed to
-        // read — so a non-empty result guarantees the linked pub is public for
-        // every caller, because the read runs as an anonymous caller (WOO-578).
-        $refinementQuery = [
-            '_schema'             => $run->publicationSchemaId,
-            '_relations_contains' => $documentUuid,
-            '_limit'              => 2,
-            '_order'              => ['@self.created' => 'asc'],
-        ];
-        if ($run->refinementRegisterId !== null) {
-            $refinementQuery['_register'] = $run->refinementRegisterId;
-        }
-
-        try {
-            // Same anonymous evaluation as the main search (WOO-578) — the linked
-            // publication must be visible to an anonymous caller, not to the session.
-            $matches = $this->evaluateAsAnonymous(
-                objectService: $objectService,
-                operation: static fn (): array => $objectService->searchObjectsPaginated(
-                    query: $refinementQuery,
-                    _rbac: true,
-                    _multitenancy: false
-                )
-            );
-        } catch (\Throwable $e) {
-            $this->logger?->warning(
-                'WOO-536: document→publication refinement failed',
-                ['documentUuid' => $documentUuid, 'error' => $e->getMessage()]
-            );
-            return null;
-        }
-
-        return ($matches['results'] ?? []);
-
-    }//end refinedPublicationRows()
-
-    /**
-     * Fast-path publication lookup — verify that a carried publication id resolves
-     * to a publicly-visible publication row via a single {@see ObjectService::find()}
-     * call, avoiding the per-row `_relations_contains` fan-out.
-     *
-     * Under `_rbac: true` + `_multitenancy: false`, `find()` returns null when the
-     * publication is not publicly visible to an anonymous caller (draft,
-     * depublished, archived under the schema RBAC), so a non-null return guarantees
-     * the caller may embed the summary. On any failure the method returns null and
-     * the caller falls back to the relations-based path — authoritative but slower.
-     * The read runs as an anonymous caller (WOO-578), so "publicly visible" holds
-     * for every session — see the Stap 1 comment in {@see assemblePublicSearchResults()}.
-     *
-     * @param string               $publicationId The UUID from the document row's carried summary.
-     * @param PublicSearchAssembly $run           The search being assembled (ObjectService,
-     *                                            register scope hint, publication schema id).
-     *
-     * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
-     */
-    private function tryFastPathPublicationLookup(string $publicationId, PublicSearchAssembly $run): ?array
-    {
-        $objectService       = $run->objectService;
-        $registerId          = $run->refinementRegisterId;
-        $publicationSchemaId = $run->publicationSchemaId;
-
-        try {
-            // Same anonymous evaluation as the main search (WOO-578).
-            $publication = $this->evaluateAsAnonymous(
-                objectService: $objectService,
-                operation: static fn (): mixed => $objectService->find(
-                    id: $publicationId,
-                    _extend: [],
-                    files: false,
-                    register: $registerId,
-                    schema: $publicationSchemaId,
-                    _rbac: true,
-                    _multitenancy: false
-            )
-            );
-        } catch (\Throwable $e) {
-            return null;
-        }
-
-        if ($publication === null) {
-            return null;
-        }
-
-        if (is_array($publication) === true) {
-            $publicationArray = $publication;
-        } else {
-            $publicationArray = $publication->jsonSerialize();
-        }
-
-        // Guard: RET-006 archived rows must never surface even if RBAC lets them through
-        // (see B1 in the row loop above — same rule applies to the linked publication).
-        if (($publicationArray['status'] ?? null) === 'archived') {
-            return null;
-        }
-
-        return [
-            'summary' => [
-                'id'    => (string) ($publicationArray['@self']['id'] ?? ($publicationArray['id'] ?? '')),
-                'slug'  => (string) ($publicationArray['@self']['slug'] ?? ($publicationArray['slug'] ?? '')),
-                'title' => (string) ($publicationArray['title'] ?? ''),
-            ],
-            'public' => true,
-        ];
-
-    }//end tryFastPathPublicationLookup()
-
-    /**
-     * Slug-based fallback lookup for legacy document seeds that carry
-     * `_relations['publication.slug'] = <slug>` rather than a UUID.
-     *
-     * Scans the publication schema for the slug with the same schema-level RBAC
-     * gating as the UUID fast-path — for anonymous callers, a non-empty result
-     * guarantees the linked publication is publicly visible. Returns null on miss
-     * (unknown slug, non-public, archived) so the caller falls through to the
-     * `_relations_contains` path. The read runs as an anonymous caller for every
-     * session (WOO-578).
-     *
-     * @param string               $publicationSlug The linked publication's slug.
-     * @param PublicSearchAssembly $run             The search being assembled (ObjectService,
-     *                                              publication register id or null, publication
-     *                                              schema id in scope).
-     *
-     * @return array|null The public-visible publication summary + flag, or null on miss.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function tryPublicationSlugLookup(string $publicationSlug, PublicSearchAssembly $run): ?array
-    {
-        $rows = $this->scanPublicationSlugs(publicationSlug: $publicationSlug, run: $run);
-        if ($rows === null) {
-            return null;
-        }
-
-        $firstMatch = $this->firstSlugMatch(publicationSlug: $publicationSlug, rows: $rows);
-        if ($firstMatch === null || ($firstMatch['status'] ?? null) === 'archived') {
-            return null;
-        }
-
-        return [
-            'summary' => [
-                'id'    => (string) ($firstMatch['@self']['id'] ?? ($firstMatch['id'] ?? '')),
-                'slug'  => (string) $publicationSlug,
-                'title' => (string) ($firstMatch['title'] ?? ''),
-            ],
-            'public' => true,
-        ];
-
-    }//end tryPublicationSlugLookup()
-
-    /**
-     * The publication rows a slug scan returns, read as an anonymous caller.
-     *
-     * ObjectService::searchObjectsPaginated normalises the query differently
-     * for `@self.<field>` filters than the HTTP query parser does, so the slug
-     * match runs client-side instead of as a pushdown filter. Scope is
-     * `_schemas => [$publicationSchemaId]` (+ `_register` when the outer catalog
-     * scope collapses to one register), capped by `_limit: 500`. Slug collisions
-     * across registers on a multi-register scope are possible. The caller
-     * memoises the result per slug for the request (see $slugCache), so N
-     * documents sharing one slug pay the scan cost once. Legacy slugs beyond row
-     * 500 do not resolve; such fleets should migrate away from the denormalised
-     * `publication.slug` shape (WOO-506 legacy).
-     *
-     * @param string               $publicationSlug The linked publication's slug, for the log.
-     * @param PublicSearchAssembly $run             The search being assembled.
-     *
-     * @return mixed The scanned rows, or null when the scan threw.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function scanPublicationSlugs(string $publicationSlug, PublicSearchAssembly $run): mixed
-    {
-        $objectService = $run->objectService;
-        $slugScanQuery = [
-            '_schemas' => [$run->publicationSchemaId],
-            '_limit'   => 500,
-        ];
-        if ($run->refinementRegisterId !== null) {
-            $slugScanQuery['_register'] = $run->refinementRegisterId;
-        }
-
-        try {
-            // Same anonymous evaluation as the main search (WOO-578).
-            $matches = $this->evaluateAsAnonymous(
-                objectService: $objectService,
-                operation: static fn (): array => $objectService->searchObjectsPaginated(
-                    query: $slugScanQuery,
-                    _rbac: true,
-                    _multitenancy: false
-                )
-            );
-        } catch (\Throwable $e) {
-            $this->logger?->warning(
-                'WOO-536: slug scan threw',
-                ['slug' => $publicationSlug, 'error' => $e->getMessage()]
-            );
-            return null;
-        }
-
-        return ($matches['results'] ?? []);
-
-    }//end scanPublicationSlugs()
-
-    /**
-     * The first scanned publication whose `@self.slug` (or else `slug`) is the given slug.
-     *
-     * OR does not SQL-UNIQUE `slug` at the schema layer, so a collision is
-     * logged at debug (parity with N4b in the `_relations_contains` path; debug
-     * keeps log volume sane on hot public endpoints) and the first row wins.
-     *
-     * @param string $publicationSlug The linked publication's slug.
-     * @param mixed  $rows            The scanned rows, arrays or serialisable objects.
-     *
-     * @return array|null The first match as an array, or null.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function firstSlugMatch(string $publicationSlug, mixed $rows): ?array
-    {
-        $firstMatch = null;
-        $matchCount = 0;
-        foreach ($rows as $publication) {
-            if (is_array($publication) === false) {
-                $publication = $publication->jsonSerialize();
-            }
-
-            if (($publication['@self']['slug'] ?? ($publication['slug'] ?? '')) !== $publicationSlug) {
-                continue;
-            }
-
-            $matchCount++;
-            $firstMatch = ($firstMatch ?? $publication);
-        }
-
-        if ($matchCount > 1) {
-            $this->logger?->debug(
-                'WOO-536: publication slug matched multiple rows; using first-scanned',
-                ['slug' => $publicationSlug, 'count' => $matchCount]
-            );
-        }
-
-        return $firstMatch;
-
-    }//end firstSlugMatch()
-
-    /**
-     * Find the register and schema IDs for an object UUID within a constrained scope.
-     *
-     * Locates which OpenRegister (register × schema) pair holds a given UUID, always
-     * scoped to the caller-supplied register/schema lists. The lookup goes through
-     * OpenRegister's `ObjectService` (ADR-022: consume OR abstractions) rather than
-     * issuing raw SQL against OR's internal per-register/per-schema storage tables or
-     * probing the DBMS catalog for their existence. OR remains free to change its
-     * physical storage layout without breaking opencatalogi.
-     *
-     * The legacy platform-wide search across every magic table is gone (#734) — it was
-     * an anonymous-reachable DoS vector and also leaked cross-catalog objects (#733).
-     * Callers MUST pass non-empty $allowedRegisters and $allowedSchemas; otherwise the
-     * method returns null without touching OpenRegister.
-     *
-     * @param string                 $uuid             The UUID of the object to find.
-     * @param array<int|string>|null $allowedRegisters Register IDs the search may touch.
-     * @param array<int|string>|null $allowedSchemas   Schema IDs the search may touch.
-     *
-     * @return array{register: int, schema: int}|null The register/schema IDs, or null.
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     *
-     * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
-     */
-    public function findObjectLocation(
-        string $uuid,
-        ?array $allowedRegisters=null,
-        ?array $allowedSchemas=null
-    ): ?array {
-        if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
-            // Fail closed — without an explicit constraint we will NOT do a
-            // platform-wide scan. This is the post-#734 behaviour.
-            return null;
-        }
-
-        $objectService = $this->getObjectService();
-        if ($objectService === null) {
-            return null;
-        }
-
-        // Locate the object by asking OpenRegister to resolve it within each
-        // constrained (register × schema) pair. The location lookup is visibility-
-        // agnostic (_rbac: false) — it mirrors the previous behaviour of locating an
-        // object's home pair; callers re-apply their own RBAC/visibility filter on the
-        // subsequent read. No raw SQL and no knowledge of OR's table layout.
-        foreach ($allowedRegisters as $register) {
-            if (is_numeric($register) === false) {
-                continue;
-            }
-
-            $registerId = (int) $register;
-            foreach ($allowedSchemas as $schema) {
-                if (is_numeric($schema) === false) {
-                    continue;
-                }
-
-                $schemaId = (int) $schema;
-                try {
-                    $object = $objectService->find(
-                        id: $uuid,
-                        _extend: [],
-                        files: false,
-                        register: $registerId,
-                        schema: $schemaId,
-                        _rbac: false,
-                        _multitenancy: false
-                    );
-                } catch (DoesNotExistException $e) {
-                    continue;
-                } catch (\Exception $e) {
-                    continue;
-                }
-
-                if ($object !== null) {
-                    return [
-                        'register' => $registerId,
-                        'schema'   => $schemaId,
-                    ];
-                }
-            }//end foreach
-        }//end foreach
-
-        return null;
-
-    }//end findObjectLocation()
-
-    /**
-     * Run an OpenRegister read as an anonymous caller (SCH-PFTS-001 / WOO-578).
-     *
-     * OpenRegister's `ObjectService::runAsAnonymous()` clears the session subject
-     * for the duration of the callable, so admin bypass, owner grants and group
-     * rules stay out of the evaluation and every caller gets the same rows and
-     * the same `total`. It is a server-side primitive: nothing in the request
-     * can switch it on or off.
-     *
-     * The guard exists because this app has been taken down once by a hard
-     * dependency on an OR primitive that was removed (WOO-551, `Unknown named
-     * parameter $_rbacAsPublic`). On an OpenRegister without the method the
-     * read runs with the caller's session — the WOO-551 behaviour — and says
-     * so in the log once per request, so the drift is visible, not silent.
-     *
-     * @param object   $objectService The OpenRegister ObjectService.
-     * @param callable $operation     The read to perform.
-     *
-     * @return mixed Whatever the read returns.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    private function evaluateAsAnonymous(object $objectService, callable $operation): mixed
-    {
-        if (method_exists($objectService, 'runAsAnonymous') === true) {
-            return $objectService->runAsAnonymous($operation);
-        }
-
-        if ($this->warnedAboutMissingAnonymousScope === false) {
-            $this->warnedAboutMissingAnonymousScope = true;
-            // `error`, not `warning`: the endpoint keeps answering, but its
-            // uniform-visibility contract is silently not being kept, and a warning
-            // is routinely filtered on a busy public deployment. The message names
-            // the fix rather than only the symptom.
-            $this->logger?->error(
-                'WOO-578: this OpenRegister has no ObjectService::runAsAnonymous(), so /api/search '
-                .'evaluates with the caller session and signed-in users may see more than anonymous '
-                .'callers (the WOO-551 behaviour). Upgrade OpenRegister to a build that carries the '
-                .'anonymous evaluation scope to restore uniform visibility.'
-            );
-        }
-
-        return $operation();
-
-    }//end evaluateAsAnonymous()
-
-
-    /**
-     * Resolve the OpenRegister ObjectService from the container.
-     *
-     * @return object|null The OpenRegister ObjectService, or null when OR is unavailable.
-     *
-     * @spec exclude Lazy dependency-injection accessor for the OR ObjectService; pure
-     *       framework plumbing, no domain behavior.
-     */
-    private function getObjectService(): ?object
-    {
-        try {
-            return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-        } catch (\Throwable $e) {
-            return null;
-        }
-
-    }//end getObjectService()
-
-    /**
-     * Build the ObjectService search query for a catalog index request.
-     *
-     * Merges the incoming request parameters with catalog-level schema/register filters,
-     * handles multi-schema and multi-register cases, and strips non-universal _order fields
-     * when searching across multiple registers.
-     *
-     * @param array  $catalog       Catalog data array (keys: schemas, registers).
-     * @param array  $queryParams   Raw request query parameters from IRequest::getParams().
-     * @param object $objectService ObjectService instance (already resolved from container).
-     *
-     * @return array The merged and sanitised search query ready for searchObjectsPaginated().
-     *
-     * @spec exclude Query-assembly plumbing extracted from PublicationsController; translates
-     *       request params into an ObjectService search query, no domain behavior of its own.
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     * @SuppressWarnings(PHPMD.NPathComplexity)
-     * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() and CatalogScopeIds::forCatalog() are pure functions
-     */
-    public function buildCatalogSearchQuery(array $catalog, array $queryParams, object $objectService): array
-    {
-        // Use ObjectService centralized query builder which handles dot-to-underscore conversion.
-        $searchQuery = array_merge(
-            $objectService->buildSearchQuery($queryParams),
-            ['_includeDeleted' => false]
-        );
-
-        // The scope is the (guarded) catalog's, never the caller's: without this a
-        // `?schema=<S>&register=<R>` became `@self.schema`, which OR prefers over the
-        // `_schemas` set below (WOO-581 review). See CallerScope::strip().
-        $searchQuery = CallerScope::strip(query: $searchQuery);
-
-        // Clean up catalog-specific parameters.
-        unset($searchQuery['catalogSlug'], $searchQuery['fq']);
-
-        // A JSON-encoded `_order` (as nextcloud-vue's buildQueryString sends it) becomes an array.
-        if (isset($searchQuery['_order']) === true && is_string($searchQuery['_order']) === true) {
-            $decodedOrder = json_decode($searchQuery['_order'], true);
-            if (is_array($decodedOrder) === true) {
-                $searchQuery['_order'] = $decodedOrder;
-            }
-        }
-
-        // The scope's ids as the search route reads them: positive ints only, each once,
-        // so a word in `registers` never becomes `_register = 0` and a catalog holding
-        // ['19', 19] does not list everything twice.
-        $scope            = CatalogScopeIds::forCatalog(catalog: $catalog);
-        $schemas          = array_values(array_unique($scope['schemas']));
-        $catalogRegisters = array_values(array_unique($scope['registers']));
-
-        // Handle catalog filtering using _schemas for multi-schema search.
-        if ($schemas !== []) {
-            // Pass all schemas for both search and faceting.
-            $searchQuery['_schemas'] = $schemas;
-            // Only set _schema when the catalog pins ONE schema in ONE register (the
-            // magic-mapper fast path). A scalar schema without a scalar register takes
-            // neither OR's multi-schema route (needs no scalar schema) nor its
-            // single-schema route (needs a register), and falls through to the
-            // all-tables `_ids` lookup — outside the guarded scope (WOO-581 review
-            // round 2). The guard itself produces that shape: [S_ok, S_open] × [R1, R2]
-            // becomes [S_ok] × [R1, R2]. Otherwise `_schemas` carries the scope.
-            unset($searchQuery['_schema']);
-
-            if (count($schemas) === 1 && count($catalogRegisters) === 1) {
-                $searchQuery['_schema'] = $schemas[0];
-            }
-        }//end if
-
-        if ($catalogRegisters !== []) {
-            $registers = $catalogRegisters;
-            if (count($registers) === 1) {
-                // Single register: use magic mapper optimization.
-                $searchQuery['_register'] = $registers[0];
-                return $searchQuery;
-            }
-
-            // Multi-register: pass all register IDs and prevent auto-setting.
-            $searchQuery['_registers'] = $registers;
-            $searchQuery['_register']  = null;
-
-            // Multi-register search: strip _order on non-universal fields
-            // since schemas may have different property names (e.g., 'name' vs 'naam').
-            // Only allow metadata fields that exist in all magic mapper tables.
-            if (empty($searchQuery['_order']) === false && is_array($searchQuery['_order']) === true) {
-                foreach (array_keys($searchQuery['_order']) as $orderField) {
-                    // `@self.created` names the same metadata column as `_created`.
-                    $columnField = (string) $orderField;
-                    if (str_starts_with($columnField, '@self.') === true) {
-                        $columnField = '_'.substr($columnField, strlen('@self.'));
-                    }
-
-                    if (in_array($columnField, self::UNIVERSAL_ORDER_FIELDS, true) === false) {
-                        unset($searchQuery['_order'][$orderField]);
-                    }
-                }
-
-                if (empty($searchQuery['_order']) === true) {
-                    unset($searchQuery['_order']);
-                }
-            }
-        }//end if
-
-        return $searchQuery;
-
-    }//end buildCatalogSearchQuery()
-
-    /**
-     * Resolve schema and register objects from OpenRegister mappers for catalog enrichment.
-     *
-     * Returns an array with keys 'schemas' (id → {id, slug, title}) and
-     * 'registers' (id → {id, slug, title}). Missing entries are silently skipped.
-     *
-     * @param array $catalog Catalog data array (keys: schemas, registers).
-     *
-     * @return array{schemas: array<int|string, array>, registers: array<int|string, array>}
-     *
-     * @spec exclude Metadata-resolution plumbing extracted from PublicationsController; looks up
-     *       schema/register labels via OR mappers for response enrichment, no domain behavior.
-     */
-    public function resolveSchemaAndRegisterObjects(array $catalog): array
-    {
-        $resolvedSchemas   = [];
-        $resolvedRegisters = [];
-
-        try {
-            $schemaMapper   = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
-            $registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
-
-            $schemaIds = $catalog['schemas'] ?? [];
-            if (is_string($schemaIds) === true) {
-                $schemaIds = json_decode($schemaIds, true) ?? [];
-            }
-
-            foreach ($schemaIds as $schemaId) {
-                try {
-                    $schema = $schemaMapper->find((int) $schemaId);
-                    $resolvedSchemas[$schemaId] = [
-                        'id'    => $schema->getId(),
-                        'slug'  => $schema->getSlug(),
-                        'title' => $schema->getTitle(),
-                    ];
-                } catch (\Exception $e) {
-                    // Schema not found, skip.
-                }
-            }
-
-            $registerIds = $catalog['registers'] ?? [];
-            if (is_string($registerIds) === true) {
-                $registerIds = json_decode($registerIds, true) ?? [];
-            }
-
-            foreach ($registerIds as $registerId) {
-                try {
-                    $register = $registerMapper->find((int) $registerId);
-                    $resolvedRegisters[$registerId] = [
-                        'id'    => $register->getId(),
-                        'slug'  => $register->getSlug(),
-                        'title' => $register->getTitle(),
-                    ];
-                } catch (\Exception $e) {
-                    // Register not found, skip.
-                }
-            }
-        } catch (\Exception $e) {
-            // OpenRegister not available, return empty sets.
-        }//end try
-
-        return [
-            'schemas'   => $resolvedSchemas,
-            'registers' => $resolvedRegisters,
-        ];
-
-    }//end resolveSchemaAndRegisterObjects()
-
-    /**
-     * Find an object within a catalog's registers/schemas using ObjectService.
-     *
-     * Iterates over each (register, schema) combination in the catalog.
-     * Returns the first matching object entity, or null if not found.
-     *
-     * @param array  $catalog       Catalog data array (keys: schemas, registers).
-     * @param string $id            The UUID of the object to find.
-     * @param object $objectService ObjectService instance (already resolved from container).
-     *
-     * @return object|null The found object entity, or null.
-     *
-     * @spec exclude Lookup plumbing extracted from PublicationsController; iterates a catalog's
-     *       (register, schema) pairs and delegates the actual read to ObjectService::find().
-     */
-    public function findObjectInCatalog(array $catalog, string $id, object $objectService): ?object
-    {
-        $catalogRegisters = $catalog['registers'] ?? [];
-        $catalogSchemas   = $catalog['schemas'] ?? [];
-
-        // Parse JSON string if needed (catalog fields may be JSON-encoded).
-        if (is_string($catalogRegisters) === true) {
-            $catalogRegisters = json_decode($catalogRegisters, true) ?? [];
-        }
-
-        if (is_string($catalogSchemas) === true) {
-            $catalogSchemas = json_decode($catalogSchemas, true) ?? [];
-        }
-
-        // WF4 / wave-12: iterate ALL (register × schema) pairs, not just $catalogRegisters[0].
-        // Previously the code only tried the first register in the list, so objects in
-        // register #2+ were unreachable via this path and returned spurious 404s.
-        if (empty($catalogRegisters) === false) {
-            $registersToTry = array_map('intval', $catalogRegisters);
-        } else {
-            $registersToTry = [null];
-        }
-
-        $schemasToTry = array_map('intval', $catalogSchemas);
-
-        foreach ($registersToTry as $register) {
-            foreach ($schemasToTry as $schemaId) {
-                try {
-                    $object = $objectService->find(
-                        id: $id,
-                        _extend: [],
-                        files: false,
-                        register: $register,
-                        schema: $schemaId,
-                        _rbac: true,
-                        _multitenancy: false
-                    );
-                    if ($object !== null) {
-                        return $object;
-                    }
-                } catch (DoesNotExistException $e) {
-                    // Object not found in this (register, schema) pair — try next.
-                    continue;
-                }
-            }//end foreach
-        }//end foreach
-
-        return null;
-
-    }//end findObjectInCatalog()
-
-    /**
-     * Recursively strips empty values (null, empty string, empty array) from an array.
-     *
-     * Used to reduce API response payload by omitting properties that have no value.
-     * Values of 0, false, and "0" are preserved as they are meaningful.
-     *
-     * @param array $data The data array to strip empty values from.
-     *
-     * @return array The data with empty values removed.
-     *
-     * @spec exclude Response-shaping plumbing extracted from PublicationsController; recursively
-     *       prunes empty values to slim the payload, no domain behavior.
-     *
-     * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-     */
-    public function stripEmptyValues(array $data): array
-    {
-        $result = [];
-        foreach ($data as $key => $value) {
-            if (is_array($value) === true) {
-                $this->processArrayValue(result: $result, key: $key, value: $value);
-                continue;
-            }//end if
-
-            if ($value === null || $value === '') {
-                continue;
-            }
-
-            $result[$key] = $value;
-        }//end foreach
-
-        return $result;
-
-    }//end stripEmptyValues()
-
-    /**
-     * Process a single array value during empty-value stripping.
-     *
-     * Handles both sequential (list) and associative arrays, recursing into nested arrays.
-     *
-     * @param array      $result Reference to the result array being built.
-     * @param int|string $key    The key for this value.
-     * @param array      $value  The array value to process.
-     *
-     * @return void
-     */
-    private function processArrayValue(array &$result, int|string $key, array $value): void
-    {
-        if (array_is_list($value) === true) {
-            $stripped = [];
-            foreach ($value as $item) {
-                if (is_array($item) === false) {
-                    $stripped[] = $item;
-                    continue;
-                }
-
-                $stripped[] = $this->stripEmptyValues(data: $item);
-            }
-
-            if (empty($stripped) === false) {
-                $result[$key] = $stripped;
-            }
-
-            return;
-        }
-
-        $stripped = $this->stripEmptyValues(data: $value);
-        if (empty($stripped) === false) {
-            $result[$key] = $stripped;
-        }
-
-    }//end processArrayValue()
+class PublicationQueryService implements PublicationQueryServiceInterface {
+
+	/**
+	 * Order fields that exist in every magic-mapper table.
+	 *
+	 * Used when filtering _order for multi-register searches.
+	 *
+	 * @var array<string>
+	 */
+	private const UNIVERSAL_ORDER_FIELDS = [
+		'_uuid',
+		'_created',
+		'_updated',
+		'_name',
+		'_description',
+		'_summary',
+		'_relevance',
+	];
+
+	/**
+	 * Hard cap on `_limit` for the anonymous public FTS surface.
+	 *
+	 * Review #147 🟡 (unauthenticated DoS): without a cap, an anonymous
+	 * `?_limit=1000000&_content=true` fanned out unbounded into OR's
+	 * chunk-search path, giving a public CPU/memory amplifier. 100 rows
+	 * per page matches typical faceted-search UI needs; callers with a
+	 * legitimate higher-throughput need MUST paginate.
+	 *
+	 * @var integer
+	 */
+	public const PUBLIC_LIMIT_MAX = 100;
+
+	/**
+	 * Whether the missing-runAsAnonymous() warning has been logged this request.
+	 *
+	 * @var bool
+	 */
+	private bool $warnedAboutMissingAnonymousScope = false;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param ContainerInterface $container DI container
+	 * @param IUserSession|null $userSession User session — consumed by {@see isAnonymous()},
+	 *                                       which the public `/publications/{id}/uses` and
+	 *                                       `/used-by` endpoints use to gate visibility on
+	 *                                       non-public root objects. Auto-wired at runtime.
+	 * @param IAppConfig|null $config App config; used by the catalog-enumeration path to locate the catalog register/schema.
+	 * @param LoggerInterface|null $logger Logger — surfaces the fail-closed empty-envelope branch so silent
+	 *                                     catalog-scope resolution failure is observable in production (WOO-536).
+	 */
+	public function __construct(
+		private readonly ContainerInterface $container,
+		private readonly ?IUserSession $userSession = null,
+		private readonly ?IAppConfig $config = null,
+		private readonly ?LoggerInterface $logger = null,
+	) {
+
+	}//end __construct()
+
+	/**
+	 * Assemble the public full-text search result envelope (SCH-PFTS-001,
+	 * SCH-PFTS-CAT-001..003).
+	 *
+	 * Delegates entirely to OR's `ObjectService::searchObjectsPaginated` across the
+	 * (register × schema) set derived from the catalog scope. Matches from every
+	 * schema in every catalog the caller may see are merged into a single flat array
+	 * discriminated by `@self.schema` slug, resolved dynamically via SchemaMapper. A
+	 * document row's linked publication is embedded via a per-document
+	 * `_relations_contains` refinement; documents whose linked publication is not
+	 * publicly visible are dropped (transitive visibility).
+	 *
+	 * Visibility is enforced in SQL by OR's schema-level RBAC, evaluated as an
+	 * anonymous caller for every session (SCH-PFTS-001): the read runs inside OR's
+	 * `runAsAnonymous()`, so only `public`-group read rules decide what comes back
+	 * and a signed-in administrator sees exactly what an anonymous caller sees.
+	 * See the Stap 1 comment inside this method (WOO-578; the interim WOO-551
+	 * behaviour applies only on an OpenRegister without that primitive).
+	 *
+	 * Scope resolution:
+	 *   1. `_catalog=<slug>` — that catalog's registers + schemas (SCH-PFTS-CAT-001).
+	 *   2. `_catalogi[]=…` — union across the resolved catalogs.
+	 *   3. no param — union of `listed: true` + `published` catalogs (SCH-PFTS-CAT-002).
+	 * A caller's own `_schema`/`_registers`/`fq`/`catalogSlug` cannot widen scope past
+	 * the catalog boundary — those are stripped before forwarding to OR.
+	 *
+	 * Content-search: this ships metadata search across schema properties + `@self`
+	 * metadata. When `_content=true` is set, OR's `_content_search` flag is forwarded
+	 * to widen matching to document body text (WOO-517 add-on). Extraction is owned
+	 * by OR's TextExtractionService + ChunkMapper.
+	 *
+	 * @param array $queryParams Raw request query parameters from IRequest::getParams().
+	 *                           Recognised keys: `_content` (opt-in body-text search),
+	 *                           `_catalog` (single catalog slug), `_catalogi[]` (multi
+	 *                           catalog union).
+	 * @param object $objectService OpenRegister ObjectService instance (already resolved from container).
+	 *
+	 * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
+	 *
+	 * @spec openspec/changes/fix-fts-catalog-model-alignment/specs/search/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @SuppressWarnings(PHPMD.StaticAccess) SearchRangeGuard::malformedParameter() is a pure function over the query.
+	 */
+	public function assemblePublicSearchResults(array $queryParams, object $objectService): array {
+		// A range bound that is neither a date nor a number would reach
+		// OpenRegister and come back as an empty result that reads as "nothing
+		// found". Refuse it by name instead (REQ-SCF-002).
+		$malformed = SearchRangeGuard::malformedParameter(queryParams: $queryParams);
+		if ($malformed !== null) {
+			throw new MalformedSearchParameterException(parameter: $malformed);
+		}
+
+		// ONE anonymous scope around the WHOLE assembly, not just the object reads.
+		// Scope resolution asks OpenRegister's SchemaMapper and RegisterMapper which
+		// schemas and registers exist, and those honour multitenancy by default — so
+		// with a session in play they answer from the caller's active organisation.
+		// Wrapping only the object reads left that door open: a signed-in caller
+		// could resolve a WIDER scope than an anonymous one before the anonymous read
+		// ever started, and see rows an anonymous caller does not. That is exactly
+		// what SCH-PFTS-001 forbids. One scope over the whole method closes the
+		// question for every read on this path, including ones added later.
+		//
+		// The inner `evaluateAsAnonymous()` calls stay: the scope is a depth counter,
+		// so nesting composes, and they keep the guarantee attached to each read for
+		// anyone who calls those helpers from somewhere else.
+		return $this->evaluateAsAnonymous(
+			objectService: $objectService,
+			operation: fn (): array => $this->assembleSearchResultsAsAnonymous(
+				queryParams: $queryParams,
+				objectService: $objectService
+			)
+		);
+
+	}//end assemblePublicSearchResults()
+
+	/**
+	 * The body of {@see assemblePublicSearchResults()}, always run inside the
+	 * anonymous evaluation scope that method opens.
+	 *
+	 * Private on purpose: calling it directly would skip the scope and reinstate
+	 * the WOO-551 drift this ticket exists to remove.
+	 *
+	 * @param array $queryParams Raw request query parameters.
+	 * @param object $objectService OpenRegister ObjectService instance.
+	 *
+	 * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
+	 *
+	 * @psalm-param   array<string, mixed> $queryParams
+	 * @phpstan-param array<string, mixed> $queryParams
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function assembleSearchResultsAsAnonymous(array $queryParams, object $objectService): array {
+		$scope = $this->guardedCatalogScope(queryParams: $queryParams);
+		if ($scope === null) {
+			return [
+				'results' => [],
+				'total' => 0,
+			];
+		}
+
+		$run = new PublicSearchAssembly(objectService: $objectService, scope: $scope);
+		// Opt-in content-search (WOO-517): widen matching to include
+		// OR-extracted document body text. Default false — omitted/false is
+		// byte-identical to the WOO-506 baseline, so existing consumers see zero
+		// drift. Read before buildSearchQuery() so the raw `_content` key can be
+		// stripped from the forwarded query below (it is OC's own flag name, not
+		// OR's — OR's equivalent is `_content_search`).
+		$run->contentSearch = filter_var(
+			value: ($queryParams['_content'] ?? false),
+			filter: FILTER_VALIDATE_BOOLEAN
+		);
+		$run->searchQuery = $this->forwardedSearchQuery(queryParams: $queryParams, run: $run);
+
+		// Stap 1 — OR's schema-level RBAC, evaluated AS AN ANONYMOUS CALLER.
+		// SCH-PFTS-001 (WOO-536) promises uniform visibility on this public
+		// endpoint: a signed-in administrator sees exactly what an anonymous
+		// caller sees. The `_rbac_as_public: true` toggle that enforced this was
+		// removed on OR (`31687c6f3`) and WOO-551 accepted the drift to keep the
+		// endpoint alive. WOO-578 brings the guarantee back through OR's
+		// `runAsAnonymous()`: the session subject is cleared for the duration of
+		// the call, so the admin bypass, the `_owner` grant and group rules never
+		// enter the evaluation and only the `public` read rules decide.
+		// `_rbac: true` stays — the public rules ARE the filter.
+		$candidateResult = $this->evaluateAsAnonymous(
+			objectService: $objectService,
+			operation: static fn (): array => $objectService->searchObjectsPaginated(
+				query: $run->searchQuery,
+				_rbac: true,
+				_multitenancy: false
+			)
+		);
+
+		$this->prepareRowShaping(run: $run);
+
+		foreach (($candidateResult['results'] ?? []) as $candidate) {
+			$this->collectCandidateRow(candidate: $candidate, run: $run);
+		}
+
+		return $this->searchEnvelope(candidateResult: $candidateResult, run: $run);
+	}//end assembleSearchResultsAsAnonymous()
+
+	/**
+	 * The catalogue scope of the search with the read-rule guard applied, or null
+	 * when the search must answer with the empty envelope.
+	 *
+	 * @param array $queryParams Raw request query parameters.
+	 *
+	 * @return array{registers: array<int>, schemas: array<int>}|null The guarded scope, or null.
+	 *
+	 * @psalm-param   array<string, mixed> $queryParams
+	 * @phpstan-param array<string, mixed> $queryParams
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function guardedCatalogScope(array $queryParams): ?array {
+		// Stap 2 — Catalog-derived scope (SCH-PFTS-CAT-001..003).
+		// Replaces the pre-WOO-536 app-config-derived scope (publication_register /
+		// publication_schema / document_schema) with a catalog-model union so
+		// /api/search covers every (register × schema) the caller may see.
+		$scope = $this->resolveCatalogScope(queryParams: $queryParams);
+
+		// SCH-PFTS-CAT-002 guard (WOO-574, tasks.md 3.5 of the WOO-536 change):
+		// a schema whose `authorization` block is EMPTY is filtered by
+		// MagicRbacHandler down to owner-admits OR not-private only, so on this
+		// surface every non-private row of it would be exposed. (A non-empty block
+		// that merely omits `read` already fails closed there — it is dropped too,
+		// for a uniform scope, not because it leaks. Full account on
+		// {@see dropSchemasWithoutReadRules()}.) Drop those schemas from the scope
+		// and warn the operator. The guard used to apply to anonymous callers only,
+		// with signed-in callers left to OR's session RBAC (WOO-551 semantics).
+		// Since WOO-578 every read on this endpoint is evaluated as an anonymous
+		// caller, so the guard holds for every caller: a schema that is open for
+		// want of rules is open for nobody here.
+		//
+		// THE SIBLING GAPS. `/api/{catalogSlug}` and its five sibling routes
+		// (PublicationsController) used to build their scope from
+		// `$catalog['schemas']` without this guard; WOO-580 routed them through
+		// `applyCatalogReadRuleGuard()`. WOO-581 did the same for
+		// `/api/catalogs/{slug}/dcat` and `/schema`, and routed the two readers
+		// that build a UNION over all catalogs — `/api/federation/publications`
+		// and `/api/catalogi/{id}` — through `applySchemaScopeReadRuleGuard()`,
+		// as it did the WOO sitemap: that picks its schema by woo-register
+		// category but admits it on `$catalog['schemas']` membership, so it is a
+		// reader of the same source. OOAPI is not guarded here and needs no guard:
+		// `requireAuthenticatedConsumer()` refuses anonymous callers, and this
+		// guard is anonymous-only.
+		//
+		// A GUARDED SCOPE IS ONLY A GUARD IF IT IS THE SCOPE OR SEARCHES. A
+		// caller's `schema=` / `register=` / `@self[schema]=` used to reach OR as
+		// `@self.schema`, which wins over the guarded `_schemas`; every public list
+		// route now runs the request query through `CallerScope::strip()` first.
+		if (empty($scope['schemas']) === false) {
+			$scope['schemas'] = $this->dropSchemasWithoutReadRules(schemaIds: $scope['schemas']);
+		}
+
+		if (empty($scope['schemas']) === true) {
+			// Fail-closed: no schemas in scope — either an explicit _catalog / _catalogi[]
+			// resolved to nothing, or the deployment has no listed+published catalogs.
+			$this->logger?->warning(
+				'PublicationQueryService::assemblePublicSearchResults returning empty envelope — no schemas in resolved catalog scope',
+				[
+					'_catalog' => ($queryParams['_catalog'] ?? null),
+					'_catalogi' => ($queryParams['_catalogi'] ?? null),
+				]
+			);
+			return null;
+		}
+
+		// ADR-083 preflight: OR is an optional dependency for this path. Establish
+		// that SchemaMapper is loadable BEFORE we touch $objectService — every OR
+		// call downstream ($objectService->buildSearchQuery, ->searchObjectsPaginated,
+		// and the container->get(SchemaMapper) below) assumes the package is present.
+		// If it isn't, return the same empty envelope shape as the no-scope branch
+		// so the endpoint stays uniform for the anonymous caller.
+		if (class_exists('OCA\\OpenRegister\\Db\\SchemaMapper') === false) {
+			$this->logger?->warning(
+				'PublicationQueryService: OpenRegister SchemaMapper unavailable — returning empty envelope',
+				[]
+			);
+			return null;
+		}
+
+		return $scope;
+	}//end guardedCatalogScope()
+
+	/**
+	 * The search query forwarded to OpenRegister: the caller's query with every
+	 * scope-widening parameter stripped and the guarded catalogue scope applied.
+	 *
+	 * @param array $queryParams Raw request query parameters.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array<string, mixed> The forwarded query.
+	 *
+	 * @psalm-param   array<string, mixed> $queryParams
+	 * @phpstan-param array<string, mixed> $queryParams
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+	 */
+	private function forwardedSearchQuery(array $queryParams, PublicSearchAssembly $run): array {
+		$searchQuery = $run->objectService->buildSearchQuery($queryParams);
+		// Q7 Interpretation A: strip any client-supplied scope-widening params so a
+		// request cannot bypass the catalog-derived scope. This preserves the
+		// pre-WOO-536 discipline that clients cannot inject their own register/schema
+		// set past the resolved catalog boundary. This used to strip only `_schema` and
+		// `_registers`; `?schema=<S>&register=<R>` reached OR as `@self.schema`, won the
+		// precedence chain and bypassed the SCH-PFTS-CAT-002 guard (WOO-581 review).
+		$searchQuery = CallerScope::strip(query: $searchQuery);
+		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
+		unset($searchQuery['_content']);
+		// OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
+		unset($searchQuery['_catalog'], $searchQuery['_catalogi']);
+
+		$searchQuery = $this->applyResolvedScope(searchQuery: $searchQuery, scope: $run->scope);
+
+		if ($run->contentSearch === true) {
+			$searchQuery = $this->widenForContentSearch(searchQuery: $searchQuery, registerIds: $run->scope['registers']);
+		}
+
+		return $searchQuery;
+	}//end forwardedSearchQuery()
+
+	/**
+	 * Apply the resolved catalogue scope and the public `_limit` cap to a forwarded query.
+	 *
+	 * @param array $searchQuery The forwarded query.
+	 * @param array $scope The guarded catalogue scope.
+	 *
+	 * @return array<string, mixed> The query with scope and cap applied.
+	 *
+	 * @psalm-param   array<string, mixed> $searchQuery
+	 * @phpstan-param array<string, mixed> $searchQuery
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function applyResolvedScope(array $searchQuery, array $scope): array {
+		// Apply the resolved scope. Single-register: use `_register` for the magic-mapper
+		// fast path. Multi-register: pass `_registers[]` and explicitly nullify `_register`
+		// to prevent ObjectService from auto-setting it.
+		$searchQuery['_schemas'] = $scope['schemas'];
+		if (count($scope['registers']) === 1) {
+			$searchQuery['_register'] = $scope['registers'][0];
+		} elseif (empty($scope['registers']) === false) {
+			$searchQuery['_registers'] = $scope['registers'];
+			$searchQuery['_register'] = null;
+		}
+		$searchQuery['_includeDeleted'] = false;
+
+		// Clamp `_limit` to a hard maximum (review #147 🟡 unauthenticated DoS —
+		// no cap allowed anonymous `?_limit=1000000&_content=true` to fan out
+		// unbounded into OR's chunk-search path). The cap is enforced HERE, not
+		// in the controller, so every entry point that reaches this assembler
+		// is covered (`SearchController::index()` is the only one today, but
+		// any future entrypoint automatically inherits the cap). 100 mirrors
+		// typical faceted-search page sizes; callers wanting more MUST paginate.
+		$requestedLimit = ($searchQuery['_limit'] ?? null);
+		if (is_numeric($requestedLimit) === true && (int)$requestedLimit > self::PUBLIC_LIMIT_MAX) {
+			$searchQuery['_limit'] = self::PUBLIC_LIMIT_MAX;
+		}
+
+		return $searchQuery;
+	}//end applyResolvedScope()
+
+	/**
+	 * Turn on OpenRegister's body-text search and widen the schemas to the document
+	 * schemas of the registers in scope (WOO-517).
+	 *
+	 * @param array $searchQuery The forwarded query, already scoped.
+	 * @param array $registerIds The registers in scope.
+	 *
+	 * @return array<string, mixed> The query with content search on.
+	 *
+	 * @psalm-param   array<string, mixed> $searchQuery
+	 * @phpstan-param array<string, mixed> $searchQuery
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function widenForContentSearch(array $searchQuery, array $registerIds): array {
+		// Forward to OR's opt-in chunk-search fan-out (expose-content-search-in
+		// -object-service). OR already dedupes its own metadata-match + chunk-match
+		// union on object id before returning; the `@self.id` dedup below is an
+		// additional guarantee at the OC assembly layer.
+		$searchQuery['_content_search'] = true;
+
+		// AND WIDEN THE SCOPE TO THE DOCUMENT SCHEMA, or the fan-out returns
+		// nothing it is allowed to keep.
+		//
+		// A catalog is wired at the publication register + PUBLICATION schema, so
+		// `$scope['schemas']` is publication-only. OR's chunk arm applies that same
+		// scope to each resolved chunk owner, and a body-text chunk belongs to a
+		// DOCUMENT. Measured on the dev instance 2026-09-02 with a freshly seeded,
+		// publicly visible publication + document + .txt, extraction confirmed:
+		//
+		//   SCOPECHECK objReg=31 objSchema=1114 scope={"registers":[31],
+		//              "schemas":[1113]} match=false
+		//
+		// so every document match was discarded inside OR and this assembler never
+		// saw a row: `{"results":[],"total":1}`. That is WOO-517's
+		// "a body-text-only match surfaces via ?_content=true" failing, and it is
+		// the silent drop resolveDocumentPublicationSummary()'s docblock already
+		// warned about, one layer further out.
+		//
+		// Scoped to `_content=true` on purpose: without it the schemas stay
+		// publication-only, so a document still MUST NOT surface on the
+		// metadata-only path. The document rows this admits are still gated by the
+		// transitive-visibility check in the row loop below, which drops any
+		// document whose linked publication is not publicly visible.
+		$documentSchemaIds = $this->resolveDocumentSchemaIds(
+			registerIds: $registerIds,
+			schemas: $searchQuery['_schemas']
+		);
+		// The widening runs AFTER the SCH-PFTS-CAT-002 guard, so the schemas it
+		// adds get the same guard; the transitive check below is defence in
+		// depth, not the control (WOO-581 review round 2).
+		if ($documentSchemaIds !== []) {
+			$documentSchemaIds = $this->dropSchemasWithoutReadRules(schemaIds: $documentSchemaIds);
+		}
+
+		if ($documentSchemaIds !== []) {
+			$searchQuery['_schemas'] = array_values(
+				array_unique(array_merge($searchQuery['_schemas'], $documentSchemaIds))
+			);
+		}
+
+		return $searchQuery;
+	}//end widenForContentSearch()
+
+	/**
+	 * Resolve what the row loop needs once the candidates are in: the SchemaMapper,
+	 * the publication schema in scope and the register document refinements run in.
+	 *
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function prepareRowShaping(PublicSearchAssembly $run): void {
+		// Stap 3 — Dynamic schema-discriminator via SchemaMapper. Replaces the pre-WOO-536
+		// two-element hardcoded map; per-request cache so multi-schema search doesn't hit
+		// the DB per row. Availability preflight for OR ran at the top of this method.
+		$run->schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
+
+		// Track the publication schema for document→publication refinement (Stap 5a).
+		// Shares the outer $schemaSlugById cache so the pre-loop scan doubles as a
+		// warm-up for the row-loop lookups (M3 — no duplicate mapper hits).
+		$run->publicationSchemaId = $this->resolvePublicationSchemaId(
+			schemaMapper: $run->schemaMapper,
+			scopeSchemas: $run->scope['schemas'],
+			schemaSlugById: $run->schemaSlugById
+		);
+		// Track a single register for per-document refinement queries. Falls back to null
+		// when the scope spans multiple registers — refinement then goes through the
+		// multi-schema path via the query dict.
+		if (count($run->scope['registers']) === 1) {
+			$run->refinementRegisterId = $run->scope['registers'][0];
+		}
+
+	}//end prepareRowShaping()
+
+	/**
+	 * Keep one candidate row, or count it as dropped.
+	 *
+	 * Stap 4 — Removed the isObjectPublic() PHP post-filter. Visibility is now
+	 * enforced in SQL by OR's schema authorization (RBA-PUBLIC-001..004). OR's
+	 * `total` and `facets` therefore reflect visible-only counts by construction —
+	 * no undercount workaround, no facet stripping.
+	 *
+	 * @param mixed $candidate The candidate as OpenRegister returned it.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function collectCandidateRow(mixed $candidate, PublicSearchAssembly $run): void {
+		$rowArray = $candidate;
+		if (is_array($rowArray) === false) {
+			$rowArray = $rowArray->jsonSerialize();
+		}
+
+		// Dedup on @self.id: a document matching on BOTH metadata and body text must
+		// appear exactly once. Rows without a resolvable id (defensive — should not
+		// occur) are never deduped. Marker is stamped AFTER per-row validation so a
+		// first candidate that fails validation cannot silently suppress a later
+		// same-id candidate that would have passed. Dedup drops do NOT count against
+		// `total` — they collapse a single logical hit that OR double-counted, so
+		// OR's total remains the correct upper bound.
+		$objectId = ($rowArray['@self']['id'] ?? ($rowArray['id'] ?? null));
+		if ($objectId !== null && isset($run->seenObjectIds[$objectId]) === true) {
+			return;
+		}
+
+		$rowArray = $this->shapeCandidateRow(rowArray: $rowArray, run: $run);
+		if ($rowArray === null) {
+			$run->droppedCount++;
+			return;
+		}
+
+		if ($objectId !== null) {
+			$run->seenObjectIds[$objectId] = true;
+		}
+
+		$run->rows[] = $rowArray;
+
+	}//end collectCandidateRow()
+
+	/**
+	 * Shape one candidate row for the public envelope, or return null to drop it.
+	 *
+	 * @param array $rowArray The candidate row.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array|null The shaped row, or null when it must be dropped.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function shapeCandidateRow(array $rowArray, PublicSearchAssembly $run): ?array {
+		$schemaId = $this->extractSchemaId(rowArray: $rowArray);
+		if ($schemaId === null) {
+			return null;
+		}
+
+		$schemaSlug = $this->cachedSchemaSlug(schemaId: $schemaId, run: $run);
+		if ($schemaSlug === null) {
+			return null;
+		}
+
+		$rowArray['@self']['schema'] = $schemaSlug;
+
+		// RET-006 belt-and-braces: `status: 'archived'` is a terminal-hidden state
+		// that MUST NOT appear on any public surface, regardless of publish/depublish
+		// dates. The schema-level SQL RBAC does not include a status-check (would need
+		// a `status: {$ne: archived}` clause on the read-rules; that clause interacts
+		// badly with legacy rows where `status` is NULL — SQL treats `NULL != x` as
+		// unknown, which would silently drop pre-status-migration rows). Enforcing here
+		// in PHP is deterministic and safe for legacy data.
+		if (($rowArray['status'] ?? null) === 'archived') {
+			return null;
+		}
+
+		// Strip any raw chunk-search fields OR might have attached to the row.
+		// Defence-in-depth: OR already resolves each chunk hit to its owning
+		// ObjectEntity, so these fields should never be present.
+		unset(
+			$rowArray['_snippet'],
+			$rowArray['snippet'],
+			$rowArray['chunk'],
+			$rowArray['chunk_id'],
+			$rowArray['chunkId'],
+			$rowArray['score'],
+			$rowArray['_score']
+		);
+
+		if ($schemaSlug === 'document') {
+			return $this->withLinkedPublication(rowArray: $rowArray, run: $run);
+		}
+
+		return $rowArray;
+	}//end shapeCandidateRow()
+
+	/**
+	 * The slug of a schema, looked up through the SchemaMapper once per request.
+	 *
+	 * @param int $schemaId The schema id.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return string|null The slug, or null when the lookup failed.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function cachedSchemaSlug(int $schemaId, PublicSearchAssembly $run): ?string {
+		if (isset($run->schemaSlugById[$schemaId]) === false) {
+			try {
+				$run->schemaSlugById[$schemaId] = $run->schemaMapper->find($schemaId)->getSlug();
+			} catch (\Throwable $e) {
+				$this->logger?->warning('WOO-536: schema slug lookup failed', ['schemaId' => $schemaId, 'error' => $e->getMessage()]);
+				$run->schemaSlugById[$schemaId] = null;
+			}
+		}
+
+		return $run->schemaSlugById[$schemaId];
+	}//end cachedSchemaSlug()
+
+	/**
+	 * Embed a document row's linked publication, or return null when that
+	 * publication is missing or not publicly visible (transitive visibility).
+	 *
+	 * Without a publication schema in scope the row is returned unchanged.
+	 *
+	 * @param array $rowArray The document row.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array|null The row with its publication, or null to drop it.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function withLinkedPublication(array $rowArray, PublicSearchAssembly $run): ?array {
+		if ($run->publicationSchemaId === null) {
+			return $rowArray;
+		}
+
+		$publicationSummary = $this->resolveDocumentPublicationSummary(documentRow: $rowArray, run: $run);
+
+		if ($publicationSummary === null || $publicationSummary['public'] !== true) {
+			// No linked publication OR linked publication is not publicly
+			// visible under schema-level RBAC — drop the document row
+			// (transitive visibility).
+			return null;
+		}
+
+		$rowArray['publication'] = $publicationSummary['summary'];
+		return $rowArray;
+	}//end withLinkedPublication()
+
+	/**
+	 * The result envelope: the rows kept, the reconciled total, and OpenRegister's
+	 * facets when it returned them.
+	 *
+	 * @param array $candidateResult OpenRegister's paginated search result.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function searchEnvelope(array $candidateResult, PublicSearchAssembly $run): array {
+		$envelope = [
+			'results' => $run->rows,
+			'total' => $this->reconciledTotal(candidateResult: $candidateResult, run: $run),
+		];
+
+		if (isset($candidateResult['facets']) === true) {
+			$envelope['facets'] = $candidateResult['facets'];
+		}
+		if (isset($candidateResult['facetable']) === true) {
+			$envelope['facetable'] = $candidateResult['facetable'];
+		}
+		return $envelope;
+	}//end searchEnvelope()
+
+	/**
+	 * The envelope `total`: OpenRegister's global count reconciled with the rows
+	 * this page dropped.
+	 *
+	 * @param array $candidateResult OpenRegister's paginated search result.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return int The total to report.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function reconciledTotal(array $candidateResult, PublicSearchAssembly $run): int {
+		// Stap 4 — Envelope `total` reconciles OR's global count with the PHP drops.
+		//
+		// OR's `total` is the GLOBAL count of candidate rows matching the query
+		// across every page (needed so paginated consumers can compute `has_more`).
+		// Most drops are already applied at the SQL layer via OR's schema-level
+		// RBAC — but the row-loop still filters two classes OR cannot see:
+		//   1. `status: 'archived'` (belt-and-braces RET-006, no schema-side rule)
+		//   2. Transitive visibility on documents whose linked publication is not
+		//      publicly visible (N4a — `_content=true` chunk-hits are the common
+		//      trigger; OR's schema RBAC gates the document but not its parent
+		//      publication).
+		// Both drops leak "invisible" rows into OR's `total`. Sending OR's raw
+		// total when we dropped rows on THIS page would ship `total > count(rows)`
+		// with no way for the caller to reconcile — the SCH-PFTS-004 bug pattern.
+		//
+		// Compromise without an OR schema change: subtract per-page drops from
+		// OR's total, floored at `count($rows)` so the envelope never claims
+		// fewer visible items than it actually shipped. This preserves the
+		// pagination signal (total > count(rows) still means "more pages") while
+		// guaranteeing total ≥ count(rows) on every page. It is a per-page
+		// approximation: later pages may drop more rows and shrink `total`
+		// further, so a UI polling forward will see `total` decrease monotonically
+		// as invisible candidates are filtered out — acceptable for a public
+		// FTS surface where the exact global count is not a hard requirement.
+		//
+		// The architecturally clean fix (push transitive visibility down to
+		// OR's schema RBAC) needs an OR schema change and cross-schema `read`
+		// rules; tracked as follow-up.
+		$orTotal = (int)($candidateResult['total'] ?? count($run->rows));
+		$adjustedTotal = max(count($run->rows), ($orTotal - $run->droppedCount));
+
+		// WOO-577: OR's count query and its row stream can disagree. OR dedupes
+		// the metadata-match + chunk-match union on object id before returning
+		// `results`, but `total` stays the undeduplicated chunk-join count, so a
+		// `_content=true` query can answer `total: 8` while handing back NOTHING.
+		// Measured on acato and reproduced on the NC 32 rig (OpenCatalogi
+		// 1.0.9-woo-2 + OpenRegister 1.1.5): `_search=Nextcloud&_content=true`
+		// → `{"total": 8, "results": []}`.
+		//
+		// Only the FIRST page's "no rows at all" case is corrected here, and
+		// deliberately so. On page one, `results: []` with `total > 0` and no local
+		// drops is impossible for an honest backend — there is no offset that could
+		// explain it — so it is the `total: X, results: []` shape the envelope
+		// comment above already calls out as the SCH-PFTS-004 bug pattern, and
+		// reporting 0 is the truthful answer.
+		//
+		// ON ANY LATER PAGE THE SAME SHAPE IS ORDINARY. A caller that asks for
+		// `_offset=40` of 31 real matches gets `{results: [], total: 31}` from a
+		// perfectly healthy search — that is what running out of rows looks like.
+		// Zeroing there would make `total` collapse from 31 to 0 on the last page
+		// of every paginated query, and a UI that redraws its count from each
+		// response would show "0 results" at the end of a search that found 31.
+		// The observed WOO-577 desync reproduced on the default first page, so
+		// scoping the correction there loses nothing and costs no honest caller.
+		//
+		// Pages that DO carry rows keep OR's total untouched, so the "more pages"
+		// signal survives; whether that number itself should be deduplicated is
+		// answered in OR's count (openregister#3856), not in a per-page guess here.
+		if ($run->rows === [] && $run->droppedCount === 0 && $orTotal > 0 && $this->isFirstPage(searchQuery: $run->searchQuery) === true) {
+			$this->logger?->warning(
+				'WOO-577: OpenRegister reported a total without returning any rows on the first page; '
+				. 'reporting 0 so the envelope does not advertise unreachable results',
+				[
+					'orTotal' => $orTotal,
+					'search' => ($run->searchQuery['_search'] ?? null),
+					'contentSearch' => $run->contentSearch,
+					'schemas' => $run->searchQuery['_schemas'],
+				]
+			);
+			$adjustedTotal = 0;
+		}
+
+		return $adjustedTotal;
+	}//end reconciledTotal()
+
+	/**
+	 * Whether the request addresses the first page of the result set.
+	 *
+	 * Absent pagination params, `_offset: 0`, or `_page: 1` all mean "start at the
+	 * beginning". Anything else may legitimately land past the end of the results,
+	 * where an empty page with a non-zero total is ordinary rather than a backend
+	 * disagreement (WOO-577). A `_page` without a `_limit` cannot be resolved to an
+	 * offset here, so anything above 1 counts as NOT the first page — the
+	 * conservative direction, since the cost of guessing wrong is a wrong `total`.
+	 *
+	 * @param array $searchQuery The query as forwarded to OpenRegister.
+	 *
+	 * @return bool True when this is the first page.
+	 *
+	 * @psalm-param   array<string, mixed> $searchQuery
+	 * @phpstan-param array<string, mixed> $searchQuery
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function isFirstPage(array $searchQuery): bool {
+		$offset = ($searchQuery['_offset'] ?? null);
+		if ($offset !== null && (int)$offset !== 0) {
+			return false;
+		}
+
+		$page = ($searchQuery['_page'] ?? null);
+		if ($page !== null && (int)$page > 1) {
+			return false;
+		}
+
+		return true;
+	}//end isFirstPage()
+
+	/**
+	 * Drop every schema that has no `authorization.read` rules from the anonymous scope.
+	 *
+	 * TWO SHAPES, ONE OF WHICH IS THE LEAK. OpenRegister handles them differently
+	 * — see MagicRbacHandler::buildRbacConditionsSql():
+	 *   - `authorization` EMPTY or absent: `bypass => false`, but the only
+	 *     conditions are owner-admits OR not-private. An anonymous caller
+	 *     therefore reads every NON-PRIVATE row of the schema. This is the
+	 *     exposure, and it is not an unconditional bypass.
+	 *   - `authorization` NON-EMPTY but without a `read` action: OpenRegister
+	 *     FAILS CLOSED ("Action not configured on a non-empty authorization
+	 *     block"), so an anonymous caller already gets nothing.
+	 * Both are dropped here — the first because it leaks, the second so the
+	 * anonymous scope is uniform rather than because it is unsafe — and a
+	 * warning names the schema (SCH-PFTS-CAT-002). Fail-closed: when the mapper
+	 * cannot be consulted the whole scope collapses to empty, which the caller
+	 * turns into the empty envelope.
+	 *
+	 * Trade-off: OR resolves authorization with a register-level cascade; a
+	 * schema that inherits its rules from the register is dropped here too
+	 * because only the schema-level block is inspected. Configure the read
+	 * rules on the schema itself to include it in anonymous search.
+	 *
+	 * @param int[] $schemaIds Schema ids in the resolved catalog scope.
+	 *
+	 * @return int[] The ids whose schema carries non-empty `authorization.read` rules.
+	 *
+	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 */
+	private function dropSchemasWithoutReadRules(array $schemaIds): array {
+		try {
+			$schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
+		} catch (\Throwable $e) {
+			$this->logger?->warning(
+				'WOO-574: SchemaMapper unavailable for the read-rule guard — anonymous scope emptied',
+				['error' => $e->getMessage()]
+			);
+			return [];
+		}
+
+		$kept = [];
+		foreach ($schemaIds as $schemaId) {
+			try {
+				$schema = $schemaMapper->find((int)$schemaId);
+				$authorization = $schema->getAuthorization();
+				$slug = (string)$schema->getSlug();
+			} catch (\Throwable $e) {
+				$this->logger?->warning(
+					'WOO-574: schema lookup failed in the read-rule guard — schema excluded from anonymous scope',
+					['schemaId' => $schemaId, 'error' => $e->getMessage()]
+				);
+				continue;
+			}
+
+			if (is_array($authorization) === false || empty($authorization['read']) === true) {
+				$this->logger?->warning(
+					'WOO-574: schema has no authorization.read rules — excluded from anonymous search (SCH-PFTS-CAT-002)',
+					['schemaId' => $schemaId, 'schema' => $slug]
+				);
+				continue;
+			}//end if
+
+			$kept[] = (int)$schemaId;
+		}//end foreach
+
+		return $kept;
+	}//end dropSchemasWithoutReadRules()
+
+	/**
+	 * Apply the SCH-PFTS-CAT-002 read-rule guard to a catalog's schema scope.
+	 *
+	 * Same DROP as `/api/search` (WOO-574), on a different surface — but no
+	 * longer the same RULE: since WOO-578 that endpoint applies it to every
+	 * caller, while this guard is anonymous-only (see ANONYMOUS ONLY below).
+	 * Which schemas it removes, and which half of that set is the actual leak
+	 * rather than a schema OpenRegister already refuses, is set out on
+	 * {@see dropSchemasWithoutReadRules()}.
+	 * `assemblePublicSearchResults()` has dropped those schemas since WOO-574,
+	 * but that method only serves `/api/search`. The
+	 * per-catalog routes (`/api/{catalogSlug}` and its `/{id}`, `/uses`,
+	 * `/used`, `/attachments`, `/download` siblings) are `#[PublicPage]` too and
+	 * build their scope straight from the catalog, so the guard never reached
+	 * them and the leak stayed open there (WOO-580).
+	 *
+	 * Guarding the CATALOG rather than each query is what makes this one rule
+	 * instead of six: every one of those routes reads `$catalog['schemas']`,
+	 * directly or through {@see buildCatalogSearchQuery()} /
+	 * {@see findObjectInCatalog()}, and each already fails closed on an empty
+	 * schema list. Handing them a guarded catalog therefore also keeps the
+	 * `@catalog.schemas` block in the response from naming a schema the caller
+	 * may not read.
+	 *
+	 * "THE CATALOG IS GUARDED" IS NOT "EVERY READER OF ITS SCHEMAS IS
+	 * GUARDED". This guards the catalog ITS CALLER hands in. Its callers are
+	 * the six routes in
+	 * {@see \OCA\OpenCatalogi\Controller\PublicationsController} plus, since
+	 * WOO-581, `/api/catalogs/{slug}/dcat`
+	 * ({@see \OCA\OpenCatalogi\Controller\DcatController::catalog()}) and
+	 * `/api/catalogs/{slug}/schema`
+	 * ({@see \OCA\OpenCatalogi\Controller\SchemaOrgController::catalog()}).
+	 * Readers that build a UNION over every catalog instead of taking one
+	 * catalog go through {@see applySchemaScopeReadRuleGuard()}:
+	 * `/api/federation/publications` and `/api/catalogi/{id}`. A new reader of
+	 * `$catalog['schemas']` on a public route needs one of the two; grep for
+	 * the source, not the route family — that is how WOO-580 and WOO-581 were
+	 * each found after the previous fix.
+	 *
+	 * ANONYMOUS ONLY, deliberately — and since WOO-578 that is a DIFFERENCE
+	 * from `/api/search`, not a match. That endpoint drops rule-less schemas
+	 * unconditionally now, and (where the installed OpenRegister carries the
+	 * primitive) evaluates every read inside its `runAsAnonymous()`, so its own
+	 * SCH-PFTS-CAT-002 guard holds for signed-in callers too. These per-catalog routes keep session RBAC,
+	 * and that is the surface WOO-578 leaves staff when it narrows
+	 * `/api/search`; widening the guard here would close that door in the same
+	 * move.
+	 *
+	 * @param array $catalog Catalog data array (keys: schemas, registers).
+	 *
+	 * @return array The catalog with `schemas` normalised to int[] and, for an
+	 *               anonymous caller, filtered to the schemas that carry read rules.
+	 *
+	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 */
+	public function applyCatalogReadRuleGuard(array $catalog): array {
+		$schemas = ($catalog['schemas'] ?? []);
+		if (is_string($schemas) === true) {
+			$schemas = (json_decode($schemas, true) ?? []);
+		}
+
+		if (is_array($schemas) === false) {
+			$schemas = [];
+		}
+
+		$schemas = array_values(array_map('intval', array_filter($schemas, 'is_numeric')));
+
+		$catalog['schemas'] = $this->applySchemaScopeReadRuleGuard(schemaIds: $schemas);
+
+		return $catalog;
+	}//end applyCatalogReadRuleGuard()
+
+	/**
+	 * Apply the SCH-PFTS-CAT-002 read-rule guard to a bare schema-id scope.
+	 *
+	 * The same anonymous-only drop as {@see applyCatalogReadRuleGuard()}, for
+	 * the readers that do not hold one catalog but a UNION of the schema lists
+	 * of every catalog on the instance (WOO-581):
+	 * {@see \OCA\OpenCatalogi\Service\PublicationService::getCatalogFilters()}
+	 * (and its fast-path twin), which serve `/api/federation/publications`, and
+	 * {@see \OCA\OpenCatalogi\Service\CatalogiService::getCatalogFilters()},
+	 * which serves `/api/catalogi/{id}`. Both are `#[PublicPage]`, both searched
+	 * with `_rbac: true` over an unguarded union, and on both an anonymous
+	 * caller read the full record of a schema without an `authorization` block.
+	 * The WOO sitemap ({@see \OCA\OpenCatalogi\Service\SitemapService}) runs
+	 * its single category schema through it too. Through getCatalogFilters() it
+	 * also covers `/api/federation/publications/{id}` and its `/uses`, `/used`,
+	 * `/attachments` and `/download` siblings.
+	 *
+	 * A signed-in caller gets the list back UNTOUCHED — not even normalised —
+	 * so session-RBAC behaviour on these paths does not move. An anonymous
+	 * caller gets int ids, with every schema lacking read rules removed (see
+	 * {@see dropSchemasWithoutReadRules()} for which of those is the actual
+	 * leak). The caller MUST treat an empty result as "nothing to search", not
+	 * as "no schema filter".
+	 *
+	 * @param array $schemaIds Schema ids (int or numeric string) in the scope.
+	 *
+	 * @return array The scope, filtered for an anonymous caller.
+	 *
+	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 */
+	public function applySchemaScopeReadRuleGuard(array $schemaIds): array {
+		if ($this->isAnonymous() === false || empty($schemaIds) === true) {
+			return $schemaIds;
+		}
+
+		$schemaIds = array_values(array_map('intval', array_filter($schemaIds, 'is_numeric')));
+
+		return $this->dropSchemasWithoutReadRules(schemaIds: $schemaIds);
+	}//end applySchemaScopeReadRuleGuard()
+
+	/**
+	 * Apply the SCH-PFTS-CAT-002 read-rule guard to the ROWS of a relation result.
+	 *
+	 * `/api/{catalogSlug}/{id}/uses` and `/used` guard their root object, then hand
+	 * off to OpenRegister's relation handler, which loads the related objects from
+	 * every register × schema and filters them by schema RBAC only — and RBAC reads
+	 * an empty `authorization` block as open (WOO-581 review round 2). Those rows
+	 * are legitimately outside the catalog's schema list (a publication's documents
+	 * live in the document schema), so catalog membership is the wrong filter; the
+	 * leak class is. For an anonymous caller every row whose schema lacks read rules
+	 * (or carries no numeric schema id) is dropped. A signed-in caller keeps every
+	 * row (and only gets the page cut when `$page` is given).
+	 *
+	 * `total` needs the whole list. OR's `getUses()` counts every related object and
+	 * then slices the page, so lowering `total` by the rows dropped from one page
+	 * still counted the hidden rows on the other pages — and walking `_offset`
+	 * showed where they sat (WOO-581 review round 3). With `$page` the envelope is
+	 * the caller's FULL relation list (fetched with `_offset` 0 and no limit): the
+	 * guard runs over all of it, `total` becomes the number of rows kept, and the
+	 * page is cut here. Without `$page` — `getUsedBy()`, whose `total` is already
+	 * page-local — `total` is lowered by the rows dropped from the page, which is
+	 * exact there.
+	 *
+	 * @param array $result An OpenRegister relation envelope (`results`, `total`, …).
+	 * @param array{limit: int, offset: int}|null $page The caller's page when `$result` holds the full list.
+	 *
+	 * @return array The envelope with the guarded rows.
+	 *
+	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 */
+	public function applyReadRuleGuardToRows(array $result, ?array $page = null): array {
+		$rows = ($result['results'] ?? null);
+		if (is_array($rows) === false || ($page === null && $this->isAnonymous() === false)) {
+			return $result;
+		}
+
+		// A signed-in caller keeps every row; only the page is cut (when asked).
+		$keptRows = array_values($rows);
+		if ($this->isAnonymous() === true) {
+			$rowSchemas = array_map(fn (mixed $row): ?int => $this->rowSchemaId(row: $row), $keptRows);
+			$kept = array_flip(
+				$this->applySchemaScopeReadRuleGuard(schemaIds: array_values(array_unique(array_filter($rowSchemas, 'is_int'))))
+			);
+			$keptRows = array_values(
+				array_filter(
+					$keptRows,
+					static fn (int $index): bool => $rowSchemas[$index] !== null && isset($kept[$rowSchemas[$index]]) === true,
+					ARRAY_FILTER_USE_KEY
+				)
+			);
+		}
+
+		$result['results'] = $keptRows;
+		if ($page !== null) {
+			$result['total'] = count($keptRows);
+			$result['results'] = array_slice($keptRows, $page['offset'], $page['limit']);
+			$result['limit'] = $page['limit'];
+			$result['offset'] = $page['offset'];
+			return $result;
+		}
+
+		$dropped = (count($rows) - count($keptRows));
+		if ($dropped > 0 && is_numeric($result['total'] ?? null) === true) {
+			$result['total'] = max(count($keptRows), ((int)$result['total'] - $dropped));
+		}
+
+		return $result;
+	}//end applyReadRuleGuardToRows()
+
+	/**
+	 * The numeric schema id of a result row (array or serialisable entity).
+	 *
+	 * @param mixed $row A result row.
+	 *
+	 * @return int|null The schema id, or null when the row carries none.
+	 *
+	 * @spec exclude Private helper of applyReadRuleGuardToRows(); no behaviour of its own.
+	 */
+	private function rowSchemaId(mixed $row): ?int {
+		if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+			$row = $row->jsonSerialize();
+		}
+
+		$schemaId = null;
+		if (is_array($row) === true) {
+			$schemaId = ($row['@self']['schema'] ?? null);
+		}
+
+		if (is_numeric($schemaId) === false) {
+			return null;
+		}
+
+		return (int)$schemaId;
+	}//end rowSchemaId()
+
+	/**
+	 * Resolve the register + schema union that /api/search covers for this request.
+	 *
+	 * Central discriminator for SCH-PFTS-CAT-001..003:
+	 *   1. Explicit `_catalog` (single slug) → that catalog's registers + schemas.
+	 *   2. Explicit `_catalogi[]` (array of slugs) → union across the resolved catalogs.
+	 *   3. No param → union across every catalog where `listed: true` AND `published`
+	 *      is in the past. This is the SCH-PFTS-CAT-002 default that mirrors the
+	 *      pre-WOO-536 anon-visible scope discipline (#733 cross-catalog leak,
+	 *      #734 anonymous DoS — both stay closed under this rule).
+	 *
+	 * Unknown slugs are silently dropped from the union so a typo does not fail the
+	 * whole request. The caller MUST inspect the returned `schemas` array and
+	 * fail-closed if empty (empty envelope).
+	 *
+	 * @param array $queryParams Raw request query dict.
+	 *
+	 * @return array{registers: int[], schemas: int[]}
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalogue.
+	 */
+	private function resolveCatalogScope(array $queryParams): array {
+		$catalogiService = null;
+		try {
+			$catalogiService = $this->container->get('OCA\\OpenCatalogi\\Service\\CatalogiService');
+		} catch (\Throwable $e) {
+			$this->logger?->warning('WOO-536: CatalogiService unavailable', ['error' => $e->getMessage()]);
+			return ['registers' => [], 'schemas' => []];
+		}
+
+		$singleCatalog = ($queryParams['_catalog'] ?? null);
+		$multiCatalog = ($queryParams['_catalogi'] ?? []);
+
+		// 1. Explicit single-catalog scope.
+		if (is_string($singleCatalog) === true && $singleCatalog !== '') {
+			$catalog = $this->publicCatalogBySlug(catalogiService: $catalogiService, slug: $singleCatalog);
+			if ($catalog === null) {
+				return ['registers' => [], 'schemas' => []];
+			}
+
+			return CatalogScopeIds::forCatalog(catalog: $catalog);
+		}
+
+		// 2. Explicit multi-catalog union; unknown and unpublished slugs drop out silently.
+		if (is_array($multiCatalog) === true && empty($multiCatalog) === false) {
+			return $this->unionCatalogScopes(
+				catalogs: $this->publicCatalogsBySlugs(catalogiService: $catalogiService, slugs: $multiCatalog)
+			);
+		}
+
+		// 3. Default — union of listed+published catalogs.
+		return $this->unionCatalogScopes(
+			catalogs: $this->listListedPublishedCatalogs(catalogiService: $catalogiService)
+		);
+
+	}//end resolveCatalogScope()
+
+	/**
+	 * A catalog by slug, or null when it does not exist or is not published yet.
+	 *
+	 * C2: an unpublished catalog must be indistinguishable from a non-existent
+	 * one on the public endpoint — else anonymous callers could probe for drafts
+	 * by slug-guessing. `getCatalogBySlug` uses `_rbac:false`, so the published
+	 * predicate is re-applied here.
+	 *
+	 * @param object $catalogiService The CatalogiService.
+	 * @param string $slug The catalog slug.
+	 *
+	 * @return array|null The catalog, or null.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function publicCatalogBySlug(object $catalogiService, string $slug): ?array {
+		$catalog = $catalogiService->getCatalogBySlug($slug);
+		if ($catalog === null || $this->isCatalogPubliclyAvailable(catalog: $catalog) === false) {
+			return null;
+		}
+
+		return $catalog;
+	}//end publicCatalogBySlug()
+
+	/**
+	 * The published catalogs among the given slugs, in order; other entries drop out.
+	 *
+	 * @param object $catalogiService The CatalogiService.
+	 * @param array $slugs The requested slugs; non-string and empty entries are skipped.
+	 *
+	 * @return array The catalogs.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function publicCatalogsBySlugs(object $catalogiService, array $slugs): array {
+		$catalogs = [];
+		foreach ($slugs as $slug) {
+			if (is_string($slug) === false || $slug === '') {
+				continue;
+			}
+
+			$catalog = $this->publicCatalogBySlug(catalogiService: $catalogiService, slug: $slug);
+			if ($catalog !== null) {
+				$catalogs[] = $catalog;
+			}
+		}
+
+		return $catalogs;
+	}//end publicCatalogsBySlugs()
+
+	/**
+	 * The union of the register and schema ids of the given catalogs, without duplicates.
+	 *
+	 * @param array $catalogs The catalogs.
+	 *
+	 * @return array{registers: int[], schemas: int[]}
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalogue.
+	 */
+	private function unionCatalogScopes(array $catalogs): array {
+		$regs = [];
+		$schemas = [];
+		foreach ($catalogs as $catalog) {
+			$scope = CatalogScopeIds::forCatalog(catalog: $catalog);
+			$regs = array_merge($regs, $scope['registers']);
+			$schemas = array_merge($schemas, $scope['schemas']);
+		}
+
+		return [
+			'registers' => array_values(array_unique($regs)),
+			'schemas' => array_values(array_unique($schemas)),
+		];
+
+	}//end unionCatalogScopes()
+
+	/**
+	 * Enumerate catalogs eligible for the anonymous default scope: `listed: true`
+	 * AND `published` is set to a datetime in the past (or absent — treated as
+	 * "not yet published" and excluded).
+	 *
+	 * Uses `CatalogiService::getObjectService()` to hit the catalog register directly
+	 * with `_rbac: false` — the catalog's OWN authorization determines its visibility
+	 * via the `listed` + `published` predicate here, not RBAC on the catalog register.
+	 *
+	 * @param object $catalogiService The OC CatalogiService (resolved via container).
+	 *
+	 * @return array<int, array> List of catalog jsonSerialize() arrays.
+	 */
+	private function listListedPublishedCatalogs(object $catalogiService): array {
+		try {
+			$objectService = $catalogiService->getObjectService();
+			if ($objectService === null) {
+				return [];
+			}
+			$catalogRegister = ($this->config?->getValueString('opencatalogi', 'catalog_register', '') ?? '');
+			$catalogSchema = ($this->config?->getValueString('opencatalogi', 'catalog_schema', '') ?? '');
+			if ($catalogRegister === '' || $catalogSchema === '') {
+				$this->logger?->warning(
+					'WOO-536: catalog_register or catalog_schema app-config is not set — /api/search default scope will be empty',
+					['catalog_register' => $catalogRegister, 'catalog_schema' => $catalogSchema]
+				);
+				return [];
+			}
+
+			// Note: `searchObjects` is the non-paginated variant used for the
+			// catalog enumeration below. The PHP `published <= now` check further
+			// down covers the visibility branch that RBAC would otherwise encode.
+			// `listed:true` is a business-scope filter not carried by the schema
+			// read-rules, so the query needs it explicitly.
+			$catalogs = $objectService->searchObjects(
+				query: [
+					'@self' => [
+						'register' => $catalogRegister,
+						'schema' => $catalogSchema,
+					],
+					'listed' => true,
+				],
+				_rbac: false,
+				_multitenancy: false,
+			);
+		} catch (\Throwable $e) {
+			$this->logger?->warning('WOO-536: enumerating listed+published catalogs failed', ['error' => $e->getMessage()]);
+			return [];
+		}
+
+		$out = [];
+		foreach ($catalogs as $catalogEntity) {
+			try {
+				if (is_array($catalogEntity) === true) {
+					$c = $catalogEntity;
+				} else {
+					$c = $catalogEntity->jsonSerialize();
+				}
+			} catch (\Throwable $e) {
+				continue;
+			}
+			if ($this->isCatalogPubliclyAvailable(catalog: $c) === false) {
+				continue;
+			}
+			$out[] = $c;
+		}
+		return $out;
+	}//end listListedPublishedCatalogs()
+
+	/**
+	 * Predicate: a catalog is publicly available when its `published` field
+	 * exists AND parses AND is on or before "now". Extracted so the explicit-slug
+	 * paths in {@see resolveCatalogScope()} and the default-scope enumeration in
+	 * {@see listListedPublishedCatalogs()} apply the same rule.
+	 *
+	 * @param array $catalog The catalog jsonSerialize()d array.
+	 *
+	 * @return bool True when the catalog is publicly available (published in past).
+	 */
+	private function isCatalogPubliclyAvailable(array $catalog): bool {
+		$published = ($catalog['published'] ?? null);
+		if (is_string($published) === false || $published === '') {
+			return false;
+		}
+		try {
+			return new DateTimeImmutable($published) <= new DateTimeImmutable('now');
+		} catch (\Throwable $e) {
+			return false;
+		}
+
+	}//end isCatalogPubliclyAvailable()
+
+	/**
+	 * Whether the current caller is anonymous (no logged-in user).
+	 *
+	 * Consumed by {@see \OCA\OpenCatalogi\Controller\PublicationsController::getUses}
+	 * and `::getUsedBy` to gate anonymous access to relationship endpoints on
+	 * non-public root objects. Fail-closed: treats an unavailable session as
+	 * anonymous so the stricter visibility rule applies.
+	 *
+	 * @return boolean True when no user session is available or no user is logged in.
+	 *
+	 * @spec exclude Visibility helper for the public relation-endpoint published-predicate guard.
+	 */
+	public function isAnonymous(): bool {
+		if ($this->userSession === null) {
+			// Fail closed: when the session is unavailable, treat the caller as anonymous
+			// so the published-predicate guard applies the stricter visibility rule.
+			return true;
+		}
+
+		return $this->userSession->getUser() === null;
+	}//end isAnonymous()
+
+	/**
+	 * Determine whether an object is publicly visible (published and not depublished).
+	 *
+	 * Mirrors the live OpenRegister RBAC visibility model (APB-006), the same rule
+	 * the public publications API and the frontend `publicationStatus` helpers use:
+	 * an object is public when its own `publicationDate` field is set and is at or
+	 * before "now", and either carries no `depublicationDate` or one still in the
+	 * future. The removed object-level `@self.published` predicate is not consulted.
+	 *
+	 * @param array $objectData The serialized object data (own fields + `@self` envelope).
+	 *
+	 * @return boolean True when the object is currently published.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
+	 */
+	public function isObjectPublic(array $objectData): bool {
+		$publicationDate = ($objectData['publicationDate'] ?? null);
+		$depublicationDate = ($objectData['depublicationDate'] ?? null);
+
+		if ($publicationDate === null || $publicationDate === '') {
+			return false;
+		}
+
+		$now = time();
+		$publishedTime = strtotime((string)$publicationDate);
+		if ($publishedTime === false || $publishedTime > $now) {
+			return false;
+		}
+
+		if ($depublicationDate === null || $depublicationDate === '') {
+			return true;
+		}
+
+		$depublishedTime = strtotime((string)$depublicationDate);
+		return ($depublishedTime === false || $depublishedTime > $now);
+	}//end isObjectPublic()
+
+	/**
+	 * The `document` schema ids carried by the scope's registers.
+	 *
+	 * A catalog is wired at the publication register + publication schema, so the
+	 * resolved scope names the publication schema only. Body text lives on
+	 * DOCUMENTS, so a content search has to admit their schema or OR's chunk arm
+	 * resolves owners it is then obliged to discard.
+	 *
+	 * Reads the register's own schema list rather than scanning every schema on
+	 * the instance: a document schema that no register in scope carries is not a
+	 * document this search may return, and widening past the catalog boundary is
+	 * exactly what the `unset()` of client-supplied `_schemas` above prevents.
+	 *
+	 * @param array<int, int|string> $registerIds The scope's register ids.
+	 * @param array<int, int|string> $schemas Schema ids already in scope.
+	 *
+	 * @return array<int, int> The document schema ids not already in scope.
+	 *
+	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
+	 */
+	private function resolveDocumentSchemaIds(array $registerIds, array $schemas): array {
+		if ($registerIds === []) {
+			return [];
+		}
+
+		try {
+			$registerMapper = $this->container->get('OCA\\OpenRegister\\Db\\RegisterMapper');
+			$schemaMapper = $this->container->get('OCA\\OpenRegister\\Db\\SchemaMapper');
+		} catch (\Throwable $e) {
+			$this->logger?->warning(
+				'WOO-517: could not resolve OR mappers for document-schema widening',
+				['error' => $e->getMessage()]
+			);
+			return [];
+		}
+
+		$already = [];
+		foreach ($schemas as $sid) {
+			$already[(int)$sid] = true;
+		}
+
+		$found = [];
+		foreach ($registerIds as $registerId) {
+			foreach ($this->documentSchemaIdsOfRegister(
+				registerMapper: $registerMapper,
+				schemaMapper: $schemaMapper,
+				registerId: (int)$registerId
+			) as $sid) {
+				if (isset($already[$sid]) === false) {
+					$found[$sid] = true;
+				}
+			}
+		}
+
+		return array_keys($found);
+	}//end resolveDocumentSchemaIds()
+
+	/**
+	 * The schema ids one register carries that are slugged `document`.
+	 *
+	 * Split out of {@see resolveDocumentSchemaIds()} to keep both within the
+	 * complexity budget; a register that cannot be read, or a schema whose slug
+	 * cannot be resolved, contributes nothing rather than failing the search.
+	 *
+	 * @param object $registerMapper OR RegisterMapper.
+	 * @param object $schemaMapper OR SchemaMapper.
+	 * @param int $registerId The register to read.
+	 *
+	 * @return array<int, int> The document schema ids this register carries.
+	 *
+	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
+	 */
+	private function documentSchemaIdsOfRegister(object $registerMapper, object $schemaMapper, int $registerId): array {
+		try {
+			$register = $registerMapper->find($registerId);
+		} catch (\Throwable $e) {
+			return [];
+		}
+
+		$ids = [];
+		foreach ($register->getSchemas() as $sid) {
+			$sidInt = (int)$sid;
+			if ($sidInt === 0) {
+				continue;
+			}
+
+			try {
+				$slug = $schemaMapper->find($sidInt)->getSlug();
+			} catch (\Throwable $e) {
+				continue;
+			}
+
+			if ($slug === 'document') {
+				$ids[] = $sidInt;
+			}
+		}
+
+		return $ids;
+	}//end documentSchemaIdsOfRegister()
+
+	/**
+	 * Find the `publication` schema id inside the resolved scope so document rows can
+	 * be enriched with their linked publication summary. When the scope does not
+	 * include the publication schema (e.g. a catalog-scoped search across only
+	 * `besluit` + `verzoek`), returns null and document→publication refinement is
+	 * simply skipped for that request.
+	 *
+	 * Populates `$schemaSlugById` for every scope schema visited (even after the
+	 * `publication` match is found), so the row-loop's later slug lookups reuse
+	 * the same per-request cache instead of re-hitting the mapper (M3).
+	 *
+	 * @param object $schemaMapper OR SchemaMapper.
+	 * @param int[] $scopeSchemas Schema ids in the resolved scope.
+	 * @param array<int, string|null> $schemaSlugById Per-request slug cache (by reference).
+	 *                                                Callers must annotate their local
+	 *                                                `[]` with an inline `@var` tag so
+	 *                                                phpstan tracks the type across the
+	 *                                                pass-by-ref boundary.
+	 *
+	 * @return int|null Publication schema id when present in scope, null otherwise.
+	 */
+	private function resolvePublicationSchemaId(object $schemaMapper, array $scopeSchemas, array &$schemaSlugById): ?int {
+		$publicationSchemaId = null;
+		foreach ($scopeSchemas as $sid) {
+			$sidInt = (int)$sid;
+			if (array_key_exists($sidInt, $schemaSlugById) === true) {
+				$slug = $schemaSlugById[$sidInt];
+			} else {
+				try {
+					// $schemaMapper is typed `object` (OR is an optional dep, resolved
+					// via the container), so phpstan can't infer getSlug()'s return
+					// type — normalise to string|null (keep the `array<int, string|null>`
+					// shape of the by-ref cache intact).
+					$rawSlug = $schemaMapper->find($sidInt)->getSlug();
+					if (is_string($rawSlug) === true) {
+						$slug = $rawSlug;
+					} else {
+						$slug = null;
+					}
+				} catch (\Throwable $e) {
+					$schemaSlugById[$sidInt] = null;
+					continue;
+				}
+				$schemaSlugById[$sidInt] = $slug;
+			}
+			if ($slug === 'publication' && $publicationSchemaId === null) {
+				$publicationSchemaId = $sidInt;
+			}
+		}
+		return $publicationSchemaId;
+	}//end resolvePublicationSchemaId()
+
+	/**
+	 * Extract the numeric schema id from a serialized object row's `@self.schema`.
+	 *
+	 * @param array $rowArray The serialized object row.
+	 *
+	 * @return integer|null The schema id, or null when absent/non-numeric.
+	 *
+	 * @spec exclude Row-shape plumbing; no domain behavior of its own.
+	 */
+	private function extractSchemaId(array $rowArray): ?int {
+		$schema = ($rowArray['@self']['schema'] ?? ($rowArray['schema'] ?? null));
+		if (is_array($schema) === true) {
+			$schema = ($schema['id'] ?? null);
+		}
+
+		if ($schema === null || is_numeric($schema) === false) {
+			return null;
+		}
+
+		return (int)$schema;
+	}//end extractSchemaId()
+
+	/**
+	 * Resolve the linked publication's `{id, slug, title}` summary for a document row.
+	 *
+	 * Looks the linked publication up by slug (denormalised on the document's own
+	 * `publication.slug` property) so the response can carry the publication's real
+	 * UUID even though the authored document payload only carries `slug` + `title`
+	 * (design.md "Seed publications" — the UUID does not exist until import). Results
+	 * are cached per request so a page of documents linking the same publication only
+	 * issues one lookup per unique slug.
+	 *
+	 * Stap 5a (WOO-536): replaces the denormalised `publication.slug` string lookup
+	 * with a per-document `_relations_contains` query on the publication schema. The
+	 * OR-side relation graph is authoritative, so a slug rename no longer detaches
+	 * documents from the envelope.
+	 *
+	 * The query runs under OR's schema-level RBAC. Anonymous callers see only the
+	 * public-group-eligible linked publication. If OR returns nothing, the linked
+	 * publication either does not exist, is not public under the caller's effective
+	 * context, or the document is genuinely unlinked — all three collapse to "drop the
+	 * row" (transitive visibility). The read runs as an anonymous caller for every
+	 * session (WOO-578), so "the caller's effective context" is always the public one.
+	 *
+	 * N4b (WOO-536 plan): a document related to multiple publications resolves to the
+	 * OLDEST-by-created linked publication (most stable link — does not change as new
+	 * publications are added). Documented as a known approximation.
+	 *
+	 * The run carries the publication register (null when the outer scope spans
+	 * multiple registers, so the query falls back to the multi-schema search path),
+	 * the publication schema in scope, and two per-request caches: document uuid to
+	 * summary, and publication slug to summary. The slug cache prevents an
+	 * O(N × 500) scan regression when N documents on one page share the same
+	 * `_relations['publication.slug']`.
+	 *
+	 * @param array $documentRow The document row (post `@self.schema` rewrite).
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+	 *
+	 * @spec openspec/changes/fix-fts-catalog-model-alignment/tasks.md
+	 */
+	private function resolveDocumentPublicationSummary(array $documentRow, PublicSearchAssembly $run): ?array {
+		$documentUuid = ($documentRow['@self']['id'] ?? ($documentRow['id'] ?? null));
+		if (is_string($documentUuid) === false || $documentUuid === '') {
+			return null;
+		}
+
+		if (array_key_exists($documentUuid, $run->publicationCache) === true) {
+			return $run->publicationCache[$documentUuid];
+		}
+
+		$summary = $this->publicationFromCarriedLinks(documentRow: $documentRow, run: $run);
+		if ($summary === null) {
+			$summary = $this->publicationFromRefinement(documentUuid: $documentUuid, run: $run);
+		}
+
+		$run->publicationCache[$documentUuid] = $summary;
+		return $summary;
+	}//end resolveDocumentPublicationSummary()
+
+	/**
+	 * The first publication a document's carried links resolve to, tried in the
+	 * order {@see carriedPublicationLinks()} lists them.
+	 *
+	 * @param array $documentRow The document row.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function publicationFromCarriedLinks(array $documentRow, PublicSearchAssembly $run): ?array {
+		foreach ($this->carriedPublicationLinks(documentRow: $documentRow) as $link) {
+			$summary = $this->publicationByLink(link: $link, run: $run);
+			if ($summary !== null) {
+				return $summary;
+			}
+		}
+
+		return null;
+	}//end publicationFromCarriedLinks()
+
+	/**
+	 * The links to its publication a document row carries, in lookup order, as
+	 * `[kind, value]` pairs where kind is `id` or `slug`. Empty values are left out.
+	 *
+	 * @param array $documentRow The document row.
+	 *
+	 * @return array<int, array{0: string, 1: string}> The links.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function carriedPublicationLinks(array $documentRow): array {
+		// M1 fast-path: if the document row already carries a resolvable
+		// `publication.id`, verify it points at a publicly-visible publication
+		// via a targeted find() rather than fanning out into a relations query
+		// per row. This eliminates the N+1 for well-formed documents seeded
+		// with a denormalised publication summary. On any miss (missing id,
+		// find() fails, or find() returns a non-public row), fall through to
+		// the `_relations_contains` path below — the authoritative relation
+		// graph remains the source of truth for divergent cases.
+		$links = [['id', ($documentRow['publication']['id'] ?? null)]];
+
+		// M1b: the carried summary may name the publication by SLUG and not by
+		// id. That is the shape the fleet actually writes — a document is
+		// created with `publication: {slug, title}` — and before this branch
+		// existed it matched nothing: M1 above reads `publication.id`, M2 below
+		// reads the `_relations` array rather than this property, and the
+		// refinement query at the end asks the INVERSE question (a publication
+		// whose relations contain this document), which document→publication
+		// writes never answer.
+		//
+		// So a well-formed public document dropped out of every content-search
+		// result, silently: the row is discarded by the `publicationSummary
+		// === null` guard in assemblePublicSearchResults(), and an empty result
+		// set is indistinguishable from "nothing matched".
+		$links[] = ['slug', ($documentRow['publication']['slug'] ?? null)];
+
+		// M2 fast-path: legacy documents store the linked publication in their
+		// OWN `_relations` array — either as `publication` (UUID form, canonical)
+		// or `publication.slug` (denormalised form, WOO-506 seed shape). Fase 5
+		// Robert-plan assumed publication.documents[] (inverse), but the fleet
+		// seed and existing writes point document→publication, not the other
+		// way around. Query the publication schema by id or slug and let the
+		// schema-level RBAC decide visibility.
+		$relations = ($documentRow['@self']['relations'] ?? ($documentRow['_relations'] ?? []));
+		if (is_array($relations) === true) {
+			$links[] = ['id', ($relations['publication'] ?? null)];
+			$links[] = ['slug', ($relations['publication.slug'] ?? null)];
+		}
+
+		return array_values(
+			array_filter(
+				$links,
+				static fn (array $link): bool => is_string($link[1]) === true && $link[1] !== ''
+			)
+		);
+
+	}//end carriedPublicationLinks()
+
+	/**
+	 * Resolve one carried link: an id through the fast-path find, a slug through
+	 * the per-request slug cache.
+	 *
+	 * @param array $link The `[kind, value]` pair.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+	 *
+	 * @psalm-param   array{0: string, 1: string} $link
+	 * @phpstan-param array{0: string, 1: string} $link
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function publicationByLink(array $link, PublicSearchAssembly $run): ?array {
+		if ($link[0] === 'id') {
+			return $this->tryFastPathPublicationLookup(publicationId: $link[1], run: $run);
+		}
+
+		if (array_key_exists($link[1], $run->slugCache) === false) {
+			$run->slugCache[$link[1]] = $this->tryPublicationSlugLookup(publicationSlug: $link[1], run: $run);
+		}
+
+		return $run->slugCache[$link[1]];
+	}//end publicationByLink()
+
+	/**
+	 * The publication whose relations contain the document, oldest first, or null
+	 * when the refinement fails or finds none.
+	 *
+	 * @param string $documentUuid The document's uuid.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function publicationFromRefinement(string $documentUuid, PublicSearchAssembly $run): ?array {
+		$rows = $this->refinedPublicationRows(documentUuid: $documentUuid, run: $run);
+		if ($rows === null) {
+			return null;
+		}
+
+		if (empty($rows) === true) {
+			// N4a: no publicly-visible linked publication → drop the document.
+			$this->logger?->info(
+				'WOO-536: document has no publicly-visible linked publication',
+				['documentUuid' => $documentUuid]
+			);
+			return null;
+		}
+
+		if (count($rows) > 1) {
+			// N4b: multi-linked document — the oldest-by-created wins (documented
+			// approximation, most stable link). Fires on every hit-per-page, so
+			// debug (not info) keeps log volume sane on hot public deployments.
+			$this->logger?->debug(
+				'WOO-536: document linked to multiple publications; using oldest-by-created',
+				['documentUuid' => $documentUuid, 'count' => count($rows)]
+			);
+		}
+
+		return $this->refinedPublicationSummary(publication: $rows[0]);
+	}//end publicationFromRefinement()
+
+	/**
+	 * The `{id, slug, title}` summary of the publication a refinement returned.
+	 *
+	 * @param mixed $publication The publication row, as an array or a serialisable entity.
+	 *
+	 * @return array{summary: array{id:string,slug:string,title:string}, public: bool}
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function refinedPublicationSummary(mixed $publication): array {
+		if (is_array($publication) === false) {
+			$publication = $publication->jsonSerialize();
+		}
+
+		return [
+			'summary' => [
+				'id' => (string)($publication['@self']['id'] ?? ($publication['id'] ?? '')),
+				'slug' => (string)($publication['@self']['slug'] ?? ($publication['slug'] ?? '')),
+				'title' => (string)($publication['title'] ?? ''),
+			],
+			'public' => true,
+		];
+
+	}//end refinedPublicationSummary()
+
+	/**
+	 * The publication rows whose relations contain the document, or null when the
+	 * refinement query failed (logged).
+	 *
+	 * @param string $documentUuid The document's uuid.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return array|null The matching rows, or null on failure.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function refinedPublicationRows(string $documentUuid, PublicSearchAssembly $run): ?array {
+		$objectService = $run->objectService;
+
+		// Build the per-document refinement query. Under OR's schema-level RBAC,
+		// anonymous callers only see publications the `public` group is allowed to
+		// read — so a non-empty result guarantees the linked pub is public for
+		// every caller, because the read runs as an anonymous caller (WOO-578).
+		$refinementQuery = [
+			'_schema' => $run->publicationSchemaId,
+			'_relations_contains' => $documentUuid,
+			'_limit' => 2,
+			'_order' => ['@self.created' => 'asc'],
+		];
+		if ($run->refinementRegisterId !== null) {
+			$refinementQuery['_register'] = $run->refinementRegisterId;
+		}
+
+		try {
+			// Same anonymous evaluation as the main search (WOO-578) — the linked
+			// publication must be visible to an anonymous caller, not to the session.
+			$matches = $this->evaluateAsAnonymous(
+				objectService: $objectService,
+				operation: static fn (): array => $objectService->searchObjectsPaginated(
+					query: $refinementQuery,
+					_rbac: true,
+					_multitenancy: false
+				)
+			);
+		} catch (\Throwable $e) {
+			$this->logger?->warning(
+				'WOO-536: document→publication refinement failed',
+				['documentUuid' => $documentUuid, 'error' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		return ($matches['results'] ?? []);
+	}//end refinedPublicationRows()
+
+	/**
+	 * Fast-path publication lookup — verify that a carried publication id resolves
+	 * to a publicly-visible publication row via a single {@see ObjectService::find()}
+	 * call, avoiding the per-row `_relations_contains` fan-out.
+	 *
+	 * Under `_rbac: true` + `_multitenancy: false`, `find()` returns null when the
+	 * publication is not publicly visible to an anonymous caller (draft,
+	 * depublished, archived under the schema RBAC), so a non-null return guarantees
+	 * the caller may embed the summary. On any failure the method returns null and
+	 * the caller falls back to the relations-based path — authoritative but slower.
+	 * The read runs as an anonymous caller (WOO-578), so "publicly visible" holds
+	 * for every session — see the Stap 1 comment in {@see assemblePublicSearchResults()}.
+	 *
+	 * @param string $publicationId The UUID from the document row's carried summary.
+	 * @param PublicSearchAssembly $run The search being assembled (ObjectService,
+	 *                                  register scope hint, publication schema id).
+	 *
+	 * @return array{summary: array{id:string,slug:string,title:string}, public: bool}|null
+	 */
+	private function tryFastPathPublicationLookup(string $publicationId, PublicSearchAssembly $run): ?array {
+		$objectService = $run->objectService;
+		$registerId = $run->refinementRegisterId;
+		$publicationSchemaId = $run->publicationSchemaId;
+
+		try {
+			// Same anonymous evaluation as the main search (WOO-578).
+			$publication = $this->evaluateAsAnonymous(
+				objectService: $objectService,
+				operation: static fn (): mixed => $objectService->find(
+					id: $publicationId,
+					_extend: [],
+					files: false,
+					register: $registerId,
+					schema: $publicationSchemaId,
+					_rbac: true,
+					_multitenancy: false
+				)
+			);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if ($publication === null) {
+			return null;
+		}
+
+		if (is_array($publication) === true) {
+			$publicationArray = $publication;
+		} else {
+			$publicationArray = $publication->jsonSerialize();
+		}
+
+		// Guard: RET-006 archived rows must never surface even if RBAC lets them through
+		// (see B1 in the row loop above — same rule applies to the linked publication).
+		if (($publicationArray['status'] ?? null) === 'archived') {
+			return null;
+		}
+
+		return [
+			'summary' => [
+				'id' => (string)($publicationArray['@self']['id'] ?? ($publicationArray['id'] ?? '')),
+				'slug' => (string)($publicationArray['@self']['slug'] ?? ($publicationArray['slug'] ?? '')),
+				'title' => (string)($publicationArray['title'] ?? ''),
+			],
+			'public' => true,
+		];
+
+	}//end tryFastPathPublicationLookup()
+
+	/**
+	 * Slug-based fallback lookup for legacy document seeds that carry
+	 * `_relations['publication.slug'] = <slug>` rather than a UUID.
+	 *
+	 * Scans the publication schema for the slug with the same schema-level RBAC
+	 * gating as the UUID fast-path — for anonymous callers, a non-empty result
+	 * guarantees the linked publication is publicly visible. Returns null on miss
+	 * (unknown slug, non-public, archived) so the caller falls through to the
+	 * `_relations_contains` path. The read runs as an anonymous caller for every
+	 * session (WOO-578).
+	 *
+	 * @param string $publicationSlug The linked publication's slug.
+	 * @param PublicSearchAssembly $run The search being assembled (ObjectService,
+	 *                                  publication register id or null, publication
+	 *                                  schema id in scope).
+	 *
+	 * @return array|null The public-visible publication summary + flag, or null on miss.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function tryPublicationSlugLookup(string $publicationSlug, PublicSearchAssembly $run): ?array {
+		$rows = $this->scanPublicationSlugs(publicationSlug: $publicationSlug, run: $run);
+		if ($rows === null) {
+			return null;
+		}
+
+		$firstMatch = $this->firstSlugMatch(publicationSlug: $publicationSlug, rows: $rows);
+		if ($firstMatch === null || ($firstMatch['status'] ?? null) === 'archived') {
+			return null;
+		}
+
+		return [
+			'summary' => [
+				'id' => (string)($firstMatch['@self']['id'] ?? ($firstMatch['id'] ?? '')),
+				'slug' => (string)$publicationSlug,
+				'title' => (string)($firstMatch['title'] ?? ''),
+			],
+			'public' => true,
+		];
+
+	}//end tryPublicationSlugLookup()
+
+	/**
+	 * The publication rows a slug scan returns, read as an anonymous caller.
+	 *
+	 * ObjectService::searchObjectsPaginated normalises the query differently
+	 * for `@self.<field>` filters than the HTTP query parser does, so the slug
+	 * match runs client-side instead of as a pushdown filter. Scope is
+	 * `_schemas => [$publicationSchemaId]` (+ `_register` when the outer catalog
+	 * scope collapses to one register), capped by `_limit: 500`. Slug collisions
+	 * across registers on a multi-register scope are possible. The caller
+	 * memoises the result per slug for the request (see $slugCache), so N
+	 * documents sharing one slug pay the scan cost once. Legacy slugs beyond row
+	 * 500 do not resolve; such fleets should migrate away from the denormalised
+	 * `publication.slug` shape (WOO-506 legacy).
+	 *
+	 * @param string $publicationSlug The linked publication's slug, for the log.
+	 * @param PublicSearchAssembly $run The search being assembled.
+	 *
+	 * @return mixed The scanned rows, or null when the scan threw.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function scanPublicationSlugs(string $publicationSlug, PublicSearchAssembly $run): mixed {
+		$objectService = $run->objectService;
+		$slugScanQuery = [
+			'_schemas' => [$run->publicationSchemaId],
+			'_limit' => 500,
+		];
+		if ($run->refinementRegisterId !== null) {
+			$slugScanQuery['_register'] = $run->refinementRegisterId;
+		}
+
+		try {
+			// Same anonymous evaluation as the main search (WOO-578).
+			$matches = $this->evaluateAsAnonymous(
+				objectService: $objectService,
+				operation: static fn (): array => $objectService->searchObjectsPaginated(
+					query: $slugScanQuery,
+					_rbac: true,
+					_multitenancy: false
+				)
+			);
+		} catch (\Throwable $e) {
+			$this->logger?->warning(
+				'WOO-536: slug scan threw',
+				['slug' => $publicationSlug, 'error' => $e->getMessage()]
+			);
+			return null;
+		}
+
+		return ($matches['results'] ?? []);
+	}//end scanPublicationSlugs()
+
+	/**
+	 * The first scanned publication whose `@self.slug` (or else `slug`) is the given slug.
+	 *
+	 * OR does not SQL-UNIQUE `slug` at the schema layer, so a collision is
+	 * logged at debug (parity with N4b in the `_relations_contains` path; debug
+	 * keeps log volume sane on hot public endpoints) and the first row wins.
+	 *
+	 * @param string $publicationSlug The linked publication's slug.
+	 * @param mixed $rows The scanned rows, arrays or serialisable objects.
+	 *
+	 * @return array|null The first match as an array, or null.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function firstSlugMatch(string $publicationSlug, mixed $rows): ?array {
+		$firstMatch = null;
+		$matchCount = 0;
+		foreach ($rows as $publication) {
+			if (is_array($publication) === false) {
+				$publication = $publication->jsonSerialize();
+			}
+
+			if (($publication['@self']['slug'] ?? ($publication['slug'] ?? '')) !== $publicationSlug) {
+				continue;
+			}
+
+			$matchCount++;
+			$firstMatch = ($firstMatch ?? $publication);
+		}
+
+		if ($matchCount > 1) {
+			$this->logger?->debug(
+				'WOO-536: publication slug matched multiple rows; using first-scanned',
+				['slug' => $publicationSlug, 'count' => $matchCount]
+			);
+		}
+
+		return $firstMatch;
+	}//end firstSlugMatch()
+
+	/**
+	 * Find the register and schema IDs for an object UUID within a constrained scope.
+	 *
+	 * Locates which OpenRegister (register × schema) pair holds a given UUID, always
+	 * scoped to the caller-supplied register/schema lists. The lookup goes through
+	 * OpenRegister's `ObjectService` (ADR-022: consume OR abstractions) rather than
+	 * issuing raw SQL against OR's internal per-register/per-schema storage tables or
+	 * probing the DBMS catalog for their existence. OR remains free to change its
+	 * physical storage layout without breaking opencatalogi.
+	 *
+	 * The legacy platform-wide search across every magic table is gone (#734) — it was
+	 * an anonymous-reachable DoS vector and also leaked cross-catalog objects (#733).
+	 * Callers MUST pass non-empty $allowedRegisters and $allowedSchemas; otherwise the
+	 * method returns null without touching OpenRegister.
+	 *
+	 * @param string $uuid The UUID of the object to find.
+	 * @param array<int|string>|null $allowedRegisters Register IDs the search may touch.
+	 * @param array<int|string>|null $allowedSchemas Schema IDs the search may touch.
+	 *
+	 * @return array{register: int, schema: int}|null The register/schema IDs, or null.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	public function findObjectLocation(
+		string $uuid,
+		?array $allowedRegisters = null,
+		?array $allowedSchemas = null,
+	): ?array {
+		if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
+			// Fail closed — without an explicit constraint we will NOT do a
+			// platform-wide scan. This is the post-#734 behaviour.
+			return null;
+		}
+
+		$objectService = $this->getObjectService();
+		if ($objectService === null) {
+			return null;
+		}
+
+		// Locate the object by asking OpenRegister to resolve it within each
+		// constrained (register × schema) pair. The location lookup is visibility-
+		// agnostic (_rbac: false) — it mirrors the previous behaviour of locating an
+		// object's home pair; callers re-apply their own RBAC/visibility filter on the
+		// subsequent read. No raw SQL and no knowledge of OR's table layout.
+		foreach ($allowedRegisters as $register) {
+			if (is_numeric($register) === false) {
+				continue;
+			}
+
+			$registerId = (int)$register;
+			foreach ($allowedSchemas as $schema) {
+				if (is_numeric($schema) === false) {
+					continue;
+				}
+
+				$schemaId = (int)$schema;
+				try {
+					$object = $objectService->find(
+						id: $uuid,
+						_extend: [],
+						files: false,
+						register: $registerId,
+						schema: $schemaId,
+						_rbac: false,
+						_multitenancy: false
+					);
+				} catch (DoesNotExistException $e) {
+					continue;
+				} catch (\Exception $e) {
+					continue;
+				}
+
+				if ($object !== null) {
+					return [
+						'register' => $registerId,
+						'schema' => $schemaId,
+					];
+				}
+			}//end foreach
+		}//end foreach
+
+		return null;
+	}//end findObjectLocation()
+
+	/**
+	 * Run an OpenRegister read as an anonymous caller (SCH-PFTS-001 / WOO-578).
+	 *
+	 * OpenRegister's `ObjectService::runAsAnonymous()` clears the session subject
+	 * for the duration of the callable, so admin bypass, owner grants and group
+	 * rules stay out of the evaluation and every caller gets the same rows and
+	 * the same `total`. It is a server-side primitive: nothing in the request
+	 * can switch it on or off.
+	 *
+	 * The guard exists because this app has been taken down once by a hard
+	 * dependency on an OR primitive that was removed (WOO-551, `Unknown named
+	 * parameter $_rbacAsPublic`). On an OpenRegister without the method the
+	 * read runs with the caller's session — the WOO-551 behaviour — and says
+	 * so in the log once per request, so the drift is visible, not silent.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param callable $operation The read to perform.
+	 *
+	 * @return mixed Whatever the read returns.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function evaluateAsAnonymous(object $objectService, callable $operation): mixed {
+		if (method_exists($objectService, 'runAsAnonymous') === true) {
+			return $objectService->runAsAnonymous($operation);
+		}
+
+		if ($this->warnedAboutMissingAnonymousScope === false) {
+			$this->warnedAboutMissingAnonymousScope = true;
+			// `error`, not `warning`: the endpoint keeps answering, but its
+			// uniform-visibility contract is silently not being kept, and a warning
+			// is routinely filtered on a busy public deployment. The message names
+			// the fix rather than only the symptom.
+			$this->logger?->error(
+				'WOO-578: this OpenRegister has no ObjectService::runAsAnonymous(), so /api/search '
+				. 'evaluates with the caller session and signed-in users may see more than anonymous '
+				. 'callers (the WOO-551 behaviour). Upgrade OpenRegister to a build that carries the '
+				. 'anonymous evaluation scope to restore uniform visibility.'
+			);
+		}
+
+		return $operation();
+	}//end evaluateAsAnonymous()
+
+	/**
+	 * Resolve the OpenRegister ObjectService from the container.
+	 *
+	 * @return object|null The OpenRegister ObjectService, or null when OR is unavailable.
+	 *
+	 * @spec exclude Lazy dependency-injection accessor for the OR ObjectService; pure
+	 *       framework plumbing, no domain behavior.
+	 */
+	private function getObjectService(): ?object {
+		try {
+			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+	}//end getObjectService()
+
+	/**
+	 * Build the ObjectService search query for a catalog index request.
+	 *
+	 * Merges the incoming request parameters with catalog-level schema/register filters,
+	 * handles multi-schema and multi-register cases, and strips non-universal _order fields
+	 * when searching across multiple registers.
+	 *
+	 * @param array $catalog Catalog data array (keys: schemas, registers).
+	 * @param array $queryParams Raw request query parameters from IRequest::getParams().
+	 * @param object $objectService ObjectService instance (already resolved from container).
+	 *
+	 * @return array The merged and sanitised search query ready for searchObjectsPaginated().
+	 *
+	 * @spec exclude Query-assembly plumbing extracted from PublicationsController; translates
+	 *       request params into an ObjectService search query, no domain behavior of its own.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() and CatalogScopeIds::forCatalog() are pure functions
+	 */
+	public function buildCatalogSearchQuery(array $catalog, array $queryParams, object $objectService): array {
+		// Use ObjectService centralized query builder which handles dot-to-underscore conversion.
+		$searchQuery = array_merge(
+			$objectService->buildSearchQuery($queryParams),
+			['_includeDeleted' => false]
+		);
+
+		// The scope is the (guarded) catalog's, never the caller's: without this a
+		// `?schema=<S>&register=<R>` became `@self.schema`, which OR prefers over the
+		// `_schemas` set below (WOO-581 review). See CallerScope::strip().
+		$searchQuery = CallerScope::strip(query: $searchQuery);
+
+		// Clean up catalog-specific parameters.
+		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
+
+		// A JSON-encoded `_order` (as nextcloud-vue's buildQueryString sends it) becomes an array.
+		if (isset($searchQuery['_order']) === true && is_string($searchQuery['_order']) === true) {
+			$decodedOrder = json_decode($searchQuery['_order'], true);
+			if (is_array($decodedOrder) === true) {
+				$searchQuery['_order'] = $decodedOrder;
+			}
+		}
+
+		// The scope's ids as the search route reads them: positive ints only, each once,
+		// so a word in `registers` never becomes `_register = 0` and a catalog holding
+		// ['19', 19] does not list everything twice.
+		$scope = CatalogScopeIds::forCatalog(catalog: $catalog);
+		$schemas = array_values(array_unique($scope['schemas']));
+		$catalogRegisters = array_values(array_unique($scope['registers']));
+
+		// Handle catalog filtering using _schemas for multi-schema search.
+		if ($schemas !== []) {
+			// Pass all schemas for both search and faceting.
+			$searchQuery['_schemas'] = $schemas;
+			// Only set _schema when the catalog pins ONE schema in ONE register (the
+			// magic-mapper fast path). A scalar schema without a scalar register takes
+			// neither OR's multi-schema route (needs no scalar schema) nor its
+			// single-schema route (needs a register), and falls through to the
+			// all-tables `_ids` lookup — outside the guarded scope (WOO-581 review
+			// round 2). The guard itself produces that shape: [S_ok, S_open] × [R1, R2]
+			// becomes [S_ok] × [R1, R2]. Otherwise `_schemas` carries the scope.
+			unset($searchQuery['_schema']);
+
+			if (count($schemas) === 1 && count($catalogRegisters) === 1) {
+				$searchQuery['_schema'] = $schemas[0];
+			}
+		}//end if
+
+		if ($catalogRegisters !== []) {
+			$registers = $catalogRegisters;
+			if (count($registers) === 1) {
+				// Single register: use magic mapper optimization.
+				$searchQuery['_register'] = $registers[0];
+				return $searchQuery;
+			}
+
+			// Multi-register: pass all register IDs and prevent auto-setting.
+			$searchQuery['_registers'] = $registers;
+			$searchQuery['_register'] = null;
+
+			// Multi-register search: strip _order on non-universal fields
+			// since schemas may have different property names (e.g., 'name' vs 'naam').
+			// Only allow metadata fields that exist in all magic mapper tables.
+			if (empty($searchQuery['_order']) === false && is_array($searchQuery['_order']) === true) {
+				foreach (array_keys($searchQuery['_order']) as $orderField) {
+					// `@self.created` names the same metadata column as `_created`.
+					$columnField = (string)$orderField;
+					if (str_starts_with($columnField, '@self.') === true) {
+						$columnField = '_' . substr($columnField, strlen('@self.'));
+					}
+
+					if (in_array($columnField, self::UNIVERSAL_ORDER_FIELDS, true) === false) {
+						unset($searchQuery['_order'][$orderField]);
+					}
+				}
+
+				if (empty($searchQuery['_order']) === true) {
+					unset($searchQuery['_order']);
+				}
+			}
+		}//end if
+
+		return $searchQuery;
+	}//end buildCatalogSearchQuery()
+
+	/**
+	 * Resolve schema and register objects from OpenRegister mappers for catalog enrichment.
+	 *
+	 * Returns an array with keys 'schemas' (id → {id, slug, title}) and
+	 * 'registers' (id → {id, slug, title}). Missing entries are silently skipped.
+	 *
+	 * @param array $catalog Catalog data array (keys: schemas, registers).
+	 *
+	 * @return array{schemas: array<int|string, array>, registers: array<int|string, array>}
+	 *
+	 * @spec exclude Metadata-resolution plumbing extracted from PublicationsController; looks up
+	 *       schema/register labels via OR mappers for response enrichment, no domain behavior.
+	 */
+	public function resolveSchemaAndRegisterObjects(array $catalog): array {
+		$resolvedSchemas = [];
+		$resolvedRegisters = [];
+
+		try {
+			$schemaMapper = $this->container->get('OCA\OpenRegister\Db\SchemaMapper');
+			$registerMapper = $this->container->get('OCA\OpenRegister\Db\RegisterMapper');
+
+			$schemaIds = $catalog['schemas'] ?? [];
+			if (is_string($schemaIds) === true) {
+				$schemaIds = json_decode($schemaIds, true) ?? [];
+			}
+
+			foreach ($schemaIds as $schemaId) {
+				try {
+					$schema = $schemaMapper->find((int)$schemaId);
+					$resolvedSchemas[$schemaId] = [
+						'id' => $schema->getId(),
+						'slug' => $schema->getSlug(),
+						'title' => $schema->getTitle(),
+					];
+				} catch (\Exception $e) {
+					// Schema not found, skip.
+				}
+			}
+
+			$registerIds = $catalog['registers'] ?? [];
+			if (is_string($registerIds) === true) {
+				$registerIds = json_decode($registerIds, true) ?? [];
+			}
+
+			foreach ($registerIds as $registerId) {
+				try {
+					$register = $registerMapper->find((int)$registerId);
+					$resolvedRegisters[$registerId] = [
+						'id' => $register->getId(),
+						'slug' => $register->getSlug(),
+						'title' => $register->getTitle(),
+					];
+				} catch (\Exception $e) {
+					// Register not found, skip.
+				}
+			}
+		} catch (\Exception $e) {
+			// OpenRegister not available, return empty sets.
+		}//end try
+
+		return [
+			'schemas' => $resolvedSchemas,
+			'registers' => $resolvedRegisters,
+		];
+
+	}//end resolveSchemaAndRegisterObjects()
+
+	/**
+	 * Find an object within a catalog's registers/schemas using ObjectService.
+	 *
+	 * Iterates over each (register, schema) combination in the catalog.
+	 * Returns the first matching object entity, or null if not found.
+	 *
+	 * @param array $catalog Catalog data array (keys: schemas, registers).
+	 * @param string $id The UUID of the object to find.
+	 * @param object $objectService ObjectService instance (already resolved from container).
+	 *
+	 * @return object|null The found object entity, or null.
+	 *
+	 * @spec exclude Lookup plumbing extracted from PublicationsController; iterates a catalog's
+	 *       (register, schema) pairs and delegates the actual read to ObjectService::find().
+	 */
+	public function findObjectInCatalog(array $catalog, string $id, object $objectService): ?object {
+		$catalogRegisters = $catalog['registers'] ?? [];
+		$catalogSchemas = $catalog['schemas'] ?? [];
+
+		// Parse JSON string if needed (catalog fields may be JSON-encoded).
+		if (is_string($catalogRegisters) === true) {
+			$catalogRegisters = json_decode($catalogRegisters, true) ?? [];
+		}
+
+		if (is_string($catalogSchemas) === true) {
+			$catalogSchemas = json_decode($catalogSchemas, true) ?? [];
+		}
+
+		// WF4 / wave-12: iterate ALL (register × schema) pairs, not just $catalogRegisters[0].
+		// Previously the code only tried the first register in the list, so objects in
+		// register #2+ were unreachable via this path and returned spurious 404s.
+		if (empty($catalogRegisters) === false) {
+			$registersToTry = array_map('intval', $catalogRegisters);
+		} else {
+			$registersToTry = [null];
+		}
+
+		$schemasToTry = array_map('intval', $catalogSchemas);
+
+		foreach ($registersToTry as $register) {
+			foreach ($schemasToTry as $schemaId) {
+				try {
+					$object = $objectService->find(
+						id: $id,
+						_extend: [],
+						files: false,
+						register: $register,
+						schema: $schemaId,
+						_rbac: true,
+						_multitenancy: false
+					);
+					if ($object !== null) {
+						return $object;
+					}
+				} catch (DoesNotExistException $e) {
+					// Object not found in this (register, schema) pair — try next.
+					continue;
+				}
+			}//end foreach
+		}//end foreach
+
+		return null;
+	}//end findObjectInCatalog()
+
+	/**
+	 * Recursively strips empty values (null, empty string, empty array) from an array.
+	 *
+	 * Used to reduce API response payload by omitting properties that have no value.
+	 * Values of 0, false, and "0" are preserved as they are meaningful.
+	 *
+	 * @param array $data The data array to strip empty values from.
+	 *
+	 * @return array The data with empty values removed.
+	 *
+	 * @spec exclude Response-shaping plumbing extracted from PublicationsController; recursively
+	 *       prunes empty values to slim the payload, no domain behavior.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 */
+	public function stripEmptyValues(array $data): array {
+		$result = [];
+		foreach ($data as $key => $value) {
+			if (is_array($value) === true) {
+				$this->processArrayValue(result: $result, key: $key, value: $value);
+				continue;
+			}//end if
+
+			if ($value === null || $value === '') {
+				continue;
+			}
+
+			$result[$key] = $value;
+		}//end foreach
+
+		return $result;
+	}//end stripEmptyValues()
+
+	/**
+	 * Process a single array value during empty-value stripping.
+	 *
+	 * Handles both sequential (list) and associative arrays, recursing into nested arrays.
+	 *
+	 * @param array $result Reference to the result array being built.
+	 * @param int|string $key The key for this value.
+	 * @param array $value The array value to process.
+	 *
+	 * @return void
+	 */
+	private function processArrayValue(array &$result, int|string $key, array $value): void {
+		if (array_is_list($value) === true) {
+			$stripped = [];
+			foreach ($value as $item) {
+				if (is_array($item) === false) {
+					$stripped[] = $item;
+					continue;
+				}
+
+				$stripped[] = $this->stripEmptyValues(data: $item);
+			}
+
+			if (empty($stripped) === false) {
+				$result[$key] = $stripped;
+			}
+
+			return;
+		}
+
+		$stripped = $this->stripEmptyValues(data: $value);
+		if (empty($stripped) === false) {
+			$result[$key] = $stripped;
+		}
+
+	}//end processArrayValue()
 }//end class

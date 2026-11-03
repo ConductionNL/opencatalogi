@@ -241,8 +241,8 @@ class QualityService implements QualityServiceInterface {
 	/**
 	 * The points of every passed check; each failed check appends its property to the missing list.
 	 *
-	 * @param array<int, array{0: bool, 1: int, 2: string}> $checks  Passed, points, missing property.
-	 * @param array<int, string>                            $missing Missing-property accumulator (by reference).
+	 * @param array<int, array{0: bool, 1: int, 2: string}> $checks Passed, points, missing property.
+	 * @param array<int, string> $missing Missing-property accumulator (by reference).
 	 *
 	 * @return int The points.
 	 *
@@ -353,7 +353,7 @@ class QualityService implements QualityServiceInterface {
 	 * The roll-up tally with one more dataset scored: its entry, total, band and missing properties.
 	 *
 	 * @param array<string, mixed> $tally The tally so far: scored, sum, distribution, missingBreakdown.
-	 * @param array                $node  The dataset node.
+	 * @param array $node The dataset node.
 	 *
 	 * @return array<string, mixed> The tally.
 	 *
@@ -395,7 +395,7 @@ class QualityService implements QualityServiceInterface {
 	 * One DQV quality measurement of a dimension (or the total).
 	 *
 	 * @param string $dimension The dimension name, or `total`.
-	 * @param mixed  $value     The score.
+	 * @param mixed $value The score.
 	 *
 	 * @return array<string, mixed> The measurement node.
 	 *

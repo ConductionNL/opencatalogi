@@ -75,8 +75,8 @@ class XMLResponseGoldenTest extends TestCase {
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param array<mixed> $data    The data.
-	 * @param string|null  $rootTag The root tag.
+	 * @param array<mixed> $data The data.
+	 * @param string|null $rootTag The root tag.
 	 *
 	 * @return void
 	 */

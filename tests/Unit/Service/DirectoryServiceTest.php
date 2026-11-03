@@ -4323,7 +4323,6 @@ class DirectoryServiceTest extends TestCase {
 
 	}//end testPrivateAddressIsRefusedByDefault()
 
-
 	/**
 	 * With the allowance ON, a private address is permitted.
 	 *
@@ -4349,7 +4348,6 @@ class DirectoryServiceTest extends TestCase {
 		$this->addToAssertionCount(1);
 
 	}//end testPrivateAddressIsAllowedWhenExplicitlyEnabled()
-
 
 	/**
 	 * THE CLOUD-METADATA ENDPOINT STAYS BLOCKED, ALLOWANCE OR NOT.
@@ -4378,7 +4376,6 @@ class DirectoryServiceTest extends TestCase {
 
 	}//end testMetadataEndpointIsRefusedEvenWithTheAllowanceOn()
 
-
 	/**
 	 * Loopback IPv6 stays blocked with the allowance on, for the same reason.
 	 *
@@ -4399,8 +4396,6 @@ class DirectoryServiceTest extends TestCase {
 
 	}//end testIpv6LoopbackIsRefusedEvenWithTheAllowanceOn()
 
-
-
 	// =========================================================================
 	// Last success apart from last attempt (REQ-FLS-001, issue #1647)
 	// =========================================================================
@@ -4408,9 +4403,9 @@ class DirectoryServiceTest extends TestCase {
 	/**
 	 * Build an ObjectService double that records every object it is asked to save.
 	 *
-	 * @param array                          $saved    Receives each saved object
+	 * @param array $saved Receives each saved object
 	 * @param array<\OCP\AppFramework\Db\Entity> $existing What searchObjects returns
-	 * @param integer                        $failFirst Number of initial saveObject calls that throw
+	 * @param integer $failFirst Number of initial saveObject calls that throw
 	 *
 	 * @return MockObject
 	 */
@@ -4569,7 +4564,7 @@ class DirectoryServiceTest extends TestCase {
 	 * second entry is a loopback URL the guard must refuse.
 	 *
 	 * @param string $publicationsUrl The listing's `publications` URL
-	 * @param string $method          getPublication or getUsed
+	 * @param string $method getPublication or getUsed
 	 *
 	 * @return array{0: mixed, 1: array<int, \Psr\Http\Message\RequestInterface>}
 	 */

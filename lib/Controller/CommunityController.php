@@ -101,7 +101,6 @@ class CommunityController extends Controller {
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
-
 	}//end withCors()
 
 	/**
@@ -117,7 +116,6 @@ class CommunityController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->readWritePreflight();
-
 	}//end preflightedCors()
 
 	/**
@@ -213,7 +211,6 @@ class CommunityController extends Controller {
 		}
 
 		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end setStatus()
 
 	/**
@@ -266,7 +263,6 @@ class CommunityController extends Controller {
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
 
 		return $response;
-
 	}//end feed()
 
 	/**
@@ -299,6 +295,5 @@ class CommunityController extends Controller {
 		}
 
 		return $this->withCors(response: new JSONResponse($this->registers->renderMarkup(markup: $markup)));
-
 	}//end renderMarkup()
 }//end class

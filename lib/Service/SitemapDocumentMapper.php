@@ -58,8 +58,8 @@ class SitemapDocumentMapper {
 	 * Constructor.
 	 *
 	 * @param TooiVocabularyService $tooiVocabulary Resolves organisations and handling types to TOOI.
-	 * @param WooCategoryRegistry   $categories     Resolves a publication's category.
-	 * @param OpenRegisterLookup    $openRegister   Reaches OpenRegister for the organisation lookup.
+	 * @param WooCategoryRegistry $categories Resolves a publication's category.
+	 * @param OpenRegisterLookup $openRegister Reaches OpenRegister for the organisation lookup.
 	 */
 	public function __construct(
 		private readonly TooiVocabularyService $tooiVocabulary,
@@ -118,7 +118,7 @@ class SitemapDocumentMapper {
 	 * The DiWoo creation date, publisher and format of one file's document.
 	 *
 	 * @param array $publication The publication.
-	 * @param array $file        The file.
+	 * @param array $file The file.
 	 *
 	 * @return array<string, mixed>
 	 *
@@ -145,7 +145,7 @@ class SitemapDocumentMapper {
 	 * `@self.published` is always empty for magic-mapped publications, so it is not read.
 	 *
 	 * @param array $publication The publication.
-	 * @param array $file        The file.
+	 * @param array $file The file.
 	 *
 	 * @return array<string, array|null>
 	 *
@@ -165,7 +165,7 @@ class SitemapDocumentMapper {
 	 * TOOI organisatie URI, or without `@resource` when there is none.
 	 *
 	 * @param array $publication The publication as returned from ObjectService
-	 * @param array $file        The file metadata belonging to that publication
+	 * @param array $file The file metadata belonging to that publication
 	 *
 	 * @return array{'#text': mixed, '@resource'?: string} The publisher element.
 	 *
@@ -213,7 +213,7 @@ class SitemapDocumentMapper {
 	 * The documenthandeling element, resolved through the DiWoo value list
 	 * (default: ontvangst), or null when the handling type resolves to none.
 	 *
-	 * @param array  $publication  The publication as returned from ObjectService
+	 * @param array $publication The publication as returned from ObjectService
 	 * @param string $handlingTime The moment the document was made public, as an xs:dateTime.
 	 *
 	 * @return array|null The documenthandelingen element, or null.

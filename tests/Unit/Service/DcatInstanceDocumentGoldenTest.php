@@ -167,7 +167,9 @@ class DcatInstanceDocumentGoldenTest extends TestCase {
 						/**
 						 * @param array<string, mixed> $row The row.
 						 */
-						public function __construct(private array $row) {
+						public function __construct(
+							private array $row,
+						) {
 						}
 
 						/**

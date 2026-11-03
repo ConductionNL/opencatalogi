@@ -38,7 +38,7 @@ class PublicationRuleChecks {
 	/**
 	 * Constructor.
 	 *
-	 * @param PublicationRuleServiceInterface       $ruleService       The publication rules.
+	 * @param PublicationRuleServiceInterface $ruleService The publication rules.
 	 * @param DecisionPublicationValidatorInterface $decisionValidator Checks a decision before it is published.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
@@ -53,7 +53,7 @@ class PublicationRuleChecks {
 	/**
 	 * Preview a rule over the array entries of a sample.
 	 *
-	 * @param array $rule   The rule.
+	 * @param array $rule The rule.
 	 * @param array $sample The sample records; entries that are not arrays are left out.
 	 *
 	 * @return array The preview.
@@ -64,7 +64,6 @@ class PublicationRuleChecks {
 	 */
 	public function preview(array $rule, array $sample): array {
 		return $this->ruleService->preview(rule: $rule, sample: array_values(array_filter($sample, 'is_array')));
-
 	}//end preview()
 
 	/**
@@ -92,7 +91,7 @@ class PublicationRuleChecks {
 	/**
 	 * Validate a decision for publication.
 	 *
-	 * @param array $decision     The decision.
+	 * @param array $decision The decision.
 	 * @param array $decisionType The decision type.
 	 *
 	 * @return array{publishable: boolean, reasons: array<int, string>, responseDate: string|null, publicationText: string|null}
@@ -101,6 +100,5 @@ class PublicationRuleChecks {
 	 */
 	public function validateDecision(array $decision, array $decisionType): array {
 		return $this->decisionValidator->validate(decision: $decision, decisionType: $decisionType);
-
 	}//end validateDecision()
 }//end class

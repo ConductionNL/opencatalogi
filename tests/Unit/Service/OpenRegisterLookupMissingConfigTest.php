@@ -54,7 +54,7 @@ class OpenRegisterLookupMissingConfigTest extends TestCase {
 	 * The exception carries the app id and the unset key, and its message holds no server path.
 	 *
 	 * @param array<string, string> $stored The stored app-config values.
-	 * @param string                $key    The key the exception must name.
+	 * @param string $key The key the exception must name.
 	 *
 	 * @return void
 	 */

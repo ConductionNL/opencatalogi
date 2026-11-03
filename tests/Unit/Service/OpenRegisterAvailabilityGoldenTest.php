@@ -57,7 +57,7 @@ class AvailabilityGoldenObjects {
 	/**
 	 * Record the call and answer with one stored object.
 	 *
-	 * @param string            $name The method.
+	 * @param string $name The method.
 	 * @param array<int, mixed> $args Its arguments.
 	 *
 	 * @return array<string, mixed>
@@ -106,7 +106,6 @@ class OpenRegisterAvailabilityGoldenTest extends TestCase {
 		}
 
 		return $cases;
-
 	}//end cases()
 
 	/**
@@ -190,8 +189,8 @@ class OpenRegisterAvailabilityGoldenTest extends TestCase {
 	/**
 	 * Build the store and make its call.
 	 *
-	 * @param string            $store The store.
-	 * @param array<int, mixed> $deps  The config, container, app manager and logger.
+	 * @param string $store The store.
+	 * @param array<int, mixed> $deps The config, container, app manager and logger.
 	 *
 	 * @return mixed The answer.
 	 */
@@ -232,6 +231,5 @@ class OpenRegisterAvailabilityGoldenTest extends TestCase {
 		}
 
 		return $value;
-
 	}//end describe()
 }//end class

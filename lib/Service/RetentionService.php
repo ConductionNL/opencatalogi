@@ -33,9 +33,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-use DateInterval;
 use DateTimeImmutable;
-use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCP\IAppConfig;
@@ -549,7 +547,7 @@ class RetentionService implements RetentionServiceInterface {
 	/**
 	 * Save a stamped publication; a failing save is logged and yields null.
 	 *
-	 * @param RetentionRun         $run  The run over the publication's register and schema.
+	 * @param RetentionRun $run The run over the publication's register and schema.
 	 * @param array<string, mixed> $data The stamped publication.
 	 *
 	 * @return array<string, mixed>|null The saved publication.
@@ -865,8 +863,8 @@ class RetentionService implements RetentionServiceInterface {
 	/**
 	 * The publication a decision is about.
 	 *
-	 * @param RetentionRun $run           The run over the publication register and schema.
-	 * @param string       $publicationId The publication id.
+	 * @param RetentionRun $run The run over the publication register and schema.
+	 * @param string $publicationId The publication id.
 	 *
 	 * @return mixed The object as OpenRegister returns it.
 	 *

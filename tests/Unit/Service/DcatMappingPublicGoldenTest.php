@@ -187,7 +187,7 @@ class DcatMappingPublicGoldenTest extends TestCase {
 	 * buildPublisher() matches the recording.
 	 *
 	 * @param array<string, mixed>|null $organisation The organisation.
-	 * @param array<string, mixed>      $defaults     The catalog defaults.
+	 * @param array<string, mixed> $defaults The catalog defaults.
 	 *
 	 * @return void
 	 */
@@ -203,8 +203,8 @@ class DcatMappingPublicGoldenTest extends TestCase {
 	/**
 	 * mapDistribution() matches the recording.
 	 *
-	 * @param array<string, mixed> $file    The file entry.
-	 * @param string|null          $licence The fallback licence.
+	 * @param array<string, mixed> $file The file entry.
+	 * @param string|null $licence The fallback licence.
 	 *
 	 * @return void
 	 */
@@ -248,14 +248,13 @@ class DcatMappingPublicGoldenTest extends TestCase {
 	 */
 	private function service(): DcatMappingService {
 		return new DcatMappingService(new DcatVocabularyService());
-
 	}//end service()
 
 	/**
 	 * Compare one result with its recording, recording it under GOLDEN_RECORD=1.
 	 *
-	 * @param string $name   The recording key.
-	 * @param mixed  $actual The result.
+	 * @param string $name The recording key.
+	 * @param mixed $actual The result.
 	 *
 	 * @return void
 	 */

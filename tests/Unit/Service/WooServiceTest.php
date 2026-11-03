@@ -105,7 +105,9 @@ class WooFakeFileService {
 		$this->added[] = ['target' => $objectEntity, 'name' => $fileName, 'content' => (string)stream_get_contents($content)];
 		$id = (100 + count($this->added));
 		return new class($id) {
-			public function __construct(private int $id) {
+			public function __construct(
+				private int $id,
+			) {
 			}
 			public function getId(): int {
 				return $this->id;
@@ -124,7 +126,7 @@ class WooFakeFileService {
 	public int $redactions = 0;
 
 	/** Mirrors openregister FileService::anonymizeDocument. */
-	public function anonymizeDocument(\OCP\Files\Node $node, array $entities, string $scope='document', ?string $fileKey=null, ?bool $preserveStructure=null): \OCP\Files\Node {
+	public function anonymizeDocument(\OCP\Files\Node $node, array $entities, string $scope = 'document', ?string $fileKey = null, ?bool $preserveStructure = null): \OCP\Files\Node {
 		$this->redactions++;
 		if ($this->redacted === null) {
 			throw new \RuntimeException('Presidio unreachable');
@@ -289,7 +291,7 @@ class WooServiceTest extends TestCase {
 		$id = 0;
 		foreach (['doc-a' => 'a.pdf', 'doc-b' => 'b.pdf', 'doc-c' => 'c.pdf', 'doc-c-anon' => 'c-gelakt.pdf'] as $reference => $name) {
 			$id++;
-			$this->documents['/alice/files/'.$reference] = $this->document($name, $id);
+			$this->documents['/alice/files/' . $reference] = $this->document($name, $id);
 		}
 
 		$this->store = [
@@ -346,7 +348,7 @@ class WooServiceTest extends TestCase {
 
 		$userFolder = $this->createMock(\OCP\Files\Folder::class);
 		$userFolder->method('get')->willReturnCallback(
-			fn (string $path) => ($this->documents['/alice/files/'.$path] ?? throw new \OCP\Files\NotFoundException($path))
+			fn (string $path) => ($this->documents['/alice/files/' . $path] ?? throw new \OCP\Files\NotFoundException($path))
 		);
 		$root = $this->createMock(\OCP\Files\IRootFolder::class);
 		$root->method('getUserFolder')->with('alice')->willReturn($userFolder);
@@ -354,10 +356,10 @@ class WooServiceTest extends TestCase {
 			fn (string $path) => ($this->documents[$path] ?? throw new \OCP\Files\NotFoundException($path))
 		);
 		$root->method('getFirstNodeById')->willReturnCallback(
-			fn (int $id) => ($this->documents['id:'.$id] ?? null)
+			fn (int $id) => ($this->documents['id:' . $id] ?? null)
 		);
 		$linker = $this->createMock(\OCA\OpenCatalogi\Service\Portal\PublicationLinker::class);
-		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/'.$id);
+		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/' . $id);
 
 		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $linker, $this->l10n);
 		$this->service = new WooService(
@@ -696,18 +698,18 @@ class WooServiceTest extends TestCase {
 	 * A Nextcloud file double with a name and content.
 	 *
 	 * @param string $name The file name.
-	 * @param int    $id   The file id.
+	 * @param int $id The file id.
 	 *
 	 * @return \OCP\Files\File
 	 */
-	private function document(string $name, int $id=0): \OCP\Files\File {
+	private function document(string $name, int $id = 0): \OCP\Files\File {
 		$file = $this->createMock(\OCP\Files\File::class);
 		$file->method('getName')->willReturn($name);
 		$file->method('getId')->willReturn($id);
-		$file->method('hash')->willReturnCallback(static fn (string $type): string => hash($type, 'inhoud van '.$name));
+		$file->method('hash')->willReturnCallback(static fn (string $type): string => hash($type, 'inhoud van ' . $name));
 		$file->method('fopen')->willReturnCallback(static function () use ($name) {
 			$stream = fopen('php://memory', 'r+');
-			fwrite($stream, 'inhoud van '.$name);
+			fwrite($stream, 'inhoud van ' . $name);
 			rewind($stream);
 			return $stream;
 		});
@@ -757,13 +759,13 @@ class WooServiceTest extends TestCase {
 		$this->assertSame([101, 102, 103], $this->files->published);
 
 		$this->assertSame($publication['id'], $result['wooPublication']['publication']);
-		$this->assertSame('https://example.org/p/'.$publication['id'], $result['wooPublication']['publicationUrl']);
+		$this->assertSame('https://example.org/p/' . $publication['id'], $result['wooPublication']['publicationUrl']);
 		$this->assertSame('published', $result['status']);
 
 		// The payload passes the real, merged publication schema.
 		$root = dirname(__DIR__, 3);
-		$base = json_decode((string)file_get_contents($root.'/lib/Settings/publication_register.json'), true)['components']['schemas']['publication'];
-		$fields = json_decode((string)file_get_contents($root.'/lib/Settings/register.d/woo-dossier-publication.json'), true)['components']['schemas']['publication']['properties'];
+		$base = json_decode((string)file_get_contents($root . '/lib/Settings/publication_register.json'), true)['components']['schemas']['publication'];
+		$fields = json_decode((string)file_get_contents($root . '/lib/Settings/register.d/woo-dossier-publication.json'), true)['components']['schemas']['publication']['properties'];
 		$schema = ['type' => 'object', 'properties' => array_merge($base['properties'], $fields), 'required' => $base['required']];
 		$payload = $publication;
 		unset($payload['id']);
@@ -844,10 +846,10 @@ class WooServiceTest extends TestCase {
 		$this->documents['id:42'] = $this->document('by-id.pdf');
 		$this->documents['/alice/files/map'] = $this->createMock(\OCP\Files\Folder::class);
 		$root = $this->createMock(\OCP\Files\IRootFolder::class);
-		$root->method('getFirstNodeById')->willReturnCallback(fn (int $id) => ($this->documents['id:'.$id] ?? null));
+		$root->method('getFirstNodeById')->willReturnCallback(fn (int $id) => ($this->documents['id:' . $id] ?? null));
 		$root->method('get')->willReturnCallback(fn (string $path) => ($this->documents[$path] ?? throw new \OCP\Files\NotFoundException($path)));
 		$userFolder = $this->createMock(\OCP\Files\Folder::class);
-		$userFolder->method('get')->willReturnCallback(fn (string $path) => ($this->documents['/alice/files/'.$path] ?? throw new \OCP\Files\NotFoundException($path)));
+		$userFolder->method('get')->willReturnCallback(fn (string $path) => ($this->documents['/alice/files/' . $path] ?? throw new \OCP\Files\NotFoundException($path)));
 		$root->method('getUserFolder')->willReturn($userFolder);
 		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $this->createMock(\OCA\OpenCatalogi\Service\Portal\PublicationLinker::class), $this->l10n);
 

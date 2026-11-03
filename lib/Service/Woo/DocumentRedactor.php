@@ -59,18 +59,18 @@ class DocumentRedactor {
 	/**
 	 * Constructor.
 	 *
-	 * @param BatchPublicationWriter $writer     Resolves a document reference to a file.
-	 * @param ContainerInterface     $container  Resolves OpenRegister's redaction services.
-	 * @param IL10N                  $l10n       The officer-facing reasons.
-	 * @param LoggerInterface        $logger     Failure diagnostics (never the document text).
-	 * @param IAppManager|null       $appManager Whether OpenRegister is installed.
+	 * @param BatchPublicationWriter $writer Resolves a document reference to a file.
+	 * @param ContainerInterface $container Resolves OpenRegister's redaction services.
+	 * @param IL10N $l10n The officer-facing reasons.
+	 * @param LoggerInterface $logger Failure diagnostics (never the document text).
+	 * @param IAppManager|null $appManager Whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly BatchPublicationWriter $writer,
 		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly ?IAppManager $appManager=null,
+		private readonly ?IAppManager $appManager = null,
 	) {
 
 	}//end __construct()
@@ -81,9 +81,9 @@ class DocumentRedactor {
 	 * A partly public document is redacted and verified now. Any other
 	 * assessment drops a redaction an earlier one left behind.
 	 *
-	 * @param array<string, mixed> $assessment    The assessment, already carrying the new decision.
-	 * @param string|null          $batchId       The batch, whose creator owns relative references.
-	 * @param string               $fallbackOwner The acting officer, when the batch names no creator.
+	 * @param array<string, mixed> $assessment The assessment, already carrying the new decision.
+	 * @param string|null $batchId The batch, whose creator owns relative references.
+	 * @param string $fallbackOwner The acting officer, when the batch names no creator.
 	 *
 	 * @return array{anonymizedDocument: string, anonymizedDocumentHash: string, redactionStatus: string, redactionMessage: string}
 	 *
@@ -100,7 +100,6 @@ class DocumentRedactor {
 		}
 
 		return $this->redact(assessment: $assessment, owner: $this->ownerOf(batchId: $batchId, fallback: $fallbackOwner));
-
 	}//end forAssessment()
 
 	/**
@@ -134,7 +133,6 @@ class DocumentRedactor {
 		}//end foreach
 
 		return $out;
-
 	}//end unredacted()
 
 	/**
@@ -147,7 +145,7 @@ class DocumentRedactor {
 	 * officer's behalf here.
 	 *
 	 * @param array<string, mixed> $assessment The document assessment.
-	 * @param string               $owner      Whose files a relative reference lives in.
+	 * @param string $owner Whose files a relative reference lives in.
 	 *
 	 * @return array{anonymizedDocument: string, anonymizedDocumentHash: string, redactionStatus: string, redactionMessage: string}
 	 *
@@ -167,14 +165,14 @@ class DocumentRedactor {
 			$files = $this->container->get('OCA\OpenRegister\Service\FileService');
 			$relations = $this->container->get('OCA\OpenRegister\Db\EntityRelationMapper');
 		} catch (Throwable $e) {
-			$this->logger->warning('[DocumentRedactor] OpenRegister redaction unavailable: '.get_class($e));
+			$this->logger->warning('[DocumentRedactor] OpenRegister redaction unavailable: ' . get_class($e));
 			return $this->failed(reason: $this->l10n->t('Redaction is unavailable in OpenRegister.'));
 		}
 
 		try {
 			$entities = $this->entities(rows: $relations->findEntitiesForAnonymization($original->getId()));
 		} catch (Throwable $e) {
-			$this->logger->warning('[DocumentRedactor] findings unreadable for file '.$original->getId().': '.get_class($e));
+			$this->logger->warning('[DocumentRedactor] findings unreadable for file ' . $original->getId() . ': ' . get_class($e));
 			return $this->failed(reason: $this->l10n->t('The findings for this document cannot be read.'));
 		}
 
@@ -188,20 +186,19 @@ class DocumentRedactor {
 		} catch (Throwable $e) {
 			// Log the class only: an exception message may quote the text
 			// that was meant to be redacted.
-			$this->logger->warning('[DocumentRedactor] redaction failed for file '.$original->getId().': '.get_class($e));
+			$this->logger->warning('[DocumentRedactor] redaction failed for file ' . $original->getId() . ': ' . get_class($e));
 			return $this->failed(reason: $this->l10n->t('Redaction failed in OpenRegister. The document stays unpublished.'));
 		}
 
 		return $this->verify(original: $original, redacted: $redacted, residuals: $residuals);
-
 	}//end redact()
 
 	/**
 	 * Accept a redacted file only when it is a different file, with different
 	 * bytes, and OpenRegister reports nothing left readable.
 	 *
-	 * @param File  $original  The original document.
-	 * @param mixed $redacted  What OpenRegister returned.
+	 * @param File $original The original document.
+	 * @param mixed $redacted What OpenRegister returned.
 	 * @param mixed $residuals Findings OpenRegister could not remove.
 	 *
 	 * @return array{anonymizedDocument: string, anonymizedDocumentHash: string, redactionStatus: string, redactionMessage: string}
@@ -256,7 +253,7 @@ class DocumentRedactor {
 	 * the publish before anything is written.
 	 *
 	 * @param array<int, array<string, mixed>> $listings The publishable documents.
-	 * @param string                           $owner    The batch's creator.
+	 * @param string $owner The batch's creator.
 	 *
 	 * @return void
 	 *
@@ -293,7 +290,7 @@ class DocumentRedactor {
 	 * Whether a partly public listing points at its verified redacted file.
 	 *
 	 * @param array<string, mixed> $listing The listing.
-	 * @param string               $owner   The batch's creator.
+	 * @param string $owner The batch's creator.
 	 *
 	 * @return bool
 	 *
@@ -350,20 +347,19 @@ class DocumentRedactor {
 			$entities[] = [
 				'text' => $value,
 				'entityType' => $type,
-				'key' => substr(md5($value.$type), 0, 8),
+				'key' => substr(md5($value . $type), 0, 8),
 			];
 		}
 
 		return $entities;
-
 	}//end entities()
 
 	/**
 	 * Whose files a relative document reference lives in: the batch's
 	 * creator, the same owner the publish resolves against.
 	 *
-	 * @param string|null $batchId  The batch uuid, when known.
-	 * @param string      $fallback The acting officer.
+	 * @param string|null $batchId The batch uuid, when known.
+	 * @param string $fallback The acting officer.
 	 *
 	 * @return string
 	 */
@@ -388,7 +384,6 @@ class DocumentRedactor {
 		}
 
 		return $owner;
-
 	}//end ownerOf()
 
 	/**

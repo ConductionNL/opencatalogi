@@ -148,7 +148,6 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		];
 
 		return $this->withRollExplanation(period: $period, end: $end);
-
 	}//end open()
 
 	/**
@@ -185,7 +184,6 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		}
 
 		return $publicationId;
-
 	}//end validatePublicationTerm()
 
 	/**
@@ -211,7 +209,6 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		}
 
 		return $period;
-
 	}//end withRollExplanation()
 
 	/**
@@ -297,7 +294,6 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		}
 
 		return 'open';
-
 	}//end state()
 
 	/**
@@ -414,6 +410,5 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		}
 
 		return $trimmed;
-
 	}//end validateAnnouncement()
 }//end class

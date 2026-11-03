@@ -544,7 +544,7 @@ class EventService implements EventServiceInterface {
 	 * The attachment tally after sharing one file: skipped when it already has a share token.
 	 *
 	 * @param array $result The published and skipped counts and the errors so far.
-	 * @param array $share  The file service and the file.
+	 * @param array $share The file service and the file.
 	 *
 	 * @return array
 	 *

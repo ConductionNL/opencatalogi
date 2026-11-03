@@ -63,8 +63,8 @@ class DemoDataGoldenTest extends TestCase {
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param string|null $descriptor   The descriptor text, or null for no file.
-	 * @param bool        $openRegister Whether OpenRegister is installed.
+	 * @param string|null $descriptor The descriptor text, or null for no file.
+	 * @param bool $openRegister Whether OpenRegister is installed.
 	 *
 	 * @return void
 	 */
@@ -90,9 +90,9 @@ class DemoDataGoldenTest extends TestCase {
 			 * Record an import.
 			 *
 			 * @param string $appId The app id.
-			 * @param array  $data The data.
+			 * @param array $data The data.
 			 * @param string $version The version.
-			 * @param bool   $force Whether forced.
+			 * @param bool $force Whether forced.
 			 *
 			 * @return array<string, mixed>
 			 */

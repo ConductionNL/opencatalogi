@@ -34,9 +34,9 @@ use Exception;
 class SchemaNotFoundException extends Exception {
 
 	/**
-	 * @param string         $schemaSlugOrId The reference that resolved to nothing.
-	 * @param int            $code           HTTP-like status code.
-	 * @param Exception|null $previous       The mapper's exception.
+	 * @param string $schemaSlugOrId The reference that resolved to nothing.
+	 * @param int $code HTTP-like status code.
+	 * @param Exception|null $previous The mapper's exception.
 	 */
 	public function __construct(string $schemaSlugOrId, int $code = 404, ?Exception $previous = null) {
 		parent::__construct(message: "Schema not found: '" . $schemaSlugOrId . "'", code: $code, previous: $previous);

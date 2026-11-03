@@ -60,7 +60,6 @@ class OoapiService implements OoapiServiceInterface {
 	 */
 	public const MAX_PAGE_SIZE = 250;
 
-
 	/**
 	 * OoapiService constructor.
 	 *
@@ -211,7 +210,6 @@ class OoapiService implements OoapiServiceInterface {
 		}
 
 		return $this->getOrganization(organisationId: $organisationId, scope: $scope);
-
 	}//end renderOrganization()
 
 	/**
@@ -233,7 +231,6 @@ class OoapiService implements OoapiServiceInterface {
 		}
 
 		return $this->getOrganization(organisationId: $organisationId, scope: $scope);
-
 	}//end organizationById()
 
 	/**
@@ -262,7 +259,7 @@ class OoapiService implements OoapiServiceInterface {
 	/**
 	 * One object by id as an array, or null when OpenRegister has none (a failing lookup is logged).
 	 *
-	 * @param string $id   The object id.
+	 * @param string $id The object id.
 	 * @param string $kind What the object is, for the log line.
 	 *
 	 * @return array<string, mixed>|null
@@ -317,7 +314,6 @@ class OoapiService implements OoapiServiceInterface {
 		}
 
 		return ['items' => $items, 'pageNumber' => $page->number, 'pageSize' => $page->size, 'hasNext' => (($result['next'] ?? null) !== null)];
-
 	}//end searchCollection()
 
 	/**
@@ -357,7 +353,6 @@ class OoapiService implements OoapiServiceInterface {
 	 */
 	public function listCourses(OoapiScope $scope, OoapiPage $page): array {
 		return $this->searchCollection(scope: $scope, page: $page, idField: 'courseId');
-
 	}//end listCourses()
 
 	/**
@@ -372,7 +367,6 @@ class OoapiService implements OoapiServiceInterface {
 	 */
 	public function listPrograms(OoapiScope $scope, OoapiPage $page): array {
 		return $this->searchCollection(scope: $scope, page: $page, idField: 'programId');
-
 	}//end listPrograms()
 
 	/**
@@ -433,8 +427,8 @@ class OoapiService implements OoapiServiceInterface {
 	 *
 	 * An archived or foreign-catalog object reads as absent (D6 addendum).
 	 *
-	 * @param array<string, mixed> $data  The object.
-	 * @param OoapiScope           $scope The catalog's OOAPI scope.
+	 * @param array<string, mixed> $data The object.
+	 * @param OoapiScope $scope The catalog's OOAPI scope.
 	 *
 	 * @return boolean
 	 *
