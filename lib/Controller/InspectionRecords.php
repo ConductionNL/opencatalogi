@@ -111,7 +111,12 @@ class InspectionRecords {
 	}//end store()
 
 	/**
-	 * Read a stored inspection as a flat array.
+	 * Read a stored inspection as a flat array, without RBAC.
+	 *
+	 * The inspection schema is readable by administrators only, and the link is
+	 * followed anonymously, so the read skips RBAC. The caller must not answer
+	 * anything from the result before the presented token matched it
+	 * (see resolveLink()).
 	 *
 	 * @param string $id The inspection id.
 	 *
@@ -127,7 +132,8 @@ class InspectionRecords {
 			object: $this->registers->getObjectService()->find(
 				id: $id,
 				register: $config['register'],
-				schema: $config['schema']
+				schema: $config['schema'],
+				_rbac: false
 			)
 		);
 

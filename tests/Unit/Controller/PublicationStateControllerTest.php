@@ -360,8 +360,47 @@ class PublicationStateControllerTest extends TestCase {
 		}
 
 		return $value;
-
 	}//end withoutMoments()
+
+	/**
+	 * The depublication is stored without RBAC once the guard passed, the publication with RBAC.
+	 *
+	 * The depublication schema is writable by administrators only, so an editor's
+	 * withdrawal stores its record through the app after the update check.
+	 */
+	public function testTheDepublicationIsStoredWithoutRbacAfterTheGuard(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Wrong annex attached', 'depublishedBy' => 'someone-else']);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdraw('p1')->getStatus());
+		$this->assertSame(['publication_schema', 'depublication_schema'], array_column($this->saves, 'schema'));
+		$this->assertTrue($this->saves[0]['rbac']);
+		$this->assertFalse($this->saves[1]['rbac']);
+		$this->assertSame('redacteur', $this->saves[1]['object']['depublishedBy']);
+
+		$this->saves = [];
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertSame(['depublication_schema'], array_column($this->saves, 'schema'));
+		$this->assertFalse($this->saves[0]['rbac']);
+		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
+	}
+
+	/** A caller the guard refuses stores no depublication, for either withdrawal. */
+	public function testARefusedCallerStoresNoDepublication(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->withParams(['reason' => 'Wrong annex attached', 'depublishedBy' => 'redacteur']);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdraw('p1')->getStatus());
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertSame([], $this->saves);
+
+		$this->publication = [];
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->withdraw('p1')->getStatus());
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertSame([], $this->saves);
+	}
 
 	/** REQ-PPW-002: a withdrawal without a reason is refused. */
 	public function testAWithdrawalWithoutAReasonIsRefused(): void {

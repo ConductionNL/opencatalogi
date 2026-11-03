@@ -153,6 +153,9 @@ class InspectionController extends Controller {
 	/**
 	 * Follow an inspection link.
 	 *
+	 * A request without a token reads nothing. The inspection is read without
+	 * RBAC and answers nothing until the presented token matched it.
+	 *
 	 * @param string $id The inspection.
 	 *
 	 * @return JSONResponse The chosen documents, or the refusal with the end date.
@@ -165,6 +168,11 @@ class InspectionController extends Controller {
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function follow(string $id): JSONResponse {
 		$token = (string)$this->request->getParam('token', '');
+		if ($token === '') {
+			return $this->withCors(
+				response: new JSONResponse(data: ['error' => 'unknown-inspection'], statusCode: Http::STATUS_NOT_FOUND)
+			);
+		}
 
 		try {
 			$inspection = $this->registers->find(id: $id);

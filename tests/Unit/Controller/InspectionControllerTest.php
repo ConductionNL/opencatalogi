@@ -163,7 +163,6 @@ class InspectionControllerTest extends TestCase {
 		};
 
 		return $this->store;
-
 	}//end inspectionStore()
 
 	/**
@@ -256,6 +255,69 @@ class InspectionControllerTest extends TestCase {
 		$this->assertArrayNotHasKey('documents', $response->getData());
 
 	}//end testAWrongTokenAnswersNotFoundAndNoDocuments()
+
+	/**
+	 * The link is read without RBAC, so an anonymous reader reaches an inspection only administrators may read.
+	 */
+	public function testTheLinkIsReadWithoutRbac(): void {
+		$this->storedInspection(
+			[
+				'record' => 'besluit-1',
+				'documents' => ['doc-1'],
+				'startDate' => '2026-09-01T00:00:00+00:00',
+				'endDate' => '2099-01-01T00:00:00+00:00',
+				'token' => 'the-token',
+			]
+		);
+		$this->withToken('the-token');
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->follow('inspection-1')->getStatus());
+		$this->assertSame([['id' => 'inspection-1', 'register' => '42', 'schema' => '42', 'rbac' => false]], $this->store->reads);
+
+	}//end testTheLinkIsReadWithoutRbac()
+
+	/**
+	 * A request without a token reads nothing, even when the register is down.
+	 */
+	public function testARequestWithoutATokenReadsNothing(): void {
+		$this->objects->expects($this->never())->method('getObjectService');
+		$this->withToken('');
+
+		$response = $this->controller->follow('inspection-1');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame(['error' => 'unknown-inspection'], $response->getData());
+
+	}//end testARequestWithoutATokenReadsNothing()
+
+	/**
+	 * A forged token answers nothing that is stored on the inspection.
+	 *
+	 * The stored values a reader could try (the opener, the record, the dates)
+	 * and a token one character off all answer the same 404.
+	 */
+	public function testAForgedTokenAnswersNothingStored(): void {
+		$stored = [
+			'record' => 'besluit-1',
+			'documents' => ['doc-1'],
+			'startDate' => '2026-09-01T00:00:00+00:00',
+			'endDate' => '2099-01-01T00:00:00+00:00',
+			'token' => 'the-token',
+			'openedBy' => 'beheerder',
+		];
+
+		foreach (['beheerder', 'besluit-1', 'inspection-1', 'the-token ', ' the-token', 'the-tokeN'] as $forged) {
+			$this->setUp();
+			$this->storedInspection($stored);
+			$this->withToken($forged);
+
+			$response = $this->controller->follow('inspection-1');
+
+			$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus(), $forged);
+			$this->assertSame(['error' => 'unknown-inspection'], $response->getData(), $forged);
+		}
+
+	}//end testAForgedTokenAnswersNothingStored()
 
 	/**
 	 * The stored inspections and presented tokens the follow golden replays.
