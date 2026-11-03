@@ -62,6 +62,18 @@ class QualityService implements QualityServiceInterface {
 	];
 
 	/**
+	 * The roll-up tally before any dataset is scored.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const EMPTY_TALLY = [
+		'scored' => [],
+		'sum' => 0,
+		'distribution' => ['0-25' => 0, '26-50' => 0, '51-75' => 0, '76-100' => 0],
+		'missingBreakdown' => [],
+	];
+
+	/**
 	 * Non-proprietary / machine-readable format tokens rewarded for interoperability.
 	 *
 	 * @var array<int, string>
@@ -114,17 +126,7 @@ class QualityService implements QualityServiceInterface {
 			'contextuality' => $this->scoreContextuality(node: $node, missing: $missing),
 		];
 
-		$weights = $this->weights();
-		$weightSum = array_sum($weights);
-		$weighted = 0.0;
-		foreach ($dimensions as $dimension => $sub) {
-			$weighted += ($sub * ($weights[$dimension] ?? 0));
-		}
-
-		$total = 0;
-		if ($weightSum > 0) {
-			$total = (int)round($weighted / $weightSum);
-		}
+		$total = $this->weightedTotal(dimensions: $dimensions);
 
 		return [
 			'total' => $total,
@@ -143,27 +145,14 @@ class QualityService implements QualityServiceInterface {
 	 * @return int The 0–100 sub-score.
 	 */
 	private function scoreFindability(array $node, array &$missing): int {
-		$score = 0;
-		if ($this->present(node: $node, key: 'dct:title') === true) {
-			$score += 33;
-		} else {
-			$missing[] = 'dct:title';
-		}
+		$checks = [
+			[$this->present(node: $node, key: 'dct:title'), 33, 'dct:title'],
+			[$this->present(node: $node, key: 'dcat:keyword'), 33, 'dcat:keyword'],
+			// Theme only counts when bound to an authority URI (@id), never a literal.
+			[$this->isIdRef(value: $node['dcat:theme'] ?? null), 34, 'dcat:theme'],
+		];
 
-		if ($this->present(node: $node, key: 'dcat:keyword') === true) {
-			$score += 33;
-		} else {
-			$missing[] = 'dcat:keyword';
-		}
-
-		// Theme only counts when bound to an authority URI (@id), never a literal.
-		if ($this->isIdRef(value: $node['dcat:theme'] ?? null) === true) {
-			$score += 34;
-		} else {
-			$missing[] = 'dcat:theme';
-		}
-
-		return $score;
+		return $this->awarded(checks: $checks, missing: $missing);
 	}//end scoreFindability()
 
 	/**
@@ -204,20 +193,7 @@ class QualityService implements QualityServiceInterface {
 
 		$best = 0;
 		foreach ($distributions as $distribution) {
-			$score = 0;
-			if (($distribution['dct:format'] ?? null) !== null && $distribution['dct:format'] !== []) {
-				$score += 40;
-			}
-
-			if (($distribution['dcat:mediaType'] ?? null) !== null && $distribution['dcat:mediaType'] !== '') {
-				$score += 30;
-			}
-
-			if ($this->isOpenFormat(distribution: $distribution) === true) {
-				$score += 30;
-			}
-
-			$best = max($best, $score);
+			$best = max($best, $this->distributionScore(distribution: $distribution));
 		}
 
 		if ($best < 40) {
@@ -236,46 +212,105 @@ class QualityService implements QualityServiceInterface {
 	 * @return int The 0–100 sub-score.
 	 */
 	private function scoreReusability(array $node, array &$missing): int {
-		$score = 0;
-		if ($this->present(node: $node, key: 'dct:license') === true) {
-			$score += 50;
-		} else {
-			$missing[] = 'dct:license';
-		}
+		$checks = [
+			[$this->present(node: $node, key: 'dct:license'), 50, 'dct:license'],
+			[$this->present(node: $node, key: 'dct:publisher'), 50, 'dct:publisher'],
+		];
 
-		if ($this->present(node: $node, key: 'dct:publisher') === true) {
-			$score += 50;
-		} else {
-			$missing[] = 'dct:publisher';
-		}
-
-		return $score;
+		return $this->awarded(checks: $checks, missing: $missing);
 	}//end scoreReusability()
 
 	/**
-	 * Score contextuality: modification date and a stable identifier / landing page.
+	 * Contextuality: a date (modified or issued) and an identifier (or a landing page).
 	 *
-	 * @param array<string, mixed> $node The dataset node.
+	 * @param array $node The dataset node.
 	 * @param array<int, string> $missing Missing-property accumulator (by reference).
 	 *
-	 * @return int The 0–100 sub-score.
+	 * @return int The dimension score.
+	 *
+	 * @spec openspec/specs/publication-quality/spec.md
 	 */
 	private function scoreContextuality(array $node, array &$missing): int {
-		$score = 0;
-		if ($this->present(node: $node, key: 'dct:modified') === true || $this->present(node: $node, key: 'dct:issued') === true) {
-			$score += 50;
-		} else {
-			$missing[] = 'dct:modified';
-		}
+		$dated = $this->present(node: $node, key: 'dct:modified') === true || $this->present(node: $node, key: 'dct:issued') === true;
+		$identified = $this->present(node: $node, key: 'dct:identifier') === true
+			|| $this->isIdRef(value: $node['dcat:landingPage'] ?? null) === true;
 
-		if ($this->present(node: $node, key: 'dct:identifier') === true || $this->isIdRef(value: $node['dcat:landingPage'] ?? null) === true) {
-			$score += 50;
-		} else {
-			$missing[] = 'dct:identifier';
+		return $this->awarded(checks: [[$dated, 50, 'dct:modified'], [$identified, 50, 'dct:identifier']], missing: $missing);
+	}//end scoreContextuality()
+
+	/**
+	 * The points of every passed check; each failed check appends its property to the missing list.
+	 *
+	 * @param array<int, array{0: bool, 1: int, 2: string}> $checks  Passed, points, missing property.
+	 * @param array<int, string>                            $missing Missing-property accumulator (by reference).
+	 *
+	 * @return int The points.
+	 *
+	 * @spec openspec/specs/publication-quality/spec.md
+	 */
+	private function awarded(array $checks, array &$missing): int {
+		$score = 0;
+		foreach ($checks as [$passed, $points, $property]) {
+			if ($passed === true) {
+				$score += $points;
+				continue;
+			}
+
+			$missing[] = $property;
 		}
 
 		return $score;
-	}//end scoreContextuality()
+	}//end awarded()
+
+	/**
+	 * One distribution's interoperability: a format, a media type and an open format.
+	 *
+	 * @param array $distribution The distribution node.
+	 *
+	 * @return int The score, 0 to 100.
+	 *
+	 * @spec openspec/specs/publication-quality/spec.md
+	 */
+	private function distributionScore(array $distribution): int {
+		$score = 0;
+		if (($distribution['dct:format'] ?? null) !== null && $distribution['dct:format'] !== []) {
+			$score += 40;
+		}
+
+		if (($distribution['dcat:mediaType'] ?? null) !== null && $distribution['dcat:mediaType'] !== '') {
+			$score += 30;
+		}
+
+		if ($this->isOpenFormat(distribution: $distribution) === true) {
+			$score += 30;
+		}
+
+		return $score;
+	}//end distributionScore()
+
+	/**
+	 * The weighted mean of the dimension scores under the configured weights; 0 when every weight is 0.
+	 *
+	 * @param array<string, int> $dimensions The dimension scores.
+	 *
+	 * @return int The total, rounded.
+	 *
+	 * @spec openspec/specs/publication-quality/spec.md
+	 */
+	private function weightedTotal(array $dimensions): int {
+		$weights = $this->weights();
+		$weightSum = array_sum($weights);
+		if ($weightSum <= 0) {
+			return 0;
+		}
+
+		$weighted = 0.0;
+		foreach ($dimensions as $dimension => $sub) {
+			$weighted += ($sub * ($weights[$dimension] ?? 0));
+		}
+
+		return (int)round($weighted / $weightSum);
+	}//end weightedTotal()
 
 	/**
 	 * Aggregate a catalog roll-up over the scored dataset nodes.
@@ -288,35 +323,21 @@ class QualityService implements QualityServiceInterface {
 	 * @spec openspec/specs/publication-quality/spec.md
 	 */
 	public function rollup(array $nodes, int $worst = 5): array {
-		$scored = [];
-		$sum = 0;
-		$distribution = ['0-25' => 0, '26-50' => 0, '51-75' => 0, '76-100' => 0];
-		$missingBreakdown = [];
-
+		$tally = self::EMPTY_TALLY;
 		foreach ($nodes as $node) {
-			$score = $this->scoreDataset(node: $node);
-			$entry = [
-				'iri' => ($node['@id'] ?? ''),
-				'total' => $score['total'],
-				'dimensions' => $score['dimensions'],
-				'missing' => $score['missing'],
-			];
-			$scored[] = $entry;
-			$sum += $score['total'];
-
-			$distribution[$this->band(total: $score['total'])]++;
-			foreach ($score['missing'] as $property) {
-				$missingBreakdown[$property] = (($missingBreakdown[$property] ?? 0) + 1);
-			}
+			$tally = $this->withScored(tally: $tally, node: $node);
 		}
 
+		$scored = $tally['scored'];
 		$count = count($scored);
 		$average = 0;
 		if ($count > 0) {
-			$average = (int)round($sum / $count);
+			$average = (int)round($tally['sum'] / $count);
 		}
 
 		usort($scored, static fn ($a, $b) => ($a['total'] <=> $b['total']));
+		$distribution = $tally['distribution'];
+		$missingBreakdown = $tally['missingBreakdown'];
 
 		return [
 			'count' => $count,
@@ -327,6 +348,28 @@ class QualityService implements QualityServiceInterface {
 		];
 
 	}//end rollup()
+
+	/**
+	 * The roll-up tally with one more dataset scored: its entry, total, band and missing properties.
+	 *
+	 * @param array<string, mixed> $tally The tally so far: scored, sum, distribution, missingBreakdown.
+	 * @param array                $node  The dataset node.
+	 *
+	 * @return array<string, mixed> The tally.
+	 *
+	 * @spec openspec/specs/publication-quality/spec.md
+	 */
+	private function withScored(array $tally, array $node): array {
+		$score = $this->scoreDataset(node: $node);
+		$tally['scored'][] = ['iri' => ($node['@id'] ?? '')] + $score;
+		$tally['sum'] += $score['total'];
+		$tally['distribution'][$this->band(total: $score['total'])]++;
+		foreach ($score['missing'] as $property) {
+			$tally['missingBreakdown'][$property] = (($tally['missingBreakdown'][$property] ?? 0) + 1);
+		}
+
+		return $tally;
+	}//end withScored()
 
 	/**
 	 * Build the W3C DQV `dqv:hasQualityMeasurement` nodes for a scored dataset.
@@ -340,21 +383,31 @@ class QualityService implements QualityServiceInterface {
 	public function dqvMeasurements(array $score): array {
 		$measurements = [];
 		foreach ($score['dimensions'] as $dimension => $value) {
-			$measurements[] = [
-				'@type' => 'dqv:QualityMeasurement',
-				'dqv:isMeasurementOf' => ['@id' => 'https://data.overheid.nl/dqv/dimension/' . $dimension],
-				'dqv:value' => (int)$value,
-			];
+			$measurements[] = $this->measurement(dimension: $dimension, value: $value);
 		}
 
-		$measurements[] = [
-			'@type' => 'dqv:QualityMeasurement',
-			'dqv:isMeasurementOf' => ['@id' => 'https://data.overheid.nl/dqv/dimension/total'],
-			'dqv:value' => (int)$score['total'],
-		];
+		$measurements[] = $this->measurement(dimension: 'total', value: $score['total']);
 
 		return $measurements;
 	}//end dqvMeasurements()
+
+	/**
+	 * One DQV quality measurement of a dimension (or the total).
+	 *
+	 * @param string $dimension The dimension name, or `total`.
+	 * @param mixed  $value     The score.
+	 *
+	 * @return array<string, mixed> The measurement node.
+	 *
+	 * @spec openspec/specs/publication-quality/spec.md
+	 */
+	private function measurement(string $dimension, mixed $value): array {
+		return [
+			'@type' => 'dqv:QualityMeasurement',
+			'dqv:isMeasurementOf' => ['@id' => 'https://data.overheid.nl/dqv/dimension/' . $dimension],
+			'dqv:value' => (int)$value,
+		];
+	}//end measurement()
 
 	/**
 	 * Whether a node property is present (non-empty).
