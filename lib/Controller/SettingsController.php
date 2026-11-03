@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -151,6 +152,8 @@ class SettingsController extends Controller {
 			$result = $this->settingsService->updateSettings($data);
 			$this->connectionReporter?->refreshFromSave(savedKeys: array_keys($result));
 			return new JSONResponse($result);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 400);
 		} catch (\Exception $e) {
 			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
 		}

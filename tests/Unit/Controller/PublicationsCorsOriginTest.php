@@ -29,6 +29,7 @@ use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
+use Unit\Support\ServerAwareRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -71,7 +72,7 @@ class PublicationsCorsOriginTest extends TestCase {
 	 */
 	#[DataProvider('origins')]
 	public function testThePreflightAnswersTheAllowedOrigin(string $header, ?string $server, string $expected): void {
-		$request = $this->createMock(IRequest::class);
+		$request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getHeader')->willReturnCallback(static fn (string $name): string => ($name === 'Origin' ? $header : ''));
 		$request->server = ($server === null ? [] : ['HTTP_ORIGIN' => $server]);
 

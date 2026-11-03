@@ -44,6 +44,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for the DCAT validation answers.
  *
  * @covers \OCA\OpenCatalogi\Service\DcatService
+ * @uses \OCA\OpenCatalogi\Service\JsonList
  * @uses   \OCA\OpenCatalogi\Service\DcatAssurance
  * @uses   \OCA\OpenCatalogi\Service\DcatMappingService
  * @uses   \OCA\OpenCatalogi\Service\DcatSerializer
