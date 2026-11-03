@@ -367,9 +367,11 @@ class InspectionControllerTest extends TestCase {
 		$this->withToken($token);
 
 		$response = $this->controller->follow('inspection-1');
+		$headers = $response->getHeaders();
 		$actual = [
 			'status' => $response->getStatus(),
 			'data' => $response->getData(),
+			'cors' => [($headers['Access-Control-Allow-Origin'] ?? null), ($headers['Access-Control-Allow-Credentials'] ?? null)],
 		];
 
 		// Whether a request without a token reads anything is pinned by its own test.

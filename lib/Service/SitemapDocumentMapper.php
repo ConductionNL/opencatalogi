@@ -48,11 +48,11 @@ class SitemapDocumentMapper {
 	];
 
 	/**
-	 * Per-request cache of resolved organisation → TOOI identifier lookups.
+	 * Per-request cache of organisation rows, by organisation uuid; an empty array when not found.
 	 *
-	 * @var array<string, string|null>
+	 * @var array<string, array<string, mixed>>
 	 */
-	private array $orgTooiCache = [];
+	private array $organisationCache = [];
 
 	/**
 	 * Constructor.
@@ -97,6 +97,10 @@ class SitemapDocumentMapper {
 			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
 		}
 
+		if ($diwoo['diwoo:publisher']['#text'] === '') {
+			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no name');
+		}
+
 		// Each optional axis is its element, or null with the violation that omits it.
 		foreach ($this->optionalAxes(publication: $publication, file: $file) as $key => $element) {
 			if ($element !== null) {
@@ -129,7 +133,7 @@ class SitemapDocumentMapper {
 
 		return [
 			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
-			'diwoo:publisher' => $this->publisherElement(publication: $publication, file: $file),
+			'diwoo:publisher' => $this->publisherElement(publication: $publication),
 			'diwoo:format' => [
 				'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($file['extension']),
 				'#text' => strtolower($file['extension']),
@@ -161,19 +165,23 @@ class SitemapDocumentMapper {
 	}//end optionalAxes()
 
 	/**
-	 * The publisher element: the owner as text, with `@resource` bound to a valid
-	 * TOOI organisatie URI, or without `@resource` when there is none.
+	 * The publisher element: the owning organisation's name as text, with `@resource`
+	 * bound to a valid TOOI organisatie URI, or without `@resource` when there is none.
+	 *
+	 * The text is never a user: no owner id and no display name reach the public
+	 * sitemap. Without an organisation name it is empty, and map() reports it.
 	 *
 	 * @param array $publication The publication as returned from ObjectService
-	 * @param array $file The file metadata belonging to that publication
 	 *
-	 * @return array{'#text': mixed, '@resource'?: string} The publisher element.
+	 * @return array{'#text': string, '@resource'?: string} The publisher element.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function publisherElement(array $publication, array $file): array {
-		$publisher = ['#text' => ($file['owner'] ?? $publication['@self']['owner'] ?? '')];
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->resolveOrganisationTooiIdentifier(publication: $publication));
+	private function publisherElement(array $publication): array {
+		$organisation = $this->organisationRow(publication: $publication);
+		$publisher = ['#text' => trim((string)$this->stringOrNull(value: ($organisation['name'] ?? null)))];
+		$tooiIdentifier = $this->resolveOrganisationTooiIdentifier(publication: $publication, organisation: $organisation);
+		$orgUri = $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier);
 		if ($orgUri !== null) {
 			$publisher['@resource'] = $orgUri;
 		}
@@ -319,75 +327,76 @@ class SitemapDocumentMapper {
 	 * Resolve the TOOI organisatie identifier for a publication's owning organisation.
 	 *
 	 * Prefers a publication-level `tooiIdentifier`, then a `@self.organisation` value
-	 * that is already a TOOI id URI, and finally the organisation object's own
-	 * `tooiIdentifier` property (resolved once per organisation via OpenRegister and
-	 * cached for the request). Returns null when none resolves.
+	 * that is already a TOOI id URI, and finally the TOOI identifier of the
+	 * OpenRegister organisation. Returns null when none resolves.
 	 *
 	 * @param array<string, mixed> $publication The publication object.
+	 * @param array<string, mixed> $organisation The organisation row, empty when there is none.
 	 *
 	 * @return string|null The candidate TOOI organisatie identifier, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function resolveOrganisationTooiIdentifier(array $publication): ?string {
+	private function resolveOrganisationTooiIdentifier(array $publication, array $organisation): ?string {
 		$direct = $this->stringOrNull(value: ($publication['tooiIdentifier'] ?? null));
-		$organisation = $this->stringOrNull(value: ($publication['@self']['organisation'] ?? null));
-		if ($direct !== null || $organisation === null) {
+		$envelope = $this->stringOrNull(value: ($publication['@self']['organisation'] ?? null));
+		if ($direct !== null || $envelope === null) {
 			return $direct;
 		}
 
 		// Already a TOOI id URI on the publication envelope.
-		if (str_starts_with($organisation, TooiVocabularyService::ORG_ID_BASE) === true) {
-			return $organisation;
+		if (str_starts_with($envelope, TooiVocabularyService::ORG_ID_BASE) === true) {
+			return $envelope;
 		}
 
-		if (array_key_exists($organisation, $this->orgTooiCache) === false) {
-			$this->orgTooiCache[$organisation] = $this->fetchOrganisationTooiIdentifier(organisation: $organisation);
-		}
-
-		return $this->orgTooiCache[$organisation];
+		return $this->stringOrNull(value: ($organisation['tooiIdentifier'] ?? null));
 	}//end resolveOrganisationTooiIdentifier()
 
 	/**
-	 * Fetch an organisation's `tooiIdentifier` via OpenRegister by its UUID.
+	 * The publication's organisation row, looked up once per organisation uuid for the
+	 * request; empty when the envelope names none, names a TOOI id, or nothing is found.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function organisationRow(array $publication): array {
+		$organisation = $this->stringOrNull(value: ($publication['@self']['organisation'] ?? null));
+		if ($organisation === null || str_starts_with($organisation, TooiVocabularyService::ORG_ID_BASE) === true) {
+			return [];
+		}
+
+		if (array_key_exists($organisation, $this->organisationCache) === false) {
+			$this->organisationCache[$organisation] = $this->fetchOrganisation(organisation: $organisation);
+		}
+
+		return $this->organisationCache[$organisation];
+	}//end organisationRow()
+
+	/**
+	 * Read an OpenRegister organisation's name and TOOI identifier by its UUID.
+	 *
+	 * `@self.organisation` names an OpenRegister organisation, not an object, so it
+	 * is read through the OrganisationMapper. Only the name and the TOOI identifier
+	 * leave this method.
 	 *
 	 * @param string $organisation The organisation UUID.
 	 *
-	 * @return string|null The tooiIdentifier, or null when unresolved/unavailable.
+	 * @return array{name?: mixed, tooiIdentifier?: mixed} The organisation, or empty when unresolved or unavailable.
 	 *
-	 * @spec exclude Object-lookup plumbing for the DIWOO publisher binding.
+	 * @spec exclude Organisation-lookup plumbing for the DIWOO publisher binding.
 	 */
-	private function fetchOrganisationTooiIdentifier(string $organisation): ?string {
+	private function fetchOrganisation(string $organisation): array {
 		try {
-			$objectService = $this->openRegister->installedService('OCA\OpenRegister\Service\ObjectService', 'OpenRegister service is not available.');
-			$results = $objectService->searchObjects(query: ['@self' => ['uuid' => $organisation]], _rbac: false, _multitenancy: false);
+			$found = $this->openRegister
+				->installedService('OCA\OpenRegister\Db\OrganisationMapper', 'OpenRegister organisations are not available.')
+				->findByUuid($organisation);
+
+			return ['name' => $found->getName(), 'tooiIdentifier' => $found->getTooi()];
 		} catch (\Throwable $e) {
-			return null;
+			return [];
 		}
-
-		if (is_array($results) === false || empty($results) === true) {
-			return null;
-		}
-
-		return $this->stringOrNull(value: (self::rowData(row: $results[0])['tooiIdentifier'] ?? null));
-	}//end fetchOrganisationTooiIdentifier()
-
-	/**
-	 * A search row as an array: itself, its jsonSerialize(), or empty.
-	 *
-	 * @param mixed $row The row.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private static function rowData(mixed $row): array {
-		if (is_array($row) === true) {
-			return $row;
-		}
-
-		if (method_exists($row, 'jsonSerialize') === true) {
-			return $row->jsonSerialize();
-		}
-
-		return [];
-	}//end rowData()
+	}//end fetchOrganisation()
 }//end class

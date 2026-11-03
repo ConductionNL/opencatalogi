@@ -449,7 +449,7 @@ class SitemapServiceTest extends TestCase {
 
 		// Publisher @resource is bound to the TOOI organisatie identifier (WOO-TOOI-002).
 		$this->assertEquals('https://identifier.overheid.nl/tooi/id/gemeente/gm0855', $doc['diwoo:publisher']['@resource']);
-		$this->assertEquals('file-owner', $doc['diwoo:publisher']['#text']);
+		$this->assertSame('', $doc['diwoo:publisher']['#text'], 'A user id is never the publisher.');
 
 		// Format.
 		$this->assertStringContainsString('PDF', $doc['diwoo:format']['@resource']);
@@ -476,13 +476,15 @@ class SitemapServiceTest extends TestCase {
 	 */
 	public function testThePublisherIsLookedUpOncePerOrganisation(): void {
 		$tooi = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855';
-		$objectService = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjects']);
-		$objectService->expects($this->once())
-			->method('searchObjects')
-			->with(['@self' => ['uuid' => 'org-uuid-123']])
-			->willReturn([['tooiIdentifier' => $tooi]]);
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuid']);
+		$organisations->expects($this->once())
+			->method('findByUuid')
+			->with('org-uuid-123')
+			->willReturn($this->organisation(name: 'Gemeente Zuiddrecht', tooi: $tooi));
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
-		$this->container->method('get')->willReturn($objectService);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id): mixed => ($id === 'OCA\OpenRegister\Db\OrganisationMapper' ? $organisations : null)
+		);
 
 		$file = ['downloadUrl' => 'https://example.com/files/doc.pdf', 'extension' => 'pdf', 'owner' => 'file-owner'];
 		$method = $this->getPrivateMethod('mapDiwooDocument');
@@ -756,6 +758,40 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * An OpenRegister organisation: the real entity when OpenRegister is loaded, otherwise a double with its getters.
+	 *
+	 * @param string|null $name The name.
+	 * @param string|null $tooi The TOOI identifier.
+	 *
+	 * @return object The organisation.
+	 */
+	private function organisation(?string $name, ?string $tooi): object {
+		if (class_exists('OCA\OpenRegister\Db\Organisation') === true) {
+			$organisation = new \OCA\OpenRegister\Db\Organisation();
+			$organisation->setName($name);
+			$organisation->setTooi($tooi);
+
+			return $organisation;
+		}
+
+		return new class($name, $tooi) {
+			public function __construct(
+				private ?string $name,
+				private ?string $tooi,
+			) {
+			}
+
+			public function getName(): ?string {
+				return $this->name;
+			}
+
+			public function getTooi(): ?string {
+				return $this->tooi;
+			}
+		};
+	}//end organisation()
+
+	/**
 	 * The documents XML of one page with three files, the organisation looked up by uuid.
 	 *
 	 * @param array<int, mixed> $calls The organisation lookups, recorded by parameter name.
@@ -793,19 +829,17 @@ class SitemapServiceTest extends TestCase {
 			}
 		);
 		$objectService->method('searchObjects')->willReturnCallback(
-			function (...$args) use (&$calls): array {
-				// Recorded by parameter name, so the stub and the real ObjectService read the same.
-				$names = ['query', '_rbac', '_multitenancy'];
-				if (method_exists(\OCA\OpenRegister\Service\ObjectService::class, 'searchObjects') === true) {
-					$names = array_map(
-						static fn (\ReflectionParameter $parameter): string => $parameter->getName(),
-						(new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'searchObjects'))->getParameters()
-					);
-				}
-
-				$named = array_combine(array_slice($names, 0, count($args)), array_slice($args, 0, count($names)));
-				$calls[] = array_intersect_key($named, array_flip(['query', '_rbac', '_multitenancy']));
-				return [$this->createSerializableObject(['tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855'])];
+			static function () use (&$calls): array {
+				// OpenRegister answers nothing to a query without a register and schema.
+				$calls[] = 'searchObjects';
+				return [];
+			}
+		);
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuid']);
+		$organisations->method('findByUuid')->willReturnCallback(
+			function (string $uuid) use (&$calls): object {
+				$calls[] = ['findByUuid' => $uuid];
+				return $this->organisation(name: 'Gemeente Voorbeeld & Omstreken', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855');
 			}
 		);
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
@@ -813,6 +847,7 @@ class SitemapServiceTest extends TestCase {
 			static fn ($id) => match ($id) {
 				'OCA\OpenRegister\Service\ObjectService' => $objectService,
 				'OCA\OpenRegister\Service\FileService' => $fileService,
+				'OCA\OpenRegister\Db\OrganisationMapper' => $organisations,
 				default => null,
 			}
 		);
@@ -823,7 +858,7 @@ class SitemapServiceTest extends TestCase {
 	/**
 	 * The full documents XML of a page matches the recording: the root attributes,
 	 * one document per downloadable file, and the publisher looked up by
-	 * organisation uuid (outside RBAC) from an entity row.
+	 * organisation uuid through OpenRegister's OrganisationMapper.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
