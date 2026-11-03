@@ -102,7 +102,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return $this->objectService;
-
 	}//end objects()
 
 	/**
@@ -129,7 +128,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return ['register' => $register, 'schema' => $schema];
-
 	}//end target()
 
 	/**
@@ -193,7 +191,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		$found['id'] = ($found['id'] ?? $requestId);
 
 		return $found;
-
 	}//end find()
 
 	/**
@@ -222,6 +219,5 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return $requests;
-
 	}//end all()
 }//end class

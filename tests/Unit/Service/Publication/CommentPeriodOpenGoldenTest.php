@@ -140,7 +140,6 @@ class CommentPeriodOpenGoldenTest extends TestCase {
 		}
 
 		return $out;
-
 	}//end cases()
 
 	/**
@@ -274,6 +273,5 @@ class CommentPeriodOpenGoldenTest extends TestCase {
 		);
 
 		return new CommentPeriodService(new TermRoll($container, $appManager), $config, $urls);
-
 	}//end service()
 }//end class

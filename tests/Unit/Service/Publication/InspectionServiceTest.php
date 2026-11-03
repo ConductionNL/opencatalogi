@@ -33,7 +33,6 @@ class InspectionServiceTest extends TestCase {
 	 */
 	private function at(string $when): DateTimeImmutable {
 		return new DateTimeImmutable($when, new DateTimeZone('UTC'));
-
 	}//end at()
 
 	public function testTheEndDateIsComputedFromTheTypesTerm(): void {

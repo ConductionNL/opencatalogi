@@ -118,7 +118,6 @@ class InitializeSettingsGoldenTest extends TestCase {
 		}
 
 		return $output;
-
 	}//end recordingOutput()
 
 	/**
@@ -186,6 +185,5 @@ class InitializeSettingsGoldenTest extends TestCase {
 		);
 
 		return new InitializeSettings($apps, $container, $config, $logger);
-
 	}//end step()
 }//end class

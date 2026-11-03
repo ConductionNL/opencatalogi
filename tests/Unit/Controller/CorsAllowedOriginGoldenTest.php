@@ -68,12 +68,12 @@ use OCA\OpenCatalogi\Controller\ThemesController;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IRequest;
-use Unit\Support\ServerAwareRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Golden test for resolveAllowedOrigin() and the read-only CORS header set.

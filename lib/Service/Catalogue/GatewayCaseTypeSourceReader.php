@@ -118,7 +118,6 @@ class GatewayCaseTypeSourceReader implements CaseTypeSourceReader {
 		}
 
 		return $answer;
-
 	}//end fetchDefinition()
 
 	/**
@@ -143,7 +142,6 @@ class GatewayCaseTypeSourceReader implements CaseTypeSourceReader {
 		}
 
 		return array_values(array_filter($results, 'is_array'));
-
 	}//end listDefinitions()
 
 	/**
@@ -175,7 +173,6 @@ class GatewayCaseTypeSourceReader implements CaseTypeSourceReader {
 		}
 
 		return $this->decode(response: $response);
-
 	}//end call()
 
 	/**

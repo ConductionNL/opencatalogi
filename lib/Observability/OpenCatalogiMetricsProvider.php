@@ -183,7 +183,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	 * The ids of the schemas whose title contains the needle, in mapper order.
 	 *
 	 * @param iterable<mixed> $schemas The schemas (entities or arrays).
-	 * @param string          $needle  Case-insensitive substring to match against the titles.
+	 * @param string $needle Case-insensitive substring to match against the titles.
 	 *
 	 * @return array<int, int> Matching schema IDs.
 	 *
@@ -204,7 +204,7 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	/**
 	 * The id of a schema whose title contains the needle.
 	 *
-	 * @param mixed  $schema The schema (entity or array).
+	 * @param mixed $schema The schema (entity or array).
 	 * @param string $needle Case-insensitive substring to match against the title.
 	 *
 	 * @return int|null The schema id, or null without an id, a title or a match.
@@ -264,8 +264,8 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	/**
 	 * Add a register's id under each schema id it lists.
 	 *
-	 * @param array<int, array<int, int>> $map      Map of schema ID → register IDs so far.
-	 * @param array<string, mixed>        $register The register's own fields.
+	 * @param array<int, array<int, int>> $map Map of schema ID → register IDs so far.
+	 * @param array<string, mixed> $register The register's own fields.
 	 *
 	 * @return array<int, array<int, int>> The map with this register added.
 	 *
@@ -375,8 +375,8 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	/**
 	 * Every object of one register and schema, as plain field arrays.
 	 *
-	 * @param object                      $objectService The OpenRegister ObjectService.
-	 * @param array{register: int, schema: int} $self    The register and schema to search.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param array{register: int, schema: int} $self The register and schema to search.
 	 *
 	 * @return array<int, array<string, mixed>> The objects, or none when the search fails or answers no list.
 	 *

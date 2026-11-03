@@ -58,7 +58,7 @@ class RedactorFakeFileService {
 	/** @var array<int, array<int, array<string, string>>> */
 	public array $calls = [];
 
-	public function anonymizeDocument(Node $node, array $entities, string $scope='document', ?string $fileKey=null, ?bool $preserveStructure=null): Node {
+	public function anonymizeDocument(Node $node, array $entities, string $scope = 'document', ?string $fileKey = null, ?bool $preserveStructure = null): Node {
 		$this->calls[] = $entities;
 		if ($this->throw !== null) {
 			throw $this->throw;
@@ -144,7 +144,7 @@ class DocumentRedactorTest extends TestCase {
 
 		$this->l10n = $this->createMock(IL10N::class);
 		$this->l10n->method('t')->willReturnCallback(
-			static fn (string $text, mixed $parameters=[]): string => vsprintf($text, (array)$parameters)
+			static fn (string $text, mixed $parameters = []): string => vsprintf($text, (array)$parameters)
 		);
 
 	}//end setUp()
@@ -152,7 +152,7 @@ class DocumentRedactorTest extends TestCase {
 	/**
 	 * A file double with an id and content, hashed like Nextcloud does.
 	 *
-	 * @param int    $id      The file id.
+	 * @param int $id The file id.
 	 * @param string $content The bytes.
 	 *
 	 * @return File
@@ -188,7 +188,7 @@ class DocumentRedactorTest extends TestCase {
 	 * Assert a result leaves nothing to publish.
 	 *
 	 * @param array<string, string> $result The redaction result.
-	 * @param string                $reason A fragment of the officer's reason.
+	 * @param string $reason A fragment of the officer's reason.
 	 *
 	 * @return void
 	 */

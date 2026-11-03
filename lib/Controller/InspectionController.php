@@ -99,7 +99,6 @@ class InspectionController extends Controller {
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
-
 	}//end preflightedCors()
 
 	/**
@@ -149,7 +148,6 @@ class InspectionController extends Controller {
 		}
 
 		return new JSONResponse($this->registers->toArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end open()
 
 	/**
@@ -239,7 +237,6 @@ class InspectionController extends Controller {
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
-
 	}//end withCors()
 
 }//end class

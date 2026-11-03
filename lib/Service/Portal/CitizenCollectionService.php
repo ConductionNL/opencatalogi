@@ -75,16 +75,16 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param PortalObjectStore $store  Reads and writes as the system.
+	 * @param PortalObjectStore $store Reads and writes as the system.
 	 * @param PublicationLinker $linker The public link to a publication.
-	 * @param LoggerInterface   $logger The logger.
-	 * @param PortalInput       $input  Checks the resident's input.
+	 * @param LoggerInterface $logger The logger.
+	 * @param PortalInput $input Checks the resident's input.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
 		private readonly PublicationLinker $linker,
 		private readonly LoggerInterface $logger,
-		private readonly PortalInput $input=new PortalInput(),
+		private readonly PortalInput $input = new PortalInput(),
 	) {
 
 	}//end __construct()
@@ -95,13 +95,13 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	 * Without `collection` a new dossier with `title` is made. The same
 	 * publication and document twice is kept once.
 	 *
-	 * @param string               $owner The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param array<string, mixed> $input collection, title, publication, attachment, note.
 	 *
 	 * @return array<string, mixed> The owner's view of the dossier.
 	 *
 	 * @throws PortalNotFoundException When the dossier or publication is not the owner's or not public.
-	 * @throws PortalInputException    When the input is refused.
+	 * @throws PortalInputException When the input is refused.
 	 *
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-resident-adds-a-public-publication-or-one-of-its-documents-to-a-dossier-req-ccol-002
 	 */
@@ -150,20 +150,19 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		$dossier['items'] = $items;
 
 		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: ($dossier['id'] ?? null)));
-
 	}//end addItem()
 
 	/**
 	 * The dossier to add to: the owner's own, or a new one with a title.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier, or '' for a new one.
-	 * @param mixed  $title        The title of a new dossier.
+	 * @param mixed $title The title of a new dossier.
 	 *
 	 * @return array<string, mixed>
 	 *
 	 * @throws PortalNotFoundException When the dossier is not the owner's.
-	 * @throws PortalInputException    When a new dossier has no title or the owner has too many.
+	 * @throws PortalInputException When a new dossier has no title or the owner has too many.
 	 */
 	private function targetDossier(string $owner, string $collectionId, mixed $title): array {
 		if ($collectionId !== '') {
@@ -180,15 +179,14 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		}
 
 		return ['title' => $title, 'description' => '', 'owner' => $owner, 'items' => [], 'share' => null, 'sourceOf' => []];
-
 	}//end targetDossier()
 
 	/**
 	 * Remove one item from a dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
-	 * @param string $itemId       The item.
+	 * @param string $itemId The item.
 	 *
 	 * @return array<string, mixed> The owner's view.
 	 *
@@ -206,21 +204,20 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 		$dossier['items'] = $kept;
 		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: $collectionId));
-
 	}//end removeItem()
 
 	/**
 	 * Write the note of one item, or of the dossier when no item is named.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
-	 * @param string $itemId       The item, or '' for the dossier.
-	 * @param string $note         The note.
+	 * @param string $itemId The item, or '' for the dossier.
+	 * @param string $note The note.
 	 *
 	 * @return array<string, mixed> The owner's view.
 	 *
 	 * @throws PortalNotFoundException When the dossier or item is not found.
-	 * @throws PortalInputException    When the note is too long.
+	 * @throws PortalInputException When the note is too long.
 	 *
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-resident-removes-items-and-writes-notes-req-ccol-003
 	 */
@@ -248,13 +245,12 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 		$dossier['items'] = $items;
 		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: $collectionId));
-
 	}//end note()
 
 	/**
 	 * Delete a dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array{deleted: bool}
@@ -266,13 +262,12 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	public function delete(string $owner, string $collectionId): array {
 		$this->owned(owner: $owner, collectionId: $collectionId);
 		return ['deleted' => $this->store->delete(schema: self::SCHEMA, id: $collectionId)];
-
 	}//end delete()
 
 	/**
 	 * The owner's view of one dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array<string, mixed>
@@ -283,7 +278,6 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	 */
 	public function view(string $owner, string $collectionId): array {
 		return $this->ownerView(dossier: $this->owned(owner: $owner, collectionId: $collectionId));
-
 	}//end view()
 
 	/**
@@ -315,7 +309,6 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		}
 
 		return $items;
-
 	}//end itemList()
 
 	/**
@@ -351,13 +344,12 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		}
 
 		return $deleted;
-
 	}//end removeEverythingOf()
 
 	/**
 	 * The dossier when this owner owns it.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array<string, mixed>
@@ -372,7 +364,6 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 		$dossier['id'] = $collectionId;
 		return $dossier;
-
 	}//end owned()
 
 	/**
@@ -418,7 +409,6 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	 */
 	private function now(): string {
 		return (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-
 	}//end now()
 
 	/**
@@ -431,6 +421,5 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		$bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
 		$bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
 		return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
-
 	}//end uuid()
 }//end class

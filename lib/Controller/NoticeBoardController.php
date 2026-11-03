@@ -108,7 +108,6 @@ class NoticeBoardController extends Controller {
 		}
 
 		return new JSONResponse(['banners' => $this->banners->forUser(banners: $banners, uid: $user->getUID())]);
-
 	}//end banners()
 
 	/**
@@ -134,7 +133,6 @@ class NoticeBoardController extends Controller {
 		$this->banners->dismiss(uid: $user->getUID(), bannerId: $bannerId);
 
 		return new JSONResponse(['dismissed' => true]);
-
 	}//end dismissBanner()
 
 	/**

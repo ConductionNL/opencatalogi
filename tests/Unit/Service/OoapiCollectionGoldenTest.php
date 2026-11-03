@@ -101,8 +101,8 @@ class OoapiCollectionGoldenTest extends TestCase {
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param string            $method The service method.
-	 * @param array<int, mixed> $args   Its arguments.
+	 * @param string $method The service method.
+	 * @param array<int, mixed> $args Its arguments.
 	 *
 	 * @return void
 	 */
@@ -129,8 +129,8 @@ class OoapiCollectionGoldenTest extends TestCase {
 	/**
 	 * Call a read with the case's arguments.
 	 *
-	 * @param string            $method The service method.
-	 * @param array<int, mixed> $args   Its arguments.
+	 * @param string $method The service method.
+	 * @param array<int, mixed> $args Its arguments.
 	 *
 	 * @return mixed The answer.
 	 */

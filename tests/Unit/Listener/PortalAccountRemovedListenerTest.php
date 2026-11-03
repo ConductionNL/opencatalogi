@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace Unit\Listener;
 
-require_once __DIR__.'/../Service/Portal/FakePortalObjectStore.php';
+require_once __DIR__ . '/../Service/Portal/FakePortalObjectStore.php';
 
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
@@ -68,8 +68,8 @@ class PortalAccountRemovedListenerTest extends TestCase {
 	/**
 	 * A real OpenRegister entity.
 	 *
-	 * @param string               $schema The schema id.
-	 * @param array<string, mixed> $data   The object.
+	 * @param string $schema The schema id.
+	 * @param array<string, mixed> $data The object.
 	 *
 	 * @return ObjectEntity
 	 */

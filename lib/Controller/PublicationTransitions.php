@@ -41,10 +41,10 @@ class PublicationTransitions {
 	/**
 	 * Constructor.
 	 *
-	 * @param PublicationStateServiceInterface $states      The visibility state and the record per move.
-	 * @param DepublicationServiceInterface    $depublisher Sends the withdrawals.
-	 * @param ContainerInterface               $container   Server container, for OpenRegister's file service.
-	 * @param RegisterAccess                   $registers   The configured register pairs and the ObjectService.
+	 * @param PublicationStateServiceInterface $states The visibility state and the record per move.
+	 * @param DepublicationServiceInterface $depublisher Sends the withdrawals.
+	 * @param ContainerInterface $container Server container, for OpenRegister's file service.
+	 * @param RegisterAccess $registers The configured register pairs and the ObjectService.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -68,7 +68,6 @@ class PublicationTransitions {
 	 */
 	public function stateOf(array $publication): string {
 		return $this->states->stateOf(publication: $publication);
-
 	}//end stateOf()
 
 	/**
@@ -82,7 +81,6 @@ class PublicationTransitions {
 	 */
 	public function publishedRecord(array $publication): array {
 		return $this->states->publishedRecord(publication: $publication);
-
 	}//end publishedRecord()
 
 	/**
@@ -96,7 +94,6 @@ class PublicationTransitions {
 	 */
 	public function withdrawnRecord(array $publication): array {
 		return $this->states->withdrawnRecord(publication: $publication);
-
 	}//end withdrawnRecord()
 
 	/**
@@ -110,7 +107,6 @@ class PublicationTransitions {
 	 */
 	public function channelsReached(array $publication): array {
 		return $this->states->channelsReached(publication: $publication);
-
 	}//end channelsReached()
 
 	/**
@@ -124,7 +120,6 @@ class PublicationTransitions {
 	 */
 	public function storable(array $depublication): array {
 		return $this->states->storable(depublication: $depublication);
-
 	}//end storable()
 
 	/**
@@ -157,14 +152,13 @@ class PublicationTransitions {
 	 */
 	public function outstandingChannels(array $depublication): array {
 		return $this->depublisher->outstandingChannels(depublication: $depublication);
-
 	}//end outstandingChannels()
 
 	/**
 	 * Withdraw one file of a publication through OpenRegister's file service.
 	 *
 	 * @param mixed $publication The publication object.
-	 * @param int   $fileId      The file id.
+	 * @param int $fileId The file id.
 	 *
 	 * @return string|null Null when the file was withdrawn, else why it was not.
 	 *
@@ -178,6 +172,5 @@ class PublicationTransitions {
 		}
 
 		return null;
-
 	}//end unpublishFile()
 }//end class

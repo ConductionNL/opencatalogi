@@ -47,7 +47,6 @@ class CommunitySurfaceTest extends TestCase {
 	 */
 	private function at(string $when): DateTimeImmutable {
 		return new DateTimeImmutable($when, new DateTimeZone('UTC'));
-
 	}//end at()
 
 	public function testAReaderSeesWhatIsDownWithItsMessage(): void {
@@ -132,7 +131,6 @@ class CommunitySurfaceTest extends TestCase {
 		$requested = $this->subscriptions->request(address: 'reader@example.org', scope: $scope);
 
 		return ['subscription' => $requested['subscription'], 'token' => $requested['token']];
-
 	}//end orderedConfirm()
 
 	public function testABannerShowsInsideItsPeriodAndIsGoneAfterIt(): void {

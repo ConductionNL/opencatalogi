@@ -228,7 +228,9 @@ class ServiceCatalogueControllerTest extends TestCase {
 	public function testAPublishedCaseTypeIsAnsweredWithItsLinks(): void {
 		$definition = ['identifier' => 'vergunning', 'title' => 'Vergunning', 'published' => true];
 		$objectService = new class($definition) {
-			public function __construct(private readonly array $definition) {
+			public function __construct(
+				private readonly array $definition,
+			) {
 			}
 
 			public function find(string $id, string $register, string $schema): array {
@@ -272,8 +274,8 @@ class ServiceCatalogueControllerTest extends TestCase {
 	 * endpoints must not have, so the saves are observable rather than
 	 * discarded.
 	 *
-	 * @param array<string, mixed> $stored  The object `find()` answers with.
-	 * @param array<int, mixed>    $results The rows `searchObjects()` answers with.
+	 * @param array<string, mixed> $stored The object `find()` answers with.
+	 * @param array<int, mixed> $results The rows `searchObjects()` answers with.
 	 *
 	 * @return object The stand-in.
 	 */
@@ -294,10 +296,13 @@ class ServiceCatalogueControllerTest extends TestCase {
 			public array $queries = [];
 
 			/**
-			 * @param array<string, mixed> $stored  The object to answer with.
-			 * @param array<int, mixed>    $results The search rows.
+			 * @param array<string, mixed> $stored The object to answer with.
+			 * @param array<int, mixed> $results The search rows.
 			 */
-			public function __construct(private array $stored, private array $results) {
+			public function __construct(
+				private array $stored,
+				private array $results,
+			) {
 			}
 
 			public function find(string $id, string $register, string $schema): array {
@@ -321,7 +326,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $object The object to store.
-			 * @param array<int, string>   $extend Unused here.
+			 * @param array<int, string> $extend Unused here.
 			 *
 			 * @return array<string, mixed> The stored object.
 			 */

@@ -90,14 +90,13 @@ class WooRequestPauseResumeGoldenTest extends TestCase {
 		}
 
 		return $cases;
-
 	}//end worlds()
 
 	/**
 	 * Replay a world and compare it to the recording.
 	 *
-	 * @param string               $operation pause or resume.
-	 * @param array<string, mixed> $world     The world.
+	 * @param string $operation pause or resume.
+	 * @param array<string, mixed> $world The world.
 	 *
 	 * @return void
 	 */
@@ -146,7 +145,7 @@ class WooRequestPauseResumeGoldenTest extends TestCase {
 	/**
 	 * The controller of a world.
 	 *
-	 * @param array<string, mixed>        $world   The world.
+	 * @param array<string, mixed> $world The world.
 	 * @param WooRequestFakeObjectService $objects The register.
 	 *
 	 * @return WooRequestController
@@ -223,6 +222,5 @@ class WooRequestPauseResumeGoldenTest extends TestCase {
 		}
 
 		return $terms;
-
 	}//end terms()
 }//end class

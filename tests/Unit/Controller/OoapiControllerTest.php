@@ -528,7 +528,7 @@ class OoapiControllerTest extends TestCase {
 		);
 
 		$this->assertSame(200, $this->controller->$method(...$args)->getStatus());
-		$this->assertSame([$context.'_register', $context.'_schema'], $keys->getArrayCopy());
+		$this->assertSame([$context . '_register', $context . '_schema'], $keys->getArrayCopy());
 	}
 
 	/**
@@ -626,9 +626,9 @@ class OoapiControllerTest extends TestCase {
 	/**
 	 * Matches an OoapiScope on the given register/schema pair and, when given, catalog.
 	 *
-	 * @param string                    $register The register id.
-	 * @param string                    $schema   The schema id.
-	 * @param array<string, mixed>|null $catalog  The catalog, or null for any.
+	 * @param string $register The register id.
+	 * @param string $schema The schema id.
+	 * @param array<string, mixed>|null $catalog The catalog, or null for any.
 	 *
 	 * @return \PHPUnit\Framework\Constraint\Callback<OoapiScope> The constraint.
 	 */
@@ -644,7 +644,7 @@ class OoapiControllerTest extends TestCase {
 	 * Matches an OoapiPage with the given number and size and no filter.
 	 *
 	 * @param int $number The page number.
-	 * @param int $size   The page size.
+	 * @param int $size The page size.
 	 *
 	 * @return \PHPUnit\Framework\Constraint\Callback<OoapiPage> The constraint.
 	 */

@@ -69,9 +69,9 @@ class ConnectionObservations {
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	public function directorySync(array $results): array {
-		$total  = (int) ($results['total_directories'] ?? 0);
-		$failed = (int) ($results['failed_directories'] ?? 0);
-		$synced = (int) ($results['synced_directories'] ?? 0);
+		$total = (int)($results['total_directories'] ?? 0);
+		$failed = (int)($results['failed_directories'] ?? 0);
+		$synced = (int)($results['synced_directories'] ?? 0);
 
 		if ($total === 0) {
 			return ['unconfigured', 'No directory is known yet, so the last sync had nothing to read.'];
@@ -116,9 +116,9 @@ class ConnectionObservations {
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
 	private function firstFailedDirectory(array $results): string {
-		$errors = array_values((array) ($results['errors'] ?? []));
+		$errors = array_values((array)($results['errors'] ?? []));
 
-		return $this->hostOf(url: (string) ($errors[0]['directory'] ?? ''), fallback: 'A directory');
+		return $this->hostOf(url: (string)($errors[0]['directory'] ?? ''), fallback: 'A directory');
 	}//end firstFailedDirectory()
 
 	/**
@@ -136,14 +136,14 @@ class ConnectionObservations {
 			return ['unconfigured', 'No peer directory is known yet, so the last broadcast told nobody.'];
 		}
 
-		$failed   = array_keys(array_filter($results, static fn (mixed $accepted): bool => $accepted !== true));
+		$failed = array_keys(array_filter($results, static fn (mixed $accepted): bool => $accepted !== true));
 		$accepted = ($total - count($failed));
 
 		if ($failed === []) {
 			return $this->allAccepted(results: $results);
 		}
 
-		$first = $this->hostOf(url: (string) $failed[0], fallback: 'A peer directory');
+		$first = $this->hostOf(url: (string)$failed[0], fallback: 'A peer directory');
 		if ($accepted > 0) {
 			return ['limited', $accepted . ' of ' . $total . ' peer directories accepted the last broadcast. ' . $first . ' did not.'];
 		}
@@ -155,7 +155,7 @@ class ConnectionObservations {
 	 * The message of a broadcast no peer accepted.
 	 *
 	 * @param string $first The first refusing peer's host.
-	 * @param int    $total The number of peers.
+	 * @param int $total The number of peers.
 	 *
 	 * @return string The message.
 	 *
@@ -180,7 +180,7 @@ class ConnectionObservations {
 	 */
 	private function allAccepted(array $results): array {
 		if (count($results) === 1) {
-			return ['configured', $this->hostOf(url: (string) array_key_first($results), fallback: 'The peer directory') . ' accepted the last broadcast.'];
+			return ['configured', $this->hostOf(url: (string)array_key_first($results), fallback: 'The peer directory') . ' accepted the last broadcast.'];
 		}
 
 		return ['configured', 'All ' . count($results) . ' peer directories accepted the last broadcast.'];
@@ -234,7 +234,7 @@ class ConnectionObservations {
 	 */
 	private function readinessTally(array $report): array {
 		$tally = [0, 0, null];
-		foreach ((array) ($report['checks'] ?? []) as $check) {
+		foreach ((array)($report['checks'] ?? []) as $check) {
 			if (is_array($check) === false) {
 				continue;
 			}
@@ -244,8 +244,8 @@ class ConnectionObservations {
 				continue;
 			}
 
-			$tally[0] += (int) (($check['status'] ?? '') === 'pass');
-			$tally[1] += (int) (($check['status'] ?? '') === 'fail');
+			$tally[0] += (int)(($check['status'] ?? '') === 'pass');
+			$tally[1] += (int)(($check['status'] ?? '') === 'fail');
 		}
 
 		return $tally;
@@ -286,8 +286,8 @@ class ConnectionObservations {
 	 * @return array{0: string, 1: string} The status and message.
 	 */
 	private function wooRegistration(?array $registration): array {
-		$status = (string) ($registration['status'] ?? '');
-		$reason = (string) ($registration['reason'] ?? '');
+		$status = (string)($registration['status'] ?? '');
+		$reason = (string)($registration['reason'] ?? '');
 
 		if ($status === 'pass') {
 			return ['configured', 'Every readiness check passed, and the Woo-index registration matches this address.'];
@@ -299,7 +299,7 @@ class ConnectionObservations {
 	/**
 	 * The host of a URL, or a fallback name when the URL has none.
 	 *
-	 * @param string $url      The URL.
+	 * @param string $url The URL.
 	 * @param string $fallback The name to use without a host.
 	 *
 	 * @return string The host or the fallback.

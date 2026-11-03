@@ -168,15 +168,14 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		}
 
 		return $cases;
-
 	}//end cases()
 
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param string $class  The controller class.
+	 * @param string $class The controller class.
 	 * @param string $method The endpoint.
-	 * @param string $world  The world.
+	 * @param string $world The world.
 	 *
 	 * @return void
 	 */
@@ -239,7 +238,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 
 		sort($methods);
 		return $methods;
-
 	}//end endpoints()
 
 	/**
@@ -266,7 +264,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		}
 
 		return new $class(...$args);
-
 	}//end controller()
 
 	/**
@@ -332,7 +329,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 
 		$this->made[$type] = $value;
 		return $value;
-
 	}//end collaborator()
 
 	/**
@@ -352,7 +348,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		$request->method('getMethod')->willReturn('GET');
 		$this->labels[$request] = 'IRequest';
 		return $request;
-
 	}//end request()
 
 	/**
@@ -361,24 +356,23 @@ class RegisterPlumbingGoldenTest extends TestCase {
 	 * @return IAppConfig The app config.
 	 */
 	private function appConfig(): IAppConfig {
-		$read = 			function (string $app, string $key, string $default = '') {
-				$this->log[] = ['IAppConfig.getValueString' => [$app, $key, $default]];
-				if ($key === 'cors_allowed_origins') {
-					return 'https://a.example';
-				}
+		$read = function (string $app, string $key, string $default = '') {
+			$this->log[] = ['IAppConfig.getValueString' => [$app, $key, $default]];
+			if ($key === 'cors_allowed_origins') {
+				return 'https://a.example';
+			}
 
-				if (str_ends_with($key, '_schema') === true && $this->world === 'halfset') {
-					return '';
-				}
+			if (str_ends_with($key, '_schema') === true && $this->world === 'halfset') {
+				return '';
+			}
 
-				if (str_ends_with($key, '_register') === true || str_ends_with($key, '_schema') === true) {
-					return ($this->world === 'unset' ? '' : 'cfg-' . $key);
-				}
+			if (str_ends_with($key, '_register') === true || str_ends_with($key, '_schema') === true) {
+				return ($this->world === 'unset' ? '' : 'cfg-' . $key);
+			}
 
-				return $default;
-			};
+			return $default;
+		};
 		return $this->double(type: IAppConfig::class, label: 'IAppConfig', depth: 0, answers: ['getValueString' => $read]);
-
 	}//end appConfig()
 
 	/**
@@ -415,7 +409,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		);
 		$this->labels[$container] = 'container';
 		return $container;
-
 	}//end container()
 
 	/**
@@ -431,7 +424,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		}
 
 		return $this->collaborator(type: ObjectService::class . '#answers');
-
 	}//end openRegisterService()
 
 	/**
@@ -441,7 +433,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 	 */
 	private function resolver(): object {
 		return $this->recorder(label: 'resolver', answers: ['resolveRegisterId' => 'res-reg', 'resolveSchemaId' => 'res-sch']);
-
 	}//end resolver()
 
 	/**
@@ -466,7 +457,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		);
 		$this->labels[$appManager] = 'IAppManager';
 		return $appManager;
-
 	}//end appManager()
 
 	/**
@@ -484,7 +474,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		$session->method('isLoggedIn')->willReturn($this->world !== 'anonymous');
 		$this->labels[$session] = 'IUserSession';
 		return $session;
-
 	}//end userSession()
 
 	/**
@@ -499,7 +488,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		);
 		$this->labels[$l10n] = 'IL10N';
 		return $l10n;
-
 	}//end l10n()
 
 	/**
@@ -509,27 +497,26 @@ class RegisterPlumbingGoldenTest extends TestCase {
 	 */
 	private function catalogue(): ServiceCatalogueServiceInterface {
 		$objectService = function (): object {
-				$this->log[] = ['catalogue.getObjectService' => []];
-				if ($this->world === 'absent') {
-					throw new CatalogueUnreadableException(message: 'The service catalogue cannot be read because OpenRegister is not installed.');
-				}
+			$this->log[] = ['catalogue.getObjectService' => []];
+			if ($this->world === 'absent') {
+				throw new CatalogueUnreadableException(message: 'The service catalogue cannot be read because OpenRegister is not installed.');
+			}
 
-				return $this->collaborator(type: ObjectService::class . '#answers');
-			};
+			return $this->collaborator(type: ObjectService::class . '#answers');
+		};
 		$read = function (array $entryConfig, array $caseTypeConfig, array $filters = []): array {
-				$this->log[] = ['catalogue.readCatalogue' => $this->normalise(value: [$entryConfig, $caseTypeConfig, $filters])];
-				return ['entries' => [['id' => 'entry-1', 'available' => false]], 'caseTypes' => []];
-			};
+			$this->log[] = ['catalogue.readCatalogue' => $this->normalise(value: [$entryConfig, $caseTypeConfig, $filters])];
+			return ['entries' => [['id' => 'entry-1', 'available' => false]], 'caseTypes' => []];
+		};
 		return $this->double(type: ServiceCatalogueServiceInterface::class, label: 'catalogue', depth: 0, answers: ['getObjectService' => $objectService, 'readCatalogue' => $read]);
-
 	}//end catalogue()
 
 	/**
 	 * A recording double of a class or interface: every call logged, typed defaults returned.
 	 *
-	 * @param string $type  The class or interface, optionally suffixed "#answers" for the ObjectService.
+	 * @param string $type The class or interface, optionally suffixed "#answers" for the ObjectService.
 	 * @param string $label The label in the log.
-	 * @param int    $depth How deep in a chain of returned doubles this one is.
+	 * @param int $depth How deep in a chain of returned doubles this one is.
 	 * @param array<string, \Closure> $answers Answers for named methods, in place of the logged default.
 	 *
 	 * @return MockObject The double.
@@ -567,13 +554,12 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		}
 
 		return $double;
-
 	}//end double()
 
 	/**
 	 * A plain recorder for an untyped service: every call logged, fixed answers or null.
 	 *
-	 * @param string               $label   The label in the log.
+	 * @param string $label The label in the log.
 	 * @param array<string, mixed> $answers Answers per method.
 	 *
 	 * @return object The recorder.
@@ -585,14 +571,17 @@ class RegisterPlumbingGoldenTest extends TestCase {
 
 		$recorder = new class($log, $answers) {
 			/**
-			 * @param \Closure             $log     Where calls are logged.
+			 * @param \Closure $log Where calls are logged.
 			 * @param array<string, mixed> $answers Answers per method.
 			 */
-			public function __construct(private \Closure $log, private array $answers) {
+			public function __construct(
+				private \Closure $log,
+				private array $answers,
+			) {
 			}
 
 			/**
-			 * @param string            $name The method.
+			 * @param string $name The method.
 			 * @param array<int, mixed> $args The arguments.
 			 *
 			 * @return mixed The answer.
@@ -604,7 +593,6 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		};
 		$this->labels[$recorder] = $label;
 		return $recorder;
-
 	}//end recorder()
 
 	/**
@@ -621,14 +609,13 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		}
 
 		return ['results' => $rows, 'total' => 1, 'limit' => 5, 'offset' => 0, 'page' => 1, 'pages' => 1];
-
 	}//end searchAnswer()
 
 	/**
 	 * The passed arguments by parameter name, trailing defaults left out.
 	 *
-	 * @param ReflectionMethod  $method The method.
-	 * @param array<int, mixed> $args   The arguments as PHPUnit passes them.
+	 * @param ReflectionMethod $method The method.
+	 * @param array<int, mixed> $args The arguments as PHPUnit passes them.
 	 *
 	 * @return array<string, mixed> The arguments.
 	 */
@@ -656,16 +643,15 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		}
 
 		return $this->normalise(value: $named);
-
 	}//end arguments()
 
 	/**
 	 * A typed default for a return type.
 	 *
-	 * @param ReflectionType|null $type  The return type.
-	 * @param MockObject          $self  The double, for self and static.
-	 * @param int                 $depth How deep the double is.
-	 * @param string              $label The label for a returned double.
+	 * @param ReflectionType|null $type The return type.
+	 * @param MockObject $self The double, for self and static.
+	 * @param int $depth How deep the double is.
+	 * @param string $label The label for a returned double.
 	 *
 	 * @return mixed The default.
 	 */
@@ -746,6 +732,5 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		}
 
 		return $value;
-
 	}//end normalise()
 }//end class

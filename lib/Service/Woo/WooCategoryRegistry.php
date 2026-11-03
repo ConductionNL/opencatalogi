@@ -146,7 +146,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	 */
 	public static function sitemapFileFor(string $code): string {
 		return self::SITEMAP_PREFIX . $code . self::SITEMAP_SUFFIX;
-
 	}//end sitemapFileFor()
 
 	/**
@@ -176,7 +175,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 		}
 
 		return $code;
-
 	}//end codeOf()
 
 	/**
@@ -188,8 +186,8 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	 * query that lists its publications.
 	 *
 	 * @return array<string, array<string, mixed>> The categories, each with `code`,
-	 *   `label`, `labelEn`, `tooiUri`, `tooiLabel`, `mapsTo`, `origin`,
-	 *   `sitemapFile` and `schemas`.
+	 *                                             `label`, `labelEn`, `tooiUri`, `tooiLabel`, `mapsTo`, `origin`,
+	 *                                             `sitemapFile` and `schemas`.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-information-categories-are-data-not-code-req-wic-001
 	 */
@@ -214,7 +212,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 		$this->categories = $categories;
 
 		return $this->categories;
-
 	}//end all()
 
 	/**
@@ -232,7 +229,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 		$this->all();
 
 		return $this->refused;
-
 	}//end rejected()
 
 	/**
@@ -251,7 +247,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 		}
 
 		return $files;
-
 	}//end sitemapFiles()
 
 	/**
@@ -265,7 +260,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	 */
 	public function find(string $code): ?array {
 		return ($this->all()[$code] ?? null);
-
 	}//end find()
 
 	/**
@@ -284,7 +278,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 		}
 
 		return $this->find(code: $code);
-
 	}//end findBySitemapFile()
 
 	/**
@@ -301,7 +294,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 	 */
 	public function schemasFor(string $code): array {
 		return (array)($this->find(code: $code)['schemas'] ?? []);
-
 	}//end schemasFor()
 
 	/**
@@ -343,7 +335,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 		}
 
 		return null;
-
 	}//end resolveForDocument()
 
 	/**
@@ -392,11 +383,7 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 		}
 
 		return $records;
-
 	}//end bundled()
-
-
-
 
 	/**
 	 * The stored local information categories, or an empty list when there are none.
@@ -450,8 +437,6 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 		}
 
 		return $rows;
-
 	}//end storedCategories()
-
 
 }//end class

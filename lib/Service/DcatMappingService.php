@@ -59,7 +59,7 @@ class DcatMappingService {
 	/**
 	 * Constructor.
 	 *
-	 * @param DcatVocabularyService  $vocabulary    The HVD-category / data-theme resolver.
+	 * @param DcatVocabularyService $vocabulary The HVD-category / data-theme resolver.
 	 * @param DcatDistributionMapper $distributions The file-to-distribution mapper.
 	 */
 	public function __construct(
@@ -132,8 +132,8 @@ class DcatMappingService {
 	/**
 	 * A non-empty array under one key of an `x-dcat` annotation.
 	 *
-	 * @param mixed  $annotation The schema's `x-dcat` value.
-	 * @param string $key        The block to read (`mapping`, `hvd`).
+	 * @param mixed $annotation The schema's `x-dcat` value.
+	 * @param string $key The block to read (`mapping`, `hvd`).
 	 *
 	 * @return array<string, mixed>|null The block, or null when the annotation or block is not a non-empty array.
 	 *
@@ -213,8 +213,8 @@ class DcatMappingService {
 	/**
 	 * The publication value at each mapped path, leaving out empty values.
 	 *
-	 * @param array<string, mixed>  $publication The publication object.
-	 * @param array<string, string> $mapping     The resolved DCAT property map.
+	 * @param array<string, mixed> $publication The publication object.
+	 * @param array<string, string> $mapping The resolved DCAT property map.
 	 *
 	 * @return array<string, mixed> The non-empty values, in mapping order.
 	 *
@@ -235,7 +235,7 @@ class DcatMappingService {
 	/**
 	 * The scalar elements of each array value mapped through a `[]` path.
 	 *
-	 * @param array<string, mixed>  $values  The non-empty mapped values.
+	 * @param array<string, mixed> $values The non-empty mapped values.
 	 * @param array<string, string> $mapping The resolved DCAT property map.
 	 *
 	 * @return array<string, array<int, string>> The list properties.
@@ -462,7 +462,7 @@ class DcatMappingService {
 	 * The publication's value at the schema's HVD category property, as a string.
 	 *
 	 * @param array<string, mixed> $publication The publication object.
-	 * @param DcatMappingProfile   $profile     The schema HVD config.
+	 * @param DcatMappingProfile $profile The schema HVD config.
 	 *
 	 * @return string|null The scalar value, or null when no property is set or the value is not scalar.
 	 *
@@ -494,7 +494,6 @@ class DcatMappingService {
 	private function filled(mixed $value): bool {
 		return $value !== null && $value !== '';
 	}//end filled()
-
 
 	/**
 	 * Map a single published file attachment to a `dcat:Distribution`.

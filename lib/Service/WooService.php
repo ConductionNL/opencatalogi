@@ -110,7 +110,6 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 */
 	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'published'];
 
-
 	/**
 	 * Cached OpenRegister ObjectService instance.
 	 *
@@ -352,8 +351,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	/**
 	 * A new assessment object for one collected document, waiting to be assessed.
 	 *
-	 * @param array<string, mixed> $document      The collected document
-	 * @param string               $caseReference The case the batch belongs to
+	 * @param array<string, mixed> $document The collected document
+	 * @param string $caseReference The case the batch belongs to
 	 *
 	 * @return array<string, mixed> The assessment object data
 	 *
@@ -379,7 +378,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * A new batch object, in progress, for its saved assessments.
 	 *
 	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
-	 * @param array<string, mixed>             $batchContext   The case reference, Deck board, Deck availability and creation time
+	 * @param array<string, mixed> $batchContext The case reference, Deck board, Deck availability and creation time
 	 *
 	 * @return array<string, mixed> The batch object data
 	 *
@@ -413,7 +412,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * A card that cannot be linked is logged and left out; the others still link.
 	 *
 	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
-	 * @param array<string, mixed>             $batchContext   The case reference, register and Deck board
+	 * @param array<string, mixed> $batchContext The case reference, register and Deck board
 	 *
 	 * @return array<int, array<string, mixed>> The deck links that were made
 	 *
@@ -458,7 +457,6 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		}//end foreach
 
 		return $deckLinks;
-
 	}//end linkAssessmentCards()
 
 	/**
@@ -476,7 +474,6 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		}
 
 		return 'Document';
-
 	}//end assessmentCardTitle()
 
 	/**

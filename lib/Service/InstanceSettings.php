@@ -40,7 +40,7 @@ class InstanceSettings {
 	 * Constructor.
 	 *
 	 * @param IURLGenerator $urlGenerator The URL generator, for the base URL.
-	 * @param IAppConfig    $appConfig    The app configuration.
+	 * @param IAppConfig $appConfig The app configuration.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -60,13 +60,12 @@ class InstanceSettings {
 	 */
 	public function baseUrl(): string {
 		return rtrim($this->urlGenerator->getBaseUrl(), '/');
-
 	}//end baseUrl()
 
 	/**
 	 * A string app-config value of opencatalogi.
 	 *
-	 * @param string $key     The config key.
+	 * @param string $key The config key.
 	 * @param string $default The value when the key is not set.
 	 *
 	 * @return string The configured value.
@@ -75,14 +74,13 @@ class InstanceSettings {
 	 */
 	public function stringValue(string $key, string $default): string {
 		return $this->appConfig->getValueString(AppIdentity::APP_ID, $key, $default);
-
 	}//end stringValue()
 
 	/**
 	 * An integer app-config value of opencatalogi.
 	 *
-	 * @param string $key     The config key.
-	 * @param int    $default The value when the key is not set.
+	 * @param string $key The config key.
+	 * @param int $default The value when the key is not set.
 	 *
 	 * @return int The configured value.
 	 *
@@ -90,6 +88,5 @@ class InstanceSettings {
 	 */
 	public function intValue(string $key, int $default): int {
 		return $this->appConfig->getValueInt(AppIdentity::APP_ID, $key, $default);
-
 	}//end intValue()
 }//end class

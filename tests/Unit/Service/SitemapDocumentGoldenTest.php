@@ -95,7 +95,7 @@ class SitemapDocumentGoldenTest extends TestCase {
 
 	/**
 	 * @param array $publication The publication.
-	 * @param array $file        The file.
+	 * @param array $file The file.
 	 */
 	#[DataProvider('cases')]
 	public function testTheMappedDocumentMatchesTheRecordedOutput(array $publication, array $file): void {
