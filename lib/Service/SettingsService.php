@@ -222,6 +222,23 @@ class SettingsService implements SettingsServiceInterface {
 	];
 
 	/**
+	 * The object types whose source, schema and register a caller may store through updateSettings().
+	 *
+	 * This is SETTINGS_OBJECT_TYPES without `usageCounter`: the settings page shows a
+	 * usage counter selector, but its keys are not writable through this endpoint.
+	 */
+	private const WRITABLE_OBJECT_TYPES = [
+		'catalog',
+		'listing',
+		'organization',
+		'theme',
+		'glossary',
+		'ooapi_courses',
+		'ooapi_programs',
+		'ooapi_offerings',
+	];
+
+	/**
 	 * The publishing options, stored as the text 'true' or 'false'.
 	 */
 	private const PUBLISHING_OPTIONS = [
@@ -891,76 +908,10 @@ class SettingsService implements SettingsServiceInterface {
 	 */
 	public function updateSettings(array $data): array {
 		try {
-			// Build the canonical allowlist from the same object-type enumeration
-			// used by getSettings() so the two methods stay in sync automatically.
-			$allowedTypes = [
-				'catalog',
-				'listing',
-				'organization',
-				'theme',
-				'glossary',
-				// OOAPI-catalog-publication (OOAPI-010).
-				'ooapi_courses',
-				'ooapi_programs',
-				'ooapi_offerings',
-			];
-
-			$allowedKeys = [];
-			foreach ($allowedTypes as $type) {
-				$allowedKeys[] = "{$type}_source";
-				$allowedKeys[] = "{$type}_schema";
-				$allowedKeys[] = "{$type}_register";
-			}
-
-			// Publishing-option keys are also settable via this endpoint.
-			$allowedKeys[] = 'auto_publish_attachments';
-			$allowedKeys[] = 'auto_publish_objects';
-			$allowedKeys[] = 'use_old_style_publishing_view';
-
-			// DCAT-AP-NL harvest publisher defaults (DCAT-010).
-			$allowedKeys[] = 'dcat_instance_title';
-			$allowedKeys[] = 'dcat_publisher_name';
-			$allowedKeys[] = 'dcat_publisher_uri';
-			$allowedKeys[] = 'dcat_default_license';
-			$allowedKeys[] = 'dcat_contact_point';
-
-			// OOAPI 5.0 consumer-credential allowlist (OOAPI-008/OOAPI-010).
-			$allowedKeys[] = 'ooapi_consumers';
-
-			// Woo-index registration status (WOO-HR-003).
-			$allowedKeys[] = 'woo_index_registration_status';
-			$allowedKeys[] = 'woo_index_registration_url';
-			$allowedKeys[] = 'woo_index_registration_at';
-			$allowedKeys[] = 'woo_index_registration_answer';
-
-			// National channel sources (REQ-WND-001).
-			$allowedKeys[] = 'channel_sources';
-
-			// Public API cache time in seconds (REQ-PAC-003).
-			$allowedKeys[] = 'public_api_cache_seconds';
-
 			$updated = [];
-
-			// Only persist keys that are explicitly allowed.
-			foreach ($allowedKeys as $key) {
+			foreach ($this->writableSettingKeys() as $key) {
 				if (array_key_exists($key, $data) === true) {
-					$value = $data[$key];
-					if ($key === 'channel_sources') {
-						$value = $this->normaliseChannelSources(value: $value);
-					}
-
-					if ($key === 'public_api_cache_seconds') {
-						// A negative or unreadable time switches caching off rather than
-						// storing something the cache headers cannot use; more than an
-						// hour is stored as an hour, the ceiling the headers apply too.
-						$seconds = 0;
-						if (is_numeric($value) === true) {
-							$seconds = min(self::PUBLIC_API_CACHE_MAX_SECONDS, max(0, (int)$value));
-						}
-
-						$value = $seconds;
-					}
-
+					$value = $this->storableSetting(key: $key, value: $data[$key]);
 					$this->config->setValueString($this->appName, $key, (string)$value);
 					// Retrieve the persisted value to confirm the change.
 					$updated[$key] = $this->config->getValueString($this->appName, $key);
@@ -970,9 +921,72 @@ class SettingsService implements SettingsServiceInterface {
 			return $updated;
 		} catch (\Exception $e) {
 			throw new RuntimeException('Failed to update settings: ' . $e->getMessage());
-		}//end try
+		}
 
 	}//end updateSettings()
+
+	/**
+	 * The settings a caller may store, in the order they are written: source, schema and
+	 * register per writable object type, then every instance setting.
+	 *
+	 * @return array<int, string> The allowed config keys.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function writableSettingKeys(): array {
+		$keys = [];
+		foreach (self::WRITABLE_OBJECT_TYPES as $type) {
+			array_push($keys, "{$type}_source", "{$type}_schema", "{$type}_register");
+		}
+
+		return array_merge($keys, array_keys(self::SETTING_DEFAULTS));
+
+	}//end writableSettingKeys()
+
+	/**
+	 * The value to store for a setting: channel sources normalised, the cache time clamped.
+	 *
+	 * @param string $key   The config key.
+	 * @param mixed  $value The value the caller sent.
+	 *
+	 * @return mixed The value to store.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function storableSetting(string $key, mixed $value): mixed {
+		if ($key === 'channel_sources') {
+			return $this->normaliseChannelSources(value: $value);
+		}
+
+		if ($key === 'public_api_cache_seconds') {
+			return $this->publicApiCacheSeconds(value: $value);
+		}
+
+		return $value;
+
+	}//end storableSetting()
+
+	/**
+	 * The public API cache time to store.
+	 *
+	 * A negative or unreadable time switches caching off rather than storing something
+	 * the cache headers cannot use; more than an hour is stored as an hour, the ceiling
+	 * the headers apply too.
+	 *
+	 * @param mixed $value The time the caller sent.
+	 *
+	 * @return int The seconds to store.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function publicApiCacheSeconds(mixed $value): int {
+		if (is_numeric($value) === false) {
+			return 0;
+		}
+
+		return min(self::PUBLIC_API_CACHE_MAX_SECONDS, max(0, (int)$value));
+
+	}//end publicApiCacheSeconds()
 
 	/**
 	 * Get the current publishing options.
@@ -1009,27 +1023,10 @@ class SettingsService implements SettingsServiceInterface {
 	 */
 	public function updatePublishingOptions(array $options): array {
 		try {
-			// Define valid publishing option keys for security.
-			$validOptions = [
-				'auto_publish_attachments',
-				'auto_publish_objects',
-				'use_old_style_publishing_view',
-			];
-
 			$updatedOptions = [];
-
-			// Update each publishing option in the configuration.
-			foreach ($validOptions as $option) {
-				// Check if this option is provided in the input data.
+			foreach (self::PUBLISHING_OPTIONS as $option) {
 				if (isset($options[$option]) === true) {
-					// Convert boolean or string to string format for storage.
-					$value = 'false';
-					if ($options[$option] === true || $options[$option] === 'true') {
-						$value = 'true';
-					}
-
-					// Store the value in the configuration.
-					$this->config->setValueString($this->appName, $option, $value);
+					$this->config->setValueString($this->appName, $option, $this->storedFlag(value: $options[$option]));
 					// Retrieve and convert back to boolean for the response.
 					$updatedOptions[$option] = $this->config->getValueString($this->appName, $option) === 'true';
 				}
@@ -1038,9 +1035,27 @@ class SettingsService implements SettingsServiceInterface {
 			return $updatedOptions;
 		} catch (\Exception $e) {
 			throw new RuntimeException('Failed to update publishing options: ' . $e->getMessage());
-		}//end try
+		}
 
 	}//end updatePublishingOptions()
+
+	/**
+	 * A publishing option as stored: 'true' for boolean true or the text 'true', otherwise 'false'.
+	 *
+	 * @param mixed $value The value the caller sent.
+	 *
+	 * @return string 'true' or 'false'.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function storedFlag(mixed $value): string {
+		if ($value === true || $value === 'true') {
+			return 'true';
+		}
+
+		return 'false';
+
+	}//end storedFlag()
 
 	/**
 	 * Get the current federation sync options.
