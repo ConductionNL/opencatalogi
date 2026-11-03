@@ -1234,60 +1234,82 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @return array<int, array> List of catalog jsonSerialize() arrays.
 	 */
 	private function listListedPublishedCatalogs(object $catalogiService): array {
+		$out = [];
+		foreach ($this->listedCatalogRows(catalogiService: $catalogiService) as $catalogEntity) {
+			$catalog = $catalogEntity;
+			try {
+				if (is_array($catalogEntity) === false) {
+					$catalog = $catalogEntity->jsonSerialize();
+				}
+			} catch (\Throwable $e) {
+				continue;
+			}
+
+			if ($this->isCatalogPubliclyAvailable(catalog: $catalog) === true) {
+				$out[] = $catalog;
+			}
+		}
+
+		return $out;
+	}//end listListedPublishedCatalogs()
+
+	/**
+	 * The `listed: true` catalog rows of the catalog register, read outside RBAC and
+	 * multitenancy; empty when OpenRegister, the catalog register or schema is missing,
+	 * or the search fails.
+	 *
+	 * `searchObjects` is the non-paginated variant. The `published <= now` check in
+	 * {@see listListedPublishedCatalogs()} covers the visibility branch RBAC would
+	 * otherwise encode; `listed` is a business-scope filter the schema read rules do
+	 * not carry, so the query names it.
+	 *
+	 * @param object $catalogiService The OC CatalogiService.
+	 *
+	 * @return iterable<mixed> The catalog rows, arrays or serialisable objects.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function listedCatalogRows(object $catalogiService): iterable {
 		try {
 			$objectService = $catalogiService->getObjectService();
 			if ($objectService === null) {
 				return [];
 			}
-			$catalogRegister = ($this->config?->getValueString('opencatalogi', 'catalog_register', '') ?? '');
-			$catalogSchema = ($this->config?->getValueString('opencatalogi', 'catalog_schema', '') ?? '');
-			if ($catalogRegister === '' || $catalogSchema === '') {
-				$this->logger?->warning(
-					'WOO-536: catalog_register or catalog_schema app-config is not set — /api/search default scope will be empty',
-					['catalog_register' => $catalogRegister, 'catalog_schema' => $catalogSchema]
-				);
+
+			$scope = $this->catalogRegisterScope();
+			if ($scope === null) {
 				return [];
 			}
 
-			// Note: `searchObjects` is the non-paginated variant used for the
-			// catalog enumeration below. The PHP `published <= now` check further
-			// down covers the visibility branch that RBAC would otherwise encode.
-			// `listed:true` is a business-scope filter not carried by the schema
-			// read-rules, so the query needs it explicitly.
-			$catalogs = $objectService->searchObjects(
-				query: [
-					'@self' => [
-						'register' => $catalogRegister,
-						'schema' => $catalogSchema,
-					],
-					'listed' => true,
-				],
-				_rbac: false,
-				_multitenancy: false,
-			);
+			return $objectService->searchObjects(query: ['@self' => $scope, 'listed' => true], _rbac: false, _multitenancy: false);
 		} catch (\Throwable $e) {
 			$this->logger?->warning('WOO-536: enumerating listed+published catalogs failed', ['error' => $e->getMessage()]);
 			return [];
 		}
+	}//end listedCatalogRows()
 
-		$out = [];
-		foreach ($catalogs as $catalogEntity) {
-			try {
-				if (is_array($catalogEntity) === true) {
-					$c = $catalogEntity;
-				} else {
-					$c = $catalogEntity->jsonSerialize();
-				}
-			} catch (\Throwable $e) {
-				continue;
-			}
-			if ($this->isCatalogPubliclyAvailable(catalog: $c) === false) {
-				continue;
-			}
-			$out[] = $c;
+	/**
+	 * The configured catalog register and schema, or null (with a warning) when either is not set.
+	 *
+	 * @return array{register: string, schema: string}|null
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function catalogRegisterScope(): ?array {
+		$scope = [
+			'register' => ($this->config?->getValueString('opencatalogi', 'catalog_register', '') ?? ''),
+			'schema' => ($this->config?->getValueString('opencatalogi', 'catalog_schema', '') ?? ''),
+		];
+		if ($scope['register'] === '' || $scope['schema'] === '') {
+			$this->logger?->warning(
+				'WOO-536: catalog_register or catalog_schema app-config is not set — /api/search default scope will be empty',
+				['catalog_register' => $scope['register'], 'catalog_schema' => $scope['schema']]
+			);
+			return null;
 		}
-		return $out;
-	}//end listListedPublishedCatalogs()
+
+		return $scope;
+	}//end catalogRegisterScope()
 
 	/**
 	 * Predicate: a catalog is publicly available when its `published` field
@@ -2048,8 +2070,6 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *
 	 * @return array{register: int, schema: int}|null The register/schema IDs, or null.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
 	 */
 	public function findObjectLocation(
@@ -2057,9 +2077,10 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		?array $allowedRegisters = null,
 		?array $allowedSchemas = null,
 	): ?array {
-		if (empty($allowedRegisters) === true || empty($allowedSchemas) === true) {
-			// Fail closed — without an explicit constraint we will NOT do a
-			// platform-wide scan. This is the post-#734 behaviour.
+		// Fail closed: without an explicit constraint there is NO platform-wide scan
+		// (the post-#734 behaviour).
+		$pairs = self::locationPairs(registers: $allowedRegisters, schemas: $allowedSchemas);
+		if ($pairs === []) {
 			return null;
 		}
 
@@ -2073,45 +2094,65 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		// agnostic (_rbac: false) — it mirrors the previous behaviour of locating an
 		// object's home pair; callers re-apply their own RBAC/visibility filter on the
 		// subsequent read. No raw SQL and no knowledge of OR's table layout.
-		foreach ($allowedRegisters as $register) {
-			if (is_numeric($register) === false) {
-				continue;
+		foreach ($pairs as $pair) {
+			if ($this->pairHoldsObject(objectService: $objectService, lookup: ['id' => $uuid] + $pair) === true) {
+				return $pair;
 			}
-
-			$registerId = (int)$register;
-			foreach ($allowedSchemas as $schema) {
-				if (is_numeric($schema) === false) {
-					continue;
-				}
-
-				$schemaId = (int)$schema;
-				try {
-					$object = $objectService->find(
-						id: $uuid,
-						_extend: [],
-						files: false,
-						register: $registerId,
-						schema: $schemaId,
-						_rbac: false,
-						_multitenancy: false
-					);
-				} catch (DoesNotExistException $e) {
-					continue;
-				} catch (\Exception $e) {
-					continue;
-				}
-
-				if ($object !== null) {
-					return [
-						'register' => $registerId,
-						'schema' => $schemaId,
-					];
-				}
-			}//end foreach
-		}//end foreach
+		}
 
 		return null;
 	}//end findObjectLocation()
+
+	/**
+	 * Every (register, schema) pair of the numeric ids of both lists, registers outer;
+	 * other entries are skipped, and a missing or empty list gives no pairs.
+	 *
+	 * @param array<int|string>|null $registers The allowed register ids.
+	 * @param array<int|string>|null $schemas The allowed schema ids.
+	 *
+	 * @return array<int, array{register: int, schema: int}>
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private static function locationPairs(?array $registers, ?array $schemas): array {
+		$pairs = [];
+		foreach (array_filter((array)$registers, 'is_numeric') as $register) {
+			foreach (array_filter((array)$schemas, 'is_numeric') as $schema) {
+				$pairs[] = ['register' => (int)$register, 'schema' => (int)$schema];
+			}
+		}
+
+		return $pairs;
+	}//end locationPairs()
+
+	/**
+	 * Whether OpenRegister finds the object in one register and schema, outside RBAC
+	 * and multitenancy; a lookup that throws reads as not found.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param array{id: string, register: int, schema: int} $lookup The object id and the pair.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function pairHoldsObject(object $objectService, array $lookup): bool {
+		try {
+			$object = $objectService->find(
+				id: $lookup['id'],
+				_extend: [],
+				files: false,
+				register: $lookup['register'],
+				schema: $lookup['schema'],
+				_rbac: false,
+				_multitenancy: false
+			);
+		} catch (\Exception $e) {
+			return false;
+		}
+
+		return $object !== null;
+	}//end pairHoldsObject()
 
 	/**
 	 * Run an OpenRegister read as an anonymous caller (SCH-PFTS-001 / WOO-578).
@@ -2190,26 +2231,42 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @spec exclude Query-assembly plumbing extracted from PublicationsController; translates
 	 *       request params into an ObjectService search query, no domain behavior of its own.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() and CatalogScopeIds::forCatalog() are pure functions
+	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function
 	 */
 	public function buildCatalogSearchQuery(array $catalog, array $queryParams, object $objectService): array {
-		// Use ObjectService centralized query builder which handles dot-to-underscore conversion.
-		$searchQuery = array_merge(
-			$objectService->buildSearchQuery($queryParams),
-			['_includeDeleted' => false]
-		);
+		$searchQuery = $this->requestSearchQuery(queryParams: $queryParams, objectService: $objectService);
 
-		// The scope is the (guarded) catalog's, never the caller's: without this a
-		// `?schema=<S>&register=<R>` became `@self.schema`, which OR prefers over the
-		// `_schemas` set below (WOO-581 review). See CallerScope::strip().
-		$searchQuery = CallerScope::strip(query: $searchQuery);
+		// The scope's ids as the search route reads them: positive ints only, each once,
+		// so a word in `registers` never becomes `_register = 0` and a catalog holding
+		// ['19', 19] does not list everything twice.
+		$scope = CatalogScopeIds::forCatalog(catalog: $catalog);
+		$scope = ['schemas' => array_values(array_unique($scope['schemas'])), 'registers' => array_values(array_unique($scope['registers']))];
 
-		// Clean up catalog-specific parameters.
+		return self::withRegisterScope(searchQuery: self::withSchemaScope(searchQuery: $searchQuery, scope: $scope), registers: $scope['registers']);
+	}//end buildCatalogSearchQuery()
+
+	/**
+	 * The request parameters as an ObjectService query, without the caller's scope.
+	 *
+	 * OpenRegister's query builder handles the dot-to-underscore conversion. The scope is
+	 * the (guarded) catalog's, never the caller's: without the strip a
+	 * `?schema=<S>&register=<R>` became `@self.schema`, which OR prefers over `_schemas`
+	 * (WOO-581 review). A JSON-encoded `_order` (as nextcloud-vue's buildQueryString
+	 * sends it) becomes an array.
+	 *
+	 * @param array $queryParams Raw request query parameters.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 *
+	 * @return array
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private function requestSearchQuery(array $queryParams, object $objectService): array {
+		$searchQuery = CallerScope::strip(query: array_merge($objectService->buildSearchQuery($queryParams), ['_includeDeleted' => false]));
 		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
 
-		// A JSON-encoded `_order` (as nextcloud-vue's buildQueryString sends it) becomes an array.
 		if (isset($searchQuery['_order']) === true && is_string($searchQuery['_order']) === true) {
 			$decodedOrder = json_decode($searchQuery['_order'], true);
 			if (is_array($decodedOrder) === true) {
@@ -2217,67 +2274,91 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 			}
 		}
 
-		// The scope's ids as the search route reads them: positive ints only, each once,
-		// so a word in `registers` never becomes `_register = 0` and a catalog holding
-		// ['19', 19] does not list everything twice.
-		$scope = CatalogScopeIds::forCatalog(catalog: $catalog);
-		$schemas = array_values(array_unique($scope['schemas']));
-		$catalogRegisters = array_values(array_unique($scope['registers']));
+		return $searchQuery;
+	}//end requestSearchQuery()
 
-		// Handle catalog filtering using _schemas for multi-schema search.
-		if ($schemas !== []) {
-			// Pass all schemas for both search and faceting.
-			$searchQuery['_schemas'] = $schemas;
-			// Only set _schema when the catalog pins ONE schema in ONE register (the
-			// magic-mapper fast path). A scalar schema without a scalar register takes
-			// neither OR's multi-schema route (needs no scalar schema) nor its
-			// single-schema route (needs a register), and falls through to the
-			// all-tables `_ids` lookup — outside the guarded scope (WOO-581 review
-			// round 2). The guard itself produces that shape: [S_ok, S_open] × [R1, R2]
-			// becomes [S_ok] × [R1, R2]. Otherwise `_schemas` carries the scope.
-			unset($searchQuery['_schema']);
+	/**
+	 * The query with the catalog's schemas as `_schemas`, and `_schema` only for one schema in one register.
+	 *
+	 * Only the magic-mapper fast path gets a scalar `_schema`. A scalar schema without a
+	 * scalar register takes neither OR's multi-schema route nor its single-schema route,
+	 * and falls through to the all-tables `_ids` lookup, outside the guarded scope
+	 * (WOO-581 review round 2). The guard itself produces that shape: [S_ok, S_open] ×
+	 * [R1, R2] becomes [S_ok] × [R1, R2].
+	 *
+	 * @param array $searchQuery The query.
+	 * @param array{schemas: array<int, int>, registers: array<int, int>} $scope The catalog's ids.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private static function withSchemaScope(array $searchQuery, array $scope): array {
+		if ($scope['schemas'] === []) {
+			return $searchQuery;
+		}
 
-			if (count($schemas) === 1 && count($catalogRegisters) === 1) {
-				$searchQuery['_schema'] = $schemas[0];
-			}
-		}//end if
-
-		if ($catalogRegisters !== []) {
-			$registers = $catalogRegisters;
-			if (count($registers) === 1) {
-				// Single register: use magic mapper optimization.
-				$searchQuery['_register'] = $registers[0];
-				return $searchQuery;
-			}
-
-			// Multi-register: pass all register IDs and prevent auto-setting.
-			$searchQuery['_registers'] = $registers;
-			$searchQuery['_register'] = null;
-
-			// Multi-register search: strip _order on non-universal fields
-			// since schemas may have different property names (e.g., 'name' vs 'naam').
-			// Only allow metadata fields that exist in all magic mapper tables.
-			if (empty($searchQuery['_order']) === false && is_array($searchQuery['_order']) === true) {
-				foreach (array_keys($searchQuery['_order']) as $orderField) {
-					// `@self.created` names the same metadata column as `_created`.
-					$columnField = (string)$orderField;
-					if (str_starts_with($columnField, '@self.') === true) {
-						$columnField = '_' . substr($columnField, strlen('@self.'));
-					}
-
-					if (in_array($columnField, self::UNIVERSAL_ORDER_FIELDS, true) === false) {
-						unset($searchQuery['_order'][$orderField]);
-					}
-				}
-
-				if (empty($searchQuery['_order']) === true) {
-					unset($searchQuery['_order']);
-				}
-			}
-		}//end if
+		$searchQuery['_schemas'] = $scope['schemas'];
+		unset($searchQuery['_schema']);
+		if (count($scope['schemas']) === 1 && count($scope['registers']) === 1) {
+			$searchQuery['_schema'] = $scope['schemas'][0];
+		}
 
 		return $searchQuery;
-	}//end buildCatalogSearchQuery()
+	}//end withSchemaScope()
+
+	/**
+	 * The query with the catalog's registers: `_register` for one, `_registers` for more.
+	 *
+	 * Across registers, schemas may name their properties differently (`name`, `naam`),
+	 * so `_order` keeps only the metadata fields every magic table has.
+	 *
+	 * @param array $searchQuery The query.
+	 * @param array<int, int> $registers The catalog's register ids.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private static function withRegisterScope(array $searchQuery, array $registers): array {
+		if ($registers === []) {
+			return $searchQuery;
+		}
+
+		if (count($registers) === 1) {
+			$searchQuery['_register'] = $registers[0];
+			return $searchQuery;
+		}
+
+		$searchQuery['_registers'] = $registers;
+		$searchQuery['_register'] = null;
+		if (empty($searchQuery['_order']) === false && is_array($searchQuery['_order']) === true) {
+			$searchQuery['_order'] = array_filter($searchQuery['_order'], self::isUniversalOrderField(...), ARRAY_FILTER_USE_KEY);
+			if ($searchQuery['_order'] === []) {
+				unset($searchQuery['_order']);
+			}
+		}
+
+		return $searchQuery;
+	}//end withRegisterScope()
+
+	/**
+	 * Whether an order field names a metadata column every magic table has; `@self.created` names `_created`.
+	 *
+	 * @param int|string $orderField The order field.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	private static function isUniversalOrderField(int|string $orderField): bool {
+		$columnField = (string)$orderField;
+		if (str_starts_with($columnField, '@self.') === true) {
+			$columnField = '_' . substr($columnField, strlen('@self.'));
+		}
+
+		return in_array($columnField, self::UNIVERSAL_ORDER_FIELDS, true);
+	}//end isUniversalOrderField()
 
 	/**
 	 * Resolve schema and register objects from OpenRegister mappers for catalog enrichment.
