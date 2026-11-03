@@ -1303,24 +1303,42 @@ class SettingsService implements SettingsServiceInterface {
 	 */
 	private static function deepMergeConfig(array $base, array $overlay): array {
 		foreach ($overlay as $key => $value) {
-			if (is_array($value) === true
-				&& isset($base[$key]) === true
-				&& is_array($base[$key]) === true
-			) {
-				$baseIsList = ($base[$key] === [] || array_keys($base[$key]) === range(0, (count($base[$key]) - 1)));
-				$overlayIsList = ($value === [] || array_keys($value) === range(0, (count($value) - 1)));
-				if ($baseIsList === true && $overlayIsList === true) {
-					$base[$key] = array_merge($base[$key], $value);
-				} else {
-					$base[$key] = self::deepMergeConfig(base: $base[$key], overlay: $value);
-				}
-			} else {
-				$base[$key] = $value;
-			}
+			$base[$key] = self::mergedConfigValue(base: ($base[$key] ?? null), overlay: $value);
 		}
 
 		return $base;
 	}//end deepMergeConfig()
+
+	/**
+	 * One key of a deep merge: two lists concatenate, two arrays merge, anything else takes the overlay.
+	 *
+	 * @param mixed $base    The base value, null when the key is new.
+	 * @param mixed $overlay The fragment's value.
+	 *
+	 * @return mixed The merged value.
+	 */
+	private static function mergedConfigValue(mixed $base, mixed $overlay): mixed {
+		if (is_array($overlay) === false || is_array($base) === false) {
+			return $overlay;
+		}
+
+		if (self::isConfigList(value: $base) === true && self::isConfigList(value: $overlay) === true) {
+			return array_merge($base, $overlay);
+		}
+
+		return self::deepMergeConfig(base: $base, overlay: $overlay);
+	}//end mergedConfigValue()
+
+	/**
+	 * Whether a config array is a list (empty, or keyed 0..n-1 in order).
+	 *
+	 * @param array<mixed> $value The array.
+	 *
+	 * @return bool True for a list.
+	 */
+	private static function isConfigList(array $value): bool {
+		return $value === [] || array_keys($value) === range(0, (count($value) - 1));
+	}//end isConfigList()
 
 	/**
 	 * Attach every unreferenced `components.schemas` slug to the publication register.
@@ -1337,45 +1355,66 @@ class SettingsService implements SettingsServiceInterface {
 	 * @return array<mixed> The payload with stray schemas attached.
 	 */
 	private static function attachOrphanSchemasToPublicationRegister(array $data): array {
-		$schemas = ($data['components']['schemas'] ?? null);
-		if (is_array($schemas) === false || $schemas === []) {
-			return $data;
-		}
-
 		// The publication register must already be declared (it lives in the monolith);
 		// without it there is nothing to attach to.
-		if (isset($data['components']['registers']['publication']) === false
-			|| is_array($data['components']['registers']['publication']) === false
-		) {
+		$schemas = ($data['components']['schemas'] ?? null);
+		$register = ($data['components']['registers']['publication'] ?? null);
+		if (is_array($schemas) === false || $schemas === [] || is_array($register) === false) {
 			return $data;
 		}
 
 		// Every slug any register in this payload already declares.
 		$declared = self::collectDeclaredSchemaSlugs(registers: ($data['components']['registers'] ?? []));
-
-		$register = $data['components']['registers']['publication'];
-		foreach (array_keys($schemas) as $slug) {
-			if (is_string($slug) === false || isset($declared[$slug]) === true) {
-				continue;
-			}
-
-			$register['schemas'][] = $slug;
-
-			// Only supply the magic-mapping default when the fragment said nothing —
-			// an explicit `magicMapping: false` stays untouched.
-			if (isset($register['configuration']['schemas'][$slug]) === false) {
-				$register['configuration']['schemas'][$slug] = [
-					'magicMapping' => true,
-					'autoCreateTable' => true,
-					'comment' => 'Auto-attached: declared in components.schemas without a register reference.',
-				];
-			}
+		foreach (self::orphanSlugs(schemas: $schemas, declared: $declared) as $slug) {
+			$register = self::withOrphanSchema(register: $register, slug: $slug);
 		}
 
 		$data['components']['registers']['publication'] = $register;
-
 		return $data;
 	}//end attachOrphanSchemasToPublicationRegister()
+
+	/**
+	 * The string schema slugs no register declares, in `components.schemas` order.
+	 *
+	 * @param array<mixed>          $schemas  The `components.schemas` map.
+	 * @param array<string, bool>   $declared The declared slugs, keyed by slug.
+	 *
+	 * @return array<int, string> The orphan slugs.
+	 */
+	private static function orphanSlugs(array $schemas, array $declared): array {
+		$orphans = [];
+		foreach (array_keys($schemas) as $slug) {
+			if (is_string($slug) === true && isset($declared[$slug]) === false) {
+				$orphans[] = $slug;
+			}
+		}
+
+		return $orphans;
+	}//end orphanSlugs()
+
+	/**
+	 * Add one schema slug to the publication register, with the magic-mapping default.
+	 *
+	 * @param array<mixed> $register The publication register.
+	 * @param string       $slug     The schema slug no register declares.
+	 *
+	 * @return array<mixed> The register.
+	 */
+	private static function withOrphanSchema(array $register, string $slug): array {
+		$register['schemas'][] = $slug;
+
+		// Only supply the magic-mapping default when the fragment said nothing —
+		// an explicit `magicMapping: false` stays untouched.
+		if (isset($register['configuration']['schemas'][$slug]) === false) {
+			$register['configuration']['schemas'][$slug] = [
+				'magicMapping' => true,
+				'autoCreateTable' => true,
+				'comment' => 'Auto-attached: declared in components.schemas without a register reference.',
+			];
+		}
+
+		return $register;
+	}//end withOrphanSchema()
 
 	/**
 	 * Collect every schema slug that any register in the payload already declares.
@@ -1389,19 +1428,30 @@ class SettingsService implements SettingsServiceInterface {
 	private static function collectDeclaredSchemaSlugs(array $registers): array {
 		$declared = [];
 		foreach ($registers as $registerData) {
-			if (is_array($registerData) === false || is_array($registerData['schemas'] ?? null) === false) {
-				continue;
-			}
-
-			foreach ($registerData['schemas'] as $declaredSlug) {
-				if (is_string($declaredSlug) === true) {
-					$declared[$declaredSlug] = true;
-				}
+			foreach (self::declaredSlugsOf(register: $registerData) as $declaredSlug) {
+				$declared[$declaredSlug] = true;
 			}
 		}
 
 		return $declared;
 	}//end collectDeclaredSchemaSlugs()
+
+	/**
+	 * The string schema slugs one register declares.
+	 *
+	 * @param mixed $register One entry of `components.registers`.
+	 *
+	 * @return array<int|string, string> The slugs, or none when the register has no schema list.
+	 *
+	 * @spec exclude Internal collection step of attachOrphanSchemasToPublicationRegister().
+	 */
+	private static function declaredSlugsOf(mixed $register): array {
+		if (is_array($register) === false || is_array($register['schemas'] ?? null) === false) {
+			return [];
+		}
+
+		return array_filter($register['schemas'], 'is_string');
+	}//end declaredSlugsOf()
 
 	/**
 	 * Update the app configuration with imported schema and register IDs.
