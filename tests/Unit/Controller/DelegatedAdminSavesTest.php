@@ -469,6 +469,25 @@ class DelegatedAdminSavesTest extends TestCase {
 	}//end identities()
 
 	/**
+	 * A new record of what somebody did is owned by the system: OpenRegister lets an owner past the block, so the actor could otherwise rewrite or delete it.
+	 *
+	 * @param string $factory The controller factory.
+	 * @param string $method The route's method.
+	 * @param string $property The property holding the identity.
+	 * @param array<string, mixed> $params The request.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('identities')]
+	public function testTheRecordIsNotOwnedByTheActor(string $factory, string $method, string $property, array $params): void {
+		$this->storeFor(['gedelegeerden']);
+
+		$this->{$factory}($this->requestWith($params))->{$method}();
+
+		$this->assertTrue($this->store->saves[0]['unowned']);
+	}//end testTheRecordIsNotOwnedByTheActor()
+
+	/**
 	 * The store refuses a save that asks RBAC, so the flows above prove something.
 	 *
 	 * @param string $factory The controller factory.

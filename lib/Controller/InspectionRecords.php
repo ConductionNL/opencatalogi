@@ -93,7 +93,8 @@ class InspectionRecords {
 	 *
 	 * The inspection schema names group admin, which leaves out the delegated
 	 * administrators the route's admin-setting check lets in. That check is the
-	 * gate, so the save skips RBAC.
+	 * gate, so the save skips RBAC. The system owns the record, so whoever opened
+	 * it cannot rewrite or delete it.
 	 *
 	 * @param array<string, mixed> $inspection The inspection to save.
 	 *
@@ -110,7 +111,8 @@ class InspectionRecords {
 			extend: [],
 			register: $config['register'],
 			schema: $config['schema'],
-			_rbac: false
+			_rbac: false,
+			_unowned: true
 		);
 
 	}//end store()

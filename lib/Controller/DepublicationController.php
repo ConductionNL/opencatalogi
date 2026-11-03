@@ -167,6 +167,8 @@ class DepublicationController extends Controller {
 	 * shown as outstanding; neither is possible against a value that only ever
 	 * existed inside one response.
 	 *
+	 * The system owns the record, so whoever wrote it cannot rewrite or delete it.
+	 *
 	 * @param array<string, mixed> $depublication The depublication.
 	 *
 	 * @return JSONResponse The stored depublication, or why it could not be stored.
@@ -178,7 +180,8 @@ class DepublicationController extends Controller {
 				extend: [],
 				register: $this->depublicationConfiguration()['register'],
 				schema: $this->depublicationConfiguration()['schema'],
-				_rbac: false
+				_rbac: false,
+				_unowned: true
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(

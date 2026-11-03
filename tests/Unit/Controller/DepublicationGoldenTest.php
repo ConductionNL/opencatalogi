@@ -242,8 +242,8 @@ class DepublicationGoldenTest extends TestCase {
 				return ($this->case['stored'] ?? ['id' => $id, 'withdrawals' => [['channel' => 'koop2'], ['channel' => 'plooi']]]);
 			}
 
-			public function saveObject(array $object, array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true): array {
-				$this->log[] = ['save' => [$object, $extend, $register, $schema, $uuid, $_rbac]];
+			public function saveObject(array $object, array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_unowned = false): array {
+				$this->log[] = ['save' => [$object, $extend, $register, $schema, $uuid, $_rbac, $_unowned]];
 				if (($this->case['fail'] ?? null) === 'save') {
 					throw new RuntimeException('save broke');
 				}

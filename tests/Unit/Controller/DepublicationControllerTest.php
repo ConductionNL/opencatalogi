@@ -181,6 +181,7 @@ class DepublicationControllerTest extends TestCase {
 				string $schema = '',
 				string $uuid = '',
 				bool $_rbac = true,
+				bool $_unowned = false,
 			): array {
 				$id = ($uuid !== '' ? $uuid : 'stored-1');
 				$object['id'] = $id;

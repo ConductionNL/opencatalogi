@@ -312,7 +312,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -442,7 +443,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -700,7 +702,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -811,7 +814,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -940,7 +944,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -1053,7 +1058,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -1271,7 +1277,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ]
         ]
@@ -1376,7 +1383,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ]
         ]
@@ -1494,7 +1502,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -1605,7 +1614,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -1735,7 +1745,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -1861,7 +1872,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -1997,7 +2009,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -2127,7 +2140,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -2244,7 +2258,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [
@@ -2367,7 +2382,8 @@
                     },
                     "register": "opencatalogi/publication_register",
                     "schema": "opencatalogi/depublication_schema",
-                    "_rbac": false
+                    "_rbac": false,
+                    "_unowned": true
                 }
             ],
             [

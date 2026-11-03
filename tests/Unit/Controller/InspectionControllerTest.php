@@ -440,6 +440,7 @@ class InspectionControllerTest extends TestCase {
 				string $schema = '',
 				string $uuid = '',
 				bool $_rbac = true,
+				bool $_unowned = false,
 			): array {
 				$object['id'] = 'inspection-1';
 				$this->saved[] = $object;
@@ -610,7 +611,7 @@ class InspectionControllerTest extends TestCase {
 			 *
 			 * @return array<string, mixed> The envelope.
 			 */
-			public function saveObject(array $object, array $extend = [], string $register = '', string $schema = '', bool $_rbac = true): array {
+			public function saveObject(array $object, array $extend = [], string $register = '', string $schema = '', bool $_rbac = true, bool $_unowned = false): array {
 				return ['id' => 'inspection-7', 'object' => ['termDays' => $object['termDays']]];
 			}
 		};

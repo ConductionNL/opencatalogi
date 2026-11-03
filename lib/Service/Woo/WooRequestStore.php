@@ -152,7 +152,8 @@ class WooRequestStore implements InformationRequestStoreInterface {
 				schema: $target['schema'],
 				uuid: $uuid,
 				_rbac: false,
-				_multitenancy: false
+				_multitenancy: false,
+				_unowned: true
 			)
 		);
 
