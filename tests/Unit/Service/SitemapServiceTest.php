@@ -748,6 +748,77 @@ class SitemapServiceTest extends TestCase {
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
 
+	/**
+	 * The full documents XML of a page matches the recording: the root attributes,
+	 * one document per downloadable file, and the publisher looked up by
+	 * organisation uuid (outside RBAC) from an entity row.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testBuildSitemapDocumentsMatchTheRecording(): void {
+		$this->setupValidSitemapContext('reg-woo', 'sch-1');
+		$catalogObj = $this->createCatalogObj(['sch-1']);
+		$pubObject = $this->createSerializableObject([
+			'id' => 'pub-1',
+			'publicationDate' => '2024-02-02 08:00:00',
+			'category' => 'infocat014',
+			'soortHandeling' => 'vaststelling',
+			'@self' => ['created' => '2024-01-01', 'updated' => '2024-06-01', 'owner' => 'admin', 'organisation' => 'org-uuid-1'],
+		]);
+		$files = ['results' => [
+			['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf', 'published' => '2024-03-01'],
+			['extension' => 'txt'],
+			['downloadUrl' => 'https://example.com/b.odt', 'extension' => 'odt', 'owner' => 'file-owner'],
+		]];
+		$fileService = $this->createMock(\OCA\OpenRegister\Service\FileService::class);
+		$fileService->method('getFiles')->willReturn(['some-file-data']);
+		$fileService->method('formatFiles')->willReturn($files);
+
+		$calls = [];
+		$objectService = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjectsPaginated', 'searchObjects']);
+		$objectService->method('searchObjectsPaginated')->willReturnCallback(
+			static function (array $query = []) use ($pubObject, $catalogObj): array {
+				if (isset($query['slug']) === true) {
+					return ['results' => [$catalogObj]];
+				}
+
+				return ['results' => [$pubObject]];
+			}
+		);
+		$objectService->method('searchObjects')->willReturnCallback(
+			function (...$args) use (&$calls): array {
+				// Recorded by parameter name, so the stub and the real ObjectService read the same.
+				$names = ['query', '_rbac', '_multitenancy'];
+				if (method_exists(\OCA\OpenRegister\Service\ObjectService::class, 'searchObjects') === true) {
+					$names = array_map(
+						static fn (\ReflectionParameter $parameter): string => $parameter->getName(),
+						(new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'searchObjects'))->getParameters()
+					);
+				}
+
+				$named = array_combine(array_slice($names, 0, count($args)), array_slice($args, 0, count($names)));
+				$calls[] = array_intersect_key($named, array_flip(['query', '_rbac', '_multitenancy']));
+				return [$this->createSerializableObject(['tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855'])];
+			}
+		);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn ($id) => match ($id) {
+				'OCA\OpenRegister\Service\ObjectService' => $objectService,
+				'OCA\OpenRegister\Service\FileService' => $fileService,
+				default => null,
+			}
+		);
+
+		$actual = json_decode((string)json_encode(['data' => $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1)->render(), 'lookups' => $calls]), true);
+		$fixture = __DIR__ . '/fixtures/sitemap-documents-golden.json';
+		if (getenv('GOLDEN_RECORD') === '1') {
+			file_put_contents($fixture, json_encode($actual, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($fixture), true), $actual);
+	}
+
 	public function testBuildSitemapWithNoFiles(): void {
 		$this->setupValidSitemapContext('reg-woo', 'sch-1');
 
