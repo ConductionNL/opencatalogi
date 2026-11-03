@@ -108,9 +108,9 @@ class WithheldDocuments {
 	/**
 	 * Constructor.
 	 *
-	 * @param WithheldDocumentStore $store      Reads and writes the withheldDocument objects.
-	 * @param ContainerInterface    $container  Resolves dossiq's grounds list.
-	 * @param IAppManager           $appManager Says whether dossiq is there.
+	 * @param WithheldDocumentStore $store Reads and writes the withheldDocument objects.
+	 * @param ContainerInterface $container Resolves dossiq's grounds list.
+	 * @param IAppManager $appManager Says whether dossiq is there.
 	 */
 	public function __construct(
 		private readonly WithheldDocumentStore $store,
@@ -122,9 +122,9 @@ class WithheldDocuments {
 	/**
 	 * Replace the withheld documents recorded for a publication.
 	 *
-	 * @param string                           $publicationId The publication of the Woo decision.
-	 * @param array<int, array<string, mixed>> $entries       One `{position, grounds}` per withheld document.
-	 * @param string                           $source        The recording app, such as `dossiq`.
+	 * @param string $publicationId The publication of the Woo decision.
+	 * @param array<int, array<string, mixed>> $entries One `{position, grounds}` per withheld document.
+	 * @param string $source The recording app, such as `dossiq`.
 	 *
 	 * @return array{recorded: int, refused: list<array{position: int, code: string, reason: string}>}
 	 *
@@ -192,7 +192,7 @@ class WithheldDocuments {
 	/**
 	 * Resolve every entry, accepting each position once.
 	 *
-	 * @param object|null                                       $grounds dossiq's WooRefusalGrounds.
+	 * @param object|null $grounds dossiq's WooRefusalGrounds.
 	 * @param list<array{position: int, grounds: list<string>}> $entries The reduced entries.
 	 *
 	 * @return array{0: list<array<string, mixed>>, 1: list<array{position: int, code: string, reason: string}>} Accepted and refused.
@@ -230,7 +230,7 @@ class WithheldDocuments {
 	 * call from the same version of the list. A dossiq without `listWithRetired()`
 	 * is still asked per code.
 	 *
-	 * @param object|null                                       $grounds dossiq's WooRefusalGrounds.
+	 * @param object|null $grounds dossiq's WooRefusalGrounds.
 	 * @param list<array{position: int, grounds: list<string>}> $entries The reduced entries.
 	 *
 	 * @return array<string, array<string, mixed>>|null
@@ -348,7 +348,7 @@ class WithheldDocuments {
 	 * Refuse every entry with one reason.
 	 *
 	 * @param list<array{position: int, grounds: list<string>}> $entries The reduced entries.
-	 * @param string                                            $reason  The reason.
+	 * @param string $reason The reason.
 	 *
 	 * @return array{recorded: int, refused: list<array{position: int, code: string, reason: string}>}
 	 */

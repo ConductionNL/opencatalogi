@@ -168,9 +168,9 @@ class UsageCountGoldenTest extends TestCase {
 					->getMock();
 				$entity->method('jsonSerialize')->willReturn($row['entity']);
 				$row = $entity;
-			} else if (isset($row['plain']) === true) {
+			} elseif (isset($row['plain']) === true) {
 				$row = (object)$row['plain'];
-			} else if (($row['date'] ?? null) === '<today>') {
+			} elseif (($row['date'] ?? null) === '<today>') {
 				$row['date'] = $today;
 			}
 
@@ -200,7 +200,7 @@ class UsageCountGoldenTest extends TestCase {
 				mixed $schema = null,
 				?string $uuid = null,
 				bool $_rbac = true,
-				bool $_multitenancy = true
+				bool $_multitenancy = true,
 			) use (&$calls, $case, $normalise): ObjectEntity {
 				$calls[] = ['saveObject', $normalise($object), $extend, $register, $schema, $uuid, $_rbac, $_multitenancy];
 				if (($case['saveFails'] ?? false) === true) {
@@ -236,6 +236,5 @@ class UsageCountGoldenTest extends TestCase {
 		$answer = $service->increment(new PublicationUsage($publicationId, $kind, $catalog), $userAgent);
 
 		return ['answer' => $answer, 'calls' => $calls];
-
 	}//end increment()
 }//end class

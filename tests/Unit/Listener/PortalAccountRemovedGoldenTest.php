@@ -135,7 +135,7 @@ class PortalAccountRemovedGoldenTest extends TestCase {
 	/**
 	 * A container whose mappers answer the case's id-to-slug maps.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return ContainerInterface The double.
@@ -159,7 +159,9 @@ class PortalAccountRemovedGoldenTest extends TestCase {
 					/**
 					 * @param array<mixed> $map The id-to-slug map.
 					 */
-					public function __construct(private array $map) {
+					public function __construct(
+						private array $map,
+					) {
 					}
 
 					/**
@@ -173,7 +175,6 @@ class PortalAccountRemovedGoldenTest extends TestCase {
 		);
 
 		return $container;
-
 	}//end container()
 
 	/**
@@ -194,7 +195,6 @@ class PortalAccountRemovedGoldenTest extends TestCase {
 		}
 
 		return $logger;
-
 	}//end logger()
 
 	/**
@@ -212,7 +212,6 @@ class PortalAccountRemovedGoldenTest extends TestCase {
 		[$new, $old] = $event;
 
 		return new ObjectUpdatedEvent(self::entity(object: $new), ($old === null ? null : self::entity(object: $old)));
-
 	}//end event()
 
 	/**
@@ -233,6 +232,5 @@ class PortalAccountRemovedGoldenTest extends TestCase {
 		$entity->setObject($object[2]);
 
 		return $entity;
-
 	}//end entity()
 }//end class

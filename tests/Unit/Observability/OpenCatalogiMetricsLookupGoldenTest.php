@@ -107,9 +107,9 @@ class LookupMetricsLogger extends AbstractLogger {
 	public array $lines = [];
 
 	/**
-	 * @param mixed              $level   The level.
+	 * @param mixed $level The level.
 	 * @param string|\Stringable $message The message.
-	 * @param array<mixed>       $context The context.
+	 * @param array<mixed> $context The context.
 	 *
 	 * @return void
 	 */

@@ -39,11 +39,11 @@ class PortalAssertionVerifierTest extends TestCase {
 	 *
 	 * @param array<string, mixed> $claims Claims to override or add.
 	 * @param array<string, mixed> $header Header to override.
-	 * @param string               $secret The signing secret.
+	 * @param string $secret The signing secret.
 	 *
 	 * @return string
 	 */
-	public static function mint(array $claims=[], array $header=[], string $secret=self::SECRET): string {
+	public static function mint(array $claims = [], array $header = [], string $secret = self::SECRET): string {
 		$now = time();
 		$claims = array_merge(
 			[
@@ -63,7 +63,7 @@ class PortalAssertionVerifierTest extends TestCase {
 		$enc = static fn (string $bytes): string => rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=');
 		$h = $enc((string)json_encode($header, JSON_UNESCAPED_SLASHES));
 		$c = $enc((string)json_encode($claims, JSON_UNESCAPED_SLASHES));
-		return $h.'.'.$c.'.'.$enc(hash_hmac('sha256', $h.'.'.$c, $secret, true));
+		return $h . '.' . $c . '.' . $enc(hash_hmac('sha256', $h . '.' . $c, $secret, true));
 	}
 
 	private function verifier(): PortalAssertionVerifier {
@@ -109,7 +109,7 @@ class PortalAssertionVerifierTest extends TestCase {
 		$token = self::mint(header: ['alg' => 'none']);
 		$this->assertNull($this->verifier()->verify($token));
 		[$h, $c] = explode('.', $token);
-		$this->assertNull($this->verifier()->verify($h.'.'.$c.'.'));
+		$this->assertNull($this->verifier()->verify($h . '.' . $c . '.'));
 	}
 
 	public function testAnEmptySubjectIsRefused(): void {

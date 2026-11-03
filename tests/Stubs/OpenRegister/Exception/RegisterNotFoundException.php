@@ -34,10 +34,10 @@ use Exception;
 class RegisterNotFoundException extends Exception {
 
 	/**
-	 * @param string         $registerSlugOrId The reference that resolved to nothing.
-	 * @param int            $code             HTTP-like status code.
-	 * @param Exception|null $previous         The mapper's exception.
-	 * @param string|null    $remedies         What the caller can do about it.
+	 * @param string $registerSlugOrId The reference that resolved to nothing.
+	 * @param int $code HTTP-like status code.
+	 * @param Exception|null $previous The mapper's exception.
+	 * @param string|null $remedies What the caller can do about it.
 	 */
 	public function __construct(string $registerSlugOrId, int $code = 404, ?Exception $previous = null, ?string $remedies = null) {
 		$message = "Register not found: '" . $registerSlugOrId . "'";

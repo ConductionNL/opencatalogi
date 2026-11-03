@@ -12,11 +12,11 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IRequest;
-use Unit\Support\ServerAwareRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Unit tests for CatalogiController.
@@ -182,12 +182,12 @@ class CatalogiControllerTest extends TestCase {
 	public function testIndexStripsTheCallersScopeKeys(): void {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$caller = [
-				'_schemas' => [56],
-				'_registers' => [99],
-				'_schema' => 56,
-				'schema' => 56,
-				'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
-			];
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+		];
 
 		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		// OR's buildSearchQuery() keeps these keys; the strip after it is the control.

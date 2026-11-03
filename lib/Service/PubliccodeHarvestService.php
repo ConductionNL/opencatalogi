@@ -142,7 +142,7 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	/**
 	 * The status with the integriq source and the shards present in it.
 	 *
-	 * @param array $status      The status so far.
+	 * @param array $status The status so far.
 	 * @param array $definitions The shard definitions.
 	 *
 	 * @return array
@@ -184,7 +184,7 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	/**
 	 * Write one shard's synchronization into integriq, over the stored one when it exists.
 	 *
-	 * @param array $shard   The shard definition.
+	 * @param array $shard The shard definition.
 	 * @param array $context The shard definitions and the OpenRegister ObjectService.
 	 *
 	 * @return string 'created' or 'updated'.
@@ -293,8 +293,8 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	/**
 	 * The paged GitHub code search one shard runs: the query narrowed to its size range.
 	 *
-	 * @param array  $definitions The shard file.
-	 * @param string $range       The shard's size range, as `min..max`.
+	 * @param array $definitions The shard file.
+	 * @param string $range The shard's size range, as `min..max`.
 	 *
 	 * @return array<string, mixed>
 	 *

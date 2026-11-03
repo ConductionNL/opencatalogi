@@ -163,7 +163,7 @@ class SearchCatalogToolGoldenTest extends TestCase {
 						->getMock();
 					$entity->method('jsonSerialize')->willReturn($row['entity']);
 					$data['results'][$index] = $entity;
-				} else if (is_array($row) === true && isset($row['plain']) === true) {
+				} elseif (is_array($row) === true && isset($row['plain']) === true) {
 					$data['results'][$index] = (object)$row['plain'];
 				}
 			}
@@ -207,6 +207,5 @@ class SearchCatalogToolGoldenTest extends TestCase {
 		$answer = $provider->invokeTool('opencatalogi.searchCatalog', $case['args']);
 
 		return ['answer' => json_decode((string)json_encode($answer), true), 'calls' => $calls];
-
 	}//end invoke()
 }//end class

@@ -39,8 +39,8 @@ class RegisterAccess {
 	/**
 	 * Constructor.
 	 *
-	 * @param OpenRegisterLookupInterface      $openRegister Resolves the configured register pairs.
-	 * @param ServiceCatalogueServiceInterface $catalogue    Reaches the ObjectService.
+	 * @param OpenRegisterLookupInterface $openRegister Resolves the configured register pairs.
+	 * @param ServiceCatalogueServiceInterface $catalogue Reaches the ObjectService.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookupInterface $openRegister,
@@ -53,7 +53,7 @@ class RegisterAccess {
 	 * Resolve the register and schema identifiers for a configuration context.
 	 *
 	 * @param string $registerKey The `<context>_register` config key.
-	 * @param string $schemaKey   The `<context>_schema` config key.
+	 * @param string $schemaKey The `<context>_schema` config key.
 	 *
 	 * @return array<string, string> Map with 'register' and 'schema' identifiers.
 	 *
@@ -64,7 +64,6 @@ class RegisterAccess {
 	 */
 	public function registerConfiguration(string $registerKey, string $schemaKey): array {
 		return $this->openRegister->registerConfiguration(registerKey: $registerKey, schemaKey: $schemaKey);
-
 	}//end registerConfiguration()
 
 	/**
@@ -78,6 +77,5 @@ class RegisterAccess {
 	 */
 	public function getObjectService(): object {
 		return $this->catalogue->getObjectService();
-
 	}//end getObjectService()
 }//end class

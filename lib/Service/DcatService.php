@@ -233,8 +233,8 @@ class DcatService implements DcatServiceInterface {
 	/**
 	 * Resolve what a catalog document is built from: scope, defaults, schema mappings and options.
 	 *
-	 * @param array<string, mixed> $catalog     The catalog object.
-	 * @param string               $catalogSlug The catalog slug.
+	 * @param array<string, mixed> $catalog The catalog object.
+	 * @param string $catalogSlug The catalog slug.
 	 *
 	 * @return array<string, mixed>
 	 *
@@ -265,7 +265,7 @@ class DcatService implements DcatServiceInterface {
 	 * WOO-001): anonymous callers receive only publicly visible objects.
 	 *
 	 * @param array $scope The resolved catalog scope.
-	 * @param int   $page  The 1-based page number.
+	 * @param int $page The 1-based page number.
 	 *
 	 * @return array The paginated search result.
 	 *
@@ -296,7 +296,7 @@ class DcatService implements DcatServiceInterface {
 	 * Map a page of publications to DCAT datasets, skipping schemas that opted out.
 	 *
 	 * @param array $publications The publications of this page.
-	 * @param array $scope        The resolved catalog scope.
+	 * @param array $scope The resolved catalog scope.
 	 *
 	 * @return array{datasets: array, refs: array, maxModified: int, violations: array<int, array<string, mixed>>}
 	 *
@@ -325,7 +325,7 @@ class DcatService implements DcatServiceInterface {
 	 * Whether the publication's schema opted out of DCAT (its mapping resolved to null).
 	 *
 	 * @param array $publication The publication.
-	 * @param array $scope       The resolved catalog scope.
+	 * @param array $scope The resolved catalog scope.
 	 *
 	 * @return bool
 	 *
@@ -357,7 +357,7 @@ class DcatService implements DcatServiceInterface {
 	 * does; a failing lookup yields a dataset without distributions.
 	 *
 	 * @param array $publication The publication.
-	 * @param array $scope       The resolved catalog scope, with the file service.
+	 * @param array $scope The resolved catalog scope, with the file service.
 	 *
 	 * @return DcatDatasetSource
 	 *
@@ -385,7 +385,7 @@ class DcatService implements DcatServiceInterface {
 	 * Map one publication to a DCAT dataset; its violations are left on the source.
 	 *
 	 * @param DcatDatasetSource $source The publication, its IRI and its attachments.
-	 * @param array             $scope  The resolved catalog scope.
+	 * @param array $scope The resolved catalog scope.
 	 *
 	 * @return array The dataset node.
 	 *
@@ -413,7 +413,7 @@ class DcatService implements DcatServiceInterface {
 	 * The page graph: the dcat:Catalog node, the datasets, and the Hydra paging node when paged.
 	 *
 	 * @param array $catalog The catalog object.
-	 * @param array $scope   The resolved catalog scope, with paging, dataset refs and datasets.
+	 * @param array $scope The resolved catalog scope, with paging, dataset refs and datasets.
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
@@ -436,7 +436,7 @@ class DcatService implements DcatServiceInterface {
 	 * The description and publisher are left out when the catalog has none.
 	 *
 	 * @param array $catalog The catalog object.
-	 * @param array $scope   The resolved catalog scope, with the `@id` references of the datasets on this page.
+	 * @param array $scope The resolved catalog scope, with the `@id` references of the datasets on this page.
 	 *
 	 * @return array
 	 *
@@ -509,7 +509,7 @@ class DcatService implements DcatServiceInterface {
 	 * The `_meta` block: Last-Modified from the newest dataset (or now), ETag, count and paging.
 	 *
 	 * @param mixed $etagKey The catalog id, or its slug.
-	 * @param array $page    The page number, whether a next page exists, and the collected datasets.
+	 * @param array $page The page number, whether a next page exists, and the collected datasets.
 	 *
 	 * @return array
 	 *
@@ -735,8 +735,8 @@ class DcatService implements DcatServiceInterface {
 	/**
 	 * The profile-version, controlled-vocabulary and mandatory-property violations of a catalog's first page.
 	 *
-	 * @param array<string, mixed> $catalog     The catalog object.
-	 * @param string               $catalogSlug The catalog slug.
+	 * @param array<string, mixed> $catalog The catalog object.
+	 * @param string $catalogSlug The catalog slug.
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
@@ -762,7 +762,7 @@ class DcatService implements DcatServiceInterface {
 	 * One violation per dataset in a document that lacks a mandatory property.
 	 *
 	 * @param array<string, mixed> $document The JSON-LD catalog document.
-	 * @param array<string, string> $tag     Keys every violation carries between its iri and what is missing.
+	 * @param array<string, string> $tag Keys every violation carries between its iri and what is missing.
 	 *
 	 * @return array<int, array<string, mixed>> The violations.
 	 *

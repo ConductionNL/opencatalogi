@@ -121,6 +121,5 @@ class WooReadinessController extends Controller {
 		$this->connectionReporter?->reportWooReadiness(report: $report);
 
 		return new JSONResponse($report);
-
 	}//end run()
 }//end class

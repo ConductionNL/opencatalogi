@@ -59,8 +59,8 @@ final class ListCorsPolicy {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig|null $config   App config for the CORS allowlist (optional).
-	 * @param CorsSettings    $settings Allowed CORS methods, headers and max age.
+	 * @param IAppConfig|null $config App config for the CORS allowlist (optional).
+	 * @param CorsSettings $settings Allowed CORS methods, headers and max age.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -68,9 +68,9 @@ final class ListCorsPolicy {
 		private readonly ?IAppConfig $config = null,
 		CorsSettings $settings = new CorsSettings(),
 	) {
-		$this->methods        = $settings->methods;
+		$this->methods = $settings->methods;
 		$this->allowedHeaders = $settings->allowedHeaders;
-		$this->maxAge         = $settings->maxAge;
+		$this->maxAge = $settings->maxAge;
 
 	}//end __construct()
 
@@ -79,7 +79,7 @@ final class ListCorsPolicy {
 	 *
 	 * The caller's origin is never echoed back unless it is on the allowlist (#735).
 	 *
-	 * @param string $appName      The app whose `cors_allowed_origins` key is read.
+	 * @param string $appName The app whose `cors_allowed_origins` key is read.
 	 * @param string $callerOrigin The caller's Origin.
 	 *
 	 * @return string The header value.
@@ -89,6 +89,5 @@ final class ListCorsPolicy {
 	public function allowedOrigin(string $appName, string $callerOrigin): string {
 		$configured = ($this->config?->getValueString($appName, 'cors_allowed_origins', '*') ?? '*');
 		return (new CorsAllowlist($configured))->allowedFor($callerOrigin);
-
 	}//end allowedOrigin()
 }//end class

@@ -108,7 +108,6 @@ class AtomFeedService implements AtomFeedServiceInterface {
 		}
 
 		return $entries;
-
 	}//end entries()
 
 	/**
@@ -174,6 +173,5 @@ class AtomFeedService implements AtomFeedServiceInterface {
 		$lines[] = '</feed>';
 
 		return implode("\n", $lines) . "\n";
-
 	}//end toAtom()
 }//end class

@@ -55,7 +55,7 @@ final class SearchWindow {
 	/**
 	 * Constructor.
 	 *
-	 * @param DateTimeImmutable $from  The last run (exclusive).
+	 * @param DateTimeImmutable $from The last run (exclusive).
 	 * @param DateTimeImmutable $until The moment of the run (inclusive).
 	 */
 	public function __construct(
@@ -85,14 +85,13 @@ final class SearchWindow {
 		$params['_limit'] = self::SEARCH_LIMIT;
 		$params['_order'] = ['publicationDate' => 'asc'];
 		return $params;
-
 	}//end searchParams()
 
 	/**
 	 * This window, narrowed to a saved period.
 	 *
 	 * @param DateTimeImmutable|null $periodFrom The start of the period (inclusive), or null.
-	 * @param DateTimeImmutable|null $periodTo   The end of the period (inclusive), or null.
+	 * @param DateTimeImmutable|null $periodTo The end of the period (inclusive), or null.
 	 *
 	 * @return self
 	 *
@@ -103,7 +102,6 @@ final class SearchWindow {
 		$window->periodFrom = $periodFrom;
 		$window->periodTo = $periodTo;
 		return $window;
-
 	}//end narrowedTo()
 
 	/**
@@ -125,7 +123,6 @@ final class SearchWindow {
 		}
 
 		return $this->periodTo === null || $date <= $this->periodTo;
-
 	}//end contains()
 
 	/**
@@ -137,6 +134,5 @@ final class SearchWindow {
 	 */
 	private function utc(DateTimeImmutable $moment): string {
 		return $moment->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM);
-
 	}//end utc()
 }//end class

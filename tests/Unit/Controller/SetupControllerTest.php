@@ -751,18 +751,18 @@ class SetupControllerTest extends TestCase {
 	/**
 	 * A SetupController wired over the given collaborators the way the container wires it.
 	 *
-	 * @param string                           $appName   The app id.
-	 * @param IRequest                         $request   The request.
-	 * @param IAppConfig                       $config    App configuration.
-	 * @param SettingsServiceInterface         $settings  Settings service.
-	 * @param DemoDataServiceInterface         $demo      Demo data service.
-	 * @param DirectoryServiceInterface        $directory Directory service.
-	 * @param BroadcastServiceInterface        $broadcast Broadcast service.
-	 * @param ContainerInterface               $container Container.
-	 * @param IL10N                            $l10n      Localization.
-	 * @param LoggerInterface                  $logger    Logger.
-	 * @param IUserSession                     $session   User session.
-	 * @param ConnectionReporterInterface|null $reporter  Connection reporter.
+	 * @param string $appName The app id.
+	 * @param IRequest $request The request.
+	 * @param IAppConfig $config App configuration.
+	 * @param SettingsServiceInterface $settings Settings service.
+	 * @param DemoDataServiceInterface $demo Demo data service.
+	 * @param DirectoryServiceInterface $directory Directory service.
+	 * @param BroadcastServiceInterface $broadcast Broadcast service.
+	 * @param ContainerInterface $container Container.
+	 * @param IL10N $l10n Localization.
+	 * @param LoggerInterface $logger Logger.
+	 * @param IUserSession $session User session.
+	 * @param ConnectionReporterInterface|null $reporter Connection reporter.
 	 *
 	 * @return SetupController The controller.
 	 */

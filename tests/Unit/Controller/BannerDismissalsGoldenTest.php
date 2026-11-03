@@ -98,7 +98,6 @@ class BannerDismissalsGoldenTest extends TestCase {
 		$cases['banners for bob'] = [['call' => 'banners', 'user' => 'bob', 'stored' => '["b-9"]']];
 		$cases['dismiss for bob'] = [['call' => 'dismiss', 'user' => 'bob', 'stored' => '["b-9"]', 'banner' => 'b-1']];
 		return $cases;
-
 	}//end cases()
 
 	/**
@@ -204,7 +203,6 @@ class BannerDismissalsGoldenTest extends TestCase {
 		}
 
 		return new NoticeBoardController(...$args);
-
 	}//end controller()
 
 	/**
@@ -226,7 +224,6 @@ class BannerDismissalsGoldenTest extends TestCase {
 			}
 		);
 		return $container;
-
 	}//end container()
 
 	/**
@@ -255,6 +252,5 @@ class BannerDismissalsGoldenTest extends TestCase {
 
 		$catalogue->method('getObjectService')->willReturn($objects);
 		return $catalogue;
-
 	}//end catalogue()
 }//end class

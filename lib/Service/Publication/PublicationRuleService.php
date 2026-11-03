@@ -159,7 +159,6 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 		}
 
 		return ($left > $right);
-
 	}//end compareDates()
 
 	/**
@@ -199,7 +198,6 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 		}
 
 		return true;
-
 	}//end publishes()
 
 	/**
@@ -236,7 +234,6 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 		}
 
 		return $projected;
-
 	}//end projectForAnonymous()
 
 	/**
@@ -352,7 +349,6 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 		}
 
 		return $projected;
-
 	}//end projectList()
 
 	/**
@@ -411,6 +407,5 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 		}
 
 		return $indexed;
-
 	}//end indexByRecordType()
 }//end class

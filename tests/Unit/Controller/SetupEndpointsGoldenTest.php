@@ -181,7 +181,7 @@ class SetupEndpointsGoldenTest extends TestCase {
 	/**
 	 * The controller over recording doubles for one case.
 	 *
-	 * @param array<string, mixed>  $case   The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<string, string> $values The app config, changed in place by writes.
 	 *
 	 * @return SetupController The controller.
@@ -408,8 +408,8 @@ class SetupEndpointsGoldenTest extends TestCase {
 	 * would record that class's signature: the test stub's locally and OpenRegister's
 	 * own in CI. Named and without defaults, the record is what the controller passed.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return array<string, mixed> The passed arguments by name.
 	 */
@@ -428,7 +428,6 @@ class SetupEndpointsGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
 
 	/**
@@ -439,13 +438,15 @@ class SetupEndpointsGoldenTest extends TestCase {
 	 * @return object The row.
 	 */
 	private static function row(array $data): object {
-		return new class ($data) {
+		return new class($data) {
 			/**
 			 * Constructor.
 			 *
 			 * @param array<string, mixed> $data The serialised data.
 			 */
-			public function __construct(private array $data) {
+			public function __construct(
+				private array $data,
+			) {
 			}
 
 			/**
@@ -463,18 +464,18 @@ class SetupEndpointsGoldenTest extends TestCase {
 	/**
 	 * A SetupController wired over the given collaborators the way the container wires it.
 	 *
-	 * @param string                           $appName   The app id.
-	 * @param IRequest                         $request   The request.
-	 * @param IAppConfig                       $config    App configuration.
-	 * @param SettingsServiceInterface         $settings  Settings service.
-	 * @param DemoDataServiceInterface         $demo      Demo data service.
-	 * @param DirectoryServiceInterface        $directory Directory service.
-	 * @param BroadcastServiceInterface        $broadcast Broadcast service.
-	 * @param ContainerInterface               $container Container.
-	 * @param IL10N                            $l10n      Localization.
-	 * @param LoggerInterface                  $logger    Logger.
-	 * @param IUserSession                     $session   User session.
-	 * @param ConnectionReporterInterface|null $reporter  Connection reporter.
+	 * @param string $appName The app id.
+	 * @param IRequest $request The request.
+	 * @param IAppConfig $config App configuration.
+	 * @param SettingsServiceInterface $settings Settings service.
+	 * @param DemoDataServiceInterface $demo Demo data service.
+	 * @param DirectoryServiceInterface $directory Directory service.
+	 * @param BroadcastServiceInterface $broadcast Broadcast service.
+	 * @param ContainerInterface $container Container.
+	 * @param IL10N $l10n Localization.
+	 * @param LoggerInterface $logger Logger.
+	 * @param IUserSession $session User session.
+	 * @param ConnectionReporterInterface|null $reporter Connection reporter.
 	 *
 	 * @return SetupController The controller.
 	 */

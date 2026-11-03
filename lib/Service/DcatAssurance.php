@@ -36,7 +36,7 @@ class DcatAssurance {
 	 * Constructor.
 	 *
 	 * @param StandardsVersionService $standardsVersions Declared DCAT-AP-NL profile version, and the published one.
-	 * @param QualityService|null     $qualityService    Optional MQA/FAIR scorer for DQV exposure (PQM-002).
+	 * @param QualityService|null $qualityService Optional MQA/FAIR scorer for DQV exposure (PQM-002).
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -90,6 +90,5 @@ class DcatAssurance {
 		}
 
 		return $dataset;
-
 	}//end withQualityMeasurements()
 }//end class

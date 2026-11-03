@@ -1,4 +1,5 @@
 <?php
+
 /**
  * One per-register listing table of OpenRegister.
  *
@@ -26,31 +27,28 @@ namespace OCA\OpenCatalogi\Repair;
  *
  * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
  */
-final class ListingTable
-{
-    /**
-     * Constructor.
-     *
-     * @param int $registerId The register.
-     * @param int $schemaId   The listing schema.
-     */
-    public function __construct(
-        public readonly int $registerId,
-        public readonly int $schemaId
-    ) {
+final class ListingTable {
+	/**
+	 * Constructor.
+	 *
+	 * @param int $registerId The register.
+	 * @param int $schemaId The listing schema.
+	 */
+	public function __construct(
+		public readonly int $registerId,
+		public readonly int $schemaId,
+	) {
 
-    }//end __construct()
+	}//end __construct()
 
-    /**
-     * The table name, unprefixed.
-     *
-     * @return string
-     *
-     * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
-     */
-    public function name(): string
-    {
-        return sprintf('openregister_table_%d_%d', $this->registerId, $this->schemaId);
-
-    }//end name()
+	/**
+	 * The table name, unprefixed.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function name(): string {
+		return sprintf('openregister_table_%d_%d', $this->registerId, $this->schemaId);
+	}//end name()
 }//end class

@@ -67,7 +67,7 @@ interface OpenRegisterLookupInterface {
 	 * Resolve the register and schema identifiers for a configuration context.
 	 *
 	 * @param string $registerKey The `<context>_register` config key.
-	 * @param string $schemaKey   The `<context>_schema` config key.
+	 * @param string $schemaKey The `<context>_schema` config key.
 	 *
 	 * @return array<string, string> Map with 'register' and 'schema' identifiers (slug or UUID).
 	 *
