@@ -132,6 +132,8 @@ export default {
 }
 </script>
 
+<style scoped src="../../css/detail-modal.css"></style>
+
 <style scoped>
 .modal__content {
 	margin: var(--OC-margin-50);
@@ -146,39 +148,6 @@ export default {
 	flex-direction: column;
 	gap: var(--OC-margin-20);
 	margin-top: var(--OC-margin-20);
-}
-
-.detailSection {
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius);
-	padding: var(--OC-margin-20);
-}
-
-.detailSection h3 {
-	margin: 0 0 var(--OC-margin-15) 0;
-	color: var(--color-primary);
-	font-weight: bold;
-}
-
-.detailGrid {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: var(--OC-margin-10);
-}
-
-.detailItem {
-	display: flex;
-	flex-direction: column;
-	gap: var(--OC-margin-5);
-}
-
-.detailItem strong {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-}
-
-.detailItem span {
-	color: var(--color-main-text);
 }
 
 .publicationTypesList {
@@ -199,42 +168,5 @@ export default {
 .publicationTypeItem .description {
 	font-size: 0.9em;
 	color: var(--color-text-lighter);
-}
-
-.metadataContainer {
-	background-color: var(--color-background-dark);
-	border-radius: var(--border-radius);
-	padding: var(--OC-margin-15);
-	overflow-x: auto;
-}
-
-.metadataContainer pre {
-	margin: 0;
-	font-family: 'Courier New', monospace;
-	font-size: 0.85em;
-	color: var(--color-main-text);
-	white-space: pre-wrap;
-	overflow-wrap: break-word;
-}
-
-.emptyState {
-	text-align: center;
-	padding: var(--OC-margin-50);
-	color: var(--color-text-lighter);
-}
-
-.modalActions {
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--OC-margin-10);
-	margin-top: var(--OC-margin-20);
-	padding-top: var(--OC-margin-20);
-	border-top: 1px solid var(--color-border);
-}
-
-@media (min-width: 768px) {
-	.detailGrid {
-		grid-template-columns: repeat(2, 1fr);
-	}
 }
 </style>

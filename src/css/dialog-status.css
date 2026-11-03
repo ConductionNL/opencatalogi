@@ -1,0 +1,28 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
+ * Status layout shared by the confirm dialogs (delete, copy, view log): the
+ * content container, the success colour and the loading row. These rules are
+ * global, as they were in each dialog; load the file with
+ * `<style src="../../css/dialog-status.css"></style>`.
+ */
+
+.zaakDetailsContainer {
+	margin-block-start: var(--OC-margin-20);
+	margin-inline-start: var(--OC-margin-20);
+	margin-inline-end: var(--OC-margin-20);
+}
+
+.success {
+	color: green;
+}
+
+.loading-status {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: 0.5rem;
+	margin: 1rem 0;
+	color: var(--color-text-lighter);
+}

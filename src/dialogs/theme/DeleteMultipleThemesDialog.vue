@@ -142,23 +142,4 @@ export default {
 }
 </script>
 
-<style>
-.zaakDetailsContainer {
-	margin-block-start: var(--OC-margin-20);
-	margin-inline-start: var(--OC-margin-20);
-	margin-inline-end: var(--OC-margin-20);
-}
-
-.success {
-	color: green;
-}
-
-.loading-status {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 0.5rem;
-	margin: 1rem 0;
-	color: var(--color-text-lighter);
-}
-</style>
+<style src="../../css/dialog-status.css"></style>
