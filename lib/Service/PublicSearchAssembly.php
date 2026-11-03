@@ -1,4 +1,5 @@
 <?php
+
 /**
  * State of one public full-text search assembly.
  *
@@ -28,99 +29,97 @@ namespace OCA\OpenCatalogi\Service;
  *
  * @spec openspec/specs/search/spec.md
  */
-final class PublicSearchAssembly
-{
+final class PublicSearchAssembly {
 
-    /**
-     * The query as forwarded to OpenRegister.
-     *
-     * @var array<string, mixed>
-     */
-    public array $searchQuery = [];
+	/**
+	 * The query as forwarded to OpenRegister.
+	 *
+	 * @var array<string, mixed>
+	 */
+	public array $searchQuery = [];
 
-    /**
-     * Whether the caller opted into body-text search with `_content`.
-     *
-     * @var bool
-     */
-    public bool $contentSearch = false;
+	/**
+	 * Whether the caller opted into body-text search with `_content`.
+	 *
+	 * @var bool
+	 */
+	public bool $contentSearch = false;
 
-    /**
-     * OpenRegister's SchemaMapper, resolved once the candidates are in.
-     *
-     * @var object|null
-     */
-    public ?object $schemaMapper = null;
+	/**
+	 * OpenRegister's SchemaMapper, resolved once the candidates are in.
+	 *
+	 * @var object|null
+	 */
+	public ?object $schemaMapper = null;
 
-    /**
-     * The publication schema in scope, used to link documents to their publication.
-     *
-     * @var integer|null
-     */
-    public ?int $publicationSchemaId = null;
+	/**
+	 * The publication schema in scope, used to link documents to their publication.
+	 *
+	 * @var integer|null
+	 */
+	public ?int $publicationSchemaId = null;
 
-    /**
-     * The register document refinements run in, or null when the scope spans several.
-     *
-     * @var integer|null
-     */
-    public ?int $refinementRegisterId = null;
+	/**
+	 * The register document refinements run in, or null when the scope spans several.
+	 *
+	 * @var integer|null
+	 */
+	public ?int $refinementRegisterId = null;
 
-    /**
-     * Schema slug per schema id, null for a failed lookup.
-     *
-     * @var array<int, string|null>
-     */
-    public array $schemaSlugById = [];
+	/**
+	 * Schema slug per schema id, null for a failed lookup.
+	 *
+	 * @var array<int, string|null>
+	 */
+	public array $schemaSlugById = [];
 
-    /**
-     * Linked-publication summary per document uuid.
-     *
-     * @var array<string, array|null>
-     */
-    public array $publicationCache = [];
+	/**
+	 * Linked-publication summary per document uuid.
+	 *
+	 * @var array<string, array|null>
+	 */
+	public array $publicationCache = [];
 
-    /**
-     * Publication lookup result per publication slug.
-     *
-     * @var array<string, array|null>
-     */
-    public array $slugCache = [];
+	/**
+	 * Publication lookup result per publication slug.
+	 *
+	 * @var array<string, array|null>
+	 */
+	public array $slugCache = [];
 
-    /**
-     * Object ids already kept, for deduplication.
-     *
-     * @var array<int|string, bool>
-     */
-    public array $seenObjectIds = [];
+	/**
+	 * Object ids already kept, for deduplication.
+	 *
+	 * @var array<int|string, bool>
+	 */
+	public array $seenObjectIds = [];
 
-    /**
-     * The rows kept so far.
-     *
-     * @var array<int, array>
-     */
-    public array $rows = [];
+	/**
+	 * The rows kept so far.
+	 *
+	 * @var array<int, array>
+	 */
+	public array $rows = [];
 
-    /**
-     * Candidates dropped on this page (deduplication does not count).
-     *
-     * @var integer
-     */
-    public int $droppedCount = 0;
+	/**
+	 * Candidates dropped on this page (deduplication does not count).
+	 *
+	 * @var integer
+	 */
+	public int $droppedCount = 0;
 
+	/**
+	 * Constructor.
+	 *
+	 * @param object $objectService OpenRegister ObjectService instance.
+	 * @param array{registers: array<int>, schemas: array<int>} $scope The guarded catalogue scope.
+	 *
+	 * @spec openspec/specs/search/spec.md
+	 */
+	public function __construct(
+		public readonly object $objectService,
+		public readonly array $scope,
+	) {
 
-    /**
-     * Constructor.
-     *
-     * @param object                                      $objectService OpenRegister ObjectService instance.
-     * @param array{registers: array<int>, schemas: array<int>} $scope   The guarded catalogue scope.
-     *
-     * @spec openspec/specs/search/spec.md
-     */
-    public function __construct(
-        public readonly object $objectService,
-        public readonly array $scope,
-    ) {
-
-    }//end __construct()
+	}//end __construct()
 }//end class

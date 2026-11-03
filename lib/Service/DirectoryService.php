@@ -342,8 +342,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * Every caller treats each returned URL as a publications endpoint;
 	 * getKnownDirectoryUrls() returns the peers' directory URLs instead.
 	 *
-	 * @param mixed                                $objectService The OpenRegister object service.
-	 * @param array{available: bool, default: bool} $flags         Which filters apply.
+	 * @param mixed $objectService The OpenRegister object service.
+	 * @param array{available: bool, default: bool} $flags Which filters apply.
 	 *
 	 * @return array<int, mixed> The URLs, in the order they were first found.
 	 */
@@ -399,8 +399,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Whether a stored listing passes the available-only and default-only filters.
 	 *
-	 * @param mixed                                $objectData The listing's object data.
-	 * @param array{available: bool, default: bool} $flags     Which filters apply.
+	 * @param mixed $objectData The listing's object data.
+	 * @param array{available: bool, default: bool} $flags Which filters apply.
 	 *
 	 * @return bool True when no applying filter rejects the listing.
 	 */
@@ -644,8 +644,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * Listings that point at this instance or at a local address are not synced.
 	 *
-	 * @param array  $results      The sync results so far.
-	 * @param array  $listings     The listings the peer returned.
+	 * @param array $results The sync results so far.
+	 * @param array $listings The listings the peer returned.
 	 * @param string $directoryUrl The peer directory URL.
 	 *
 	 * @return array The sync results.
@@ -693,7 +693,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Sync listings concurrently; when the batch fails, every listing gets a failed result.
 	 *
-	 * @param array  $listings     The listings to sync.
+	 * @param array $listings The listings to sync.
 	 * @param string $directoryUrl The peer directory URL.
 	 *
 	 * @return array The per-listing sync results.
@@ -734,7 +734,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Count one listing sync result into the directory sync results.
 	 *
-	 * @param array $results       The directory sync results.
+	 * @param array $results The directory sync results.
 	 * @param array $listingResult The result of one listing sync.
 	 *
 	 * @return array
@@ -793,8 +793,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * The rethrown RequestException carries the original request and response, or a
 	 * synthetic GET of the directory URL when the failure had no request.
 	 *
-	 * @param string          $directoryUrl The directory URL.
-	 * @param GuzzleException $exception    The fetch failure.
+	 * @param string $directoryUrl The directory URL.
+	 * @param GuzzleException $exception The fetch failure.
 	 *
 	 * @return RequestException
 	 *
@@ -882,7 +882,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Whether a listing belongs to another directory that is synced as a source of its own.
 	 *
-	 * @param mixed  $listingDirectory   The directory the listing names.
+	 * @param mixed $listingDirectory The directory the listing names.
 	 * @param string $sourceDirectoryUrl The directory being synced.
 	 *
 	 * @return bool
@@ -898,7 +898,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * The sync result of a listing that is skipped because its own directory is synced separately.
 	 *
-	 * @param array $result           The initial sync result.
+	 * @param array $result The initial sync result.
 	 * @param mixed $listingDirectory The directory the listing names.
 	 *
 	 * @return array
@@ -945,9 +945,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Normalise an incoming listing to the local listing schema.
 	 *
-	 * @param array  $listingData        The listing as the peer sent it.
+	 * @param array $listingData The listing as the peer sent it.
 	 * @param string $sourceDirectoryUrl The directory being synced.
-	 * @param mixed  $listingDirectory   The directory the listing names.
+	 * @param mixed $listingDirectory The directory the listing names.
 	 *
 	 * @return array The listing to store.
 	 *
@@ -1070,9 +1070,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function withSyncStamps(array $listingData): array {
-		$listingData['lastSync']      = (new DateTime())->format('c');
+		$listingData['lastSync'] = (new DateTime())->format('c');
 		$listingData['lastSuccessAt'] = $listingData['lastSync'];
-		$listingData['lastError']     = '';
+		$listingData['lastError'] = '';
 
 		$originalPublished = ($listingData['published'] ?? null);
 		$listingData['published'] = (new DateTime())->format('c');
@@ -1090,7 +1090,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Set the status fields of a newly seen listing; an update later keeps the stored ones.
 	 *
-	 * @param array  $listingData        The listing.
+	 * @param array $listingData The listing.
 	 * @param string $sourceDirectoryUrl The directory being synced.
 	 *
 	 * @return array
@@ -1113,7 +1113,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * the same logical catalog, and the directory URL tells those peers apart while
 	 * repeated syncs of the same peer still find the same listing.
 	 *
-	 * @param array $target      The ObjectService and listing register/schema.
+	 * @param array $target The ObjectService and listing register/schema.
 	 * @param array $listingData The prepared listing.
 	 *
 	 * @return mixed The matching listings.
@@ -1136,9 +1136,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Create the listing, or update the stored one when the incoming data is newer and differs.
 	 *
-	 * @param array $listingData      The prepared listing.
+	 * @param array $listingData The prepared listing.
 	 * @param mixed $existingListings The stored listings that match it.
-	 * @param array $target           The ObjectService, listing register/schema and new uuid.
+	 * @param array $target The ObjectService, listing register/schema and new uuid.
 	 *
 	 * @return array The outcome: action, success and, for a skip, the reason.
 	 *
@@ -1172,9 +1172,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Save a listing object in the listing register/schema.
 	 *
-	 * @param array $target      The ObjectService and listing register/schema.
+	 * @param array $target The ObjectService and listing register/schema.
 	 * @param array $listingData The listing object.
-	 * @param mixed $uuid        The uuid to save it under.
+	 * @param mixed $uuid The uuid to save it under.
 	 *
 	 * @return void
 	 *
@@ -1196,9 +1196,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * Does nothing when the failure came before a stored listing was found. A failure
 	 * to record is ignored.
 	 *
-	 * @param array|null $target           The ObjectService and listing register/schema, or null.
-	 * @param mixed      $existingListings The stored listings found so far.
-	 * @param \Exception $exception        The sync failure.
+	 * @param array|null $target The ObjectService and listing register/schema, or null.
+	 * @param mixed $existingListings The stored listings found so far.
+	 * @param \Exception $exception The sync failure.
 	 *
 	 * @return void
 	 *
@@ -1213,8 +1213,8 @@ class DirectoryService implements DirectoryServiceInterface {
 			$existingListingData = $existingListings[0]->jsonSerialize();
 			$errorData = ($existingListingData['object'] ?? []);
 			$errorData['statusCode'] = 500;
-			$errorData['lastSync']   = (new DateTime())->format('c');
-			$errorData['lastError']  = self::sanitizeSyncError(message: $exception->getMessage());
+			$errorData['lastSync'] = (new DateTime())->format('c');
+			$errorData['lastError'] = self::sanitizeSyncError(message: $exception->getMessage());
 
 			$this->saveListing(target: $target, listingData: $errorData, uuid: $existingListingData['id']);
 		} catch (\Exception $updateException) {
@@ -1265,7 +1265,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
 		return $this->mergePeerPublications(targets: $targets, answers: $answers);
-
 	}//end getPublications()
 
 	/**
@@ -1295,7 +1294,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		return null;
-
 	}//end parsePeerPublications()
 
 	/**
@@ -1315,7 +1313,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			'facets' => [],
 			'total' => 0,
 		];
-		$seenIds  = [];
+		$seenIds = [];
 
 		foreach ($answers as $index => $answer) {
 			if ($answer === null || empty($answer['results']) === true) {
@@ -1333,7 +1331,7 @@ class DirectoryService implements DirectoryServiceInterface {
 				}
 
 				$combined['results'][] = $this->tagWithDirectory(item: $item, directoryName: $target['name']);
-				$seenIds[$itemId]      = true;
+				$seenIds[$itemId] = true;
 			}
 
 			if (empty($answer['facets']) === false) {
@@ -1342,13 +1340,12 @@ class DirectoryService implements DirectoryServiceInterface {
 		}//end foreach
 
 		return $combined;
-
 	}//end mergePeerPublications()
 
 	/**
 	 * Record on a federated publication which directory it came from, for faceting.
 	 *
-	 * @param array  $item          The publication
+	 * @param array $item The publication
 	 * @param string $directoryName The host name of the peer directory
 	 *
 	 * @return array The publication with `@self.directory` set
@@ -1362,7 +1359,6 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		$item['@self']['directory'] = $directoryName;
 		return $item;
-
 	}//end tagWithDirectory()
 
 	/**
@@ -1672,15 +1668,15 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * the directory sync fails at the HTTP level.
 	 *
 	 * @param string $directoryUrl The directory URL that failed
-	 * @param integer $statusCode   The HTTP status code of the error
-	 * @param string  $errorMessage The error text; stored without credentials or query strings
+	 * @param integer $statusCode The HTTP status code of the error
+	 * @param string $errorMessage The error text; stored without credentials or query strings
 	 *
 	 * @return void
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
 	 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#REQ-FLS-001
 	 */
-	private function updateDirectoryStatusOnError(string $directoryUrl, int $statusCode, string $errorMessage=''): void {
+	private function updateDirectoryStatusOnError(string $directoryUrl, int $statusCode, string $errorMessage = ''): void {
 		try {
 			// Check if OpenRegister service is available.
 			if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
@@ -1718,8 +1714,8 @@ class DirectoryService implements DirectoryServiceInterface {
 
 				// Update with error status. lastSuccessAt is left as it was.
 				$errorData['statusCode'] = $statusCode;
-				$errorData['lastSync']   = (new DateTime())->format('c');
-				$errorData['lastError']  = self::sanitizeSyncError(message: $errorMessage);
+				$errorData['lastSync'] = (new DateTime())->format('c');
+				$errorData['lastError'] = self::sanitizeSyncError(message: $errorMessage);
 
 				// Use positional parameters for compatibility with different ObjectService versions.
 				$objectService->saveObject(
@@ -1754,7 +1750,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		$clean = preg_replace_callback(
 			'~\b([a-z][a-z0-9+.-]*://)([^\s/?#`\'"<>]*@)?([^\s?#`\'"<>]*)(\?[^\s#`\'"<>]*)?(#[^\s`\'"<>]*)?~i',
 			static function (array $match): string {
-				return $match[1].$match[3];
+				return $match[1] . $match[3];
 			},
 			$message
 		);
@@ -1763,10 +1759,9 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		// Any query-looking fragment left outside a URL (for example "?token=abc").
-		$clean = (string) preg_replace('~\?[^\s`\'"<>]*=[^\s`\'"<>]*~', '', $clean);
+		$clean = (string)preg_replace('~\?[^\s`\'"<>]*=[^\s`\'"<>]*~', '', $clean);
 
 		return mb_substr($clean, 0, 1000);
-
 	}//end sanitizeSyncError()
 
 	/**
@@ -2145,7 +2140,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		return false;
 	}//end isBlockedIp()
 
-
 	/**
 	 * Whether this instance may federate with directories on private addresses.
 	 *
@@ -2349,14 +2343,14 @@ class DirectoryService implements DirectoryServiceInterface {
 		$lookup = [
 			'guzzleConfig' => $guzzleConfig,
 			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
-			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($uuid).'/used',
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl)
+				. '/' . urlencode($uuid) . '/used',
 			'parse' => $this->parsePeerResults(...),
 		];
 		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
 		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
 		return $this->mergePeerResults(targets: $targets, answers: $answers);
-
 	}//end getUsed()
 
 	/**
@@ -2378,7 +2372,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		return null;
-
 	}//end parsePeerResults()
 
 	/**
@@ -2393,8 +2386,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 */
 	private function mergePeerResults(array $targets, array $answers): array {
 		$combinedResults = [];
-		$seenIds         = [];
-		$sources         = [];
+		$seenIds = [];
+		$sources = [];
 		foreach ($answers as $index => $results) {
 			if (empty($results) === true) {
 				continue;
@@ -2405,7 +2398,7 @@ class DirectoryService implements DirectoryServiceInterface {
 				$itemId = ($item['id'] ?? $item['uuid'] ?? uniqid());
 				if (isset($seenIds[$itemId]) === false) {
 					$combinedResults[] = $item;
-					$seenIds[$itemId]  = true;
+					$seenIds[$itemId] = true;
 				}
 			}
 		}
@@ -2444,7 +2437,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		$lookup = [
 			'guzzleConfig' => $guzzleConfig,
 			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
-			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($publicationId),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl)
+				. '/' . urlencode($publicationId),
 			'parse' => static function (mixed $data): ?array {
 				if (empty($data) === true) {
 					return null;
@@ -2475,7 +2469,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * parameters, no fan-out on the peer's side and the schema and register extended.
 	 *
 	 * @param array $guzzleConfig The caller's Guzzle configuration
-	 * @param array $extraQuery   Parameters to add after `_aggregate`
+	 * @param array $extraQuery Parameters to add after `_aggregate`
 	 *
 	 * @return array The query parameters
 	 *
@@ -2496,14 +2490,13 @@ class DirectoryService implements DirectoryServiceInterface {
 		];
 
 		return $query;
-
 	}//end peerQuery()
 
 	/**
 	 * The requests to send for a peer lookup, skipping our own directory and any unsafe URL.
 	 *
 	 * @param array $directories The directory URLs to ask
-	 * @param array $lookup      The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
+	 * @param array $lookup The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
 	 *
 	 * @return array<int, array{url: string, name: string}> One entry per peer to call
 	 *
@@ -2533,21 +2526,20 @@ class DirectoryService implements DirectoryServiceInterface {
 			}
 
 			$targets[] = [
-				'url' => $lookup['endpointFor']($directoryUrl).'?'.http_build_query($lookup['query']),
+				'url' => $lookup['endpointFor']($directoryUrl) . '?' . http_build_query($lookup['query']),
 				'name' => $host,
 			];
 		}//end foreach
 
 		return $targets;
-
 	}//end peerTargets()
 
 	/**
 	 * Call each peer and parse its answer.
 	 *
 	 * @param array $targets The peer requests, as built by peerTargets()
-	 * @param array $lookup  The lookup: the caller's `guzzleConfig`, merged over the defaults, and `parse`,
-	 *                       which turns a decoded answer into a result or null when unusable
+	 * @param array $lookup The lookup: the caller's `guzzleConfig`, merged over the defaults, and `parse`,
+	 *                      which turns a decoded answer into a result or null when unusable
 	 *
 	 * @return array<int, array|null> The parsed answers, indexed like $targets; null for a failed peer
 	 *
@@ -2571,14 +2563,13 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		return $answers;
-
 	}//end fetchFromPeers()
 
 	/**
 	 * Call one peer and parse its answer.
 	 *
-	 * @param string $url    The URL to call
-	 * @param array  $lookup The lookup: the HTTP `client` and `parse`, which turns a decoded answer into a result or null
+	 * @param string $url The URL to call
+	 * @param array $lookup The lookup: the HTTP `client` and `parse`, which turns a decoded answer into a result or null
 	 *
 	 * @return array|null The parsed answer, or null on a non-2xx status, invalid JSON or a failed request
 	 *
@@ -2590,7 +2581,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			// that a federated peer cannot pivot to cloud-metadata via a 302 response.
 			// The URL is already validated by assertSafeOutboundUrl(); here we
 			// ensure Guzzle never silently follows a redirect to an unvalidated host.
-			$response   = $lookup['client']->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
+			$response = $lookup['client']->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
 			$statusCode = $response->getStatusCode();
 			if ($statusCode < 200 || $statusCode >= 300) {
 				return null;
@@ -2624,14 +2615,13 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#REQ-FOR-002
 	 */
 	private static function peerFederationPublicationsUrl(string $url): string {
-		$base = rtrim((string) strtok($url, '?#'), '/');
-		$pos  = strpos($base.'/', '/api/');
+		$base = rtrim((string)strtok($url, '?#'), '/');
+		$pos = strpos($base . '/', '/api/');
 		if ($pos === false) {
 			return $base;
 		}
 
-		return substr($base, 0, $pos).'/api/federation/publications';
-
+		return substr($base, 0, $pos) . '/api/federation/publications';
 	}//end peerFederationPublicationsUrl()
 
 	/**
@@ -2673,7 +2663,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * The discovered listings for the directory, filtered to our own unless the caller opts in.
 	 *
 	 * @param object $objectService The OpenRegister ObjectService
-	 * @param array  $requestParams The directory request parameters
+	 * @param array $requestParams The directory request parameters
 	 *
 	 * @return array The listings, or an empty array when unconfigured or the search fails
 	 *
@@ -2769,7 +2759,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * Such a listing's `directory` field points at the peer's own /api/directory
 	 * URL, not ours, and the default directory view does not re-broadcast it.
 	 *
-	 * @param array  $listingData     The listing
+	 * @param array $listingData The listing
 	 * @param string $ourDirectoryUrl Our own directory URL
 	 *
 	 * @return boolean True when the listing names a directory other than ours
@@ -2781,14 +2771,13 @@ class DirectoryService implements DirectoryServiceInterface {
 		$listingDir = ($objectData['directory'] ?? '');
 
 		return empty($listingDir) === false && $listingDir !== $ourDirectoryUrl;
-
 	}//end isFromOtherDirectory()
 
 	/**
 	 * Our local catalogs, converted to listings with their schemas expanded.
 	 *
 	 * @param object $objectService The OpenRegister ObjectService
-	 * @param array  $requestParams The directory request parameters
+	 * @param array $requestParams The directory request parameters
 	 *
 	 * @return array The catalogs as listings, or an empty array when unconfigured or the search fails
 	 *
@@ -2819,8 +2808,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * The search query for one part of the directory: its scope, the request's
 	 * filters (except schema and register) and its pagination.
 	 *
-	 * @param array{schema: string, register: string} $scope         The schema and register to search
-	 * @param array                                   $requestParams The directory request parameters
+	 * @param array{schema: string, register: string} $scope The schema and register to search
+	 * @param array $requestParams The directory request parameters
 	 *
 	 * @return array The OpenRegister search query
 	 *
@@ -2850,7 +2839,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		return $query;
-
 	}//end directoryQuery()
 
 	/**

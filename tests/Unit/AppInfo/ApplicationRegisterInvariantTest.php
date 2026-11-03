@@ -93,7 +93,7 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	 *
 	 * @return string
 	 */
-	private function source(string $file=self::APPLICATION_PHP): string {
+	private function source(string $file = self::APPLICATION_PHP): string {
 		$path = realpath($file);
 		$this->assertNotFalse($path, $file . ' must exist');
 
@@ -126,7 +126,6 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		}
 
 		return $registrars;
-
 	}//end registrars()
 
 	/**

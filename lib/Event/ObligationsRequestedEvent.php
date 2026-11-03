@@ -69,7 +69,6 @@ class ObligationsRequestedEvent extends Event {
 	 */
 	public function getAppId(): string {
 		return $this->appId;
-
 	}//end getAppId()
 
 	/**
@@ -95,6 +94,5 @@ class ObligationsRequestedEvent extends Event {
 	 */
 	public function getObligations(): ?array {
 		return $this->obligations;
-
 	}//end getObligations()
 }//end class

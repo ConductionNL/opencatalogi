@@ -135,7 +135,6 @@ class CommentPeriodController extends Controller {
 		}
 
 		return $this->storePeriod(period: $period);
-
 	}//end open()
 
 	/**
@@ -152,7 +151,6 @@ class CommentPeriodController extends Controller {
 		}
 
 		return $user->getUID();
-
 	}//end sessionUserId()
 
 	/**
@@ -210,7 +208,6 @@ class CommentPeriodController extends Controller {
 		}
 
 		return new JSONResponse($saved, Http::STATUS_CREATED);
-
 	}//end storePeriod()
 
 	/**
@@ -247,7 +244,6 @@ class CommentPeriodController extends Controller {
 		}
 
 		return $this->publicPeriodResponse(period: $period);
-
 	}//end show()
 
 	/**

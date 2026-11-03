@@ -37,7 +37,7 @@ trait ForwardsRegisterAccess {
 	 * Resolve the register and schema identifiers for a configuration context.
 	 *
 	 * @param string $registerKey The `<context>_register` config key.
-	 * @param string $schemaKey   The `<context>_schema` config key.
+	 * @param string $schemaKey The `<context>_schema` config key.
 	 *
 	 * @return array{register: string, schema: string} The resolved identifiers.
 	 *
@@ -47,7 +47,6 @@ trait ForwardsRegisterAccess {
 	 */
 	public function registerConfiguration(string $registerKey, string $schemaKey): array {
 		return $this->registers->registerConfiguration(registerKey: $registerKey, schemaKey: $schemaKey);
-
 	}//end registerConfiguration()
 
 	/**
@@ -61,6 +60,5 @@ trait ForwardsRegisterAccess {
 	 */
 	public function getObjectService(): object {
 		return $this->registers->getObjectService();
-
 	}//end getObjectService()
 }//end trait

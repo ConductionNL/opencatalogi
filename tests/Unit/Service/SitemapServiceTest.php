@@ -36,14 +36,14 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * Same helper as RegisterSchemaLinkServiceTest::environmentAwareDouble().
 	 *
-	 * @param class-string       $class   The class to double.
+	 * @param class-string $class The class to double.
 	 * @param array<int, string> $methods The methods to configure.
 	 *
 	 * @return MockObject The double.
 	 */
 	private function environmentAwareDouble(string $class, array $methods): MockObject {
 		$existing = [];
-		$absent   = [];
+		$absent = [];
 		foreach ($methods as $method) {
 			if (method_exists($class, $method) === true) {
 				$existing[] = $method;
@@ -1168,7 +1168,9 @@ class SitemapServiceTest extends TestCase {
 			'configuration' => ['catalog_register' => 'cat-reg', 'catalog_schema' => 'cat-sch'],
 		]);
 		$catalogObj = new class($catalogSchemas) {
-			public function __construct(private array $schemas) {
+			public function __construct(
+				private array $schemas,
+			) {
 			}
 
 			public function getObject(): array {

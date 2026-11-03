@@ -90,7 +90,7 @@ final class RetentionRules {
 	/**
 	 * Reject a rule whose action is set but is not one of the retention actions.
 	 *
-	 * @param mixed  $rule  The rule; anything but an array is ignored.
+	 * @param mixed $rule The rule; anything but an array is ignored.
 	 * @param string $where The catalog/category the rule belongs to.
 	 *
 	 * @return void
@@ -110,14 +110,14 @@ final class RetentionRules {
 	/**
 	 * The expiry a term of months gives from a publication date, or null when not computable.
 	 *
-	 * @param string|null  $publicationDate The ISO-8601 publication date.
-	 * @param integer|null $termMonths      The retention term in months.
+	 * @param string|null $publicationDate The ISO-8601 publication date.
+	 * @param integer|null $termMonths The retention term in months.
 	 *
 	 * @return string|null The expiry as ISO-8601.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-metadata-on-the-publication-schema-ret-003
 	 */
-	public function expiry(?string $publicationDate, ?int $termMonths): string|null {
+	public function expiry(?string $publicationDate, ?int $termMonths): ?string {
 		$date = $this->parseDate(value: $publicationDate);
 		if ($date === null || (int)$termMonths <= 0) {
 			return null;
@@ -151,7 +151,7 @@ final class RetentionRules {
 	/**
 	 * The publication after a human decision: extended by a number of months, or withdrawn.
 	 *
-	 * @param array<string, mixed> $data     The publication.
+	 * @param array<string, mixed> $data The publication.
 	 * @param array<string, mixed> $decision The decision, its rationale note and the months to extend by.
 	 *
 	 * @return array<string, mixed>
@@ -175,8 +175,8 @@ final class RetentionRules {
 	/**
 	 * The publication after an expired term's depublish or archive action, marked evaluated.
 	 *
-	 * @param array<string, mixed> $data   The publication.
-	 * @param string               $action The depublish or archive action.
+	 * @param array<string, mixed> $data The publication.
+	 * @param string $action The depublish or archive action.
 	 *
 	 * @return array<string, mixed>
 	 *
@@ -192,7 +192,7 @@ final class RetentionRules {
 	/**
 	 * The publication with a decision appended to its decision log.
 	 *
-	 * @param array<string, mixed>  $data  The publication.
+	 * @param array<string, mixed> $data The publication.
 	 * @param array<string, string> $entry The decision, who took it and the note.
 	 *
 	 * @return array<string, mixed>
@@ -240,8 +240,8 @@ final class RetentionRules {
 	/**
 	 * The publication depublished now, archived too for archive and dispose.
 	 *
-	 * @param array<string, mixed> $data     The publication.
-	 * @param string               $decision The withdrawing decision.
+	 * @param array<string, mixed> $data The publication.
+	 * @param string $decision The withdrawing decision.
 	 *
 	 * @return array<string, mixed>
 	 *
@@ -258,8 +258,8 @@ final class RetentionRules {
 	/**
 	 * The stored expiry (or now, when unreadable or missing) extended by a number of months.
 	 *
-	 * @param array<string, mixed> $data   The publication.
-	 * @param int                  $months The months to extend by.
+	 * @param array<string, mixed> $data The publication.
+	 * @param int $months The months to extend by.
 	 *
 	 * @return string The new expiry as ISO-8601.
 	 *

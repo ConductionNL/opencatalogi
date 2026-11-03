@@ -39,7 +39,7 @@ class BannerDismissals {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig             $config        Holds the dismissed ids per user.
+	 * @param IAppConfig $config Holds the dismissed ids per user.
 	 * @param BannerServiceInterface $bannerService Decides which banners a user sees.
 	 */
 	public function __construct(
@@ -53,7 +53,7 @@ class BannerDismissals {
 	 * The banners this user should see right now.
 	 *
 	 * @param array<int, array<string, mixed>> $banners The banner rows.
-	 * @param string                           $uid     The user.
+	 * @param string $uid The user.
 	 *
 	 * @return array<int, array<string, mixed>> The banners to show.
 	 *
@@ -70,7 +70,7 @@ class BannerDismissals {
 	/**
 	 * Remember that this user dismissed a banner.
 	 *
-	 * @param string $uid      The user.
+	 * @param string $uid The user.
 	 * @param string $bannerId The banner.
 	 *
 	 * @return void
@@ -104,6 +104,5 @@ class BannerDismissals {
 		}
 
 		return $dismissed;
-
 	}//end dismissed()
 }//end class

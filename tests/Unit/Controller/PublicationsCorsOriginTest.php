@@ -28,12 +28,11 @@ use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
-use OCP\IRequest;
-use Unit\Support\ServerAwareRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * The preflight answers an allowed caller Origin, read from the header or
@@ -64,9 +63,9 @@ class PublicationsCorsOriginTest extends TestCase {
 	/**
 	 * The preflight's Access-Control-Allow-Origin for a caller.
 	 *
-	 * @param string      $header   The Origin header.
-	 * @param string|null $server   HTTP_ORIGIN in the server variables, or null for none.
-	 * @param string      $expected The origin answered.
+	 * @param string $header The Origin header.
+	 * @param string|null $server HTTP_ORIGIN in the server variables, or null for none.
+	 * @param string $expected The origin answered.
 	 *
 	 * @return void
 	 */

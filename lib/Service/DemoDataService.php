@@ -75,9 +75,9 @@ class DemoDataService implements DemoDataServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppManager        $appManager Resolves this app's path and version.
-	 * @param ContainerInterface $container  Resolves OpenRegister's importer.
-	 * @param LoggerInterface    $logger     Records what was imported.
+	 * @param IAppManager $appManager Resolves this app's path and version.
+	 * @param ContainerInterface $container Resolves OpenRegister's importer.
+	 * @param LoggerInterface $logger Records what was imported.
 	 *
 	 * @return void
 	 */
@@ -99,8 +99,6 @@ class DemoDataService implements DemoDataServiceInterface {
 		return is_file($this->descriptorPath()) === true;
 	}//end isAvailable()
 
-
-
 	/**
 	 * Every answer the wizard's choice step may offer, declining included.
 	 *
@@ -117,11 +115,11 @@ class DemoDataService implements DemoDataServiceInterface {
 	public function listChoices(): array {
 		$choices = [
 			[
-				'id'          => self::NONE_DATASET,
-				'label'       => 'None, I will set this up myself',
+				'id' => self::NONE_DATASET,
+				'label' => 'None, I will set this up myself',
 				'description' => 'Nothing is imported. You start with an empty app and add your own data.',
 				'objectCount' => 0,
-				'icon'        => 'CloseCircleOutline',
+				'icon' => 'CloseCircleOutline',
 			],
 		];
 
@@ -131,7 +129,6 @@ class DemoDataService implements DemoDataServiceInterface {
 		}
 
 		return $choices;
-
 	}//end listChoices()
 
 	/**
@@ -145,7 +142,7 @@ class DemoDataService implements DemoDataServiceInterface {
 	 */
 	private function demoChoice(int $objects): array {
 		return [
-			'id'    => self::DEMO_DATASET,
+			'id' => self::DEMO_DATASET,
 			'label' => 'Example data',
 			// 🔴 NO NUMBER IN THIS SENTENCE. The wizard runs a card's
 			// description through the app's translation function, which is a
@@ -160,7 +157,7 @@ class DemoDataService implements DemoDataServiceInterface {
 				. 'afterwards.'
 			),
 			'objectCount' => $objects,
-			'icon'        => 'DatabaseOutline',
+			'icon' => 'DatabaseOutline',
 		];
 
 	}//end demoChoice()
@@ -182,7 +179,6 @@ class DemoDataService implements DemoDataServiceInterface {
 		}
 
 		return $this->objectCount(data: $data);
-
 	}//end shippedObjectCount()
 
 	/**
@@ -211,7 +207,6 @@ class DemoDataService implements DemoDataServiceInterface {
 		}
 
 		return $data;
-
 	}//end readDescriptor()
 
 	/**
@@ -230,7 +225,6 @@ class DemoDataService implements DemoDataServiceInterface {
 		}
 
 		return count($components['objects']);
-
 	}//end objectCount()
 
 	/**
@@ -262,9 +256,9 @@ class DemoDataService implements DemoDataServiceInterface {
 		);
 
 		$imported = [
-			'objects'   => $objects,
+			'objects' => $objects,
 			'registers' => count((array)($result['registers'] ?? [])),
-			'schemas'   => count((array)($result['schemas'] ?? [])),
+			'schemas' => count((array)($result['schemas'] ?? [])),
 		];
 
 		$this->logger->info(

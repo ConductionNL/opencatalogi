@@ -23,7 +23,6 @@ namespace Unit\Service\Publication;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
-use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use Opis\JsonSchema\Validator;
@@ -48,7 +47,7 @@ class PublicationStateServiceTest extends TestCase {
 	/**
 	 * A schema from a register file.
 	 *
-	 * @param string $file   The register file under lib/Settings.
+	 * @param string $file The register file under lib/Settings.
 	 * @param string $schema The schema slug.
 	 *
 	 * @return array<string, mixed> The schema.

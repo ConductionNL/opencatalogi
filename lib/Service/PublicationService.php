@@ -374,7 +374,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * without querying, explicitly to refuse a platform-wide scan.
 	 *
 	 * @return array{register: string, schema: string}|null The configured pair,
-	 *         or null when either key is unset — the caller must then refuse.
+	 *                                                      or null when either key is unset — the caller must then refuse.
 	 *
 	 * @spec exclude Configuration plumbing — resolves and validates the two
 	 *       app-config keys that scope every publication query.
@@ -780,15 +780,15 @@ class PublicationService implements PublicationServiceInterface {
 	 * (ConductionNL/opencatalogi#1783).
 	 *
 	 * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service.
-	 * @param array<string, mixed>                    $query         The query, stripped of the caller's scope keys.
-	 * @param array<int, mixed>                       $registers     The register scope.
-	 * @param array<int, mixed>                       $schemas       The schema scope.
+	 * @param array<string, mixed> $query The query, stripped of the caller's scope keys.
+	 * @param array<int, mixed> $registers The register scope.
+	 * @param array<int, mixed> $schemas The schema scope.
 	 *
 	 * @return array<string, mixed> The paginated result.
 	 *
 	 * @throws RegisterNotFoundException When OpenRegister refuses a non-slug register entry (such as `'0'`);
 	 *                                   a plain unknown id is searched, not refused.
-	 * @throws SchemaNotFoundException   When OpenRegister refuses a non-slug schema entry the same way.
+	 * @throws SchemaNotFoundException When OpenRegister refuses a non-slug schema entry the same way.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
@@ -801,7 +801,7 @@ class PublicationService implements PublicationServiceInterface {
 				_rbac: true,
 				_multitenancy: false
 			);
-		} catch (RegisterNotFoundException | SchemaNotFoundException $e) {
+		} catch (RegisterNotFoundException|SchemaNotFoundException $e) {
 			$registerIds = $this->withoutSlugs(entries: $registers);
 			$schemaIds = $this->withoutSlugs(entries: $schemas);
 			if (count($registerIds) === count($registers) && count($schemaIds) === count($schemas)) {
@@ -971,7 +971,6 @@ class PublicationService implements PublicationServiceInterface {
 		}
 
 		return $directoryBuckets;
-
 	}//end directoryFacetBuckets()
 
 	/**
@@ -1012,7 +1011,6 @@ class PublicationService implements PublicationServiceInterface {
 		}
 
 		return $catalogBuckets;
-
 	}//end catalogFacetBuckets()
 
 	/**
@@ -1624,9 +1622,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Resolve the clamped pagination and the switches of a listing request.
 	 *
-	 * @param array  $queryParams   The request query.
-	 * @param array  $requestParams The original request parameters, for the pagination links.
-	 * @param string $baseUrl       The base URL of the pagination links.
+	 * @param array $queryParams The request query.
+	 * @param array $requestParams The original request parameters, for the pagination links.
+	 * @param string $baseUrl The base URL of the pagination links.
 	 *
 	 * @return array Limit, page, offset, the listing switches, requestParams and baseUrl.
 	 *
@@ -1648,7 +1646,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * The local page of an aggregated listing, its results stamped as local.
 	 *
 	 * @param array $localData The decoded local index response.
-	 * @param array $context   Pagination, listing switches, request params and base URL.
+	 * @param array $context Pagination, listing switches, request params and base URL.
 	 *
 	 * @return array The listing response.
 	 *
@@ -1692,7 +1690,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * Write the resolved pagination back into the query as `_limit`, `_page` and `_offset`.
 	 *
 	 * @param array $queryParams The request query.
-	 * @param array $pagination  The resolved limit, page and offset.
+	 * @param array $pagination The resolved limit, page and offset.
 	 *
 	 * @return array The query with its pagination keys set.
 	 *
@@ -1736,7 +1734,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * Decide the ultra-fast path: on when nothing needs local enrichment, unless `_ultra_fast` says otherwise.
 	 *
 	 * @param array $queryParams The request query.
-	 * @param array $options     The other listing switches.
+	 * @param array $options The other listing switches.
 	 *
 	 * @return bool
 	 *
@@ -1777,7 +1775,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * Serve a listing from local publications only, on the ultra-fast or the fast path.
 	 *
 	 * @param array $queryParams The paginated request query.
-	 * @param array $context     Pagination, listing switches, request params and base URL.
+	 * @param array $context Pagination, listing switches, request params and base URL.
 	 *
 	 * @return array The listing response.
 	 *
@@ -1816,9 +1814,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Stamp local results with their origin: `@self.directory = local` and the local catalogs.
 	 *
-	 * @param array $results       The local results.
-	 * @param bool  $markDirectory Whether to set `@self.directory`.
-	 * @param bool  $withCatalogs  Whether to set `@self.catalogs` (only when there are local catalogs).
+	 * @param array $results The local results.
+	 * @param bool $markDirectory Whether to set `@self.directory`.
+	 * @param bool $withCatalogs Whether to set `@self.catalogs` (only when there are local catalogs).
 	 *
 	 * @return array The stamped results.
 	 *
@@ -1858,10 +1856,10 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Build the paginated envelope of a listing: results, totals and next/prev links.
 	 *
-	 * @param array     $results The results of this page.
-	 * @param int|float $total   The total number of results.
-	 * @param int       $offset  The offset reported for this page.
-	 * @param array     $context Holds limit, page, requestParams and baseUrl.
+	 * @param array $results The results of this page.
+	 * @param int|float $total The total number of results.
+	 * @param int $offset The offset reported for this page.
+	 * @param array $context Holds limit, page, requestParams and baseUrl.
 	 *
 	 * @return array The envelope.
 	 *
@@ -1940,9 +1938,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Set the response facets, adding the virtual directory and catalog facets when requested.
 	 *
-	 * @param array      $responseData The response.
-	 * @param mixed|null $facets       The facets to set, or null when the sources had none.
-	 * @param array      $context      Holds reqDirFacets and reqCatFacets.
+	 * @param array $responseData The response.
+	 * @param mixed|null $facets The facets to set, or null when the sources had none.
+	 * @param array $context Holds reqDirFacets and reqCatFacets.
 	 *
 	 * @return array The response.
 	 *
@@ -1971,8 +1969,8 @@ class PublicationService implements PublicationServiceInterface {
 	 * Set the merged facetable metadata of a local and a federated source.
 	 *
 	 * @param array $responseData The response.
-	 * @param array $sources      The local and the federated search response, in that order.
-	 * @param bool  $include      Whether facetable metadata was requested.
+	 * @param array $sources The local and the federated search response, in that order.
+	 * @param bool $include Whether facetable metadata was requested.
 	 *
 	 * @return array The response.
 	 *
@@ -2000,9 +1998,9 @@ class PublicationService implements PublicationServiceInterface {
 	 * de-duplicated and re-ordered, and then the requested page is sliced out. Asking
 	 * each source for the same page would give totals and pages that do not add up.
 	 *
-	 * @param array     $queryParams The paginated request query.
-	 * @param int|float $localTotal  The local total from the first local query.
-	 * @param array     $context     Pagination, listing switches, request params and base URL.
+	 * @param array $queryParams The paginated request query.
+	 * @param int|float $localTotal The local total from the first local query.
+	 * @param array $context Pagination, listing switches, request params and base URL.
 	 *
 	 * @return array The listing response.
 	 *
@@ -2046,7 +2044,7 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * The merged facets of the local and the federated source, or null when neither has facets.
 	 *
-	 * @param array $localData        The local search response.
+	 * @param array $localData The local search response.
 	 * @param array $federationResult The federated search response.
 	 *
 	 * @return mixed
@@ -2143,7 +2141,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * The `_performance` block of an aggregated listing.
 	 *
 	 * @param float $startTime The request start time.
-	 * @param bool  $federated Whether the federated sources answered.
+	 * @param bool $federated Whether the federated sources answered.
 	 *
 	 * @return array
 	 *
@@ -2173,7 +2171,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * hands over to the ultra-fast path.
 	 *
 	 * @param array $queryParams The paginated request query.
-	 * @param array $context     Listing switches, request params and base URL.
+	 * @param array $context Listing switches, request params and base URL.
 	 *
 	 * @return array Response data containing publications, pagination info, and optionally facets
 	 *
@@ -2217,9 +2215,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * The fast-path listing envelope of a local index response.
 	 *
-	 * @param array $localData   The decoded local index response.
+	 * @param array $localData The decoded local index response.
 	 * @param array $queryParams The paginated request query.
-	 * @param array $context     Listing switches, request params and base URL.
+	 * @param array $context Listing switches, request params and base URL.
 	 *
 	 * @return array
 	 *
@@ -2267,10 +2265,10 @@ class PublicationService implements PublicationServiceInterface {
 	 * This method bypasses ALL middleware overhead and calls ObjectService directly.
 	 * Use when no catalog info, facets, or additional processing is needed.
 	 *
-	 * @param array  $queryParams   Query parameters
-	 * @param array  $requestParams Original request parameters for pagination links
-	 * @param string $baseUrl       Base URL for building pagination links
-	 * @param float  $startTime     Start time for performance monitoring
+	 * @param array $queryParams Query parameters
+	 * @param array $requestParams Original request parameters for pagination links
+	 * @param string $baseUrl Base URL for building pagination links
+	 * @param float $startTime Start time for performance monitoring
 	 *
 	 * @return array Minimal response with publications and pagination
 	 *
@@ -2366,7 +2364,7 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Search the catalog union directly on ObjectService, bypassing searchPublications().
 	 *
-	 * @param array $queryParams    The request query.
+	 * @param array $queryParams The request query.
 	 * @param array $catalogContext The guarded catalog register/schema union.
 	 *
 	 * @return array The ObjectService result.
@@ -2425,7 +2423,7 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Build the ultra-fast listing envelope from an ObjectService result.
 	 *
-	 * @param array $result      The ObjectService result.
+	 * @param array $result The ObjectService result.
 	 * @param array $queryParams The request query.
 	 * @param array $pageContext Pagination, request params and base URL.
 	 *
@@ -2461,8 +2459,8 @@ class PublicationService implements PublicationServiceInterface {
 	 * The `_performance` block of the ultra-fast path.
 	 *
 	 * @param array $queryParams The request query.
-	 * @param float $startTime   The request start time.
-	 * @param array $timings     The measured phase timings.
+	 * @param float $startTime The request start time.
+	 * @param array $timings The measured phase timings.
 	 *
 	 * @return array
 	 *

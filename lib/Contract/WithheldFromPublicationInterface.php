@@ -31,9 +31,9 @@ interface WithheldFromPublicationInterface {
 	/**
 	 * The response with `withheld` added when the catalogue opted in, unchanged otherwise.
 	 *
-	 * @param array<string, mixed> $response      The rendered publication.
-	 * @param array<string, mixed> $catalog       The catalogue it was read through.
-	 * @param string               $publicationId The publication.
+	 * @param array<string, mixed> $response The rendered publication.
+	 * @param array<string, mixed> $catalog The catalogue it was read through.
+	 * @param string $publicationId The publication.
 	 *
 	 * @return array<string, mixed>
 	 *

@@ -65,7 +65,7 @@ class SettingsWriteValuesTest extends TestCase {
 	 * A list or object value throws, names the key, and nothing of the payload is written.
 	 *
 	 * @param array<string, mixed> $payload The payload.
-	 * @param string               $key     The key whose value is rejected.
+	 * @param string $key The key whose value is rejected.
 	 *
 	 * @return void
 	 */

@@ -155,9 +155,9 @@ class ConnectionReporter implements ConnectionReporterInterface {
 	 * Constructor.
 	 *
 	 * @param IEventDispatcher $eventDispatcher Sends the integriq events (ADR-041).
-	 * @param IAppConfig       $appConfig       Keeps the report memory of throttled connections.
-	 * @param ITimeFactory     $timeFactory     Tells the time for the report memory.
-	 * @param LoggerInterface  $logger          Records what could not be sent.
+	 * @param IAppConfig $appConfig Keeps the report memory of throttled connections.
+	 * @param ITimeFactory $timeFactory Tells the time for the report memory.
+	 * @param LoggerInterface $logger Records what could not be sent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -325,7 +325,7 @@ class ConnectionReporter implements ConnectionReporterInterface {
 	 * Without integriq the class check fails first, so nothing is read,
 	 * stored, sent or logged.
 	 *
-	 * @param string                               $key     One of {@see self::KEYS}.
+	 * @param string $key One of {@see self::KEYS}.
 	 * @param callable(): array{0: string, 1: string} $observe Works out the status and message.
 	 *
 	 * @return bool True when a report was sent.
@@ -340,7 +340,7 @@ class ConnectionReporter implements ConnectionReporterInterface {
 			[$status, $message] = $observe();
 
 			$throttled = in_array($key, self::THROTTLED_KEYS, true);
-			$now       = $this->timeFactory->getTime();
+			$now = $this->timeFactory->getTime();
 			if ($throttled === true && $this->isDue(key: $key, status: $status, now: $now) === false) {
 				return false;
 			}
@@ -375,20 +375,20 @@ class ConnectionReporter implements ConnectionReporterInterface {
 	 * that disagree cannot report on every broadcast. The same status reports
 	 * again after an hour.
 	 *
-	 * @param string $key    The connection key.
+	 * @param string $key The connection key.
 	 * @param string $status The status the outcome says.
-	 * @param int    $now    The current Unix time.
+	 * @param int $now The current Unix time.
 	 *
 	 * @return bool
 	 */
 	private function isDue(string $key, string $status, int $now): bool {
 		$memory = $this->appConfig->getValueString(self::APP_ID, self::MEMORY_KEY_PREFIX . $key, '');
-		$parts  = explode('|', $memory, 2);
+		$parts = explode('|', $memory, 2);
 		if (count($parts) !== 2 || ctype_digit($parts[1]) === false) {
 			return true;
 		}
 
-		$elapsed = ($now - (int) $parts[1]);
+		$elapsed = ($now - (int)$parts[1]);
 		if ($parts[0] === $status) {
 			return $elapsed >= self::REPEAT_SECONDS;
 		}
@@ -421,7 +421,7 @@ class ConnectionReporter implements ConnectionReporterInterface {
 	/**
 	 * Build and dispatch one event, swallowing anything a listener throws.
 	 *
-	 * @param string             $key   The connection the event is about, for the log.
+	 * @param string $key The connection the event is about, for the log.
 	 * @param callable(): object $build Builds the event.
 	 *
 	 * @return bool True when the event was dispatched without an exception.

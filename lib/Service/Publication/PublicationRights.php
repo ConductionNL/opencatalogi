@@ -44,9 +44,9 @@ class PublicationRights {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface      $container Server container, for OpenRegister's schema mapper.
-	 * @param ServiceCatalogueService $objects   The OpenRegister reader.
-	 * @param LoggerInterface         $logger    Logger.
+	 * @param ContainerInterface $container Server container, for OpenRegister's schema mapper.
+	 * @param ServiceCatalogueService $objects The OpenRegister reader.
+	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,

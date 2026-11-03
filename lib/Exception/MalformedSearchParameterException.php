@@ -35,7 +35,9 @@ class MalformedSearchParameterException extends InvalidArgumentException {
 	 *
 	 * @param string $parameter The parameter as the caller wrote it, e.g. meetingDate[gte].
 	 */
-	public function __construct(private readonly string $parameter) {
+	public function __construct(
+		private readonly string $parameter,
+	) {
 		parent::__construct(message: $parameter . ' is not a date or a number');
 
 	}//end __construct()
@@ -49,6 +51,5 @@ class MalformedSearchParameterException extends InvalidArgumentException {
 	 */
 	public function getParameter(): string {
 		return $this->parameter;
-
 	}//end getParameter()
 }//end class

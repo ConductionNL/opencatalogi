@@ -77,14 +77,13 @@ class WithheldGroundsResolveGoldenTest extends TestCase {
 		}
 
 		return $cases;
-
 	}//end worlds()
 
 	/**
 	 * Replay a world and compare it to the recording.
 	 *
 	 * @param list<mixed> $entries The entries.
-	 * @param string      $dossiq  `list` or `per code`.
+	 * @param string $dossiq `list` or `per code`.
 	 *
 	 * @return void
 	 */
@@ -141,7 +140,10 @@ class WithheldGroundsResolveGoldenTest extends TestCase {
 		$log = &$this->log;
 		$double = ($dossiq === 'list')
 			? new class($grounds, $log) extends \OCA\Dossiq\Woo\WooRefusalGrounds {
-				public function __construct(private array $grounds, private array &$log) {
+				public function __construct(
+					private array $grounds,
+					private array &$log,
+				) {
 				}
 
 				public function listWithRetired(): array {
@@ -154,21 +156,24 @@ class WithheldGroundsResolveGoldenTest extends TestCase {
 					return null;
 				}
 			}
-			: new class($grounds, $log) {
-				public function __construct(private array $grounds, private array &$log) {
-				}
+		: new class($grounds, $log) {
+			public function __construct(
+				private array $grounds,
+				private array &$log,
+			) {
+			}
 
-				public function byCode(string $code): ?array {
-					$this->log[] = ['byCode', $code];
-					foreach ($this->grounds as $ground) {
-						if (is_array($ground) === true && ($ground['code'] ?? null) === $code) {
-							return $ground;
-						}
+			public function byCode(string $code): ?array {
+				$this->log[] = ['byCode', $code];
+				foreach ($this->grounds as $ground) {
+					if (is_array($ground) === true && ($ground['code'] ?? null) === $code) {
+						return $ground;
 					}
-
-					return null;
 				}
-			};
+
+				return null;
+			}
+		};
 
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturn($double);
@@ -176,6 +181,5 @@ class WithheldGroundsResolveGoldenTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn(true);
 
 		return new WithheldDocuments($store, $container, $appManager);
-
 	}//end service()
 }//end class

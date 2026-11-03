@@ -22,8 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Contract;
 
-use RuntimeException;
-
 /**
  * Contract of EventService, for callers in other components.
  *

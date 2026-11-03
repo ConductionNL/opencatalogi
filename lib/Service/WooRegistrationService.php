@@ -63,12 +63,12 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param WooReadinessService  $readiness    The Woo-enabled catalogues.
-	 * @param NationalIndexService $index        The national channels.
-	 * @param SettingsService      $settings     The OpenRegister reader, for the organisations.
-	 * @param IAppConfig           $config       The registration status keys.
-	 * @param IURLGenerator        $urlGenerator The instance's base URL.
-	 * @param WooCategoryRegistry  $categories   The information categories, bundled plus local.
+	 * @param WooReadinessService $readiness The Woo-enabled catalogues.
+	 * @param NationalIndexService $index The national channels.
+	 * @param SettingsService $settings The OpenRegister reader, for the organisations.
+	 * @param IAppConfig $config The registration status keys.
+	 * @param IURLGenerator $urlGenerator The instance's base URL.
+	 * @param WooCategoryRegistry $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		private readonly WooReadinessService $readiness,
@@ -172,7 +172,6 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 		$this->config->setValueString(self::APP_NAME, self::ANSWER_KEY, (string)$answer['answer']);
 
 		return ['sent' => true, 'request' => $request, 'registration' => $this->registration()];
-
 	}//end request()
 
 	/**
@@ -195,7 +194,6 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 		$this->config->setValueString(self::APP_NAME, self::AT_KEY, $moment->format(DateTimeInterface::ATOM));
 
 		return $this->registration();
-
 	}//end confirm()
 
 	/**
@@ -215,7 +213,7 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 
 		return [
 			'robotsUrl' => $baseUrl . self::ROBOTS_ROUTE,
-			'apache' => "RewriteEngine On\nRewriteRule ^/?robots\\.txt$ " . $route . " [PT,L]",
+			'apache' => "RewriteEngine On\nRewriteRule ^/?robots\\.txt$ " . $route . ' [PT,L]',
 			'nginx' => "location = /robots.txt {\n    rewrite ^ " . $route . " last;\n}",
 		];
 
@@ -228,7 +226,6 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 	 */
 	private function baseUrl(): string {
 		return rtrim($this->urlGenerator->getBaseUrl(), '/');
-
 	}//end baseUrl()
 
 	/**

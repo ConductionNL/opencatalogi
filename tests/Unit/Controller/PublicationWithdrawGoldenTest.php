@@ -146,7 +146,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 	/**
 	 * The controller over recording doubles.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls, filled by the doubles.
 	 *
 	 * @return PublicationStateController The controller.
@@ -186,7 +186,6 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		);
 
 		return $controller;
-
 	}//end controller()
 
 	/**
@@ -199,13 +198,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => 'T:' . $text);
 
 		return $l10n;
-
 	}//end l10n()
 
 	/**
 	 * A state service double answering the case's state.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return PublicationStateServiceInterface The double.
@@ -238,13 +236,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		);
 
 		return $states;
-
 	}//end states()
 
 	/**
 	 * A depublication service double that echoes what it was given.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return DepublicationServiceInterface The double.
@@ -265,13 +262,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		);
 
 		return $depublisher;
-
 	}//end depublisher()
 
 	/**
 	 * A container double with the app config, or without it, and a file service.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return ContainerInterface The double.
@@ -296,13 +292,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		);
 
 		return $container;
-
 	}//end container()
 
 	/**
 	 * A file service double that records unpublishFile() into the call log.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return object The double.
@@ -315,9 +310,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		return new class($record, ($case['unpublishFails'] ?? false)) {
 			/**
 			 * @param \Closure $record Appends to the call log.
-			 * @param bool     $fails  Whether unpublishing fails.
+			 * @param bool $fails Whether unpublishing fails.
 			 */
-			public function __construct(private \Closure $record, private bool $fails) {
+			public function __construct(
+				private \Closure $record,
+				private bool $fails,
+			) {
 			}
 
 			/**
@@ -336,7 +334,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 	/**
 	 * An OpenRegister reader double over a recording ObjectService.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return ServiceCatalogueServiceInterface The double.
@@ -371,7 +369,6 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$objects->method('getObjectService')->willReturn($objectService);
 
 		return $objects;
-
 	}//end objects()
 
 	/**
@@ -386,7 +383,6 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$entity->method('jsonSerialize')->willReturn($properties);
 
 		return $entity;
-
 	}//end entity()
 
 	/**
@@ -412,8 +408,8 @@ class PublicationWithdrawGoldenTest extends TestCase {
 	 * would record that class's signature: the test stub's locally and OpenRegister's
 	 * own in CI. Named and without defaults, the record is what the controller passed.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return array<string, mixed> The passed arguments by name.
 	 */
@@ -432,7 +428,6 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
 }//end class
 

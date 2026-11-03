@@ -124,7 +124,10 @@ class SchemaOrgCatalogRefsGoldenTest extends TestCase {
 			$this->log[] = $entry;
 		};
 		$objects = new class($world, $log) {
-			public function __construct(private array $world, private \Closure $log) {
+			public function __construct(
+				private array $world,
+				private \Closure $log,
+			) {
 			}
 
 			public function searchObjectsPaginated(array $query = [], bool $_rbac = true, bool $_multitenancy = true, bool $deleted = false): array {
@@ -139,7 +142,9 @@ class SchemaOrgCatalogRefsGoldenTest extends TestCase {
 
 				if (($this->world['entities'] ?? false) === true) {
 					return ['results' => array_map(static fn (array $row): object => new class($row) implements \JsonSerializable {
-						public function __construct(private array $row) {
+						public function __construct(
+							private array $row,
+						) {
 						}
 
 						public function jsonSerialize(): array {
@@ -177,6 +182,5 @@ class SchemaOrgCatalogRefsGoldenTest extends TestCase {
 		}
 
 		return new SchemaOrgService($container, $dcat, $url, $logger);
-
 	}//end service()
 }//end class

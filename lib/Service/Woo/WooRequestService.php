@@ -171,7 +171,6 @@ class WooRequestService implements InformationRequestServiceInterface {
 		// enough to read out over the phone and not a counter, because a counter
 		// tells a requester how many other people asked.
 		return 'WOO-' . $now->format('Y') . '-' . strtoupper(bin2hex(random_bytes(3)));
-
 	}//end mintReference()
 
 	/**
@@ -199,7 +198,6 @@ class WooRequestService implements InformationRequestServiceInterface {
 		$request['termBasis'] = (string)($term['basis'] ?? StatutoryTerm::BASIS_TERM);
 
 		return $request;
-
 	}//end withTerm()
 
 	/**
@@ -263,7 +261,6 @@ class WooRequestService implements InformationRequestServiceInterface {
 		}
 
 		return $request;
-
 	}//end attachBatch()
 
 	/**
@@ -362,7 +359,6 @@ class WooRequestService implements InformationRequestServiceInterface {
 		}
 
 		return 'running';
-
 	}//end outcome()
 
 	/**
