@@ -42,7 +42,7 @@ class CatalogScopeResolver {
 	/**
 	 * Constructor for CatalogScopeResolver.
 	 *
-	 * @param IAppConfig      $config App configuration holding the catalog register and schema
+	 * @param IAppConfig $config App configuration holding the catalog register and schema
 	 * @param LoggerInterface $logger Logger for the refusal of an unconfigured scope
 	 */
 	public function __construct(
@@ -96,7 +96,6 @@ class CatalogScopeResolver {
 		}
 
 		return $scope;
-
 	}//end configuredScope()
 
 	/**
@@ -105,8 +104,8 @@ class CatalogScopeResolver {
 	 * A UUID is matched on `@self.uuid`; any other id (such as a slug) on the
 	 * catalog's own `slug` field.
 	 *
-	 * @param array{schema: string, register: string} $scope     The configured catalog schema and register.
-	 * @param string|int|null                         $catalogId The catalog to narrow to, or null for all.
+	 * @param array{schema: string, register: string} $scope The configured catalog schema and register.
+	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
 	 *
 	 * @return array The query.
 	 *
@@ -132,14 +131,13 @@ class CatalogScopeResolver {
 
 		$query['slug'] = (string)$catalogId;
 		return $query;
-
 	}//end searchQuery()
 
 	/**
 	 * Collect the unique values of one array-valued property across catalogs.
 	 *
 	 * @param array<int,mixed> $catalogs The catalog objects returned by the search.
-	 * @param string           $property The array-valued property to collect ('registers' | 'schemas').
+	 * @param string $property The array-valued property to collect ('registers' | 'schemas').
 	 *
 	 * @return array<int,mixed> The de-duplicated union of that property's values.
 	 *
@@ -156,6 +154,5 @@ class CatalogScopeResolver {
 		}
 
 		return array_unique($collected);
-
 	}//end collectUnique()
 }//end class

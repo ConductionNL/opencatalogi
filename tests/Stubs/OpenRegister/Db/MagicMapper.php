@@ -27,8 +27,8 @@ class MagicMapper {
 	 * Make sure the magic table for a register/schema pair exists.
 	 *
 	 * @param Register $register The register.
-	 * @param Schema   $schema   The schema.
-	 * @param boolean  $force    Recreate the table even when it exists.
+	 * @param Schema $schema The schema.
+	 * @param boolean $force Recreate the table even when it exists.
 	 *
 	 * @return boolean Whether the table exists afterwards.
 	 */

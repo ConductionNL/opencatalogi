@@ -125,7 +125,6 @@ class SetupDemoDataSteps {
 		}
 
 		return $this->installDemoData(dataset: $picked);
-
 	}//end loadDataset()
 
 	/**
@@ -188,7 +187,7 @@ class SetupDemoDataSteps {
 					'Demo data installed: %1$s objects across %2$s schemas.',
 					[$imported['objects'], $imported['schemas']]
 				),
-				'detail'  => $imported,
+				'detail' => $imported,
 			]
 		);
 	}//end installDemoData()

@@ -66,7 +66,6 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	 */
 	public function isInstalled(): bool {
 		return $this->appManager->isInstalled('openregister');
-
 	}//end isInstalled()
 
 	/**
@@ -80,7 +79,6 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	 */
 	public function objectService(): mixed {
 		return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-
 	}//end objectService()
 
 	/**
@@ -98,7 +96,6 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 		}
 
 		throw new RuntimeException('OpenRegister service is not available.');
-
 	}//end installedObjectService()
 
 	/**
@@ -110,7 +107,7 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	 * MissingConfigException, which callers surface as a 503.
 	 *
 	 * @param string $registerKey The `<context>_register` config key.
-	 * @param string $schemaKey   The `<context>_schema` config key.
+	 * @param string $schemaKey The `<context>_schema` config key.
 	 *
 	 * @return array<string, string> Map with 'register' and 'schema' identifiers (slug or UUID).
 	 *
@@ -129,7 +126,6 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 		}
 
 		return $this->configuredRegister(registerKey: $registerKey, schemaKey: $schemaKey);
-
 	}//end registerConfiguration()
 
 	/**
@@ -155,7 +151,7 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	 * The register and schema pair read from the app config.
 	 *
 	 * @param string $registerKey The `<context>_register` config key.
-	 * @param string $schemaKey   The `<context>_schema` config key.
+	 * @param string $schemaKey The `<context>_schema` config key.
 	 *
 	 * @return array<string, string> Map with 'register' and 'schema' identifiers.
 	 *
@@ -196,7 +192,7 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	/**
 	 * An OpenRegister service from the container when OpenRegister is among the installed apps.
 	 *
-	 * @param string $serviceId   The container id of the service.
+	 * @param string $serviceId The container id of the service.
 	 * @param string $unavailable The message of the refusal when OpenRegister is not installed.
 	 *
 	 * @return mixed The service.
@@ -211,6 +207,5 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 		}
 
 		throw new RuntimeException($unavailable);
-
 	}//end installedService()
 }//end class

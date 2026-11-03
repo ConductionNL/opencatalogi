@@ -154,9 +154,7 @@ class CommentPeriodServiceTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return $appManager;
-
 	}//end appManager()
-
 
 	/**
 	 * A period opens with its computed end, its remedy and its form.

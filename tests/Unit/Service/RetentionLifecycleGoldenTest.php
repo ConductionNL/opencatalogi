@@ -198,7 +198,6 @@ class RetentionLifecycleGoldenTest extends TestCase {
 		}
 
 		return new RetentionService($config, $container, $session, $logger);
-
 	}//end service()
 
 	/**
@@ -218,8 +217,11 @@ class RetentionLifecycleGoldenTest extends TestCase {
 		]);
 
 		return new class($log, $catalogs, $world) {
-
-			public function __construct(private \Closure $log, private array $catalogs, private array $world) {
+			public function __construct(
+				private \Closure $log,
+				private array $catalogs,
+				private array $world,
+			) {
 			}
 
 			public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {

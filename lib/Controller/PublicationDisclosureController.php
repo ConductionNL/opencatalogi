@@ -168,7 +168,6 @@ class PublicationDisclosureController extends Controller {
 		}
 
 		return new JSONResponse(['saved' => true]);
-
 	}//end savePublishedCollections()
 
 }//end class

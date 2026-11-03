@@ -875,7 +875,6 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery()
 
-
 	/**
 	 * A localhost instance must not advertise itself to a real directory.
 	 *
@@ -898,7 +897,6 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame([], $results);
 
 	}//end testBroadcastRefusesWhenThisInstanceAdvertisesALocalAddress()
-
 
 	/**
 	 * The `local_federation_hosts` allowlist re-enables a local docker rig.

@@ -50,8 +50,8 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param WithheldFromPublicationStore $store  The OpenRegister reads.
-	 * @param LoggerInterface     $logger Records an unreadable list.
+	 * @param WithheldFromPublicationStore $store The OpenRegister reads.
+	 * @param LoggerInterface $logger Records an unreadable list.
 	 */
 	public function __construct(
 		private readonly WithheldFromPublicationStore $store,
@@ -62,9 +62,9 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 	/**
 	 * The response with `withheld` added when the catalogue opted in, unchanged otherwise.
 	 *
-	 * @param array<string, mixed> $response      The rendered publication.
-	 * @param array<string, mixed> $catalog       The catalogue it was read through.
-	 * @param string               $publicationId The publication.
+	 * @param array<string, mixed> $response The rendered publication.
+	 * @param array<string, mixed> $catalog The catalogue it was read through.
+	 * @param string $publicationId The publication.
 	 *
 	 * @return array<string, mixed>
 	 *
@@ -145,8 +145,8 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 	 * run yet, or was refused) cannot be told from nothing withheld, and `withheld: []` would
 	 * state the second.
 	 *
-	 * @param array<string, mixed> $response      The rendered publication.
-	 * @param string               $publicationId The publication.
+	 * @param array<string, mixed> $response The rendered publication.
+	 * @param string $publicationId The publication.
 	 *
 	 * @return array<string, mixed>
 	 */

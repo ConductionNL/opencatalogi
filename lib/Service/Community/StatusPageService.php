@@ -54,7 +54,6 @@ class StatusPageService implements StatusPageServiceInterface {
 	 */
 	public const STATES = ['available', 'degraded', 'unavailable', 'maintenance'];
 
-
 	/**
 	 * Set a component's state.
 	 *

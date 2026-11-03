@@ -46,8 +46,6 @@ use Psr\Log\LoggerInterface;
  */
 class UsageCounterService implements UsageCounterServiceInterface {
 
-
-
 	/**
 	 * IAppConfig key holding the OpenRegister register id for counter objects.
 	 *
@@ -245,8 +243,8 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	/**
 	 * Count one usage unless it is not countable, comes from a crawler, or has no counter store.
 	 *
-	 * @param PublicationUsage $usage     The publication, kind and catalog being counted.
-	 * @param string|null      $userAgent Request UA, evaluated for crawler-skip only.
+	 * @param PublicationUsage $usage The publication, kind and catalog being counted.
+	 * @param string|null $userAgent Request UA, evaluated for crawler-skip only.
 	 *
 	 * @return boolean True when a count was recorded.
 	 *
@@ -506,14 +504,13 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		$windowed = $this->aggregateSeries(rows: $this->filterByRange(rows: $rows, from: $from, to: $to));
 
 		return array_replace($windowed, ['countingStart' => $countingStart, 'from' => $from, 'to' => $to]);
-
 	}//end aggregateInstanceSeries()
 
 	/**
 	 * The value when it is a well-formed calendar day, otherwise the fallback.
 	 *
-	 * @param string|null $value    The candidate day.
-	 * @param string      $fallback The day to use instead.
+	 * @param string|null $value The candidate day.
+	 * @param string $fallback The day to use instead.
 	 *
 	 * @return string The day.
 	 *
@@ -590,7 +587,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * still opens its bucket. Negative and non-numeric counts count as 0.
 	 *
 	 * @param array<int, mixed> $rows Counter rows (arrays or ObjectEntity).
-	 * @param string            $key  The field to group by (`date`, `publication`).
+	 * @param string $key The field to group by (`date`, `publication`).
 	 *
 	 * @return array<string, array<string, mixed>> One bucket per value, in first-seen order.
 	 *
@@ -614,7 +611,7 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	 * Add a row's count to the bucket column of its kind; other kinds add nothing.
 	 *
 	 * @param array<string, mixed> $bucket The bucket with `views` and `downloads`.
-	 * @param array<string, mixed> $row    The normalised counter row.
+	 * @param array<string, mixed> $row The normalised counter row.
 	 *
 	 * @return array<string, mixed> The bucket.
 	 *
@@ -688,8 +685,8 @@ class UsageCounterService implements UsageCounterServiceInterface {
 	/**
 	 * Whether a day lies within an inclusive range whose ends may be open.
 	 *
-	 * @param string                           $date  The row's day; '' is never in range.
-	 * @param array{0: ?string, 1: ?string}    $range The start and end day, null for an open end.
+	 * @param string $date The row's day; '' is never in range.
+	 * @param array{0: ?string, 1: ?string} $range The start and end day, null for an open end.
 	 *
 	 * @return boolean True when the day is set and inside the range.
 	 *

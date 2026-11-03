@@ -51,17 +51,17 @@ class ConnectionObservationsTest extends TestCase {
 	/**
 	 * A sync result in the shape DirectoryService::doCronSync() returns.
 	 *
-	 * @param int                $synced The directories that answered.
+	 * @param int $synced The directories that answered.
 	 * @param array<int, string> $failed The directory URLs that did not.
 	 *
 	 * @return array<string, mixed>
 	 */
 	private function sync(int $synced, array $failed = []): array {
 		return [
-			'total_directories'  => ($synced + count($failed)),
+			'total_directories' => ($synced + count($failed)),
 			'synced_directories' => $synced,
 			'failed_directories' => count($failed),
-			'errors'             => array_map(
+			'errors' => array_map(
 				static fn (string $url): array => ['directory' => $url, 'error' => 'cURL error 6 for ' . $url],
 				$failed
 			),
@@ -171,7 +171,7 @@ class ConnectionObservationsTest extends TestCase {
 	/**
 	 * A readiness report in the shape WooReadinessService::runCheck() returns.
 	 *
-	 * @param array<int, string>        $statuses     The status of each non-registration check.
+	 * @param array<int, string> $statuses The status of each non-registration check.
 	 * @param array<string, mixed>|null $registration The registration check, or null to leave it out.
 	 *
 	 * @return array<string, mixed>
@@ -208,9 +208,9 @@ class ConnectionObservationsTest extends TestCase {
 	 */
 	public function testAReadinessCheckThatPassedWithoutAConfirmedRegistrationIsLimited(): void {
 		$cases = [
-			'not-registered'       => 'not registered with the Woo-index yet',
+			'not-registered' => 'not registered with the Woo-index yet',
 			'registration-pending' => 'requested and not confirmed yet',
-			'url-mismatch'         => 'does not match this address',
+			'url-mismatch' => 'does not match this address',
 		];
 		foreach ($cases as $reason => $says) {
 			$status = 'skipped';

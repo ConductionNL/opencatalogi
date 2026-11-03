@@ -42,7 +42,9 @@ class WooRequestSerialisableResult implements JsonSerializable {
 	 *
 	 * @param array<string, mixed> $payload What it serialises to.
 	 */
-	public function __construct(private readonly array $payload) {
+	public function __construct(
+		private readonly array $payload,
+	) {
 	}//end __construct()
 
 	/**
@@ -103,15 +105,15 @@ class WooRequestStoreTest extends TestCase {
 	 * Build the store.
 	 *
 	 * @param string $configured What the register and schema keys answer.
-	 * @param bool   $installed  Whether OpenRegister is installed.
-	 * @param bool   $bound      Whether the container binds the ObjectService.
+	 * @param bool $installed Whether OpenRegister is installed.
+	 * @param bool $bound Whether the container binds the ObjectService.
 	 *
 	 * @return WooRequestStore The store.
 	 */
 	private function build(
 		string $configured = '42',
 		bool $installed = true,
-		bool $bound = true
+		bool $bound = true,
 	): WooRequestStore {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn($configured);
@@ -131,7 +133,6 @@ class WooRequestStoreTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager));
-
 	}//end build()
 
 	/**

@@ -29,12 +29,12 @@ class PermissionHandler {
 	/**
 	 * Whether the user may take the action on the schema, or on one object of it.
 	 *
-	 * @param Schema            $schema      The schema.
-	 * @param string            $action      The CRUD action.
-	 * @param string|null       $userId      The user, the current one when null.
-	 * @param string|null       $objectOwner The object's owner.
-	 * @param boolean           $_rbac       Whether to apply RBAC.
-	 * @param ObjectEntity|null $object      The object, for conditional rules.
+	 * @param Schema $schema The schema.
+	 * @param string $action The CRUD action.
+	 * @param string|null $userId The user, the current one when null.
+	 * @param string|null $objectOwner The object's owner.
+	 * @param boolean $_rbac Whether to apply RBAC.
+	 * @param ObjectEntity|null $object The object, for conditional rules.
 	 *
 	 * @return boolean
 	 */

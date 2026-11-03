@@ -46,19 +46,18 @@ final class SearchRangeGuard {
 	 */
 	public static function malformedParameter(array $queryParams): ?string {
 		foreach ($queryParams as $name => $value) {
-			if (is_array($value) === false || str_starts_with((string) $name, '_') === true) {
+			if (is_array($value) === false || str_starts_with((string)$name, '_') === true) {
 				continue;
 			}
 
 			foreach (['gte', 'lte', 'gt', 'lt'] as $operator) {
 				if (array_key_exists($operator, $value) === true && self::isRangeBound(value: $value[$operator]) === false) {
-					return $name.'['.$operator.']';
+					return $name . '[' . $operator . ']';
 				}
 			}
 		}
 
 		return null;
-
 	}//end malformedParameter()
 
 	/**
@@ -88,7 +87,6 @@ final class SearchRangeGuard {
 			return false;
 		}
 
-		return checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]);
-
+		return checkdate((int)$parts[2], (int)$parts[3], (int)$parts[1]);
 	}//end isRangeBound()
 }//end class

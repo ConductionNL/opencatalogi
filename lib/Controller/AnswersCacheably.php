@@ -121,7 +121,6 @@ trait AnswersCacheably {
 		}
 
 		return $response;
-
 	}//end cacheableForCaller()
 
 	/**
@@ -133,7 +132,6 @@ trait AnswersCacheably {
 	 */
 	private function publicCacheCeiling(): int {
 		return SettingsServiceInterface::PUBLIC_API_CACHE_MAX_SECONDS;
-
 	}//end publicCacheCeiling()
 
 	/**
@@ -177,6 +175,5 @@ trait AnswersCacheably {
 		}
 
 		return false;
-
 	}//end ifNoneMatchHits()
 }//end trait

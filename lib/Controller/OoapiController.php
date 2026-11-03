@@ -71,7 +71,7 @@ class OoapiController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param OoapiServiceInterface $ooapiService The OOAPI 5.0 orchestration service.
 	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug →
-	 *                                         catalog).
+	 *                                                  catalog).
 	 * @param IUserSession $userSession Nextcloud user session (OOAPI-008 auth gate).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
@@ -254,8 +254,8 @@ class OoapiController extends Controller {
 	 * answers 500.
 	 *
 	 * @param array{catalogSlug: string, context: string} $lookup The catalog slug and the `<context>` of the
-	 *                                                           `<context>_register`/`<context>_schema` config keys.
-	 * @param callable                                    $render Builds the answer from the OoapiScope of the catalog and its pair.
+	 *                                                            `<context>_register`/`<context>_schema` config keys.
+	 * @param callable $render Builds the answer from the OoapiScope of the catalog and its pair.
 	 *
 	 * @return JSONResponse The answer, or the refusal.
 	 *
@@ -275,8 +275,8 @@ class OoapiController extends Controller {
 				}
 
 				$context = $this->resolveContext(
-					registerKey: $lookup['context'].'_register',
-					schemaKey: $lookup['context'].'_schema'
+					registerKey: $lookup['context'] . '_register',
+					schemaKey: $lookup['context'] . '_schema'
 				);
 				if ($context['error'] !== null) {
 					return $context['error'];
@@ -298,7 +298,7 @@ class OoapiController extends Controller {
 	 * A single resource, or a 404 with the given message when there is none.
 	 *
 	 * @param array<string, mixed>|null $resource The resource.
-	 * @param string                    $notFound The translated not-found message.
+	 * @param string $notFound The translated not-found message.
 	 *
 	 * @return JSONResponse The resource, or the 404.
 	 *
@@ -310,15 +310,14 @@ class OoapiController extends Controller {
 		}
 
 		return $this->json(data: $resource, status: Http::STATUS_OK);
-
 	}//end resourceOrNotFound()
 
 	/**
 	 * Fetch one materialized resource by its OOAPI id field.
 	 *
-	 * @param array{catalogSlug: string, context: string, id: string, idField: string} $lookup   The catalog slug, config context,
-	 *                                                                                           id and the field that holds it.
-	 * @param string                                                                   $notFound The translated not-found message.
+	 * @param array{catalogSlug: string, context: string, id: string, idField: string} $lookup The catalog slug, config context,
+	 *                                                                                         id and the field that holds it.
+	 * @param string $notFound The translated not-found message.
 	 *
 	 * @return JSONResponse The resource, or a 404 or refusal.
 	 *

@@ -160,6 +160,5 @@ class ObligationOverviewService {
 		}
 
 		return 'due';
-
 	}//end stateOf()
 }//end class

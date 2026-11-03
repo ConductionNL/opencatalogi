@@ -394,7 +394,6 @@ class SearchControllerTest extends TestCase {
 		$this->queryService->method('assemblePublicSearchResults')->willReturn(['results' => [], 'total' => 0]);
 
 		return $this->controller->index();
-
 	}//end searchAs()
 
 	/**
