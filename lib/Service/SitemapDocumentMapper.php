@@ -102,7 +102,7 @@ class SitemapDocumentMapper {
 		}
 
 		return ['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]];
-}//end map()
+	}//end map()
 
 	/**
 	 * The DiWoo location, dates, publisher and format of one file's document.
@@ -294,7 +294,7 @@ class SitemapDocumentMapper {
 		}
 
 		return $this->orgTooiCache[$organisation];
-}//end resolveOrganisationTooiIdentifier()
+	}//end resolveOrganisationTooiIdentifier()
 
 	/**
 	 * Fetch an organisation's `tooiIdentifier` via OpenRegister by its UUID.
@@ -318,7 +318,7 @@ class SitemapDocumentMapper {
 		}
 
 		return $this->stringOrNull(value: (self::rowData(row: $results[0])['tooiIdentifier'] ?? null));
-}//end fetchOrganisationTooiIdentifier()
+	}//end fetchOrganisationTooiIdentifier()
 
 	/**
 	 * A search row as an array: itself, its jsonSerialize(), or empty.

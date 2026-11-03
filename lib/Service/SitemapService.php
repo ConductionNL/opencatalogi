@@ -189,7 +189,7 @@ class SitemapService implements SitemapServiceInterface {
 		}
 
 		return $builder->response(sitemaps: $builder->entries(queries: $request->queries, baseUri: $this->publicationsBaseUri(request: $request)));
-}//end buildSitemapIndex()
+	}//end buildSitemapIndex()
 
 	/**
 	 * The base URI of the category's paged publication sitemaps.
@@ -237,7 +237,7 @@ class SitemapService implements SitemapServiceInterface {
 		}
 
 		return new XMLResponse(data: self::documentsXml(documents: $documents));
-}//end buildSitemap()
+	}//end buildSitemap()
 
 	/**
 	 * The DiWoo documents XML around the mapped documents.
@@ -259,7 +259,7 @@ class SitemapService implements SitemapServiceInterface {
 			'@attributes' => array_replace(self::DOCUMENTS_ATTRIBUTES, ['xsi:schemaLocation' => StandardsVersionService::diwooSchemaLocation()]),
 			'diwoo:Document' => $documents,
 		];
-}//end documentsXml()
+	}//end documentsXml()
 
 	/**
 	 * Map one file of a publication to a DiWoo document; see SitemapDocumentMapper::map().
@@ -393,7 +393,7 @@ class SitemapService implements SitemapServiceInterface {
 		}
 
 		return array_values(array_filter($ids, static fn (mixed $id): bool => $id !== null));
-}//end declaredSchemaIds()
+	}//end declaredSchemaIds()
 
 	/**
 	 * The id of a register schema whose slug is one of the wanted slugs, or null.
@@ -646,7 +646,7 @@ class SitemapService implements SitemapServiceInterface {
 		}
 
 		return $violations;
-}//end collectDiwooViolations()
+	}//end collectDiwooViolations()
 
 	/**
 	 * Validate a catalog's DIWOO output in a dry run (WOO-TOOI-004).
