@@ -1,10 +1,10 @@
 {
     "category by name, owner from the publication": {
         "document": {
+            "loc": "",
+            "lastmod": "2024-04-04T04:04:04+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
-                    "loc": "",
-                    "lastmod": "2024-04-04 04:04:04",
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
                         "#text": "admin"
@@ -27,7 +27,7 @@
                                 "#text": "ontvangst",
                                 "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535"
                             },
-                            "diwoo:atTime": "2024-04-04 04:04:04"
+                            "diwoo:atTime": "2024-04-04T04:04:04+00:00"
                         }
                     }
                 }
@@ -43,15 +43,20 @@
                 "documentLoc": "",
                 "axis": "publisher",
                 "reason": "organisation has no TOOI identifier"
+            },
+            {
+                "documentLoc": "",
+                "axis": "officieleTitel",
+                "reason": "publication has no title"
             }
         ]
     },
     "every axis binds": {
         "document": {
+            "loc": "https://example.com/files/doc.pdf",
+            "lastmod": "2024-05-10T12:00:00+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
-                    "loc": "https://example.com/files/doc.pdf",
-                    "lastmod": "2024-05-10 12:00:00",
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
                         "#text": "file-owner",
@@ -75,7 +80,7 @@
                                 "#text": "vaststelling",
                                 "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_641ecd76"
                             },
-                            "diwoo:atTime": "2024-05-10 12:00:00"
+                            "diwoo:atTime": "2024-05-10T12:00:00+00:00"
                         }
                     }
                 }
@@ -86,15 +91,20 @@
                 "documentLoc": "earlier",
                 "axis": "kept",
                 "reason": "appended to"
+            },
+            {
+                "documentLoc": "https://example.com/files/doc.pdf",
+                "axis": "officieleTitel",
+                "reason": "publication has no title"
             }
         ]
     },
     "handling time from the publication date": {
         "document": {
+            "loc": "https://example.com/c.pdf",
+            "lastmod": "2024-06-20T14:30:00+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
-                    "loc": "https://example.com/c.pdf",
-                    "lastmod": "2024-06-20 14:30:00",
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
                         "#text": "admin"
@@ -117,7 +127,7 @@
                                 "#text": "ontvangst",
                                 "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535"
                             },
-                            "diwoo:atTime": "2023-12-31"
+                            "diwoo:atTime": "2023-12-31T00:00:00+00:00"
                         }
                     }
                 }
@@ -133,15 +143,20 @@
                 "documentLoc": "https://example.com/c.pdf",
                 "axis": "publisher",
                 "reason": "organisation has no TOOI identifier"
+            },
+            {
+                "documentLoc": "https://example.com/c.pdf",
+                "axis": "officieleTitel",
+                "reason": "publication has no title"
             }
         ]
     },
     "no axis binds": {
         "document": {
+            "loc": "https://example.com/a.DOCX",
+            "lastmod": "2024-06-20T14:30:00+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
-                    "loc": "https://example.com/a.DOCX",
-                    "lastmod": "2024-06-20 14:30:00",
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
                         "#text": "admin"
@@ -166,6 +181,11 @@
             },
             {
                 "documentLoc": "https://example.com/a.DOCX",
+                "axis": "officieleTitel",
+                "reason": "publication has no title"
+            },
+            {
+                "documentLoc": "https://example.com/a.DOCX",
                 "axis": "informatiecategorie",
                 "reason": "category resolves to no member of the informatiecategorieen waardelijst"
             },
@@ -178,10 +198,10 @@
     },
     "only the category, handling defaults": {
         "document": {
+            "loc": "https://example.com/b.pdf",
+            "lastmod": "2024-04-04T04:04:04+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
-                    "loc": "https://example.com/b.pdf",
-                    "lastmod": "2024-04-04 04:04:04",
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
                         "#text": "admin"
@@ -204,7 +224,7 @@
                                 "#text": "ontvangst",
                                 "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535"
                             },
-                            "diwoo:atTime": "2024-04-04 04:04:04"
+                            "diwoo:atTime": "2024-04-04T04:04:04+00:00"
                         }
                     }
                 }
@@ -220,15 +240,20 @@
                 "documentLoc": "https://example.com/b.pdf",
                 "axis": "publisher",
                 "reason": "organisation has no TOOI identifier"
+            },
+            {
+                "documentLoc": "https://example.com/b.pdf",
+                "axis": "officieleTitel",
+                "reason": "publication has no title"
             }
         ]
     },
     "only the organisation": {
         "document": {
+            "loc": "",
+            "lastmod": "2024-03-03T03:03:03+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
-                    "loc": "",
-                    "lastmod": "2024-03-03 03:03:03",
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
                         "#text": "admin",
@@ -244,7 +269,7 @@
                                 "#text": "ontvangst",
                                 "@resource": "https://identifier.overheid.nl/tooi/def/thes/kern/c_dfcee535"
                             },
-                            "diwoo:atTime": "2024-03-03 03:03:03"
+                            "diwoo:atTime": "2024-03-03T03:03:03+00:00"
                         }
                     }
                 }
@@ -255,6 +280,11 @@
                 "documentLoc": "earlier",
                 "axis": "kept",
                 "reason": "appended to"
+            },
+            {
+                "documentLoc": "",
+                "axis": "officieleTitel",
+                "reason": "publication has no title"
             },
             {
                 "documentLoc": "",

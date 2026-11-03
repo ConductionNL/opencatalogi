@@ -178,6 +178,11 @@
                 },
                 {
                     "documentLoc": "https://dl.example/1.pdf",
+                    "axis": "officieleTitel",
+                    "reason": "publication has no title"
+                },
+                {
+                    "documentLoc": "https://dl.example/1.pdf",
                     "axis": "informatiecategorie",
                     "reason": "category resolves to no member of the informatiecategorieen waardelijst"
                 },
@@ -185,6 +190,11 @@
                     "documentLoc": "https://dl.example/2.odt",
                     "axis": "publisher",
                     "reason": "organisation has no TOOI identifier"
+                },
+                {
+                    "documentLoc": "https://dl.example/2.odt",
+                    "axis": "officieleTitel",
+                    "reason": "publication has no title"
                 },
                 {
                     "documentLoc": "https://dl.example/2.odt",

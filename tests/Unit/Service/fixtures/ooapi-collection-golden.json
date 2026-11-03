@@ -467,16 +467,10 @@
         ]
     },
     "resource without catalog on either side": {
-        "answer": {
-            "offeringId": "course-nocat",
-            "code": "N"
-        },
+        "answer": null,
         "asked": [
             {
                 "find": "course-nocat"
-            },
-            {
-                "schema": 11
             }
         ]
     },
@@ -614,6 +608,14 @@
         "asked": [
             {
                 "schema": 15
+            }
+        ]
+    },
+    "resource in another register": {
+        "answer": null,
+        "asked": [
+            {
+                "find": "course-otherregister"
             }
         ]
     }

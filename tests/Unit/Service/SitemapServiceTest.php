@@ -11,6 +11,7 @@ use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapRequest;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -412,6 +413,7 @@ class SitemapServiceTest extends TestCase {
 		// handling type resolves through the DiWoo value list.
 		$publication = [
 			'id' => 'pub-1',
+			'title' => '  Besluit op het Woo-verzoek  ',
 			'category' => 'infocat014',
 			'soortHandeling' => 'vaststelling',
 			'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855',
@@ -434,13 +436,16 @@ class SitemapServiceTest extends TestCase {
 		$method = $this->getPrivateMethod('mapDiwooDocument');
 		$result = $method->invoke($this->service, $publication, $file);
 
-		$this->assertArrayHasKey('diwoo:Document', $result);
+		$this->assertSame(['loc', 'lastmod', 'diwoo:Document'], array_keys($result));
+		$this->assertSame('https://example.com/files/doc.pdf', $result['loc']);
+		$this->assertSame('2024-05-10T12:00:00+00:00', $result['lastmod']);
 
 		$doc = $result['diwoo:Document']['diwoo:DiWoo'];
 
-		$this->assertEquals('https://example.com/files/doc.pdf', $doc['loc']);
-		$this->assertEquals(date('Y-m-d H:i:s', strtotime('2024-05-10 12:00:00')), $doc['lastmod']);
+		$this->assertArrayNotHasKey('loc', $doc);
+		$this->assertArrayNotHasKey('lastmod', $doc);
 		$this->assertEquals('2024-01-15', $doc['diwoo:creatiedatum']);
+		$this->assertSame(['diwoo:officieleTitel' => 'Besluit op het Woo-verzoek'], $doc['diwoo:titelcollectie']);
 
 		// Publisher @resource is bound to the TOOI organisatie identifier (WOO-TOOI-002).
 		$this->assertEquals('https://identifier.overheid.nl/tooi/id/gemeente/gm0855', $doc['diwoo:publisher']['@resource']);
@@ -459,7 +464,7 @@ class SitemapServiceTest extends TestCase {
 		$handling = $doc['diwoo:documenthandelingen']['diwoo:documenthandeling'];
 		$this->assertEquals('vaststelling', $handling['diwoo:soortHandeling']['#text']);
 		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_641ecd76', $handling['diwoo:soortHandeling']['@resource']);
-		$this->assertEquals('2024-05-10 12:00:00', $handling['diwoo:atTime']);
+		$this->assertSame('2024-05-10T12:00:00+00:00', $handling['diwoo:atTime']);
 	}
 
 	/**
@@ -514,7 +519,7 @@ class SitemapServiceTest extends TestCase {
 		$result = $method->invoke($this->service, $publication, $file);
 
 		$handling = $result['diwoo:Document']['diwoo:DiWoo']['diwoo:documenthandelingen']['diwoo:documenthandeling'];
-		$this->assertEquals('2024-04-02 09:30:00', $handling['diwoo:atTime']);
+		$this->assertSame('2024-04-02T09:30:00+00:00', $handling['diwoo:atTime']);
 	}
 
 	public function testMapDiwooDocumentOmitsUnresolvedAxesAndReports(): void {
@@ -555,6 +560,8 @@ class SitemapServiceTest extends TestCase {
 		$axes = array_column($violations, 'axis');
 		$this->assertContains('publisher', $axes);
 		$this->assertContains('informatiecategorie', $axes);
+		$this->assertContains('officieleTitel', $axes);
+		$this->assertArrayNotHasKey('diwoo:titelcollectie', $doc);
 	}
 
 	// ──────────────────────────────────────────────────────────
@@ -760,6 +767,7 @@ class SitemapServiceTest extends TestCase {
 		$catalogObj = $this->createCatalogObj(['sch-1']);
 		$pubObject = $this->createSerializableObject([
 			'id' => 'pub-1',
+			'title' => 'Besluit & bijlagen <2024>',
 			'publicationDate' => '2024-02-02 08:00:00',
 			'category' => 'infocat014',
 			'soortHandeling' => 'vaststelling',
@@ -832,29 +840,17 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
-	 * Every DiWoo document of a page, validated against the official DiWoo 0.9.8 XSD,
-	 * gives the recorded list of schema errors (fixtures/diwoo-0.9.8/SOURCE.md).
+	 * The XSD errors of every diwoo:Document in a sitemap, one list per document,
+	 * validated against the vendored official DiWoo 0.9.8 XSD (fixtures/diwoo-0.9.8/SOURCE.md).
 	 *
-	 * The sitemap's own loc and lastmod are left out first. The list pins what is still
-	 * invalid until the sitemap carries the DiWoo 0.9.8 structure; an `@resource`
-	 * written as a child element instead of an attribute changes it.
+	 * @param string $xml The sitemap XML.
 	 *
-	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @return array<int, array<int, string>>
 	 */
-	public function testTheDocumentsMatchTheRecordedXsdErrors(): void {
+	private static function diwooXsdErrors(string $xml): array {
 		$dir = __DIR__ . '/fixtures/diwoo-0.9.8';
-		$hashes = [
-			'diwoo-metadata.xsd' => '0a332f65c98f5bb2b4fb64c52c2f72867966a6e5bf1a5a5ea3870716fc6ea212',
-			'diwoo-metadata-lijsten.xsd' => 'c17fd0daa9eb37c44c774ac73271679a8fc2189805823dcfba6a86c2fd42b308',
-			'MDTO-XML1.0.1.xsd' => 'edad88821a1023a9eafca0fa399ee7735ef03481aa186e07bbdaabdc123def34',
-		];
-		foreach ($hashes as $file => $hash) {
-			$this->assertSame($hash, hash_file('sha256', $dir . '/' . $file), $file . ' is not the published file');
-		}
-
-		$calls = [];
 		$dom = new \DOMDocument();
-		$dom->loadXML($this->documentsPage(calls: $calls));
+		$dom->loadXML($xml);
 		libxml_set_external_entity_loader(
 			static fn (?string $public, string $system): ?string => match ($system) {
 				'https://www.nationaalarchief.nl/mdto/MDTO-XML1.0.1.xsd' => $dir . '/MDTO-XML1.0.1.xsd',
@@ -864,17 +860,10 @@ class SitemapServiceTest extends TestCase {
 		$previous = libxml_use_internal_errors(true);
 		$errors = [];
 		try {
-			foreach ($dom->getElementsByTagNameNS('https://standaarden.overheid.nl/diwoo/metadata/', 'Document') as $index => $document) {
+			foreach ($dom->getElementsByTagNameNS(StandardsVersionService::DIWOO_NAMESPACE, 'Document') as $index => $document) {
 				$one = new \DOMDocument();
-				$one->loadXML($one->saveXML($one->importNode($document, true)));
-				// loc and lastmod belong to the sitemap url around the document, not in it;
-				// leaving them out shows what else the schema rejects.
-				foreach (['loc', 'lastmod'] as $sitemapElement) {
-					foreach (iterator_to_array($one->getElementsByTagNameNS('http://www.sitemaps.org/schemas/sitemap/0.9', $sitemapElement)) as $node) {
-						$node->parentNode->removeChild($node);
-					}
-				}
-
+				$one->appendChild($one->importNode($document, true));
+				$one->loadXML((string)$one->saveXML());
 				$one->schemaValidate($dir . '/diwoo-metadata.xsd');
 				$errors[$index] = array_map(static fn (\LibXMLError $error): string => trim($error->message), libxml_get_errors());
 				libxml_clear_errors();
@@ -884,12 +873,146 @@ class SitemapServiceTest extends TestCase {
 			libxml_set_external_entity_loader(null);
 		}
 
-		$fixture = __DIR__ . '/fixtures/sitemap-diwoo-xsd-errors.json';
-		if (getenv('GOLDEN_RECORD') === '1') {
-			file_put_contents($fixture, json_encode($errors, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		return $errors;
+	}
+
+	/**
+	 * Fail unless every file in the fixture directory has its published sha256.
+	 *
+	 * @param array<string, string> $hashes The file names and their sha256.
+	 *
+	 * @return void
+	 */
+	private function assertVerbatimCopies(array $hashes): void {
+		foreach ($hashes as $file => $hash) {
+			$this->assertSame($hash, hash_file('sha256', __DIR__ . '/fixtures/diwoo-0.9.8/' . $file), $file . ' is not the published file');
+		}
+	}
+
+	/**
+	 * Every DiWoo document of a rendered page validates against the official DiWoo 0.9.8 XSD.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testEveryDocumentOfAPageValidatesAgainstTheDiwooXsd(): void {
+		$this->assertVerbatimCopies([
+			'diwoo-metadata.xsd' => '0a332f65c98f5bb2b4fb64c52c2f72867966a6e5bf1a5a5ea3870716fc6ea212',
+			'diwoo-metadata-lijsten.xsd' => 'c17fd0daa9eb37c44c774ac73271679a8fc2189805823dcfba6a86c2fd42b308',
+			'MDTO-XML1.0.1.xsd' => 'edad88821a1023a9eafca0fa399ee7735ef03481aa186e07bbdaabdc123def34',
+		]);
+
+		$calls = [];
+		$this->assertSame([[], []], self::diwooXsdErrors($this->documentsPage(calls: $calls)));
+	}
+
+	/**
+	 * The harness accepts what the standard accepts: the documents of the standard's
+	 * own example sitemaps validate, apart from the fictitious municipalities gm9999
+	 * and gm9998 they publish under, which the organisation list does not hold.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testTheOfficialExampleSitemapsValidate(): void {
+		$examples = [
+			'sitemap-alleenverplicht.xml' => 'a7a0354d60667de9fc85567d379b67d407ce04a78e44d4107530828e33928b32',
+			'sitemap-uitgebreid.xml' => '2224a9d841e54dff52447d9ac9c65c893f70bdb0d5c665dfb675d4c4881c0b61',
+		];
+		$this->assertVerbatimCopies($examples);
+		foreach (array_keys($examples) as $file) {
+			$errors = self::diwooXsdErrors((string)file_get_contents(__DIR__ . '/fixtures/diwoo-0.9.8/' . $file));
+			$this->assertNotSame([], $errors, $file . ' holds no document');
+			$this->assertNotSame([], array_merge(...$errors), $file . ': the fictitious publisher must be refused, or nothing was validated');
+			foreach (array_merge(...$errors) as $error) {
+				$this->assertMatchesRegularExpression("~attribute 'resource': 'https://identifier\\.overheid\\.nl/tooi/id/gemeente/gm999[89]' is not a valid value~", $error, $file);
+			}
+		}
+	}
+
+	/**
+	 * A page is a sitemaps.org urlset; each url holds loc, lastmod and the document, in that order.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testEachUrlHoldsLocLastmodAndTheDocumentInThatOrder(): void {
+		$calls = [];
+		$dom = new \DOMDocument();
+		$dom->loadXML($this->documentsPage(calls: $calls));
+		$root = $dom->documentElement;
+		$this->assertSame(['urlset', StandardsVersionService::SITEMAP_NAMESPACE], [$root->localName, $root->namespaceURI]);
+
+		$urls = [];
+		foreach ($root->childNodes as $url) {
+			if ($url instanceof \DOMElement === false) {
+				continue;
+			}
+
+			$children = [];
+			foreach ($url->childNodes as $child) {
+				if ($child instanceof \DOMElement === true) {
+					$children[] = [$child->namespaceURI, $child->localName, $child->localName === 'Document' ? '' : $child->textContent];
+				}
+			}
+
+			$urls[] = [$url->namespaceURI, $url->localName, $children];
 		}
 
-		$this->assertSame(json_decode((string)file_get_contents($fixture), true), $errors);
+		$sitemap = StandardsVersionService::SITEMAP_NAMESPACE;
+		$diwoo = StandardsVersionService::DIWOO_NAMESPACE;
+		$this->assertSame([
+			[$sitemap, 'url', [[$sitemap, 'loc', 'https://example.com/a.pdf'], [$sitemap, 'lastmod', '2024-03-01T00:00:00+00:00'], [$diwoo, 'Document', '']]],
+			[$sitemap, 'url', [[$sitemap, 'loc', 'https://example.com/b.odt'], [$sitemap, 'lastmod', '2024-06-01T00:00:00+00:00'], [$diwoo, 'Document', '']]],
+		], $urls);
+		$this->assertSame(0, $dom->getElementsByTagNameNS($diwoo, 'DiWoo')->item(0)->getElementsByTagNameNS($sitemap, '*')->length, 'diwoo:DiWoo holds no sitemap element');
+	}
+
+	/**
+	 * lastmod and atTime are xs:dateTime values in UTC, the same in every server time zone.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testDatesAreWrittenAsUtcDateTimes(): void {
+		$method = $this->getPrivateMethod('mapDiwooDocument');
+		$zone = date_default_timezone_get();
+		$cases = [
+			'date only' => ['2024-03-01', '2024-03-01T00:00:00+00:00'],
+			'local time' => ['2024-02-02 08:00:00', '2024-02-02T08:00:00+00:00'],
+			'with offset' => ['2024-03-01T10:00:00+02:00', '2024-03-01T08:00:00+00:00'],
+			'unparseable' => ['not a date', '1970-01-01T00:00:00+00:00'],
+			'not a string' => [20240301, '1970-01-01T00:00:00+00:00'],
+		];
+		try {
+			foreach (['UTC', 'Europe/Amsterdam', 'Pacific/Kiritimati'] as $serverZone) {
+				date_default_timezone_set($serverZone);
+				foreach ($cases as $name => [$stored, $expected]) {
+					$entry = $method->invoke($this->service, ['id' => 'p', 'soortHandeling' => 'vaststelling'], ['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf', 'published' => $stored]);
+					$this->assertSame($expected, $entry['lastmod'], $serverZone . ' ' . $name);
+					$this->assertSame($expected, $entry['diwoo:Document']['diwoo:DiWoo']['diwoo:documenthandelingen']['diwoo:documenthandeling']['diwoo:atTime'], $serverZone . ' ' . $name);
+				}
+			}
+		} finally {
+			date_default_timezone_set($zone);
+		}
+	}
+
+	/**
+	 * A publication without a title is reported as officieleTitel, and its document stays on the page.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testAPublicationWithoutATitleIsReported(): void {
+		$file = ['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf'];
+		foreach (['missing' => null, 'blank' => '   ', 'not text' => ['nl' => 'Besluit']] as $name => $title) {
+			$publication = ['id' => 'p', 'category' => 'infocat014', '@self' => ['files' => [$file]]];
+			if ($title !== null) {
+				$publication['title'] = $title;
+			}
+
+			$violations = $this->service->collectDiwooViolations([$publication]);
+			$this->assertContains(['documentLoc' => 'https://example.com/a.pdf', 'axis' => 'officieleTitel', 'reason' => 'publication has no title'], $violations, $name);
+		}
+
+		$titled = ['id' => 'p', 'title' => 'Besluit', 'category' => 'infocat014', '@self' => ['files' => [$file]]];
+		$this->assertNotContains('officieleTitel', array_column($this->service->collectDiwooViolations([$titled]), 'axis'));
 	}
 
 	/**
@@ -933,7 +1056,12 @@ class SitemapServiceTest extends TestCase {
 		}
 	}
 
-	public function testBuildSitemapWithNoFiles(): void {
+	/**
+	 * A page without downloadable files is a urlset without url entries.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testAPageWithoutFilesIsAnEmptyUrlset(): void {
 		$this->setupValidSitemapContext('reg-woo', 'sch-1');
 
 		$catalogObj = $this->createCatalogObj(['sch-1']);
@@ -978,6 +1106,10 @@ class SitemapServiceTest extends TestCase {
 		$result = $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
+		$dom = new \DOMDocument();
+		$dom->loadXML($result->render());
+		$this->assertSame(['urlset', StandardsVersionService::SITEMAP_NAMESPACE], [$dom->documentElement->localName, $dom->documentElement->namespaceURI]);
+		$this->assertSame(0, $dom->documentElement->getElementsByTagName('*')->length);
 	}
 
 	public function testBuildSitemapWithFileMissingDownloadUrl(): void {
