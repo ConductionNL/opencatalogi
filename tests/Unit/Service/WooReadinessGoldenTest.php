@@ -59,6 +59,20 @@ class WooReadinessGoldenTest extends TestCase {
 	private array $fetched = [];
 
 	/**
+	 * The catalog searches the service ran, in order.
+	 *
+	 * @var list<array<string, mixed>>
+	 */
+	private array $searched = [];
+
+	/**
+	 * The request options of every fetch, in order.
+	 *
+	 * @var list<array<string, mixed>>
+	 */
+	private array $options = [];
+
+	/**
 	 * The recorded cases: what the world answers.
 	 *
 	 * @return array<string, array{0: array<string, mixed>}>
@@ -84,6 +98,16 @@ class WooReadinessGoldenTest extends TestCase {
 			'registration mismatch' => [['registration' => ['registered', 'https://other.org']]],
 			'registration requested' => [['registration' => ['requested', '']]],
 			'no catalogs' => [['catalogs' => []]],
+			'settings unreadable' => [['settings' => 'throws']],
+			'catalog register not configured' => [['settings' => 'no-register']],
+			'catalog schema not configured' => [['settings' => 'no-schema']],
+			'object service unavailable' => [['objects' => 'throws']],
+			'catalog search fails' => [['search' => 'throws']],
+			'catalog search without results' => [['search' => 'no-results']],
+			'robots as a stream' => [['robots' => 'stream']],
+			'catalog slug not text' => [['catalogs' => [null, 'demo']]],
+			'document redirects' => [['document' => 302]],
+			'robots answers no content' => [['robots' => 204]],
 			'request cap reached' => [['catalogs' => ['c1', 'c2', 'c3', 'c4', 'c5'], 'pages' => ['ok', 'ok', 'ok', 'ok']]],
 		];
 
@@ -101,7 +125,7 @@ class WooReadinessGoldenTest extends TestCase {
 		$name = $this->dataName();
 		$report = $this->service(world: $world)->runCheck();
 		unset($report['checkedAt']);
-		$actual = ['report' => $report, 'fetched' => $this->fetched];
+		$actual = ['report' => $report, 'fetched' => $this->fetched, 'searched' => $this->searched];
 
 		$recorded = [];
 		if (file_exists(self::FIXTURE) === true) {
@@ -128,8 +152,9 @@ class WooReadinessGoldenTest extends TestCase {
 	private function service(array $world): WooReadinessService {
 		$client = $this->createMock(IClient::class);
 		$client->method('get')->willReturnCallback(
-			function (string $url) use ($world): IResponse {
+			function (string $url, array $options = []) use ($world): IResponse {
 				$this->fetched[] = $url;
+				$this->options[] = $options;
 				return $this->answer(url: $url, world: $world);
 			}
 		);
@@ -169,10 +194,33 @@ class WooReadinessGoldenTest extends TestCase {
 		}
 
 		$objects = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-		$objects->method('searchObjectsPaginated')->willReturn(['results' => $catalogs]);
+		$objects->method('searchObjectsPaginated')->willReturnCallback(
+			function (...$args) use ($world, $catalogs): array {
+				$this->searched[] = self::passedArguments(args: $args);
+				return match ($world['search'] ?? 'ok') {
+					'throws' => throw new \RuntimeException('search down'),
+					'no-results' => ['total' => 0],
+					default => ['results' => $catalogs],
+				};
+			}
+		);
+		$configuration = match ($world['settings'] ?? 'ok') {
+			'no-register' => ['catalog_schema' => '5'],
+			'no-schema' => ['catalog_register' => '1', 'catalog_schema' => ''],
+			default => ['catalog_register' => '1', 'catalog_schema' => '5'],
+		};
 		$settings = $this->createMock(SettingsService::class);
-		$settings->method('getSettings')->willReturn(['configuration' => ['catalog_register' => '1', 'catalog_schema' => '5']]);
-		$settings->method('getObjectService')->willReturn($objects);
+		if (($world['settings'] ?? 'ok') === 'throws') {
+			$settings->method('getSettings')->willThrowException(new \RuntimeException('settings down'));
+		} else {
+			$settings->method('getSettings')->willReturn(['configuration' => $configuration]);
+		}
+
+		if (($world['objects'] ?? 'ok') === 'throws') {
+			$settings->method('getObjectService')->willThrowException(new \RuntimeException('no OpenRegister'));
+		} else {
+			$settings->method('getObjectService')->willReturn($objects);
+		}
 
 		$registration = ($world['registration'] ?? ['registered', self::BASE]);
 		$config = $this->createMock(IAppConfig::class);
@@ -248,9 +296,56 @@ class WooReadinessGoldenTest extends TestCase {
 
 		$response = $this->createMock(IResponse::class);
 		$response->method('getStatusCode')->willReturn($status);
+		if (($world['robots'] ?? null) === 'stream' && str_ends_with($url, '/robots.txt') === true) {
+			$stream = fopen('php://memory', 'r+');
+			fwrite($stream, "Sitemap: x/sitemaps/y\n");
+			rewind($stream);
+			$body = $stream;
+		}
+
 		$response->method('getBody')->willReturn($body);
 
 		return $response;
 
 	}//end answer()
+
+	/**
+	 * Every fetch has the 10 second timeout, no exception on an error status, and follows no redirect.
+	 *
+	 * A followed redirect would reach an address the SSRF guard never saw.
+	 *
+	 * @return void
+	 */
+	public function testEveryFetchHasTheTimeoutAndFollowsNoRedirect(): void {
+		$this->service(world: [])->runCheck();
+
+		$this->assertNotEmpty($this->options);
+		foreach ($this->options as $options) {
+			$this->assertSame(['timeout' => 10, 'http_errors' => false, 'allow_redirects' => false], $options);
+		}
+
+	}//end testEveryFetchHasTheTimeoutAndFollowsNoRedirect()
+
+	/**
+	 * The arguments of a catalog search by parameter name, without those left at their default.
+	 *
+	 * Named, so the record follows what the service passed, not the loaded ObjectService's signature.
+	 *
+	 * @param array<int, mixed> $args The arguments the mock received.
+	 *
+	 * @return array<string, mixed> The passed arguments by name.
+	 */
+	private static function passedArguments(array $args): array {
+		$named = [];
+		$parameters = (new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'searchObjectsPaginated'))->getParameters();
+		foreach ($parameters as $position => $parameter) {
+			$passed = array_key_exists($position, $args);
+			if ($passed === true && ($parameter->isDefaultValueAvailable() === false || $args[$position] !== $parameter->getDefaultValue())) {
+				$named[$parameter->getName()] = $args[$position];
+			}
+		}
+
+		return $named;
+
+	}//end passedArguments()
 }//end class
