@@ -6,7 +6,7 @@
   "lizard": "1.24.3"
  },
  "unit_reader": 2,
- "measured_at": "10b2402a464586ddc0c2f1a17c51b16a50048476",
+ "measured_at": "d34462cb2ff262b487b5b496429c3f8c7c29d883",
  "checks": [
   "javascript duplication",
   "javascript unit_complexity >10",
