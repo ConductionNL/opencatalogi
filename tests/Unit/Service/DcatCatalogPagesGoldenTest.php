@@ -171,7 +171,9 @@ class DcatCatalogPagesGoldenTest extends TestCase {
 				$rows = $world['rows'];
 				if (($world['entities'] ?? false) === true) {
 					$rows = array_map(static fn (array $row): object => new class($row) implements \JsonSerializable {
-						public function __construct(private array $row) {
+						public function __construct(
+							private array $row,
+						) {
 						}
 
 						public function jsonSerialize(): array {

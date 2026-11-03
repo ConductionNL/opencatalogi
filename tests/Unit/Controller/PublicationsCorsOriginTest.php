@@ -63,9 +63,9 @@ class PublicationsCorsOriginTest extends TestCase {
 	/**
 	 * The preflight's Access-Control-Allow-Origin for a caller.
 	 *
-	 * @param string      $header   The Origin header.
-	 * @param string|null $server   HTTP_ORIGIN in the server variables, or null for none.
-	 * @param string      $expected The origin answered.
+	 * @param string $header The Origin header.
+	 * @param string|null $server HTTP_ORIGIN in the server variables, or null for none.
+	 * @param string $expected The origin answered.
 	 *
 	 * @return void
 	 */

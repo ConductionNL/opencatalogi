@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
-use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
 use DateTime;
+use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
 use OCA\OpenRegister\Db\Flow;
 use OCA\OpenRegister\Db\FlowRun;
 use OCA\OpenRegister\Db\FlowRunMapper;

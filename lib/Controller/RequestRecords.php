@@ -39,7 +39,7 @@ class RequestRecords {
 	 * Constructor.
 	 *
 	 * @param InformationRequestServiceInterface $requests Builds request records, receipts and the terms report.
-	 * @param InformationRequestStoreInterface   $store    Stores and reads the requests.
+	 * @param InformationRequestStoreInterface $store Stores and reads the requests.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -53,7 +53,7 @@ class RequestRecords {
 	/**
 	 * Build the record of a newly received request.
 	 *
-	 * @param array  $input      The intake input.
+	 * @param array $input The intake input.
 	 * @param string $receivedBy The user id of whoever records it.
 	 *
 	 * @return array<string, mixed> The record to save.
@@ -64,14 +64,13 @@ class RequestRecords {
 	 */
 	public function receive(array $input, string $receivedBy): array {
 		return $this->requests->receive(input: $input, receivedBy: $receivedBy);
-
 	}//end receive()
 
 	/**
 	 * The request with its statutory term.
 	 *
 	 * @param array $request The request.
-	 * @param array $term    The term.
+	 * @param array $term The term.
 	 *
 	 * @return array<string, mixed> The request, with its term.
 	 *
@@ -79,7 +78,6 @@ class RequestRecords {
 	 */
 	public function withTerm(array $request, array $term): array {
 		return $this->requests->withTerm(request: $request, term: $term);
-
 	}//end withTerm()
 
 	/**
@@ -93,13 +91,12 @@ class RequestRecords {
 	 */
 	public function receipt(array $request): array {
 		return $this->requests->receipt(request: $request);
-
 	}//end receipt()
 
 	/**
 	 * The request with a batch attached.
 	 *
-	 * @param array  $request   The request.
+	 * @param array $request The request.
 	 * @param string $batchUuid The batch uuid.
 	 *
 	 * @return array<string, mixed> The request, with its batch.
@@ -110,7 +107,6 @@ class RequestRecords {
 	 */
 	public function attachBatch(array $request, string $batchUuid): array {
 		return $this->requests->attachBatch(request: $request, batchUuid: $batchUuid);
-
 	}//end attachBatch()
 
 	/**
@@ -124,14 +120,13 @@ class RequestRecords {
 	 */
 	public function termsReport(array $requests): array {
 		return $this->requests->termsReport(requests: $requests);
-
 	}//end termsReport()
 
 	/**
 	 * Store a request.
 	 *
-	 * @param array  $record The request record.
-	 * @param string $uuid   The uuid of an existing request, empty for a new one.
+	 * @param array $record The request record.
+	 * @param string $uuid The uuid of an existing request, empty for a new one.
 	 *
 	 * @return array<string, mixed> The stored request.
 	 *
@@ -139,9 +134,8 @@ class RequestRecords {
 	 *
 	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
 	 */
-	public function save(array $record, string $uuid=''): array {
+	public function save(array $record, string $uuid = ''): array {
 		return $this->store->save(record: $record, uuid: $uuid);
-
 	}//end save()
 
 	/**
@@ -157,7 +151,6 @@ class RequestRecords {
 	 */
 	public function find(string $requestId): ?array {
 		return $this->store->find(requestId: $requestId);
-
 	}//end find()
 
 	/**
@@ -171,6 +164,5 @@ class RequestRecords {
 	 */
 	public function all(): array {
 		return $this->store->all();
-
 	}//end all()
 }//end class

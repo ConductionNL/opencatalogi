@@ -212,7 +212,6 @@ class StandardsVersionService implements StandardsVersionServiceInterface {
 		}
 
 		return $matches[1];
-
 	}//end parseDiwooVersion()
 
 	/**
@@ -247,7 +246,6 @@ class StandardsVersionService implements StandardsVersionServiceInterface {
 		}
 
 		return $version;
-
 	}//end parseDcatApNlVersion()
 
 	/**
@@ -280,7 +278,6 @@ class StandardsVersionService implements StandardsVersionServiceInterface {
 		$comparison['profile'] = self::DCAT_AP_NL_PROFILE;
 
 		return $comparison;
-
 	}//end dcatApNlVersion()
 
 	/**
@@ -297,7 +294,6 @@ class StandardsVersionService implements StandardsVersionServiceInterface {
 		}
 
 		return self::parseDiwooVersion(html: $body);
-
 	}//end publishedDiwooVersion()
 
 	/**
@@ -314,7 +310,6 @@ class StandardsVersionService implements StandardsVersionServiceInterface {
 		}
 
 		return self::parseDcatApNlVersion(html: $body);
-
 	}//end publishedDcatApNlVersion()
 
 	/**
@@ -399,6 +394,5 @@ class StandardsVersionService implements StandardsVersionServiceInterface {
 		$this->fetched[$url] = (string)$body;
 
 		return $this->fetched[$url];
-
 	}//end fetch()
 }//end class

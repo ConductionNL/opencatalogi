@@ -122,8 +122,8 @@ class RetentionDecisionGoldenTest extends TestCase {
 	/**
 	 * Replace moments relative to the run with `<now>` or `<now+NM>`.
 	 *
-	 * @param mixed             $value The value.
-	 * @param DateTimeImmutable $now   The moment the case started.
+	 * @param mixed $value The value.
+	 * @param DateTimeImmutable $now The moment the case started.
 	 *
 	 * @return mixed The value.
 	 */
@@ -145,7 +145,6 @@ class RetentionDecisionGoldenTest extends TestCase {
 		}
 
 		return $value;
-
 	}//end relative()
 
 	/**
@@ -203,6 +202,5 @@ class RetentionDecisionGoldenTest extends TestCase {
 		}
 
 		return new RetentionService($config, $container, $session, $this->createMock(LoggerInterface::class));
-
 	}//end service()
 }//end class

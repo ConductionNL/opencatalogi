@@ -134,7 +134,6 @@ class TermRoll {
 		}
 
 		return new DateTimeImmutable($moment->format('Y-m-d\\TH:i:s.uP'));
-
 	}//end immutable()
 
 	/**
@@ -170,7 +169,6 @@ class TermRoll {
 		}
 
 		return $this->calculator;
-
 	}//end calculator()
 
 	/**
@@ -201,6 +199,5 @@ class TermRoll {
 		}
 
 		return $this->calendars;
-
 	}//end calendars()
 }//end class

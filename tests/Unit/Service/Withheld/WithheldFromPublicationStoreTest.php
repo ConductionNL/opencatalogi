@@ -39,8 +39,8 @@ class WithheldFromPublicationStoreTest extends TestCase {
 	}//end setUp()
 
 	/**
-	 * @param array<string, string> $config     The app config.
-	 * @param bool                  $installed  Whether OpenRegister is installed.
+	 * @param array<string, string> $config The app config.
+	 * @param bool $installed Whether OpenRegister is installed.
 	 */
 	private function store(array $config = ['publication_register' => 'r', 'withheld_document_schema' => 'w', 'catalog_register' => 'r', 'catalog_schema' => 'c', 'woo_register' => 'wr', 'woo_batch_schema' => 'b'], bool $installed = true): WithheldFromPublicationStore {
 		$appConfig = $this->createMock(IAppConfig::class);

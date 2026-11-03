@@ -840,8 +840,8 @@ class PublicationsControllerTest extends TestCase {
 
 		$this->catalogiService->method('getCatalogBySlug')
 			->willReturn([
-				'title'     => 'Guarded Catalog',
-				'schemas'   => [1, 2, 3],
+				'title' => 'Guarded Catalog',
+				'schemas' => [1, 2, 3],
 				'registers' => [7],
 			]);
 
@@ -883,8 +883,8 @@ class PublicationsControllerTest extends TestCase {
 
 		$this->catalogiService->method('getCatalogBySlug')
 			->willReturn([
-				'title'     => 'Word Catalog',
-				'schemas'   => [1],
+				'title' => 'Word Catalog',
+				'schemas' => [1],
 				'registers' => ['publication'],
 			]);
 
@@ -897,7 +897,6 @@ class PublicationsControllerTest extends TestCase {
 		$this->assertSame([], $response->getData()['results']);
 		$this->assertSame(0, $response->getData()['total']);
 	}//end testIndexAnswersTheEmptyEnvelopeWhenTheCatalogNamesNoRegisterId()
-
 
 	public function testIndexWithEmptySchemas(): void {
 		$mockObjService = $this->mockObjectService();
@@ -998,8 +997,8 @@ class PublicationsControllerTest extends TestCase {
 			->addMethods(['getId'])
 			->getMock();
 		$mockObj->method('getId')->willReturn($id);
-		$mockObj->method('getSchema')->willReturn((string) $schema);
-		$mockObj->method('getRegister')->willReturn((string) $register);
+		$mockObj->method('getSchema')->willReturn((string)$schema);
+		$mockObj->method('getRegister')->willReturn((string)$register);
 		return $mockObj;
 	}
 
@@ -2113,13 +2112,13 @@ class PublicationsControllerTest extends TestCase {
 	/**
 	 * A publication detail read, as a given caller and with a given Accept and If-None-Match header.
 	 *
-	 * @param boolean $signedIn    Whether the caller is signed in.
-	 * @param string  $accept      The Accept header of the request.
-	 * @param string  $ifNoneMatch The If-None-Match header of the request.
+	 * @param boolean $signedIn Whether the caller is signed in.
+	 * @param string $accept The Accept header of the request.
+	 * @param string $ifNoneMatch The If-None-Match header of the request.
 	 *
 	 * @return JSONResponse The answer.
 	 */
-	private function showAs(bool $signedIn, string $accept, string $ifNoneMatch=''): JSONResponse {
+	private function showAs(bool $signedIn, string $accept, string $ifNoneMatch = ''): JSONResponse {
 		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$schemaOrg = $this->createMock(\OCA\OpenCatalogi\Service\SchemaOrgService::class);
 		$schemaOrg->method('buildPublicationNode')->willReturn(self::SHOWN_NODE);

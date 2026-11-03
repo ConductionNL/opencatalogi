@@ -57,18 +57,18 @@ class BatchPublicationWriter {
 	/**
 	 * Constructor.
 	 *
-	 * @param IRootFolder        $rootFolder Resolves document references.
-	 * @param ContainerInterface $container  Resolves OpenRegister.
-	 * @param PublicationLinker  $linker     The public link to the publication.
-	 * @param IL10N              $l10n       The refusal message.
-	 * @param IAppManager|null   $appManager Whether OpenRegister is installed.
+	 * @param IRootFolder $rootFolder Resolves document references.
+	 * @param ContainerInterface $container Resolves OpenRegister.
+	 * @param PublicationLinker $linker The public link to the publication.
+	 * @param IL10N $l10n The refusal message.
+	 * @param IAppManager|null $appManager Whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly IRootFolder $rootFolder,
 		private readonly ContainerInterface $container,
 		private readonly PublicationLinker $linker,
 		private readonly IL10N $l10n,
-		private readonly ?IAppManager $appManager=null,
+		private readonly ?IAppManager $appManager = null,
 	) {
 
 	}//end __construct()
@@ -114,14 +114,13 @@ class BatchPublicationWriter {
 		}
 
 		return $listings;
-
 	}//end listings()
 
 	/**
 	 * Resolve every document, refusing the publish when one cannot be found.
 	 *
 	 * @param array<int, array<string, mixed>> $listings The publishable documents ({title, document}).
-	 * @param string                           $owner    The batch's creator.
+	 * @param string $owner The batch's creator.
 	 *
 	 * @return array<int, File> The files, in the listings' order.
 	 *
@@ -152,14 +151,13 @@ class BatchPublicationWriter {
 		}
 
 		return $files;
-
 	}//end resolveAll()
 
 	/**
 	 * One document reference as a file, or null.
 	 *
 	 * @param string $reference A file id, an absolute path, or a path in the owner's files.
-	 * @param string $owner     The batch's creator.
+	 * @param string $owner The batch's creator.
 	 *
 	 * @return File|null
 	 *
@@ -175,9 +173,9 @@ class BatchPublicationWriter {
 			$node = null;
 			if (preg_match('/^\d+$/', $reference) === 1) {
 				$node = $this->rootFolder->getFirstNodeById((int)$reference);
-			} else if (str_starts_with($reference, '/') === true) {
+			} elseif (str_starts_with($reference, '/') === true) {
 				$node = $this->rootFolder->get($reference);
-			} else if ($owner !== '') {
+			} elseif ($owner !== '') {
 				$node = $this->rootFolder->getUserFolder($owner)->get($reference);
 			}
 		} catch (Throwable) {
@@ -189,7 +187,6 @@ class BatchPublicationWriter {
 		}
 
 		return null;
-
 	}//end resolve()
 
 	/**
@@ -201,10 +198,10 @@ class BatchPublicationWriter {
 	 * unchanged), so publishing again continues instead of making a second
 	 * publication.
 	 *
-	 * @param array<string, mixed>             $batch        The batch.
-	 * @param array<int, array<string, mixed>> $listings     The publishable documents.
-	 * @param string                           $now          The moment of publishing.
-	 * @param callable                         $keepProgress Stores the batch with its progress.
+	 * @param array<string, mixed> $batch The batch.
+	 * @param array<int, array<string, mixed>> $listings The publishable documents.
+	 * @param string $now The moment of publishing.
+	 * @param callable $keepProgress Stores the batch with its progress.
 	 *
 	 * @return array{id: string, url: string, wooCategory: string, attached: array<int, string>}
 	 *
@@ -247,7 +244,7 @@ class BatchPublicationWriter {
 	 * Create the batch's publication, or take the one an earlier attempt made.
 	 *
 	 * @param array<string, mixed> $batch The batch.
-	 * @param string               $now   The moment of publishing.
+	 * @param string $now The moment of publishing.
 	 *
 	 * @return array{id: string, entity: mixed}
 	 *
@@ -277,14 +274,13 @@ class BatchPublicationWriter {
 		);
 
 		return ['id' => $this->idOf(entity: $entity), 'entity' => $entity];
-
 	}//end publication()
 
 	/**
 	 * The publication a batch becomes.
 	 *
 	 * @param array<string, mixed> $batch The batch.
-	 * @param string               $now   The moment of publishing.
+	 * @param string $now The moment of publishing.
 	 *
 	 * @return array<string, mixed>
 	 *
@@ -294,7 +290,7 @@ class BatchPublicationWriter {
 		$caseReference = (string)($batch['caseReference'] ?? '');
 		$title = trim((string)($batch['title'] ?? ''));
 		if ($title === '') {
-			$title = trim('Woo-publicatie '.$caseReference);
+			$title = trim('Woo-publicatie ' . $caseReference);
 		}
 
 		$payload = [
@@ -309,7 +305,6 @@ class BatchPublicationWriter {
 		}
 
 		return $payload;
-
 	}//end payload()
 
 	/**
@@ -328,14 +323,13 @@ class BatchPublicationWriter {
 		}
 
 		return WooCategory::WOO_REQUEST;
-
 	}//end category()
 
 	/**
 	 * Attach one file to the publication and publish it.
 	 *
 	 * @param array{id: string, entity: mixed} $publication The publication.
-	 * @param File                             $file        The document.
+	 * @param File $file The document.
 	 *
 	 * @return void
 	 *
@@ -380,7 +374,6 @@ class BatchPublicationWriter {
 	 */
 	public function url(string $id): string {
 		return $this->linker->url(id: $id);
-
 	}//end url()
 
 	/**
@@ -414,6 +407,5 @@ class BatchPublicationWriter {
 		}
 
 		return (string)($entity['@self']['id'] ?? ($entity['id'] ?? ''));
-
 	}//end idOf()
 }//end class

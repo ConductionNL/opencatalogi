@@ -158,16 +158,19 @@ class RetentionApplyDefaultsGoldenTest extends TestCase {
 		};
 		$evaluator = new class((string)($world['evaluator'] ?? 'first'), $record) {
 			/**
-			 * @param string   $mode   How to answer.
+			 * @param string $mode How to answer.
 			 * @param \Closure $record Records an evaluation.
 			 */
-			public function __construct(private string $mode, private \Closure $record) {
+			public function __construct(
+				private string $mode,
+				private \Closure $record,
+			) {
 			}
 
 			/**
 			 * Answer with the first matching rule's outputs.
 			 *
-			 * @param array<string, mixed> $table  The decision table.
+			 * @param array<string, mixed> $table The decision table.
 			 * @param array<string, mixed> $inputs The inputs.
 			 *
 			 * @return array<string, mixed>
@@ -227,6 +230,5 @@ class RetentionApplyDefaultsGoldenTest extends TestCase {
 		);
 
 		return new RetentionService($config, $container, $this->createMock(IUserSession::class), $logger);
-
 	}//end service()
 }//end class

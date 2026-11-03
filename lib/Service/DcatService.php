@@ -245,8 +245,8 @@ class DcatService implements DcatServiceInterface {
 	/**
 	 * Resolve what a catalog document is built from: scope, defaults, schema mappings and options.
 	 *
-	 * @param array<string, mixed> $catalog     The catalog object.
-	 * @param string               $catalogSlug The catalog slug.
+	 * @param array<string, mixed> $catalog The catalog object.
+	 * @param string $catalogSlug The catalog slug.
 	 *
 	 * @return array<string, mixed>
 	 *
@@ -281,7 +281,7 @@ class DcatService implements DcatServiceInterface {
 	 * WOO-001): anonymous callers receive only publicly visible objects.
 	 *
 	 * @param array $scope The resolved catalog scope.
-	 * @param int   $page  The 1-based page number.
+	 * @param int $page The 1-based page number.
 	 *
 	 * @return array The paginated search result.
 	 *
@@ -312,7 +312,7 @@ class DcatService implements DcatServiceInterface {
 	 * Map a page of publications to DCAT datasets, skipping schemas that opted out.
 	 *
 	 * @param array $publications The publications of this page.
-	 * @param array $scope        The resolved catalog scope.
+	 * @param array $scope The resolved catalog scope.
 	 *
 	 * @return array{datasets: array, refs: array, maxModified: int, violations: array<int, array<string, mixed>>}
 	 *
@@ -349,7 +349,7 @@ class DcatService implements DcatServiceInterface {
 	 * does; a failing lookup yields a dataset without distributions.
 	 *
 	 * @param array $publication The publication.
-	 * @param array $scope       The resolved catalog scope, with the file service.
+	 * @param array $scope The resolved catalog scope, with the file service.
 	 *
 	 * @return DcatDatasetSource
 	 *
@@ -377,7 +377,7 @@ class DcatService implements DcatServiceInterface {
 	 * Map one publication to a DCAT dataset; its violations are left on the source.
 	 *
 	 * @param DcatDatasetSource $source The publication, its IRI and its attachments.
-	 * @param array             $scope  The resolved catalog scope.
+	 * @param array $scope The resolved catalog scope.
 	 *
 	 * @return array The dataset node.
 	 *
@@ -406,8 +406,8 @@ class DcatService implements DcatServiceInterface {
 	 *
 	 * The declared profile lets a harvester and our own validator read the same version.
 	 *
-	 * @param array $catalog     The catalog object.
-	 * @param array $scope       The resolved catalog scope.
+	 * @param array $catalog The catalog object.
+	 * @param array $scope The resolved catalog scope.
 	 * @param array $datasetRefs The `@id` references of the datasets on this page.
 	 *
 	 * @return array
@@ -440,8 +440,8 @@ class DcatService implements DcatServiceInterface {
 	 * The Hydra paging node, or null for a single page.
 	 *
 	 * @param string $catalogIri The catalog endpoint URL.
-	 * @param int    $page       The 1-based page number.
-	 * @param bool   $hasNext    Whether a next page exists.
+	 * @param int $page The 1-based page number.
+	 * @param bool $hasNext Whether a next page exists.
 	 *
 	 * @return array|null
 	 *
@@ -470,10 +470,10 @@ class DcatService implements DcatServiceInterface {
 	/**
 	 * The `_meta` block: Last-Modified from the newest dataset (or now), ETag, count and paging.
 	 *
-	 * @param mixed $etagKey     The catalog id, or its slug.
-	 * @param int   $count       The number of datasets on this page.
-	 * @param int   $maxModified The newest dataset timestamp, 0 when none is known.
-	 * @param array $paging      The page number and whether a next page exists.
+	 * @param mixed $etagKey The catalog id, or its slug.
+	 * @param int $count The number of datasets on this page.
+	 * @param int $maxModified The newest dataset timestamp, 0 when none is known.
+	 * @param array $paging The page number and whether a next page exists.
 	 *
 	 * @return array
 	 *
@@ -710,7 +710,7 @@ class DcatService implements DcatServiceInterface {
 	 * One violation per dataset in a document that lacks a mandatory property.
 	 *
 	 * @param array<string, mixed> $document The JSON-LD catalog document.
-	 * @param array<string, string> $tag     Keys every violation carries between its iri and what is missing.
+	 * @param array<string, string> $tag Keys every violation carries between its iri and what is missing.
 	 *
 	 * @return array<int, array<string, mixed>> The violations.
 	 *

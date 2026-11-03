@@ -260,7 +260,7 @@ class RobotsControllerTest extends TestCase {
 	 * A catalogue entity with a slug and its Woo flag.
 	 *
 	 * @param string $slug The slug.
-	 * @param bool   $woo  Whether it publishes a Woo sitemap.
+	 * @param bool $woo Whether it publishes a Woo sitemap.
 	 */
 	private function catalogue(string $slug, bool $woo): \OCA\OpenRegister\Db\ObjectEntity {
 		$catalogue = new \OCA\OpenRegister\Db\ObjectEntity();
@@ -273,7 +273,7 @@ class RobotsControllerTest extends TestCase {
 	 * The robots.txt text for these catalogues, with the query the controller asked.
 	 *
 	 * @param array<int, \OCA\OpenRegister\Db\ObjectEntity> $catalogues The search answer.
-	 * @param array<string, mixed>|null                      $query      Filled with the query asked.
+	 * @param array<string, mixed>|null $query Filled with the query asked.
 	 */
 	private function robotsFor(array $catalogues, ?array &$query = null): string {
 		$objectService = $this->getMockBuilder(\OCA\OpenRegister\Service\ObjectService::class)

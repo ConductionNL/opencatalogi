@@ -184,7 +184,7 @@ class PortalContributionProviderTest extends TestCase {
 	public function testTheDossierPageShowsTheSelectedDossier(): void {
 		$manifest = $this->manifest('citizen');
 		$blocks = $this->byId($manifest['pages'])['dossiers']['blocks'];
-		$types = array_map(static fn (array $block): string => $block['type'].':'.($block['collection'] ?? ($block['action'] ?? '')), $blocks);
+		$types = array_map(static fn (array $block): string => $block['type'] . ':' . ($block['collection'] ?? ($block['action'] ?? '')), $blocks);
 		$this->assertSame(['richText:', 'action:createDossier', 'collection:myDossiers', 'detail:myDossiers'], $types);
 
 		$dossiers = $this->byId($manifest['collections'])['myDossiers'];
@@ -220,7 +220,7 @@ class PortalContributionProviderTest extends TestCase {
 			$words = explode(' ', $label);
 			array_shift($words);
 			foreach ($words as $word) {
-				$this->assertFalse(ctype_upper(mb_substr($word, 0, 1)) && $word !== 'Woo', 'Title Case in: '.$label);
+				$this->assertFalse(ctype_upper(mb_substr($word, 0, 1)) && $word !== 'Woo', 'Title Case in: ' . $label);
 			}
 		}
 	}

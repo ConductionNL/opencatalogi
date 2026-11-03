@@ -1766,7 +1766,7 @@ class CatalogiServiceTest extends TestCase {
 	 * whose read-rule guard the test decides.
 	 *
 	 * @param ObjectService|MockObject $objectService The ObjectService mock.
-	 * @param \Closure                 $guard         What applySchemaScopeReadRuleGuard() returns.
+	 * @param \Closure $guard What applySchemaScopeReadRuleGuard() returns.
 	 *
 	 * @return void
 	 */

@@ -134,7 +134,6 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 		}
 
 		return $this->objectService;
-
 	}//end getObjectService()
 
 	/**
@@ -172,7 +171,6 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 		}
 
 		return $indexed;
-
 	}//end indexCaseTypes()
 
 	/**
@@ -217,7 +215,6 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 		unset($entry['unavailableReason']);
 
 		return $entry;
-
 	}//end decideAvailability()
 
 	/**
@@ -233,7 +230,6 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 		$entry['unavailableReason'] = $reason;
 
 		return $entry;
-
 	}//end markUnavailable()
 
 	/**
@@ -352,7 +348,6 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 		$assembled['total'] = (int)($entryResult['total'] ?? count($entries));
 
 		return $assembled;
-
 	}//end readCatalogue()
 
 	/**
@@ -387,6 +382,5 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 		}
 
 		return $arrays;
-
 	}//end toArrays()
 }//end class

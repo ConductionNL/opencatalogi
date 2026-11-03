@@ -60,7 +60,6 @@ class OoapiService implements OoapiServiceInterface {
 	 */
 	public const MAX_PAGE_SIZE = 250;
 
-
 	/**
 	 * OoapiService constructor.
 	 *
@@ -211,7 +210,6 @@ class OoapiService implements OoapiServiceInterface {
 		}
 
 		return $this->getOrganization(organisationId: $organisationId, scope: $scope);
-
 	}//end renderOrganization()
 
 	/**
@@ -233,7 +231,6 @@ class OoapiService implements OoapiServiceInterface {
 		}
 
 		return $this->getOrganization(organisationId: $organisationId, scope: $scope);
-
 	}//end organizationById()
 
 	/**
@@ -354,7 +351,6 @@ class OoapiService implements OoapiServiceInterface {
 	 */
 	public function listCourses(OoapiScope $scope, OoapiPage $page): array {
 		return $this->searchCollection(scope: $scope, page: $page, idField: 'courseId');
-
 	}//end listCourses()
 
 	/**
@@ -369,7 +365,6 @@ class OoapiService implements OoapiServiceInterface {
 	 */
 	public function listPrograms(OoapiScope $scope, OoapiPage $page): array {
 		return $this->searchCollection(scope: $scope, page: $page, idField: 'programId');
-
 	}//end listPrograms()
 
 	/**

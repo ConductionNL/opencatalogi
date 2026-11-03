@@ -144,7 +144,6 @@ class UsageAggregationGoldenTest extends TestCase {
 		}
 
 		return $cases;
-
 	}//end agents()
 
 	/**
@@ -173,7 +172,7 @@ class UsageAggregationGoldenTest extends TestCase {
 	 * aggregateInstanceSeries() matches the recording for each window.
 	 *
 	 * @param string|null $from The window start.
-	 * @param string      $to   The window end.
+	 * @param string $to The window end.
 	 *
 	 * @return void
 	 */
@@ -198,8 +197,8 @@ class UsageAggregationGoldenTest extends TestCase {
 	/**
 	 * isCrawler() matches the recording.
 	 *
-	 * @param string|null $agent    The user agent.
-	 * @param string      $crawlers The configured crawler list.
+	 * @param string|null $agent The user agent.
+	 * @param string $crawlers The configured crawler list.
 	 *
 	 * @return void
 	 */
@@ -215,8 +214,8 @@ class UsageAggregationGoldenTest extends TestCase {
 	/**
 	 * Compare one result with its recording, recording it under GOLDEN_RECORD=1.
 	 *
-	 * @param string $name   The recording key.
-	 * @param mixed  $actual The result.
+	 * @param string $name The recording key.
+	 * @param mixed $actual The result.
 	 *
 	 * @return void
 	 */
@@ -251,14 +250,13 @@ class UsageAggregationGoldenTest extends TestCase {
 		$objects = $this->createMock(ObjectService::class);
 		$objects->method('searchObjects')->willReturn($rows);
 		return $objects;
-
 	}//end objectService()
 
 	/**
 	 * A UsageCounterService with a counter register and schema and the given crawler list.
 	 *
-	 * @param ObjectService|null $objects  The ObjectService, or null when OpenRegister is missing.
-	 * @param string             $crawlers The configured crawler list.
+	 * @param ObjectService|null $objects The ObjectService, or null when OpenRegister is missing.
+	 * @param string $crawlers The configured crawler list.
 	 *
 	 * @return UsageCounterService
 	 */
@@ -278,6 +276,5 @@ class UsageAggregationGoldenTest extends TestCase {
 		$container->method('get')->willReturn($objects);
 
 		return new UsageCounterService($config, $appManager, $container, $this->createMock(LoggerInterface::class));
-
 	}//end service()
 }//end class

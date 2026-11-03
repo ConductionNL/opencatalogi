@@ -66,7 +66,7 @@ class SavedSearchService implements SavedSearchServiceInterface {
 	/**
 	 * Save a search for this resident.
 	 *
-	 * @param string               $owner The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param array<string, mixed> $input title, query (object or JSON), frequency.
 	 *
 	 * @return array<string, mixed> The saved search.
@@ -112,7 +112,7 @@ class SavedSearchService implements SavedSearchServiceInterface {
 	/**
 	 * Stop the notices of a saved search: one click from the notice.
 	 *
-	 * @param string $owner         The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $savedSearchId The saved search.
 	 *
 	 * @return array{active: bool}
@@ -127,13 +127,12 @@ class SavedSearchService implements SavedSearchServiceInterface {
 		$this->store->save(schema: self::SCHEMA, data: $saved, id: $savedSearchId);
 
 		return ['active' => false];
-
 	}//end pause()
 
 	/**
 	 * Delete a saved search.
 	 *
-	 * @param string $owner         The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $savedSearchId The saved search.
 	 *
 	 * @return array{deleted: bool}
@@ -145,13 +144,12 @@ class SavedSearchService implements SavedSearchServiceInterface {
 	public function delete(string $owner, string $savedSearchId): array {
 		$this->owned(owner: $owner, savedSearchId: $savedSearchId);
 		return ['deleted' => $this->store->delete(schema: self::SCHEMA, id: $savedSearchId)];
-
 	}//end delete()
 
 	/**
 	 * The saved search when this owner owns it.
 	 *
-	 * @param string $owner         The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $savedSearchId The saved search.
 	 *
 	 * @return array<string, mixed>
@@ -165,7 +163,6 @@ class SavedSearchService implements SavedSearchServiceInterface {
 		}
 
 		return $saved;
-
 	}//end owned()
 
 	/**
@@ -202,7 +199,7 @@ class SavedSearchService implements SavedSearchServiceInterface {
 		$categories = $this->list(value: ($filters['informatiecategorie'] ?? []), field: 'informatiecategorie');
 		foreach ($categories as $category) {
 			if (array_key_exists($category, WooCategory::ALL) === false) {
-				throw new PortalInputException(message: 'Unknown information category: '.$category);
+				throw new PortalInputException(message: 'Unknown information category: ' . $category);
 			}
 		}
 
@@ -210,7 +207,7 @@ class SavedSearchService implements SavedSearchServiceInterface {
 		foreach (['periodFrom', 'periodTo'] as $bound) {
 			$period[$bound] = $this->string(value: ($filters[$bound] ?? ''), max: 10, field: $bound);
 			if ($period[$bound] !== '' && preg_match('/^\d{4}-\d{2}-\d{2}$/', $period[$bound]) !== 1) {
-				throw new PortalInputException(message: $bound.' must be a date like 2026-01-31');
+				throw new PortalInputException(message: $bound . ' must be a date like 2026-01-31');
 			}
 		}
 
@@ -230,8 +227,8 @@ class SavedSearchService implements SavedSearchServiceInterface {
 	/**
 	 * A trimmed string within a length.
 	 *
-	 * @param mixed  $value The value.
-	 * @param int    $max   The most characters.
+	 * @param mixed $value The value.
+	 * @param int $max The most characters.
 	 * @param string $field The field, for the message.
 	 *
 	 * @return string
@@ -244,17 +241,16 @@ class SavedSearchService implements SavedSearchServiceInterface {
 		}
 
 		if (is_string($value) === false || mb_strlen(trim($value)) > $max) {
-			throw new PortalInputException(message: $field.' must be text of at most '.$max.' characters');
+			throw new PortalInputException(message: $field . ' must be text of at most ' . $max . ' characters');
 		}
 
 		return trim($value);
-
 	}//end string()
 
 	/**
 	 * A list of short strings.
 	 *
-	 * @param mixed  $value The value.
+	 * @param mixed $value The value.
 	 * @param string $field The field, for the message.
 	 *
 	 * @return array<int, string>
@@ -263,19 +259,18 @@ class SavedSearchService implements SavedSearchServiceInterface {
 	 */
 	private function list(mixed $value, string $field): array {
 		if (is_array($value) === false || array_is_list($value) === false || count($value) > 50) {
-			throw new PortalInputException(message: $field.' must be a list');
+			throw new PortalInputException(message: $field . ' must be a list');
 		}
 
 		$out = [];
 		foreach ($value as $entry) {
 			if (is_string($entry) === false || $entry === '' || mb_strlen($entry) > 255) {
-				throw new PortalInputException(message: $field.' must hold text values');
+				throw new PortalInputException(message: $field . ' must hold text values');
 			}
 
 			$out[] = $entry;
 		}
 
 		return $out;
-
 	}//end list()
 }//end class

@@ -99,8 +99,8 @@ class SetupActions {
 	/**
 	 * Run one setup action and answer with its outcome.
 	 *
-	 * @param string   $actionId The action id from the manifest.
-	 * @param IRequest $request  The request, for the dataset a card posts.
+	 * @param string $actionId The action id from the manifest.
+	 * @param IRequest $request The request, for the dataset a card posts.
 	 *
 	 * @return JSONResponse `{ success, message }`, 400 for an unknown action.
 	 *

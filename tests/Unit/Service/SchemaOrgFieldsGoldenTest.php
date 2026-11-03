@@ -265,6 +265,5 @@ class SchemaOrgFieldsGoldenTest extends TestCase {
 		);
 
 		return new SchemaOrgService($container, $dcat, $urls, $this->createMock(LoggerInterface::class));
-
 	}//end service()
 }//end class

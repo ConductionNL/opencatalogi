@@ -68,7 +68,7 @@ class AttachmentMigrationService implements AttachmentMigrationServiceInterface 
 	 * Wire the container and the logger.
 	 *
 	 * @param ContainerInterface $container Container, so OpenRegister is resolved lazily.
-	 * @param LoggerInterface    $logger    Logger.
+	 * @param LoggerInterface $logger Logger.
 	 *
 	 * @return void
 	 *
@@ -143,7 +143,8 @@ class AttachmentMigrationService implements AttachmentMigrationServiceInterface 
 	 * @param array<string, mixed> $document The document's fields.
 	 *
 	 * @return array{description: string|null, labels: array<int, string>, published: string|null, depublished: string|null}
-	 *         The metadata to write onto the file.
+	 *
+	 * Returns: The metadata to write onto the file.
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-the-documents-metadata-lands-on-the-file-req-att-102
 	 */
@@ -203,8 +204,8 @@ class AttachmentMigrationService implements AttachmentMigrationServiceInterface 
 	/**
 	 * Load the publication a document points at.
 	 *
-	 * @param object                                  $objectService The OpenRegister ObjectService.
-	 * @param array{id: string|null, slug: string|null} $link        What the document's link identifies.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param array{id: string|null, slug: string|null} $link What the document's link identifies.
 	 *
 	 * @return object|null The publication, or null when it cannot be found.
 	 *
@@ -279,7 +280,7 @@ class AttachmentMigrationService implements AttachmentMigrationServiceInterface 
 	 * Load the document as an entity, which is what the file API takes.
 	 *
 	 * @param object $objectService The OpenRegister ObjectService.
-	 * @param string $uuid          The document uuid.
+	 * @param string $uuid The document uuid.
 	 *
 	 * @return object The document entity.
 	 *
@@ -295,7 +296,7 @@ class AttachmentMigrationService implements AttachmentMigrationServiceInterface 
 	/**
 	 * Resolve a search row to an entity.
 	 *
-	 * @param mixed  $row           The row as returned by the reader.
+	 * @param mixed $row The row as returned by the reader.
 	 * @param object $objectService The OpenRegister ObjectService.
 	 *
 	 * @return object|null The entity, or null.

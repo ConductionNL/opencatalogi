@@ -149,7 +149,6 @@ class DecisionPublicationValidator implements DecisionPublicationValidatorInterf
 		}
 
 		return $text;
-
 	}//end publicationText()
 
 	/**
@@ -178,6 +177,5 @@ class DecisionPublicationValidator implements DecisionPublicationValidatorInterf
 		}
 
 		return $decision;
-
 	}//end applyValidated()
 }//end class

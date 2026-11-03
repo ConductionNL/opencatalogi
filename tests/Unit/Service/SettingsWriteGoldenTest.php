@@ -99,9 +99,9 @@ class SettingsWriteGoldenTest extends TestCase {
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param string               $method  The method.
+	 * @param string $method The method.
 	 * @param array<string, mixed> $payload The payload.
-	 * @param string               $config  'throws' for a failing app config.
+	 * @param string $config 'throws' for a failing app config.
 	 *
 	 * @return void
 	 */

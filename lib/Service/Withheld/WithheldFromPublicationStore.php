@@ -57,7 +57,7 @@ class WithheldFromPublicationStore {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig         $config     Holds the register and schema ids.
+	 * @param IAppConfig $config Holds the register and schema ids.
 	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 */
 	public function __construct(
@@ -133,8 +133,8 @@ class WithheldFromPublicationStore {
 	 * first, so a batch created while the scan runs lands after the pages already read and
 	 * cannot shift a batch past the scan.
 	 *
-	 * @param string $register      The batch register.
-	 * @param string $schema        The batch schema.
+	 * @param string $register The batch register.
+	 * @param string $schema The batch schema.
 	 * @param string $publicationId The publication.
 	 *
 	 * @return array<string, mixed>|null The batch, or null when none names the publication.
@@ -166,7 +166,7 @@ class WithheldFromPublicationStore {
 	 * The catalogues whose registers and schemas hold the given register and schema.
 	 *
 	 * @param string $register The publication's register.
-	 * @param string $schema   The publication's schema.
+	 * @param string $schema The publication's schema.
 	 *
 	 * @return list<array<string, mixed>>
 	 *
@@ -193,9 +193,9 @@ class WithheldFromPublicationStore {
 	/**
 	 * Search one register and schema on the server's behalf.
 	 *
-	 * @param string               $register The register.
-	 * @param string               $schema   The schema.
-	 * @param array<string, mixed> $filters  Property filters.
+	 * @param string $register The register.
+	 * @param string $schema The schema.
+	 * @param array<string, mixed> $filters Property filters.
 	 *
 	 * @return list<array<string, mixed>>
 	 *

@@ -207,12 +207,12 @@ class GlossaryControllerTest extends TestCase {
 				['opencatalogi', 'cors_allowed_origins', '*', '*'],
 			]);
 		$this->request->method('getParams')->willReturn([
-				'_schemas' => [56],
-				'_registers' => [99],
-				'_schema' => 56,
-				'schema' => 56,
-				'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
-			]);
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+		]);
 		$this->request->server = [];
 
 		$this->assertEquals(200, $this->controller->index()->getStatus());

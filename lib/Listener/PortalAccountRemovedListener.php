@@ -73,8 +73,8 @@ class PortalAccountRemovedListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param CitizenCollectionServiceInterface $collections Deletes the resident's objects.
-	 * @param ContainerInterface       $container   Resolves OpenRegister's mappers.
-	 * @param LoggerInterface          $logger      The logger.
+	 * @param ContainerInterface $container Resolves OpenRegister's mappers.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		private readonly CitizenCollectionServiceInterface $collections,
@@ -154,7 +154,6 @@ class PortalAccountRemovedListener implements IEventListener {
 		}
 
 		return $subjectRef;
-
 	}//end removedAccountOwner()
 
 	/**
@@ -167,7 +166,6 @@ class PortalAccountRemovedListener implements IEventListener {
 	 */
 	private function isRemoval(array $newData, array $oldData): bool {
 		return ($newData['status'] ?? null) === self::REMOVED && ($oldData['status'] ?? null) !== self::REMOVED;
-
 	}//end isRemoval()
 
 	/**
@@ -186,14 +184,13 @@ class PortalAccountRemovedListener implements IEventListener {
 		}
 
 		return $subjectRef;
-
 	}//end subjectRefOf()
 
 	/**
 	 * Whether a register and schema, as ids or slugs, are portaliq's accounts.
 	 *
 	 * @param string $register The object's register.
-	 * @param string $schema   The object's schema.
+	 * @param string $schema The object's schema.
 	 *
 	 * @return bool
 	 */
@@ -206,7 +203,7 @@ class PortalAccountRemovedListener implements IEventListener {
 	/**
 	 * The slug for an id, or the value itself when it already is one.
 	 *
-	 * @param string $map   `register` or `schema`.
+	 * @param string $map `register` or `schema`.
 	 * @param string $value The id or slug.
 	 *
 	 * @return string
@@ -218,7 +215,7 @@ class PortalAccountRemovedListener implements IEventListener {
 				try {
 					$this->slugs[$key] = (array)$this->container->get($class)->getIdToSlugMap();
 				} catch (Throwable $e) {
-					$this->logger->debug('OpenCatalogi: no '.$key.' slugs', ['reason' => $e->getMessage()]);
+					$this->logger->debug('OpenCatalogi: no ' . $key . ' slugs', ['reason' => $e->getMessage()]);
 				}
 			}
 		}
@@ -229,6 +226,5 @@ class PortalAccountRemovedListener implements IEventListener {
 		}
 
 		return $value;
-
 	}//end slugOf()
 }//end class

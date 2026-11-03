@@ -264,9 +264,9 @@ class SitemapService implements SitemapServiceInterface {
 	/**
 	 * Map one file of a publication to a DiWoo document; see SitemapDocumentMapper::map().
 	 *
-	 * @param array                             $publication The publication as returned from ObjectService.
-	 * @param array                             $file        The file metadata belonging to that publication.
-	 * @param array<int, array<string, string>> $violations  Per-document unresolved-axis report (by reference).
+	 * @param array $publication The publication as returned from ObjectService.
+	 * @param array $file The file metadata belonging to that publication.
+	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference).
 	 *
 	 * @return array A DIWOO metadata array ready for XMLResponse.
 	 *
@@ -346,8 +346,8 @@ class SitemapService implements SitemapServiceInterface {
 	 * empty, because reading "resolved to nothing" as "names nothing" would widen the
 	 * sitemap back to the whole catalogue (REQ-WIC-003).
 	 *
-	 * @param array       $schemaIds The catalog's schema ids.
-	 * @param string|null $code      The category code, or null for no known category.
+	 * @param array $schemaIds The catalog's schema ids.
+	 * @param string|null $code The category code, or null for no known category.
 	 *
 	 * @return array
 	 *
@@ -398,7 +398,7 @@ class SitemapService implements SitemapServiceInterface {
 	/**
 	 * The id of a register schema whose slug is one of the wanted slugs, or null.
 	 *
-	 * @param mixed         $schema The register's schema entry.
+	 * @param mixed $schema The register's schema entry.
 	 * @param array<string> $wanted The lower-case slugs a category names.
 	 *
 	 * @return mixed
@@ -511,7 +511,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * The first object a search finds, or an empty array; visibility is governed by RBAC on the search.
 	 *
 	 * @param mixed $objectService The OpenRegister ObjectService.
-	 * @param array $query         The search.
+	 * @param array $query The search.
 	 *
 	 * @return mixed
 	 *
@@ -553,7 +553,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * Forget a title-matched schema (and its register) outside the catalogue: it contributes nothing.
 	 *
 	 * @param SitemapRequest $request The request.
-	 * @param array          $scope   The catalogue's registers and schemas.
+	 * @param array $scope The catalogue's registers and schemas.
 	 *
 	 * @return void
 	 */
@@ -682,7 +682,6 @@ class SitemapService implements SitemapServiceInterface {
 		$violations = $this->collectDiwooViolations(publications: $this->publicationsWithFiles(rows: ($publicationResult['results'] ?? [])));
 
 		return ['catalogSlug' => $catalogSlug, 'categoryCode' => $categoryCode, 'valid' => ($violations === []), 'violations' => $violations];
-
 	}//end validateDiwooOutput()
 
 	/**

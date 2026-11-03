@@ -34,8 +34,8 @@ class PortalInput {
 	/**
 	 * A trimmed string within a length, or a refusal.
 	 *
-	 * @param mixed  $value The value.
-	 * @param int    $max   The most characters.
+	 * @param mixed $value The value.
+	 * @param int $max The most characters.
 	 * @param string $field The field, for the message.
 	 *
 	 * @return string
@@ -49,16 +49,15 @@ class PortalInput {
 		}
 
 		if (is_string($value) === false) {
-			throw new PortalInputException(message: $field.' must be text');
+			throw new PortalInputException(message: $field . ' must be text');
 		}
 
 		$value = trim($value);
 		if (mb_strlen($value) > $max) {
-			throw new PortalInputException(message: $field.' is too long');
+			throw new PortalInputException(message: $field . ' is too long');
 		}
 
 		return $value;
-
 	}//end text()
 
 	/**
@@ -89,6 +88,5 @@ class PortalInput {
 		}
 
 		return $value;
-
 	}//end attachment()
 }//end class

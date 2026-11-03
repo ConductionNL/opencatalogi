@@ -191,11 +191,6 @@ class SettingsService implements SettingsServiceInterface {
 		],
 	];
 
-
-
-
-
-
 	/**
 	 * Seeded catalogues that ship unpublished and are published once their scope resolves.
 	 *
@@ -300,7 +295,6 @@ class SettingsService implements SettingsServiceInterface {
 	 */
 	private const OPENREGISTER_APP_ID = 'openregister';
 
-
 	/**
 	 * SettingsService constructor.
 	 *
@@ -399,7 +393,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return true;
-
 	}//end installOrUpdateOpenRegister()
 
 	/**
@@ -417,7 +410,7 @@ class SettingsService implements SettingsServiceInterface {
 				'Failed to install/update OpenRegister: version %s is older than the required %s. '
 				. 'Update it from the Nextcloud App Store (or `occ app:update openregister`).',
 				$this->appManager->getAppVersion(self::OPENREGISTER_APP_ID),
-				(string) $minVersion
+				(string)$minVersion
 			)
 		);
 
@@ -474,7 +467,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return null;
-
 	}//end publicationRegister()
 
 	/**
@@ -482,7 +474,7 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * The schema is the register's first schema whose title contains the type.
 	 *
-	 * @param string                    $type     The object type.
+	 * @param string $type The object type.
 	 * @param array<string, mixed>|null $register The publication register, or null when there is none.
 	 *
 	 * @return array<string, mixed> The `<type>_register` and `<type>_schema` keys found.
@@ -501,14 +493,13 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $configuration;
-
 	}//end autoConfiguration()
 
 	/**
 	 * The first schema whose title contains the type, skipping entries that are not arrays.
 	 *
-	 * @param mixed  $schemas The register's schemas.
-	 * @param string $type    The object type.
+	 * @param mixed $schemas The register's schemas.
+	 * @param string $type The object type.
 	 *
 	 * @return array<string, mixed>|null The schema, or null when none matches.
 	 *
@@ -526,7 +517,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return null;
-
 	}//end schemaTitled()
 
 	/**
@@ -576,7 +566,6 @@ class SettingsService implements SettingsServiceInterface {
 
 		$this->updateSettings(data: $configuration);
 		return true;
-
 	}//end applyAutoConfiguration()
 
 	/**
@@ -692,7 +681,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $availability;
-
 	}//end registerAvailability()
 
 	/**
@@ -712,7 +700,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $defaults + self::SETTING_DEFAULTS;
-
 	}//end settingDefaults()
 
 	/**
@@ -760,7 +747,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return (array)$entity;
-
 	}//end entityArray()
 
 	/**
@@ -784,7 +770,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $schemaMapper->findMultipleOptimized(ids: $idsToResolve);
-
 	}//end referencedSchemas()
 
 	/**
@@ -810,7 +795,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return array_keys($idsToResolve);
-
 	}//end referencedSchemaIds()
 
 	/**
@@ -833,7 +817,6 @@ class SettingsService implements SettingsServiceInterface {
 
 		$registerArray['schemas'] = self::resolvedSchemas(schemaIds: $schemaIds, schemaMap: $schemaMap);
 		return $registerArray;
-
 	}//end withFullSchemas()
 
 	/**
@@ -859,7 +842,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $fullSchemas;
-
 	}//end resolvedSchemas()
 
 	/**
@@ -889,7 +871,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return (string)json_encode((object)$sources);
-
 	}//end normaliseChannelSources()
 
 	/**
@@ -940,14 +921,13 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return array_merge($keys, array_keys(self::SETTING_DEFAULTS));
-
 	}//end writableSettingKeys()
 
 	/**
 	 * The value to store for a setting: channel sources normalised, the cache time clamped.
 	 *
-	 * @param string $key   The config key.
-	 * @param mixed  $value The value the caller sent.
+	 * @param string $key The config key.
+	 * @param mixed $value The value the caller sent.
 	 *
 	 * @return mixed The value to store.
 	 *
@@ -963,7 +943,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $value;
-
 	}//end storableSetting()
 
 	/**
@@ -985,7 +964,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return min(self::PUBLIC_API_CACHE_MAX_SECONDS, max(0, (int)$value));
-
 	}//end publicApiCacheSeconds()
 
 	/**
@@ -1054,7 +1032,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return 'false';
-
 	}//end storedFlag()
 
 	/**
@@ -1250,7 +1227,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $data;
-
 	}//end readConfigurationFile()
 
 	/**
@@ -1283,7 +1259,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $data;
-
 	}//end mergeRegisterFragments()
 
 	/**
@@ -1303,7 +1278,6 @@ class SettingsService implements SettingsServiceInterface {
 		$fragmentFiles = glob($directory . '/*.json');
 		sort($fragmentFiles);
 		return $fragmentFiles;
-
 	}//end fragmentFiles()
 
 	/**
@@ -1330,7 +1304,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $relativeFilePath;
-
 	}//end relativeSourcePath()
 
 	/**
@@ -1359,7 +1332,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $data;
-
 	}//end withSourceTracking()
 
 	/**
@@ -1385,7 +1357,7 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * One key of a deep merge: two lists concatenate, two arrays merge, anything else takes the overlay.
 	 *
-	 * @param mixed $base    The base value, null when the key is new.
+	 * @param mixed $base The base value, null when the key is new.
 	 * @param mixed $overlay The fragment's value.
 	 *
 	 * @return mixed The merged value.
@@ -1449,8 +1421,8 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * The string schema slugs no register declares, in `components.schemas` order.
 	 *
-	 * @param array<mixed>          $schemas  The `components.schemas` map.
-	 * @param array<string, bool>   $declared The declared slugs, keyed by slug.
+	 * @param array<mixed> $schemas The `components.schemas` map.
+	 * @param array<string, bool> $declared The declared slugs, keyed by slug.
 	 *
 	 * @return array<int, string> The orphan slugs.
 	 */
@@ -1469,7 +1441,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * Add one schema slug to the publication register, with the magic-mapping default.
 	 *
 	 * @param array<mixed> $register The publication register.
-	 * @param string       $slug     The schema slug no register declares.
+	 * @param string $slug The schema slug no register declares.
 	 *
 	 * @return array<mixed> The register.
 	 */
@@ -1716,9 +1688,9 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * Write `<prefix>_source`, and `<prefix>_schema` and `<prefix>_register` when known.
 	 *
-	 * @param string $prefix     The config key prefix.
-	 * @param mixed  $schemaId   The schema id, or null.
-	 * @param mixed  $registerId The register id, or null.
+	 * @param string $prefix The config key prefix.
+	 * @param mixed $schemaId The schema id, or null.
+	 * @param mixed $registerId The register id, or null.
 	 *
 	 * @return void
 	 *
@@ -1741,8 +1713,8 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * A value is never overwritten with an empty one.
 	 *
-	 * @param array $group      The group: `register` (key or null) and `schemas` (key => slug).
-	 * @param array $schemaMap  Schema id by slug.
+	 * @param array $group The group: `register` (key or null) and `schemas` (key => slug).
+	 * @param array $schemaMap Schema id by slug.
 	 * @param mixed $registerId The register id, or null.
 	 *
 	 * @return void
@@ -2045,7 +2017,7 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * The publication register and schema for each empty scope list of a catalogue.
 	 *
-	 * @param CatalogScopeBackfill                                                       $run   The backfill run.
+	 * @param CatalogScopeBackfill $run The backfill run.
 	 * @param array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool} $scope The resolved catalogue.
 	 *
 	 * @return array<string, array<int, mixed>> The `registers` and `schemas` fills, each only when empty.

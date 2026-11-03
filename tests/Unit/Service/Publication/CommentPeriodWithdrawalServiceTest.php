@@ -60,7 +60,7 @@ class PeriodFakeObjectService {
 		$schema = null,
 		?string $uuid = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true
+		bool $_multitenancy = true,
 	): array {
 		$this->writes[] = ['schema' => $schema, 'object' => $object];
 		$id = (string)($uuid ?? ($object['id'] ?? 'dep-1'));
@@ -280,21 +280,20 @@ class CommentPeriodWithdrawalServiceTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return $appManager;
-
 	}//end appManager()
 	/**
 	 * Build the pass with a given object service, config and logger.
 	 *
-	 * @param object|null     $objects The object service, or null for none bound.
-	 * @param string          $sources What the channel_sources key answers.
-	 * @param LoggerInterface $logger  The logger.
+	 * @param object|null $objects The object service, or null for none bound.
+	 * @param string $sources What the channel_sources key answers.
+	 * @param LoggerInterface $logger The logger.
 	 *
 	 * @return CommentPeriodWithdrawalService The pass.
 	 */
 	private function buildPass(
 		?object $objects,
 		string $sources,
-		LoggerInterface $logger
+		LoggerInterface $logger,
 	): CommentPeriodWithdrawalService {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(

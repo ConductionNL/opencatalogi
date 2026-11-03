@@ -55,11 +55,11 @@ class PublicationStateController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                  $appName      The app name.
-	 * @param IRequest                $request      The request.
-	 * @param IL10N                   $l10n         Localisation.
-	 * @param IUserSession            $userSession  The current session.
-	 * @param PublicationRights       $rights       The update right on one publication.
+	 * @param string $appName The app name.
+	 * @param IRequest $request The request.
+	 * @param IL10N $l10n Localisation.
+	 * @param IUserSession $userSession The current session.
+	 * @param PublicationRights $rights The update right on one publication.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
 	 */
 	public function __construct(
@@ -101,7 +101,6 @@ class PublicationStateController extends Controller {
 		}
 
 		return new JSONResponse(['state' => $this->registers->stateOf(publication: $this->asArray(object: $publication))]);
-
 	}//end visibility()
 
 	/**
@@ -133,7 +132,6 @@ class PublicationStateController extends Controller {
 		}
 
 		return new JSONResponse(['state' => PublicationStateServiceInterface::STATE_PUBLIC]);
-
 	}//end publish()
 
 	/**
@@ -157,13 +155,12 @@ class PublicationStateController extends Controller {
 		}
 
 		return $this->withdrawWithReason(id: $id, properties: $this->asArray(object: $publication));
-
 	}//end withdraw()
 
 	/**
 	 * Take a public or scheduled publication down, then tell every channel it reached.
 	 *
-	 * @param string               $id         The publication id.
+	 * @param string $id The publication id.
 	 * @param array<string, mixed> $properties The publication's properties.
 	 *
 	 * @return JSONResponse The stored depublication, or the refusal.
@@ -193,7 +190,7 @@ class PublicationStateController extends Controller {
 	 * Down first: the mistake leaves the public API now, whatever the
 	 * channels answer after.
 	 *
-	 * @param string               $id         The publication id.
+	 * @param string $id The publication id.
 	 * @param array<string, mixed> $properties The publication's properties.
 	 *
 	 * @return string|JSONResponse The state it was in, or 409 for another state, or the save refusal.
@@ -211,13 +208,12 @@ class PublicationStateController extends Controller {
 		}
 
 		return $state;
-
 	}//end takeDown()
 
 	/**
 	 * The channels to tell: those a public publication reached, none for a scheduled one.
 	 *
-	 * @param string               $state      The state before the withdrawal.
+	 * @param string $state The state before the withdrawal.
 	 * @param array<string, mixed> $properties The publication's properties.
 	 *
 	 * @return array<int, string> The channels.
@@ -228,7 +224,6 @@ class PublicationStateController extends Controller {
 		}
 
 		return $this->registers->channelsReached(publication: $properties);
-
 	}//end channelsFor()
 
 	/**
@@ -238,7 +233,6 @@ class PublicationStateController extends Controller {
 	 */
 	private function reason(): string {
 		return trim((string)$this->request->getParam('reason', ''));
-
 	}//end reason()
 
 	/**
@@ -248,7 +242,7 @@ class PublicationStateController extends Controller {
 	 * it leaves the public API and the DiWoo sitemap; the rest of the
 	 * publication stays public.
 	 *
-	 * @param string $id     The publication id.
+	 * @param string $id The publication id.
 	 * @param string $fileId The file id.
 	 *
 	 * @return JSONResponse The stored depublication naming the document.
@@ -286,7 +280,6 @@ class PublicationStateController extends Controller {
 		$depublication['file'] = $fileId;
 
 		return $this->record(depublication: $depublication);
-
 	}//end withdrawFile()
 
 	/**
@@ -321,7 +314,6 @@ class PublicationStateController extends Controller {
 		}
 
 		return [$publication, null];
-
 	}//end guardWrite()
 
 	/**
@@ -403,7 +395,7 @@ class PublicationStateController extends Controller {
 	/**
 	 * Save the publication's record, with RBAC on.
 	 *
-	 * @param string               $id     The publication id.
+	 * @param string $id The publication id.
 	 * @param array<string, mixed> $record The properties.
 	 *
 	 * @return void
@@ -436,7 +428,6 @@ class PublicationStateController extends Controller {
 		}
 
 		return null;
-
 	}//end requireUser()
 
 	/**
@@ -451,7 +442,6 @@ class PublicationStateController extends Controller {
 		}
 
 		return $user->getUID();
-
 	}//end actor()
 
 	/**
@@ -474,7 +464,6 @@ class PublicationStateController extends Controller {
 	 */
 	private function notFound(): JSONResponse {
 		return new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND);
-
 	}//end notFound()
 
 	/**
@@ -486,7 +475,6 @@ class PublicationStateController extends Controller {
 	 */
 	private function conflict(string $state): JSONResponse {
 		return new JSONResponse(data: ['error' => 'wrong-state', 'state' => $state], statusCode: Http::STATUS_CONFLICT);
-
 	}//end conflict()
 
 	/**
@@ -515,6 +503,5 @@ class PublicationStateController extends Controller {
 		}
 
 		return new JSONResponse(data: ['error' => 'not-saved', 'message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-
 	}//end refused()
 }//end class
