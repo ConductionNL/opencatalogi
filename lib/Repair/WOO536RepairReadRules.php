@@ -421,7 +421,8 @@ class WOO536RepairReadRules implements IRepairStep
 
     /**
      * Build the two-rule shape while preserving any non-conditional
-     * elements (e.g., "authenticated") from the existing read block.
+     * elements (e.g., "authenticated") from the existing read block. Published
+     * content is read in every organisation, so both rules cross organisations.
      *
      * @param array $existing The existing read-block array (must match single-rule shape).
      *
@@ -436,6 +437,7 @@ class WOO536RepairReadRules implements IRepairStep
                     'publicationDate'   => ['$lte' => '$now'],
                     'depublicationDate' => ['$gte' => '$now'],
                 ],
+                'crossOrganisation' => true,
             ],
             [
                 'group' => 'public',
@@ -443,6 +445,7 @@ class WOO536RepairReadRules implements IRepairStep
                     'publicationDate'   => ['$lte' => '$now'],
                     'depublicationDate' => ['$exists' => false],
                 ],
+                'crossOrganisation' => true,
             ],
         ];
 
