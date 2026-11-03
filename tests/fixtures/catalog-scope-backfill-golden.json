@@ -635,6 +635,100 @@
             "publication_schema": "7"
         }
     },
+    "resolved seed with empty registers": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Applicatielandschap",
+                    "slug": "applicatielandschap",
+                    "registers": [
+                        "23"
+                    ],
+                    "schemas": [
+                        119
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "cat-seed",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
+    "resolved seed with empty schemas": {
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "23",
+                        "schema": "8"
+                    }
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "title": "Applicatielandschap",
+                    "slug": "applicatielandschap",
+                    "registers": [
+                        21
+                    ],
+                    "schemas": [
+                        "7"
+                    ]
+                },
+                [],
+                "23",
+                "8",
+                "cat-seed",
+                false,
+                false
+            ],
+            [
+                "setValueString",
+                "opencatalogi",
+                "catalog_scope_pending",
+                "[]"
+            ]
+        ],
+        "config": {
+            "catalog_register": "23",
+            "catalog_schema": "8",
+            "catalog_scope_pending": "[]",
+            "publication_register": "23",
+            "publication_schema": "7"
+        }
+    },
     "resolved seed with garbage publish memory": {
         "calls": [
             [
