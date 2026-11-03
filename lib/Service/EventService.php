@@ -47,6 +47,31 @@ use RuntimeException;
  * @spec openspec/specs/auto-publishing/spec.md
  */
 class EventService implements EventServiceInterface {
+
+	/**
+	 * The tally of an event before any object is processed.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const EMPTY_RESULTS = [
+		'processed' => 0,
+		'published' => 0,
+		'attachmentsPublished' => 0,
+		'errors' => [],
+		'details' => [],
+	];
+
+	/**
+	 * The counts and error of one object before it is processed.
+	 *
+	 * @var array<string, mixed>
+	 */
+	private const EMPTY_OUTCOME = [
+		'processed' => 0,
+		'published' => 0,
+		'attachmentsPublished' => 0,
+		'error' => null,
+	];
 	use ChecksPublicationWindow;
 
 	/**
@@ -169,34 +194,42 @@ class EventService implements EventServiceInterface {
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 */
 	private function handleObjectEvents(array $objects, string $event): array {
-		$results = [
-			'processed' => 0,
-			'published' => 0,
-			'attachmentsPublished' => 0,
-			'errors' => [],
-			'details' => [],
-		];
+		$results = self::EMPTY_RESULTS;
 
 		try {
 			$run = ['event' => $event, 'options' => $this->settingsService->getPublishingOptions()];
 			foreach ($objects as $objectData) {
-				$outcome = $this->processObject(objectData: $objectData, run: $run);
-				$results['processed'] += $outcome['processed'];
-				$results['published'] += $outcome['published'];
-				$results['attachmentsPublished'] += $outcome['attachmentsPublished'];
-				if ($outcome['error'] !== null) {
-					$results['errors'][] = $outcome['error'];
-				}
-
-				$results['details'][] = $outcome['detail'];
+				$results = self::withOutcome(results: $results, outcome: $this->processObject(objectData: $objectData, run: $run));
 			}
 
 			return $results;
 		} catch (\Exception $e) {
 			throw new RuntimeException('Failed to handle object ' . $event . ' events: ' . $e->getMessage());
 		}//end try
-
 	}//end handleObjectEvents()
+
+	/**
+	 * The event's tally with one object's outcome added.
+	 *
+	 * @param array $results The tally so far.
+	 * @param array $outcome The object's counts, error and detail.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private static function withOutcome(array $results, array $outcome): array {
+		foreach (['processed', 'published', 'attachmentsPublished'] as $count) {
+			$results[$count] += $outcome[$count];
+		}
+
+		if ($outcome['error'] !== null) {
+			$results['errors'][] = $outcome['error'];
+		}
+
+		$results['details'][] = $outcome['detail'];
+		return $results;
+	}//end withOutcome()
 
 	/**
 	 * Apply the auto-publish rules to one object.
@@ -211,24 +244,11 @@ class EventService implements EventServiceInterface {
 	private function processObject(array $objectData, array $run): array {
 		$outcome = [
 			'detail' => ['objectId' => ($objectData['@self']['id'] ?? 'unknown'), 'actions' => [], 'errors' => []],
-			'processed' => 0,
-			'published' => 0,
-			'attachmentsPublished' => 0,
-			'error' => null,
-		];
+		] + self::EMPTY_OUTCOME;
 
+		$context = ['objectData' => $objectData, 'run' => $run];
 		try {
-			if ($run['event'] === 'create' && $run['options']['auto_publish_objects'] === true) {
-				$outcome = $this->autoPublishObject(objectData: $objectData, outcome: $outcome);
-			}
-
-			if ($run['options']['auto_publish_attachments'] === true && $this->isObjectPublished(objectData: $objectData) === true) {
-				$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
-				$outcome['detail']['actions'][] = 'attachments_processed';
-				$outcome['attachmentsPublished'] = $attachmentResult['published'];
-				$outcome['detail']['errors'] = array_merge($outcome['detail']['errors'], $attachmentResult['errors']);
-			}
-
+			$outcome = $this->withAttachments(outcome: $this->autoPublishObject(outcome: $outcome, context: $context), context: $context);
 			$outcome['processed'] = 1;
 		} catch (\Exception $e) {
 			$outcome['detail']['errors'][] = $e->getMessage();
@@ -239,21 +259,45 @@ class EventService implements EventServiceInterface {
 	}//end processObject()
 
 	/**
-	 * Publish an object that matches a catalog, and record the result on its outcome.
+	 * The outcome after publishing the attachments of a live object, when the options say so.
 	 *
-	 * @param array $objectData The object data.
+	 * @param array $outcome The object's outcome so far.
+	 * @param array $context The object data and the run (event and publishing options).
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function withAttachments(array $outcome, array $context): array {
+		$objectData = $context['objectData'];
+		if ($context['run']['options']['auto_publish_attachments'] !== true || $this->isObjectPublished(objectData: $objectData) === false) {
+			return $outcome;
+		}
+
+		$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
+		$outcome['detail']['actions'][] = 'attachments_processed';
+		$outcome['attachmentsPublished'] = $attachmentResult['published'];
+		$outcome['detail']['errors'] = array_merge($outcome['detail']['errors'], $attachmentResult['errors']);
+
+		return $outcome;
+	}//end withAttachments()
+
+	/**
+	 * On a create event with auto-publishing on, publish an object that matches a catalog, and record the result.
+	 *
 	 * @param array<string, mixed> $outcome The object's outcome so far.
+	 * @param array<string, mixed> $context The object data and the run (event and publishing options).
 	 *
 	 * @return array<string, mixed> The outcome with the publish action or error added.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 */
-	private function autoPublishObject(array $objectData, array $outcome): array {
-		if ($this->shouldAutoPublishObject(objectData: $objectData) === false) {
+	private function autoPublishObject(array $outcome, array $context): array {
+		if ($this->wantsAutoPublish(context: $context) === false) {
 			return $outcome;
 		}
 
-		$publishResult = $this->publishObject(objectData: $objectData);
+		$publishResult = $this->publishObject(objectData: $context['objectData']);
 		if ($publishResult['success'] === true) {
 			$outcome['detail']['actions'][] = 'object_published';
 			$outcome['published'] = 1;
@@ -263,6 +307,21 @@ class EventService implements EventServiceInterface {
 		$outcome['detail']['errors'][] = 'Failed to auto-publish object: ' . $publishResult['error'];
 		return $outcome;
 	}//end autoPublishObject()
+
+	/**
+	 * Whether the object is to be published: a create event, auto-publishing on, and a catalog that lists it.
+	 *
+	 * @param array<string, mixed> $context The object data and the run (event and publishing options).
+	 *
+	 * @return boolean
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function wantsAutoPublish(array $context): bool {
+		return $context['run']['event'] === 'create'
+			&& $context['run']['options']['auto_publish_objects'] === true
+			&& $this->shouldAutoPublishObject(objectData: $context['objectData']) === true;
+	}//end wantsAutoPublish()
 
 	/**
 	 * Determine if an object should be auto-published based on catalog matching.
@@ -283,20 +342,7 @@ class EventService implements EventServiceInterface {
 		}
 
 		try {
-			$objectService = $this->getObjectService();
-			$catalogQuery = $this->catalogQuery();
-			if ($catalogQuery === null) {
-				return false;
-			}
-
-			// Check each catalog to see if it includes our object's register and schema.
-			foreach ($objectService->searchObjects(query: $catalogQuery) as $catalog) {
-				if ($this->catalogIncludes(catalogData: $catalog->jsonSerialize(), objectSelf: $objectData['@self']) === true) {
-					return true;
-				}
-			}
-
-			return false;
+			return $this->inAnyCatalog(objectSelf: $objectData['@self']);
 		} catch (\Exception $e) {
 			// Log error but don't fail the process.
 			$this->logger->error(
@@ -305,8 +351,32 @@ class EventService implements EventServiceInterface {
 			);
 			return false;
 		}//end try
-
 	}//end shouldAutoPublishObject()
+
+	/**
+	 * Whether any configured catalog lists the object's register and schema.
+	 *
+	 * @param array $objectSelf The object's @self envelope.
+	 *
+	 * @return boolean False when the catalog register or schema is not configured.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function inAnyCatalog(array $objectSelf): bool {
+		$objectService = $this->getObjectService();
+		$catalogQuery = $this->catalogQuery();
+		if ($catalogQuery === null) {
+			return false;
+		}
+
+		foreach ($objectService->searchObjects(query: $catalogQuery) as $catalog) {
+			if ($this->catalogIncludes(catalogData: $catalog->jsonSerialize(), objectSelf: $objectSelf) === true) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end inAnyCatalog()
 
 	/**
 	 * The search query for the configured catalogs.
@@ -362,44 +432,60 @@ class EventService implements EventServiceInterface {
 	private function publishObject(array $objectData): array {
 		try {
 			$objectService = $this->getObjectService();
-			$objectId = ($objectData['@self']['uuid'] ?? $objectData['@self']['id'] ?? null);
-			$register = ($objectData['@self']['register'] ?? null);
-			$schema = ($objectData['@self']['schema'] ?? null);
+			$target = self::publicationTarget(objectSelf: ($objectData['@self'] ?? []));
+			$data = self::publishedPayload(objectData: $objectData);
 
-			if ($objectId === null || $register === null || $schema === null) {
-				throw new RuntimeException('Object is missing id, register or schema and cannot be published.');
-			}
+			$objectService->saveObject(object: $data, register: (string)$target['register'], schema: (string)$target['schema'], uuid: (string)$target['id']);
 
-			// Build the persisted payload from the object's own fields (drop the
-			// read-only @self envelope) and set the publication date to now.
-			$data = $objectData;
-			unset($data['@self']);
-			$now = new DateTime();
-			$data['publicationDate'] = $now->format(\DateTimeInterface::ATOM);
-			// Clearing any prior depublication date keeps the object live.
-			$data['depublicationDate'] = null;
-
-			$objectService->saveObject(
-				object: $data,
-				register: (string)$register,
-				schema: (string)$schema,
-				uuid: (string)$objectId,
-			);
-
-			return [
-				'success' => true,
-				'objectId' => $objectId,
-				'publishedAt' => $data['publicationDate'],
-			];
+			return ['success' => true, 'objectId' => $target['id'], 'publishedAt' => $data['publicationDate']];
 		} catch (\Exception $e) {
-			return [
-				'success' => false,
-				'objectId' => ($objectData['@self']['id'] ?? 'unknown'),
-				'error' => $e->getMessage(),
-			];
+			return ['success' => false, 'objectId' => ($objectData['@self']['id'] ?? 'unknown'), 'error' => $e->getMessage()];
 		}//end try
-
 	}//end publishObject()
+
+	/**
+	 * The id, register and schema an object is saved under.
+	 *
+	 * @param array $objectSelf The object's @self envelope.
+	 *
+	 * @return array{id: mixed, register: mixed, schema: mixed}
+	 *
+	 * @throws RuntimeException When one of them is missing.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
+	 */
+	private static function publicationTarget(array $objectSelf): array {
+		$target = [
+			'id' => ($objectSelf['uuid'] ?? $objectSelf['id'] ?? null),
+			'register' => ($objectSelf['register'] ?? null),
+			'schema' => ($objectSelf['schema'] ?? null),
+		];
+		if (in_array(null, $target, true) === true) {
+			throw new RuntimeException('Object is missing id, register or schema and cannot be published.');
+		}
+
+		return $target;
+	}//end publicationTarget()
+
+	/**
+	 * The object's own fields without the read-only @self envelope, published now.
+	 *
+	 * Clearing any prior depublication date keeps the object live.
+	 *
+	 * @param array $objectData The object data.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md#APB-006
+	 */
+	private static function publishedPayload(array $objectData): array {
+		$data = $objectData;
+		unset($data['@self']);
+		$data['publicationDate'] = (new DateTime())->format(\DateTimeInterface::ATOM);
+		$data['depublicationDate'] = null;
+
+		return $data;
+	}//end publishedPayload()
 
 	/**
 	 * Publish all unpublished attachments for an object.
@@ -411,59 +497,74 @@ class EventService implements EventServiceInterface {
 	 *
 	 * @return array Result of the attachment publishing operation.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 */
 	private function publishObjectAttachments(array $objectData): array {
 		$objectId = ($objectData['@self']['uuid'] ?? $objectData['@self']['id']);
-
-		$result = [
-			'published' => 0,
-			'skipped' => 0,
-			'errors' => [],
-		];
+		$result = ['published' => 0, 'skipped' => 0, 'errors' => []];
 
 		try {
 			$fileService = $this->getFileService();
-			$fileMapper = $this->getFileMapper();
-
-			// Use FileMapper to get files directly from database without triggering object updates.
-			// This completely avoids the infinite loop issue.
-			// First, we need to get the ObjectEntity to use with FileMapper.
-			$objectService = $this->getObjectService();
-			$objectEntity = $objectService->find($objectId);
-
-			if ($objectEntity === null) {
-				return $result;
-			}
-
-			// Use FileMapper to get files directly from database (no object updates triggered).
-			$files = $fileMapper->getFilesForObject($objectEntity);
-
-			foreach ($files as $file) {
-				// FileMapper includes the share information: a share token means already published.
-				if (empty($file['share_token']) === false) {
-					$result['skipped']++;
-					continue;
-				}
-
-				$error = $this->shareFileError(fileService: $fileService, file: $file);
-				if ($error === null) {
-					$result['published']++;
-					continue;
-				}
-
-				$result['errors'][] = $error;
-			}//end foreach
-
-			return $result;
+			$files = $this->objectFiles(objectId: $objectId);
 		} catch (\Exception $e) {
 			$result['errors'][] = 'Failed to access file service: ' . $e->getMessage();
 			return $result;
-		}//end try
+		}
 
+		foreach ($files as $file) {
+			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file]);
+		}
+
+		return $result;
 	}//end publishObjectAttachments()
+
+	/**
+	 * The files of an object, read through FileMapper, or none when the object does not exist.
+	 *
+	 * FileMapper reads the files straight from the database, so listing them
+	 * triggers no object update (and no new event).
+	 *
+	 * @param mixed $objectId The object uuid or id.
+	 *
+	 * @return array The files, with their share information.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function objectFiles(mixed $objectId): array {
+		$fileMapper = $this->getFileMapper();
+		$objectEntity = $this->getObjectService()->find($objectId);
+		if ($objectEntity === null) {
+			return [];
+		}
+
+		return $fileMapper->getFilesForObject($objectEntity);
+	}//end objectFiles()
+
+	/**
+	 * The attachment tally after sharing one file: skipped when it already has a share token.
+	 *
+	 * @param array $result The published and skipped counts and the errors so far.
+	 * @param array $share  The file service and the file.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function withSharedFile(array $result, array $share): array {
+		if (empty($share['file']['share_token']) === false) {
+			$result['skipped']++;
+			return $result;
+		}
+
+		$error = $this->shareFileError(fileService: $share['fileService'], file: $share['file']);
+		if ($error === null) {
+			$result['published']++;
+			return $result;
+		}
+
+		$result['errors'][] = $error;
+		return $result;
+	}//end withSharedFile()
 
 	/**
 	 * Create the share link of one file, and say why when that failed.
@@ -484,14 +585,24 @@ class EventService implements EventServiceInterface {
 			return "Failed to publish file {$fileName}: " . $e->getMessage();
 		}
 
-		if ($shareLink === null
-			|| $shareLink === ''
-			|| str_contains($shareLink, 'not found') === true
-			|| str_contains($shareLink, 'couldn\'t be found') === true
-		) {
+		if (self::isFailedShareLink(shareLink: $shareLink) === true) {
 			return "Failed to create share link for file {$fileName}";
 		}
 
 		return null;
 	}//end shareFileError()
+
+	/**
+	 * Whether a share link answer is empty or says the file was not found.
+	 *
+	 * @param mixed $shareLink The answer of createShareLink().
+	 *
+	 * @return boolean
+	 */
+	private static function isFailedShareLink(mixed $shareLink): bool {
+		return $shareLink === null
+			|| $shareLink === ''
+			|| str_contains($shareLink, 'not found') === true
+			|| str_contains($shareLink, 'couldn\'t be found') === true;
+	}//end isFailedShareLink()
 }//end class
