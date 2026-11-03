@@ -594,7 +594,8 @@ class RetentionService implements RetentionServiceInterface {
 	 * registers and schemas it contains. The first catalog whose lists include
 	 * the publication's register and schema provides the slug that keys the
 	 * per-catalog retention defaults (RET-004). Returns an empty string when no
-	 * catalog matches, in which case no catalog default can apply.
+	 * catalog matches, in which case no catalog default can apply. Ids are compared
+	 * as text, so two uuid ids only match when they are the same uuid.
 	 *
 	 * @param string $register The publication's register id.
 	 * @param string $schema The publication's schema id.
@@ -604,34 +605,10 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	private function resolveCatalogSlug(string $register, string $schema): string {
-		$objectService = $this->getObjectService();
-		$catalogRegister = (string)$this->config->getValueString('opencatalogi', 'catalog_register', '');
-		$catalogSchema = (string)$this->config->getValueString('opencatalogi', 'catalog_schema', '');
-		if ($objectService === null || $catalogRegister === '' || $catalogSchema === '') {
-			return '';
-		}
-
-		try {
-			$result = $objectService->searchObjectsPaginated(
-				query: [
-					'@self' => ['register' => $catalogRegister, 'schema' => $catalogSchema],
-					'_limit' => 1000,
-				],
-				_rbac: false,
-				_multitenancy: false
-			);
-			$catalogs = ($result['results'] ?? []);
-		} catch (\Throwable $e) {
-			$this->logger->warning('[RetentionService] catalog lookup for retention defaults failed: ' . $e->getMessage());
-			return '';
-		}
-
-		foreach ($catalogs as $catalog) {
+		foreach ($this->catalogObjects() as $catalog) {
 			$catalogData = $this->plainArray(object: $catalog);
-			$registers = array_map('intval', (array)($catalogData['registers'] ?? []));
-			$schemas = array_map('intval', (array)($catalogData['schemas'] ?? []));
-			if (in_array((int)$register, $registers, true) === true
-				&& in_array((int)$schema, $schemas, true) === true
+			if (in_array($register, array_map('strval', (array)($catalogData['registers'] ?? [])), true) === true
+				&& in_array($schema, array_map('strval', (array)($catalogData['schemas'] ?? [])), true) === true
 			) {
 				return (string)($catalogData['slug'] ?? '');
 			}
@@ -639,6 +616,34 @@ class RetentionService implements RetentionServiceInterface {
 
 		return '';
 	}//end resolveCatalogSlug()
+
+	/**
+	 * Every catalog object, read outside RBAC and multitenancy; empty when the
+	 * catalog register or schema is not configured or the search fails.
+	 *
+	 * @return iterable<mixed> The catalog rows, arrays or serialisable objects.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	private function catalogObjects(): iterable {
+		$objectService = $this->getObjectService();
+		$scope = [
+			'register' => (string)$this->config->getValueString('opencatalogi', 'catalog_register', ''),
+			'schema' => (string)$this->config->getValueString('opencatalogi', 'catalog_schema', ''),
+		];
+		if ($objectService === null || $scope['register'] === '' || $scope['schema'] === '') {
+			return [];
+		}
+
+		try {
+			$result = $objectService->searchObjectsPaginated(query: ['@self' => $scope, '_limit' => 1000], _rbac: false, _multitenancy: false);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[RetentionService] catalog lookup for retention defaults failed: ' . $e->getMessage());
+			return [];
+		}
+
+		return ($result['results'] ?? []);
+	}//end catalogObjects()
 
 	/**
 	 * Evaluate all publications for retention expiry and act per stored policy.
