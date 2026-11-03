@@ -136,15 +136,16 @@ final class RetentionRules {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
 	 */
 	public function parseDate(mixed $value): ?DateTimeImmutable {
-		if ($value === null || $value === '') {
-			return null;
+		$date = null;
+		if ($value !== null && $value !== '') {
+			try {
+				$date = new DateTimeImmutable($value);
+			} catch (\Throwable $e) {
+				$date = null;
+			}
 		}
 
-		try {
-			return new DateTimeImmutable($value);
-		} catch (\Throwable $e) {
-			return null;
-		}
+		return $date;
 	}//end parseDate()
 
 	/**

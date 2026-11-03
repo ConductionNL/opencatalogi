@@ -887,10 +887,12 @@ class DcatService implements DcatServiceInterface {
 	 * @param array<mixed>|string|null $raw The catalog field value.
 	 *
 	 * @return array<int, int> The integer ID list.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) JsonList::fromField() is a pure static function.
 	 */
 	private function idList(array|string|null $raw): array {
 		$ids = [];
-		foreach (self::listOf(raw: $raw) as $value) {
+		foreach (JsonList::fromField(raw: $raw) as $value) {
 			if (is_numeric($value) === true) {
 				$ids[] = (int)$value;
 			}
@@ -898,25 +900,6 @@ class DcatService implements DcatServiceInterface {
 
 		return $ids;
 	}//end idList()
-
-	/**
-	 * A catalog list field as an array: decoded when it is JSON text, empty when it is not a list.
-	 *
-	 * @param array<mixed>|string|null $raw The catalog field value.
-	 *
-	 * @return array<mixed>
-	 */
-	private static function listOf(array|string|null $raw): array {
-		if (is_string($raw) === true) {
-			$raw = json_decode($raw, true);
-		}
-
-		if (is_array($raw) === false) {
-			return [];
-		}
-
-		return $raw;
-	}//end listOf()
 
 	/**
 	 * The value when it is a string, otherwise null.

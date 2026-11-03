@@ -49,6 +49,7 @@ use RuntimeException;
  * Golden test for DcatService::buildCatalogDocument.
  *
  * @covers \OCA\OpenCatalogi\Service\DcatService
+ * @uses \OCA\OpenCatalogi\Service\JsonList
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\DcatAssurance

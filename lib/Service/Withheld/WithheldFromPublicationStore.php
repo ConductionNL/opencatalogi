@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Withheld;
 
+use OCA\OpenCatalogi\Service\JsonList;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenCatalogi\Service\WooService;
@@ -290,16 +291,10 @@ class WithheldFromPublicationStore {
 	 * @param mixed $raw The field: a list, or a JSON string of one.
 	 *
 	 * @return list<string>
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) JsonList::fromField() is a pure static function.
 	 */
 	private function ids(mixed $raw): array {
-		if (is_string($raw) === true) {
-			$raw = json_decode($raw, true);
-		}
-
-		if (is_array($raw) === false) {
-			return [];
-		}
-
-		return array_values(array_map(static fn (mixed $id): string => (string)$id, $raw));
+		return array_values(array_map(static fn (mixed $id): string => (string)$id, JsonList::fromField(raw: $raw)));
 	}//end ids()
 }//end class

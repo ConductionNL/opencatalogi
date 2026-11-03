@@ -73,7 +73,8 @@ final class RetentionRun {
 	 *
 	 * @return mixed The saved object.
 	 *
-	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+	 * @spec exclude internal save step of the background retention run, which has no user session;
+	 *   it pins the register, schema and RBAC-off flags for the job and is not a route wrapper.
 	 */
 	public function save(array $data): mixed {
 		return $this->objectService->saveObject(
