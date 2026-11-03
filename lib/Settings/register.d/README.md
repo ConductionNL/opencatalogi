@@ -44,6 +44,13 @@ table and shows up in the admin settings schema selector:
 }
 ```
 
+Every new schema carries an `authorization` block. OpenRegister reads a schema
+without one as readable and writable by everyone, anonymous callers included.
+`tests/Unit/Settings/RegisterSchemaAuthorizationTest.php` fails on a schema that
+has none. A flow that serves such a schema to the public (a token link, a
+public form) does its own check first and then reads or writes that one object
+with `_rbac: false`.
+
 Two safety nets cover fragments that forget:
 
 - `SettingsService::attachOrphanSchemasToPublicationRegister()` appends any
