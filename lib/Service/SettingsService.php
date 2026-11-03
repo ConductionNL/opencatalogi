@@ -37,6 +37,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -79,6 +80,8 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyMethods) Object type configuration is split into small private steps to stay under the unit limits.
+ *
+ * @spec openspec/specs/admin-settings/spec.md
  */
 class SettingsService implements SettingsServiceInterface {
 
@@ -277,6 +280,30 @@ class SettingsService implements SettingsServiceInterface {
 		'woo_index_registration_answer' => '',
 		'channel_sources' => '{}',
 		'public_api_cache_seconds' => '60',
+	];
+
+	/**
+	 * The instance settings a caller may write through updateSettings(), in the order they are written.
+	 *
+	 * Each has a default in SETTING_DEFAULTS, which also drives what getSettings()
+	 * reports; a default added only for display is not writable until it is listed here.
+	 */
+	private const WRITABLE_SETTINGS = [
+		'auto_publish_attachments',
+		'auto_publish_objects',
+		'use_old_style_publishing_view',
+		'dcat_instance_title',
+		'dcat_publisher_name',
+		'dcat_publisher_uri',
+		'dcat_default_license',
+		'dcat_contact_point',
+		'ooapi_consumers',
+		'woo_index_registration_status',
+		'woo_index_registration_url',
+		'woo_index_registration_at',
+		'woo_index_registration_answer',
+		'channel_sources',
+		'public_api_cache_seconds',
 	];
 
 	/**
@@ -895,18 +922,22 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * Update the settings configuration.
 	 *
-	 * Only keys that belong to the canonical settings allowlist (the same set
-	 * enumerated in getSettings()) are accepted.  Any unrecognised key in $data
-	 * is silently ignored, preventing arbitrary app-config key injection.
+	 * Only the keys writableSettingKeys() lists are accepted: source, schema and
+	 * register per writable object type, and WRITABLE_SETTINGS. Any other key in
+	 * $data is silently ignored, preventing arbitrary app-config key injection.
+	 * A list or object value for an accepted key (except the channel sources map)
+	 * rejects the whole payload before anything is written.
 	 *
 	 * @param array $data The settings data to update.
 	 *
 	 * @return array The updated settings configuration.
+	 * @throws InvalidArgumentException If an accepted key carries a list or an object.
 	 * @throws \RuntimeException If settings update fails.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	public function updateSettings(array $data): array {
+		$this->assertSingleValues(data: $data, keys: $this->writableSettingKeys());
 		try {
 			$updated = [];
 			foreach ($this->writableSettingKeys() as $key) {
@@ -926,8 +957,31 @@ class SettingsService implements SettingsServiceInterface {
 	}//end updateSettings()
 
 	/**
+	 * Reject a payload that gives an accepted key a list or an object, which would be stored as the text "Array".
+	 *
+	 * The channel sources setting is the one map a caller may send.
+	 *
+	 * @param array             $data The settings data to update.
+	 * @param array<int,string> $keys The accepted keys.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException Naming the first key with such a value.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function assertSingleValues(array $data, array $keys): void {
+		foreach (array_intersect_key($data, array_flip(array_diff($keys, ['channel_sources']))) as $key => $value) {
+			if (is_array($value) === true || is_object($value) === true) {
+				throw new InvalidArgumentException('Setting ' . $key . ' takes a single value, not a list or an object');
+			}
+		}
+
+	}//end assertSingleValues()
+
+	/**
 	 * The settings a caller may store, in the order they are written: source, schema and
-	 * register per writable object type, then every instance setting.
+	 * register per writable object type, then WRITABLE_SETTINGS.
 	 *
 	 * @return array<int, string> The allowed config keys.
 	 *
@@ -939,7 +993,7 @@ class SettingsService implements SettingsServiceInterface {
 			array_push($keys, "{$type}_source", "{$type}_schema", "{$type}_register");
 		}
 
-		return array_merge($keys, array_keys(self::SETTING_DEFAULTS));
+		return array_merge($keys, self::WRITABLE_SETTINGS);
 
 	}//end writableSettingKeys()
 
