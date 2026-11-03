@@ -22,6 +22,9 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
+use Exception;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 
 /**
@@ -39,6 +42,7 @@ class SitemapDocumentMapper {
 	 * @var array<string, array{0: string, 1: string}>
 	 */
 	private const OPTIONAL_AXES = [
+		'diwoo:titelcollectie' => ['officieleTitel', 'publication has no title'],
 		'diwoo:classificatiecollectie' => ['informatiecategorie', 'category resolves to no member of the informatiecategorieen waardelijst'],
 		'diwoo:documenthandelingen' => ['soortHandeling', 'handling type does not resolve to a DiWoo value-list member'],
 	];
@@ -65,9 +69,10 @@ class SitemapDocumentMapper {
 	}//end __construct()
 
 	/**
-	 * Maps publication + file metadata into a DIWOO Document XML array structure.
+	 * Maps publication + file metadata into one `url` entry of a DiWoo sitemap.
 	 *
-	 * Used to generate items inside diwoo:Documents.
+	 * The entry holds `loc`, `lastmod` and `diwoo:Document`, in the order the
+	 * sitemaps.org `url` type requires.
 	 *
 	 * The three Woo-index-controlled axes — informatiecategorie, publisher
 	 * `@resource`, and soortHandeling — are resolved through the bundled TOOI/DiWoo
@@ -80,9 +85,10 @@ class SitemapDocumentMapper {
 	 * @param array $file The file metadata belonging to that publication
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference)
 	 *
-	 * @return array A DIWOO metadata array ready for XMLResponse
+	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array} The url entry, ready for XMLResponse.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
 	 */
 	public function map(array $publication, array $file, array &$violations = []): array {
 		$loc = ($file['downloadUrl'] ?? '');
@@ -101,11 +107,15 @@ class SitemapDocumentMapper {
 			$this->addViolation(violations: $violations, loc: $loc, axis: self::OPTIONAL_AXES[$key][0], reason: self::OPTIONAL_AXES[$key][1]);
 		}
 
-		return ['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]];
+		return [
+			'loc' => $loc,
+			'lastmod' => self::utcDateTime(value: ($file['published'] ?? $publication['@self']['updated'] ?? 'now')),
+			'diwoo:Document' => ['diwoo:DiWoo' => $diwoo],
+		];
 	}//end map()
 
 	/**
-	 * The DiWoo location, dates, publisher and format of one file's document.
+	 * The DiWoo creation date, publisher and format of one file's document.
 	 *
 	 * @param array $publication The publication.
 	 * @param array $file        The file.
@@ -116,11 +126,8 @@ class SitemapDocumentMapper {
 	 */
 	private function diwooCore(array $publication, array $file): array {
 		$created = ($publication['@self']['created'] ?? 'now');
-		$published = ($file['published'] ?? $publication['@self']['updated'] ?? 'now');
 
 		return [
-			'loc' => ($file['downloadUrl'] ?? ''),
-			'lastmod' => date('Y-m-d H:i:s', strtotime($published)),
 			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
 			'diwoo:publisher' => $this->publisherElement(publication: $publication, file: $file),
 			'diwoo:format' => [
@@ -145,8 +152,9 @@ class SitemapDocumentMapper {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	private function optionalAxes(array $publication, array $file): array {
-		$handlingTime = ($file['published'] ?? $publication['publicationDate'] ?? date('Y-m-d H:i:s'));
+		$handlingTime = self::utcDateTime(value: ($file['published'] ?? $publication['publicationDate'] ?? 'now'));
 		return [
+			'diwoo:titelcollectie' => $this->titleElement(publication: $publication),
 			'diwoo:classificatiecollectie' => $this->categoryElement(publication: $publication),
 			'diwoo:documenthandelingen' => $this->handlingElement(publication: $publication, handlingTime: $handlingTime),
 		];
@@ -206,13 +214,13 @@ class SitemapDocumentMapper {
 	 * (default: ontvangst), or null when the handling type resolves to none.
 	 *
 	 * @param array  $publication  The publication as returned from ObjectService
-	 * @param mixed  $handlingTime The moment the document was made public.
+	 * @param string $handlingTime The moment the document was made public, as an xs:dateTime.
 	 *
 	 * @return array|null The documenthandelingen element, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function handlingElement(array $publication, mixed $handlingTime): ?array {
+	private function handlingElement(array $publication, string $handlingTime): ?array {
 		$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull(value: $publication['soortHandeling'] ?? null));
 		if ($handling === null) {
 			return null;
@@ -228,6 +236,50 @@ class SitemapDocumentMapper {
 			],
 		];
 	}//end handlingElement()
+
+	/**
+	 * The titelcollectie element with the publication's title as officieleTitel, or null without a title.
+	 *
+	 * @param array $publication The publication as returned from ObjectService
+	 *
+	 * @return array|null The titelcollectie element, or null.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	private function titleElement(array $publication): ?array {
+		$title = $this->stringOrNull(value: ($publication['title'] ?? null));
+		if ($title === null) {
+			return null;
+		}
+
+		return ['diwoo:officieleTitel' => trim($title)];
+	}//end titleElement()
+
+	/**
+	 * A date or time as an xs:dateTime in UTC; a value without a zone is read as UTC.
+	 *
+	 * A value that does not parse gives the epoch, as strtotime() did before.
+	 *
+	 * @param mixed $value The stored date or time.
+	 *
+	 * @return string The moment in DATE_ATOM form, such as 2024-02-02T08:00:00+00:00.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	private static function utcDateTime(mixed $value): string {
+		$utc = new DateTimeZone('UTC');
+		if (is_string($value) === false) {
+			$value = '@0';
+		}
+
+		try {
+			$moment = new DateTimeImmutable($value, $utc);
+		} catch (Exception $e) {
+			$moment = new DateTimeImmutable('@0', $utc);
+		}
+
+		return $moment->setTimezone($utc)->format(DATE_ATOM);
+	}//end utcDateTime()
 
 	/**
 	 * Return the value as a string, or null when it is not a non-empty string.
