@@ -59,15 +59,15 @@ class SitemapPublisherGoldenTest extends TestCase {
 		$tooi = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855';
 		$self = ['owner' => 'jan.jansen', 'organisation' => 'org-uuid-1'];
 		$worlds = [
-			'organisation with name and TOOI id' => [['@self' => $self], ['org-uuid-1' => [['name' => 'Gemeente Zuiddrecht', 'tooiIdentifier' => $tooi]]]],
-			'organisation as entity row' => [['@self' => $self], ['org-uuid-1' => ['entity']]],
-			'organisation without name' => [['@self' => $self], ['org-uuid-1' => [['tooiIdentifier' => $tooi]]]],
-			'organisation with a blank name' => [['@self' => $self], ['org-uuid-1' => [['name' => '   ', 'tooiIdentifier' => $tooi]]]],
-			'organisation with a non-text name' => [['@self' => $self], ['org-uuid-1' => [['name' => ['nl' => 'X'], 'tooiIdentifier' => $tooi]]]],
-			'a padded name, two rows' => [['@self' => $self], ['org-uuid-1' => [['name' => '  Gemeente Eerste  ', 'tooiIdentifier' => $tooi], ['name' => 'Gemeente Tweede', 'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0363']]]],
+			'organisation with name and TOOI id' => [['@self' => $self], ['org-uuid-1' => ['name' => 'Gemeente Zuiddrecht', 'tooi' => $tooi]]],
+			'organisation without name' => [['@self' => $self], ['org-uuid-1' => ['name' => null, 'tooi' => $tooi]]],
+			'organisation with a blank name' => [['@self' => $self], ['org-uuid-1' => ['name' => '   ', 'tooi' => $tooi]]],
+			'organisation with a padded name' => [['@self' => $self], ['org-uuid-1' => ['name' => '  Gemeente Eerste  ', 'tooi' => $tooi]]],
+			'organisation without TOOI id' => [['@self' => $self], ['org-uuid-1' => ['name' => 'Gemeente Zuiddrecht', 'tooi' => null]]],
+			'organisation with a TOOI code, not a TOOI id' => [['@self' => $self], ['org-uuid-1' => ['name' => 'Gemeente Zuiddrecht', 'tooi' => 'gm0855']]],
 			'organisation not found' => [['@self' => $self], []],
 			'lookup fails' => [['@self' => $self], 'fails'],
-			'TOOI id on the publication, organisation by uuid' => [['tooiIdentifier' => $tooi, '@self' => $self], ['org-uuid-1' => [['name' => 'Gemeente Zuiddrecht', 'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0363']]]],
+			'TOOI id on the publication, organisation by uuid' => [['tooiIdentifier' => $tooi, '@self' => $self], ['org-uuid-1' => ['name' => 'Gemeente Zuiddrecht', 'tooi' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0363']]],
 			'organisation is a TOOI id' => [['@self' => ['owner' => 'jan.jansen', 'organisation' => $tooi]], []],
 			'no organisation' => [['@self' => ['owner' => 'jan.jansen']], []],
 			'nothing at all' => [[], []],
@@ -100,6 +100,43 @@ class SitemapPublisherGoldenTest extends TestCase {
 	}//end testThePublisherMatchesTheRecording()
 
 	/**
+	 * An OpenRegister organisation with a name and a TOOI identifier.
+	 *
+	 * The real entity when OpenRegister is loaded, otherwise a double with the same getters.
+	 *
+	 * @param array{name: string|null, tooi: string|null} $fields The name and the TOOI identifier.
+	 *
+	 * @return object The organisation.
+	 */
+	public static function organisation(array $fields): object {
+		if (class_exists('OCA\OpenRegister\Db\Organisation') === true) {
+			$organisation = new \OCA\OpenRegister\Db\Organisation();
+			$organisation->setName($fields['name']);
+			$organisation->setTooi($fields['tooi']);
+
+			return $organisation;
+		}
+
+		return new class($fields) {
+			/**
+			 * @param array{name: string|null, tooi: string|null} $fields The name and the TOOI identifier.
+			 */
+			public function __construct(
+				private array $fields,
+			) {
+			}
+
+			public function getName(): ?string {
+				return $this->fields['name'];
+			}
+
+			public function getTooi(): ?string {
+				return $this->fields['tooi'];
+			}
+		};
+	}//end organisation()
+
+	/**
 	 * A SitemapService whose OpenRegister answers organisation lookups from the store.
 	 *
 	 * @param mixed $store The organisations by uuid, or 'fails'.
@@ -108,7 +145,26 @@ class SitemapPublisherGoldenTest extends TestCase {
 	 * @return SitemapService
 	 */
 	private function service(mixed $store, array &$lookups): SitemapService {
-		$objects = new class($store, $lookups) {
+		$objects = new class($lookups) {
+			/**
+			 * @param array<int, mixed> $lookups The lookups, by reference.
+			 */
+			public function __construct(
+				private array &$lookups,
+			) {
+			}
+
+			/**
+			 * Answer as OpenRegister does for a query without a register and schema: nothing.
+			 *
+			 * @return array
+			 */
+			public function searchObjects(array $query = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->lookups[] = ['searchObjects' => $query, '_rbac' => $_rbac, '_multitenancy' => $_multitenancy];
+				return [];
+			}
+		};
+		$organisations = new class($store, $lookups) {
 			/**
 			 * @param mixed $store The organisations by uuid, or 'fails'.
 			 * @param array<int, mixed> $lookups The lookups, by reference.
@@ -120,34 +176,27 @@ class SitemapPublisherGoldenTest extends TestCase {
 			}
 
 			/**
-			 * Answer an organisation lookup.
+			 * Find an organisation as OpenRegister's OrganisationMapper does: the entity, or an exception.
 			 *
-			 * @return array
+			 * @return object The organisation.
 			 */
-			public function searchObjects(array $query = [], bool $_rbac = true, bool $_multitenancy = true): array {
-				$this->lookups[] = ['query' => $query, '_rbac' => $_rbac, '_multitenancy' => $_multitenancy];
+			public function findByUuid(string $uuid): object {
+				$this->lookups[] = ['findByUuid' => $uuid];
 				if ($this->store === 'fails') {
 					throw new \RuntimeException('store down');
 				}
 
-				$rows = ($this->store[$query['@self']['uuid'] ?? ''] ?? []);
-				return array_map(
-					static fn (mixed $row): mixed => $row === 'entity' ? new class {
-						/**
-						 * The organisation.
-						 *
-						 * @return array
-						 */
-						public function jsonSerialize(): array {
-							return ['name' => 'Gemeente Entiteit', 'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0363'];
-						}
-					} : $row,
-					$rows
-				);
+				if (isset($this->store[$uuid]) === false) {
+					throw new \OCP\AppFramework\Db\DoesNotExistException('Organisation not found');
+				}
+
+				return SitemapPublisherGoldenTest::organisation(fields: $this->store[$uuid]);
 			}
 		};
 		$container = $this->createMock(ContainerInterface::class);
-		$container->method('get')->willReturn($objects);
+		$container->method('get')->willReturnCallback(
+			static fn (string $id): object => ($id === 'OCA\OpenRegister\Db\OrganisationMapper' ? $organisations : $objects)
+		);
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('getInstalledApps')->willReturn(['openregister']);
 		$settings = $this->createMock(SettingsService::class);
