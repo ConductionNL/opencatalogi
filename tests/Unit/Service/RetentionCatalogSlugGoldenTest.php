@@ -86,18 +86,21 @@ class RetentionCatalogSlugGoldenTest extends TestCase {
 		);
 		$store = new class($world['store'], $log) {
 			/**
-			 * @param mixed             $answer What the search answers.
-			 * @param array<int, mixed> $log    The calls, by reference.
+			 * @param mixed $answer What the search answers.
+			 * @param array<int, mixed> $log The calls, by reference.
 			 */
-			public function __construct(private mixed $answer, private array &$log) {
+			public function __construct(
+				private mixed $answer,
+				private array &$log,
+			) {
 			}
 
 			/**
 			 * Record the search and answer it.
 			 *
-			 * @param array $query         The query.
-			 * @param bool  $_rbac         Whether RBAC applies.
-			 * @param bool  $_multitenancy Whether the organisation filter applies.
+			 * @param array $query The query.
+			 * @param bool $_rbac Whether RBAC applies.
+			 * @param bool $_multitenancy Whether the organisation filter applies.
 			 *
 			 * @return array<string, mixed>
 			 */
