@@ -206,7 +206,7 @@ class EventService implements EventServiceInterface {
 		} catch (\Exception $e) {
 			throw new RuntimeException('Failed to handle object ' . $event . ' events: ' . $e->getMessage());
 		}//end try
-}//end handleObjectEvents()
+	}//end handleObjectEvents()
 
 	/**
 	 * The event's tally with one object's outcome added.
@@ -256,7 +256,7 @@ class EventService implements EventServiceInterface {
 		}//end try
 
 		return $outcome;
-}//end processObject()
+	}//end processObject()
 
 	/**
 	 * The outcome after publishing the attachments of a live object, when the options say so.
@@ -351,7 +351,7 @@ class EventService implements EventServiceInterface {
 			);
 			return false;
 		}//end try
-}//end shouldAutoPublishObject()
+	}//end shouldAutoPublishObject()
 
 	/**
 	 * Whether any configured catalog lists the object's register and schema.
@@ -441,7 +441,7 @@ class EventService implements EventServiceInterface {
 		} catch (\Exception $e) {
 			return ['success' => false, 'objectId' => ($objectData['@self']['id'] ?? 'unknown'), 'error' => $e->getMessage()];
 		}//end try
-}//end publishObject()
+	}//end publishObject()
 
 	/**
 	 * The id, register and schema an object is saved under.
@@ -516,7 +516,7 @@ class EventService implements EventServiceInterface {
 		}
 
 		return $result;
-}//end publishObjectAttachments()
+	}//end publishObjectAttachments()
 
 	/**
 	 * The files of an object, read through FileMapper, or none when the object does not exist.
@@ -590,7 +590,7 @@ class EventService implements EventServiceInterface {
 		}
 
 		return null;
-}//end shareFileError()
+	}//end shareFileError()
 
 	/**
 	 * Whether a share link answer is empty or says the file was not found.
