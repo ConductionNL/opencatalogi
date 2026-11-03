@@ -341,4 +341,65 @@ class RegisterSchemaLinkServiceTest extends TestCase {
 		);
 
 	}//end testRealEntitiesWithMagicAccessorsAreLinked()
+
+	/**
+	 * A real register with another slug is never patched, even when the mapper finds no publication register.
+	 *
+	 * @return void
+	 */
+	public function testARegisterWithAnotherSlugIsNeverPatched(): void {
+		$other = new Register();
+		$other->setSlug('other');
+		$other->setSchemas([3]);
+		$other->setConfiguration([]);
+		$schema = new \OCA\OpenRegister\Db\Schema();
+		$schema->setId(9);
+		$schema->setSlug('new-schema');
+
+		$mapper = $this->makeMapper();
+		$mapper->method('find')->willThrowException(new \RuntimeException('no publication register'));
+		$mapper->expects($this->never())->method('update');
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($mapper);
+
+		$this->service->reconcile(['registers' => [$other], 'schemas' => [$schema]]);
+		$this->assertSame([3], $other->getSchemas());
+
+	}//end testARegisterWithAnotherSlugIsNeverPatched()
+
+	/**
+	 * An existing configuration entry for a schema is kept, not overwritten by the defaults.
+	 *
+	 * @return void
+	 */
+	public function testAnExistingSchemaConfigurationIsKept(): void {
+		$register = new Register();
+		$register->setSlug('publication');
+		$register->setSchemas([3]);
+		$register->setConfiguration(['schemas' => ['new-schema' => ['magicMapping' => false]]]);
+		$schema = new \OCA\OpenRegister\Db\Schema();
+		$schema->setId(9);
+		$schema->setSlug('new-schema');
+
+		$saved = [];
+		$mapper = $this->makeMapper();
+		$mapper->method('update')->willReturnCallback(
+			static function ($entity) use (&$saved) {
+				$saved = $entity->getConfiguration();
+				return $entity;
+			}
+		);
+		$magic = $this->environmentAwareDouble(\OCA\OpenRegister\Db\MagicMapper::class, ['ensureTableForRegisterSchema']);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				'OCA\OpenRegister\Db\RegisterMapper' => $mapper,
+				'OCA\OpenRegister\Db\MagicMapper' => $magic,
+			}
+		);
+
+		$this->service->reconcile(['registers' => [$register], 'schemas' => [$schema]]);
+		$this->assertSame(['magicMapping' => false], $saved['schemas']['new-schema']);
+
+	}//end testAnExistingSchemaConfigurationIsKept()
 }//end class
