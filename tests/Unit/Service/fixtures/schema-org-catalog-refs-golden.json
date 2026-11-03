@@ -1,0 +1,303 @@
+{
+    "one register, one schema": {
+        "dataset": [
+            {
+                "@id": "iri:woo/u1"
+            },
+            {
+                "@id": "iri:woo/p2"
+            },
+            {
+                "@id": "iri:woo/7"
+            }
+        ],
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "_limit": 1000,
+                        "@self": {
+                            "register": 1,
+                            "schema": 11
+                        }
+                    },
+                    "_rbac": true,
+                    "_multitenancy": false,
+                    "deleted": false
+                }
+            }
+        ]
+    },
+    "several registers and schemas": {
+        "dataset": [
+            {
+                "@id": "iri:woo/u1"
+            },
+            {
+                "@id": "iri:woo/p2"
+            },
+            {
+                "@id": "iri:woo/7"
+            }
+        ],
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "_limit": 1000,
+                        "@self": {
+                            "register": [
+                                1,
+                                2
+                            ],
+                            "schema": [
+                                11,
+                                12
+                            ]
+                        },
+                        "_registers": [
+                            1,
+                            2
+                        ],
+                        "_schemas": [
+                            11,
+                            12
+                        ]
+                    },
+                    "_rbac": true,
+                    "_multitenancy": false,
+                    "deleted": false
+                }
+            }
+        ]
+    },
+    "lists as json text": {
+        "dataset": [
+            {
+                "@id": "iri:woo/u1"
+            },
+            {
+                "@id": "iri:woo/p2"
+            },
+            {
+                "@id": "iri:woo/7"
+            }
+        ],
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "_limit": 1000,
+                        "@self": {
+                            "register": [
+                                1,
+                                3
+                            ],
+                            "schema": [
+                                11,
+                                2
+                            ]
+                        },
+                        "_registers": [
+                            1,
+                            3
+                        ],
+                        "_schemas": [
+                            11,
+                            2
+                        ]
+                    },
+                    "_rbac": true,
+                    "_multitenancy": false,
+                    "deleted": false
+                }
+            }
+        ]
+    },
+    "invalid json text": {
+        "dataset": [],
+        "log": []
+    },
+    "json text that is a number": {
+        "dataset": [],
+        "log": []
+    },
+    "non-numeric entries only": {
+        "dataset": [],
+        "log": []
+    },
+    "numeric strings with spaces and signs": {
+        "dataset": [
+            {
+                "@id": "iri:woo/u1"
+            },
+            {
+                "@id": "iri:woo/p2"
+            },
+            {
+                "@id": "iri:woo/7"
+            }
+        ],
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "_limit": 1000,
+                        "@self": {
+                            "register": [
+                                4,
+                                -2,
+                                10
+                            ],
+                            "schema": [
+                                11
+                            ]
+                        },
+                        "_registers": [
+                            4,
+                            -2,
+                            10
+                        ],
+                        "_schemas": [
+                            11
+                        ]
+                    },
+                    "_rbac": true,
+                    "_multitenancy": false,
+                    "deleted": false
+                }
+            }
+        ]
+    },
+    "keyed lists": {
+        "dataset": [
+            {
+                "@id": "iri:woo/u1"
+            },
+            {
+                "@id": "iri:woo/p2"
+            },
+            {
+                "@id": "iri:woo/7"
+            }
+        ],
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "_limit": 1000,
+                        "@self": {
+                            "register": [
+                                3,
+                                4
+                            ],
+                            "schema": [
+                                11
+                            ]
+                        },
+                        "_registers": [
+                            3,
+                            4
+                        ],
+                        "_schemas": [
+                            11
+                        ]
+                    },
+                    "_rbac": true,
+                    "_multitenancy": false,
+                    "deleted": false
+                }
+            }
+        ]
+    },
+    "no registers": {
+        "dataset": [],
+        "log": []
+    },
+    "no schemas": {
+        "dataset": [],
+        "log": []
+    },
+    "null lists": {
+        "dataset": [],
+        "log": []
+    },
+    "search fails": {
+        "dataset": [],
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "_limit": 1000,
+                        "@self": {
+                            "register": 1,
+                            "schema": 11
+                        }
+                    },
+                    "_rbac": true,
+                    "_multitenancy": false,
+                    "deleted": false
+                }
+            },
+            {
+                "debug": "[SchemaOrgService] Catalog dataset listing failed",
+                "context": {
+                    "catalog": "woo",
+                    "error": "search down"
+                }
+            }
+        ]
+    },
+    "no results key": {
+        "dataset": [],
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "_limit": 1000,
+                        "@self": {
+                            "register": 1,
+                            "schema": 11
+                        }
+                    },
+                    "_rbac": true,
+                    "_multitenancy": false,
+                    "deleted": false
+                }
+            }
+        ]
+    },
+    "rows as entities": {
+        "dataset": [
+            {
+                "@id": "iri:woo/u1"
+            },
+            {
+                "@id": "iri:woo/p2"
+            },
+            {
+                "@id": "iri:woo/7"
+            }
+        ],
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "_limit": 1000,
+                        "@self": {
+                            "register": 1,
+                            "schema": 11
+                        }
+                    },
+                    "_rbac": true,
+                    "_multitenancy": false,
+                    "deleted": false
+                }
+            }
+        ]
+    },
+    "no OpenRegister": {
+        "dataset": [],
+        "log": []
+    }
+}
