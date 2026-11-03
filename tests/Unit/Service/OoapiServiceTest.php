@@ -317,7 +317,7 @@ class OoapiServiceTest extends TestCase {
 				}
 
 				$calls[] = $named;
-				return $this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'schema' => 'schema-1'], 'catalog' => 'catalog-1', 'code' => 'INF101']);
+				return $this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'register' => 'reg-1', 'schema' => 'schema-1'], 'catalog' => 'catalog-1', 'code' => 'INF101']);
 			}
 		);
 		$this->wireOpenRegister($objectService, $this->courseSchemaMapper());
@@ -342,7 +342,7 @@ class OoapiServiceTest extends TestCase {
 			$this->setUp();
 			$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 			$objectService->method('find')->willReturn(
-				$this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'schema' => 'schema-1'], 'catalog' => $objectCatalog, 'code' => 'INF101'])
+				$this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'register' => 'reg-1', 'schema' => 'schema-1'], 'catalog' => $objectCatalog, 'code' => 'INF101'])
 			);
 			$this->wireOpenRegister($objectService, $this->courseSchemaMapper());
 
