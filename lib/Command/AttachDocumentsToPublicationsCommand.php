@@ -127,7 +127,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		foreach (self::OPTIONS as $name => $description) {
 			$this->addOption(name: $name, mode: InputOption::VALUE_NONE, description: $description);
 		}
-}//end configure()
+	}//end configure()
 
 	/**
 	 * Read every document and migrate it.
@@ -439,7 +439,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		$publication = (string)$doc['publication']->getUuid();
 		$window = $this->windowNote(metadata: $doc['metadata']);
 		self::say(output: $output, line: ['report', $doc['uuid'], $doc['name'], $publication, count($doc['files']), $window]);
-}//end reportDocument()
+	}//end reportDocument()
 
 	/**
 	 * Move each file onto the publication and write the document's metadata onto it.
