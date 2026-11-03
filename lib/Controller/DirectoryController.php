@@ -33,7 +33,6 @@ use OCP\AppFramework\Db\MultipleObjectsReturnedException;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
-use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
@@ -57,8 +56,7 @@ class DirectoryController extends Controller {
 	 * @param DirectoryServiceInterface $directoryService The directory service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param IAppConfig|null $config App config for CORS allowlist (optional).
-	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
+	 * @param ListCorsPolicy $cors Allowed CORS methods, headers and max age, and the configured origin allowlist.
 	 */
 	public function __construct(
 		$appName,
@@ -66,8 +64,7 @@ class DirectoryController extends Controller {
 		private readonly DirectoryServiceInterface $directoryService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?IAppConfig $config = null,
-		private readonly CorsSettings $cors = new CorsSettings(),
+		private readonly ListCorsPolicy $cors = new ListCorsPolicy(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -83,7 +80,8 @@ class DirectoryController extends Controller {
 	 * @SuppressWarnings(PHPMD.UnusedPrivateMethod)
 	 */
 	private function allowedOriginsSetting(): string {
-		return ($this->config?->getValueString($this->appName, 'cors_allowed_origins', '*') ?? '*');
+		return $this->cors->allowedOriginsSetting(appName: $this->appName);
+
 	}//end allowedOriginsSetting()
 
 	/**

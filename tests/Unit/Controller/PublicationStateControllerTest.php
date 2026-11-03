@@ -18,6 +18,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\PublicationStateController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
@@ -161,11 +162,8 @@ class PublicationStateControllerTest extends TestCase {
 			$this->request,
 			$l10n,
 			$session,
-			new PublicationStateService(),
 			$this->rights,
-			new DepublicationService($this->index, $this->createMock(LoggerInterface::class)),
-			$container,
-			new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)
+			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects))
 		);
 	}
 

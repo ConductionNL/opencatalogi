@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\SitemapStandards;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCP\Http\Client\IClient;
@@ -22,6 +23,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for WooReadinessService.
  *
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
+ * @covers \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses \OCA\OpenCatalogi\Service\CatalogReadinessChecks
  */
 class WooReadinessServiceTest extends TestCase {
@@ -100,11 +102,10 @@ XML;
 		$this->service = new WooReadinessService(
 			$this->clientService,
 			$this->directoryService,
-			$this->sitemapService,
+			new SitemapStandards($this->sitemapService, $this->standardsVersionService),
 			$this->settingsService,
 			$this->config,
-			$this->urlGenerator,
-			$this->standardsVersionService
+			$this->urlGenerator
 		);
 	}
 
@@ -238,12 +239,14 @@ XML;
 			}
 		);
 
-		$this->sitemapService->method('validateDiwooOutput')->willReturn([
-			'catalogSlug' => 'demo-catalog',
-			'categoryCode' => 'sitemapindex-diwoo-infocat001.xml',
-			'valid' => true,
-			'violations' => [],
-		]);
+		$this->sitemapService->expects($this->once())->method('validateDiwooOutput')
+			->with('demo-catalog', 'sitemapindex-diwoo-infocat001.xml', 1)
+			->willReturn([
+				'catalogSlug' => 'demo-catalog',
+				'categoryCode' => 'sitemapindex-diwoo-infocat001.xml',
+				'valid' => true,
+				'violations' => [],
+			]);
 
 		$this->config->expects($this->once())->method('setValueString')
 			->with('opencatalogi', 'woo_readiness_report', $this->isType('string'));
@@ -441,11 +444,10 @@ XML;
 		return new WooReadinessService(
 			$this->clientService,
 			$this->directoryService,
-			$this->sitemapService,
+			new SitemapStandards($this->sitemapService, $versions),
 			$this->settingsService,
 			$this->config,
-			$this->urlGenerator,
-			$versions
+			$this->urlGenerator
 		);
 	}
 

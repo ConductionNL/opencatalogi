@@ -25,6 +25,7 @@ namespace Unit\Controller;
 
 require_once __DIR__ . '/WooRequestControllerTest.php';
 
+use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
@@ -46,6 +47,7 @@ use Psr\Container\ContainerInterface;
  * Golden test for WooRequestController::pause and ::resume.
  *
  * @covers \OCA\OpenCatalogi\Controller\WooRequestController
+ * @covers \OCA\OpenCatalogi\Controller\RequestRecords
  * @uses \OCA\OpenCatalogi\Service\Woo\WooRequestService
  * @uses \OCA\OpenCatalogi\Service\Woo\WooRequestStore
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
@@ -185,8 +187,7 @@ class WooRequestPauseResumeGoldenTest extends TestCase {
 			$request,
 			$l10n,
 			$userSession,
-			new WooRequestService(),
-			new WooRequestStore($config, new OpenRegisterLookup($container, $appManager)),
+			new RequestRecords(new WooRequestService(), new WooRequestStore($config, new OpenRegisterLookup($container, $appManager))),
 			$this->terms(engine: ($world['engine'] ?? 'works'))
 		);
 

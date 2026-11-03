@@ -24,8 +24,11 @@
  * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
  *
  * @covers \OCA\OpenCatalogi\Controller\CommunityController
+ * @covers \OCA\OpenCatalogi\Controller\CommunityPages
+ * @covers \OCA\OpenCatalogi\Controller\ForwardsRegisterAccess
  * @covers \OCA\OpenCatalogi\Controller\NoticeBoardController
  * @covers \OCA\OpenCatalogi\Controller\PublicationRulesController
+ * @covers \OCA\OpenCatalogi\Controller\PublicationRuleChecks
  * @covers \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
  * @covers \OCA\OpenCatalogi\Controller\ReadsOpenRegisterResults
  * @covers \OCA\OpenCatalogi\Controller\AnswersCrossOriginRequests
@@ -38,9 +41,16 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
+use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
+use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Controller\CommunityController;
+use OCA\OpenCatalogi\Controller\CommunityPages;
 use OCA\OpenCatalogi\Controller\NoticeBoardController;
+use OCA\OpenCatalogi\Controller\PublicationRuleChecks;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -177,7 +187,17 @@ class CommunityReadsGoldenTest extends TestCase {
 				$name === IAppConfig::class => $config,
 				$name === ContainerInterface::class => $container,
 				$name === ServiceCatalogueServiceInterface::class => $objects,
+				$name === PublicationRuleChecks::class => new PublicationRuleChecks(
+					$this->createMock(PublicationRuleServiceInterface::class),
+					$this->createMock(DecisionPublicationValidatorInterface::class)
+				),
 				$name === RegisterAccess::class => new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects),
+				$name === CommunityPages::class => new CommunityPages(
+					$this->createMock(StatusPageServiceInterface::class),
+					$this->createMock(AtomFeedServiceInterface::class),
+					$this->createMock(MarkupRenderServiceInterface::class),
+					new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)
+				),
 				default => $this->createMock($name),
 			};
 		}

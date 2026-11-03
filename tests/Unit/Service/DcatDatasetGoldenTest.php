@@ -28,6 +28,7 @@
  * @spec openspec/specs/dcat-ap-harvest/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\DcatMappingService
+ * @covers \OCA\OpenCatalogi\Service\DcatDistributionMapper
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
  * @uses \OCA\OpenCatalogi\Service\DcatDatasetSource
  * @uses \OCA\OpenCatalogi\Service\DcatMappingProfile

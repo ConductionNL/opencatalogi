@@ -173,26 +173,34 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 		}
 
 		try {
-			$schema = $schemaMapper->find($schemaId);
-			$schemaData = $this->toArray(item: $schema);
-			$marker = (string)($schemaData['x-schema-org'] ?? '');
-			if ($marker === '') {
-				return self::DEFAULT_TYPE;
-			}
-
-			// Strip the `schema:` CURIE prefix, leaving the bare type.
-			$type = preg_replace('/^schema:/', '', $marker);
-			if ($type === null || $type === '') {
-				return self::DEFAULT_TYPE;
-			}
-
-			return $type;
+			$marker = (string)($this->toArray(item: $schemaMapper->find($schemaId))['x-schema-org'] ?? '');
 		} catch (\Throwable $e) {
 			$this->logger->debug('[SchemaOrgService] Could not resolve schema marker', ['schema' => $schemaId, 'error' => $e->getMessage()]);
 			return self::DEFAULT_TYPE;
-		}//end try
+		}
+
+		return $this->bareType(marker: $marker);
 
 	}//end markerTypeForSchema()
+
+	/**
+	 * The bare schema.org type of a `schema:X` marker.
+	 *
+	 * @param string $marker The schema's `x-schema-org` value.
+	 *
+	 * @return string The type without the `schema:` prefix, or the default type when nothing is left.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function bareType(string $marker): string {
+		// Strip the `schema:` CURIE prefix, leaving the bare type.
+		$type = preg_replace('/^schema:/', '', $marker);
+		if ($type === null || $type === '') {
+			return self::DEFAULT_TYPE;
+		}
+
+		return $type;
+	}//end bareType()
 
 	/**
 	 * Whether the catalog elects `schema:Dataset` for its publications.
@@ -240,20 +248,12 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 		$name = ($organisation['title'] ?? $organisation['name'] ?? $defaults['publisherName'] ?? '');
 		$uri = ($organisation['oin'] ?? $organisation['uri'] ?? $defaults['publisherUri'] ?? '');
 
-		if ($name === '' && $uri === '') {
+		$publisher = array_filter(['name' => $name, '@id' => $uri], static fn ($value) => $value !== '');
+		if ($publisher === []) {
 			return null;
 		}
 
-		$publisher = ['@type' => 'Organization'];
-		if ($name !== '') {
-			$publisher['name'] = (string)$name;
-		}
-
-		if ($uri !== '') {
-			$publisher['@id'] = (string)$uri;
-		}
-
-		return $publisher;
+		return ['@type' => 'Organization'] + array_map('strval', $publisher);
 	}//end buildPublisher()
 
 	/**
@@ -270,25 +270,13 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	 */
 	private function buildDistributions(array $publication): array {
 		$fileService = $this->getFileService();
-		if ($fileService === null) {
-			return [];
-		}
-
 		$objectId = ($publication['id'] ?? $publication['@self']['uuid'] ?? null);
-		if ($objectId === null) {
-			return [];
-		}
-
-		$files = [];
-		try {
-			$files = ($fileService->formatFiles($fileService->getFiles(object: $objectId))['results'] ?? []);
-		} catch (\Throwable $e) {
-			$this->logger->debug('[SchemaOrgService] Could not load files', ['id' => $objectId, 'error' => $e->getMessage()]);
+		if ($fileService === null || $objectId === null) {
 			return [];
 		}
 
 		$distributions = [];
-		foreach ($files as $file) {
+		foreach ($this->attachmentsOf(fileService: $fileService, objectId: $objectId) as $file) {
 			$node = $this->downloadNode(file: $file);
 			if ($node !== null) {
 				$distributions[] = $node;
@@ -297,6 +285,25 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 
 		return $distributions;
 	}//end buildDistributions()
+
+	/**
+	 * The formatted attachments of a publication, or none when they cannot be loaded.
+	 *
+	 * @param object $fileService The OpenRegister FileService.
+	 * @param mixed  $objectId    The publication id or uuid.
+	 *
+	 * @return mixed The formatFiles `results`.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function attachmentsOf(object $fileService, mixed $objectId): mixed {
+		try {
+			return ($fileService->formatFiles($fileService->getFiles(object: $objectId))['results'] ?? []);
+		} catch (\Throwable $e) {
+			$this->logger->debug('[SchemaOrgService] Could not load files', ['id' => $objectId, 'error' => $e->getMessage()]);
+			return [];
+		}
+	}//end attachmentsOf()
 
 	/**
 	 * The `DataDownload` node of one attachment, or null when it has no download url.
@@ -313,27 +320,45 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 			return null;
 		}
 
-		$node = [
-			'@type' => 'DataDownload',
-			'contentUrl' => $downloadUrl,
-		];
-
-		$mimetype = ($file['mimetype'] ?? $file['mimeType'] ?? null);
-		if (is_string($mimetype) === true && $mimetype !== '') {
-			$node['encodingFormat'] = $mimetype;
-		}
-
-		$title = ($file['title'] ?? $file['name'] ?? null);
-		if (is_string($title) === true && $title !== '') {
-			$node['name'] = $title;
-		}
-
-		if (isset($file['size']) === true && is_numeric($file['size']) === true) {
-			$node['contentSize'] = (string)((int)$file['size']);
-		}
-
-		return $node;
+		return ['@type' => 'DataDownload', 'contentUrl' => $downloadUrl] + $this->downloadDetails(file: $file);
 	}//end downloadNode()
+
+	/**
+	 * The media type, name and size of an attachment, each only when usable.
+	 *
+	 * @param array<string, mixed> $file The formatted attachment.
+	 *
+	 * @return array<string, string> The `encodingFormat`, `name` and `contentSize` fields.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function downloadDetails(array $file): array {
+		$details = array_filter(
+			[
+				'encodingFormat' => ($file['mimetype'] ?? $file['mimeType'] ?? null),
+				'name' => ($file['title'] ?? $file['name'] ?? null),
+			],
+			$this->isNonEmptyString(...)
+		);
+		if (isset($file['size']) === true && is_numeric($file['size']) === true) {
+			$details['contentSize'] = (string)((int)$file['size']);
+		}
+
+		return $details;
+	}//end downloadDetails()
+
+	/**
+	 * Whether a value is a non-empty string.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return bool True for a string other than ''.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function isNonEmptyString(mixed $value): bool {
+		return is_string($value) === true && $value !== '';
+	}//end isNonEmptyString()
 
 	/**
 	 * Build the schema.org JSON-LD node for a single publication.
@@ -351,37 +376,70 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	public function buildPublicationNode(array $object, array $catalog, string $catalogSlug): array {
-		$uuid = (string)($object['@self']['uuid'] ?? $object['id'] ?? '');
-		$url = $this->dcatService->datasetIri($catalogSlug, $uuid);
-
+		$url = $this->dcatService->datasetIri($catalogSlug, (string)($object['@self']['uuid'] ?? $object['id'] ?? ''));
 		$elected = $this->isDatasetElected(catalog: $catalog);
-
 		$node = array_merge(
-			[
-				'@context' => self::CONTEXT,
-				'@type' => $this->nodeType(object: $object, elected: $elected),
-				'@id' => $url,
-				'url' => $url,
-			],
-			$this->descriptiveFields(object: $object)
+			['@context' => self::CONTEXT, '@type' => $this->nodeType(object: $object, elected: $elected), '@id' => $url, 'url' => $url],
+			$this->descriptiveFields(object: $object),
+			$this->publisherField(catalog: $catalog)
 		);
 
-		$publisher = $this->buildPublisher(catalog: $catalog);
-		if ($publisher !== null) {
-			$node['publisher'] = $publisher;
-		}
-
 		if ($elected === true) {
-			$distributions = $this->buildDistributions(publication: $object);
-			if ($distributions !== []) {
-				$node['distribution'] = $distributions;
-			}
-
+			$node += $this->distributionField(publication: $object);
 			$node['includedInDataCatalog'] = $this->catalogBacklink(catalog: $catalog, catalogSlug: $catalogSlug);
 		}
 
 		return $node;
 	}//end buildPublicationNode()
+
+	/**
+	 * The `publisher` field of a node, or none when no publisher resolves.
+	 *
+	 * @param array<string, mixed> $catalog The catalog object.
+	 *
+	 * @return array<string, array<string, mixed>> The field.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function publisherField(array $catalog): array {
+		$publisher = $this->buildPublisher(catalog: $catalog);
+		if ($publisher === null) {
+			return [];
+		}
+
+		return ['publisher' => $publisher];
+	}//end publisherField()
+
+	/**
+	 * The `distribution` field of an elected publication, or none without downloads.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 *
+	 * @return array<string, array<int, array<string, mixed>>> The field.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function distributionField(array $publication): array {
+		$distributions = $this->buildDistributions(publication: $publication);
+		if ($distributions === []) {
+			return [];
+		}
+
+		return ['distribution' => $distributions];
+	}//end distributionField()
+
+	/**
+	 * The given text fields that are not '', as strings.
+	 *
+	 * @param array<string, mixed> $texts The candidate fields.
+	 *
+	 * @return array<string, string> The usable fields, in order.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function textFields(array $texts): array {
+		return array_map('strval', array_filter($texts, static fn ($value) => $value !== ''));
+	}//end textFields()
 
 	/**
 	 * The `@type` of a publication node: `Dataset` when the catalog elects it,
@@ -417,25 +475,34 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	private function descriptiveFields(array $object): array {
-		$fields = [];
-
-		$name = ($object['title'] ?? $object['name'] ?? '');
-		if ($name !== '') {
-			$fields['name'] = (string)$name;
-		}
-
-		$description = ($object['description'] ?? $object['summary'] ?? '');
-		if ($description !== '') {
-			$fields['description'] = (string)$description;
-		}
+		$fields = $this->textFields(
+			texts: [
+				'name' => ($object['title'] ?? $object['name'] ?? ''),
+				'description' => ($object['description'] ?? $object['summary'] ?? ''),
+			]
+		);
 
 		$modified = ($object['@self']['updated'] ?? $object['publicationDate'] ?? null);
 		if ($modified !== null && $modified !== '') {
 			$fields['dateModified'] = $this->isoDate(value: (string)$modified);
 		}
 
+		return $fields + $this->licenseAndKeywords(object: $object);
+	}//end descriptiveFields()
+
+	/**
+	 * The licence and keywords of a publication, each only when usable.
+	 *
+	 * @param array<string, mixed> $object The rendered publication object.
+	 *
+	 * @return array<string, mixed> The `license` and `keywords` fields.
+	 *
+	 * @spec openspec/specs/structured-data-discoverability/spec.md
+	 */
+	private function licenseAndKeywords(array $object): array {
+		$fields = [];
 		$license = ($object['license'] ?? null);
-		if (is_string($license) === true && $license !== '') {
+		if ($this->isNonEmptyString(value: $license) === true) {
 			$fields['license'] = $license;
 		}
 
@@ -445,7 +512,7 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 		}
 
 		return $fields;
-	}//end descriptiveFields()
+	}//end licenseAndKeywords()
 
 	/**
 	 * The non-empty scalar tags of a publication, as strings.
@@ -499,26 +566,18 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	public function buildCatalogNode(array $catalog, string $catalogSlug): array {
 		$catalogUrl = $this->catalogNodeUrl(catalogSlug: $catalogSlug);
 
-		$node = [
-			'@context' => self::CONTEXT,
-			'@type' => 'DataCatalog',
-			'@id' => $catalogUrl,
-			'url' => $catalogUrl,
-			'name' => (string)($catalog['title'] ?? $catalogSlug),
-		];
-
-		if (($catalog['description'] ?? '') !== '') {
-			$node['description'] = (string)$catalog['description'];
-		}
-
-		$publisher = $this->buildPublisher(catalog: $catalog);
-		if ($publisher !== null) {
-			$node['publisher'] = $publisher;
-		}
-
-		$node['dataset'] = $this->listVisiblePublicationRefs(catalog: $catalog, catalogSlug: $catalogSlug);
-
-		return $node;
+		$node = array_merge(
+			[
+				'@context' => self::CONTEXT,
+				'@type' => 'DataCatalog',
+				'@id' => $catalogUrl,
+				'url' => $catalogUrl,
+				'name' => (string)($catalog['title'] ?? $catalogSlug),
+			],
+			$this->textFields(texts: ['description' => ($catalog['description'] ?? '')]),
+			$this->publisherField(catalog: $catalog)
+		);
+		return $node + ['dataset' => $this->listVisiblePublicationRefs(catalog: $catalog, catalogSlug: $catalogSlug)];
 	}//end buildCatalogNode()
 
 	/**

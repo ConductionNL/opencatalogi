@@ -32,6 +32,7 @@
  * @covers \OCA\OpenCatalogi\Controller\CommunityController
  * @covers \OCA\OpenCatalogi\Controller\DcatController
  * @covers \OCA\OpenCatalogi\Controller\DirectoryController
+ * @covers \OCA\OpenCatalogi\Controller\ListCorsPolicy
  * @covers \OCA\OpenCatalogi\Controller\GlossaryController
  * @covers \OCA\OpenCatalogi\Controller\InspectionController
  * @covers \OCA\OpenCatalogi\Controller\ListingsController
@@ -59,6 +60,7 @@ use OCA\OpenCatalogi\Controller\DcatController;
 use OCA\OpenCatalogi\Controller\DirectoryController;
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\InspectionController;
+use OCA\OpenCatalogi\Controller\ListCorsPolicy;
 use OCA\OpenCatalogi\Controller\ListingsController;
 use OCA\OpenCatalogi\Controller\OoapiController;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
@@ -344,6 +346,8 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 				$args[] = $request;
 			} elseif ($name === IAppConfig::class) {
 				$args[] = $config;
+			} elseif ($name === ListCorsPolicy::class) {
+				$args[] = new ListCorsPolicy($config);
 			} elseif ($param->isDefaultValueAvailable() === true) {
 				$args[] = $param->getDefaultValue();
 			} else {

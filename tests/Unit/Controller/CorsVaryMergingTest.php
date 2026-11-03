@@ -42,6 +42,7 @@ use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Controller\CommunityController;
 use OCA\OpenCatalogi\Controller\DcatController;
 use OCA\OpenCatalogi\Controller\DirectoryController;
+use OCA\OpenCatalogi\Controller\ListCorsPolicy;
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\InspectionController;
 use OCA\OpenCatalogi\Controller\ListingsController;
@@ -294,6 +295,8 @@ class CorsVaryMergingTest extends TestCase {
 				$args[] = $request;
 			} elseif ($name === IAppConfig::class) {
 				$args[] = $config;
+			} elseif ($name === ListCorsPolicy::class) {
+				$args[] = new ListCorsPolicy(config: $config);
 			} elseif ($param->isDefaultValueAvailable() === true) {
 				$args[] = $param->getDefaultValue();
 			} else {

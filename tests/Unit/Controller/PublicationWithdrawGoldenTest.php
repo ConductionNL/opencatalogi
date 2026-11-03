@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\PublicationStateController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
@@ -47,6 +48,7 @@ use Psr\Container\ContainerInterface;
  * Golden test for PublicationStateController::withdraw().
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationStateController
+ * @covers \OCA\OpenCatalogi\Controller\PublicationTransitions
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
@@ -179,11 +181,8 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			$request,
 			$this->l10n(),
 			$session,
-			$this->states(case: $case, calls: $calls),
 			$rights,
-			$this->depublisher(case: $case, calls: $calls),
-			$container,
-			new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $this->objects(case: $case, calls: $calls))
+			new PublicationTransitions($this->states(case: $case, calls: $calls), $this->depublisher(case: $case, calls: $calls), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $this->objects(case: $case, calls: $calls)))
 		);
 
 		return $controller;

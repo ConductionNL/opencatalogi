@@ -44,8 +44,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
-use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -77,10 +75,7 @@ class PublicationRulesController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param PublicationRuleServiceInterface $ruleService The rule evaluator.
-	 * @param DecisionPublicationValidatorInterface $decisionValidator The decision type validation.
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+	 * @param PublicationRuleChecks $rules The rule evaluator and the decision type validation.
 	 */
 	public function __construct(
 		$appName,
@@ -88,8 +83,7 @@ class PublicationRulesController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationRuleServiceInterface $ruleService,
-		private readonly DecisionPublicationValidatorInterface $decisionValidator,
+		private readonly PublicationRuleChecks $rules,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -140,7 +134,7 @@ class PublicationRulesController extends Controller {
 		}
 
 		try {
-			$preview = $this->ruleService->preview(rule: $rule, sample: array_values(array_filter($sample, 'is_array')));
+			$preview = $this->rules->preview(rule: $rule, sample: $sample);
 		} catch (UnreadableRuleException $e) {
 			return new JSONResponse(
 				data: ['error' => 'unreadable-rule', 'message' => $e->getMessage()],
@@ -185,7 +179,7 @@ class PublicationRulesController extends Controller {
 			);
 		}
 
-		$validation = $this->decisionValidator->validate(decision: $decision, decisionType: $decisionType);
+		$validation = $this->rules->validateDecision(decision: $decision, decisionType: $decisionType);
 
 		if ($validation['publishable'] === false) {
 			return new JSONResponse(
@@ -226,13 +220,7 @@ class PublicationRulesController extends Controller {
 		}
 
 		try {
-			$results = $this->ruleService->searchPublic(
-				records: array_values(array_filter($records, 'is_array')),
-				rulesByType: $this->ruleService->indexByRecordType(
-					rules: array_values(array_filter($rules, 'is_array'))
-				),
-				terms: $terms
-			);
+			$results = $this->rules->searchPublic(query: ['records' => $records, 'rules' => $rules, 'terms' => $terms]);
 		} catch (UnreadableRuleException $e) {
 			// A rule this app cannot evaluate refuses. Answering the empty set
 			// would read as "nothing published matches", which is a claim

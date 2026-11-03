@@ -46,10 +46,8 @@ use DateTimeZone;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
-use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -137,8 +135,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container for resolving OpenRegister.
+	 * @param RegisterBindings $bindings The configured register ids and the OpenRegister services.
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
@@ -146,8 +143,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
 	 */
 	public function __construct(
-		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
+		private readonly RegisterBindings $bindings,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
@@ -167,7 +163,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	public function getObjectService(): ?object {
 		if ($this->objectService === null) {
 			try {
-				$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+				$this->objectService = $this->bindings->service('OCA\OpenRegister\Service\ObjectService');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister ObjectService unavailable: ' . $e->getMessage());
 				return null;
@@ -187,7 +183,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	public function getDeckCardService(): ?object {
 		if ($this->deckCardService === null) {
 			try {
-				$this->deckCardService = $this->container->get('OCA\OpenRegister\Service\DeckCardService');
+				$this->deckCardService = $this->bindings->service('OCA\OpenRegister\Service\DeckCardService');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister DeckCardService unavailable: ' . $e->getMessage());
 				return null;
@@ -209,7 +205,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	public function getTaskSequenceMapper(): ?object {
 		if ($this->taskSequenceMapper === null) {
 			try {
-				$this->taskSequenceMapper = $this->container->get('OCA\OpenRegister\Db\TaskSequenceMapper');
+				$this->taskSequenceMapper = $this->bindings->service('OCA\OpenRegister\Db\TaskSequenceMapper');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister TaskSequenceMapper unavailable: ' . $e->getMessage());
 				return null;
@@ -227,12 +223,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @spec exclude pure config plumbing — reads the configured WOO register id.
 	 */
 	public function getRegister(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_BATCH_REGISTER, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_BATCH_REGISTER);
 	}//end getRegister()
 
 	/**
@@ -243,12 +234,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @spec exclude pure config plumbing — reads the configured WOO batch schema id.
 	 */
 	public function getBatchSchema(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_BATCH_SCHEMA, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_BATCH_SCHEMA);
 	}//end getBatchSchema()
 
 	/**
@@ -259,12 +245,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @spec exclude pure config plumbing — reads the configured WOO assessment schema id.
 	 */
 	public function getAssessmentSchema(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_ASSESSMENT_SCHEMA, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_ASSESSMENT_SCHEMA);
 	}//end getAssessmentSchema()
 
 	/**
@@ -882,12 +863,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
 	 */
 	public function getPublishApprovalChain(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_APPROVAL_CHAIN, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_APPROVAL_CHAIN);
 	}//end getPublishApprovalChain()
 
 	/**
