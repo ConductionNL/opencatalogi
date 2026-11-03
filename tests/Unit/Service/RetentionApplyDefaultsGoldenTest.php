@@ -36,6 +36,8 @@ use Psr\Log\LoggerInterface;
  * Golden test for RetentionService::applyDefaults.
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionRun
+ * @uses \OCA\OpenCatalogi\Service\RetentionRules
  * @uses \OCA\OpenCatalogi\Service\RetentionPolicyTable
  */
 class RetentionApplyDefaultsGoldenTest extends TestCase {
