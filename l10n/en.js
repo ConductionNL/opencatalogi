@@ -6,7 +6,7 @@ OC.L10N.register(
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",
         "Title public": "Title public",
         "Whether the title of this document may be shown on the public decision when the document is withheld.": "Whether the title of this document may be shown on the public decision when the document is withheld.",
-        "Store": "Store",
+        "Marketplace": "Marketplace",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.",
         "Load example data?": "Load example data?",
         "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install.": "Example data fills the lists, detail pages and dashboards so you can see the app working straight away. Each card has its own Load button. Pick \"None\" on a production install.",
