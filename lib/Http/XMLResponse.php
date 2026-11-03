@@ -198,6 +198,7 @@ class XMLResponse extends Response {
 	 */
 	private function buildXmlElement(DOMElement $element, array $data): void {
 		$data = $this->applyAttributes(element: $element, data: $data);
+		$data = $this->applyPrefixedAttributes(element: $element, data: $data);
 		$data = $this->applyText(element: $element, data: $data);
 
 		foreach ($data as $key => $value) {
@@ -234,6 +235,28 @@ class XMLResponse extends Response {
 
 		return $data;
 	}//end applyAttributes()
+
+	/**
+	 * Write every `@name` key with a single value as the attribute `name`.
+	 *
+	 * `@attributes` and `@root` are handled elsewhere. An `@name` key holding a list or
+	 * a map, or whose name is no valid attribute name, stays a child element.
+	 *
+	 * @param DOMElement $element The element.
+	 * @param array      $data    The element's data.
+	 *
+	 * @return array The data without the keys written as attributes.
+	 */
+	private function applyPrefixedAttributes(DOMElement $element, array $data): array {
+		foreach ($data as $key => $value) {
+			if (is_scalar($value) === true && $key !== '@attributes' && preg_match('/^@[A-Za-z_][A-Za-z0-9_.:-]*$/', (string)$key) === 1) {
+				$element->setAttribute(substr($key, 1), (string)$value);
+				unset($data[$key]);
+			}
+		}
+
+		return $data;
+	}//end applyPrefixedAttributes()
 
 	/**
 	 * Append the `#text` of the data to the element.
