@@ -73,6 +73,7 @@ class AvailabilityGoldenObjects {
  *
  * @covers \OCA\OpenCatalogi\Service\Woo\WooRequestStore
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\JsonList
  * @covers \OCA\OpenCatalogi\Service\Woo\WithheldDocumentStore
  * @covers \OCA\OpenCatalogi\Service\Portal\PortalObjectStore
  * @covers \OCA\OpenCatalogi\Service\Portal\PublicSearchRunner

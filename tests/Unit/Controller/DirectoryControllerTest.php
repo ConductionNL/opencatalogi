@@ -12,6 +12,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
+use Unit\Support\ServerAwareRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -29,7 +30,7 @@ class DirectoryControllerTest extends TestCase {
 	private DirectoryController $controller;
 
 	protected function setUp(): void {
-		$this->request = $this->createMock(IRequest::class);
+		$this->request = $this->createMock(ServerAwareRequest::class);
 		$this->directoryService = $this->createMock(DirectoryService::class);
 		$this->l10n = $this->createMock(IL10N::class);
 		$this->logger = $this->createMock(LoggerInterface::class);

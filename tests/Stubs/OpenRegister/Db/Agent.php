@@ -19,6 +19,11 @@ namespace OCA\OpenRegister\Db;
  * Minimal stub for Agent entity.
  *
  * Provides magic set* / get* / has* routing to emulate the Nextcloud Entity base class.
+ * The accessors below are the ones the real entity declares and this app calls.
+ *
+ * @method int getId()
+ * @method string|null getOrganisation()
+ * @method string|null getUser()
  */
 class Agent implements \JsonSerializable {
 

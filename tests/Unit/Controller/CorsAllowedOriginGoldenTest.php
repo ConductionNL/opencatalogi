@@ -68,6 +68,7 @@ use OCA\OpenCatalogi\Controller\ThemesController;
 use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IRequest;
+use Unit\Support\ServerAwareRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionClass;
@@ -296,7 +297,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	 * @return object
 	 */
 	private function build(string $class, ?IAppConfig $config, string $origin, ?string $server = null): object {
-		$request = $this->createMock(IRequest::class);
+		$request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getHeader')->willReturnCallback(
 			static fn (string $name): string => ($name === 'Origin' ? $origin : '')
 		);
