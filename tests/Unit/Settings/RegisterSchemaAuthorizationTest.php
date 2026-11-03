@@ -42,24 +42,68 @@ class RegisterSchemaAuthorizationTest extends TestCase {
 	private const SENSITIVE = '/token|hash|address|party|answer|By$/i';
 
 	/**
-	 * Schemas whose objects are personal data or secrets: never readable by the public.
+	 * Only administrators read or write these.
 	 */
-	private const NOT_PUBLIC = [
-		'inspection',
-		'zienswijzeAsk',
-		'statusSubscription',
-		'recordVote',
-		'articleVerdict',
-		'depublication',
-		'publicationProcess',
-		'publicationRule',
-		'obligationSource',
+	private const ADMIN_ONLY = ['read' => ['admin'], 'create' => ['admin'], 'update' => ['admin'], 'delete' => ['admin']];
+
+	/**
+	 * Signed-in users read these; only administrators write them.
+	 */
+	private const SIGNED_IN_READ = ['read' => ['authenticated'], 'create' => ['admin'], 'update' => ['admin'], 'delete' => ['admin']];
+
+	/**
+	 * Anyone reads these; only administrators write them.
+	 */
+	private const PUBLIC_READ = ['read' => ['public'], 'create' => ['admin'], 'update' => ['admin'], 'delete' => ['admin']];
+
+	/**
+	 * The exact block of each schema that holds a secret, personal data or something an administrator alone writes.
+	 */
+	private const BLOCKS = [
+		'inspection' => self::ADMIN_ONLY,
+		'zienswijzeAsk' => self::ADMIN_ONLY,
+		'depublication' => self::ADMIN_ONLY,
+		'obligationSource' => self::ADMIN_ONLY,
+		'statusSubscription' => self::ADMIN_ONLY,
+		'recordVote' => self::ADMIN_ONLY,
+		'articleVerdict' => self::ADMIN_ONLY,
+		'publicationRule' => self::SIGNED_IN_READ,
+		'publicationProcess' => self::SIGNED_IN_READ,
+		'instanceBanner' => self::SIGNED_IN_READ,
+		'serviceStatus' => self::PUBLIC_READ,
+		'noticeBoard' => self::PUBLIC_READ,
+		'serviceCatalogueEntry' => self::PUBLIC_READ,
+		'caseTypeDefinition' => self::PUBLIC_READ,
+		'notice' => [
+			'read' => [['group' => 'public', 'match' => ['startDate' => ['$lte' => '$now'], 'endDate' => ['$gte' => '$now']]], 'authenticated'],
+			'create' => ['admin'],
+			'update' => ['admin'],
+			'delete' => ['admin'],
+		],
+		'knowledgeArticle' => [
+			'read' => [['group' => 'public', 'match' => ['draft' => false]], 'authenticated'],
+			'create' => ['admin'],
+			'update' => ['admin'],
+			'delete' => ['admin'],
+		],
+	];
+
+	/**
+	 * The exact property rules of those schemas: every other property follows its schema's block.
+	 *
+	 * `reveal: explicit` keeps a hidden value out of filters, sorting, free-text search and facets.
+	 */
+	private const PROPERTY_RULES = [
+		'serviceStatus' => ['stateSetBy' => ['read' => ['admin'], 'reveal' => 'explicit']],
+		'noticeBoard' => ['moderator' => ['read' => ['admin'], 'reveal' => 'explicit']],
+		'knowledgeArticle' => ['sourceCase' => ['read' => ['authenticated'], 'reveal' => 'explicit']],
+		'caseTypeDefinition' => ['importedSnapshot' => ['read' => ['admin']]],
 	];
 
 	/**
 	 * Every schema in the shipped register documents, merged by slug the way the import merges fragments.
 	 *
-	 * @return array<string, array{properties: array<int, string>, authorization: array<string, mixed>, files: array<int, string>}>
+	 * @return array<string, array{properties: array<int, string>, authorization: array<string, mixed>, propertyRules: array<string, mixed>, files: array<int, string>}>
 	 */
 	private static function schemas(): array {
 		$files = array_merge(
@@ -76,9 +120,10 @@ class RegisterSchemaAuthorizationTest extends TestCase {
 					continue;
 				}
 
-				$merged = ($schemas[$slug] ?? ['properties' => [], 'authorization' => [], 'files' => []]);
+				$merged = ($schemas[$slug] ?? ['properties' => [], 'authorization' => [], 'propertyRules' => [], 'files' => []]);
 				$merged['properties'] = array_values(array_unique(array_merge($merged['properties'], array_keys($schema['properties'] ?? []))));
 				$merged['authorization'] = array_replace($merged['authorization'], (array)($schema['authorization'] ?? []));
+				$merged['propertyRules'] = array_replace($merged['propertyRules'], array_filter(array_map(static fn (mixed $property): mixed => ($property['authorization'] ?? null), (array)($schema['properties'] ?? []))));
 				$merged['files'][] = basename($file);
 				$schemas[$slug] = $merged;
 			}
@@ -128,27 +173,24 @@ class RegisterSchemaAuthorizationTest extends TestCase {
 	}//end testEverySchemaDeclaresAuthorization()
 
 	/**
-	 * The personal-data and secret schemas grant nothing to the public, and writes only to administrators.
+	 * Each listed schema ships exactly its block, so widening any action fails here.
 	 */
-	public function testThePrivateSchemasAreNotPublic(): void {
+	public function testEachSchemaShipsExactlyItsBlock(): void {
 		$schemas = self::schemas();
 
-		foreach (self::NOT_PUBLIC as $slug) {
-			$authorization = $schemas[$slug]['authorization'];
-			$this->assertNotSame([], $authorization, $slug);
-			$this->assertStringNotContainsString('public', json_encode($authorization, JSON_THROW_ON_ERROR), $slug);
-			foreach (['create', 'update', 'delete'] as $action) {
-				$this->assertSame(['admin'], $authorization[$action], $slug . ' ' . $action);
-			}
+		foreach (self::BLOCKS as $slug => $block) {
+			$this->assertSame($block, $schemas[$slug]['authorization'], $slug);
 		}
-	}//end testThePrivateSchemasAreNotPublic()
+	}//end testEachSchemaShipsExactlyItsBlock()
 
 	/**
-	 * A knowledge article is public only once it is no longer a draft.
+	 * Each listed schema ships exactly its property rules, so removing or widening one fails here.
 	 */
-	public function testADraftKnowledgeArticleIsNotPublic(): void {
-		$read = self::schemas()['knowledgeArticle']['authorization']['read'];
+	public function testEachSchemaShipsExactlyItsPropertyRules(): void {
+		$schemas = self::schemas();
 
-		$this->assertSame([['group' => 'public', 'match' => ['draft' => false]], 'authenticated'], $read);
-	}//end testADraftKnowledgeArticleIsNotPublic()
+		foreach (array_keys(self::BLOCKS) as $slug) {
+			$this->assertSame((self::PROPERTY_RULES[$slug] ?? []), $schemas[$slug]['propertyRules'], $slug);
+		}
+	}//end testEachSchemaShipsExactlyItsPropertyRules()
 }//end class

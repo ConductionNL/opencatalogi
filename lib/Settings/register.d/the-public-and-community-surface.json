@@ -51,7 +51,7 @@
 			"serviceStatus": {
 				"slug": "serviceStatus",
 				"title": "Service status",
-				"version": "0.1.1",
+				"version": "0.1.2",
 				"authorization": {
 					"read": ["public"],
 					"create": ["admin"],
@@ -98,6 +98,10 @@
 						"description": "When somebody last said this. Shown on the page, because a state nobody touched is not a fresh state."
 					},
 					"stateSetBy": {
+						"authorization": {
+							"read": ["admin"],
+							"reveal": "explicit"
+						},
 						"type": "string",
 						"title": "State set by",
 						"description": "Who last set the state."
@@ -242,7 +246,7 @@
 			"noticeBoard": {
 				"slug": "noticeBoard",
 				"title": "Notice board",
-				"version": "0.1.1",
+				"version": "0.1.2",
 				"authorization": {
 					"read": ["public"],
 					"create": ["admin"],
@@ -278,6 +282,10 @@
 						"description": "Comments are off until somebody turns them on, and a board with comments has to name a moderator."
 					},
 					"moderator": {
+						"authorization": {
+							"read": ["admin"],
+							"reveal": "explicit"
+						},
 						"type": "string",
 						"title": "Moderator",
 						"description": "Required as soon as comments are enabled."
@@ -287,9 +295,9 @@
 			"notice": {
 				"slug": "notice",
 				"title": "Notice",
-				"version": "0.1.1",
+				"version": "0.1.2",
 				"authorization": {
-					"read": ["public"],
+					"read": [{"group": "public", "match": {"startDate": {"$lte": "$now"}, "endDate": {"$gte": "$now"}}}, "authenticated"],
 					"create": ["admin"],
 					"update": ["admin"],
 					"delete": ["admin"]

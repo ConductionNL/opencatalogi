@@ -51,6 +51,17 @@ has none. A flow that serves such a schema to the public (a token link, a
 public form) does its own check first and then reads or writes that one object
 with `_rbac: false`.
 
+A block that names group `admin` leaves out delegated administrators. A route
+behind `#[AuthorizedAdminSetting]` lets them in, so its reads and writes of such
+a schema use `_rbac: false` too.
+
+A property that must not be learnable by a reader without access takes
+`"authorization": {"read": [...], "reveal": "explicit"}`. A plain read rule hides
+the value from the answer, but a filter, a sort or `_search` can still confirm it.
+The reveal form refuses those, and the value reads as a mask for everyone until a
+single-object read asks for it, so server code that needs the value keeps a plain
+read rule and reads it with `_rbac: false`.
+
 Two safety nets cover fragments that forget:
 
 - `SettingsService::attachOrphanSchemasToPublicationRegister()` appends any

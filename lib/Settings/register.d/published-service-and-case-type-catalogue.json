@@ -172,7 +172,7 @@
 			"caseTypeDefinition": {
 				"slug": "caseTypeDefinition",
 				"title": "Case type definition",
-				"version": "0.1.1",
+				"version": "0.1.2",
 				"authorization": {
 					"read": ["public"],
 					"create": ["admin"],
@@ -260,6 +260,9 @@
 						}
 					},
 					"importedSnapshot": {
+						"authorization": {
+							"read": ["admin"]
+						},
 						"type": "object",
 						"title": "Imported snapshot",
 						"description": "The values as they arrived. A property that differs from this snapshot was changed locally, and a resynchronisation flags it.",
@@ -270,7 +273,7 @@
 			"knowledgeArticle": {
 				"slug": "knowledgeArticle",
 				"title": "Knowledge article",
-				"version": "0.1.1",
+				"version": "0.1.2",
 				"authorization": {
 					"read": [{"group": "public", "match": {"draft": false}}, "authenticated"],
 					"create": ["admin"],
@@ -311,6 +314,10 @@
 						"description": "A draft is readable by staff only."
 					},
 					"sourceCase": {
+						"authorization": {
+							"read": ["authenticated"],
+							"reveal": "explicit"
+						},
 						"type": "string",
 						"title": "Source case",
 						"description": "The case whose answer this article was extracted from."
