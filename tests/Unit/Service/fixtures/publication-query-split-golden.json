@@ -1,0 +1,391 @@
+{
+    "query: no scope": {
+        "answer": {
+            "_search": "wet",
+            "_includeDeleted": false
+        },
+        "log": []
+    },
+    "query: one schema, one register": {
+        "answer": {
+            "_search": "wet",
+            "_includeDeleted": false,
+            "_schemas": [
+                3
+            ],
+            "_schema": 3,
+            "_register": 1
+        },
+        "log": []
+    },
+    "query: one schema, two registers": {
+        "answer": {
+            "_search": "wet",
+            "_includeDeleted": false,
+            "_schemas": [
+                3
+            ],
+            "_registers": [
+                1,
+                2
+            ],
+            "_register": null
+        },
+        "log": []
+    },
+    "query: two schemas, one register": {
+        "answer": {
+            "_search": "wet",
+            "_includeDeleted": false,
+            "_schemas": [
+                3,
+                4
+            ],
+            "_register": 1
+        },
+        "log": []
+    },
+    "query: two schemas, no register": {
+        "answer": {
+            "_search": "wet",
+            "_includeDeleted": false,
+            "_schemas": [
+                3,
+                4
+            ]
+        },
+        "log": []
+    },
+    "query: duplicates and words": {
+        "answer": {
+            "_search": "wet",
+            "_includeDeleted": false,
+            "_schemas": [
+                19
+            ],
+            "_schema": 19,
+            "_register": 1
+        },
+        "log": []
+    },
+    "query: order as json, one register": {
+        "answer": {
+            "_order": {
+                "name": "asc",
+                "_created": "desc"
+            },
+            "_includeDeleted": false,
+            "_schemas": [
+                3
+            ],
+            "_schema": 3,
+            "_register": 1
+        },
+        "log": []
+    },
+    "query: order as json, two registers": {
+        "answer": {
+            "_order": {
+                "@self.created": "desc",
+                "_updated": "asc"
+            },
+            "_includeDeleted": false,
+            "_schemas": [
+                3
+            ],
+            "_registers": [
+                1,
+                2
+            ],
+            "_register": null
+        },
+        "log": []
+    },
+    "query: order only on fields some schemas lack": {
+        "answer": {
+            "_includeDeleted": false,
+            "_schemas": [
+                3
+            ],
+            "_registers": [
+                1,
+                2
+            ],
+            "_register": null
+        },
+        "log": []
+    },
+    "query: order not json": {
+        "answer": {
+            "_order": "name",
+            "_includeDeleted": false,
+            "_schemas": [
+                3
+            ],
+            "_registers": [
+                1,
+                2
+            ],
+            "_register": null
+        },
+        "log": []
+    },
+    "query: order json scalar": {
+        "answer": {
+            "_order": "5",
+            "_includeDeleted": false,
+            "_schemas": [
+                3
+            ],
+            "_registers": [
+                1,
+                2
+            ],
+            "_register": null
+        },
+        "log": []
+    },
+    "query: empty order, two registers": {
+        "answer": {
+            "_order": [],
+            "_includeDeleted": false,
+            "_schemas": [
+                3
+            ],
+            "_registers": [
+                1,
+                2
+            ],
+            "_register": null
+        },
+        "log": []
+    },
+    "query: registers only": {
+        "answer": {
+            "_order": {
+                "_uuid": "asc"
+            },
+            "_includeDeleted": false,
+            "_registers": [
+                1,
+                2
+            ],
+            "_register": null
+        },
+        "log": []
+    },
+    "location: no registers": {
+        "answer": null,
+        "log": []
+    },
+    "location: no schemas": {
+        "answer": null,
+        "log": []
+    },
+    "location: no object service": {
+        "answer": null,
+        "log": []
+    },
+    "location: found in the first pair": {
+        "answer": {
+            "register": 1,
+            "schema": 3
+        },
+        "log": [
+            {
+                "find": [
+                    "uuid-1",
+                    [],
+                    false,
+                    1,
+                    3,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "location: found in a later pair": {
+        "answer": {
+            "register": 2,
+            "schema": 4
+        },
+        "log": [
+            {
+                "find": [
+                    "uuid-1",
+                    [],
+                    false,
+                    1,
+                    3,
+                    false,
+                    false
+                ]
+            },
+            {
+                "find": [
+                    "uuid-1",
+                    [],
+                    false,
+                    1,
+                    4,
+                    false,
+                    false
+                ]
+            },
+            {
+                "find": [
+                    "uuid-1",
+                    [],
+                    false,
+                    2,
+                    3,
+                    false,
+                    false
+                ]
+            },
+            {
+                "find": [
+                    "uuid-1",
+                    [],
+                    false,
+                    2,
+                    4,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "location: words are skipped": {
+        "answer": {
+            "register": 2,
+            "schema": 4
+        },
+        "log": [
+            {
+                "find": [
+                    "uuid-1",
+                    [],
+                    false,
+                    2,
+                    4,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "location: nowhere": {
+        "answer": null,
+        "log": [
+            {
+                "find": [
+                    "uuid-1",
+                    [],
+                    false,
+                    1,
+                    3,
+                    false,
+                    false
+                ]
+            },
+            {
+                "find": [
+                    "uuid-1",
+                    [],
+                    false,
+                    2,
+                    3,
+                    false,
+                    false
+                ]
+            }
+        ]
+    },
+    "catalogs: no object service": {
+        "answer": [],
+        "log": []
+    },
+    "catalogs: no catalog register": {
+        "answer": [],
+        "log": [
+            {
+                "warning": [
+                    "WOO-536: catalog_register or catalog_schema app-config is not set \u2014 /api/search default scope will be empty",
+                    {
+                        "catalog_register": "",
+                        "catalog_schema": "6"
+                    }
+                ]
+            }
+        ]
+    },
+    "catalogs: no catalog schema": {
+        "answer": [],
+        "log": [
+            {
+                "warning": [
+                    "WOO-536: catalog_register or catalog_schema app-config is not set \u2014 /api/search default scope will be empty",
+                    {
+                        "catalog_register": "5",
+                        "catalog_schema": ""
+                    }
+                ]
+            }
+        ]
+    },
+    "catalogs: search fails": {
+        "answer": [],
+        "log": [
+            {
+                "searchObjects": [
+                    {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "listed": true
+                    },
+                    false,
+                    false
+                ]
+            },
+            {
+                "warning": [
+                    "WOO-536: enumerating listed+published catalogs failed",
+                    {
+                        "error": "catalog store down"
+                    }
+                ]
+            }
+        ]
+    },
+    "catalogs: rows of every kind": {
+        "answer": [
+            {
+                "slug": "open",
+                "published": "2001-01-01T00:00:00+00:00"
+            },
+            {
+                "slug": "entity",
+                "published": "2002-02-02T00:00:00+00:00"
+            }
+        ],
+        "log": [
+            {
+                "searchObjects": [
+                    {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "listed": true
+                    },
+                    false,
+                    false
+                ]
+            }
+        ]
+    }
+}
