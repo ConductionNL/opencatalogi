@@ -48,7 +48,7 @@ use Psr\Container\NotFoundExceptionInterface;
 class SitemapService implements SitemapServiceInterface {
 
 	/**
-	 * The namespace attributes of the DiWoo documents root, in output order; the schema
+	 * The namespace attributes of the sitemap `urlset` root, in output order; the schema
 	 * location is filled in from StandardsVersionService.
 	 *
 	 * @var array<string, string|null>
@@ -231,19 +231,21 @@ class SitemapService implements SitemapServiceInterface {
 
 		$documents = [];
 		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
-			$documents[] = $this->mapDiwooDocument(publication: $publication, file: $file)['diwoo:Document'];
+			$documents[] = $this->mapDiwooDocument(publication: $publication, file: $file);
 		}
 
 		return new XMLResponse(data: self::documentsXml(documents: $documents));
 	}//end buildSitemap()
 
 	/**
-	 * The DiWoo documents XML around the mapped documents.
+	 * The sitemap `urlset` around the mapped `url` entries.
 	 *
 	 * The emitted DiWoo version is declared once, on StandardsVersionService, so the
 	 * readiness self-check can compare it with the version the publisher publishes.
 	 *
-	 * @param array<int, array<string, mixed>> $documents The mapped `diwoo:Document` nodes.
+	 * An empty page is a `urlset` without children, not one with an empty `url`.
+	 *
+	 * @param array<int, array<string, mixed>> $documents The mapped `url` entries.
 	 *
 	 * @return array<string, mixed>
 	 *
@@ -252,11 +254,15 @@ class SitemapService implements SitemapServiceInterface {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	private static function documentsXml(array $documents): array {
-		return [
-			'@root' => 'diwoo:Documents',
+		$urlset = [
+			'@root' => 'urlset',
 			'@attributes' => array_replace(self::DOCUMENTS_ATTRIBUTES, ['xsi:schemaLocation' => StandardsVersionService::diwooSchemaLocation()]),
-			'diwoo:Document' => $documents,
 		];
+		if ($documents !== []) {
+			$urlset['url'] = $documents;
+		}
+
+		return $urlset;
 	}//end documentsXml()
 
 	/**
