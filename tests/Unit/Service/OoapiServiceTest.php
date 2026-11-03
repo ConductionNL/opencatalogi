@@ -251,38 +251,6 @@ class OoapiServiceTest extends TestCase {
 		$this->assertSame('INF101', $result['code']);
 	}
 
-	public function testRenderOrganizationReturnsNullWhenCatalogHasNoOrganization(): void {
-		$result = $this->service->renderOrganization(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'));
-		$this->assertNull($result);
-	}
-
-	public function testOrganizationByIdReturnsNullWhenIdDoesNotMatchCatalogsOwnOrganization(): void {
-		$result = $this->service->organizationById(new OoapiScope(['id' => 'catalog-1', 'organization' => 'org-1'], 'reg-1', 'schema-1'), 'org-2');
-		$this->assertNull($result);
-	}
-
-	public function testOrganizationByIdRendersTheCatalogsOwningOrganization(): void {
-		$schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
-		$schema->method('jsonSerialize')->willReturn(
-			['x-ooapi' => ['resource' => 'organization', 'mapping' => ['name' => 'name']]]
-		);
-		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
-		$schemaMapper->method('find')->willReturn($schema);
-
-		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-		$objectService->method('find')->with('org-1', [])->willReturn(
-			$this->makeObjectEntity(['@self' => ['uuid' => 'org-1'], 'name' => 'Universiteit van Amsterdam'])
-		);
-
-		$this->wireOpenRegister($objectService, $schemaMapper);
-
-		$result = $this->service->organizationById(new OoapiScope(['id' => 'catalog-1', 'organization' => 'org-1'], 'reg-1', 'schema-1'), 'org-1');
-
-		$this->assertNotNull($result);
-		$this->assertSame('org-1', $result['organizationId']);
-		$this->assertSame('Universiteit van Amsterdam', $result['name']);
-	}
-
 	/**
 	 * A single resource is served only for its own catalog, register and schema,
 	 * and never for a scope whose catalog has no id.
@@ -321,5 +289,37 @@ class OoapiServiceTest extends TestCase {
 			$result = $this->service->getResource(new OoapiScope($catalog, 'reg-1', 'schema-1'), 'course-1', 'courseId');
 			$this->assertSame($served, $result !== null, $name);
 		}
+	}
+
+	public function testRenderOrganizationReturnsNullWhenCatalogHasNoOrganization(): void {
+		$result = $this->service->renderOrganization(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'));
+		$this->assertNull($result);
+	}
+
+	public function testOrganizationByIdReturnsNullWhenIdDoesNotMatchCatalogsOwnOrganization(): void {
+		$result = $this->service->organizationById(new OoapiScope(['id' => 'catalog-1', 'organization' => 'org-1'], 'reg-1', 'schema-1'), 'org-2');
+		$this->assertNull($result);
+	}
+
+	public function testOrganizationByIdRendersTheCatalogsOwningOrganization(): void {
+		$schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
+		$schema->method('jsonSerialize')->willReturn(
+			['x-ooapi' => ['resource' => 'organization', 'mapping' => ['name' => 'name']]]
+		);
+		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('find')->with('org-1', [])->willReturn(
+			$this->makeObjectEntity(['@self' => ['uuid' => 'org-1'], 'name' => 'Universiteit van Amsterdam'])
+		);
+
+		$this->wireOpenRegister($objectService, $schemaMapper);
+
+		$result = $this->service->organizationById(new OoapiScope(['id' => 'catalog-1', 'organization' => 'org-1'], 'reg-1', 'schema-1'), 'org-1');
+
+		$this->assertNotNull($result);
+		$this->assertSame('org-1', $result['organizationId']);
+		$this->assertSame('Universiteit van Amsterdam', $result['name']);
 	}
 }
