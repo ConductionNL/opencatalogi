@@ -637,14 +637,21 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	/**
 	 * The `{@id}` dataset refs of the publications found, skipping any without a uuid or id.
 	 *
-	 * @param iterable $publications The search results.
-	 * @param string   $catalogSlug  The catalog slug.
+	 * Results that are not a list are refused with a warning: no refs.
+	 *
+	 * @param mixed  $publications The search results.
+	 * @param string $catalogSlug  The catalog slug.
 	 *
 	 * @return array<int, array<string, string>>
 	 *
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
-	private function datasetRefs(iterable $publications, string $catalogSlug): array {
+	private function datasetRefs(mixed $publications, string $catalogSlug): array {
+		if (is_iterable($publications) === false) {
+			$this->logger->warning('[SchemaOrgService] Catalog dataset listing returned no list', ['catalog' => $catalogSlug]);
+			return [];
+		}
+
 		$refs = [];
 		foreach ($publications as $publication) {
 			$publication = $this->toArray(item: $publication);

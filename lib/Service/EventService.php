@@ -261,6 +261,9 @@ class EventService implements EventServiceInterface {
 	/**
 	 * The outcome after publishing the attachments of a live object, when the options say so.
 	 *
+	 * An object without a uuid or id in its @self envelope cannot be looked up, so its
+	 * attachments are skipped with a warning and the rest of the batch goes on.
+	 *
 	 * @param array $outcome The object's outcome so far.
 	 * @param array $context The object data and the run (event and publishing options).
 	 *
@@ -271,6 +274,11 @@ class EventService implements EventServiceInterface {
 	private function withAttachments(array $outcome, array $context): array {
 		$objectData = $context['objectData'];
 		if ($context['run']['options']['auto_publish_attachments'] !== true || $this->isObjectPublished(objectData: $objectData) === false) {
+			return $outcome;
+		}
+
+		if (($objectData['@self']['uuid'] ?? $objectData['@self']['id'] ?? null) === null) {
+			$this->logger->warning('OpenCatalogi: skipped the attachments of an object without an id', ['object' => $outcome['detail']['objectId']]);
 			return $outcome;
 		}
 
