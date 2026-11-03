@@ -20,6 +20,8 @@
  * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md
  */
 
+declare(strict_types=1);
+
 namespace OCA\OpenCatalogi\Service;
 
 use DateTimeInterface;
