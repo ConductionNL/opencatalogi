@@ -28,11 +28,11 @@ use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
-use OCP\IRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * The preflight answers an allowed caller Origin, read from the header or
@@ -71,7 +71,7 @@ class PublicationsCorsOriginTest extends TestCase {
 	 */
 	#[DataProvider('origins')]
 	public function testThePreflightAnswersTheAllowedOrigin(string $header, ?string $server, string $expected): void {
-		$request = $this->createMock(IRequest::class);
+		$request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getHeader')->willReturnCallback(static fn (string $name): string => ($name === 'Origin' ? $header : ''));
 		$request->server = ($server === null ? [] : ['HTTP_ORIGIN' => $server]);
 

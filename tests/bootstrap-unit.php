@@ -156,6 +156,13 @@ if ($openRegisterRoot !== null) {
 			}
 		}
 	);
+
+	// OpenRegister's flows evaluate JsonLogic from its own vendor tree; load that
+	// one library from there so the flow tests run wherever OpenRegister does.
+	$jsonLogic = $openRegisterRoot . '/vendor/jwadhams/json-logic-php/src/JWadhams/JsonLogic.php';
+	if (class_exists('JWadhams\\JsonLogic', false) === false && file_exists($jsonLogic) === true) {
+		include_once $jsonLogic;
+	}
 } else {
 	// No real OpenRegister found — load stubs for bare CI environment.
 	spl_autoload_register(
@@ -349,3 +356,6 @@ foreach (['ConnectionStatusReportedEvent', 'ConnectionRefreshRequestedEvent'] as
 }
 
 unset($integriqStubEvent);
+
+// IRequest double base for the controller tests (needs the OCP autoloader above).
+require_once __DIR__ . '/Unit/Support/ServerAwareRequest.php';

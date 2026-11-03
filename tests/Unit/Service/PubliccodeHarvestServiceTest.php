@@ -39,6 +39,7 @@ use RuntimeException;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\PubliccodeHarvestService
+ * @uses \OCA\OpenCatalogi\Service\FlowReport
  */
 class PubliccodeHarvestServiceTest extends TestCase {
 
@@ -48,6 +49,13 @@ class PubliccodeHarvestServiceTest extends TestCase {
 	 * @var array<string, ObjectEntity>
 	 */
 	private array $store = [];
+
+	/**
+	 * The ObjectService calls made, in order.
+	 *
+	 * @var list<mixed>
+	 */
+	private array $calls = [];
 
 	/**
 	 * Skip where OpenRegister's real classes are not next to the app.
@@ -91,10 +99,14 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			->getMock();
 
 		$objects->method('find')->willReturnCallback(
-			fn (int|string $id): ?ObjectEntity => ($this->store[(string)$id] ?? null)
+			function (int|string $id, ...$rest): ?ObjectEntity {
+				$this->calls[] = ['find', $id, $rest];
+				return ($this->store[(string)$id] ?? null);
+			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
 			function (array|ObjectEntity $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): ObjectEntity {
+				$this->calls[] = ['saveObject', $object['slug'], $register, $schema, $uuid];
 				$entity = ($this->store[$object['slug']] ?? new ObjectEntity());
 				if ($uuid !== null) {
 					$this->assertSame($uuid, $entity->getUuid(), 'An update must name the stored object.');
@@ -149,6 +161,69 @@ class PubliccodeHarvestServiceTest extends TestCase {
 
 		return $flow;
 	}//end flow()
+
+	/**
+	 * The status in several worlds, and a set-up run, match the recording.
+	 *
+	 * @return void
+	 */
+	public function testStatusAndSetUpMatchTheRecording(): void {
+		$flow = $this->flow(enabled: true);
+		$flow->setNodes([['type' => 'openregister.trigger-schedule', 'config' => ['cron' => '1 2 * * *']], ['type' => 'other', 'config' => ['runAs' => 'x']]]);
+		$other = $this->flow(enabled: true);
+		$other->setName('Another flow');
+		$worlds = [
+			'nothing installed' => [[], [], null],
+			'openregister only, flow off' => [['openregister'], [], $this->flow(enabled: false)],
+			'integriq, nothing stored, flow on' => [['integriq', 'openregister'], [], $flow],
+			'integriq, source disabled' => [['integriq', 'openregister'], ['github-api' => ['isEnabled' => 'yes']], null],
+			'integriq, source enabled, two shards' => [['integriq', 'openregister'], ['github-api' => ['isEnabled' => true], 'opencatalogi-publiccode-github-01' => [], 'opencatalogi-publiccode-github-24' => []], null],
+			'only another flow' => [['openregister'], [], $other],
+		];
+		$runMapper = $this->getMockBuilder(FlowRunMapper::class)->disableOriginalConstructor()->onlyMethods(['findAllRuns'])->getMock();
+		$runMapper->method('findAllRuns')->willReturnCallback(
+			function (?string $flowId = null, ?string $status = null, int $limit = 50): array {
+				$this->calls[] = ['findAllRuns', $flowId, $limit];
+				return [];
+			}
+		);
+		$actual = [];
+		foreach ($worlds as $name => [$apps, $stored, $world]) {
+			$this->calls = [];
+			$this->store = [];
+			foreach ($stored as $slug => $data) {
+				$this->stored(slug: $slug, data: $data);
+			}
+
+			$services = [
+				'OCA\OpenRegister\Service\ObjectService' => $this->objects(),
+				'OCA\OpenRegister\Service\Flow\FlowService' => $this->flows(flows: array_filter([$world])),
+				'OCA\OpenRegister\Db\FlowRunMapper' => $runMapper,
+			];
+			$service = new PubliccodeHarvestService($this->apps(enabled: $apps), $this->container(services: $services), $this->createMock(LoggerInterface::class));
+			$actual[$name] = ['status' => $service->status(), 'calls' => $this->calls];
+		}
+
+		$this->store = [];
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(services: ['OCA\OpenRegister\Service\ObjectService' => $this->objects()]),
+			$this->createMock(LoggerInterface::class)
+		);
+		$this->calls = [];
+		$actual['set up'] = $service->setUp();
+		$actual['set up again'] = $service->setUp();
+		$actual['saved'] = array_map(static fn (ObjectEntity $entity): array => $entity->getObject(), $this->store);
+		$actual['calls'] = $this->calls;
+
+		$fixture = __DIR__ . '/fixtures/publiccode-harvest-status-golden.json';
+		$actual = json_decode((string)json_encode($actual), true);
+		if (getenv('GOLDEN_RECORD') === '1') {
+			file_put_contents($fixture, json_encode($actual, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($fixture), true), $actual);
+	}//end testStatusAndSetUpMatchTheRecording()
 
 	/**
 	 * Without integriq the status says so and every action refuses.

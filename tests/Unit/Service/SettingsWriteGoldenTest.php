@@ -71,7 +71,17 @@ class SettingsWriteGoldenTest extends TestCase {
 			'public_api_cache_seconds' => '120',
 		];
 
+		// Every config key the app reads or writes, plus near misses: a key added to an
+		// allowlist shows up in the written set of these two cases.
+		$known = json_decode((string)file_get_contents(__DIR__ . '/fixtures/settings-known-keys.json'), true);
+		$knownValues = [];
+		foreach ($known as $index => $key) {
+			$knownValues[$key] = 'v' . $index;
+		}
+
 		return [
+			'every known config key' => ['updateSettings', $knownValues],
+			'every known config key as a publishing option' => ['updatePublishingOptions', array_fill_keys($known, true)],
 			'every object type key' => ['updateSettings', $every],
 			'every instance key' => ['updateSettings', $instance],
 			'unknown and injected keys' => ['updateSettings', ['evil' => '1', 'installed_version' => '9', 'catalog_register' => '3', 'enabled' => 'no']],

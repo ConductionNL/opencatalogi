@@ -19,6 +19,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Unit tests for PublicationsController.
@@ -48,7 +49,7 @@ class PublicationsControllerTest extends TestCase {
 	private PublicationsController $controller;
 
 	protected function setUp(): void {
-		$this->request = $this->createMock(IRequest::class);
+		$this->request = $this->createMock(ServerAwareRequest::class);
 		$this->publicationService = $this->createMock(PublicationService::class);
 		$this->catalogiService = $this->createMock(CatalogiService::class);
 		$this->queryService = $this->newQueryServiceDouble();

@@ -242,18 +242,10 @@ class OoapiService implements OoapiServiceInterface {
 	 * @return array<string, mixed>|null The rendered resource, or null when not found.
 	 */
 	private function getOrganization(string $organisationId, OoapiScope $scope): ?array {
-		try {
-			$object = $this->getObjectService()->find(id: $organisationId, _extend: []);
-		} catch (\Throwable $e) {
-			$this->logger->debug('[OoapiService] Organisation not found', ['id' => $organisationId, 'error' => $e->getMessage()]);
+		$organisation = $this->fetchObject(id: $organisationId, kind: 'Organisation');
+		if ($organisation === null) {
 			return null;
 		}
-
-		if ($object === null) {
-			return null;
-		}
-
-		$organisation = $this->toArray(item: $object);
 
 		$mapping = $this->resolveSchemaMapping(schemaId: $scope->schema);
 		if ($mapping['resource'] === null) {
@@ -263,6 +255,31 @@ class OoapiService implements OoapiServiceInterface {
 
 		return $this->mappingService->buildResource(object: $organisation, mapping: $mapping['mapping'], idField: 'organizationId');
 	}//end getOrganization()
+
+	/**
+	 * One object by id as an array, or null when OpenRegister has none (a failing lookup is logged).
+	 *
+	 * @param string $id The object id.
+	 * @param string $kind What the object is, for the log line.
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md
+	 */
+	private function fetchObject(string $id, string $kind): ?array {
+		try {
+			$object = $this->getObjectService()->find(id: $id, _extend: []);
+		} catch (\Throwable $e) {
+			$this->logger->debug('[OoapiService] ' . $kind . ' not found', ['id' => $id, 'error' => $e->getMessage()]);
+			return null;
+		}
+
+		if ($object === null) {
+			return null;
+		}
+
+		return $this->toArray(item: $object);
+	}//end fetchObject()
 
 	/**
 	 * Search a paginated OOAPI resource collection scoped to the catalog
@@ -281,37 +298,22 @@ class OoapiService implements OoapiServiceInterface {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
 	 */
 	private function searchCollection(OoapiScope $scope, OoapiPage $page, string $idField): array {
-		$page = new OoapiPage(
-			number: max(1, $page->number),
-			size: max(1, min($page->size, self::MAX_PAGE_SIZE)),
-			filter: $page->filter
-		);
-
+		$page = new OoapiPage(number: max(1, $page->number), size: max(1, min($page->size, self::MAX_PAGE_SIZE)), filter: $page->filter);
 		$mapping = $this->resolveSchemaMapping(schemaId: $scope->schema);
 		if ($mapping['resource'] === null) {
 			// Unannotated schema — never offered as an OOAPI resource (OOAPI-004).
 			return ['items' => [], 'pageNumber' => $page->number, 'pageSize' => $page->size, 'hasNext' => false];
 		}
 
-		$result = $this->getObjectService()->searchObjectsPaginated(
-			query: $this->collectionQuery(scope: $scope, page: $page),
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+		$query = $this->collectionQuery(scope: $scope, page: $page);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
 
 		$items = [];
 		foreach (($result['results'] ?? []) as $object) {
 			$items[] = $this->mappingService->buildResource(object: $this->toArray(item: $object), mapping: $mapping['mapping'], idField: $idField);
 		}
 
-		return [
-			'items' => $items,
-			'pageNumber' => $page->number,
-			'pageSize' => $page->size,
-			'hasNext' => (($result['next'] ?? null) !== null),
-		];
-
+		return ['items' => $items, 'pageNumber' => $page->number, 'pageSize' => $page->size, 'hasNext' => (($result['next'] ?? null) !== null)];
 	}//end searchCollection()
 
 	/**
@@ -407,26 +409,8 @@ class OoapiService implements OoapiServiceInterface {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
 	public function getResource(OoapiScope $scope, string $id, string $idField): ?array {
-		try {
-			$object = $this->getObjectService()->find(id: $id, _extend: []);
-		} catch (\Throwable $e) {
-			$this->logger->debug('[OoapiService] Resource not found', ['id' => $id, 'error' => $e->getMessage()]);
-			return null;
-		}
-
-		if ($object === null) {
-			return null;
-		}
-
-		$data = $this->toArray(item: $object);
-
-		// Scoped to this catalog (D6 addendum) — an archived/foreign-catalog object 404s.
-		if (($data['catalog'] ?? null) !== ($scope->catalog['id'] ?? null)) {
-			return null;
-		}
-
-		$objectSchema = (string)($data['@self']['schema'] ?? '');
-		if ($objectSchema !== $scope->schema) {
+		$data = $this->fetchObject(id: $id, kind: 'Resource');
+		if ($data === null || self::inScope(data: $data, scope: $scope) === false) {
 			return null;
 		}
 
@@ -437,6 +421,23 @@ class OoapiService implements OoapiServiceInterface {
 
 		return $this->mappingService->buildResource(object: $data, mapping: $mapping['mapping'], idField: $idField);
 	}//end getResource()
+
+	/**
+	 * Whether an object belongs to the scope: its catalog and its schema.
+	 *
+	 * An archived or foreign-catalog object reads as absent (D6 addendum).
+	 *
+	 * @param array<string, mixed> $data The object.
+	 * @param OoapiScope $scope The catalog's OOAPI scope.
+	 *
+	 * @return boolean
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md
+	 */
+	private static function inScope(array $data, OoapiScope $scope): bool {
+		return ($data['catalog'] ?? null) === ($scope->catalog['id'] ?? null)
+			&& (string)($data['@self']['schema'] ?? '') === $scope->schema;
+	}//end inScope()
 
 	/**
 	 * Validate a catalog's OOAPI feed against a minimal mandatory-property
@@ -455,16 +456,7 @@ class OoapiService implements OoapiServiceInterface {
 		do {
 			$result = $this->listCourses(scope: $scope, page: new OoapiPage(number: $page, size: self::MAX_PAGE_SIZE));
 			foreach ($result['items'] as $course) {
-				$missing = [];
-				foreach (['courseId', 'code', 'name'] as $required) {
-					if (isset($course[$required]) === false || $course[$required] === '') {
-						$missing[] = $required;
-					}
-				}
-
-				if (empty($missing) === false) {
-					$violations[] = ['id' => ($course['courseId'] ?? ''), 'missing' => $missing];
-				}
+				$violations = array_merge($violations, self::courseViolations(course: $course));
 			}
 
 			$page++;
@@ -472,6 +464,26 @@ class OoapiService implements OoapiServiceInterface {
 
 		return $violations;
 	}//end validateCatalog()
+
+	/**
+	 * The course's violation when it lacks a required field, as a list of zero or one.
+	 *
+	 * @param array<string, mixed> $course The mapped course.
+	 *
+	 * @return array<int, array{id: mixed, missing: array<int, string>}>
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md
+	 */
+	private static function courseViolations(array $course): array {
+		$missing = array_values(
+			array_filter(['courseId', 'code', 'name'], static fn (string $required): bool => isset($course[$required]) === false || $course[$required] === '')
+		);
+		if ($missing === []) {
+			return [];
+		}
+
+		return [['id' => ($course['courseId'] ?? ''), 'missing' => $missing]];
+	}//end courseViolations()
 
 	/**
 	 * Normalise an OpenRegister entity or array result to an array.

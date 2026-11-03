@@ -27,6 +27,7 @@ use Unit\Service\PublicReadObjectService;
  * One publication's rows, its batch's assessments in order, and the catalogues holding it.
  *
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\JsonList
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */

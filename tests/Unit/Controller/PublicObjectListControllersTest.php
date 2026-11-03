@@ -26,9 +26,9 @@ use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\IAppConfig;
 use OCP\IL10N;
-use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Unit\Support\ServerAwareRequest;
 
 class PublicObjectListControllersTest extends TestCase {
 
@@ -59,7 +59,7 @@ class PublicObjectListControllersTest extends TestCase {
 	 * @return Controller The controller.
 	 */
 	private function controller(string $class, string $prefix, array $result, string $origins, string $origin): Controller {
-		$request = $this->createMock(IRequest::class);
+		$request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getParams')->willReturn(['q' => 'x', 'id' => 'drop', '_route' => 'drop', '_schemas' => ['9'], '@self' => ['schema' => '9', 'owner' => 'me']]);
 		$request->method('getHeader')->willReturn('');
 		$request->server = ['HTTP_ORIGIN' => $origin];

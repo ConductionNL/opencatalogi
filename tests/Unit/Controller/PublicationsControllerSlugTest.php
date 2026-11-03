@@ -36,6 +36,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Tests for the slug route of PublicationsController::show().
@@ -104,7 +105,7 @@ class PublicationsControllerSlugTest extends TestCase {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(fn (string $app, string $key, string $default = '') => $default);
 
-		$request = $this->request = $this->createMock(IRequest::class);
+		$request = $this->request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getParams')->willReturn([]);
 		$request->server = [];
 

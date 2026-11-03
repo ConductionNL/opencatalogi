@@ -40,6 +40,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for RetentionService::recordHumanDecision.
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionRules
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\RetentionPolicyTable
  * @uses   \OCA\OpenCatalogi\Service\RetentionRun

@@ -214,8 +214,6 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @return XMLResponse The publications sitemap XML response.
 	 *
-	 *                is a pure static builder over constants, like CallerScope::writeScope().
-	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse {
