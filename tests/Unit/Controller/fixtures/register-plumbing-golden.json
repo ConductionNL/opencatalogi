@@ -90,7 +90,8 @@
                         "status": "open",
                         "reason": "r",
                         "catalogSlug": "cat",
-                        "message": "m"
+                        "message": "m",
+                        "token": "tok"
                     }
                 }
             },
@@ -192,7 +193,8 @@
                         "status": "open",
                         "reason": "r",
                         "catalogSlug": "cat",
-                        "message": "m"
+                        "message": "m",
+                        "token": "tok"
                     }
                 }
             },
@@ -353,7 +355,8 @@
                         "status": "open",
                         "reason": "r",
                         "catalogSlug": "cat",
-                        "message": "m"
+                        "message": "m",
+                        "token": "tok"
                     }
                 }
             },
@@ -3545,6 +3548,7 @@
                         "reason": "r",
                         "catalogSlug": "cat",
                         "message": "m",
+                        "token": "tok",
                         "@self": {
                             "schema": "res-sch",
                             "register": "res-reg"
@@ -3634,6 +3638,7 @@
                         "reason": "r",
                         "catalogSlug": "cat",
                         "message": "m",
+                        "token": "tok",
                         "@self": {
                             "schema": "cfg-glossary_schema",
                             "register": "cfg-glossary_register"
@@ -3782,6 +3787,7 @@
                         "reason": "r",
                         "catalogSlug": "cat",
                         "message": "m",
+                        "token": "tok",
                         "@self": {
                             "schema": "res-sch",
                             "register": "res-reg"
@@ -4460,13 +4466,14 @@
                     "_extend": [],
                     "files": false,
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false
                 }
             },
             {
                 "InspectionService.resolveLink": [
                     [],
-                    ""
+                    "tok"
                 ]
             },
             {
@@ -4528,13 +4535,14 @@
                     "_extend": [],
                     "files": false,
                     "register": "cfg-publication_register",
-                    "schema": "cfg-inspection_schema"
+                    "schema": "cfg-inspection_schema",
+                    "_rbac": false
                 }
             },
             {
                 "InspectionService.resolveLink": [
                     [],
-                    ""
+                    "tok"
                 ]
             },
             {
@@ -4671,13 +4679,14 @@
                     "_extend": [],
                     "files": false,
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false
                 }
             },
             {
                 "InspectionService.resolveLink": [
                     [],
-                    ""
+                    "tok"
                 ]
             },
             {
@@ -11834,7 +11843,8 @@
                         "status": "open",
                         "reason": "r",
                         "catalogSlug": "cat",
-                        "message": "m"
+                        "message": "m",
+                        "token": "tok"
                     }
                 ]
             },
@@ -11927,7 +11937,8 @@
                         "status": "open",
                         "reason": "r",
                         "catalogSlug": "cat",
-                        "message": "m"
+                        "message": "m",
+                        "token": "tok"
                     }
                 ]
             },
@@ -12030,7 +12041,8 @@
                         "status": "open",
                         "reason": "r",
                         "catalogSlug": "cat",
-                        "message": "m"
+                        "message": "m",
+                        "token": "tok"
                     }
                 ]
             },
@@ -12187,7 +12199,8 @@
                         "status": "open",
                         "reason": "r",
                         "catalogSlug": "cat",
-                        "message": "m"
+                        "message": "m",
+                        "token": "tok"
                     }
                 ]
             },
@@ -13183,6 +13196,7 @@
                         "reason": "r",
                         "catalogSlug": "cat",
                         "message": "m",
+                        "token": "tok",
                         "@self": {
                             "schema": "res-sch",
                             "register": "res-reg"
@@ -13272,6 +13286,7 @@
                         "reason": "r",
                         "catalogSlug": "cat",
                         "message": "m",
+                        "token": "tok",
                         "@self": {
                             "schema": "cfg-theme_schema",
                             "register": "cfg-theme_register"
@@ -13420,6 +13435,7 @@
                         "reason": "r",
                         "catalogSlug": "cat",
                         "message": "m",
+                        "token": "tok",
                         "@self": {
                             "schema": "res-sch",
                             "register": "res-reg"
