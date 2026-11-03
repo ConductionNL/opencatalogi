@@ -94,37 +94,47 @@ class RegisterSchemaLinkService
     {
         try {
             $register = $this->findPublicationRegister(importResult: $importResult);
-            if ($register === null) {
-                return;
+            if ($register !== null) {
+                $this->linkSchemas(
+                    register: $register,
+                    link: $this->unlinkedSchemas(register: $register, schemas: ($importResult['schemas'] ?? []))
+                );
             }
-
-            $heldIds       = $this->normaliseHeldSchemaIds(storedIds: $register->getSchemas());
-            $configuration = $register->getConfiguration();
-
-            $missing = $this->collectUnlinkedSchemas(
-                schemas: ($importResult['schemas'] ?? []),
-                heldIds: $heldIds,
-                configuration: $configuration
-            );
-
-            if ($missing === []) {
-                return;
-            }
-
-            $register->setSchemas($heldIds);
-            $register->setConfiguration($configuration);
-            $this->getRegisterMapper()->update($register);
-
-            // The import's own table reconciliation already ran (inside importFromApp),
-            // before these schemas belonged to the register, so provision them here or
-            // the tables would not appear until the next import.
-            $this->provisionMagicTables(register: $register, schemas: $missing);
         } catch (\Throwable) {
             // Never let linkage repair sink the settings import.
             return;
         }//end try
 
     }//end reconcile()
+
+    /**
+     * Write the extended schema list and configuration to the register, then provision the new tables.
+     *
+     * Nothing is written when no schema is missing.
+     *
+     * The import's own table reconciliation already ran (inside importFromApp),
+     * before these schemas belonged to the register, so they are provisioned here or
+     * the tables would not appear until the next import.
+     *
+     * @param \OCA\OpenRegister\Db\Register $register The publication register.
+     * @param array                         $link     The held ids, the configuration and the missing schemas.
+     *
+     * @return void
+     *
+     * @spec exclude Write step of reconcile(); covered through that method.
+     */
+    private function linkSchemas(\OCA\OpenRegister\Db\Register $register, array $link): void
+    {
+        if ($link['missing'] === []) {
+            return;
+        }
+
+        $register->setSchemas($link['heldIds']);
+        $register->setConfiguration($link['configuration']);
+        $this->getRegisterMapper()->update($register);
+        $this->provisionMagicTables(register: $register, schemas: $link['missing']);
+
+    }//end linkSchemas()
 
     /**
      * Normalise a register's stored schema list to a list of integer ids.
@@ -149,49 +159,74 @@ class RegisterSchemaLinkService
     }//end normaliseHeldSchemaIds()
 
     /**
-     * Collect the imported schemas the register does not hold yet.
+     * The register's held ids and configuration, extended with the import's schemas it does not hold yet.
      *
-     * Appends each newly found id to `$heldIds` and seeds a magic-mapping entry in
-     * `$configuration` when the fragment did not supply one, so the caller can persist
-     * both in a single update.
+     * Unusable entries and schemas already held are skipped.
      *
-     * @param array $schemas       The schema entities returned by the import.
-     * @param array $heldIds       The ids already held, appended to in place.
-     * @param array $configuration The register configuration, extended in place.
+     * @param \OCA\OpenRegister\Db\Register $register The publication register.
+     * @param array                         $schemas  The schema entities returned by the import.
      *
-     * @return array<int, object> The newly linked schemas, keyed by id.
+     * @return array{heldIds: array<int>, configuration: array, missing: array<int, object>}
      *
      * @spec exclude Internal collection step of reconcile(); covered through that method.
      */
-    private function collectUnlinkedSchemas(array $schemas, array &$heldIds, array &$configuration): array
+    private function unlinkedSchemas(\OCA\OpenRegister\Db\Register $register, array $schemas): array
     {
-        $missing = [];
-
+        $link = [
+            'heldIds'       => $this->normaliseHeldSchemaIds(storedIds: $register->getSchemas()),
+            'configuration' => $register->getConfiguration(),
+            'missing'       => [],
+        ];
         foreach ($schemas as $schema) {
-            if ($this->isUsableSchema(schema: $schema) === false) {
-                continue;
+            if ($this->isNewSchema(schema: $schema, heldIds: $link['heldIds']) === true) {
+                $link = $this->withSchema(link: $link, schema: $schema);
             }
+        }
 
-            $schemaId = (int) $schema->getId();
-            if (in_array($schemaId, $heldIds, true) === true) {
-                continue;
-            }
+        return $link;
 
-            $heldIds[]          = $schemaId;
-            $missing[$schemaId] = $schema;
-            $slug = (string) $schema->getSlug();
+    }//end unlinkedSchemas()
 
-            if (isset($configuration['schemas'][$slug]) === false) {
-                $configuration['schemas'][$slug] = [
-                    'magicMapping'    => true,
-                    'autoCreateTable' => true,
-                ];
-            }
-        }//end foreach
+    /**
+     * Whether an import entry is a usable schema the register does not hold yet.
+     *
+     * @param mixed      $schema  The candidate entry from the import result.
+     * @param array<int> $heldIds The ids already held.
+     *
+     * @return boolean
+     *
+     * @spec exclude Shape guard over an untyped cross-app payload.
+     */
+    private function isNewSchema(mixed $schema, array $heldIds): bool
+    {
+        return $this->isUsableSchema(schema: $schema) === true
+            && in_array((int) $schema->getId(), $heldIds, true) === false;
 
-        return $missing;
+    }//end isNewSchema()
 
-    }//end collectUnlinkedSchemas()
+    /**
+     * Add one schema to the held ids and the missing list, with a magic-table entry when its slug has none.
+     *
+     * @param array  $link   The held ids, the configuration and the missing schemas.
+     * @param object $schema The schema to link.
+     *
+     * @return array The extended link.
+     *
+     * @spec exclude Internal collection step of reconcile(); covered through that method.
+     */
+    private function withSchema(array $link, object $schema): array
+    {
+        $schemaId = (int) $schema->getId();
+        $link['heldIds'][]          = $schemaId;
+        $link['missing'][$schemaId] = $schema;
+        $link['configuration']['schemas'][(string) $schema->getSlug()] ??= [
+            'magicMapping'    => true,
+            'autoCreateTable' => true,
+        ];
+
+        return $link;
+
+    }//end withSchema()
 
     /**
      * Whether an import result entry is a schema entity this service can link.
@@ -249,14 +284,24 @@ class RegisterSchemaLinkService
     private function findPublicationRegister(array $importResult): ?\OCA\OpenRegister\Db\Register
     {
         foreach (($importResult['registers'] ?? []) as $register) {
-            if (is_object($register) === true
-                && method_exists($register, 'getSlug') === true
-                && $register->getSlug() === self::PUBLICATION_REGISTER_SLUG
-            ) {
+            if ($this->isPublicationRegister(register: $register) === true) {
                 return $register;
             }
         }
 
+        return $this->registerFromMapper();
+
+    }//end findPublicationRegister()
+
+    /**
+     * The publication register as OpenRegister's mapper finds it, or null when it cannot.
+     *
+     * @return \OCA\OpenRegister\Db\Register|null
+     *
+     * @spec exclude Lookup helper for reconcile(); covered through that method.
+     */
+    private function registerFromMapper(): ?\OCA\OpenRegister\Db\Register
+    {
         try {
             return $this->getRegisterMapper()->find(
                 id: self::PUBLICATION_REGISTER_SLUG,
@@ -267,7 +312,24 @@ class RegisterSchemaLinkService
             return null;
         }
 
-    }//end findPublicationRegister()
+    }//end registerFromMapper()
+
+    /**
+     * Whether an import entry is the publication register.
+     *
+     * @param mixed $register The candidate entry from the import result.
+     *
+     * @return boolean
+     *
+     * @spec exclude Shape guard over an untyped cross-app payload.
+     */
+    private function isPublicationRegister(mixed $register): bool
+    {
+        return is_object($register) === true
+            && method_exists($register, 'getSlug') === true
+            && $register->getSlug() === self::PUBLICATION_REGISTER_SLUG;
+
+    }//end isPublicationRegister()
 
     /**
      * Attempts to retrieve the OpenRegister RegisterMapper from the container.
