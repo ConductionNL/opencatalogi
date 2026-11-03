@@ -319,6 +319,10 @@ class PublicationStateController extends Controller {
 	/**
 	 * Store the depublication and answer it with the outstanding channels.
 	 *
+	 * The depublication schema is writable by administrators only. Callers reach
+	 * this only after guardWrite() found the publication and the update right
+	 * on it, so the save skips RBAC and stores this one depublication.
+	 *
 	 * @param array<string, mixed> $depublication The depublication.
 	 *
 	 * @return JSONResponse The stored depublication, or 503 when it could not be stored.
@@ -333,7 +337,8 @@ class PublicationStateController extends Controller {
 				object: $this->registers->storable(depublication: $depublication),
 				extend: [],
 				register: $configuration['register'],
-				schema: $configuration['schema']
+				schema: $configuration['schema'],
+				_rbac: false
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(

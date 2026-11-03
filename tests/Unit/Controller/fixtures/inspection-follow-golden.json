@@ -1,0 +1,169 @@
+{
+    "open window, right token": {
+        "status": 200,
+        "data": {
+            "record": "besluit-1",
+            "documents": [
+                "doc-1",
+                "doc-2"
+            ],
+            "startDate": "2026-09-01T00:00:00+00:00",
+            "endDate": "2099-01-01T00:00:00+00:00"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "closed window, right token": {
+        "status": 410,
+        "data": {
+            "error": "window-closed",
+            "message": "The inspection period for these documents has ended.",
+            "endDate": "2020-02-01T00:00:00+00:00"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "open window, wrong token": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "open window, token prefix": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "open window, token in other case": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "closed window, wrong token": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "open window, no token presented": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        }
+    },
+    "stored token empty, none presented": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        }
+    },
+    "stored token missing, one presented": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "unreadable window, right token": {
+        "status": 503,
+        "data": {
+            "error": "unreadable-window",
+            "message": "This inspection has a window that cannot be read, so its link is refused."
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "unreadable window, wrong token": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "documents not a list, right token": {
+        "status": 200,
+        "data": {
+            "record": "besluit-1",
+            "documents": [],
+            "startDate": "2026-09-01T00:00:00+00:00",
+            "endDate": "2099-01-01T00:00:00+00:00"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    },
+    "unknown id, a token presented": {
+        "status": 404,
+        "data": {
+            "error": "unknown-inspection"
+        },
+        "reads": [
+            {
+                "id": "inspection-1",
+                "register": "42",
+                "schema": "42"
+            }
+        ]
+    }
+}
