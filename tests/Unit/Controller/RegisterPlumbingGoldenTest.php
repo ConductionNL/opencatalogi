@@ -121,6 +121,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		'reason' => 'r',
 		'catalogSlug' => 'cat',
 		'message' => 'm',
+		'token' => 'tok',
 	];
 
 	/**
