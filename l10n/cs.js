@@ -723,7 +723,7 @@ OC.L10N.register(
         "What is published, what is archived, and what retention says to do next.": "Co je zveřejněno, co je archivováno a co uchovávání předepisuje dál.",
         "What people looked at and what they downloaded.": "Na co se lidé dívali a co si stáhli.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Jak zralé jsou katalogy a jak hluboce jsou integrovány záznamy v adresáři.",
-        "Store": "Obchod",
+        "Marketplace": "Obchod",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Nainstalujte registry, schémata a toky zveřejněné jinými organizacemi.",
         "Could not load the catalog": "Katalog se nepodařilo načíst",
         "Reload the page to try again.": "Obnovte stránku a zkuste to znovu.",
