@@ -280,6 +280,8 @@ class AttachDocumentsApplyTest extends TestCase {
 			'dry run' => [[], []],
 			'apply, a move fails' => [['--apply' => true], ['moveFile' => true]],
 			'apply, removal fails' => [['--apply' => true], ['deleteObject' => true]],
+			'apply, files cannot be listed' => [['--apply' => true], ['getFiles' => true]],
+			'dry run, publication lookup fails' => [[], ['find' => true]],
 		];
 
 	}//end mixedRuns()
