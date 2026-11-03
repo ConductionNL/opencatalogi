@@ -449,7 +449,7 @@ class SitemapServiceTest extends TestCase {
 
 		// Publisher @resource is bound to the TOOI organisatie identifier (WOO-TOOI-002).
 		$this->assertEquals('https://identifier.overheid.nl/tooi/id/gemeente/gm0855', $doc['diwoo:publisher']['@resource']);
-		$this->assertEquals('file-owner', $doc['diwoo:publisher']['#text']);
+		$this->assertSame('', $doc['diwoo:publisher']['#text'], 'A user id is never the publisher.');
 
 		// Format.
 		$this->assertStringContainsString('PDF', $doc['diwoo:format']['@resource']);
@@ -805,7 +805,7 @@ class SitemapServiceTest extends TestCase {
 
 				$named = array_combine(array_slice($names, 0, count($args)), array_slice($args, 0, count($names)));
 				$calls[] = array_intersect_key($named, array_flip(['query', '_rbac', '_multitenancy']));
-				return [$this->createSerializableObject(['tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855'])];
+				return [$this->createSerializableObject(['name' => 'Gemeente Voorbeeld & Omstreken', 'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855'])];
 			}
 		);
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);

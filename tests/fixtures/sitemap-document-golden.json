@@ -7,7 +7,7 @@
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
-                        "#text": "admin"
+                        "#text": ""
                     },
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/XML",
@@ -46,6 +46,11 @@
             },
             {
                 "documentLoc": "",
+                "axis": "publisher",
+                "reason": "organisation has no name"
+            },
+            {
+                "documentLoc": "",
                 "axis": "officieleTitel",
                 "reason": "publication has no title"
             }
@@ -59,7 +64,7 @@
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
-                        "#text": "file-owner",
+                        "#text": "",
                         "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
                     },
                     "diwoo:format": {
@@ -94,6 +99,11 @@
             },
             {
                 "documentLoc": "https://example.com/files/doc.pdf",
+                "axis": "publisher",
+                "reason": "organisation has no name"
+            },
+            {
+                "documentLoc": "https://example.com/files/doc.pdf",
                 "axis": "officieleTitel",
                 "reason": "publication has no title"
             }
@@ -107,7 +117,7 @@
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
-                        "#text": "admin"
+                        "#text": ""
                     },
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/PDF",
@@ -146,6 +156,11 @@
             },
             {
                 "documentLoc": "https://example.com/c.pdf",
+                "axis": "publisher",
+                "reason": "organisation has no name"
+            },
+            {
+                "documentLoc": "https://example.com/c.pdf",
                 "axis": "officieleTitel",
                 "reason": "publication has no title"
             }
@@ -159,7 +174,7 @@
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
-                        "#text": "admin"
+                        "#text": ""
                     },
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/DOCX",
@@ -178,6 +193,11 @@
                 "documentLoc": "https://example.com/a.DOCX",
                 "axis": "publisher",
                 "reason": "organisation has no TOOI identifier"
+            },
+            {
+                "documentLoc": "https://example.com/a.DOCX",
+                "axis": "publisher",
+                "reason": "organisation has no name"
             },
             {
                 "documentLoc": "https://example.com/a.DOCX",
@@ -204,7 +224,7 @@
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
-                        "#text": "admin"
+                        "#text": ""
                     },
                     "diwoo:format": {
                         "@resource": "http://publications.europa.eu/resource/authority/file-type/PDF",
@@ -243,6 +263,11 @@
             },
             {
                 "documentLoc": "https://example.com/b.pdf",
+                "axis": "publisher",
+                "reason": "organisation has no name"
+            },
+            {
+                "documentLoc": "https://example.com/b.pdf",
                 "axis": "officieleTitel",
                 "reason": "publication has no title"
             }
@@ -256,7 +281,7 @@
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
                     "diwoo:publisher": {
-                        "#text": "admin",
+                        "#text": "",
                         "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0363"
                     },
                     "diwoo:format": {
@@ -280,6 +305,11 @@
                 "documentLoc": "earlier",
                 "axis": "kept",
                 "reason": "appended to"
+            },
+            {
+                "documentLoc": "",
+                "axis": "publisher",
+                "reason": "organisation has no name"
             },
             {
                 "documentLoc": "",

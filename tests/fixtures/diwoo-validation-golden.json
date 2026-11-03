@@ -178,6 +178,11 @@
                 },
                 {
                     "documentLoc": "https://dl.example/1.pdf",
+                    "axis": "publisher",
+                    "reason": "organisation has no name"
+                },
+                {
+                    "documentLoc": "https://dl.example/1.pdf",
                     "axis": "officieleTitel",
                     "reason": "publication has no title"
                 },
@@ -190,6 +195,11 @@
                     "documentLoc": "https://dl.example/2.odt",
                     "axis": "publisher",
                     "reason": "organisation has no TOOI identifier"
+                },
+                {
+                    "documentLoc": "https://dl.example/2.odt",
+                    "axis": "publisher",
+                    "reason": "organisation has no name"
                 },
                 {
                     "documentLoc": "https://dl.example/2.odt",
