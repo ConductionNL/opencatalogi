@@ -10,6 +10,10 @@
             "startDate": "2026-09-01T00:00:00+00:00",
             "endDate": "2099-01-01T00:00:00+00:00"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -25,6 +29,10 @@
             "message": "The inspection period for these documents has ended.",
             "endDate": "2020-02-01T00:00:00+00:00"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -38,6 +46,10 @@
         "data": {
             "error": "unknown-inspection"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -51,6 +63,10 @@
         "data": {
             "error": "unknown-inspection"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -64,6 +80,10 @@
         "data": {
             "error": "unknown-inspection"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -77,6 +97,10 @@
         "data": {
             "error": "unknown-inspection"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -89,19 +113,31 @@
         "status": 404,
         "data": {
             "error": "unknown-inspection"
-        }
+        },
+        "cors": [
+            "*",
+            "false"
+        ]
     },
     "stored token empty, none presented": {
         "status": 404,
         "data": {
             "error": "unknown-inspection"
-        }
+        },
+        "cors": [
+            "*",
+            "false"
+        ]
     },
     "stored token missing, one presented": {
         "status": 404,
         "data": {
             "error": "unknown-inspection"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -116,6 +152,10 @@
             "error": "unreadable-window",
             "message": "This inspection has a window that cannot be read, so its link is refused."
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -129,6 +169,10 @@
         "data": {
             "error": "unknown-inspection"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -145,6 +189,10 @@
             "startDate": "2026-09-01T00:00:00+00:00",
             "endDate": "2099-01-01T00:00:00+00:00"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
@@ -158,6 +206,10 @@
         "data": {
             "error": "unknown-inspection"
         },
+        "cors": [
+            "*",
+            "false"
+        ],
         "reads": [
             {
                 "id": "inspection-1",
