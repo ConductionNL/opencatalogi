@@ -131,7 +131,7 @@ class PubliccodeHarvestServiceTest extends TestCase {
 	 * Recorded by name and not by position, so the recording does not follow the
 	 * signature of whichever OpenRegister version is loaded.
 	 *
-	 * @param string            $method    The ObjectService method.
+	 * @param string $method The ObjectService method.
 	 * @param array<int, mixed> $arguments The arguments the double received.
 	 *
 	 * @return array<string, mixed>
