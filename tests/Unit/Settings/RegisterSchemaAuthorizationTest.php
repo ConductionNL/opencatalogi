@@ -96,7 +96,7 @@ class RegisterSchemaAuthorizationTest extends TestCase {
 	private const PROPERTY_RULES = [
 		'serviceStatus' => ['stateSetBy' => ['read' => ['admin'], 'reveal' => 'explicit']],
 		'noticeBoard' => ['moderator' => ['read' => ['admin'], 'reveal' => 'explicit']],
-		'knowledgeArticle' => ['sourceCase' => ['read' => ['authenticated'], 'reveal' => 'explicit']],
+		'knowledgeArticle' => ['sourceCase' => ['read' => ['admin'], 'reveal' => 'explicit']],
 		'caseTypeDefinition' => ['importedSnapshot' => ['read' => ['admin']]],
 	];
 

@@ -315,7 +315,7 @@
 					},
 					"sourceCase": {
 						"authorization": {
-							"read": ["authenticated"],
+							"read": ["admin"],
 							"reveal": "explicit"
 						},
 						"type": "string",
