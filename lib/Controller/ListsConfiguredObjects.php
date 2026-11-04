@@ -68,7 +68,6 @@ trait ListsConfiguredObjects {
 		}
 
 		return $searchQuery;
-
 	}//end scopedSearchQuery()
 
 	/**
@@ -114,7 +113,6 @@ trait ListsConfiguredObjects {
 		}
 
 		return $responseData;
-
 	}//end paginatedResponseData()
 
 	/**
@@ -128,6 +126,5 @@ trait ListsConfiguredObjects {
 	 */
 	private function publicJsonResponse(mixed $data): JSONResponse {
 		return $this->withListCorsHeaders(response: new JSONResponse($data));
-
 	}//end publicJsonResponse()
 }//end trait

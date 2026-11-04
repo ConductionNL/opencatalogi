@@ -68,7 +68,6 @@ class WooRequestAndCommentPeriodRegisterTest extends TestCase {
 		}
 
 		return $base;
-
 	}//end effectiveRegister()
 
 	/**
@@ -98,7 +97,6 @@ class WooRequestAndCommentPeriodRegisterTest extends TestCase {
 		}
 
 		return $base;
-
 	}//end deepMerge()
 
 	/**

@@ -39,7 +39,7 @@ class InspectionRecords {
 	 * Constructor.
 	 *
 	 * @param InspectionServiceInterface $inspections The inspection windows.
-	 * @param RegisterAccess             $registers   The configured register pairs and the ObjectService, refusing rather than defaulting.
+	 * @param RegisterAccess $registers The configured register pairs and the ObjectService, refusing rather than defaulting.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
@@ -54,7 +54,7 @@ class InspectionRecords {
 	 * Open an inspection window over a record's chosen documents.
 	 *
 	 * @param array{record: array, recordType: array, documents: array} $parameters The record, its type and the chosen documents.
-	 * @param string                                                     $openedBy   The user id of the administrator.
+	 * @param string $openedBy The user id of the administrator.
 	 *
 	 * @return array<string, mixed> The inspection to save.
 	 *
@@ -76,7 +76,7 @@ class InspectionRecords {
 	 * Resolve an inspection link at this moment.
 	 *
 	 * @param array<string, mixed> $inspection The stored inspection.
-	 * @param string               $token      The token from the link.
+	 * @param string $token The token from the link.
 	 *
 	 * @return array{readable: boolean, documents: array<int, string>, reason: string|null, endDate: string|null}
 	 *
@@ -86,7 +86,6 @@ class InspectionRecords {
 	 */
 	public function resolveLink(array $inspection, string $token): array {
 		return $this->inspections->resolveLink(inspection: $inspection, token: $token);
-
 	}//end resolveLink()
 
 	/**
@@ -112,7 +111,12 @@ class InspectionRecords {
 	}//end store()
 
 	/**
-	 * Read a stored inspection as a flat array.
+	 * Read a stored inspection as a flat array, without RBAC.
+	 *
+	 * The inspection schema is readable by administrators only, and the link is
+	 * followed anonymously, so the read skips RBAC. The caller must not answer
+	 * anything from the result before the presented token matched it
+	 * (see resolveLink()).
 	 *
 	 * @param string $id The inspection id.
 	 *
@@ -128,7 +132,8 @@ class InspectionRecords {
 			object: $this->registers->getObjectService()->find(
 				id: $id,
 				register: $config['register'],
-				schema: $config['schema']
+				schema: $config['schema'],
+				_rbac: false
 			)
 		);
 
@@ -160,7 +165,6 @@ class InspectionRecords {
 		}
 
 		return $object;
-
 	}//end toArray()
 
 	/**

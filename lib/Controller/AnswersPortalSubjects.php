@@ -43,11 +43,11 @@ trait AnswersPortalSubjects {
 	 * Run an action as the asserted subject and map its outcome to a status.
 	 *
 	 * @param callable $action The action, given the owner.
-	 * @param int      $status The success status.
+	 * @param int $status The success status.
 	 *
 	 * @return JSONResponse 401 without a valid assertion, 404, 422, 500 or the success status.
 	 */
-	private function asSubject(callable $action, int $status=Http::STATUS_OK): JSONResponse {
+	private function asSubject(callable $action, int $status = Http::STATUS_OK): JSONResponse {
 		$owner = $this->verifier->subjectOf(header: $this->request->getHeader(PortalAssertionVerifierInterface::HEADER));
 		if ($owner === null) {
 			return new JSONResponse(['error' => 'unauthenticated'], Http::STATUS_UNAUTHORIZED);
@@ -80,6 +80,5 @@ trait AnswersPortalSubjects {
 		}
 
 		return '';
-
 	}//end param()
 }//end trait

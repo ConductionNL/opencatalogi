@@ -154,7 +154,6 @@ class SettingsEnrichGoldenTest extends TestCase {
 		}
 
 		return [gettype($value) => $value];
-
 	}//end describe()
 
 	/**
@@ -174,7 +173,9 @@ class SettingsEnrichGoldenTest extends TestCase {
 				/**
 				 * @param array<string, mixed> $row The row.
 				 */
-				public function __construct(private array $row) {
+				public function __construct(
+					private array $row,
+				) {
 				}
 
 				/**
@@ -187,7 +188,6 @@ class SettingsEnrichGoldenTest extends TestCase {
 		}
 
 		return $spec['row'];
-
 	}//end handOver()
 
 	/**

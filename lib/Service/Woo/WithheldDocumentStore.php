@@ -44,9 +44,9 @@ class WithheldDocumentStore {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig         $config     Holds the register and schema ids.
+	 * @param IAppConfig $config Holds the register and schema ids.
 	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
-	 * @param LoggerInterface    $logger     Records an unavailable OpenRegister.
+	 * @param LoggerInterface $logger Records an unavailable OpenRegister.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -79,14 +79,14 @@ class WithheldDocumentStore {
 	 * by this call are removed again and the error is passed on. A failed delete of the
 	 * superseded rows leaves them next to the new ones until the next record().
 	 *
-	 * @param string                                                           $publicationId The publication.
-	 * @param list<array{position: int, grounds: list<array<string, string>>}> $accepted      The entries to store.
-	 * @param string                                                           $source        The recording app.
+	 * @param string $publicationId The publication.
+	 * @param list<array{position: int, grounds: list<array<string, string>>}> $accepted The entries to store.
+	 * @param string $source The recording app.
 	 *
 	 * @return void
 	 *
 	 * @throws RuntimeException When OpenRegister or the register configuration is not there.
-	 * @throws Throwable        When a write fails; the previous list is kept.
+	 * @throws Throwable When a write fails; the previous list is kept.
 	 *
 	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
@@ -115,8 +115,8 @@ class WithheldDocumentStore {
 	/**
 	 * The ids of the entries stored for a publication.
 	 *
-	 * @param SchemaObjects $target        The withheldDocument objects.
-	 * @param string        $publicationId The publication.
+	 * @param SchemaObjects $target The withheldDocument objects.
+	 * @param string $publicationId The publication.
 	 *
 	 * @return list<string>
 	 */
@@ -140,7 +140,7 @@ class WithheldDocumentStore {
 	 * Remove entries a failed replace had already written, so the previous list stands alone.
 	 *
 	 * @param SchemaObjects $target The withheldDocument objects.
-	 * @param list<string>  $ids    The ids written by the failed call.
+	 * @param list<string> $ids The ids written by the failed call.
 	 *
 	 * @return void
 	 */

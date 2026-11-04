@@ -168,7 +168,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return $this->runCheck();
-
 	}//end runWhenEnabled()
 
 	/**
@@ -213,7 +212,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * When robots.txt fails, no catalog check fetches anything: they all report skipped.
 	 *
 	 * @param array<int, mixed> $catalogs The WOO-enabled catalogs.
-	 * @param string            $baseUrl  The instance's public base URL.
+	 * @param string $baseUrl The instance's public base URL.
 	 *
 	 * @return array<int, array<string, mixed>> The checks, in order.
 	 *
@@ -231,13 +230,12 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return $checks;
-
 	}//end instanceChecks()
 
 	/**
 	 * The checks of one catalog: none without a slug, all skipped when robots.txt failed.
 	 *
-	 * @param mixed       $catalog          The catalog object.
+	 * @param mixed $catalog The catalog object.
 	 * @param string|null $reachableBaseUrl The base URL when robots.txt passed, null when it failed.
 	 *
 	 * @return array<int, array<string, string>> The catalog's checks.
@@ -258,7 +256,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 
 		$this->checkCatalog(baseUrl: $reachableBaseUrl, catalog: $catalogChecks);
 		return $catalogChecks->all();
-
 	}//end catalogCheckList()
 
 	/**
@@ -344,7 +341,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return ['@self' => ['register' => $registerId, 'schema' => $schemaId], 'hasWooSitemap' => true];
-
 	}//end wooCatalogQuery()
 
 	/**
@@ -413,7 +409,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * When it is not, the check fails and the checks that depend on it are skipped.
 	 *
 	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
-	 * @param string                 $url     The sitemapindex URL.
+	 * @param string $url The sitemapindex URL.
 	 *
 	 * @return array<int, string>|null Up to MAX_SAMPLED_PAGES page URLs, or null when the sitemapindex failed.
 	 *
@@ -431,7 +427,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 
 		$catalog->pass(id: $checkId);
 		return array_slice($this->extractLocs(xml: $response['body']), 0, self::MAX_SAMPLED_PAGES);
-
 	}//end sitemapPageUrls()
 
 	/**
@@ -453,7 +448,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return null;
-
 	}//end xmlFailure()
 
 	/**
@@ -502,7 +496,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return $failure;
-
 	}//end pageFailure()
 
 	/**
@@ -600,7 +593,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return $this->buildCheck(id: 'diwoo-standard-version', status: 'pass');
-
 	}//end checkDiwooStandardVersion()
 
 	/**
@@ -616,7 +608,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return $this->diwooVersion;
-
 	}//end resolveDiwooVersion()
 
 	/**
@@ -766,7 +757,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return $this->fetchResult(response: $response);
-
 	}//end safeFetch()
 
 	/**
@@ -790,7 +780,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return null;
-
 	}//end fetchRefusal()
 
 	/**
@@ -814,7 +803,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return ['ok' => true, 'status' => $status, 'body' => (string)$body];
-
 	}//end fetchResult()
 
 	/**

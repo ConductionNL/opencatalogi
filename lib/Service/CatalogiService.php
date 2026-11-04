@@ -543,7 +543,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * Store the catalog scope as the available registers and schemas.
 	 *
 	 * @param array $registers The de-duplicated registers.
-	 * @param array $schemas   The de-duplicated schemas the caller may see.
+	 * @param array $schemas The de-duplicated schemas the caller may see.
 	 *
 	 * @return array{registers: array, schemas: array} The scope as lists.
 	 */
@@ -592,7 +592,6 @@ class CatalogiService implements CatalogiServiceInterface {
 		unset($params['_route']);
 
 		return array_merge($this->pagingOptions(params: $params), $this->requestOptions(params: $params));
-
 	}//end getConfig()
 
 	/**
@@ -659,7 +658,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * Read an integer request parameter under its plain name or its underscored alias.
 	 *
 	 * @param array<string, mixed> $params The request parameters.
-	 * @param string               $name   The plain name, such as `offset`.
+	 * @param string $name The plain name, such as `offset`.
 	 *
 	 * @return int|null The value of the plain name when set, else of `_<name>`, else null.
 	 */
@@ -949,7 +948,7 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * writeScope() keeps the schema a list unless the scope is one schema in one
 	 * register (WOO-581 review rounds 3 and 4).
 	 *
-	 * @param array<string, mixed>        $config  The request config from getConfig().
+	 * @param array<string, mixed> $config The request config from getConfig().
 	 * @param array<string, array<mixed>> $context The catalogue scope from getCatalogFilters().
 	 *
 	 * @return array<string, mixed> The query for searchObjectsPaginated().
@@ -999,8 +998,8 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * accepted so SOLR does not fatal with "Call to a member function jsonSerialize()
 	 * on array" (#736).
 	 *
-	 * @param mixed $object      One search result.
-	 * @param bool  $isAnonymous Whether the caller has no session user.
+	 * @param mixed $object One search result.
+	 * @param bool $isAnonymous Whether the caller has no session user.
 	 *
 	 * @return array<string, mixed> The result as an array.
 	 */

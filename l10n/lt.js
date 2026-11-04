@@ -723,7 +723,7 @@ OC.L10N.register(
         "What is published, what is archived, and what retention says to do next.": "Kas paskelbta, kas archyvuota ir ką saugojimas nurodo toliau.",
         "What people looked at and what they downloaded.": "Ką žmonės žiūrėjo ir ką atsisiuntė.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Kokie brandūs yra katalogai ir kaip giliai integruoti katalogo įrašai.",
-        "Store": "Parduotuvė",
+        "Marketplace": "Parduotuvė",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Įdiekite registrus, schemas ir srautus, kuriuos paskelbė kitos organizacijos.",
         "Could not load the catalog": "Nepavyko įkelti katalogo",
         "Reload the page to try again.": "Įkelkite puslapį iš naujo ir bandykite dar kartą.",

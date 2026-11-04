@@ -189,7 +189,6 @@ class RenameDutchPublicationColumns implements IRepairStep {
 		}
 
 		return $counts;
-
 	}//end migrateTable()
 
 	/**

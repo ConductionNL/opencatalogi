@@ -129,8 +129,8 @@ class SettingsReadGoldenTest extends TestCase {
 	/**
 	 * The service over doubles answering from the case's world.
 	 *
-	 * @param array<string, mixed> $world   The case.
-	 * @param array<int, string>   $enabled The apps enabled through the app manager, filled in.
+	 * @param array<string, mixed> $world The case.
+	 * @param array<int, string> $enabled The apps enabled through the app manager, filled in.
 	 *
 	 * @return SettingsService The service.
 	 */
@@ -209,6 +209,5 @@ class SettingsReadGoldenTest extends TestCase {
 		);
 
 		return new SettingsService($config, $container, $apps, $this->createMock(LoggerInterface::class), $this->createMock(RegisterSchemaLinkService::class));
-
 	}//end service()
 }//end class

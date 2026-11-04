@@ -245,7 +245,6 @@ class PublicationShowGoldenTest extends TestCase {
 		$request->method('getMethod')->willReturn(($case['method'] ?? 'GET'));
 
 		return $request;
-
 	}//end request()
 
 	/**
@@ -271,7 +270,6 @@ class PublicationShowGoldenTest extends TestCase {
 		);
 
 		return $queries;
-
 	}//end queries()
 
 	/**
@@ -318,7 +316,6 @@ class PublicationShowGoldenTest extends TestCase {
 		);
 
 		return $container;
-
 	}//end container()
 
 	/**
@@ -406,7 +403,6 @@ class PublicationShowGoldenTest extends TestCase {
 		}
 
 		return $logger;
-
 	}//end logger()
 
 	/**
@@ -424,6 +420,5 @@ class PublicationShowGoldenTest extends TestCase {
 		);
 
 		return $counter;
-
 	}//end counter()
 }//end class

@@ -52,7 +52,6 @@ class InstanceSettingsTest extends TestCase {
 		);
 
 		return new InstanceSettings($urls, $config);
-
 	}//end settings()
 
 	/**

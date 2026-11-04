@@ -66,7 +66,8 @@ class LocalCategoryAdmission {
 	 * @param array<string, array<string, mixed>> $bundled The waardelijst records, to catch shadowing.
 	 *
 	 * @return array{code: string, record: array<string, mixed>|null, reason: string|null}
-	 *   The code, the record when admitted, and the reason when refused.
+	 *
+	 * Returns: The code, the record when admitted, and the reason when refused.
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) WooCategoryRegistry::sitemapFileFor() and
 	 *   ::codeOf() are pure string functions over the file-name convention. The point
@@ -144,7 +145,6 @@ class LocalCategoryAdmission {
 		}
 
 		return '';
-
 	}//end codeOfMember()
 
 	/**
@@ -168,7 +168,6 @@ class LocalCategoryAdmission {
 		}
 
 		return array_values(array_unique($slugs));
-
 	}//end schemaSlugs()
 
 	/**
@@ -186,6 +185,5 @@ class LocalCategoryAdmission {
 		}
 
 		return trim($value);
-
 	}//end text()
 }//end class

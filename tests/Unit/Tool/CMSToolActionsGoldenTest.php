@@ -205,14 +205,13 @@ class CMSToolActionsGoldenTest extends TestCase {
 		}
 
 		return $entity;
-
 	}//end entity()
 
 	/**
 	 * The arguments of an ObjectService call by parameter name, without those left at their default.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return array<string, mixed> The passed arguments by name.
 	 */
@@ -231,6 +230,5 @@ class CMSToolActionsGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
 }//end class

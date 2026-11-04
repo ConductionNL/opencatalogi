@@ -99,7 +99,6 @@ class InspectionController extends Controller {
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
-
 	}//end preflightedCors()
 
 	/**
@@ -149,11 +148,13 @@ class InspectionController extends Controller {
 		}
 
 		return new JSONResponse($this->registers->toArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end open()
 
 	/**
 	 * Follow an inspection link.
+	 *
+	 * A request without a token reads nothing. The inspection is read without
+	 * RBAC and answers nothing until the presented token matched it.
 	 *
 	 * @param string $id The inspection.
 	 *
@@ -168,64 +169,120 @@ class InspectionController extends Controller {
 	public function follow(string $id): JSONResponse {
 		$token = (string)$this->request->getParam('token', '');
 
+		return $this->withCors(response: $this->linkResponse(id: $id, token: $token));
+	}//end follow()
+
+	/**
+	 * Read the inspection a link names and answer it, or refuse.
+	 *
+	 * @param string $id The inspection.
+	 * @param string $token The token the reader presented.
+	 *
+	 * @return JSONResponse The answer, without its CORS headers.
+	 */
+	private function linkResponse(string $id, string $token): JSONResponse {
+		if ($token === '') {
+			return $this->unknownInspection();
+		}
+
 		try {
 			$inspection = $this->registers->find(id: $id);
 		} catch (CatalogueUnreadableException $e) {
-			return $this->withCors(
-				response: new JSONResponse(
-					data: ['error' => 'register-unreadable'],
-					statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-				)
-			);
+			return new JSONResponse(data: ['error' => 'register-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
 		} catch (\Throwable $e) {
-			return $this->withCors(
-				response: new JSONResponse(data: ['error' => 'unknown-inspection'], statusCode: Http::STATUS_NOT_FOUND)
-			);
+			return $this->unknownInspection();
 		}
 
+		return $this->outcomeResponse(inspection: $inspection, token: $token);
+	}//end linkResponse()
+
+	/**
+	 * Answer a stored inspection for the presented token.
+	 *
+	 * Nothing from the inspection is answered before the token matched it.
+	 *
+	 * @param array<string, mixed> $inspection The stored inspection.
+	 * @param string $token The token the reader presented.
+	 *
+	 * @return JSONResponse The chosen documents, or the refusal.
+	 */
+	private function outcomeResponse(array $inspection, string $token): JSONResponse {
 		try {
 			$outcome = $this->registers->resolveLink(inspection: $inspection, token: $token);
 		} catch (\DomainException $e) {
-			// An unreadable window refuses rather than defaulting either way.
-			return $this->withCors(
-				response: new JSONResponse(
-					data: ['error' => 'unreadable-window', 'message' => $e->getMessage()],
-					statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-				)
-			);
+			return $this->unreadableWindow(e: $e);
 		}
 
 		if ($outcome['readable'] === false && $outcome['reason'] === 'window-closed') {
-			return $this->withCors(
-				response: new JSONResponse(
-					data: [
-						'error' => 'window-closed',
-						'message' => $this->l10n->t('The inspection period for these documents has ended.'),
-						'endDate' => $outcome['endDate'],
-					],
-					statusCode: Http::STATUS_GONE
-				)
-			);
+			return $this->windowClosed(endDate: (string)$outcome['endDate']);
 		}
 
 		if ($outcome['readable'] === false) {
-			return $this->withCors(
-				response: new JSONResponse(data: ['error' => 'unknown-inspection'], statusCode: Http::STATUS_NOT_FOUND)
-			);
+			return $this->unknownInspection();
 		}
 
-		return $this->withCors(
-			response: new JSONResponse(
-				[
-					'record' => ($inspection['record'] ?? null),
-					'documents' => $outcome['documents'],
-					'startDate' => ($inspection['startDate'] ?? null),
-					'endDate' => $outcome['endDate'],
-				]
-			)
-		);
+		return $this->documentsResponse(inspection: $inspection, outcome: $outcome);
+	}//end outcomeResponse()
 
-	}//end follow()
+	/**
+	 * The answer for a link that is open: the chosen documents and the window.
+	 *
+	 * @param array<string, mixed> $inspection The stored inspection.
+	 * @param array{readable: boolean, documents: array<int, string>, reason: string|null, endDate: string|null} $outcome The resolved link.
+	 *
+	 * @return JSONResponse 200 with the documents.
+	 */
+	private function documentsResponse(array $inspection, array $outcome): JSONResponse {
+		return new JSONResponse(
+			[
+				'record' => ($inspection['record'] ?? null),
+				'documents' => $outcome['documents'],
+				'startDate' => ($inspection['startDate'] ?? null),
+				'endDate' => $outcome['endDate'],
+			]
+		);
+	}//end documentsResponse()
+
+	/**
+	 * The answer for a window that cannot be read: it refuses rather than defaulting either way.
+	 *
+	 * @param \DomainException $e Why the window cannot be read.
+	 *
+	 * @return JSONResponse 503 with the reason.
+	 */
+	private function unreadableWindow(\DomainException $e): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => 'unreadable-window', 'message' => $e->getMessage()],
+			statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+		);
+	}//end unreadableWindow()
+
+	/**
+	 * The answer for a link whose inspection period has ended.
+	 *
+	 * @param string $endDate The end of the period.
+	 *
+	 * @return JSONResponse 410 with the end date.
+	 */
+	private function windowClosed(string $endDate): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'error' => 'window-closed',
+				'message' => $this->l10n->t('The inspection period for these documents has ended.'),
+				'endDate' => $endDate,
+			],
+			statusCode: Http::STATUS_GONE
+		);
+	}//end windowClosed()
+
+	/**
+	 * The answer for an unknown inspection, a wrong token, or no token.
+	 *
+	 * @return JSONResponse 404.
+	 */
+	private function unknownInspection(): JSONResponse {
+		return new JSONResponse(data: ['error' => 'unknown-inspection'], statusCode: Http::STATUS_NOT_FOUND);
+	}//end unknownInspection()
 
 	/**
 	 * Add the CORS headers a public endpoint answers with.
@@ -239,7 +296,6 @@ class InspectionController extends Controller {
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
-
 	}//end withCors()
 
 }//end class

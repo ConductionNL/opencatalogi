@@ -29,6 +29,7 @@ use PHPUnit\Framework\TestCase;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\PubliccodeHarvestService
+ * @uses \OCA\OpenCatalogi\Service\FlowReport
  */
 class PubliccodeHarvestFlowTest extends TestCase {
 

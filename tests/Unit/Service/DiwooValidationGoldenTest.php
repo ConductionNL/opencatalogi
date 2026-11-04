@@ -27,6 +27,7 @@
  * @spec openspec/specs/woo-compliance/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\SitemapService
+ * @uses \OCA\OpenCatalogi\Service\SitemapDocumentMapper
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\SitemapIndexBuilder
@@ -99,7 +100,7 @@ class DiwooValidationGoldenTest extends TestCase {
 			]],
 		];
 
-		}//end cases()
+	}//end cases()
 
 	/**
 	 * Validate one case and compare it with the recording.
@@ -165,7 +166,9 @@ class DiwooValidationGoldenTest extends TestCase {
 				/**
 				 * @param array<string, mixed> $object The catalog data.
 				 */
-				public function __construct(private array $object) {
+				public function __construct(
+					private array $object,
+				) {
 				}
 
 				/**
@@ -247,7 +250,6 @@ class DiwooValidationGoldenTest extends TestCase {
 		$report = $service->validateDiwooOutput('the-catalog', 'sitemapindex-diwoo-infocat001.xml', ($case['page'] ?? 1));
 
 		return ['report' => $report, 'calls' => $calls];
-
 	}//end validate()
 
 	/**
@@ -262,7 +264,9 @@ class DiwooValidationGoldenTest extends TestCase {
 			/**
 			 * @param array<string, mixed> $data The row.
 			 */
-			public function __construct(private array $data) {
+			public function __construct(
+				private array $data,
+			) {
 			}
 
 			/**

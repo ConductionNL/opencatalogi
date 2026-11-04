@@ -242,13 +242,12 @@ class WooReadinessGoldenTest extends TestCase {
 		);
 
 		return new WooReadinessService($clients, $directory, new SitemapStandards($sitemaps, $versions), $settings, $config, $urls);
-
 	}//end service()
 
 	/**
 	 * What the world answers for a URL.
 	 *
-	 * @param string               $url   The URL.
+	 * @param string $url The URL.
 	 * @param array<string, mixed> $world The world.
 	 *
 	 * @return IResponse The answer.
@@ -260,7 +259,7 @@ class WooReadinessGoldenTest extends TestCase {
 			$robots = ($world['robots'] ?? 200);
 			$status = (is_int($robots) === true ? $robots : 200);
 			$body = ($robots === 'no-sitemap' ? "User-agent: *\n" : "Sitemap: x/sitemaps/y\n");
-		} else if (str_contains($url, 'page=') === true) {
+		} elseif (str_contains($url, 'page=') === true) {
 			$index = (int)substr($url, (int)strrpos($url, '=') + 1) - 1;
 			$page = (($world['pages'] ?? ['ok'])[$index] ?? 'ok');
 			if ($page === 'throw') {
@@ -273,7 +272,7 @@ class WooReadinessGoldenTest extends TestCase {
 				'bad-xml' => '<urlset',
 				default => '<docs xmlns:diwoo="d"><diwoo:Document><loc>https://example.org/doc-' . ($index + 1) . '.pdf</loc></diwoo:Document></docs>',
 			};
-		} else if (str_contains($url, '/sitemaps/') === true) {
+		} elseif (str_contains($url, '/sitemaps/') === true) {
 			$index = ($world['index'] ?? 200);
 			$status = (is_int($index) === true ? $index : 200);
 			$count = count($world['pages'] ?? ['ok']);
@@ -287,7 +286,7 @@ class WooReadinessGoldenTest extends TestCase {
 				'empty' => '<sitemapindex></sitemapindex>',
 				default => '<sitemapindex>' . $locs . '</sitemapindex>',
 			};
-		} else if (str_contains($url, 'doc-') === true) {
+		} elseif (str_contains($url, 'doc-') === true) {
 			$status = ($world['document'] ?? 200);
 			$body = 'pdf';
 		} else {
@@ -306,7 +305,6 @@ class WooReadinessGoldenTest extends TestCase {
 		$response->method('getBody')->willReturn($body);
 
 		return $response;
-
 	}//end answer()
 
 	/**
@@ -346,6 +344,5 @@ class WooReadinessGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
 }//end class

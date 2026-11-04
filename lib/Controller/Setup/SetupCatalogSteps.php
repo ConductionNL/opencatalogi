@@ -260,8 +260,8 @@ class SetupCatalogSteps {
 	/**
 	 * Every object in one register and schema, read with system privileges, or null when the search fails.
 	 *
-	 * @param object                $objectService The OpenRegister ObjectService.
-	 * @param array<string, string> $location      The `register` and `schema` to search.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param array<string, string> $location The `register` and `schema` to search.
 	 *
 	 * @return mixed The search result, or null after an exception.
 	 *

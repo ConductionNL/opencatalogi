@@ -723,7 +723,7 @@ OC.L10N.register(
         "What is published, what is archived, and what retention says to do next.": "Hvad der er udgivet, hvad der er arkiveret, og hvad opbevaringen foreskriver derefter.",
         "What people looked at and what they downloaded.": "Hvad folk kiggede på, og hvad de downloadede.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Hvor modne katalogerne er, og hvor dybt mappeposterne er integreret.",
-        "Store": "Butik",
+        "Marketplace": "Butik",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Installer registre, skemaer og flows, som andre organisationer har udgivet.",
         "Could not load the catalog": "Kataloget kunne ikke indlæses",
         "Reload the page to try again.": "Genindlæs siden for at prøve igen.",

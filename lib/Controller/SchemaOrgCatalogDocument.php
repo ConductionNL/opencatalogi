@@ -37,9 +37,9 @@ class SchemaOrgCatalogDocument {
 	/**
 	 * Constructor.
 	 *
-	 * @param SchemaOrgServiceInterface        $schemaOrgService The schema.org JSON-LD renderer.
-	 * @param CatalogiServiceInterface         $catalogiService  Catalog resolution (slug → catalog).
-	 * @param PublicationQueryServiceInterface $queryService     SCH-PFTS-CAT-002 read-rule guard (WOO-581).
+	 * @param SchemaOrgServiceInterface $schemaOrgService The schema.org JSON-LD renderer.
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug → catalog).
+	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 */
 	public function __construct(
 		private readonly SchemaOrgServiceInterface $schemaOrgService,

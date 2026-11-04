@@ -33,7 +33,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
-use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
@@ -117,16 +116,45 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 		];
 
 		if ($integriq === true) {
-			$status['source'] = $this->sourceStatus(slug: (string)$definitions['source']);
-			$status['shards']['present'] = $this->countPresentShards(definitions: $definitions);
+			$status = $this->withIntegriqStatus(status: $status, definitions: $definitions);
 		}
 
+		return $this->withLastRun(status: $status);
+	}//end status()
+
+	/**
+	 * The status with the harvest flow's last run, when the flow is imported.
+	 *
+	 * @param array $status The status so far.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md
+	 */
+	private function withLastRun(array $status): array {
 		if (($status['flow']['uuid'] ?? null) !== null) {
 			$status['lastRun'] = $this->lastRun(flowUuid: (string)$status['flow']['uuid']);
 		}
 
 		return $status;
-	}//end status()
+	}//end withLastRun()
+
+	/**
+	 * The status with the integriq source and the shards present in it.
+	 *
+	 * @param array $status The status so far.
+	 * @param array $definitions The shard definitions.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md
+	 */
+	private function withIntegriqStatus(array $status, array $definitions): array {
+		$status['source'] = $this->sourceStatus(slug: (string)$definitions['source']);
+		$status['shards']['present'] = $this->countPresentShards(definitions: $definitions);
+
+		return $status;
+	}//end withIntegriqStatus()
 
 	/**
 	 * Write one integriq synchronization per shard, updating those that exist.
@@ -140,37 +168,40 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	public function setUp(): array {
 		$this->assertIntegriq();
 
-		$definitions = $this->shardDefinitions();
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$context = ['definitions' => $this->shardDefinitions()];
+		$context['objects'] = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		$created = 0;
-		$updated = 0;
-		foreach ($definitions['shards'] as $shard) {
-			$synchronization = self::synchronizationFor(definitions: $definitions, shard: $shard);
-			$existing = $this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']);
+		$tally = ['created' => 0, 'updated' => 0];
+		foreach ($context['definitions']['shards'] as $shard) {
+			$tally[$this->saveShard(shard: $shard, context: $context)]++;
+		}
 
-			$objectService->saveObject(
-				object: $synchronization,
-				register: self::INTEGRIQ_REGISTER,
-				schema: 'synchronization',
-				uuid: $existing,
-			);
+		$this->logger->info('OpenCatalogi: GitHub publiccode harvest set up', $tally);
 
-			if ($existing === null) {
-				$created++;
-				continue;
-			}
-
-			$updated++;
-		}//end foreach
-
-		$this->logger->info(
-			'OpenCatalogi: GitHub publiccode harvest set up',
-			['created' => $created, 'updated' => $updated]
-		);
-
-		return ['created' => $created, 'updated' => $updated];
+		return $tally;
 	}//end setUp()
+
+	/**
+	 * Write one shard's synchronization into integriq, over the stored one when it exists.
+	 *
+	 * @param array $shard The shard definition.
+	 * @param array $context The shard definitions and the OpenRegister ObjectService.
+	 *
+	 * @return string 'created' or 'updated'.
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md
+	 */
+	private function saveShard(array $shard, array $context): string {
+		$synchronization = self::synchronizationFor(definitions: $context['definitions'], shard: $shard);
+		$existing = $this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']);
+		$context['objects']->saveObject(object: $synchronization, register: self::INTEGRIQ_REGISTER, schema: 'synchronization', uuid: $existing);
+
+		if ($existing === null) {
+			return 'created';
+		}
+
+		return 'updated';
+	}//end saveShard()
 
 	/**
 	 * Switch the harvest flow on or off.
@@ -231,7 +262,7 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 
 		$run = $this->container->get('OCA\OpenRegister\Service\Flow\FlowService')->run((string)$flow->getUuid());
 
-		return self::runSummary(run: $run);
+		return (new FlowReport())->runSummary(run: $run);
 	}//end runNow()
 
 	/**
@@ -255,19 +286,33 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 				. 'change the ranges there, not here. The flow "' . self::FLOW_NAME . '" fetches its pages.',
 			'sourceId' => (string)$definitions['source'],
 			'sourceType' => 'api',
-			'sourceConfig' => [
-				'endpoint' => (string)$definitions['endpoint'],
-				'query' => [
-					'q' => (string)$definitions['query'] . ' size:' . $range,
-					'per_page' => (int)$definitions['perPage'],
-				],
-				'resultsPosition' => 'items',
-				'totalPosition' => 'total_count',
-				'maxPages' => (int)$definitions['maxPages'],
-				'prefetchConcurrency' => 1,
-			],
+			'sourceConfig' => self::sourceConfigFor(definitions: $definitions, range: $range),
 		];
 	}//end synchronizationFor()
+
+	/**
+	 * The paged GitHub code search one shard runs: the query narrowed to its size range.
+	 *
+	 * @param array $definitions The shard file.
+	 * @param string $range The shard's size range, as `min..max`.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md
+	 */
+	private static function sourceConfigFor(array $definitions, string $range): array {
+		return [
+			'endpoint' => (string)$definitions['endpoint'],
+			'query' => [
+				'q' => (string)$definitions['query'] . ' size:' . $range,
+				'per_page' => (int)$definitions['perPage'],
+			],
+			'resultsPosition' => 'items',
+			'totalPosition' => 'total_count',
+			'maxPages' => (int)$definitions['maxPages'],
+			'prefetchConcurrency' => 1,
+		];
+	}//end sourceConfigFor()
 
 	/**
 	 * Read the shard file.
@@ -353,12 +398,8 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	 */
 	private function findIntegriqEntity(string $schema, string $slug): ?object {
 		try {
-			$object = $this->container->get('OCA\OpenRegister\Service\ObjectService')->find(
-				id: $slug,
-				register: self::INTEGRIQ_REGISTER,
-				schema: $schema,
-				_multitenancy: false
-			);
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			$object = $objectService->find(id: $slug, register: self::INTEGRIQ_REGISTER, schema: $schema, _multitenancy: false);
 		} catch (Throwable) {
 			return null;
 		}
@@ -399,12 +440,7 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function sourceStatus(string $slug): array {
 		$source = $this->findIntegriqEntity(schema: 'source', slug: $slug);
 		if ($source === null) {
-			return [
-				'slug' => $slug,
-				'exists' => false,
-				'enabled' => false,
-				'uuid' => null,
-			];
+			return ['slug' => $slug, 'exists' => false, 'enabled' => false, 'uuid' => null];
 		}
 
 		$data = $source->getObject();
@@ -434,6 +470,19 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 			return null;
 		}
 
+		return self::harvestFlow(flows: $flows);
+	}//end findFlow()
+
+	/**
+	 * The harvest flow among the app's flows, by name.
+	 *
+	 * @param iterable $flows The flows.
+	 *
+	 * @return object|null
+	 *
+	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md
+	 */
+	private static function harvestFlow(iterable $flows): ?object {
 		foreach ($flows as $flow) {
 			if ($flow->getName() === self::FLOW_NAME) {
 				return $flow;
@@ -441,7 +490,7 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 		}
 
 		return null;
-	}//end findFlow()
+	}//end harvestFlow()
 
 	/**
 	 * What the section shows about the flow.
@@ -454,23 +503,12 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 			return ['uuid' => null, 'imported' => false, 'enabled' => false, 'owner' => null, 'runAs' => null, 'cron' => null];
 		}
 
-		$runAs = null;
-		$cron = null;
-		foreach (($flow->getNodes() ?? []) as $node) {
-			if (($node['type'] ?? '') === 'openregister.trigger-schedule') {
-				$runAs = ($node['config']['runAs'] ?? null);
-				$cron = ($node['config']['cron'] ?? null);
-			}
-		}
-
 		return [
 			'uuid' => (string)$flow->getUuid(),
 			'imported' => true,
 			'enabled' => ($flow->getEnabled() === true),
 			'owner' => $flow->getOwner(),
-			'runAs' => $runAs,
-			'cron' => $cron,
-		];
+		] + (new FlowReport())->schedule(nodes: ($flow->getNodes() ?? []));
 	}//end flowStatus()
 
 	/**
@@ -491,47 +529,7 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 			return null;
 		}
 
-		return self::runSummary(run: $runs[0]);
+		return (new FlowReport())->runSummary(run: $runs[0]);
 	}//end lastRun()
 
-	/**
-	 * The fields of a run the section shows.
-	 *
-	 * @param object $run A FlowRun entity.
-	 *
-	 * @return array<string, mixed> The summary.
-	 *
-	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-004-a-file-that-cannot-be-read-is-skipped-not-written
-	 */
-	private static function runSummary(object $run): array {
-		return [
-			'uuid' => $run->getUuid(),
-			'status' => $run->getStatus(),
-			'trigger' => $run->getTrigger(),
-			'started' => self::atom(value: $run->getCreated()),
-			'updated' => self::atom(value: $run->getUpdated()),
-			'resumeAt' => self::atom(value: $run->getResumeAt()),
-			'error' => $run->getError(),
-			// Steps carried past by `onError: continue`: a shard whose write the
-			// schema refused ends on a failed step while the run still reads as
-			// finished, so without this count 24 clean shards and 24 shards of
-			// which three lost a page look the same (REQ-PGH-004).
-			'failedSteps' => (array_count_values(array_column((array)$run->getLog(), 'status'))['failed'] ?? 0),
-		];
-	}//end runSummary()
-
-	/**
-	 * A date as ISO 8601, or null.
-	 *
-	 * @param mixed $value A date, or anything else.
-	 *
-	 * @return string|null The formatted date.
-	 */
-	private static function atom(mixed $value): ?string {
-		if ($value instanceof DateTimeInterface) {
-			return $value->format(DATE_ATOM);
-		}
-
-		return null;
-	}//end atom()
 }//end class

@@ -37,6 +37,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -79,6 +80,8 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.TooManyMethods) Object type configuration is split into small private steps to stay under the unit limits.
+ *
+ * @spec openspec/specs/admin-settings/spec.md
  */
 class SettingsService implements SettingsServiceInterface {
 
@@ -191,11 +194,6 @@ class SettingsService implements SettingsServiceInterface {
 		],
 	];
 
-
-
-
-
-
 	/**
 	 * Seeded catalogues that ship unpublished and are published once their scope resolves.
 	 *
@@ -280,6 +278,30 @@ class SettingsService implements SettingsServiceInterface {
 	];
 
 	/**
+	 * The instance settings a caller may write through updateSettings(), in the order they are written.
+	 *
+	 * Each has a default in SETTING_DEFAULTS, which also drives what getSettings()
+	 * reports; a default added only for display is not writable until it is listed here.
+	 */
+	private const WRITABLE_SETTINGS = [
+		'auto_publish_attachments',
+		'auto_publish_objects',
+		'use_old_style_publishing_view',
+		'dcat_instance_title',
+		'dcat_publisher_name',
+		'dcat_publisher_uri',
+		'dcat_default_license',
+		'dcat_contact_point',
+		'ooapi_consumers',
+		'woo_index_registration_status',
+		'woo_index_registration_url',
+		'woo_index_registration_at',
+		'woo_index_registration_answer',
+		'channel_sources',
+		'public_api_cache_seconds',
+	];
+
+	/**
 	 * App config key listing the seeded catalogues already published automatically.
 	 */
 	private const SEEDS_PUBLISHED_KEY = 'catalog_seeds_published';
@@ -299,7 +321,6 @@ class SettingsService implements SettingsServiceInterface {
 	 * @var string $openRegisterAppId The ID of the OpenRegister app.
 	 */
 	private const OPENREGISTER_APP_ID = 'openregister';
-
 
 	/**
 	 * SettingsService constructor.
@@ -399,7 +420,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return true;
-
 	}//end installOrUpdateOpenRegister()
 
 	/**
@@ -417,7 +437,7 @@ class SettingsService implements SettingsServiceInterface {
 				'Failed to install/update OpenRegister: version %s is older than the required %s. '
 				. 'Update it from the Nextcloud App Store (or `occ app:update openregister`).',
 				$this->appManager->getAppVersion(self::OPENREGISTER_APP_ID),
-				(string) $minVersion
+				(string)$minVersion
 			)
 		);
 
@@ -474,7 +494,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return null;
-
 	}//end publicationRegister()
 
 	/**
@@ -482,7 +501,7 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * The schema is the register's first schema whose title contains the type.
 	 *
-	 * @param string                    $type     The object type.
+	 * @param string $type The object type.
 	 * @param array<string, mixed>|null $register The publication register, or null when there is none.
 	 *
 	 * @return array<string, mixed> The `<type>_register` and `<type>_schema` keys found.
@@ -501,14 +520,13 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $configuration;
-
 	}//end autoConfiguration()
 
 	/**
 	 * The first schema whose title contains the type, skipping entries that are not arrays.
 	 *
-	 * @param mixed  $schemas The register's schemas.
-	 * @param string $type    The object type.
+	 * @param mixed $schemas The register's schemas.
+	 * @param string $type The object type.
 	 *
 	 * @return array<string, mixed>|null The schema, or null when none matches.
 	 *
@@ -526,7 +544,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return null;
-
 	}//end schemaTitled()
 
 	/**
@@ -576,7 +593,6 @@ class SettingsService implements SettingsServiceInterface {
 
 		$this->updateSettings(data: $configuration);
 		return true;
-
 	}//end applyAutoConfiguration()
 
 	/**
@@ -692,7 +708,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $availability;
-
 	}//end registerAvailability()
 
 	/**
@@ -712,7 +727,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $defaults + self::SETTING_DEFAULTS;
-
 	}//end settingDefaults()
 
 	/**
@@ -760,7 +774,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return (array)$entity;
-
 	}//end entityArray()
 
 	/**
@@ -784,7 +797,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $schemaMapper->findMultipleOptimized(ids: $idsToResolve);
-
 	}//end referencedSchemas()
 
 	/**
@@ -810,7 +822,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return array_keys($idsToResolve);
-
 	}//end referencedSchemaIds()
 
 	/**
@@ -833,7 +844,6 @@ class SettingsService implements SettingsServiceInterface {
 
 		$registerArray['schemas'] = self::resolvedSchemas(schemaIds: $schemaIds, schemaMap: $schemaMap);
 		return $registerArray;
-
 	}//end withFullSchemas()
 
 	/**
@@ -859,7 +869,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $fullSchemas;
-
 	}//end resolvedSchemas()
 
 	/**
@@ -889,24 +898,27 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return (string)json_encode((object)$sources);
-
 	}//end normaliseChannelSources()
 
 	/**
 	 * Update the settings configuration.
 	 *
-	 * Only keys that belong to the canonical settings allowlist (the same set
-	 * enumerated in getSettings()) are accepted.  Any unrecognised key in $data
-	 * is silently ignored, preventing arbitrary app-config key injection.
+	 * Only the keys writableSettingKeys() lists are accepted: source, schema and
+	 * register per writable object type, and WRITABLE_SETTINGS. Any other key in
+	 * $data is silently ignored, preventing arbitrary app-config key injection.
+	 * A list or object value for an accepted key (except the channel sources map)
+	 * rejects the whole payload before anything is written.
 	 *
 	 * @param array $data The settings data to update.
 	 *
 	 * @return array The updated settings configuration.
+	 * @throws InvalidArgumentException If an accepted key carries a list or an object.
 	 * @throws \RuntimeException If settings update fails.
 	 *
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	public function updateSettings(array $data): array {
+		$this->assertSingleValues(data: $data, keys: $this->writableSettingKeys());
 		try {
 			$updated = [];
 			foreach ($this->writableSettingKeys() as $key) {
@@ -926,8 +938,31 @@ class SettingsService implements SettingsServiceInterface {
 	}//end updateSettings()
 
 	/**
+	 * Reject a payload that gives an accepted key a list or an object, which would be stored as the text "Array".
+	 *
+	 * The channel sources setting is the one map a caller may send.
+	 *
+	 * @param array $data The settings data to update.
+	 * @param array<int,string> $keys The accepted keys.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException Naming the first key with such a value.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md
+	 */
+	private function assertSingleValues(array $data, array $keys): void {
+		foreach (array_intersect_key($data, array_flip(array_diff($keys, ['channel_sources']))) as $key => $value) {
+			if (is_array($value) === true || is_object($value) === true) {
+				throw new InvalidArgumentException('Setting ' . $key . ' takes a single value, not a list or an object');
+			}
+		}
+
+	}//end assertSingleValues()
+
+	/**
 	 * The settings a caller may store, in the order they are written: source, schema and
-	 * register per writable object type, then every instance setting.
+	 * register per writable object type, then WRITABLE_SETTINGS.
 	 *
 	 * @return array<int, string> The allowed config keys.
 	 *
@@ -939,15 +974,14 @@ class SettingsService implements SettingsServiceInterface {
 			array_push($keys, "{$type}_source", "{$type}_schema", "{$type}_register");
 		}
 
-		return array_merge($keys, array_keys(self::SETTING_DEFAULTS));
-
+		return array_merge($keys, self::WRITABLE_SETTINGS);
 	}//end writableSettingKeys()
 
 	/**
 	 * The value to store for a setting: channel sources normalised, the cache time clamped.
 	 *
-	 * @param string $key   The config key.
-	 * @param mixed  $value The value the caller sent.
+	 * @param string $key The config key.
+	 * @param mixed $value The value the caller sent.
 	 *
 	 * @return mixed The value to store.
 	 *
@@ -963,7 +997,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $value;
-
 	}//end storableSetting()
 
 	/**
@@ -985,7 +1018,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return min(self::PUBLIC_API_CACHE_MAX_SECONDS, max(0, (int)$value));
-
 	}//end publicApiCacheSeconds()
 
 	/**
@@ -1054,7 +1086,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return 'false';
-
 	}//end storedFlag()
 
 	/**
@@ -1250,7 +1281,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $data;
-
 	}//end readConfigurationFile()
 
 	/**
@@ -1283,7 +1313,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $data;
-
 	}//end mergeRegisterFragments()
 
 	/**
@@ -1303,7 +1332,6 @@ class SettingsService implements SettingsServiceInterface {
 		$fragmentFiles = glob($directory . '/*.json');
 		sort($fragmentFiles);
 		return $fragmentFiles;
-
 	}//end fragmentFiles()
 
 	/**
@@ -1330,7 +1358,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $relativeFilePath;
-
 	}//end relativeSourcePath()
 
 	/**
@@ -1359,7 +1386,6 @@ class SettingsService implements SettingsServiceInterface {
 		}
 
 		return $data;
-
 	}//end withSourceTracking()
 
 	/**
@@ -1385,7 +1411,7 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * One key of a deep merge: two lists concatenate, two arrays merge, anything else takes the overlay.
 	 *
-	 * @param mixed $base    The base value, null when the key is new.
+	 * @param mixed $base The base value, null when the key is new.
 	 * @param mixed $overlay The fragment's value.
 	 *
 	 * @return mixed The merged value.
@@ -1449,8 +1475,8 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * The string schema slugs no register declares, in `components.schemas` order.
 	 *
-	 * @param array<mixed>          $schemas  The `components.schemas` map.
-	 * @param array<string, bool>   $declared The declared slugs, keyed by slug.
+	 * @param array<mixed> $schemas The `components.schemas` map.
+	 * @param array<string, bool> $declared The declared slugs, keyed by slug.
 	 *
 	 * @return array<int, string> The orphan slugs.
 	 */
@@ -1469,7 +1495,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * Add one schema slug to the publication register, with the magic-mapping default.
 	 *
 	 * @param array<mixed> $register The publication register.
-	 * @param string       $slug     The schema slug no register declares.
+	 * @param string $slug The schema slug no register declares.
 	 *
 	 * @return array<mixed> The register.
 	 */
@@ -1716,9 +1742,9 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * Write `<prefix>_source`, and `<prefix>_schema` and `<prefix>_register` when known.
 	 *
-	 * @param string $prefix     The config key prefix.
-	 * @param mixed  $schemaId   The schema id, or null.
-	 * @param mixed  $registerId The register id, or null.
+	 * @param string $prefix The config key prefix.
+	 * @param mixed $schemaId The schema id, or null.
+	 * @param mixed $registerId The register id, or null.
 	 *
 	 * @return void
 	 *
@@ -1741,8 +1767,8 @@ class SettingsService implements SettingsServiceInterface {
 	 *
 	 * A value is never overwritten with an empty one.
 	 *
-	 * @param array $group      The group: `register` (key or null) and `schemas` (key => slug).
-	 * @param array $schemaMap  Schema id by slug.
+	 * @param array $group The group: `register` (key or null) and `schemas` (key => slug).
+	 * @param array $schemaMap Schema id by slug.
 	 * @param mixed $registerId The register id, or null.
 	 *
 	 * @return void
@@ -2045,7 +2071,7 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * The publication register and schema for each empty scope list of a catalogue.
 	 *
-	 * @param CatalogScopeBackfill                                                       $run   The backfill run.
+	 * @param CatalogScopeBackfill $run The backfill run.
 	 * @param array{data: array<string, mixed>, registers: mixed, schemas: mixed, changed: bool} $scope The resolved catalogue.
 	 *
 	 * @return array<string, array<int, mixed>> The `registers` and `schemas` fills, each only when empty.

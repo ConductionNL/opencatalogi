@@ -40,7 +40,6 @@ use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
  */
 class DcatSerializer implements DcatSerializerInterface {
 
-
 	/**
 	 * Resolve the requested serialization format from the `?format=` query
 	 * parameter (authoritative) and the `Accept` header (fallback).

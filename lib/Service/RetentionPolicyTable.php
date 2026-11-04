@@ -87,8 +87,8 @@ class RetentionPolicyTable {
 	/**
 	 * The rule that matches one category exactly.
 	 *
-	 * @param string               $category The category, quoted into a literal input cell.
-	 * @param array<string, mixed> $rule     The stored rule.
+	 * @param string $category The category, quoted into a literal input cell.
+	 * @param array<string, mixed> $rule The stored rule.
 	 *
 	 * @return array<string, mixed> The decision-table rule.
 	 */

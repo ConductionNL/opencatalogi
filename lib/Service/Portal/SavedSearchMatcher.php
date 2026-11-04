@@ -81,12 +81,12 @@ class SavedSearchMatcher implements SavedSearchMatcherInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param PortalObjectStore       $store        Reads and writes as the system.
-	 * @param PublicSearchRunner      $search       The anonymous public search.
-	 * @param PublicationLinker       $linker       The public link to a publication.
+	 * @param PortalObjectStore $store Reads and writes as the system.
+	 * @param PublicSearchRunner $search The anonymous public search.
+	 * @param PublicationLinker $linker The public link to a publication.
 	 * @param PublicationQueryService $publications The public-ness rule.
-	 * @param SavedSearchNoticeWriter $notices      Writes the message to the resident.
-	 * @param LoggerInterface         $logger       The logger.
+	 * @param SavedSearchNoticeWriter $notices Writes the message to the resident.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
@@ -146,15 +146,14 @@ class SavedSearchMatcher implements SavedSearchMatcherInterface {
 		}//end foreach
 
 		return $stats;
-
 	}//end run()
 
 	/**
 	 * Whether a saved search is due at this moment.
 	 *
-	 * @param string            $frequency immediate, daily or weekly.
+	 * @param string $frequency immediate, daily or weekly.
 	 * @param DateTimeImmutable $lastRunAt Its last run.
-	 * @param DateTimeImmutable $now       The moment of the run.
+	 * @param DateTimeImmutable $now The moment of the run.
 	 *
 	 * @return bool
 	 *
@@ -171,15 +170,14 @@ class SavedSearchMatcher implements SavedSearchMatcherInterface {
 		}
 
 		return $now >= $moment && $lastRunAt < $moment;
-
 	}//end isDue()
 
 	/**
 	 * The publications that became public in the window and fit the query,
 	 * oldest first.
 	 *
-	 * @param array<string, mixed> $saved  The saved search.
-	 * @param SearchWindow         $window The run window.
+	 * @param array<string, mixed> $saved The saved search.
+	 * @param SearchWindow $window The run window.
 	 *
 	 * @return array<int, array{publication: string, title: string, url: string, publicationDate: string}>
 	 *
@@ -215,7 +213,6 @@ class SavedSearchMatcher implements SavedSearchMatcherInterface {
 		$found = array_values($found);
 		usort($found, static fn (array $a, array $b): int => strcmp($a['publicationDate'], $b['publicationDate']));
 		return $found;
-
 	}//end matches()
 
 	/**
@@ -223,8 +220,8 @@ class SavedSearchMatcher implements SavedSearchMatcherInterface {
 	 * record it on the saved search, and move `lastRunAt` in the save after
 	 * the last message.
 	 *
-	 * @param array<string, mixed> $saved  The saved search.
-	 * @param SearchWindow         $window The run window.
+	 * @param array<string, mixed> $saved The saved search.
+	 * @param SearchWindow $window The run window.
 	 *
 	 * @return int How many notices were handed over.
 	 *
@@ -263,7 +260,6 @@ class SavedSearchMatcher implements SavedSearchMatcherInterface {
 		}
 
 		return count($batches);
-
 	}//end notify()
 
 	/**
@@ -281,7 +277,6 @@ class SavedSearchMatcher implements SavedSearchMatcherInterface {
 
 		$this->lastStamp = $stamp;
 		return $stamp;
-
 	}//end stamp()
 
 	/**
@@ -293,7 +288,6 @@ class SavedSearchMatcher implements SavedSearchMatcherInterface {
 	 */
 	private function utc(DateTimeImmutable $moment): string {
 		return $moment->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM);
-
 	}//end utc()
 
 	/**

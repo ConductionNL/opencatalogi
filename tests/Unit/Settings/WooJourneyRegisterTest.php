@@ -59,7 +59,7 @@ class WooJourneyRegisterTest extends TestCase {
 	 * Validate a payload against one schema of the effective register, with
 	 * OpenRegister's widening of optional top-level properties to accept null.
 	 *
-	 * @param string               $slug    The schema slug.
+	 * @param string $slug The schema slug.
 	 * @param array<string, mixed> $payload The payload.
 	 *
 	 * @return array{0: bool, 1: array<string, mixed>}
@@ -135,7 +135,7 @@ class WooJourneyRegisterTest extends TestCase {
 	 */
 	public function testEveryPropertyTypeIsOneTypeName(): void {
 		$lists = [];
-		$walk  = static function (mixed $node, string $path) use (&$walk, &$lists): void {
+		$walk = static function (mixed $node, string $path) use (&$walk, &$lists): void {
 			if (is_array($node) === false) {
 				return;
 			}
@@ -145,7 +145,7 @@ class WooJourneyRegisterTest extends TestCase {
 			}
 
 			foreach ($node as $key => $child) {
-				$walk($child, $path.'/'.$key);
+				$walk($child, $path . '/' . $key);
 			}
 		};
 		$walk($this->register()['components']['schemas'], '');
