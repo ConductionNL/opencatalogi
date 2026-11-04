@@ -819,6 +819,13 @@ class PublicationService
         } catch (DoesNotExistException $exception) {
             return new JSONResponse(['error' => 'Object not found'], 404);
         } catch (\Exception $exception) {
+            // An object with zero attached files is an expected state (e.g. a publication
+            // created before documents were uploaded), not a server error - report it as
+            // "nothing to download" rather than a 500.
+            if ($exception->getMessage() === 'No files found for this object') {
+                return new JSONResponse(['error' => $exception->getMessage()], 404);
+            }
+
             return new JSONResponse(
                 [
                     'error' => 'Failed to create ZIP file: '.$exception->getMessage(),
