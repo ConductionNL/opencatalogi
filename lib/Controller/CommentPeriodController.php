@@ -200,7 +200,8 @@ class CommentPeriodController extends Controller {
 					register: $config['register'],
 					schema: $config['schema'],
 					_rbac: false,
-					_multitenancy: false
+					_multitenancy: false,
+					_unowned: true
 				)
 			);
 		} catch (\Throwable $e) {

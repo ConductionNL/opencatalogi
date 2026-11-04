@@ -39,7 +39,13 @@
 			"serviceCatalogueEntry": {
 				"slug": "serviceCatalogueEntry",
 				"title": "Service catalogue entry",
-				"version": "0.1.0",
+				"version": "0.1.1",
+				"authorization": {
+					"read": ["public"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "One service a resident or a company can request",
 				"description": "An entry in the public request catalogue. It names what the requester gets, what it costs in money and in time, and carries the form binding that starts it. The entry never holds the form itself: the portal resolves the binding and renders.",
@@ -166,7 +172,13 @@
 			"caseTypeDefinition": {
 				"slug": "caseTypeDefinition",
 				"title": "Case type definition",
-				"version": "0.1.0",
+				"version": "0.1.2",
+				"authorization": {
+					"read": ["public"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "A case type published with its form and its API description",
 				"description": "A case type definition published in a catalogue. It links to the form that starts it and to the API description of the interface behind it. When it came from an external catalogue it also carries where it came from, at what version, when it was imported, and the values it held at that moment, which is what a resynchronisation is compared against.",
@@ -248,6 +260,9 @@
 						}
 					},
 					"importedSnapshot": {
+						"authorization": {
+							"read": ["admin"]
+						},
 						"type": "object",
 						"title": "Imported snapshot",
 						"description": "The values as they arrived. A property that differs from this snapshot was changed locally, and a resynchronisation flags it.",
@@ -258,7 +273,13 @@
 			"knowledgeArticle": {
 				"slug": "knowledgeArticle",
 				"title": "Knowledge article",
-				"version": "0.1.0",
+				"version": "0.1.2",
+				"authorization": {
+					"read": [{"group": "public", "match": {"draft": false}}, "authenticated"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "An answer written once, published beside the catalogue",
 				"description": "A knowledge article is a published record in a catalogue, searchable and public by the rules that govern publications. A draft extracted from a case answer is not public until it is published.",
@@ -293,6 +314,10 @@
 						"description": "A draft is readable by staff only."
 					},
 					"sourceCase": {
+						"authorization": {
+							"read": ["authenticated"],
+							"reveal": "explicit"
+						},
 						"type": "string",
 						"title": "Source case",
 						"description": "The case whose answer this article was extracted from."
@@ -314,7 +339,13 @@
 			"articleVerdict": {
 				"slug": "articleVerdict",
 				"title": "Article verdict",
-				"version": "0.1.0",
+				"version": "0.1.1",
+				"authorization": {
+					"read": ["admin"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "One reader's verdict on one article",
 				"description": "Whether an article helped one reader. The reader is held as a salted hash of their token, so the article can be counted without the reader being identifiable from it.",

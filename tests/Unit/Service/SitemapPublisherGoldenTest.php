@@ -180,8 +180,8 @@ class SitemapPublisherGoldenTest extends TestCase {
 			 *
 			 * @return object The organisation.
 			 */
-			public function findByUuid(string $uuid): object {
-				$this->lookups[] = ['findByUuid' => $uuid];
+			public function findByUuidFollowingMerge(string $uuid): object {
+				$this->lookups[] = ['findByUuidFollowingMerge' => $uuid];
 				if ($this->store === 'fails') {
 					throw new \RuntimeException('store down');
 				}

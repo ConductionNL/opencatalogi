@@ -53,6 +53,10 @@ use OCP\IRequest;
 /**
  * Serves the published service catalogue and the case type catalogue.
  *
+ * The case type schema's writes and its stored snapshot name group admin, which
+ * leaves out the delegated administrators the admin-setting check lets in. That
+ * check is the gate, so the import and the resynchronisation skip RBAC.
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
  * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md
@@ -329,7 +333,8 @@ class ServiceCatalogueController extends Controller {
 				object: $definition,
 				extend: [],
 				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				schema: $caseTypeConfig['schema'],
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -413,7 +418,8 @@ class ServiceCatalogueController extends Controller {
 			extend: [],
 			register: $target['config']['register'],
 			schema: $target['config']['schema'],
-			uuid: $id
+			uuid: $id,
+			_rbac: false
 		);
 
 		return new JSONResponse($this->asArray(object: $saved));
@@ -438,7 +444,8 @@ class ServiceCatalogueController extends Controller {
 				object: $objectService->find(
 					id: $id,
 					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema']
+					schema: $caseTypeConfig['schema'],
+					_rbac: false
 				)
 			);
 		} catch (CatalogueUnreadableException $e) {

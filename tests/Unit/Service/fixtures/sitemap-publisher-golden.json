@@ -40,7 +40,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },
@@ -95,7 +95,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },
@@ -150,7 +150,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },
@@ -195,7 +195,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },
@@ -248,7 +248,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },
@@ -301,7 +301,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },
@@ -364,7 +364,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },
@@ -427,7 +427,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },
@@ -472,7 +472,7 @@
         ],
         "lookups": [
             {
-                "findByUuid": "org-uuid-1"
+                "findByUuidFollowingMerge": "org-uuid-1"
             }
         ]
     },

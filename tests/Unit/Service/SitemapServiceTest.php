@@ -476,9 +476,9 @@ class SitemapServiceTest extends TestCase {
 	 */
 	public function testThePublisherIsLookedUpOncePerOrganisation(): void {
 		$tooi = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855';
-		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuid']);
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuidFollowingMerge']);
 		$organisations->expects($this->once())
-			->method('findByUuid')
+			->method('findByUuidFollowingMerge')
 			->with('org-uuid-123')
 			->willReturn($this->organisation(name: 'Gemeente Zuiddrecht', tooi: $tooi));
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
@@ -493,6 +493,27 @@ class SitemapServiceTest extends TestCase {
 			$doc = $method->invoke($this->service, $publication, $file)['diwoo:Document']['diwoo:DiWoo'];
 			$this->assertSame($tooi, $doc['diwoo:publisher']['@resource'], $id);
 		}
+	}
+
+	/**
+	 * A publication stamped with an organisation that was merged names the surviving organisation.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testAMergedOrganisationPublishesUnderTheOneItMergedInto(): void {
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuid', 'findByUuidFollowingMerge']);
+		$organisations->method('findByUuid')->willReturn($this->organisation(name: 'Gemeente Oud', tooi: null));
+		$organisations->method('findByUuidFollowingMerge')->with('org-merged')->willReturn($this->organisation(name: 'Gemeente Samengevoegd', tooi: null));
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id): mixed => ($id === 'OCA\OpenRegister\Db\OrganisationMapper' ? $organisations : null)
+		);
+
+		$file = ['downloadUrl' => 'https://example.com/files/doc.pdf', 'extension' => 'pdf', 'owner' => 'file-owner'];
+		$publication = ['id' => 'pub-m', 'category' => 'infocat014', '@self' => ['created' => '2024-01-15 10:00:00', 'organisation' => 'org-merged']];
+		$doc = $this->getPrivateMethod('mapDiwooDocument')->invoke($this->service, $publication, $file)['diwoo:Document']['diwoo:DiWoo'];
+
+		$this->assertSame('Gemeente Samengevoegd', $doc['diwoo:publisher']['#text']);
 	}
 
 	/**
@@ -835,10 +856,10 @@ class SitemapServiceTest extends TestCase {
 				return [];
 			}
 		);
-		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuid']);
-		$organisations->method('findByUuid')->willReturnCallback(
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuidFollowingMerge']);
+		$organisations->method('findByUuidFollowingMerge')->willReturnCallback(
 			function (string $uuid) use (&$calls): object {
-				$calls[] = ['findByUuid' => $uuid];
+				$calls[] = ['findByUuidFollowingMerge' => $uuid];
 				return $this->organisation(name: 'Gemeente Voorbeeld & Omstreken', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855');
 			}
 		);

@@ -613,7 +613,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 	}//end searchAnswer()
 
 	/**
-	 * The passed arguments by parameter name, trailing defaults left out.
+	 * The passed arguments by parameter name, defaults left out, so a parameter OpenRegister adds moves nothing.
 	 *
 	 * @param ReflectionMethod $method The method.
 	 * @param array<int, mixed> $args The arguments as PHPUnit passes them.
@@ -636,11 +636,9 @@ class RegisterPlumbingGoldenTest extends TestCase {
 				continue;
 			}
 
-			if ($parameter->isDefaultValueAvailable() === false || $named[$key] !== $parameter->getDefaultValue()) {
-				break;
+			if ($parameter->isDefaultValueAvailable() === true && $named[$key] === $parameter->getDefaultValue()) {
+				unset($named[$key]);
 			}
-
-			unset($named[$key]);
 		}
 
 		return $this->normalise(value: $named);

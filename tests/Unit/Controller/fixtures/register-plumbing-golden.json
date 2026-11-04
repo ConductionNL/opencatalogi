@@ -919,12 +919,11 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "res-reg",
                     "schema": "res-sch",
-                    "uuid": null,
                     "_rbac": false,
-                    "_multitenancy": false
+                    "_multitenancy": false,
+                    "_unowned": true
                 }
             },
             {
@@ -977,12 +976,11 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "cfg-publication_register",
                     "schema": "cfg-comment_period_schema",
-                    "uuid": null,
                     "_rbac": false,
-                    "_multitenancy": false
+                    "_multitenancy": false,
+                    "_unowned": true
                 }
             },
             {
@@ -1110,12 +1108,11 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "res-reg",
                     "schema": "res-sch",
-                    "uuid": null,
                     "_rbac": false,
-                    "_multitenancy": false
+                    "_multitenancy": false,
+                    "_unowned": true
                 }
             },
             {
@@ -1228,8 +1225,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -1278,8 +1273,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-publication_register",
                     "schema": "cfg-comment_period_schema"
                 }
@@ -1393,8 +1386,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -2570,9 +2561,10 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false,
+                    "_unowned": true
                 }
             },
             {
@@ -2628,9 +2620,10 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "cfg-publication_register",
-                    "schema": "cfg-service_status_schema"
+                    "schema": "cfg-service_status_schema",
+                    "_rbac": false,
+                    "_unowned": true
                 }
             },
             {
@@ -2761,9 +2754,10 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false,
+                    "_unowned": true
                 }
             },
             {
@@ -3554,7 +3548,6 @@
                             "register": "res-reg"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -3644,7 +3637,6 @@
                             "register": "cfg-glossary_register"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -3793,7 +3785,6 @@
                             "register": "res-reg"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -4111,7 +4102,6 @@
                             "schema": "res-sch"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -4188,7 +4178,6 @@
                             "schema": "cfg-glossary_schema"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -4324,7 +4313,6 @@
                             "schema": "res-sch"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -4463,8 +4451,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch",
                     "_rbac": false
@@ -4532,8 +4518,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-publication_register",
                     "schema": "cfg-inspection_schema",
                     "_rbac": false
@@ -4676,8 +4660,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch",
                     "_rbac": false
@@ -4833,9 +4815,10 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false,
+                    "_unowned": true
                 }
             },
             {
@@ -4891,9 +4874,10 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "cfg-publication_register",
-                    "schema": "cfg-inspection_schema"
+                    "schema": "cfg-inspection_schema",
+                    "_rbac": false,
+                    "_unowned": true
                 }
             },
             {
@@ -5024,9 +5008,10 @@
             {
                 "ObjectService.saveObject": {
                     "object": [],
-                    "extend": [],
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false,
+                    "_unowned": true
                 }
             },
             {
@@ -5448,7 +5433,6 @@
                         "title": "T",
                         "status": "open"
                     },
-                    "extend": [],
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -5501,7 +5485,6 @@
                         "title": "T",
                         "status": "open"
                     },
-                    "extend": [],
                     "register": "cfg-listing_register",
                     "schema": "cfg-listing_schema"
                 }
@@ -5613,7 +5596,6 @@
                         "title": "T",
                         "status": "open"
                     },
-                    "extend": [],
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -6443,8 +6425,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -6494,8 +6474,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-listing_register",
                     "schema": "cfg-listing_schema"
                 }
@@ -6604,8 +6582,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -6845,8 +6821,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -6862,7 +6836,6 @@
                     "object": {
                         "title": "T"
                     },
-                    "extend": [],
                     "register": "res-reg",
                     "schema": "res-sch",
                     "uuid": "id-1"
@@ -6913,8 +6886,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-listing_register",
                     "schema": "cfg-listing_schema"
                 }
@@ -6930,7 +6901,6 @@
                     "object": {
                         "title": "T"
                     },
-                    "extend": [],
                     "register": "cfg-listing_register",
                     "schema": "cfg-listing_schema",
                     "uuid": "id-1"
@@ -7040,8 +7010,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -7057,7 +7025,6 @@
                     "object": {
                         "title": "T"
                     },
-                    "extend": [],
                     "register": "res-reg",
                     "schema": "res-sch",
                     "uuid": "id-1"
@@ -10085,8 +10052,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-publication_register",
                     "schema": "cfg-publication_schema"
                 }
@@ -10194,8 +10159,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -10337,8 +10300,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-publication_register",
                     "schema": "cfg-publication_schema"
                 }
@@ -10446,8 +10407,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -10589,8 +10548,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-publication_register",
                     "schema": "cfg-publication_schema"
                 }
@@ -10698,8 +10655,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -10841,8 +10796,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-publication_register",
                     "schema": "cfg-publication_schema"
                 }
@@ -10950,8 +10903,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -11070,10 +11021,9 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false
                 }
             }
         ]
@@ -11120,10 +11070,9 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-service_catalogue_register",
-                    "schema": "cfg-case_type_definition_schema"
+                    "schema": "cfg-case_type_definition_schema",
+                    "_rbac": false
                 }
             }
         ]
@@ -11229,10 +11178,9 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false
                 }
             }
         ]
@@ -11368,8 +11316,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -11441,8 +11387,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-service_catalogue_register",
                     "schema": "cfg-case_type_definition_schema"
                 }
@@ -11573,8 +11517,6 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch"
                 }
@@ -12508,10 +12450,9 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false
                 }
             }
         ]
@@ -12559,10 +12500,9 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-service_catalogue_register",
-                    "schema": "cfg-case_type_definition_schema"
+                    "schema": "cfg-case_type_definition_schema",
+                    "_rbac": false
                 }
             }
         ]
@@ -12669,10 +12609,9 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
-                    "schema": "res-sch"
+                    "schema": "res-sch",
+                    "_rbac": false
                 }
             }
         ]
@@ -13202,7 +13141,6 @@
                             "register": "res-reg"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -13292,7 +13230,6 @@
                             "register": "cfg-theme_register"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -13441,7 +13378,6 @@
                             "register": "res-reg"
                         }
                     },
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             },
@@ -13740,11 +13676,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch",
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             }
@@ -13795,11 +13728,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "cfg-theme_register",
                     "schema": "cfg-theme_schema",
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             }
@@ -13909,11 +13839,8 @@
             {
                 "ObjectService.find": {
                     "id": "id-1",
-                    "_extend": [],
-                    "files": false,
                     "register": "res-reg",
                     "schema": "res-sch",
-                    "_rbac": true,
                     "_multitenancy": false
                 }
             }

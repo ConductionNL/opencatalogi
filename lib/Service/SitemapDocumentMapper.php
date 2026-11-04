@@ -392,7 +392,7 @@ class SitemapDocumentMapper {
 		try {
 			$found = $this->openRegister
 				->installedService('OCA\OpenRegister\Db\OrganisationMapper', 'OpenRegister organisations are not available.')
-				->findByUuid($organisation);
+				->findByUuidFollowingMerge($organisation);
 
 			return ['name' => $found->getName(), 'tooiIdentifier' => $found->getTooi()];
 		} catch (\Throwable $e) {

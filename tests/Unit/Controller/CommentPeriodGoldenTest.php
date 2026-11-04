@@ -96,8 +96,9 @@ class CommentPeriodGoldenObjects {
 		mixed $schema = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
+		bool $_unowned = false,
 	): mixed {
-		($this->record)(['saveObject' => [$object, $register, $schema, $_rbac, $_multitenancy]]);
+		($this->record)(['saveObject' => [$object, $register, $schema, $_rbac, $_multitenancy, $_unowned]]);
 		if (($this->case['fail'] ?? null) === 'save') {
 			throw new RuntimeException('register write failed');
 		}
