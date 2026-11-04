@@ -35,8 +35,6 @@ namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
-use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
-use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -75,26 +73,20 @@ class WooRequestController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param InformationRequestServiceInterface $requests Builds and reads the request record.
-	 * @param InformationRequestStoreInterface $store Reads and writes the stored requests.
+	 * @param RequestRecords $records Builds the request records and reads and writes the stored requests.
 	 * @param StatutoryTermInterface $terms Arms, extends, pauses and reads the statutory term.
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly InformationRequestServiceInterface $requests,
-		private readonly InformationRequestStoreInterface $store,
+		private readonly RequestRecords $records,
 		private readonly StatutoryTermInterface $terms,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-
 
 	/**
 	 * The signed-in user id, or an empty string.
@@ -110,7 +102,6 @@ class WooRequestController extends Controller {
 		}
 
 		return $user->getUID();
-
 	}//end actor()
 
 	/**
@@ -165,7 +156,7 @@ class WooRequestController extends Controller {
 		}
 
 		try {
-			$record = $this->requests->receive(input: $this->intakeInput(), receivedBy: $this->actor());
+			$record = $this->records->receive(input: $this->intakeInput(), receivedBy: $this->actor());
 		} catch (\DomainException $e) {
 			return new JSONResponse(
 				data: ['error' => 'request-refused', 'message' => $e->getMessage()],
@@ -174,13 +165,12 @@ class WooRequestController extends Controller {
 		}
 
 		try {
-			$saved = $this->store->save(record: $record);
+			$saved = $this->records->save(record: $record);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		return $this->armReceivedRequest(saved: $saved);
-
 	}//end receive()
 
 	/**
@@ -200,7 +190,7 @@ class WooRequestController extends Controller {
 				receivedAt: new DateTimeImmutable((string)($saved['receivedAt'] ?? 'now')),
 				actor: $this->actor()
 			);
-		} catch (TermEngineUnavailableException | TermRefusedException $e) {
+		} catch (TermEngineUnavailableException|TermRefusedException $e) {
 			// The request is already stored, which is right: a request that
 			// arrived has arrived. What is refused is the claim that a term is
 			// running, so the receipt says the term was not armed rather than
@@ -208,7 +198,7 @@ class WooRequestController extends Controller {
 			return new JSONResponse(
 				data: [
 					'request' => $saved,
-					'receipt' => $this->requests->receipt(request: $saved),
+					'receipt' => $this->records->receipt(request: $saved),
 					'error' => 'term-not-armed',
 					'message' => $e->getMessage(),
 				],
@@ -217,7 +207,6 @@ class WooRequestController extends Controller {
 		}
 
 		return $this->storeArmedRequest(saved: $saved, term: $term);
-
 	}//end armReceivedRequest()
 
 	/**
@@ -232,8 +221,8 @@ class WooRequestController extends Controller {
 	 */
 	private function storeArmedRequest(array $saved, array $term): JSONResponse {
 		try {
-			$stored = $this->store->save(
-				record: $this->requests->withTerm(request: $saved, term: $term),
+			$stored = $this->records->save(
+				record: $this->records->withTerm(request: $saved, term: $term),
 				uuid: (string)($saved['id'] ?? '')
 			);
 		} catch (\Throwable $e) {
@@ -244,7 +233,7 @@ class WooRequestController extends Controller {
 			[
 				'request' => $stored,
 				'term' => $term,
-				'receipt' => $this->requests->receipt(request: $stored),
+				'receipt' => $this->records->receipt(request: $stored),
 			],
 			Http::STATUS_CREATED
 		);
@@ -270,7 +259,6 @@ class WooRequestController extends Controller {
 
 	}//end intakeInput()
 
-
 	/**
 	 * Terms met and missed, over every request.
 	 *
@@ -286,13 +274,12 @@ class WooRequestController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function termsReport(): JSONResponse {
 		try {
-			$requests = $this->store->all();
+			$requests = $this->records->all();
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		return new JSONResponse($this->requests->termsReport(requests: $requests));
-
+		return new JSONResponse($this->records->termsReport(requests: $requests));
 	}//end termsReport()
 
 	/**
@@ -317,7 +304,7 @@ class WooRequestController extends Controller {
 			[
 				'request' => $loaded,
 				'term' => $this->currentTerm(request: $loaded),
-				'receipt' => $this->requests->receipt(request: $loaded),
+				'receipt' => $this->records->receipt(request: $loaded),
 			]
 		);
 
@@ -378,11 +365,10 @@ class WooRequestController extends Controller {
 			);
 		}
 
-		$updated = $this->requests->withTerm(request: $loaded, term: $term);
+		$updated = $this->records->withTerm(request: $loaded, term: $term);
 		$updated['extensionReason'] = $rationale;
 
 		return $this->persist(request: $updated, requestId: $requestId, term: $term);
-
 	}//end extend()
 
 	/**
@@ -397,7 +383,6 @@ class WooRequestController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function pause(string $requestId): JSONResponse {
 		return $this->move(requestId: $requestId, operation: 'pause');
-
 	}//end pause()
 
 	/**
@@ -412,7 +397,6 @@ class WooRequestController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function resume(string $requestId): JSONResponse {
 		return $this->move(requestId: $requestId, operation: 'resume');
-
 	}//end resume()
 
 	/**
@@ -435,7 +419,7 @@ class WooRequestController extends Controller {
 		}
 
 		try {
-			$updated = $this->requests->attachBatch(
+			$updated = $this->records->attachBatch(
 				request: $loaded,
 				batchUuid: (string)$this->request->getParam('batch', '')
 			);
@@ -447,7 +431,6 @@ class WooRequestController extends Controller {
 		}
 
 		return $this->persist(request: $updated, requestId: $requestId, term: null);
-
 	}//end attachBatch()
 
 	/**
@@ -503,11 +486,10 @@ class WooRequestController extends Controller {
 			);
 		}
 
-		$updated = $this->requests->withTerm(request: $loaded, term: $term);
+		$updated = $this->records->withTerm(request: $loaded, term: $term);
 		$updated['status'] = self::STATUS_AFTER[$operation];
 
 		return $this->persist(request: $updated, requestId: $requestId, term: $term);
-
 	}//end move()
 
 	/**
@@ -533,7 +515,6 @@ class WooRequestController extends Controller {
 		}
 
 		return $this->terms->resume(timerUuid: $timer, reason: $reason, actor: $this->actor());
-
 	}//end workTerm()
 
 	/**
@@ -547,7 +528,7 @@ class WooRequestController extends Controller {
 	 */
 	private function load(string $requestId): array|JSONResponse {
 		try {
-			$loaded = $this->store->find(requestId: $requestId);
+			$loaded = $this->records->find(requestId: $requestId);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
@@ -557,7 +538,6 @@ class WooRequestController extends Controller {
 		}
 
 		return $loaded;
-
 	}//end load()
 
 	/**
@@ -577,7 +557,7 @@ class WooRequestController extends Controller {
 
 		try {
 			return $this->terms->describe(timerUuid: $timer);
-		} catch (TermEngineUnavailableException | TermRefusedException $e) {
+		} catch (TermEngineUnavailableException|TermRefusedException $e) {
 			return null;
 		}
 
@@ -596,12 +576,11 @@ class WooRequestController extends Controller {
 	 */
 	private function persist(array $request, string $requestId, ?array $term): JSONResponse {
 		try {
-			$stored = $this->store->save(record: $request, uuid: $requestId);
+			$stored = $this->records->save(record: $request, uuid: $requestId);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
 		return new JSONResponse(['request' => $stored, 'term' => $term]);
-
 	}//end persist()
 }//end class

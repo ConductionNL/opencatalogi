@@ -27,6 +27,8 @@
  * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionRun
+ * @uses \OCA\OpenCatalogi\Service\RetentionRules
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @uses \OCA\OpenCatalogi\Service\RetentionReport
@@ -165,7 +167,9 @@ class RetentionReportGoldenTest extends TestCase {
 					/**
 					 * @param array<string, mixed> $data The serialised row.
 					 */
-					public function __construct(private array $data) {
+					public function __construct(
+						private array $data,
+					) {
 					}
 
 					/**
@@ -192,7 +196,10 @@ class RetentionReportGoldenTest extends TestCase {
 			 * @param array<string, mixed> $answer The search answer.
 			 * @param bool $fails Whether the search throws.
 			 */
-			public function __construct(private array $answer, private bool $fails) {
+			public function __construct(
+				private array $answer,
+				private bool $fails,
+			) {
 			}
 
 			/**
@@ -237,6 +244,5 @@ class RetentionReportGoldenTest extends TestCase {
 		$report = $service->buildReport($catalog, $from, $to);
 
 		return ['rows' => $report, 'search' => $store->calls, 'log' => $calls];
-
 	}//end report()
 }//end class

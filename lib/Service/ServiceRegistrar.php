@@ -42,12 +42,19 @@ use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
+use OCA\OpenCatalogi\Contract\IndexRegistrationServiceInterface;
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
 use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
 use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Contract\ObligationReadServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
@@ -66,15 +73,9 @@ use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
+use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
-use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
-use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
-use OCA\OpenCatalogi\Contract\IndexRegistrationServiceInterface;
-use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
-use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
-use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
-use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
@@ -177,6 +178,7 @@ class ServiceRegistrar {
 		BannerServiceInterface::class => BannerService::class,
 		PublishedCollectionsServiceInterface::class => PublishedCollectionsService::class,
 		SitemapServiceInterface::class => SitemapService::class,
+		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
 	];
 
 	/**

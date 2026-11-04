@@ -436,18 +436,6 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testPublicationAttachmentsIntegerId()
 
 	/**
-	 * Skips test that requires real filesystem I/O.
-	 *
-	 * @return void
-	 */
-	public function testPrepareZipRequiresFilesystem(): void {
-		$this->markTestSkipped(
-			'prepareZip() relies on filesystem I/O (mkdir, file_get_contents, file_put_contents).'
-		);
-
-	}//end testPrepareZipRequiresFilesystem()
-
-	/**
 	 * Returns 500 error response when entity lookup throws exception.
 	 *
 	 * @return void

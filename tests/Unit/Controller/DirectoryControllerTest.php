@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\DirectoryController;
+use OCA\OpenCatalogi\Controller\ListCorsPolicy;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -14,6 +15,7 @@ use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Unit tests for DirectoryController.
@@ -28,7 +30,7 @@ class DirectoryControllerTest extends TestCase {
 	private DirectoryController $controller;
 
 	protected function setUp(): void {
-		$this->request = $this->createMock(IRequest::class);
+		$this->request = $this->createMock(ServerAwareRequest::class);
 		$this->directoryService = $this->createMock(DirectoryService::class);
 		$this->l10n = $this->createMock(IL10N::class);
 		$this->logger = $this->createMock(LoggerInterface::class);
@@ -47,7 +49,7 @@ class DirectoryControllerTest extends TestCase {
 			$this->directoryService,
 			$this->l10n,
 			$this->logger,
-			$this->config
+			new ListCorsPolicy($this->config)
 		);
 	}
 
@@ -147,7 +149,7 @@ class DirectoryControllerTest extends TestCase {
 			$this->directoryService,
 			$this->l10n,
 			$this->logger,
-			$config
+			new ListCorsPolicy($config)
 		);
 
 		$this->directoryService->method('getDirectory')->willReturn(['results' => []]);

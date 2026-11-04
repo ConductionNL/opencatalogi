@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Repair step for removing the background-job registrations left behind by the
  * move out of the retired `OCA\OpenCatalogi\Cron` namespace.
@@ -19,7 +20,6 @@
  */
 
 declare(strict_types=1);
-
 
 namespace OCA\OpenCatalogi\Repair;
 
@@ -90,8 +90,8 @@ class RemoveRetiredCronJobs implements IRepairStep {
 	];
 
 	/**
-	 * @param IJobList        $jobList The background job list.
-	 * @param LoggerInterface $logger  The logger.
+	 * @param IJobList $jobList The background job list.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		private IJobList $jobList,

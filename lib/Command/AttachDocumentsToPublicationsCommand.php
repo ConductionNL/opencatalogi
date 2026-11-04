@@ -48,6 +48,55 @@ use Throwable;
 class AttachDocumentsToPublicationsCommand extends Command {
 
 	/**
+	 * The command's flags and what each one does.
+	 *
+	 * @var array<string, string>
+	 */
+	private const OPTIONS = [
+		'apply' => 'Actually move files and remove documents. Without this flag the command reports what it WOULD do.',
+		'keep-documents' => 'Move the files but leave the document objects in place. Use for a first pass on real data, '
+			. 'so the move can be inspected before anything is removed.',
+	];
+
+	/**
+	 * The end of the closing line: a dry run says that nothing was written.
+	 *
+	 * @var array<int, string>
+	 */
+	private const DONE_SUFFIX = [0 => '', 1 => ' (dry run, nothing written)'];
+
+	/**
+	 * Every line the command writes, as a vsprintf format.
+	 *
+	 * @var array<string, string>
+	 */
+	private const MESSAGES = [
+		'dryRun' => '<comment>Running in DRY-RUN mode. Nothing is moved and nothing is removed. Re-run with --apply to migrate.</comment>',
+		'noOpenRegister' => '<error>OpenRegister is not available, so nothing can be migrated.</error>',
+		'readFailed' => '<error>Could not read documents: %s</error>',
+		'countNotRows' => '<error>The object reader returned a count rather than rows.</error>',
+		'done' => '<info>Done. Migrated=%d documents, files moved=%d, skipped=%d, failed=%d%s</info>',
+		'noUuid' => '  <comment>SKIP a document with no uuid.</comment>',
+		'noPublication' => '<comment>SKIP %s (%s): it names no publication, so there is nowhere to attach it.</comment>',
+		'failed' => '<error>FAILED %s: %s</error>',
+		'publicationMissing' => '<comment>SKIP %s (%s): its publication (%s) could not be found.</comment>',
+		'listFailed' => '<error>FAILED %s: could not list its files: %s</error>',
+		'report' => '<info>%s (%s) -> publication %s, %d file(s)%s</info>',
+		'metadataOnly' => '  <comment>No files. The document carries only metadata, so migrating it would '
+			. 'lose that metadata rather than move it. Left in place.</comment>',
+		'blocksRetirement' => '  <comment>Note this also blocks retirement: openregister:schemas:prune-retired '
+			. 'refuses a schema that still owns objects. Decide per document — copy what it '
+			. 'says onto the publication and delete it, or accept the loss with --force.</comment>',
+		'wouldMove' => '  <comment>WOULD MOVE</comment>',
+		'movedKept' => '  <info>MOVED %d file(s); document kept.</info>',
+		'moveFailed' => '  <error>FAILED to move file %d: %s</error>',
+		'removeFailed' => '  <error>Files moved but the document could not be removed: %s</error>',
+		'removeByHand' => '  <error>%s now has no files and a re-run will skip it as metadata-only. '
+			. 'Remove it by hand: occ openregister:objects:delete %s</error>',
+		'migrated' => '  <info>MIGRATED %d file(s); document removed.</info>',
+	];
+
+	/**
 	 * Wire the migration service.
 	 *
 	 * @param AttachmentMigrationServiceInterface $migration The migration rules and lazy OR access.
@@ -74,26 +123,16 @@ class AttachDocumentsToPublicationsCommand extends Command {
 			->setDescription(
 				'Turn each `document` object into a file on the publication it belongs to, '
 				. 'carrying its description, title and publication window onto the file.'
-			)
-			->addOption(
-				'apply',
-				null,
-				InputOption::VALUE_NONE,
-				'Actually move files and remove documents. Without this flag the command reports what it WOULD do.'
-			)
-			->addOption(
-				'keep-documents',
-				null,
-				InputOption::VALUE_NONE,
-				'Move the files but leave the document objects in place. Use for a first pass on real data, '
-				. 'so the move can be inspected before anything is removed.'
 			);
+		foreach (self::OPTIONS as $name => $description) {
+			$this->addOption(name: $name, mode: InputOption::VALUE_NONE, description: $description);
+		}
 	}//end configure()
 
 	/**
 	 * Read every document and migrate it.
 	 *
-	 * @param InputInterface  $input  Console input.
+	 * @param InputInterface $input Console input.
 	 * @param OutputInterface $output Console output stream.
 	 *
 	 * @return int Symfony command exit code.
@@ -101,31 +140,36 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output): int {
-		$run = [
-			'dryRun' => ((bool)$input->getOption('apply') === false),
-			'keepDocuments' => (bool)$input->getOption('keep-documents'),
-			'output' => $output,
-		];
+		$run = ['dryRun' => ((bool)$input->getOption('apply') === false), 'output' => $output];
+		$run['keepDocuments'] = (bool)$input->getOption('keep-documents');
 		if ($run['dryRun'] === true) {
-			$output->writeln(
-				'<comment>Running in DRY-RUN mode. Nothing is moved and nothing is removed. '
-				. 'Re-run with --apply to migrate.</comment>'
-			);
+			self::say(output: $output, line: ['dryRun']);
 		}
 
 		$run['services'] = $this->openRegisterServices();
-		if ($run['services'] === null) {
-			$output->writeln('<error>OpenRegister is not available, so nothing can be migrated.</error>');
-			return Command::FAILURE;
-		}
-
-		$documents = $this->readDocuments(objectService: $run['services']['objects'], output: $output);
+		$documents = $this->documentsToMigrate(run: $run);
 		if ($documents === null) {
 			return Command::FAILURE;
 		}
 
 		return $this->migrateAll(documents: $documents, run: $run);
 	}//end execute()
+
+	/**
+	 * The document rows to migrate, or null (reported) when OpenRegister is missing or the read fails.
+	 *
+	 * @param array<string,mixed> $run The run, with the OpenRegister services (null when absent) and output.
+	 *
+	 * @return array|null
+	 */
+	private function documentsToMigrate(array $run): ?array {
+		if ($run['services'] === null) {
+			self::say(output: $run['output'], line: ['noOpenRegister']);
+			return null;
+		}
+
+		return $this->readDocuments(objectService: $run['services']['objects'], output: $run['output']);
+	}//end documentsToMigrate()
 
 	/**
 	 * Migrate every document, report the tally, and fail when any document failed.
@@ -145,17 +189,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 			}
 		}
 
-		$suffix = '';
-		if ($run['dryRun'] === true) {
-			$suffix = ' (dry run, nothing written)';
-		}
-
-		$run['output']->writeln(
-			vsprintf(
-				'<info>Done. Migrated=%d documents, files moved=%d, skipped=%d, failed=%d%s</info>',
-				[...array_values($tally), $suffix]
-			)
-		);
+		self::say(output: $run['output'], line: ['done', ...array_values($tally), self::DONE_SUFFIX[(int)$run['dryRun']]]);
 
 		if ($tally['failed'] > 0) {
 			return Command::FAILURE;
@@ -190,8 +224,8 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Read every document, or null when they cannot be read.
 	 *
-	 * @param object          $objectService The OpenRegister ObjectService.
-	 * @param OutputInterface $output        Console output stream.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param OutputInterface $output Console output stream.
 	 *
 	 * @return array<int, mixed>|null The documents, or null on failure.
 	 *
@@ -199,20 +233,16 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 */
 	private function readDocuments(object $objectService, OutputInterface $output): ?array {
 		try {
-			$documents = $objectService->searchObjectsBySlug(
-				AttachmentMigrationServiceInterface::REGISTER_SLUG,
-				AttachmentMigrationServiceInterface::DOCUMENT_SCHEMA_SLUG,
-				['_limit' => 5000],
-				false,
-				false
-			);
+			$register = AttachmentMigrationServiceInterface::REGISTER_SLUG;
+			$schema = AttachmentMigrationServiceInterface::DOCUMENT_SCHEMA_SLUG;
+			$documents = $objectService->searchObjectsBySlug($register, $schema, ['_limit' => 5000], false, false);
 		} catch (Throwable $e) {
-			$output->writeln(sprintf('<error>Could not read documents: %s</error>', $e->getMessage()));
+			self::say(output: $output, line: ['readFailed', $e->getMessage()]);
 			return null;
 		}
 
 		if (is_array($documents) === false) {
-			$output->writeln('<error>The object reader returned a count rather than rows.</error>');
+			self::say(output: $output, line: ['countNotRows']);
 			return null;
 		}
 
@@ -222,23 +252,17 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Migrate one document.
 	 *
-	 * @param mixed               $document The document row.
-	 * @param array<string,mixed> $run      The run: `services` from openRegisterServices(), `dryRun`, `keepDocuments` and `output`.
+	 * @param mixed $document The document row.
+	 * @param array<string,mixed> $run The run: `services` from openRegisterServices(), `dryRun`, `keepDocuments` and `output`.
 	 *
 	 * @return array{migrated:int, files:int, skipped:int, failed:int} The tally for this document.
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
 	private function migrateOne(mixed $document, array $run): array {
-		$fields = $this->migration->toFields(row: $document);
-		$doc = [
-			'uuid' => (string)($fields['uuid'] ?? ''),
-			'name' => (string)($fields['title'] ?? ($fields['_name'] ?? 'unnamed')),
-			'fields' => $fields,
-		];
-
+		$doc = $this->documentOf(document: $document);
 		if ($doc['uuid'] === '') {
-			$run['output']->writeln('  <comment>SKIP a document with no uuid.</comment>');
+			self::say(output: $run['output'], line: ['noUuid']);
 			return $this->outcome(counts: ['skipped' => 1]);
 		}
 
@@ -248,17 +272,26 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		}
 
 		$doc['publication'] = $publication;
-		$doc['metadata'] = $this->migration->fileMetadataFor(document: $fields);
-
-		$files = $this->listFiles(doc: $doc, run: $run);
-		if ($files === null) {
-			return $this->outcome(counts: ['failed' => 1]);
-		}
-
-		$doc['files'] = $files;
+		$doc['metadata'] = $this->migration->fileMetadataFor(document: $doc['fields']);
 
 		return $this->moveDocument(doc: $doc, run: $run);
 	}//end migrateOne()
+
+	/**
+	 * A document row as its uuid, display name and fields.
+	 *
+	 * @param mixed $document The document row.
+	 *
+	 * @return array{uuid: string, name: string, fields: array<string, mixed>}
+	 */
+	private function documentOf(mixed $document): array {
+		$fields = $this->migration->toFields(row: $document);
+		return [
+			'uuid' => (string)($fields['uuid'] ?? ''),
+			'name' => (string)($fields['title'] ?? ($fields['_name'] ?? 'unnamed')),
+			'fields' => $fields,
+		];
+	}//end documentOf()
 
 	/**
 	 * Report a document with its files, then move them and remove the document as the run allows.
@@ -271,32 +304,47 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
 	private function moveDocument(array $doc, array $run): array {
-		$files = $doc['files'];
+		$doc['files'] = $this->listFiles(doc: $doc, run: $run);
+		if ($doc['files'] === null) {
+			return $this->outcome(counts: ['failed' => 1]);
+		}
+
 		$this->reportDocument(doc: $doc, output: $run['output']);
-		if (count($files) === 0) {
-			$this->explainMetadataOnly(output: $run['output']);
+		if (count($doc['files']) === 0) {
+			self::say(output: $run['output'], line: ['metadataOnly']);
+			self::say(output: $run['output'], line: ['blocksRetirement']);
 			return $this->outcome(counts: ['skipped' => 1]);
 		}
 
+		return $this->applyMove(doc: $doc, run: $run);
+	}//end moveDocument()
+
+	/**
+	 * Move the document's files, then remove the document unless it is to be kept; a dry run only says so.
+	 *
+	 * @param array<string,mixed> $doc The document, with its publication, metadata and files.
+	 * @param array<string,mixed> $run The run: `services`, `dryRun`, `keepDocuments` and `output`.
+	 *
+	 * @return array{migrated:int, files:int, skipped:int, failed:int} The tally for this document.
+	 */
+	private function applyMove(array $doc, array $run): array {
 		if ($run['dryRun'] === true) {
-			$run['output']->writeln('  <comment>WOULD MOVE</comment>');
+			self::say(output: $run['output'], line: ['wouldMove']);
 			return $this->outcome(counts: []);
 		}
 
-		$moved = $this->moveFiles(doc: $doc, run: $run);
-		if ($moved === null) {
+		$doc['moved'] = $this->moveFiles(doc: $doc, run: $run);
+		if ($doc['moved'] === null) {
 			return $this->outcome(counts: ['failed' => 1]);
 		}
 
 		if ($run['keepDocuments'] === true) {
-			$run['output']->writeln(sprintf('  <info>MOVED %d file(s); document kept.</info>', $moved));
-			return $this->outcome(counts: ['migrated' => 1, 'files' => $moved]);
+			self::say(output: $run['output'], line: ['movedKept', $doc['moved']]);
+			return $this->outcome(counts: ['migrated' => 1, 'files' => $doc['moved']]);
 		}
 
-		$doc['moved'] = $moved;
-
 		return $this->removeDocument(doc: $doc, run: $run);
-	}//end moveDocument()
+	}//end applyMove()
 
 	/**
 	 * A tally for one document: zero everywhere except the given counts.
@@ -322,36 +370,39 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
 	private function resolvePublication(array $doc, array $run): object|array {
-		$output = $run['output'];
 		$link = $this->migration->readPublicationLink(link: ($doc['fields']['publication'] ?? null));
 		if ($link['id'] === null && $link['slug'] === null) {
-			$output->writeln(
-				sprintf('<comment>SKIP %s (%s): it names no publication, so there is nowhere to attach it.</comment>', $doc['uuid'], $doc['name'])
-			);
+			self::say(output: $run['output'], line: ['noPublication', $doc['uuid'], $doc['name']]);
 			return $this->outcome(counts: ['skipped' => 1]);
 		}
 
+		return $this->findPublication(doc: $doc + ['link' => $link], run: $run);
+	}//end resolvePublication()
+
+	/**
+	 * The publication a document links to, or the document's tally (reported) when the lookup fails or finds nothing.
+	 *
+	 * @param array<string,mixed> $doc The document's uuid, name and publication link.
+	 * @param array<string,mixed> $run The run, for its services and output.
+	 *
+	 * @return object|array
+	 */
+	private function findPublication(array $doc, array $run): object|array {
 		try {
-			$publication = $this->migration->findPublication(objectService: $run['services']['objects'], link: $link);
+			$publication = $this->migration->findPublication(objectService: $run['services']['objects'], link: $doc['link']);
 		} catch (Throwable $e) {
-			$output->writeln(sprintf('<error>FAILED %s: %s</error>', $doc['uuid'], $e->getMessage()));
+			self::say(output: $run['output'], line: ['failed', $doc['uuid'], $e->getMessage()]);
 			return $this->outcome(counts: ['failed' => 1]);
 		}
 
 		if ($publication === null) {
-			$output->writeln(
-				sprintf(
-					'<comment>SKIP %s (%s): its publication (%s) could not be found.</comment>',
-					$doc['uuid'],
-					$doc['name'],
-					($link['id'] ?? $link['slug'])
-				)
-			);
+			$named = ($doc['link']['id'] ?? $doc['link']['slug']);
+			self::say(output: $run['output'], line: ['publicationMissing', $doc['uuid'], $doc['name'], $named]);
 			return $this->outcome(counts: ['skipped' => 1]);
 		}
 
 		return $publication;
-	}//end resolvePublication()
+	}//end findPublication()
 
 	/**
 	 * The files a document owns, or null (reported) when they cannot be listed.
@@ -369,7 +420,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 				object: $this->migration->documentEntity(objectService: $run['services']['objects'], uuid: $doc['uuid'])
 			);
 		} catch (Throwable $e) {
-			$run['output']->writeln(sprintf('<error>FAILED %s: could not list its files: %s</error>', $doc['uuid'], $e->getMessage()));
+			self::say(output: $run['output'], line: ['listFailed', $doc['uuid'], $e->getMessage()]);
 			return null;
 		}
 	}//end listFiles()
@@ -377,46 +428,18 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	/**
 	 * Report which publication a document goes to, how many files it has and the window it carries.
 	 *
-	 * @param array<string,mixed> $doc    The document, with its publication, metadata and files.
-	 * @param OutputInterface     $output Console output stream.
-	 *
-	 * @return void
-	 *
-	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
-	 */
-	private function reportDocument(array $doc, OutputInterface $output): void {
-		$output->writeln(
-			sprintf(
-				'<info>%s (%s) -> publication %s, %d file(s)%s</info>',
-				$doc['uuid'],
-				$doc['name'],
-				(string)$doc['publication']->getUuid(),
-				count($doc['files']),
-				$this->windowNote(metadata: $doc['metadata'])
-			)
-		);
-	}//end reportDocument()
-
-	/**
-	 * Explain why a document without files is left in place, and what that blocks.
-	 *
+	 * @param array<string,mixed> $doc The document, with its publication, metadata and files.
 	 * @param OutputInterface $output Console output stream.
 	 *
 	 * @return void
 	 *
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-an-attachment-is-a-file-on-the-publication-req-att-101
 	 */
-	private function explainMetadataOnly(OutputInterface $output): void {
-		$output->writeln(
-			'  <comment>No files. The document carries only metadata, so migrating it would '
-			. 'lose that metadata rather than move it. Left in place.</comment>'
-		);
-		$output->writeln(
-			'  <comment>Note this also blocks retirement: openregister:schemas:prune-retired '
-			. 'refuses a schema that still owns objects. Decide per document — copy what it '
-			. 'says onto the publication and delete it, or accept the loss with --force.</comment>'
-		);
-	}//end explainMetadataOnly()
+	private function reportDocument(array $doc, OutputInterface $output): void {
+		$publication = (string)$doc['publication']->getUuid();
+		$window = $this->windowNote(metadata: $doc['metadata']);
+		self::say(output: $output, line: ['report', $doc['uuid'], $doc['name'], $publication, count($doc['files']), $window]);
+	}//end reportDocument()
 
 	/**
 	 * Move each file onto the publication and write the document's metadata onto it.
@@ -431,25 +454,37 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-the-documents-metadata-lands-on-the-file-req-att-102
 	 */
 	private function moveFiles(array $doc, array $run): ?int {
-		$services = $run['services'];
 		$moved = 0;
 		foreach ($doc['files'] as $file) {
 			try {
-				$movedFile = $services['files']->moveFile(
-					sourceObject: $this->migration->documentEntity(objectService: $services['objects'], uuid: $doc['uuid']),
-					fileId: (int)$file->getId(),
-					targetObject: $doc['publication']
-				);
-				$this->applyMetadata(fileMapper: $services['fileMapper'], file: $movedFile, metadata: $doc['metadata']);
+				$this->moveFile(file: $file, doc: $doc + ['services' => $run['services']]);
 				$moved++;
 			} catch (Throwable $e) {
-				$run['output']->writeln(sprintf('  <error>FAILED to move file %d: %s</error>', (int)$file->getId(), $e->getMessage()));
+				self::say(output: $run['output'], line: ['moveFailed', (int)$file->getId(), $e->getMessage()]);
 				return null;
 			}
 		}
 
 		return $moved;
 	}//end moveFiles()
+
+	/**
+	 * Move one file from the document onto its publication and carry the metadata over.
+	 *
+	 * @param object $file The file.
+	 * @param array<string,mixed> $doc The document, with its publication, metadata and the run's services.
+	 *
+	 * @return void
+	 */
+	private function moveFile(object $file, array $doc): void {
+		$services = $doc['services'];
+		$movedFile = $services['files']->moveFile(
+			sourceObject: $this->migration->documentEntity(objectService: $services['objects'], uuid: $doc['uuid']),
+			fileId: (int)$file->getId(),
+			targetObject: $doc['publication']
+		);
+		$this->applyMetadata(file: $movedFile, target: ['fileMapper' => $services['fileMapper'], 'metadata' => $doc['metadata']]);
+	}//end moveFile()
 
 	/**
 	 * Remove a document whose files have moved, naming the manual step when that fails.
@@ -471,38 +506,28 @@ class AttachDocumentsToPublicationsCommand extends Command {
 			// its files and then strands it.
 			$run['services']['objects']->deleteObject(uuid: $doc['uuid'], _rbac: false, _multitenancy: false);
 		} catch (Throwable $e) {
-			$output->writeln(
-				sprintf('  <error>Files moved but the document could not be removed: %s</error>', $e->getMessage())
-			);
-			$output->writeln(
-				sprintf(
-					'  <error>%s now has no files and a re-run will skip it as metadata-only. '
-					. 'Remove it by hand: occ openregister:objects:delete %s</error>',
-					$doc['uuid'],
-					$doc['uuid']
-				)
-			);
+			self::say(output: $output, line: ['removeFailed', $e->getMessage()]);
+			self::say(output: $output, line: ['removeByHand', $doc['uuid'], $doc['uuid']]);
 			return $this->outcome(counts: ['files' => $moved, 'failed' => 1]);
 		}
 
-		$output->writeln(sprintf('  <info>MIGRATED %d file(s); document removed.</info>', $moved));
+		self::say(output: $output, line: ['migrated', $moved]);
 
 		return $this->outcome(counts: ['migrated' => 1, 'files' => $moved]);
 	}//end removeDocument()
 
 	/**
-	 * Write the document's metadata onto the moved file.
+	 * Carry a document's description, labels and publication window onto the moved file.
 	 *
-	 * @param object               $fileMapper The OpenRegister FileMapper.
-	 * @param object               $file       The moved file.
-	 * @param array<string, mixed> $metadata   The metadata to write.
+	 * @param object $file The moved file.
+	 * @param array $target The OpenRegister FileMapper and the document's file metadata.
 	 *
 	 * @return void
-	 *
-	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-the-documents-metadata-lands-on-the-file-req-att-102
 	 */
-	private function applyMetadata(object $fileMapper, object $file, array $metadata): void {
+	private function applyMetadata(object $file, array $target): void {
 		$fileId = (int)$file->getId();
+		$fileMapper = $target['fileMapper'];
+		$metadata = $target['metadata'];
 
 		if ($metadata['description'] !== null) {
 			$fileMapper->setDescriptionForFile(fileId: $fileId, description: $metadata['description']);
@@ -512,24 +537,56 @@ class AttachDocumentsToPublicationsCommand extends Command {
 			$fileMapper->setLabelsForFile(fileId: $fileId, labels: $metadata['labels']);
 		}
 
-		$published = null;
-		if ($metadata['published'] !== null) {
-			$published = new DateTime($metadata['published']);
-		}
-
-		$depublished = null;
-		if ($metadata['depublished'] !== null) {
-			$depublished = new DateTime($metadata['depublished']);
-		}
-
-		if ($published !== null || $depublished !== null) {
-			$fileMapper->setPublicationWindowForFile(
-				fileId: $fileId,
-				published: $published,
-				depublished: $depublished
-			);
+		$window = self::windowDates(metadata: $metadata);
+		if ($window !== null) {
+			$fileMapper->setPublicationWindowForFile(fileId: $fileId, published: $window['published'], depublished: $window['depublished']);
 		}
 	}//end applyMetadata()
+
+	/**
+	 * The publication window as dates, or null when neither end is set.
+	 *
+	 * @param array $metadata The document's file metadata.
+	 *
+	 * @return array{published: DateTime|null, depublished: DateTime|null}|null
+	 */
+	private static function windowDates(array $metadata): ?array {
+		if ($metadata['published'] === null && $metadata['depublished'] === null) {
+			return null;
+		}
+
+		return [
+			'published' => self::dateOrNull(value: $metadata['published']),
+			'depublished' => self::dateOrNull(value: $metadata['depublished']),
+		];
+	}//end windowDates()
+
+	/**
+	 * A date value as a DateTime, or null when unset.
+	 *
+	 * @param string|null $value The date.
+	 *
+	 * @return DateTime|null
+	 */
+	private static function dateOrNull(?string $value): ?DateTime {
+		if ($value === null) {
+			return null;
+		}
+
+		return new DateTime($value);
+	}//end dateOrNull()
+
+	/**
+	 * Write one line from the message table.
+	 *
+	 * @param OutputInterface $output The console output.
+	 * @param array $line The message key, then its arguments.
+	 *
+	 * @return void
+	 */
+	private static function say(OutputInterface $output, array $line): void {
+		$output->writeln(vsprintf(self::MESSAGES[array_shift($line)], $line));
+	}//end say()
 
 	/**
 	 * A short note about the window being carried over, for the report.

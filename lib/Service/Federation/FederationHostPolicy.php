@@ -66,7 +66,6 @@ class FederationHostPolicy {
 	) {
 	}//end __construct()
 
-
 	/**
 	 * Whether a host is explicitly allowlisted for local federation.
 	 *
@@ -91,7 +90,6 @@ class FederationHostPolicy {
 
 		return in_array($host, $allowedHosts, true);
 	}//end isAllowlistedFederationHost()
-
 
 	/**
 	 * Whether a URL names an address no other instance could reach.

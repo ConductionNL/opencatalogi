@@ -1526,6 +1526,38 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertFalse($this->service->rewriteSchemasAndRegisters($entity));
 	}//end testRewriteSchemasAndRegistersSkipsSaveWhenNothingChanged()
 
+	public function testRewriteSchemasAndRegistersSavesTheResolvedIds(): void {
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')->with('woo')->willReturn($this->createEntityMock(Register::class, 21));
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->expects($this->never())->method('find');
+
+		$entity = $this->createMockObjectEntity(['title' => 'C', 'registers' => ['woo'], 'schemas' => ['7']]);
+		$entity->expects($this->once())->method('setObject')
+			->with(['title' => 'C', 'registers' => [21], 'schemas' => ['7']]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('saveObject')->with($entity);
+
+		$this->injectAll($registerMapper, $schemaMapper, $objectService);
+
+		$this->assertTrue($this->service->rewriteSchemasAndRegisters($entity));
+	}//end testRewriteSchemasAndRegistersSavesTheResolvedIds()
+
+	public function testMappersAreRefusedWithoutOpenRegister(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['opencatalogi']);
+		$this->container->expects($this->never())->method('get');
+
+		foreach (['getSchemaMapper', 'getRegisterMapper'] as $getter) {
+			try {
+				$this->service->$getter();
+				$this->fail($getter . ' answered without OpenRegister');
+			} catch (\RuntimeException $e) {
+				$this->assertSame('OpenRegister service is not available.', $e->getMessage());
+			}
+		}
+	}//end testMappersAreRefusedWithoutOpenRegister()
+
 	// ──────────────────────────────────────────────────────────
 	// Helper methods
 	// ──────────────────────────────────────────────────────────
@@ -1734,7 +1766,7 @@ class CatalogiServiceTest extends TestCase {
 	 * whose read-rule guard the test decides.
 	 *
 	 * @param ObjectService|MockObject $objectService The ObjectService mock.
-	 * @param \Closure                 $guard         What applySchemaScopeReadRuleGuard() returns.
+	 * @param \Closure $guard What applySchemaScopeReadRuleGuard() returns.
 	 *
 	 * @return void
 	 */

@@ -723,7 +723,7 @@ OC.L10N.register(
         "What is published, what is archived, and what retention says to do next.": "Què està publicat, què està arxivat i què prescriu la retenció a continuació.",
         "What people looked at and what they downloaded.": "Què ha mirat la gent i què s'ha baixat.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Com de madurs són els catàlegs i com d'integrades estan les entrades del directori.",
-        "Store": "Botiga",
+        "Marketplace": "Botiga",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instal·leu registres, esquemes i fluxos publicats per altres organitzacions.",
         "Could not load the catalog": "No s'ha pogut carregar el catàleg",
         "Reload the page to try again.": "Torneu a carregar la pàgina per tornar-ho a provar.",

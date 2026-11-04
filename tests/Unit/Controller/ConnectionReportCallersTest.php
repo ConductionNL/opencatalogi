@@ -28,7 +28,19 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Controller\SettingsController;
+use OCA\OpenCatalogi\Controller\Setup\SetupActions;
+use OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep;
+use OCA\OpenCatalogi\Controller\Setup\SetupStatusReport;
+use OCA\OpenCatalogi\Controller\Setup\SetupStepRunner;
 use OCA\OpenCatalogi\Controller\SetupController;
 use OCA\OpenCatalogi\Controller\WooReadinessController;
 use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
@@ -45,7 +57,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IURLGenerator;
-use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -59,6 +70,13 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Controller\WooReadinessController
  * @covers \OCA\OpenCatalogi\Controller\SettingsController
  * @covers \OCA\OpenCatalogi\Controller\SetupController
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupActions
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupStatusReport
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupStepRunner
  * @covers \OCA\OpenCatalogi\Service\BroadcastService
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
  * @uses \OCA\OpenCatalogi\Service\Broadcast\BroadcastResult
@@ -78,7 +96,7 @@ class ConnectionReportCallersTest extends TestCase {
 	/**
 	 * The readiness controller around a service double.
 	 *
-	 * @param WooReadinessService     $service  The readiness service double.
+	 * @param WooReadinessService $service The readiness service double.
 	 * @param ConnectionReporter|null $reporter The reporter, or none.
 	 *
 	 * @return WooReadinessController
@@ -101,7 +119,7 @@ class ConnectionReportCallersTest extends TestCase {
 		$reporter->expects($this->once())->method('reportWooNotConfigured')->willReturn(true);
 		$reporter->expects($this->never())->method('reportWooReadiness');
 
-		$with    = $this->readinessController($service, $reporter)->run();
+		$with = $this->readinessController($service, $reporter)->run();
 		$without = $this->readinessController($service, null)->run();
 
 		$this->assertSame(Http::STATUS_CONFLICT, $with->getStatus());
@@ -115,7 +133,7 @@ class ConnectionReportCallersTest extends TestCase {
 	 * @return void
 	 */
 	public function testAReadinessCheckThatRanReportsItsReport(): void {
-		$report  = ['verdict' => 'ready', 'checks' => [['id' => 'robots-txt', 'status' => 'pass']]];
+		$report = ['verdict' => 'ready', 'checks' => [['id' => 'robots-txt', 'status' => 'pass']]];
 		$service = $this->createMock(WooReadinessService::class);
 		$service->method('hasWooEnabledCatalogs')->willReturn(true);
 		$service->method('runCheck')->willReturn($report);
@@ -153,7 +171,7 @@ class ConnectionReportCallersTest extends TestCase {
 	/**
 	 * The settings controller around a service double.
 	 *
-	 * @param SettingsService         $service  The settings service double.
+	 * @param SettingsService $service The settings service double.
 	 * @param ConnectionReporter|null $reporter The reporter, or none.
 	 *
 	 * @return SettingsController
@@ -188,7 +206,7 @@ class ConnectionReportCallersTest extends TestCase {
 			->with(['woo_index_registration_status', 'catalog_register'])
 			->willReturn(['woo-index']);
 
-		$with    = $this->settingsController($service, $reporter)->update();
+		$with = $this->settingsController($service, $reporter)->update();
 		$without = $this->settingsController($service, null)->update();
 
 		$this->assertSame($written, $with->getData());
@@ -225,7 +243,7 @@ class ConnectionReportCallersTest extends TestCase {
 			->with(['default_directory_url'])
 			->willReturn(['directory']);
 
-		$controller = new SetupController(
+		$controller = self::setupController(
 			'opencatalogi',
 			$request,
 			$this->createMock(IAppConfig::class),
@@ -246,8 +264,8 @@ class ConnectionReportCallersTest extends TestCase {
 	/**
 	 * A broadcast service whose delivery is a double, so no DNS lookup or POST runs.
 	 *
-	 * @param string                  $ownUrl   The address this instance advertises.
-	 * @param bool                    $accepted Whether the target accepts the broadcast.
+	 * @param string $ownUrl The address this instance advertises.
+	 * @param bool $accepted Whether the target accepts the broadcast.
 	 * @param ConnectionReporter|null $reporter The reporter, or none.
 	 *
 	 * @return BroadcastService&MockObject
@@ -294,12 +312,12 @@ class ConnectionReportCallersTest extends TestCase {
 	 * @return void
 	 */
 	public function testABroadcastReportsWhatThePeersAnswered(): void {
-		$peer     = 'https://peer.example.nl/apps/opencatalogi/api/directory';
+		$peer = 'https://peer.example.nl/apps/opencatalogi/api/directory';
 		$reporter = $this->reporter();
 		$reporter->expects($this->once())->method('reportBroadcast')->with([$peer => false])->willReturn(true);
 		$reporter->expects($this->never())->method('reportBroadcastFromLocalAddress');
 
-		$with    = $this->broadcastService('https://catalogus.example.nl/apps/opencatalogi/api/directory', false, $reporter)->broadcast($peer);
+		$with = $this->broadcastService('https://catalogus.example.nl/apps/opencatalogi/api/directory', false, $reporter)->broadcast($peer);
 		$without = $this->broadcastService('https://catalogus.example.nl/apps/opencatalogi/api/directory', false, null)->broadcast($peer);
 
 		$this->assertSame([$peer => false], $with);
@@ -384,4 +402,58 @@ class ConnectionReportCallersTest extends TestCase {
 
 		$this->assertSame(1, $result['failed_directories']);
 	}//end testADirectorySyncReportsItsResult()
+
+	/**
+	 * A SetupController wired over the given collaborators the way the container wires it.
+	 *
+	 * @param string $appName The app id.
+	 * @param IRequest $request The request.
+	 * @param IAppConfig $config App configuration.
+	 * @param SettingsServiceInterface $settings Settings service.
+	 * @param DemoDataServiceInterface $demo Demo data service.
+	 * @param DirectoryServiceInterface $directory Directory service.
+	 * @param BroadcastServiceInterface $broadcast Broadcast service.
+	 * @param ContainerInterface $container Container.
+	 * @param IL10N $l10n Localization.
+	 * @param LoggerInterface $logger Logger.
+	 * @param IUserSession $session User session.
+	 * @param ConnectionReporterInterface|null $reporter Connection reporter.
+	 *
+	 * @return SetupController The controller.
+	 */
+	private static function setupController(
+		string $appName,
+		IRequest $request,
+		IAppConfig $config,
+		SettingsServiceInterface $settings,
+		DemoDataServiceInterface $demo,
+		DirectoryServiceInterface $directory,
+		BroadcastServiceInterface $broadcast,
+		ContainerInterface $container,
+		IL10N $l10n,
+		LoggerInterface $logger,
+		IUserSession $session,
+		?ConnectionReporterInterface $reporter = null,
+	): SetupController {
+		$catalog = new SetupCatalogSteps($config, $container, $l10n, $logger);
+		return new SetupController(
+			$appName,
+			$request,
+			$l10n,
+			$session,
+			new SetupStatusReport($config, $demo, $directory, $catalog),
+			new SetupActions(
+				$config,
+				$l10n,
+				new SetupStepRunner(
+					new SetupDemoDataSteps($config, $demo, $l10n, $logger),
+					new SetupSettingsStep($settings, $catalog, $l10n, $logger),
+					$catalog,
+					new SetupFederationSteps($directory, $broadcast, $l10n, $logger)
+				),
+				$reporter
+			)
+		);
+
+	}//end setupController()
 }//end class

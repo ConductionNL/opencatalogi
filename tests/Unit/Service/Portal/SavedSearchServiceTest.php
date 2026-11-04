@@ -18,7 +18,7 @@ declare(strict_types=1);
 
 namespace Unit\Service\Portal;
 
-require_once __DIR__.'/FakePortalObjectStore.php';
+require_once __DIR__ . '/FakePortalObjectStore.php';
 
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
@@ -49,7 +49,7 @@ class SavedSearchServiceTest extends TestCase {
 	 */
 	private function assertStoredIsValid(string $id): void {
 		$root = dirname(__DIR__, 4);
-		$fragment = json_decode((string)file_get_contents($root.'/lib/Settings/register.d/saved-searches-and-alerts.json'), true)['components']['schemas']['savedSearch'];
+		$fragment = json_decode((string)file_get_contents($root . '/lib/Settings/register.d/saved-searches-and-alerts.json'), true)['components']['schemas']['savedSearch'];
 		$data = $this->store->objects['savedSearch'][$id];
 		unset($data['id']);
 		$result = (new Validator())->validate(
@@ -94,7 +94,7 @@ class SavedSearchServiceTest extends TestCase {
 		] as $input) {
 			try {
 				$this->service->save(owner: 'subject-1', input: $input);
-				$this->fail('Expected refusal: '.json_encode($input));
+				$this->fail('Expected refusal: ' . json_encode($input));
 			} catch (PortalInputException) {
 				$this->addToAssertionCount(1);
 			}
@@ -125,7 +125,7 @@ class SavedSearchServiceTest extends TestCase {
 
 	public function testAResidentKeepsAtMostTwentyFive(): void {
 		for ($i = 0; $i < SavedSearchService::MAX_PER_OWNER; $i++) {
-			$this->store->objects['savedSearch']['s'.$i] = ['id' => 's'.$i, 'owner' => 'subject-1'];
+			$this->store->objects['savedSearch']['s' . $i] = ['id' => 's' . $i, 'owner' => 'subject-1'];
 		}
 
 		$this->expectException(PortalInputException::class);

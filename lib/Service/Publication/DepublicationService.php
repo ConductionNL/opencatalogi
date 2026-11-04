@@ -159,7 +159,6 @@ class DepublicationService implements DepublicationServiceInterface {
 		}
 
 		return array_values(array_filter($outstanding, static fn (string $channel): bool => $channel !== ''));
-
 	}//end outstandingChannels()
 
 	/**
@@ -173,7 +172,6 @@ class DepublicationService implements DepublicationServiceInterface {
 	 */
 	public function isComplete(array $depublication): bool {
 		return ($this->outstandingChannels(depublication: $depublication) === []);
-
 	}//end isComplete()
 
 	/**
@@ -210,6 +208,5 @@ class DepublicationService implements DepublicationServiceInterface {
 		}
 
 		return $depublication;
-
 	}//end recordAcknowledgement()
 }//end class

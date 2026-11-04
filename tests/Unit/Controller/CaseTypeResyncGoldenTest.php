@@ -38,7 +38,9 @@ use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Service\CaseTypeCatalogueService;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -253,7 +255,7 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			'opencatalogi',
 			$request,
 			$config,
-			$container,
+			new OpenRegisterLookup($container, $this->createMock(IAppManager::class)),
 			$l10n,
 			$catalogue,
 			$caseTypes

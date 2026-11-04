@@ -165,11 +165,19 @@ class ObjectService {
 	/**
 	 * Build a search query.
 	 *
-	 * @param array<string,mixed> $filters Filter parameters.
+	 * @param array<string,mixed> $requestParams The request parameters.
+	 * @param int|string|array<mixed>|null $register Register filter.
+	 * @param int|string|array<mixed>|null $schema Schema filter.
+	 * @param array<mixed>|null $ids Object id filter.
 	 *
 	 * @return array<string,mixed>
 	 */
-	public function buildSearchQuery(array $filters = []): array {
+	public function buildSearchQuery(
+		array $requestParams,
+		int|string|array|null $register = null,
+		int|string|array|null $schema = null,
+		?array $ids = null,
+	): array {
 		return [];
 	}//end buildSearchQuery()
 

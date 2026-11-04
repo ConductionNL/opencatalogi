@@ -12,20 +12,6 @@
       "count": 16
     }
   },
-  "src/components/GenericObjectTable.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
-    "jsdoc/require-param-type": {
-      "count": 17
-    },
-    "no-console": {
-      "count": 4
-    },
-    "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
   "src/components/MarkdownEditor.vue": {
     "jsdoc/require-param-type": {
       "count": 2
@@ -70,7 +56,7 @@
   },
   "src/composables/UseFileSelection.js": {
     "no-unused-vars": {
-      "count": 3
+      "count": 2
     },
     "no-use-before-define": {
       "count": 13
@@ -327,11 +313,6 @@
   },
   "src/entities/theme/theme.spec.ts": {
     "import-extensions/extensions": {
-      "count": 1
-    }
-  },
-  "src/main.js": {
-    "no-unused-vars": {
       "count": 1
     }
   },

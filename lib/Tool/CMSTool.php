@@ -36,6 +36,7 @@ namespace OCA\OpenCatalogi\Tool;
 use BadMethodCallException;
 use OCA\OpenCatalogi\Contract\CMSToolInterface;
 use OCA\OpenRegister\Db\Agent;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\OpenRegister\Tool\ToolInterface;
 use OCP\IUserSession;
@@ -187,34 +188,20 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	private function createPageFunction(): array {
-		return [
-			'name' => 'cms_create_page',
-			'subject' => 'page',
-			'action' => 'create',
-			'description' => 'Create a new page with title and content. Returns the page UUID.',
-			'parameters' => [
-				'type' => 'object',
-				'properties' => [
-					'title' => [
-						'type' => 'string',
-						'description' => 'Page title (required)',
-					],
-					'summary' => [
-						'type' => 'string',
-						'description' => 'Brief summary of the page',
-					],
-					'description' => [
-						'type' => 'string',
-						'description' => 'Full page content in HTML or markdown',
-					],
-					'slug' => [
-						'type' => 'string',
-						'description' => 'URL-friendly slug (auto-generated if not provided)',
-					],
-				],
-				'required' => ['title'],
-			],
-		];
+		$properties = $this->typedProperties(
+			type: 'string',
+			descriptions: [
+				'title' => 'Page title (required)',
+				'summary' => 'Brief summary of the page',
+				'description' => 'Full page content in HTML or markdown',
+				'slug' => 'URL-friendly slug (auto-generated if not provided)',
+			]
+		);
+
+		return $this->definition(
+			head: ['cms_create_page', 'page', 'create', 'Create a new page with title and content. Returns the page UUID.'],
+			parameters: $this->objectParameters(properties: $properties, required: ['title'])
+		);
 
 	}//end createPageFunction()
 
@@ -226,22 +213,12 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	private function listPagesFunction(): array {
-		return [
-			'name' => 'cms_list_pages',
-			'subject' => 'page',
-			'action' => 'list',
-			'description' => 'List all pages. Returns array of pages with title, slug, and UUID.',
-			'parameters' => [
-				'type' => 'object',
-				'properties' => [
-					'limit' => [
-						'type' => 'integer',
-						'description' => 'Maximum number of pages to return (default: 50)',
-					],
-				],
-				'required' => [],
-			],
-		];
+		$properties = $this->typedProperties(type: 'integer', descriptions: ['limit' => 'Maximum number of pages to return (default: 50)']);
+
+		return $this->definition(
+			head: ['cms_list_pages', 'page', 'list', 'List all pages. Returns array of pages with title, slug, and UUID.'],
+			parameters: $this->objectParameters(properties: $properties, required: [])
+		);
 
 	}//end listPagesFunction()
 
@@ -253,47 +230,41 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	private function createMenuFunction(): array {
-		return [
-			'name' => 'cms_create_menu',
-			'subject' => 'menu',
-			'action' => 'create',
-			'description' => 'Create a new menu with items including position, names, links, order, and access groups.',
-			'parameters' => [
-				'type' => 'object',
-				'properties' => [
-					'title' => [
-						'type' => 'string',
-						'description' => 'Menu title/name (required)',
-					],
-					'position' => [
-						'type' => 'number',
-						// phpcs:ignore Generic.Files.LineLength.TooLong
-						'description' => 'Menu display position/order (0 = first, higher = later). ASK THE USER for this if not provided.',
-					],
-					'items' => [
-						'type' => 'array',
-						'description' => 'Array of menu items. Each item MUST have: order, name, and link.',
-						'items' => $this->menuItemSchema(),
-					],
-					'groups' => [
-						'type' => 'array',
-						// phpcs:ignore Generic.Files.LineLength.TooLong
-						'description' => 'Nextcloud groups that can access this entire menu (RBAC). Ask user if they want to restrict access.',
-						'items' => ['type' => 'string'],
-					],
-					'hideBeforeLogin' => [
-						'type' => 'boolean',
-						'description' => 'Whether to hide this menu before user login (security setting)',
-					],
-				],
-				'required' => [
-					'title',
-					'items',
-				],
+		return $this->definition(
+			head: [
+				'cms_create_menu',
+				'menu',
+				'create',
+				'Create a new menu with items including position, names, links, order, and access groups.',
 			],
-		];
+			parameters: $this->objectParameters(properties: $this->createMenuProperties(), required: ['title', 'items'])
+		);
 
 	}//end createMenuFunction()
+
+	/**
+	 * The properties of the `cms_create_menu` function: title, position, items, groups, hideBeforeLogin.
+	 *
+	 * @return array<string, array<string, mixed>> The property schemas
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function createMenuProperties(): array {
+		$position = 'Menu display position/order (0 = first, higher = later). ASK THE USER for this if not provided.';
+		$groups = 'Nextcloud groups that can access this entire menu (RBAC). Ask user if they want to restrict access.';
+
+		$properties = $this->typedProperties(type: 'string', descriptions: ['title' => 'Menu title/name (required)']);
+		$properties += $this->typedProperties(type: 'number', descriptions: ['position' => $position]);
+		$properties += $this->typedProperties(type: 'array', descriptions: ['items' => 'Array of menu items. Each item MUST have: order, name, and link.']);
+		$properties['items']['items'] = $this->menuItemSchema();
+		$properties += $this->groupsProperty(description: $groups);
+		$properties += $this->typedProperties(
+			type: 'boolean',
+			descriptions: ['hideBeforeLogin' => 'Whether to hide this menu before user login (security setting)']
+		);
+
+		return $properties;
+	}//end createMenuProperties()
 
 	/**
 	 * The schema of one item in the `cms_create_menu` function's `items` parameter.
@@ -303,42 +274,19 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	private function menuItemSchema(): array {
-		return [
-			'type' => 'object',
-			'properties' => [
-				'order' => [
-					'type' => 'number',
-					'description' => 'Item display order within menu',
-				],
-				'name' => [
-					'type' => 'string',
-					'description' => 'Display name of the menu item',
-				],
-				'link' => [
-					'type' => 'string',
-					'description' => 'URL or path (e.g., /page-slug or https://example.com)',
-				],
-				'description' => [
-					'type' => 'string',
-					'description' => 'Optional item description',
-				],
-				'icon' => [
-					'type' => 'string',
-					'description' => 'Optional icon name',
-				],
-				'groups' => [
-					'type' => 'array',
-					'description' => 'Nextcloud groups that can access this item (RBAC)',
-					'items' => ['type' => 'string'],
-				],
-			],
-			'required' => [
-				'order',
-				'name',
-				'link',
-			],
-		];
+		$properties = $this->typedProperties(type: 'number', descriptions: ['order' => 'Item display order within menu']);
+		$properties += $this->typedProperties(
+			type: 'string',
+			descriptions: [
+				'name' => 'Display name of the menu item',
+				'link' => 'URL or path (e.g., /page-slug or https://example.com)',
+				'description' => 'Optional item description',
+				'icon' => 'Optional icon name',
+			]
+		);
+		$properties += $this->groupsProperty(description: 'Nextcloud groups that can access this item (RBAC)');
 
+		return $this->objectParameters(properties: $properties, required: ['order', 'name', 'link']);
 	}//end menuItemSchema()
 
 	/**
@@ -349,17 +297,10 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	private function listMenusFunction(): array {
-		return [
-			'name' => 'cms_list_menus',
-			'subject' => 'menu',
-			'action' => 'list',
-			'description' => 'List all menus. Returns array of menus with name and UUID.',
-			'parameters' => [
-				'type' => 'object',
-				'properties' => [],
-				'required' => [],
-			],
-		];
+		return $this->definition(
+			head: ['cms_list_menus', 'menu', 'list', 'List all menus. Returns array of menus with name and UUID.'],
+			parameters: $this->objectParameters(properties: [], required: [])
+		);
 
 	}//end listMenusFunction()
 
@@ -371,43 +312,94 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	private function addMenuItemFunction(): array {
-		return [
-			'name' => 'cms_add_menu_item',
-			'subject' => 'menuItem',
-			'action' => 'create',
-			'description' => 'Add an item to a menu. Can link to a page or external URL.',
-			'parameters' => [
-				'type' => 'object',
-				'properties' => [
-					'menuId' => [
-						'type' => 'string',
-						'description' => 'UUID of the menu to add item to (required)',
-					],
-					'name' => [
-						'type' => 'string',
-						'description' => 'Label for the menu item (required)',
-					],
-					'link' => [
-						'type' => 'string',
-						'description' => 'External URL to link to (provide either link or pageId)',
-					],
-					'pageId' => [
-						'type' => 'string',
-						'description' => 'UUID of a page to link to (provide either link or pageId)',
-					],
-					'order' => [
-						'type' => 'integer',
-						'description' => 'Display order in the menu',
-					],
-				],
-				'required' => [
-					'menuId',
-					'name',
-				],
-			],
-		];
+		$properties = $this->typedProperties(
+			type: 'string',
+			descriptions: [
+				'menuId' => 'UUID of the menu to add item to (required)',
+				'name' => 'Label for the menu item (required)',
+				'link' => 'External URL to link to (provide either link or pageId)',
+				'pageId' => 'UUID of a page to link to (provide either link or pageId)',
+			]
+		);
+		$properties += $this->typedProperties(type: 'integer', descriptions: ['order' => 'Display order in the menu']);
+
+		return $this->definition(
+			head: ['cms_add_menu_item', 'menuItem', 'create', 'Add an item to a menu. Can link to a page or external URL.'],
+			parameters: $this->objectParameters(properties: $properties, required: ['menuId', 'name'])
+		);
 
 	}//end addMenuItemFunction()
+
+	/**
+	 * A function definition from its name, subject, action and description, and its parameters.
+	 *
+	 * @param array{0: string, 1: string, 2: string, 3: string} $head Name, subject, action and description.
+	 * @param array<string, mixed> $parameters The parameters schema.
+	 *
+	 * @return array<string, mixed> The function definition
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function definition(array $head, array $parameters): array {
+		return [
+			'name' => $head[0],
+			'subject' => $head[1],
+			'action' => $head[2],
+			'description' => $head[3],
+			'parameters' => $parameters,
+		];
+
+	}//end definition()
+
+	/**
+	 * An object schema with these properties, of which these are required.
+	 *
+	 * @param array<string, mixed> $properties The property schemas.
+	 * @param array<int, string> $required The required property names.
+	 *
+	 * @return array<string, mixed> The object schema
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function objectParameters(array $properties, array $required): array {
+		return [
+			'type' => 'object',
+			'properties' => $properties,
+			'required' => $required,
+		];
+
+	}//end objectParameters()
+
+	/**
+	 * Property schemas of one JSON type, keyed by property name, each with its description.
+	 *
+	 * @param string $type The JSON type.
+	 * @param array<string, string> $descriptions The description per property name.
+	 *
+	 * @return array<string, array{type: string, description: string}> The property schemas
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function typedProperties(string $type, array $descriptions): array {
+		return array_map(
+			static fn (string $description): array => ['type' => $type, 'description' => $description],
+			$descriptions
+		);
+
+	}//end typedProperties()
+
+	/**
+	 * The `groups` property: a list of Nextcloud group names.
+	 *
+	 * @param string $description The property description.
+	 *
+	 * @return array<string, array<string, mixed>> The property schema keyed `groups`
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function groupsProperty(string $description): array {
+		return ['groups' => ['type' => 'array', 'description' => $description, 'items' => ['type' => 'string']]];
+	}//end groupsProperty()
 
 	/**
 	 * Execute a function
@@ -425,36 +417,43 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	public function executeFunction(string $functionName, array $parameters, ?string $userId = null): array {
 		$this->logger->info(
 			'[CMSTool] Executing function',
-			[
-				'function' => $functionName,
-				'userId' => ($userId ?? $this->currentUserId),
-				'agentId' => $this->agent?->getId(),
-			]
+			['function' => $functionName, 'userId' => ($userId ?? $this->currentUserId), 'agentId' => $this->agent?->getId()]
 		);
 
 		try {
-			return match ($functionName) {
-				'cms_create_page' => $this->createPage(parameters: $parameters),
-				'cms_list_pages' => $this->listPages(parameters: $parameters),
-				'cms_create_menu' => $this->createMenu(parameters: $parameters),
-				'cms_list_menus' => $this->listMenus(),
-				'cms_add_menu_item' => $this->addMenuItem(parameters: $parameters),
-				default => $this->errorResponse(message: 'Unknown function: ' . $functionName, code: 404)
-			};
+			return $this->dispatch(functionName: $functionName, parameters: $parameters);
 		} catch (\Exception $e) {
 			$this->logger->error(
 				'[CMSTool] Function execution failed',
-				[
-					'function' => $functionName,
-					'error' => $e->getMessage(),
-					'trace' => $e->getTraceAsString(),
-				]
+				['function' => $functionName, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]
 			);
 
 			return $this->errorResponse(message: $e->getMessage());
-		}//end try
+		}
 
 	}//end executeFunction()
+
+	/**
+	 * Run the action a function name stands for, or answer 404 for an unknown name.
+	 *
+	 * @param string $functionName Function name
+	 * @param array $parameters Function parameters
+	 *
+	 * @return array Execution result
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function dispatch(string $functionName, array $parameters): array {
+		return match ($functionName) {
+			'cms_create_page' => $this->createPage(parameters: $parameters),
+			'cms_list_pages' => $this->listPages(parameters: $parameters),
+			'cms_create_menu' => $this->createMenu(parameters: $parameters),
+			'cms_list_menus' => $this->listMenus(),
+			'cms_add_menu_item' => $this->addMenuItem(parameters: $parameters),
+			default => $this->errorResponse(message: 'Unknown function: ' . $functionName, code: 404)
+		};
+
+	}//end dispatch()
 
 	/**
 	 * Create a new page
@@ -471,39 +470,40 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 			return $this->errorResponse(message: 'Title is required', code: 400);
 		}
 
-		// Generate slug if not provided.
-		$slug = ($parameters['slug'] ?? $this->generateSlug(title: $parameters['title']));
+		$pageData = $this->pageData(parameters: $parameters);
 
-		// Create page object.
-		$pageData = [
+		// ObjectService handles RBAC and validation; the page lives in the publication register.
+		$page = $this->objectService->saveObject(object: $pageData, extend: [], register: 'publication', schema: 'page');
+
+		return $this->successResponse(
+			message: 'Page created successfully',
+			data: ['pageId' => $page->getUuid(), 'title' => $parameters['title'], 'slug' => $pageData['slug']]
+		);
+
+	}//end createPage()
+
+	/**
+	 * The page object to store, with a slug made from the title when none is given.
+	 *
+	 * The owner is the user this tool acts for, never a value from the parameters.
+	 *
+	 * @param array $parameters Function parameters
+	 *
+	 * @return array<string, mixed> The page object.
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function pageData(array $parameters): array {
+		return [
 			'title' => $parameters['title'],
-			'slug' => $slug,
+			'slug' => ($parameters['slug'] ?? $this->generateSlug(title: $parameters['title'])),
 			'summary' => ($parameters['summary'] ?? ''),
 			'description' => ($parameters['description'] ?? ''),
 			'owner' => $this->currentUserId,
 			'organisation' => $this->agent?->getOrganisation(),
 		];
 
-		// Use ObjectService to create page (it handles RBAC and validation).
-		// Using the publication register from OpenCatalogi configuration.
-		// Use positional parameters for compatibility with different ObjectService versions.
-		$page = $this->objectService->saveObject(
-			object: $pageData,
-			extend: [],
-			register: 'publication',
-			schema: 'page'
-		);
-
-		return $this->successResponse(
-			message: 'Page created successfully',
-			data: [
-				'pageId' => $page->getUuid(),
-				'title' => $parameters['title'],
-				'slug' => $slug,
-			]
-		);
-
-	}//end createPage()
+	}//end pageData()
 
 	/**
 	 * List all pages
@@ -515,40 +515,46 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	public function listPages(array $parameters): array {
-		$limit = ($parameters['limit'] ?? 50);
-
-		// Get pages from ObjectService.
-		$filters = [
-			'organisation' => $this->agent?->getOrganisation(),
-		];
-
-		// Schema name without register prefix.
 		$pages = $this->objectService->findAll(
-			config: [
-				'filters' => $filters,
-				'limit' => $limit,
-			]
+			config: ['filters' => $this->organisationFilter(), 'limit' => ($parameters['limit'] ?? 50)]
 		);
 
 		return $this->successResponse(
 			message: 'Pages retrieved successfully',
-			data: [
-				'count' => count($pages),
-				'pages' => array_map(
-					function ($page) {
-						return [
-							'id' => $page->getUuid(),
-							'title' => ($page->getObject()['title'] ?? ''),
-							'slug' => ($page->getSlug() ?? ''),
-							'summary' => ($page->getSummary() ?? ''),
-						];
-					},
-					$pages
-				),
-			]
+			data: ['count' => count($pages), 'pages' => array_map(fn (ObjectEntity $page): array => $this->pageRow(page: $page), $pages)]
 		);
 
 	}//end listPages()
+
+	/**
+	 * One page in a page list: id, title, slug and summary.
+	 *
+	 * @param ObjectEntity $page The page.
+	 *
+	 * @return array<string, mixed> The page row.
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function pageRow(ObjectEntity $page): array {
+		return [
+			'id' => $page->getUuid(),
+			'title' => ($page->getObject()['title'] ?? ''),
+			'slug' => ($page->getSlug() ?? ''),
+			'summary' => ($page->getSummary() ?? ''),
+		];
+
+	}//end pageRow()
+
+	/**
+	 * The list filter that keeps the agent's organisation's objects.
+	 *
+	 * @return array<string, string|null> The filters.
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function organisationFilter(): array {
+		return ['organisation' => $this->agent?->getOrganisation()];
+	}//end organisationFilter()
 
 	/**
 	 * Create a new menu with proper schema structure.
@@ -567,13 +573,7 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 
 		$menuData = $this->menuData(parameters: $parameters);
 
-		// Use positional parameters for compatibility with different ObjectService versions.
-		$menu = $this->objectService->saveObject(
-			object: $menuData,
-			extend: [],
-			register: 'publication',
-			schema: 'menu'
-		);
+		$menu = $this->objectService->saveObject(object: $menuData, extend: [], register: 'publication', schema: 'menu');
 
 		return $this->successResponse(
 			message: 'Menu created successfully',
@@ -602,7 +602,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return $this->menuItemsRejection(items: ($parameters['items'] ?? null));
-
 	}//end menuRejection()
 
 	/**
@@ -620,7 +619,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return $this->firstIncompleteItem(items: $items);
-
 	}//end menuItemsRejection()
 
 	/**
@@ -641,7 +639,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return null;
-
 	}//end firstIncompleteItem()
 
 	/**
@@ -666,7 +663,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return null;
-
 	}//end menuItemRejection()
 
 	/**
@@ -685,7 +681,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		$itemOrder = ($item['order'] ?? null);
 
 		return (empty($itemOrder) === true && $itemOrder !== 0);
-
 	}//end lacksOrder()
 
 	/**
@@ -717,7 +712,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return $menuData;
-
 	}//end menuData()
 
 	/**
@@ -728,38 +722,35 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	public function listMenus(): array {
-		// Get menus from ObjectService.
-		$filters = [
-			'organisation' => $this->agent?->getOrganisation(),
-		];
-
-		// Schema name without register prefix.
-		$menus = $this->objectService->findAll(
-			config: [
-				'filters' => $filters,
-			]
-		);
+		$menus = $this->objectService->findAll(config: ['filters' => $this->organisationFilter()]);
 
 		return $this->successResponse(
 			message: 'Menus retrieved successfully',
-			data: [
-				'count' => count($menus),
-				'menus' => array_map(
-					function ($menu) {
-						$object = $menu->getObject();
-						return [
-							'id' => $menu->getUuid(),
-							'title' => ($object['title'] ?? 'Untitled'),
-							'position' => ($object['position'] ?? 0),
-							'itemCount' => count(($object['items'] ?? [])),
-						];
-					},
-					$menus
-				),
-			]
+			data: ['count' => count($menus), 'menus' => array_map(fn (ObjectEntity $menu): array => $this->menuRow(menu: $menu), $menus)]
 		);
 
 	}//end listMenus()
+
+	/**
+	 * One menu in a menu list: id, title, position and the number of items.
+	 *
+	 * @param ObjectEntity $menu The menu.
+	 *
+	 * @return array<string, mixed> The menu row.
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function menuRow(ObjectEntity $menu): array {
+		$object = $menu->getObject();
+
+		return [
+			'id' => $menu->getUuid(),
+			'title' => ($object['title'] ?? 'Untitled'),
+			'position' => ($object['position'] ?? 0),
+			'itemCount' => count(($object['items'] ?? [])),
+		];
+
+	}//end menuRow()
 
 	/**
 	 * Add a menu item to a menu
@@ -771,22 +762,55 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * @spec openspec/specs/cms-tool/spec.md
 	 */
 	public function addMenuItem(array $parameters): array {
-		// Validate required parameters.
-		if (empty($parameters['menuId']) === true) {
-			return $this->errorResponse(message: 'Menu ID is required', code: 400);
+		$rejection = $this->addItemRejection(parameters: $parameters);
+		if ($rejection !== null) {
+			return $this->errorResponse(message: $rejection, code: 400);
 		}
 
-		if (empty($parameters['name']) === true) {
-			return $this->errorResponse(message: 'Menu item name is required', code: 400);
+		$itemData = $this->menuItemData(parameters: $parameters);
+		$menuItem = $this->objectService->saveObject(object: $itemData, extend: [], register: 'publication', schema: 'menuItem');
+
+		return $this->successResponse(
+			message: 'Menu item added successfully',
+			data: ['menuItemId' => $menuItem->getUuid(), 'name' => $menuItem->getName(), 'menuId' => $parameters['menuId']]
+		);
+
+	}//end addMenuItem()
+
+	/**
+	 * Why an add-menu-item call cannot add an item: no menu, no name, or neither a link nor a page.
+	 *
+	 * @param array $parameters Function parameters
+	 *
+	 * @return string|null The error message, or null when the item can be added.
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function addItemRejection(array $parameters): ?string {
+		foreach (['menuId' => 'Menu ID is required', 'name' => 'Menu item name is required'] as $field => $message) {
+			if (empty($parameters[$field]) === true) {
+				return $message;
+			}
 		}
 
-		// Must provide either link or pageId.
 		if (empty($parameters['link']) === true && empty($parameters['pageId']) === true) {
-			return $this->errorResponse(message: 'Either link or pageId must be provided', code: 400);
+			return 'Either link or pageId must be provided';
 		}
 
-		// Create menu item object.
-		$menuItemData = [
+		return null;
+	}//end addItemRejection()
+
+	/**
+	 * The menu item object to store, owned by the user this tool acts for.
+	 *
+	 * @param array $parameters Function parameters
+	 *
+	 * @return array<string, mixed> The menu item object.
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function menuItemData(array $parameters): array {
+		return [
 			'name' => $parameters['name'],
 			'menu' => $parameters['menuId'],
 			'link' => $parameters['link'] ?? null,
@@ -796,25 +820,7 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 			'organisation' => $this->agent?->getOrganisation(),
 		];
 
-		// Use ObjectService to create menu item.
-		// Use positional parameters for compatibility with different ObjectService versions.
-		$menuItem = $this->objectService->saveObject(
-			object: $menuItemData,
-			extend: [],
-			register: 'publication',
-			schema: 'menuItem'
-		);
-
-		return $this->successResponse(
-			message: 'Menu item added successfully',
-			data: [
-				'menuItemId' => $menuItem->getUuid(),
-				'name' => $menuItem->getName(),
-				'menuId' => $parameters['menuId'],
-			]
-		);
-
-	}//end addMenuItem()
+	}//end menuItemData()
 
 	/**
 	 * Generate URL-friendly slug from title
@@ -958,58 +964,48 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 *
 	 * @throws \BadMethodCallException If the camelCase method doesn't exist
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 */
 	public function __call(string $name, array $arguments) {
-		// Strip 'cms_' prefix if present (function names are cms_* but methods are not).
+		// Function names are cms_* but the methods are not, and they are camelCase.
 		$methodName = preg_replace('/^cms_/', '', $name);
-
-		// Convert snake_case to camelCase.
 		$camelCaseMethod = lcfirst(str_replace('_', '', ucwords($methodName, '_')));
 
-		if (method_exists($this, $camelCaseMethod) === true) {
-			// Get method reflection to understand parameter types.
-			$reflection = new ReflectionMethod($this, $camelCaseMethod);
-			$parameters = $reflection->getParameters();
+		if (method_exists($this, $camelCaseMethod) === false) {
+			throw new BadMethodCallException("Method {$name} (or {$camelCaseMethod}) does not exist");
+		}
 
-			// Type-cast arguments based on method signature.
-			// Handle both positional and named arguments from LLPhant.
-			$isAssociative = array_keys($arguments) !== range(0, (count($arguments) - 1));
+		$result = $this->$camelCaseMethod(...$this->callArguments(method: new ReflectionMethod($this, $camelCaseMethod), arguments: $arguments));
 
-			$typedArguments = [];
-			foreach ($parameters as $index => $param) {
-				$paramName = $param->getName();
+		// LLPhant expects tool results to be JSON strings, not arrays.
+		if (is_array($result) === true) {
+			return json_encode($result);
+		}
 
-				// Get value from either named argument or positional argument.
-				$value = $arguments[$index] ?? null;
-				if ($isAssociative === true && isset($arguments[$paramName]) === true) {
-					$value = $arguments[$paramName];
-				}
-
-				// Handle string 'null' from LLM.
-				$value = $this->resolveParameterValue(param: $param, value: $value);
-
-				$typedArguments[] = $value;
-			}//end foreach
-
-			// CMSTool methods expect a single array parameter, not individual args.
-			// Combine all typed arguments back into a single associative array.
-			// If original was positional, wrap in array.
-			$result = $this->$camelCaseMethod(...$typedArguments);
-			if ($isAssociative === true) {
-				// If original was associative, pass it as-is.
-				$result = $this->$camelCaseMethod(...$arguments);
-			}
-
-			// LLPhant expects tool results to be JSON strings, not arrays.
-			// Convert array results to JSON for LLM consumption.
-			if (is_array($result) === true) {
-				return json_encode($result);
-			}
-
-			return $result;
-		}//end if
-
-		throw new BadMethodCallException("Method {$name} (or {$camelCaseMethod}) does not exist");
+		return $result;
 	}//end __call()
+
+	/**
+	 * The arguments to call a method with: named arguments as given, positional ones cast to the method's types.
+	 *
+	 * The LLM sends the text 'null' for an absent value; it becomes the parameter's default.
+	 *
+	 * @param ReflectionMethod $method The method to call.
+	 * @param array $arguments The arguments of the magic call.
+	 *
+	 * @return array The arguments to spread into the call.
+	 *
+	 * @spec openspec/specs/cms-tool/spec.md
+	 */
+	private function callArguments(ReflectionMethod $method, array $arguments): array {
+		if (array_keys($arguments) !== range(0, (count($arguments) - 1))) {
+			return $arguments;
+		}
+
+		$typedArguments = [];
+		foreach ($method->getParameters() as $index => $param) {
+			$typedArguments[] = $this->resolveParameterValue(param: $param, value: ($arguments[$index] ?? null));
+		}
+
+		return $typedArguments;
+	}//end callArguments()
 }//end class

@@ -33,9 +33,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
-use DateInterval;
 use DateTimeImmutable;
-use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCP\IAppConfig;
@@ -83,6 +81,25 @@ class RetentionService implements RetentionServiceInterface {
 	 * @var array<int, string>
 	 */
 	public const ACTIONS = ['review', 'depublish', 'archive'];
+
+	/**
+	 * The columns of the retention report CSV, in order.
+	 *
+	 * @var array<int, string>
+	 */
+	private const REPORT_COLUMNS = [
+		'id',
+		'title',
+		'publicationDate',
+		'retentionCategory',
+		'retentionTermMonths',
+		'retentionExpiresAt',
+		'status',
+		'actionTaken',
+		'decisionBy',
+		'decisionAt',
+		'decisionNote',
+	];
 
 	/**
 	 * Cached OpenRegister ObjectService instance.
@@ -245,25 +262,7 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function setRetentionDefaults(array $defaults): array {
-		// Validate each action value to keep policy data sane (never hard-coded terms).
-		foreach ($defaults as $catalog => $categories) {
-			if (is_array($categories) === false) {
-				throw new RuntimeException('Invalid retention defaults shape for catalog ' . (string)$catalog);
-			}
-
-			foreach ($categories as $category => $rule) {
-				if (is_array($rule) === false) {
-					continue;
-				}
-
-				if (isset($rule['action']) === true && in_array($rule['action'], self::ACTIONS, true) === false) {
-					$message = 'Invalid retention action "' . (string)$rule['action'] . '" for '
-						. (string)$catalog . '/' . (string)$category;
-					throw new RuntimeException($message);
-				}
-			}
-		}
-
+		(new RetentionRules())->assertValidDefaults(defaults: $defaults);
 		$this->config->setValueString('opencatalogi', self::CONFIG_DEFAULTS, json_encode($defaults));
 		return $this->getRetentionDefaults();
 	}//end setRetentionDefaults()
@@ -279,18 +278,7 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-metadata-on-the-publication-schema-ret-003
 	 */
 	public function computeExpiry(?string $publicationDate, ?int $termMonths): ?string {
-		if ($publicationDate === null || $publicationDate === '' || $termMonths === null || $termMonths <= 0) {
-			return null;
-		}
-
-		try {
-			$date = new DateTimeImmutable($publicationDate);
-		} catch (\Throwable $e) {
-			return null;
-		}
-
-		$expiry = $date->add(new DateInterval('P' . $termMonths . 'M'));
-		return $expiry->format(DateTimeInterface::ATOM);
+		return (new RetentionRules())->expiry(publicationDate: $publicationDate, termMonths: $termMonths);
 	}//end computeExpiry()
 
 	/**
@@ -492,46 +480,90 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function applyDefaultsAtPublication(array $objectData): ?array {
+		$data = $this->publicationData(objectData: $objectData);
+		$run = null;
+		if ($data !== null) {
+			$run = $this->publicationRun(self: $objectData['@self']);
+		}
+
+		if ($run === null) {
+			return null;
+		}
+
+		$stamped = $this->applyDefaults(publication: $data, catalogSlug: $this->resolveCatalogSlug(register: $run->register, schema: $run->schema));
+		if ($stamped === $data) {
+			// Idempotent: already stamped (or no matching default) means no write.
+			return null;
+		}
+
+		return $this->saveStamped(run: $run, data: (new RetentionRules())->withObjectId(self: $objectData['@self'], data: $stamped));
+	}//end applyDefaultsAtPublication()
+
+	/**
+	 * The publication payload without its @self envelope, or null when the hook does not apply.
+	 *
+	 * Only a publication object (the configured register/schema) that has been
+	 * published is stamped; RET-004 stamps at publication time only.
+	 *
+	 * @param array<string, mixed> $objectData The OR event object data (with @self envelope).
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @spec exclude internal guard for the RET-004 publication-time hook.
+	 */
+	private function publicationData(array $objectData): ?array {
 		$self = ($objectData['@self'] ?? []);
 		if (is_array($self) === false || $this->isConfiguredPublication(self: $self) === false) {
-			// Not a publication object; retention defaults do not apply.
 			return null;
 		}
 
 		$data = $objectData;
 		unset($data['@self']);
 		if (empty($data['publicationDate']) === true) {
-			// Not published yet; RET-004 stamps at publication time only.
 			return null;
 		}
 
+		return $data;
+	}//end publicationData()
+
+	/**
+	 * A run over the register and schema the event's @self envelope names, or null without OpenRegister.
+	 *
+	 * @param array<string, mixed> $self The event object's @self envelope.
+	 *
+	 * @return RetentionRun|null
+	 *
+	 * @spec exclude internal step of the RET-004 publication-time hook.
+	 */
+	private function publicationRun(array $self): ?RetentionRun {
 		$objectService = $this->getObjectService();
 		if ($objectService === null) {
 			return null;
 		}
 
-		$register = (string)($self['register'] ?? '');
-		$schema = (string)($self['schema'] ?? '');
-		$stamped = $this->applyDefaults(
-			publication: $data,
-			catalogSlug: $this->resolveCatalogSlug(register: $register, schema: $schema)
-		);
-		if ($stamped === $data) {
-			// Idempotent: already stamped (or no matching default) means no write.
-			return null;
-		}
+		return new RetentionRun(objectService: $objectService, register: (string)($self['register'] ?? ''), schema: (string)($self['schema'] ?? ''));
+	}//end publicationRun()
 
-		$stamped = $this->carryObjectId(self: $self, data: $stamped);
-
+	/**
+	 * Save a stamped publication; a failing save is logged and yields null.
+	 *
+	 * @param RetentionRun $run The run over the publication's register and schema.
+	 * @param array<string, mixed> $data The stamped publication.
+	 *
+	 * @return array<string, mixed>|null The saved publication.
+	 *
+	 * @spec exclude internal step of the RET-004 publication-time hook.
+	 */
+	private function saveStamped(RetentionRun $run, array $data): ?array {
 		try {
-			$saved = $this->save(objectService: $objectService, register: $register, schema: $schema, data: $stamped);
+			$saved = $run->save(data: $data);
 		} catch (\Throwable $e) {
 			$this->logger->error('[RetentionService] failed to stamp retention defaults at publication: ' . $e->getMessage());
 			return null;
 		}
 
 		return $this->plainArray(object: $saved);
-	}//end applyDefaultsAtPublication()
+	}//end saveStamped()
 
 	/**
 	 * Whether an event's @self envelope names the configured publication register/schema.
@@ -554,33 +586,14 @@ class RetentionService implements RetentionServiceInterface {
 	}//end isConfiguredPublication()
 
 	/**
-	 * Carry the object id from the @self envelope onto the payload so the save
-	 * updates the existing object instead of creating a duplicate.
-	 *
-	 * @param array<string, mixed> $self The event object's @self envelope.
-	 * @param array<string, mixed> $data The stamped publication payload.
-	 *
-	 * @return array<string, mixed> The payload with its id ensured.
-	 *
-	 * @spec exclude internal helper for the RET-004 publication-time hook.
-	 */
-	private function carryObjectId(array $self, array $data): array {
-		$uuid = (string)($self['uuid'] ?? ($self['id'] ?? ($data['id'] ?? '')));
-		if ($uuid !== '' && empty($data['id']) === true) {
-			$data['id'] = $uuid;
-		}
-
-		return $data;
-	}//end carryObjectId()
-
-	/**
 	 * Resolve the catalog slug a publication belongs to.
 	 *
 	 * Catalog membership is by register/schema: a catalog object lists the
 	 * registers and schemas it contains. The first catalog whose lists include
 	 * the publication's register and schema provides the slug that keys the
 	 * per-catalog retention defaults (RET-004). Returns an empty string when no
-	 * catalog matches, in which case no catalog default can apply.
+	 * catalog matches, in which case no catalog default can apply. Ids are compared
+	 * as text, so two uuid ids only match when they are the same uuid.
 	 *
 	 * @param string $register The publication's register id.
 	 * @param string $schema The publication's schema id.
@@ -590,34 +603,10 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	private function resolveCatalogSlug(string $register, string $schema): string {
-		$objectService = $this->getObjectService();
-		$catalogRegister = (string)$this->config->getValueString('opencatalogi', 'catalog_register', '');
-		$catalogSchema = (string)$this->config->getValueString('opencatalogi', 'catalog_schema', '');
-		if ($objectService === null || $catalogRegister === '' || $catalogSchema === '') {
-			return '';
-		}
-
-		try {
-			$result = $objectService->searchObjectsPaginated(
-				query: [
-					'@self' => ['register' => $catalogRegister, 'schema' => $catalogSchema],
-					'_limit' => 1000,
-				],
-				_rbac: false,
-				_multitenancy: false
-			);
-			$catalogs = ($result['results'] ?? []);
-		} catch (\Throwable $e) {
-			$this->logger->warning('[RetentionService] catalog lookup for retention defaults failed: ' . $e->getMessage());
-			return '';
-		}
-
-		foreach ($catalogs as $catalog) {
+		foreach ($this->catalogObjects() as $catalog) {
 			$catalogData = $this->plainArray(object: $catalog);
-			$registers = array_map('intval', (array)($catalogData['registers'] ?? []));
-			$schemas = array_map('intval', (array)($catalogData['schemas'] ?? []));
-			if (in_array((int)$register, $registers, true) === true
-				&& in_array((int)$schema, $schemas, true) === true
+			if (in_array($register, array_map('strval', (array)($catalogData['registers'] ?? [])), true) === true
+				&& in_array($schema, array_map('strval', (array)($catalogData['schemas'] ?? [])), true) === true
 			) {
 				return (string)($catalogData['slug'] ?? '');
 			}
@@ -625,6 +614,34 @@ class RetentionService implements RetentionServiceInterface {
 
 		return '';
 	}//end resolveCatalogSlug()
+
+	/**
+	 * Every catalog object, read outside RBAC and multitenancy; empty when the
+	 * catalog register or schema is not configured or the search fails.
+	 *
+	 * @return iterable<mixed> The catalog rows, arrays or serialisable objects.
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
+	 */
+	private function catalogObjects(): iterable {
+		$objectService = $this->getObjectService();
+		$scope = [
+			'register' => (string)$this->config->getValueString('opencatalogi', 'catalog_register', ''),
+			'schema' => (string)$this->config->getValueString('opencatalogi', 'catalog_schema', ''),
+		];
+		if ($objectService === null || $scope['register'] === '' || $scope['schema'] === '') {
+			return [];
+		}
+
+		try {
+			$result = $objectService->searchObjectsPaginated(query: ['@self' => $scope, '_limit' => 1000], _rbac: false, _multitenancy: false);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[RetentionService] catalog lookup for retention defaults failed: ' . $e->getMessage());
+			return [];
+		}
+
+		return ($result['results'] ?? []);
+	}//end catalogObjects()
 
 	/**
 	 * Evaluate all publications for retention expiry and act per stored policy.
@@ -645,21 +662,13 @@ class RetentionService implements RetentionServiceInterface {
 	public function evaluate(): array {
 		$counts = ['expiringSoon' => 0, 'reviewRequired' => 0, 'depublished' => 0, 'archived' => 0];
 
-		$objectService = $this->getObjectService();
-		$register = $this->getRegister();
-		$schema = $this->getSchema();
-		if ($objectService === null || $register === null || $schema === null) {
+		$run = $this->configuredRun();
+		if ($run === null) {
 			$this->logger->info('[RetentionService] register/schema unconfigured or OpenRegister unavailable; skipping evaluation');
 			return $counts;
 		}
 
-		$run = new RetentionRun(objectService: $objectService, register: $register, schema: $schema);
-		$objects = $this->retentionCandidates(run: $run);
-		if ($objects === null) {
-			return $counts;
-		}
-
-		foreach ($objects as $object) {
+		foreach (($this->retentionCandidates(run: $run) ?? []) as $object) {
 			$outcome = $this->evaluatePublication(run: $run, data: $this->plainArray(object: $object));
 			if ($outcome !== null) {
 				$counts[$outcome]++;
@@ -668,6 +677,24 @@ class RetentionService implements RetentionServiceInterface {
 
 		return $counts;
 	}//end evaluate()
+
+	/**
+	 * A run over the configured publication register and schema, or null when either is unset or OpenRegister is missing.
+	 *
+	 * @return RetentionRun|null
+	 *
+	 * @spec exclude internal plumbing shared by the evaluation, decision and report steps.
+	 */
+	private function configuredRun(): ?RetentionRun {
+		$objectService = $this->getObjectService();
+		$register = $this->getRegister();
+		$schema = $this->getSchema();
+		if ($objectService === null || $register === null || $schema === null) {
+			return null;
+		}
+
+		return new RetentionRun(objectService: $objectService, register: $register, schema: $schema);
+	}//end configuredRun()
 
 	/**
 	 * The publications whose retentionExpiresAt lies at or before the end of the warning window.
@@ -709,24 +736,17 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
 	 */
 	private function evaluatePublication(RetentionRun $run, array $data): ?string {
-		$expiresAt = ($data['retentionExpiresAt'] ?? null);
-		if ($expiresAt === null || $expiresAt === '') {
+		if ($run->evaluatedToday(data: $data) === true) {
 			return null;
 		}
 
-		$lastEvaluated = (string)($data['retentionLastEvaluatedAt'] ?? '');
-		if ($lastEvaluated !== '' && str_starts_with($lastEvaluated, $run->today) === true) {
-			return null;
-		}
-
-		try {
-			$expiry = new DateTimeImmutable($expiresAt);
-		} catch (\Throwable $e) {
+		$expiry = (new RetentionRules())->parseDate(value: ($data['retentionExpiresAt'] ?? null));
+		if ($expiry === null) {
 			return null;
 		}
 
 		if ($expiry > $run->now) {
-			$this->stampEvaluated(run: $run, data: $data);
+			$run->stampEvaluated(data: $data);
 			return 'expiringSoon';
 		}
 
@@ -751,18 +771,12 @@ class RetentionService implements RetentionServiceInterface {
 		$action = (string)($data['retentionAction'] ?? 'review');
 		$counted = ['depublish' => 'depublished', 'archive' => 'archived'];
 		if (isset($counted[$action]) === false) {
-			$this->stampEvaluated(run: $run, data: $data);
+			$run->stampEvaluated(data: $data);
 			return 'reviewRequired';
 		}
 
-		if ($action === 'archive') {
-			$data['status'] = 'archived';
-		}
-
-		$data['depublicationDate'] = $run->now->format(DateTimeInterface::ATOM);
-		$data['retentionLastEvaluatedAt'] = $run->now->format(DateTimeInterface::ATOM);
-		$this->recordDecision(data: $data, decision: 'auto-' . $action, note: 'retention term expired');
-		$this->save(objectService: $run->objectService, register: $run->register, schema: $run->schema, data: $data);
+		$data = (new RetentionRules(now: $run->now))->expiredWithdrawal(data: $data, action: $action);
+		$run->save(data: $this->recordDecision(data: $data, decision: 'auto-' . $action, note: 'retention term expired'));
 
 		return $counted[$action];
 	}//end actOnExpiry()
@@ -798,16 +812,15 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 	 */
 	private function queueObjects(RetentionQueue $queue): ?array {
-		$objectService = $this->getObjectService();
-		$scope = $this->publicationScope();
-		if ($objectService === null || $scope === null) {
+		$run = $this->configuredRun();
+		if ($run === null) {
 			return null;
 		}
 
-		$query = $queue->query(scope: $scope, windowDays: $this->getWarningWindowDays());
+		$query = $queue->query(scope: ['register' => $run->register, 'schema' => $run->schema], windowDays: $this->getWarningWindowDays());
 
 		try {
-			$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
+			$result = $run->objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 		} catch (\Throwable $e) {
 			$this->logger->warning('[RetentionService] queue summary failed: ' . $e->getMessage());
 			return null;
@@ -815,23 +828,6 @@ class RetentionService implements RetentionServiceInterface {
 
 		return ($result['results'] ?? []);
 	}//end queueObjects()
-
-	/**
-	 * The configured publication register and schema, or null when either is unset.
-	 *
-	 * @return array{register: string, schema: string}|null The scope.
-	 *
-	 * @spec exclude Internal scope step of queueObjects().
-	 */
-	private function publicationScope(): ?array {
-		$register = $this->getRegister();
-		$schema = $this->getSchema();
-		if ($register === null || $schema === null) {
-			return null;
-		}
-
-		return ['register' => $register, 'schema' => $schema];
-	}//end publicationScope()
 
 	/**
 	 * Record a human disposal/extension decision (who/when/basis/rationale).
@@ -856,112 +852,38 @@ class RetentionService implements RetentionServiceInterface {
 			throw new RuntimeException('A rationale note is mandatory for retention decisions');
 		}
 
-		$run = $this->decisionRun();
-
-		try {
-			$object = $run->objectService->find($publicationId);
-		} catch (\Throwable $e) {
-			throw new RuntimeException('Publication not found: ' . $publicationId);
-		}
-
-		$data = $this->plainArray(object: $object);
-		if ($decision !== 'extend') {
-			$data = $this->withdrawn(data: $data, decision: $decision);
-		}
-
-		if ($decision === 'extend') {
-			$data['retentionExpiresAt'] = $this->extendedExpiry(data: $data, months: $extendMonths);
-			$data['retentionNote'] = $rationale;
-			$data['retentionLastEvaluatedAt'] = '';
-		}
-
-		$this->recordDecision(data: $data, decision: $decision, note: $rationale);
-		$saved = $this->save(objectService: $run->objectService, register: $run->register, schema: $run->schema, data: $data);
-
-		return $this->plainArray(object: $saved);
-	}//end recordHumanDecision()
-
-	/**
-	 * The object service, register and schema a human decision is saved through.
-	 *
-	 * @return RetentionRun The run.
-	 *
-	 * @throws RuntimeException When OpenRegister, the register or the schema is unavailable.
-	 *
-	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
-	 */
-	private function decisionRun(): RetentionRun {
-		$objectService = $this->getObjectService();
-		$register = $this->getRegister();
-		$schema = $this->getSchema();
-		if ($objectService === null || $register === null || $schema === null) {
+		$run = $this->configuredRun();
+		if ($run === null) {
 			throw new RuntimeException('OpenRegister publication register/schema unavailable');
 		}
 
-		return new RetentionRun(objectService: $objectService, register: $register, schema: $schema);
-	}//end decisionRun()
+		$data = (new RetentionRules())->afterDecision(
+			data: $this->plainArray(object: $this->findPublication(run: $run, publicationId: $publicationId)),
+			decision: ['decision' => $decision, 'note' => $rationale, 'months' => $extendMonths]
+		);
+
+		return $this->plainArray(object: $run->save(data: $this->recordDecision(data: $data, decision: $decision, note: $rationale)));
+	}//end recordHumanDecision()
 
 	/**
-	 * The retention expiry moved on by a number of months.
+	 * The publication a decision is about.
 	 *
-	 * Counted from the stored expiry, or from now when there is none or it cannot be read.
+	 * @param RetentionRun $run The run over the publication register and schema.
+	 * @param string $publicationId The publication id.
 	 *
-	 * @param array<string, mixed> $data The publication.
-	 * @param int $months How many months to extend by.
+	 * @return mixed The object as OpenRegister returns it.
 	 *
-	 * @return string The new expiry, as an ATOM date.
-	 *
-	 * @throws RuntimeException When the number of months is not positive.
+	 * @throws RuntimeException When it cannot be found.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 	 */
-	private function extendedExpiry(array $data, int $months): string {
-		if ($months <= 0) {
-			throw new RuntimeException('Extend requires a positive number of months');
-		}
-
-		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		$base = ($data['retentionExpiresAt'] ?? $now->format(DateTimeInterface::ATOM));
+	private function findPublication(RetentionRun $run, string $publicationId): mixed {
 		try {
-			$newExpiry = (new DateTimeImmutable((string)$base))->add(new DateInterval('P' . $months . 'M'));
+			return $run->objectService->find($publicationId);
 		} catch (\Throwable $e) {
-			$newExpiry = $now->add(new DateInterval('P' . $months . 'M'));
+			throw new RuntimeException('Publication not found: ' . $publicationId);
 		}
-
-		return $newExpiry->format(DateTimeInterface::ATOM);
-	}//end extendedExpiry()
-
-	/**
-	 * Apply a depublish, archive or dispose decision to a publication.
-	 *
-	 * @param array<string, mixed> $data The publication.
-	 * @param string $decision The decision verb.
-	 *
-	 * @return array<string, mixed> The publication.
-	 *
-	 * @throws RuntimeException On a decision that is none of those.
-	 *
-	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
-	 */
-	private function withdrawn(array $data, string $decision): array {
-		$now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		switch ($decision) {
-			case 'depublish':
-				$data['depublicationDate'] = $now->format(DateTimeInterface::ATOM);
-				break;
-
-			case 'archive':
-			case 'dispose':
-				$data['status'] = 'archived';
-				$data['depublicationDate'] = $now->format(DateTimeInterface::ATOM);
-				break;
-
-			default:
-				throw new RuntimeException('Unknown retention decision: ' . $decision);
-		}//end switch
-
-		return $data;
-	}//end withdrawn()
+	}//end findPublication()
 
 	/**
 	 * Build a retention report (rows) for a catalog and date range.
@@ -998,20 +920,15 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
 	 */
 	private function reportPublications(): iterable {
-		$objectService = $this->getObjectService();
-		$register = $this->getRegister();
-		$schema = $this->getSchema();
-		if ($objectService === null || $register === null || $schema === null) {
+		$run = $this->configuredRun();
+		if ($run === null) {
 			return [];
 		}
 
-		$query = [
-			'@self' => ['register' => $register, 'schema' => $schema],
-			'_limit' => 10000,
-		];
+		$query = ['@self' => ['register' => $run->register, 'schema' => $run->schema], '_limit' => 10000];
 
 		try {
-			$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
+			$result = $run->objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 		} catch (\Throwable $e) {
 			$this->logger->warning('[RetentionService] report build failed: ' . $e->getMessage());
 			return [];
@@ -1030,95 +947,25 @@ class RetentionService implements RetentionServiceInterface {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-report-export-ret-009
 	 */
 	public function renderReportCsv(array $rows): string {
-		$headers = [
-			'id',
-			'title',
-			'publicationDate',
-			'retentionCategory',
-			'retentionTermMonths',
-			'retentionExpiresAt',
-			'status',
-			'actionTaken',
-			'decisionBy',
-			'decisionAt',
-			'decisionNote',
-		];
-
-		return (new BomCsv(columns: array_combine($headers, $headers)))->render(rows: $rows);
+		return (new BomCsv(columns: array_combine(self::REPORT_COLUMNS, self::REPORT_COLUMNS)))->render(rows: $rows);
 	}//end renderReportCsv()
 
 	/**
 	 * Append a decision record to the publication's decision log.
 	 *
-	 * @param array<string, mixed> $data The publication data (mutated).
+	 * @param array<string, mixed> $data The publication data.
 	 * @param string $decision The decision verb.
 	 * @param string $note The rationale / reason.
 	 *
-	 * @return void
+	 * @return array<string, mixed> The publication with the decision logged.
 	 *
 	 * @spec exclude internal helper for the audited decision payload.
 	 */
-	private function recordDecision(array &$data, string $decision, string $note): void {
-		$user = $this->userSession->getUser();
-		$decisionBy = 'system';
-		if ($user !== null) {
-			$decisionBy = $user->getUID();
-		}
-
-		$log = ($data['retentionDecisionLog'] ?? []);
-		if (is_array($log) === false) {
-			$log = [];
-		}
-
-		$log[] = [
-			'decision' => $decision,
-			'by' => $decisionBy,
-			'at' => (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM),
-			'note' => $note,
-			'basis' => (string)($data['retentionCategory'] ?? ''),
-		];
-
-		$data['retentionDecisionLog'] = $log;
-
+	private function recordDecision(array $data, string $decision, string $note): array {
+		return (new RetentionRules())->withDecision(
+			data: $data,
+			entry: ['decision' => $decision, 'by' => ($this->userSession->getUser()?->getUID() ?? 'system'), 'note' => $note]
+		);
 	}//end recordDecision()
 
-	/**
-	 * Stamp the idempotency marker without otherwise changing the object.
-	 *
-	 * @param RetentionRun $run The evaluation run.
-	 * @param array<string, mixed> $data The publication data.
-	 *
-	 * @return void
-	 *
-	 * @spec exclude internal idempotency helper.
-	 */
-	private function stampEvaluated(RetentionRun $run, array $data): void {
-		$data['retentionLastEvaluatedAt'] = $run->now->format(DateTimeInterface::ATOM);
-		$this->save(objectService: $run->objectService, register: $run->register, schema: $run->schema, data: $data);
-
-	}//end stampEvaluated()
-
-	/**
-	 * Persist a publication via the consumed OR ObjectService (auto-audited).
-	 *
-	 * @param object $objectService The OR ObjectService.
-	 * @param string $register The register id.
-	 * @param string $schema The schema id.
-	 * @param array<string, mixed> $data The publication data.
-	 *
-	 * @return mixed The saved ObjectEntity (OR returns an entity; normalise at the call site).
-	 *
-	 * @spec exclude thin pass-through to the consumed OR saveObject (ADR-022).
-	 */
-	private function save(object $objectService, string $register, string $schema, array $data): mixed {
-		return $objectService->saveObject(
-			object: $data,
-			register: $register,
-			schema: $schema,
-			uuid: (string)($data['id'] ?? $data['uuid'] ?? ''),
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-	}//end save()
 }//end class

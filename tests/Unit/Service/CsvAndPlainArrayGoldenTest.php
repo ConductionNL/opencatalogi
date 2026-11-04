@@ -24,6 +24,8 @@
  *
  * @covers \OCA\OpenCatalogi\Service\WooService
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionRun
+ * @uses \OCA\OpenCatalogi\Service\RetentionRules
  * @covers \OCA\OpenCatalogi\Service\BomCsv
  * @covers \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */

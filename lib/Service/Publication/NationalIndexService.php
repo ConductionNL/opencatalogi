@@ -226,7 +226,7 @@ class NationalIndexService implements NationalIndexServiceInterface {
 	 *
 	 * @throws IndexUnreachableException When no gateway is installed.
 	 */
-	private function gateway(array $services=self::GATEWAY_SERVICES): object {
+	private function gateway(array $services = self::GATEWAY_SERVICES): object {
 		foreach ($services as $service) {
 			try {
 				return $this->container->get($service);
@@ -285,7 +285,6 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		}
 
 		return $result;
-
 	}//end deliver()
 
 	/**
@@ -309,7 +308,6 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		}
 
 		return $sources;
-
 	}//end channelSources()
 
 	/**
@@ -330,7 +328,6 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		}
 
 		return $slug;
-
 	}//end sourceSlugFor()
 
 	/**
@@ -351,7 +348,6 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		}
 
 		return null;
-
 	}//end resolveDeliveryEvent()
 
 	/**
@@ -422,7 +418,6 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		}
 
 		return $delivery;
-
 	}//end deliverThroughPublicationGateway()
 
 	/**
@@ -484,7 +479,6 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		}
 
 		return ['answer' => $answer, 'identifier' => $identifier];
-
 	}//end deliverToPlooi()
 
 	/**
@@ -594,6 +588,5 @@ class NationalIndexService implements NationalIndexServiceInterface {
 		}
 
 		return $response;
-
 	}//end handOver()
 }//end class

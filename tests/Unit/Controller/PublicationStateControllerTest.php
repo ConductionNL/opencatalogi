@@ -18,6 +18,9 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\PublicationStateController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -26,6 +29,7 @@ use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -57,6 +61,11 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** @var array<int, array<string, mixed>> Every saveObject() call, in order. */
 	private array $saves = [];
+
+	/** @var string|null The schema whose save throws, null when every save succeeds. */
+	private ?string $failingSchema = null;
+
+	private const GOLDEN = __DIR__ . '/fixtures/publication-withdraw-depublication-golden.json';
 
 	/** @var array<int, string> Every channel a withdrawal was sent to. */
 	private array $sent = [];
@@ -115,6 +124,10 @@ class PublicationStateControllerTest extends TestCase {
 		$this->objectService->method('saveObject')->willReturnCallback(
 			function (array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true) {
 				$this->saves[] = ['object' => $object, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac];
+				if ($schema === $this->failingSchema) {
+					throw new \RuntimeException('The save was refused.');
+				}
+
 				return $this->entity($object);
 			}
 		);
@@ -158,11 +171,8 @@ class PublicationStateControllerTest extends TestCase {
 			$this->request,
 			$l10n,
 			$session,
-			new PublicationStateService(),
 			$this->rights,
-			new DepublicationService($this->index, $this->createMock(LoggerInterface::class)),
-			$container,
-			$objects
+			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects))
 		);
 	}
 
@@ -245,6 +255,151 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdraw('p1')->getStatus());
 		$this->assertSame([], $this->saves);
 		$this->assertSame([], $this->sent);
+	}
+
+	/**
+	 * The withdrawals the golden replays: action, publication, update right, parameters, session, failing schema.
+	 *
+	 * @return array<string, array{0: string, 1: array<string, mixed>, 2: bool, 3: array<string, mixed>, 4: bool, 5: string|null}>
+	 */
+	public static function withdrawWorlds(): array {
+		$public = ['id' => 'p1', 'title' => 'Besluit', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
+		$scheduled = ['id' => 'p1', 'publicationDate' => '2099-09-01T09:00:00+00:00'];
+		$withdrawn = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'depublicationDate' => '2026-09-29T09:00:00+00:00'];
+		$reason = ['reason' => 'Wrong annex attached'];
+		$forged = ['reason' => 'Wrong annex attached', 'depublishedBy' => 'someone-else', 'userId' => 'someone-else', 'actor' => 'someone-else'];
+
+		return [
+			'withdraw public' => ['withdraw', $public, true, $reason, true, null],
+			'withdraw scheduled' => ['withdraw', $scheduled, true, $reason, true, null],
+			'withdraw draft' => ['withdraw', ['id' => 'p1'], true, $reason, true, null],
+			'withdraw withdrawn' => ['withdraw', $withdrawn, true, $reason, true, null],
+			'withdraw without the update right' => ['withdraw', $public, false, $reason, true, null],
+			'withdraw unreadable' => ['withdraw', [], true, $reason, true, null],
+			'withdraw anonymous' => ['withdraw', $public, true, $reason, false, null],
+			'withdraw without a reason' => ['withdraw', $public, true, [], true, null],
+			'withdraw with a forged actor' => ['withdraw', $public, true, $forged, true, null],
+			'withdraw, publication save refused' => ['withdraw', $public, true, $reason, true, 'publication_schema'],
+			'withdraw, depublication save refused' => ['withdraw', $public, true, $reason, true, 'depublication_schema'],
+			'withdraw file' => ['withdrawFile', $public, true, $reason, true, null],
+			'withdraw file without the update right' => ['withdrawFile', $public, false, $reason, true, null],
+			'withdraw file unreadable' => ['withdrawFile', [], true, $reason, true, null],
+			'withdraw file anonymous' => ['withdrawFile', $public, true, $reason, false, null],
+			'withdraw file without a reason' => ['withdrawFile', $public, true, [], true, null],
+			'withdraw file with a forged actor' => ['withdrawFile', $public, true, $forged, true, null],
+			'withdraw file, depublication save refused' => ['withdrawFile', $public, true, $reason, true, 'depublication_schema'],
+		];
+
+	}//end withdrawWorlds()
+
+	/**
+	 * What a withdrawal answers, saves and sends matches the recording.
+	 *
+	 * @param string $action withdraw or withdrawFile.
+	 * @param array<string, mixed> $publication The publication find() answers.
+	 * @param bool $mayUpdate Whether the caller may update it.
+	 * @param array<string, mixed> $params The request parameters.
+	 * @param bool $signedIn Whether there is a session.
+	 * @param string|null $failingSchema The schema whose save throws.
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('withdrawWorlds')]
+	public function testWithdrawMatchesTheRecording(string $action, array $publication, bool $mayUpdate, array $params, bool $signedIn, ?string $failingSchema): void {
+		$this->publication = $publication;
+		$this->rights->method('mayUpdate')->willReturn($mayUpdate);
+		$this->withParams($params);
+		$this->failingSchema = $failingSchema;
+		if ($signedIn === false) {
+			$this->user = null;
+		}
+
+		$response = $action === 'withdraw' ? $this->controller->withdraw('p1') : $this->controller->withdrawFile('p1', '4711');
+		$actual = $this->withoutMoments(
+			value: [
+				'status' => $response->getStatus(),
+				'data' => $response->getData(),
+				'saves' => array_map(static fn (array $save): array => array_diff_key($save, ['rbac' => true]), $this->saves),
+				'sent' => $this->sent,
+				'unpublished' => $this->fileService->unpublished,
+			]
+		);
+
+		$recorded = [];
+		if (file_exists(self::GOLDEN) === true) {
+			$recorded = json_decode((string)file_get_contents(self::GOLDEN), true);
+		}
+
+		$name = (string)$this->dataName();
+		if (getenv('GOLDEN_RECORD') === '1') {
+			$recorded[$name] = $actual;
+			file_put_contents(self::GOLDEN, json_encode($recorded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertArrayHasKey($name, $recorded, 'No recording for ' . $name);
+		$this->assertSame($recorded[$name], json_decode((string)json_encode($actual), true));
+
+	}//end testWithdrawMatchesTheRecording()
+
+	/**
+	 * Replace every moment within ten minutes of now with a marker, so a recording does not age.
+	 *
+	 * @param mixed $value The value to normalise.
+	 *
+	 * @return mixed The value with its current moments replaced.
+	 */
+	private function withoutMoments(mixed $value): mixed {
+		if (is_array($value) === true) {
+			return array_map(fn (mixed $item): mixed => $this->withoutMoments(value: $item), $value);
+		}
+
+		if (is_string($value) === true && preg_match('/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/', $value) === 1
+			&& abs(strtotime($value) - time()) < 600
+		) {
+			return '<now>';
+		}
+
+		return $value;
+	}//end withoutMoments()
+
+	/**
+	 * The depublication is stored without RBAC once the guard passed, the publication with RBAC.
+	 *
+	 * The depublication schema is writable by administrators only, so an editor's
+	 * withdrawal stores its record through the app after the update check.
+	 */
+	public function testTheDepublicationIsStoredWithoutRbacAfterTheGuard(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Wrong annex attached', 'depublishedBy' => 'someone-else']);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdraw('p1')->getStatus());
+		$this->assertSame(['publication_schema', 'depublication_schema'], array_column($this->saves, 'schema'));
+		$this->assertTrue($this->saves[0]['rbac']);
+		$this->assertFalse($this->saves[1]['rbac']);
+		$this->assertSame('redacteur', $this->saves[1]['object']['depublishedBy']);
+
+		$this->saves = [];
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertSame(['depublication_schema'], array_column($this->saves, 'schema'));
+		$this->assertFalse($this->saves[0]['rbac']);
+		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
+	}
+
+	/** A caller the guard refuses stores no depublication, for either withdrawal. */
+	public function testARefusedCallerStoresNoDepublication(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->withParams(['reason' => 'Wrong annex attached', 'depublishedBy' => 'redacteur']);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdraw('p1')->getStatus());
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertSame([], $this->saves);
+
+		$this->publication = [];
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->withdraw('p1')->getStatus());
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertSame([], $this->saves);
 	}
 
 	/** REQ-PPW-002: a withdrawal without a reason is refused. */

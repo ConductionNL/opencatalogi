@@ -44,7 +44,7 @@ class DemoDataServiceTest extends TestCase {
 		mkdir($this->appDir . '/lib/Settings', 0777, true);
 
 		$this->appManager = $this->createMock(IAppManager::class);
-		$this->container  = $this->createMock(ContainerInterface::class);
+		$this->container = $this->createMock(ContainerInterface::class);
 
 		$this->appManager->method('getAppPath')->willReturn($this->appDir);
 		$this->appManager->method('getAppVersion')->willReturn('1.2.3');
@@ -94,10 +94,10 @@ class DemoDataServiceTest extends TestCase {
 			public array $seen = [];
 
 			/**
-			 * @param string               $appId   Config identity.
-			 * @param array<string, mixed> $data    Descriptor.
-			 * @param string               $version App version.
-			 * @param boolean              $force   Whether the version gate is bypassed.
+			 * @param string $appId Config identity.
+			 * @param array<string, mixed> $data Descriptor.
+			 * @param string $version App version.
+			 * @param boolean $force Whether the version gate is bypassed.
 			 *
 			 * @return array<string, mixed>
 			 */

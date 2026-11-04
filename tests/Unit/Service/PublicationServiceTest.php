@@ -4473,7 +4473,7 @@ class PublicationServiceTest extends TestCase {
 	 * query-service mock whose read-rule guard the test decides.
 	 *
 	 * @param MockObject $objectService The ObjectService mock.
-	 * @param \Closure   $guard         What applySchemaScopeReadRuleGuard() returns for its input.
+	 * @param \Closure $guard What applySchemaScopeReadRuleGuard() returns for its input.
 	 *
 	 * @return MockObject The query-service mock, for further expectations.
 	 */
@@ -4600,8 +4600,8 @@ class PublicationServiceTest extends TestCase {
 	 */
 	public static function federationListPaths(): array {
 		return [
-			'ultra-fast path'       => [[]],
-			'searchPublications()'  => [['_include_catalogs' => 'true']],
+			'ultra-fast path' => [[]],
+			'searchPublications()' => [['_include_catalogs' => 'true']],
 		];
 	}
 

@@ -30,3 +30,7 @@ lib/Settings/example-sets/**/*.pdf linguist-generated=true
 # Reference value lists copied from the official government sources.
 lib/Settings/tooi_waardelijsten.json linguist-vendored=true
 lib/Settings/dcat_waardelijsten.json linguist-vendored=true
+
+# Verbatim copies of a published schema: keep their bytes, so their hashes hold.
+tests/Unit/Service/fixtures/diwoo-0.9.8/*.xsd -text
+tests/Unit/Service/fixtures/diwoo-0.9.8/sitemap-*.xml -text

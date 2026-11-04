@@ -60,9 +60,11 @@ class DcatMappingService {
 	 * Constructor.
 	 *
 	 * @param DcatVocabularyService $vocabulary The HVD-category / data-theme resolver.
+	 * @param DcatDistributionMapper $distributions The file-to-distribution mapper.
 	 */
 	public function __construct(
 		private readonly DcatVocabularyService $vocabulary,
+		private readonly DcatDistributionMapper $distributions = new DcatDistributionMapper(),
 	) {
 
 	}//end __construct()
@@ -98,17 +100,7 @@ class DcatMappingService {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md
 	 */
 	public function resolveHvd(?array $schema): ?array {
-		$annotation = ($schema['x-dcat'] ?? null);
-		if (is_array($annotation) === false) {
-			return null;
-		}
-
-		$hvd = ($annotation['hvd'] ?? null);
-		if (is_array($hvd) === false || $hvd === []) {
-			return null;
-		}
-
-		return $hvd;
+		return $this->annotationBlock(annotation: ($schema['x-dcat'] ?? null), key: 'hvd');
 	}//end resolveHvd()
 
 	/**
@@ -133,16 +125,32 @@ class DcatMappingService {
 			return null;
 		}
 
-		if (is_array($annotation) === true && isset($annotation['mapping']) === true
-			&& is_array($annotation['mapping']) === true
-			&& empty($annotation['mapping']) === false
-		) {
-			return $annotation['mapping'];
+		// Unannotated (or malformed) schema → conservative default.
+		return ($this->annotationBlock(annotation: $annotation, key: 'mapping') ?? self::DEFAULT_MAPPING);
+	}//end resolveMapping()
+
+	/**
+	 * A non-empty array under one key of an `x-dcat` annotation.
+	 *
+	 * @param mixed $annotation The schema's `x-dcat` value.
+	 * @param string $key The block to read (`mapping`, `hvd`).
+	 *
+	 * @return array<string, mixed>|null The block, or null when the annotation or block is not a non-empty array.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
+	 */
+	private function annotationBlock(mixed $annotation, string $key): ?array {
+		if (is_array($annotation) === false) {
+			return null;
 		}
 
-		// Unannotated (or malformed) schema → conservative default.
-		return self::DEFAULT_MAPPING;
-	}//end resolveMapping()
+		$block = ($annotation[$key] ?? null);
+		if (is_array($block) === false || $block === []) {
+			return null;
+		}
+
+		return $block;
+	}//end annotationBlock()
 
 	/**
 	 * Map a single publication object to a `dcat:Dataset` graph fragment.
@@ -192,32 +200,58 @@ class DcatMappingService {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
 	 */
 	private function mapProperties(DcatDatasetSource $source, array $mapping): array {
-		$properties = [];
-		foreach ($mapping as $dcatProperty => $sourcePath) {
-			$value = $this->extractValue(object: $source->publication, path: $sourcePath);
-			if ($value === null || $value === '' || $value === []) {
-				continue;
-			}
+		$values = $this->mappedValues(publication: $source->publication, mapping: $mapping);
+		$lists = $this->listValues(values: $values, mapping: $mapping);
+		$properties = array_replace($values, $lists);
+		if (isset($values['dcat:theme']) === true && isset($lists['dcat:theme']) === false) {
+			$properties['dcat:theme'] = $this->themeNode(source: $source, value: $values['dcat:theme']);
+		}
 
-			if (str_ends_with($sourcePath, '[]') === true && is_array($value) === true) {
-				$properties[$dcatProperty] = $this->scalarList(values: $value);
-				continue;
-			}
-
-			if ($dcatProperty === 'dcat:theme') {
-				$theme = $this->themeNode(source: $source, value: $value);
-				if ($theme !== null) {
-					$properties['dcat:theme'] = $theme;
-				}
-
-				continue;
-			}
-
-			$properties[$dcatProperty] = $value;
-		}//end foreach
-
-		return $properties;
+		return array_filter($properties, static fn ($value) => $value !== null);
 	}//end mapProperties()
+
+	/**
+	 * The publication value at each mapped path, leaving out empty values.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 * @param array<string, string> $mapping The resolved DCAT property map.
+	 *
+	 * @return array<string, mixed> The non-empty values, in mapping order.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
+	 */
+	private function mappedValues(array $publication, array $mapping): array {
+		$values = [];
+		foreach ($mapping as $dcatProperty => $sourcePath) {
+			$value = $this->extractValue(object: $publication, path: $sourcePath);
+			if (in_array($value, [null, '', []], true) === false) {
+				$values[$dcatProperty] = $value;
+			}
+		}
+
+		return $values;
+	}//end mappedValues()
+
+	/**
+	 * The scalar elements of each array value mapped through a `[]` path.
+	 *
+	 * @param array<string, mixed> $values The non-empty mapped values.
+	 * @param array<string, string> $mapping The resolved DCAT property map.
+	 *
+	 * @return array<string, array<int, string>> The list properties.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
+	 */
+	private function listValues(array $values, array $mapping): array {
+		$lists = [];
+		foreach ($values as $dcatProperty => $value) {
+			if (str_ends_with($mapping[$dcatProperty], '[]') === true && is_array($value) === true) {
+				$lists[$dcatProperty] = $this->scalarList(values: $value);
+			}
+		}
+
+		return $lists;
+	}//end listValues()
 
 	/**
 	 * The non-empty scalar elements of a list, as strings.
@@ -229,21 +263,14 @@ class DcatMappingService {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-schema-driven-dcat-mapping-via-x-dcat-annotation-dcat-004
 	 */
 	private function scalarList(array $values): array {
-		return array_values(
-			array_filter(
-				array_map(
-					static function ($entry) {
-						if (is_scalar($entry) === true) {
-							return (string)$entry;
-						}
+		$strings = [];
+		foreach ($values as $entry) {
+			if (is_scalar($entry) === true && (string)$entry !== '') {
+				$strings[] = (string)$entry;
+			}
+		}
 
-						return null;
-					},
-					$values
-				),
-				static fn ($entry) => $entry !== null && $entry !== ''
-			)
-		);
+		return $strings;
 	}//end scalarList()
 
 	/**
@@ -381,9 +408,7 @@ class DcatMappingService {
 	 */
 	private function resolveThemeUri(array $publication, mixed $sourceValue): ?string {
 		$onObject = ($publication['tooiThemaUri'] ?? $publication['themeUri'] ?? null);
-		if (is_string($onObject) === true
-			&& (str_starts_with($onObject, 'http://') === true || str_starts_with($onObject, 'https://') === true)
-		) {
+		if ($this->isHttpUri(value: $onObject) === true) {
 			return $onObject;
 		}
 
@@ -394,6 +419,20 @@ class DcatMappingService {
 
 		return $this->vocabulary->resolveDataTheme($candidate);
 	}//end resolveThemeUri()
+
+	/**
+	 * Whether a value is an http(s) URI string.
+	 *
+	 * @param mixed $value The value to test.
+	 *
+	 * @return bool True for a string starting with `http://` or `https://`.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md
+	 */
+	private function isHttpUri(mixed $value): bool {
+		return is_string($value) === true
+			&& (str_starts_with($value, 'http://') === true || str_starts_with($value, 'https://') === true);
+	}//end isHttpUri()
 
 	/**
 	 * Resolve the HVD category for a publication from its schema `x-dcat.hvd` block
@@ -407,26 +446,54 @@ class DcatMappingService {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md
 	 */
 	private function resolveHvdCategory(array $publication, DcatMappingProfile $profile): ?array {
-		$hvd = $profile->hvd;
-		$catalogHvdDefault = $profile->catalogHvdDefault;
-		$categoryValue = null;
-		if (is_array($hvd) === true && isset($hvd['categoryProperty']) === true) {
-			$extracted = $this->extractValue(object: $publication, path: (string)$hvd['categoryProperty']);
-			if (is_scalar($extracted) === true) {
-				$categoryValue = (string)$extracted;
-			}
+		$categoryValue = $this->hvdPropertyValue(publication: $publication, profile: $profile);
+		if ($this->filled(value: $categoryValue) === false) {
+			$categoryValue = $profile->catalogHvdDefault;
 		}
 
-		if (($categoryValue === null || $categoryValue === '') && $catalogHvdDefault !== null && $catalogHvdDefault !== '') {
-			$categoryValue = $catalogHvdDefault;
-		}
-
-		if ($categoryValue === null || $categoryValue === '') {
+		if ($this->filled(value: $categoryValue) === false) {
 			return null;
 		}
 
 		return $this->vocabulary->resolveHvdCategory($categoryValue);
 	}//end resolveHvdCategory()
+
+	/**
+	 * The publication's value at the schema's HVD category property, as a string.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 * @param DcatMappingProfile $profile The schema HVD config.
+	 *
+	 * @return string|null The scalar value, or null when no property is set or the value is not scalar.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md
+	 */
+	private function hvdPropertyValue(array $publication, DcatMappingProfile $profile): ?string {
+		$property = ($profile->hvd['categoryProperty'] ?? null);
+		if ($property === null) {
+			return null;
+		}
+
+		$extracted = $this->extractValue(object: $publication, path: (string)$property);
+		if (is_scalar($extracted) === false) {
+			return null;
+		}
+
+		return (string)$extracted;
+	}//end hvdPropertyValue()
+
+	/**
+	 * Whether a value is set and not the empty string.
+	 *
+	 * @param mixed $value The value to test.
+	 *
+	 * @return bool False for null and for ''.
+	 *
+	 * @spec openspec/specs/dcat-ap-harvest/spec.md
+	 */
+	private function filled(mixed $value): bool {
+		return $value !== null && $value !== '';
+	}//end filled()
 
 	/**
 	 * Map a single published file attachment to a `dcat:Distribution`.
@@ -437,46 +504,10 @@ class DcatMappingService {
 	 * @return array<string, mixed>|null The distribution node, or null when the
 	 *                                   file has no public download URL.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-attachments-rendered-as-distributions-with-stable-iris-dcat-006
 	 */
 	public function mapDistribution(array $file, ?string $defaultLicense): ?array {
-		$downloadUrl = ($file['downloadUrl'] ?? $file['accessUrl'] ?? null);
-		if (is_string($downloadUrl) === false || $downloadUrl === '') {
-			return null;
-		}
-
-		$extension = strtolower((string)($file['extension'] ?? ''));
-		$mediaType = $this->mediaTypeFor(extension: $extension, mimetype: ($file['mimetype'] ?? $file['mimeType'] ?? null));
-
-		$distribution = [
-			// IRI is the stable public download URL → harvesters dedupe across runs.
-			'@id' => $downloadUrl,
-			'@type' => 'dcat:Distribution',
-			'dcat:downloadURL' => ['@id' => $downloadUrl],
-			'dcat:accessURL' => ['@id' => (string)($file['accessUrl'] ?? $downloadUrl)],
-		];
-
-		$title = ($file['title'] ?? $file['name'] ?? null);
-		if ($title !== null && $title !== '') {
-			$distribution['dct:title'] = (string)$title;
-		}
-
-		if ($mediaType !== null) {
-			$distribution['dcat:mediaType'] = $mediaType;
-			$distribution['dct:format'] = $this->formatUriFor(extension: $extension);
-		}
-
-		if (isset($file['size']) === true && is_numeric($file['size']) === true) {
-			$distribution['dcat:byteSize'] = (int)$file['size'];
-		}
-
-		if ($defaultLicense !== null && $defaultLicense !== '') {
-			$distribution['dct:license'] = ['@id' => $defaultLicense];
-		}
-
-		return $distribution;
+		return $this->distributions->map(file: $file, defaultLicense: $defaultLicense);
 	}//end mapDistribution()
 
 	/**
@@ -494,20 +525,12 @@ class DcatMappingService {
 		$name = ($organisation['title'] ?? $organisation['name'] ?? $defaults['publisherName'] ?? null);
 		$uri = ($organisation['oin'] ?? $organisation['tooiUri'] ?? $organisation['uri'] ?? $defaults['publisherUri'] ?? null);
 
-		if (($name === null || $name === '') && ($uri === null || $uri === '')) {
+		$named = array_filter(['@id' => $uri, 'foaf:name' => $name], $this->filled(...));
+		if ($named === []) {
 			return null;
 		}
 
-		$agent = ['@type' => 'foaf:Agent'];
-		if ($uri !== null && $uri !== '') {
-			$agent['@id'] = (string)$uri;
-		}
-
-		if ($name !== null && $name !== '') {
-			$agent['foaf:name'] = (string)$name;
-		}
-
-		return $agent;
+		return ['@type' => 'foaf:Agent'] + array_map('strval', $named);
 	}//end buildPublisher()
 
 	/**
@@ -522,19 +545,19 @@ class DcatMappingService {
 	 */
 	private function resolvePublisher(array $publication, array $defaults): ?array {
 		$objectPublisher = ($publication['publisher'] ?? $publication['organisation'] ?? null);
-		if (is_array($objectPublisher) === true) {
-			$agent = $this->buildPublisher(organisation: $objectPublisher, defaults: $defaults);
-			if ($agent !== null) {
-				return $agent;
-			}
-		} elseif (is_string($objectPublisher) === true && $objectPublisher !== '') {
+		if (is_string($objectPublisher) === true && $objectPublisher !== '') {
 			return [
 				'@type' => 'foaf:Agent',
 				'foaf:name' => $objectPublisher,
 			];
 		}
 
-		return $this->buildPublisher(organisation: ($defaults['organisation'] ?? null), defaults: $defaults);
+		$agent = null;
+		if (is_array($objectPublisher) === true) {
+			$agent = $this->buildPublisher(organisation: $objectPublisher, defaults: $defaults);
+		}
+
+		return ($agent ?? $this->buildPublisher(organisation: ($defaults['organisation'] ?? null), defaults: $defaults));
 	}//end resolvePublisher()
 
 	/**
@@ -600,47 +623,4 @@ class DcatMappingService {
 		return date('c', $timestamp);
 	}//end isoDate()
 
-	/**
-	 * Resolve a media type for a file from its extension or supplied mimetype.
-	 *
-	 * @param string $extension The lowercase file extension.
-	 * @param string|null $mimetype An explicit mimetype when available.
-	 *
-	 * @return string|null The IANA media type, or null when unknown.
-	 */
-	private function mediaTypeFor(string $extension, ?string $mimetype): ?string {
-		if (is_string($mimetype) === true && $mimetype !== '') {
-			return $mimetype;
-		}
-
-		$map = [
-			'pdf' => 'application/pdf',
-			'csv' => 'text/csv',
-			'json' => 'application/json',
-			'xml' => 'application/xml',
-			'xlsx' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-			'docx' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-			'zip' => 'application/zip',
-			'txt' => 'text/plain',
-			'html' => 'text/html',
-			'odt' => 'application/vnd.oasis.opendocument.text',
-			'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
-		];
-
-		return ($map[$extension] ?? null);
-	}//end mediaTypeFor()
-
-	/**
-	 * Build the EU file-type authority URI for an extension (DCAT `dct:format`).
-	 *
-	 * @param string $extension The lowercase file extension.
-	 *
-	 * @return array<string, string> A `dct:format` node referencing the EU authority.
-	 */
-	private function formatUriFor(string $extension): array {
-		return [
-			'@id' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($extension),
-		];
-
-	}//end formatUriFor()
 }//end class

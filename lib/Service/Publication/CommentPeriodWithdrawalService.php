@@ -117,7 +117,6 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		}
 
 		return $this->objectService;
-
 	}//end getObjectService()
 
 	/**
@@ -153,7 +152,6 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		}
 
 		return $counts;
-
 	}//end withdrawClosedPeriods()
 
 	/**
@@ -318,7 +316,6 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		);
 
 		return (string)($saved['id'] ?? '');
-
 	}//end saveDepublication()
 
 	/**
@@ -350,6 +347,5 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		}
 
 		return $channels;
-
 	}//end channels()
 }//end class

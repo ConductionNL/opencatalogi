@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:diwoo="https://standaarden.overheid.nl/diwoo/metadata/"
+        xmlns:sitemap="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd   https://standaarden.overheid.nl/diwoo/metadata/ https://standaarden.overheid.nl/diwoo/metadata/0.9.8/xsd/diwoo-metadata.xsd">
+  <!-- 
+    Alle eigenschappen zoals aanwezig in diwoo-metadata.xsd
+  -->
+   <url>
+    <!-- url waarop Juinen publiceert -->
+      <loc>https://www.juinen.nl/downloads/2020/Convenant_busvervoer_2020_juinen.pdf</loc>
+      <!-- optionele eigenschappen van sitemap:url -->
+      <lastmod>2022-09-02T00:00:00+02:00</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>1</priority>
+      <diwoo:Document>
+         <diwoo:DiWoo>
+            <diwoo:creatiedatum>2022-09-02</diwoo:creatiedatum>
+            <diwoo:geldigheid>
+               <diwoo:begindatum>2023-01-01T00:00:00Z</diwoo:begindatum>
+               <diwoo:einddatum>2023-12-31T22:59:59+01:00</diwoo:einddatum>
+            </diwoo:geldigheid>
+            <diwoo:identifiers>
+               <diwoo:identifier>2022213555/HBM</diwoo:identifier>
+               <diwoo:identifier>2022223076</diwoo:identifier>
+            </diwoo:identifiers>
+            <diwoo:publisher resource="https://identifier.overheid.nl/tooi/id/gemeente/gm9999">gemeente Juinen</diwoo:publisher>
+            <diwoo:verantwoordelijke resource="https://identifier.overheid.nl/tooi/id/gemeente/gm9999">gemeente Juinen</diwoo:verantwoordelijke>
+            <diwoo:medeverantwoordelijken>
+               <diwoo:medeverantwoordelijke resource="https://identifier.overheid.nl/tooi/id/gemeente/gm9998">gemeente Terweksel</diwoo:medeverantwoordelijke>
+            </diwoo:medeverantwoordelijken>
+            <!-- opsteller en naamOpsteller hier beide; kan niet afgedwongen in XSD dat er maar één mag-->
+            <diwoo:opsteller resource="https://identifier.overheid.nl/tooi/id/gemeente/gm9999">gemeente Juinen</diwoo:opsteller>
+            <diwoo:naamOpsteller>Hekkings Busmaatschappij</diwoo:naamOpsteller>
+            <diwoo:language resource="http://publications.europa.eu/resource/authority/language/NLD">Nederlands</diwoo:language>
+            <diwoo:format resource="http://publications.europa.eu/resource/authority/file-type/PDF">pdf</diwoo:format>
+            <diwoo:omschrijvingen>
+               <diwoo:omschrijving>De convenantpartners maken bekend dat de reguliere busdienst wordt opgeheven; deze wordt vervangen door de HBM (Hekkings Busmaatschappij), waarbij Hekking optreedt als chauffeur. Bekend onder zaaknummer 2022213555/HBM en documentnummer 2022223076.</diwoo:omschrijving>
+            </diwoo:omschrijvingen>
+            <diwoo:titelcollectie>
+               <diwoo:officieleTitel>Convenant busvervoer 2020 gemeente Juinen</diwoo:officieleTitel>
+               <diwoo:verkorteTitels>
+                  <diwoo:verkorteTitel>Convenant busvervoer 2020 Juinen</diwoo:verkorteTitel>
+               </diwoo:verkorteTitels>
+               <diwoo:alternatieveTitels>
+                  <diwoo:alternatieveTitel>Convenant busvervoer 2020 gemeente Juinen en Ter Weksel</diwoo:alternatieveTitel>
+               </diwoo:alternatieveTitels>
+            </diwoo:titelcollectie>
+            <diwoo:classificatiecollectie>
+               <diwoo:informatiecategorieen>
+                  <diwoo:informatiecategorie resource="https://identifier.overheid.nl/tooi/def/thes/kern/c_aab6bfc7">overig besluit van algemene strekking</diwoo:informatiecategorie>
+               </diwoo:informatiecategorieen>
+               <diwoo:documentsoorten>
+                  <diwoo:documentsoort resource="https://identifier.overheid.nl/tooi/def/thes/kern/c_386e74cb">convenant</diwoo:documentsoort>
+               </diwoo:documentsoorten>
+               <diwoo:themas>
+                  <diwoo:thema resource="https://identifier.overheid.nl/tooi/def/thes/top/c_319461d7">openbaar vervoer</diwoo:thema>
+                  <diwoo:thema resource="https://identifier.overheid.nl/tooi/def/thes/top/c_f411e390">rail- en wegverkeer</diwoo:thema>
+               </diwoo:themas>
+               <diwoo:trefwoorden>
+                  <diwoo:trefwoord>Busvervoer</diwoo:trefwoord>
+                  <diwoo:trefwoord>Hekkings Busmaatschappij</diwoo:trefwoord>
+               </diwoo:trefwoorden>
+            </diwoo:classificatiecollectie>
+            <diwoo:aggregatiekenmerk>convenanten</diwoo:aggregatiekenmerk>
+            <diwoo:isPartOf resource="https://www.juinen.nl/downloads/bus">dossier Busvervoer</diwoo:isPartOf>
+            <diwoo:hasParts>
+               <diwoo:hasPart resource="https://www.juinen.nl/downloads/2020/Convenant_busvervoer_2020_juinen_bijlage1.pdf">Bijlage 1 Convenant busvervoer 2020 gemeente Juinen</diwoo:hasPart>
+            </diwoo:hasParts>
+            <diwoo:documenthandelingen>
+               <diwoo:documenthandeling>
+                  <diwoo:soortHandeling resource="https://identifier.overheid.nl/tooi/def/thes/kern/c_e1ec050e">ondertekening</diwoo:soortHandeling>
+                  <diwoo:atTime>2022-09-10T09:35:59-04:00</diwoo:atTime>
+                  <diwoo:wasAssociatedWith resource="https://identifier.overheid.nl/tooi/id/gemeente/gm9999">gemeente Juinen</diwoo:wasAssociatedWith>
+               </diwoo:documenthandeling>
+            </diwoo:documenthandelingen>
+            <diwoo:documentrelaties>
+               <diwoo:documentrelatie>
+                  <diwoo:role resource="https://identifier.overheid.nl/tooi/def/thes/kern/c_75fac459">verwijst naar</diwoo:role>
+                  <diwoo:relation resource="https://www.juinen.nl/downloads/2020/Convenant_busvervoer_2018_juinen.pdf">Convenant busvervoer 2018 gemeente Juinen</diwoo:relation>
+               </diwoo:documentrelatie>
+            </diwoo:documentrelaties>
+            <diwoo:redenVerwijderingVervanging resource="https://identifier.overheid.nl/tooi/def/thes/kern/c_098c1346">correctie privacygevoelige gegevens</diwoo:redenVerwijderingVervanging>
+         </diwoo:DiWoo>
+         <diwoo:extraMetadata>
+            <diwoo:namespace>https://www.juinen.nl/documenten</diwoo:namespace>
+            <diwoo:prefix>juin</diwoo:prefix>
+            <diwoo:extraMetadatavelden>
+               <diwoo:extraMetadataveld>
+                  <diwoo:key>betrokken gemeenten</diwoo:key>
+                  <diwoo:values>
+                     <diwoo:value>Juinen</diwoo:value>
+                     <diwoo:value>Terweksel</diwoo:value>
+                  </diwoo:values>
+               </diwoo:extraMetadataveld>
+            </diwoo:extraMetadatavelden>
+         </diwoo:extraMetadata>
+      </diwoo:Document>
+   </url>
+</urlset>

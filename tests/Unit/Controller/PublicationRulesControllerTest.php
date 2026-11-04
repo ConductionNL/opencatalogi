@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Controller\PublicationRuleChecks;
 use OCA\OpenCatalogi\Controller\PublicationRulesController;
 use OCA\OpenCatalogi\Service\Publication\DecisionPublicationValidator;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
@@ -68,8 +69,7 @@ class PublicationRulesControllerTest extends TestCase {
 			$this->config,
 			$l10n,
 			$this->userSession,
-			new PublicationRuleService(),
-			new DecisionPublicationValidator(),
+			new PublicationRuleChecks(new PublicationRuleService(), new DecisionPublicationValidator())
 		);
 
 	}//end setUp()
@@ -147,6 +147,65 @@ class PublicationRulesControllerTest extends TestCase {
 
 	}//end testADecisionThatFailsItsTypeIsRefusedWithTheReason()
 
+	/**
+	 * Validating a decision without a session is refused with 401, before the decision is read.
+	 */
+	public function testValidatingADecisionWithoutASessionIsRefused(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn(null);
+		$this->withParams(
+			[
+				'decision' => ['id' => 'b1'],
+				'decisionType' => ['publicationObligation' => true, 'responseTermDays' => 42],
+			]
+		);
+
+		$args = [];
+		foreach ((new \ReflectionClass(PublicationRulesController::class))->getConstructor()->getParameters() as $param) {
+			$type = $param->getType();
+			$name = ($type instanceof \ReflectionNamedType ? $type->getName() : null);
+			$args[] = match (true) {
+				$param->getName() === 'appName' => 'opencatalogi',
+				$name === IRequest::class => $this->request,
+				$name === IAppConfig::class => $this->config,
+				$name === IUserSession::class => $session,
+				default => $this->createMock($name),
+			};
+		}
+
+		$response = (new PublicationRulesController(...$args))->validateDecision();
+
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus());
+		$this->assertSame(['error' => 'not-logged-in'], $response->getData());
+
+	}//end testValidatingADecisionWithoutASessionIsRefused()
+
+	/**
+	 * A rule the public search cannot evaluate answers 503, not an empty result.
+	 */
+	public function testThePublicSearchRefusesAnUnreadableRuleWith503(): void {
+		$this->withParams(
+			[
+				'records' => [['@type' => 'besluit', 'status' => 'definitief', 'title' => 'Een']],
+				'rules' => [
+					[
+						'recordType' => 'besluit',
+						'enabled' => true,
+						'anonymousProperties' => ['title'],
+						'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
+					],
+				],
+				'q' => '',
+			]
+		);
+
+		$response = $this->controller->publicSearch();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('unreadable-rule', $response->getData()['error']);
+
+	}//end testThePublicSearchRefusesAnUnreadableRuleWith503()
+
 	public function testThePublicSearchRunsOverTheProjections(): void {
 		$this->withParams(
 			[
@@ -165,5 +224,29 @@ class PublicationRulesControllerTest extends TestCase {
 		$this->assertSame(0, $data['total']);
 
 	}//end testThePublicSearchRunsOverTheProjections()
+
+	public function testEntriesThatAreNotRecordsAreLeftOutOfThePreviewAndTheSearch(): void {
+		$this->withParams(
+			[
+				'rule' => [
+					'recordType' => 'besluit',
+					'anonymousProperties' => ['title'],
+					'conditions' => [],
+				],
+				'sample' => ['not a record', 7, ['@type' => 'besluit', 'title' => 'Een']],
+				'records' => ['not a record', ['@type' => 'besluit', 'title' => 'Dorpsstraat']],
+				'rules' => ['not a rule', ['recordType' => 'besluit', 'enabled' => true, 'anonymousProperties' => ['title']]],
+				'q' => 'Dorpsstraat',
+			]
+		);
+
+		$preview = $this->controller->previewRule()->getData();
+		$search = $this->controller->publicSearch()->getData();
+
+		$this->assertSame([['title' => 'Een']], $preview['wouldPublish']);
+		$this->assertSame(1, $search['total']);
+		$this->assertSame('Dorpsstraat', $search['results'][0]['title']);
+
+	}//end testEntriesThatAreNotRecordsAreLeftOutOfThePreviewAndTheSearch()
 
 }//end class

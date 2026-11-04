@@ -723,7 +723,7 @@ OC.L10N.register(
         "What is published, what is archived, and what retention says to do next.": "Qué está publicado, qué está archivado y qué dicta la retención a continuación.",
         "What people looked at and what they downloaded.": "Qué miró la gente y qué descargó.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Cuán maduros son los catálogos y cuán integradas están las entradas del directorio.",
-        "Store": "Tienda",
+        "Marketplace": "Tienda",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Instale registros, esquemas y flujos publicados por otras organizaciones.",
         "Could not load the catalog": "No se pudo cargar el catálogo",
         "Reload the page to try again.": "Vuelva a cargar la página para intentarlo de nuevo.",

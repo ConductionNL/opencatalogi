@@ -36,6 +36,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Tests for the slug route of PublicationsController::show().
@@ -104,7 +105,7 @@ class PublicationsControllerSlugTest extends TestCase {
 		$appConfig = $this->createMock(IAppConfig::class);
 		$appConfig->method('getValueString')->willReturnCallback(fn (string $app, string $key, string $default = '') => $default);
 
-		$request = $this->request = $this->createMock(IRequest::class);
+		$request = $this->request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getParams')->willReturn([]);
 		$request->server = [];
 
@@ -130,13 +131,13 @@ class PublicationsControllerSlugTest extends TestCase {
 	/**
 	 * A publication double with a uuid in a register and schema.
 	 *
-	 * @param string $uuid     The uuid.
-	 * @param int    $register The register id.
-	 * @param int    $schema   The schema id.
+	 * @param string $uuid The uuid.
+	 * @param int $register The register id.
+	 * @param int $schema The schema id.
 	 *
 	 * @return \OCA\OpenRegister\Db\ObjectEntity The double.
 	 */
-	private function publication(string $uuid, int $register=1, int $schema=1): \OCA\OpenRegister\Db\ObjectEntity {
+	private function publication(string $uuid, int $register = 1, int $schema = 1): \OCA\OpenRegister\Db\ObjectEntity {
 		$mock = $this->getMockBuilder(\OCA\OpenRegister\Db\ObjectEntity::class)
 			->disableOriginalConstructor()
 			->onlyMethods(['getSchema', 'getRegister', 'getUuid'])
@@ -153,14 +154,14 @@ class PublicationsControllerSlugTest extends TestCase {
 	 * Answer searchObjects() from a map keyed by "<field>:<value>:<register>:<schema>".
 	 *
 	 * @param array<string, list<object>> $answers The canned answers.
-	 * @param array                       $catalog The catalogue show() resolves.
+	 * @param array $catalog The catalogue show() resolves.
 	 *
 	 * @return void
 	 */
-	private function given(array $answers, array $catalog=['schemas' => [1], 'registers' => [1]]): void {
+	private function given(array $answers, array $catalog = ['schemas' => [1], 'registers' => [1]]): void {
 		$this->catalogiService->method('getCatalogBySlug')->willReturn(['title' => 'Woo'] + $catalog);
 		$this->objectService->method('searchObjects')->willReturnCallback(
-			function (array $query, bool $_rbac=true) use ($answers): array {
+			function (array $query, bool $_rbac = true) use ($answers): array {
 				$this->queries[] = $query;
 				$this->rbacFlags[] = $_rbac;
 				$self = $query['@self'] ?? [];

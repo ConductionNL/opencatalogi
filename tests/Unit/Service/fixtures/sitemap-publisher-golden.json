@@ -1,0 +1,648 @@
+{
+    "organisation with name and TOOI id": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation without name": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation with a blank name": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation with a padded name": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "Gemeente Eerste",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "Gemeente Eerste",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation without TOOI id": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation with a TOOI code, not a TOOI id": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation not found": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": ""
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": ""
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "lookup fails": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": ""
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": ""
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "TOOI id on the publication, organisation by uuid": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "Gemeente Zuiddrecht",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": [
+            {
+                "findByUuid": "org-uuid-1"
+            }
+        ]
+    },
+    "organisation is a TOOI id": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": "",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": "",
+                    "@resource": "https://identifier.overheid.nl/tooi/id/gemeente/gm0855"
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": []
+    },
+    "no organisation": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": ""
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": ""
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": []
+    },
+    "nothing at all": {
+        "runs": [
+            {
+                "publisher": {
+                    "#text": ""
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            },
+            {
+                "publisher": {
+                    "#text": ""
+                },
+                "violations": [
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no TOOI identifier"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "publisher",
+                        "reason": "organisation has no name"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "officieleTitel",
+                        "reason": "publication has no title"
+                    },
+                    {
+                        "documentLoc": "https://example.com/a.pdf",
+                        "axis": "informatiecategorie",
+                        "reason": "category resolves to no member of the informatiecategorieen waardelijst"
+                    }
+                ]
+            }
+        ],
+        "lookups": []
+    }
+}

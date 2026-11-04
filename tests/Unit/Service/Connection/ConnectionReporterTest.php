@@ -84,7 +84,7 @@ class ConnectionReporterTest extends TestCase {
 	 */
 	protected function setUp(): void {
 		$this->dispatched = [];
-		$this->config     = [];
+		$this->config = [];
 
 		$this->dispatcher = $this->createMock(IEventDispatcher::class);
 		$this->dispatcher->method('dispatchTyped')->willReturnCallback(
@@ -206,7 +206,7 @@ class ConnectionReporterTest extends TestCase {
 	public function testABroadcastIsThrottled(): void {
 		$reporter = $this->reporter();
 		$accepted = ['https://peer.example.nl/api' => true];
-		$refused  = ['https://peer.example.nl/api' => false];
+		$refused = ['https://peer.example.nl/api' => false];
 
 		$this->assertTrue($reporter->reportBroadcast($accepted));
 

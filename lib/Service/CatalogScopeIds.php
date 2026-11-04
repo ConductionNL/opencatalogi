@@ -1,4 +1,5 @@
 <?php
+
 /**
  * The register and schema ids a catalogue scopes the public search to.
  *
@@ -47,7 +48,7 @@ final class CatalogScopeIds {
 	 */
 	public static function forCatalog(array $catalog): array {
 		$registers = self::normalizeIds(value: ($catalog['registers'] ?? []));
-		$schemas   = self::normalizeIds(value: ($catalog['schemas'] ?? []));
+		$schemas = self::normalizeIds(value: ($catalog['schemas'] ?? []));
 
 		if (($registers === [] && self::namesReferences(value: ($catalog['registers'] ?? [])) === true)
 			|| ($schemas === [] && self::namesReferences(value: ($catalog['schemas'] ?? [])) === true)
@@ -56,7 +57,6 @@ final class CatalogScopeIds {
 		}
 
 		return ['registers' => $registers, 'schemas' => $schemas];
-
 	}//end forCatalog()
 
 	/**
@@ -80,7 +80,7 @@ final class CatalogScopeIds {
 	public static function normalizeIds(mixed $value): array {
 		if (is_string($value) === true) {
 			$decoded = json_decode($value, true);
-			$value   = [];
+			$value = [];
 			if (is_array($decoded) === true) {
 				$value = $decoded;
 			}
@@ -96,7 +96,6 @@ final class CatalogScopeIds {
 		);
 
 		return array_values(array_filter(array_map('intval', $digits), static fn (int $id): bool => $id > 0));
-
 	}//end normalizeIds()
 
 	/**
@@ -122,6 +121,5 @@ final class CatalogScopeIds {
 		}
 
 		return is_array($value) === true && $value !== [];
-
 	}//end namesReferences()
 }//end class
