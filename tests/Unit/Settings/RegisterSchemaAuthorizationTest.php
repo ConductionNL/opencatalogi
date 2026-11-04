@@ -54,7 +54,7 @@ class RegisterSchemaAuthorizationTest extends TestCase {
 	/**
 	 * Anyone reads these; only administrators write them.
 	 */
-	private const PUBLIC_READ = ['read' => ['public'], 'create' => ['admin'], 'update' => ['admin'], 'delete' => ['admin']];
+	private const PUBLIC_READ = ['read' => [['group' => 'public', 'crossOrganisation' => true]], 'create' => ['admin'], 'update' => ['admin'], 'delete' => ['admin']];
 
 	/**
 	 * The exact block of each schema that holds a secret, personal data or something an administrator alone writes.
@@ -75,13 +75,13 @@ class RegisterSchemaAuthorizationTest extends TestCase {
 		'serviceCatalogueEntry' => self::PUBLIC_READ,
 		'caseTypeDefinition' => self::PUBLIC_READ,
 		'notice' => [
-			'read' => [['group' => 'public', 'match' => ['startDate' => ['$lte' => '$now'], 'endDate' => ['$gte' => '$now']]], 'authenticated'],
+			'read' => [['group' => 'public', 'match' => ['startDate' => ['$lte' => '$now'], 'endDate' => ['$gte' => '$now']], 'crossOrganisation' => true], 'authenticated'],
 			'create' => ['admin'],
 			'update' => ['admin'],
 			'delete' => ['admin'],
 		],
 		'knowledgeArticle' => [
-			'read' => [['group' => 'public', 'match' => ['draft' => false]], 'authenticated'],
+			'read' => [['group' => 'public', 'match' => ['draft' => false], 'crossOrganisation' => true], 'authenticated'],
 			'create' => ['admin'],
 			'update' => ['admin'],
 			'delete' => ['admin'],

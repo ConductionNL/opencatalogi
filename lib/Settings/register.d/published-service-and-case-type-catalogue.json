@@ -41,7 +41,7 @@
 				"title": "Service catalogue entry",
 				"version": "0.1.1",
 				"authorization": {
-					"read": ["public"],
+					"read": [{"group": "public", "crossOrganisation": true}],
 					"create": ["admin"],
 					"update": ["admin"],
 					"delete": ["admin"]
@@ -174,7 +174,7 @@
 				"title": "Case type definition",
 				"version": "0.1.2",
 				"authorization": {
-					"read": ["public"],
+					"read": [{"group": "public", "crossOrganisation": true}],
 					"create": ["admin"],
 					"update": ["admin"],
 					"delete": ["admin"]
@@ -275,7 +275,7 @@
 				"title": "Knowledge article",
 				"version": "0.1.2",
 				"authorization": {
-					"read": [{"group": "public", "match": {"draft": false}}, "authenticated"],
+					"read": [{"group": "public", "match": {"draft": false}, "crossOrganisation": true}, "authenticated"],
 					"create": ["admin"],
 					"update": ["admin"],
 					"delete": ["admin"]
