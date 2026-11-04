@@ -76,6 +76,7 @@ use ReflectionMethod;
  * @uses \OCA\OpenCatalogi\Controller\AnswersCrossOriginRequests
  * @uses \OCA\OpenCatalogi\Controller\BannerDismissals
  * @uses \OCA\OpenCatalogi\Controller\CommunityPages
+ * @uses \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses \OCA\OpenCatalogi\Controller\ForwardsRegisterAccess
  * @uses \OCA\OpenCatalogi\Controller\ReadsOpenRegisterResults
  * @uses \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
@@ -90,6 +91,7 @@ use ReflectionMethod;
  * @uses \OCA\OpenCatalogi\Service\Publication\DepublicationService
  * @uses \OCA\OpenCatalogi\Service\Publication\InspectionService
  * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
+ * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  */
 class DelegatedAdminSavesTest extends TestCase {
 
