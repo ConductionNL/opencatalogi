@@ -305,8 +305,10 @@ class OoapiService implements OoapiServiceInterface {
 			return ['items' => [], 'pageNumber' => $page->number, 'pageSize' => $page->size, 'hasNext' => false];
 		}
 
+		// The same organisation scope as the single read (fetchObject), so a listed
+		// resource can always be read and nothing is listed that a read would refuse.
 		$query = $this->collectionQuery(scope: $scope, page: $page);
-		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: true, deleted: false);
 
 		$items = [];
 		foreach (($result['results'] ?? []) as $object) {
@@ -423,9 +425,11 @@ class OoapiService implements OoapiServiceInterface {
 	}//end getResource()
 
 	/**
-	 * Whether an object belongs to the scope: its catalog and its schema.
+	 * Whether an object belongs to the scope: its catalog, its register and its schema.
 	 *
-	 * An archived or foreign-catalog object reads as absent (D6 addendum).
+	 * An archived or foreign-catalog object reads as absent (D6 addendum). A scope
+	 * whose catalog has no id holds nothing, so an object without a catalog is
+	 * never served for it.
 	 *
 	 * @param array<string, mixed> $data The object.
 	 * @param OoapiScope $scope The catalog's OOAPI scope.
@@ -435,7 +439,12 @@ class OoapiService implements OoapiServiceInterface {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md
 	 */
 	private static function inScope(array $data, OoapiScope $scope): bool {
-		return ($data['catalog'] ?? null) === ($scope->catalog['id'] ?? null)
+		if ($scope->catalogId() === '') {
+			return false;
+		}
+
+		return ($data['catalog'] ?? null) === $scope->catalog['id']
+			&& (string)($data['@self']['register'] ?? '') === $scope->register
 			&& (string)($data['@self']['schema'] ?? '') === $scope->schema;
 	}//end inScope()
 

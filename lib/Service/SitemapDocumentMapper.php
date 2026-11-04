@@ -22,6 +22,9 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use DateTimeImmutable;
+use DateTimeZone;
+use Exception;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 
 /**
@@ -39,16 +42,17 @@ class SitemapDocumentMapper {
 	 * @var array<string, array{0: string, 1: string}>
 	 */
 	private const OPTIONAL_AXES = [
+		'diwoo:titelcollectie' => ['officieleTitel', 'publication has no title'],
 		'diwoo:classificatiecollectie' => ['informatiecategorie', 'category resolves to no member of the informatiecategorieen waardelijst'],
 		'diwoo:documenthandelingen' => ['soortHandeling', 'handling type does not resolve to a DiWoo value-list member'],
 	];
 
 	/**
-	 * Per-request cache of resolved organisation → TOOI identifier lookups.
+	 * Per-request cache of organisation rows, by organisation uuid; an empty array when not found.
 	 *
-	 * @var array<string, string|null>
+	 * @var array<string, array<string, mixed>>
 	 */
-	private array $orgTooiCache = [];
+	private array $organisationCache = [];
 
 	/**
 	 * Constructor.
@@ -65,9 +69,10 @@ class SitemapDocumentMapper {
 	}//end __construct()
 
 	/**
-	 * Maps publication + file metadata into a DIWOO Document XML array structure.
+	 * Maps publication + file metadata into one `url` entry of a DiWoo sitemap.
 	 *
-	 * Used to generate items inside diwoo:Documents.
+	 * The entry holds `loc`, `lastmod` and `diwoo:Document`, in the order the
+	 * sitemaps.org `url` type requires.
 	 *
 	 * The three Woo-index-controlled axes — informatiecategorie, publisher
 	 * `@resource`, and soortHandeling — are resolved through the bundled TOOI/DiWoo
@@ -80,15 +85,20 @@ class SitemapDocumentMapper {
 	 * @param array $file The file metadata belonging to that publication
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference)
 	 *
-	 * @return array A DIWOO metadata array ready for XMLResponse
+	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array} The url entry, ready for XMLResponse.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
 	 */
 	public function map(array $publication, array $file, array &$violations = []): array {
 		$loc = ($file['downloadUrl'] ?? '');
 		$diwoo = $this->diwooCore(publication: $publication, file: $file);
 		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
 			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
+		}
+
+		if ($diwoo['diwoo:publisher']['#text'] === '') {
+			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no name');
 		}
 
 		// Each optional axis is its element, or null with the violation that omits it.
@@ -101,11 +111,15 @@ class SitemapDocumentMapper {
 			$this->addViolation(violations: $violations, loc: $loc, axis: self::OPTIONAL_AXES[$key][0], reason: self::OPTIONAL_AXES[$key][1]);
 		}
 
-		return ['diwoo:Document' => ['diwoo:DiWoo' => $diwoo]];
+		return [
+			'loc' => $loc,
+			'lastmod' => self::utcDateTime(value: ($file['published'] ?? $publication['@self']['updated'] ?? 'now')),
+			'diwoo:Document' => ['diwoo:DiWoo' => $diwoo],
+		];
 	}//end map()
 
 	/**
-	 * The DiWoo location, dates, publisher and format of one file's document.
+	 * The DiWoo creation date, publisher and format of one file's document.
 	 *
 	 * @param array $publication The publication.
 	 * @param array $file The file.
@@ -116,13 +130,10 @@ class SitemapDocumentMapper {
 	 */
 	private function diwooCore(array $publication, array $file): array {
 		$created = ($publication['@self']['created'] ?? 'now');
-		$published = ($file['published'] ?? $publication['@self']['updated'] ?? 'now');
 
 		return [
-			'loc' => ($file['downloadUrl'] ?? ''),
-			'lastmod' => date('Y-m-d H:i:s', strtotime($published)),
 			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
-			'diwoo:publisher' => $this->publisherElement(publication: $publication, file: $file),
+			'diwoo:publisher' => $this->publisherElement(publication: $publication),
 			'diwoo:format' => [
 				'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($file['extension']),
 				'#text' => strtolower($file['extension']),
@@ -145,27 +156,32 @@ class SitemapDocumentMapper {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	private function optionalAxes(array $publication, array $file): array {
-		$handlingTime = ($file['published'] ?? $publication['publicationDate'] ?? date('Y-m-d H:i:s'));
+		$handlingTime = self::utcDateTime(value: ($file['published'] ?? $publication['publicationDate'] ?? 'now'));
 		return [
+			'diwoo:titelcollectie' => $this->titleElement(publication: $publication),
 			'diwoo:classificatiecollectie' => $this->categoryElement(publication: $publication),
 			'diwoo:documenthandelingen' => $this->handlingElement(publication: $publication, handlingTime: $handlingTime),
 		];
 	}//end optionalAxes()
 
 	/**
-	 * The publisher element: the owner as text, with `@resource` bound to a valid
-	 * TOOI organisatie URI, or without `@resource` when there is none.
+	 * The publisher element: the owning organisation's name as text, with `@resource`
+	 * bound to a valid TOOI organisatie URI, or without `@resource` when there is none.
+	 *
+	 * The text is never a user: no owner id and no display name reach the public
+	 * sitemap. Without an organisation name it is empty, and map() reports it.
 	 *
 	 * @param array $publication The publication as returned from ObjectService
-	 * @param array $file The file metadata belonging to that publication
 	 *
-	 * @return array{'#text': mixed, '@resource'?: string} The publisher element.
+	 * @return array{'#text': string, '@resource'?: string} The publisher element.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function publisherElement(array $publication, array $file): array {
-		$publisher = ['#text' => ($file['owner'] ?? $publication['@self']['owner'] ?? '')];
-		$orgUri = $this->tooiVocabulary->resolveOrganisatie($this->resolveOrganisationTooiIdentifier(publication: $publication));
+	private function publisherElement(array $publication): array {
+		$organisation = $this->organisationRow(publication: $publication);
+		$publisher = ['#text' => trim((string)$this->stringOrNull(value: ($organisation['name'] ?? null)))];
+		$tooiIdentifier = $this->resolveOrganisationTooiIdentifier(publication: $publication, organisation: $organisation);
+		$orgUri = $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier);
 		if ($orgUri !== null) {
 			$publisher['@resource'] = $orgUri;
 		}
@@ -206,13 +222,13 @@ class SitemapDocumentMapper {
 	 * (default: ontvangst), or null when the handling type resolves to none.
 	 *
 	 * @param array $publication The publication as returned from ObjectService
-	 * @param mixed $handlingTime The moment the document was made public.
+	 * @param string $handlingTime The moment the document was made public, as an xs:dateTime.
 	 *
 	 * @return array|null The documenthandelingen element, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function handlingElement(array $publication, mixed $handlingTime): ?array {
+	private function handlingElement(array $publication, string $handlingTime): ?array {
 		$handling = $this->tooiVocabulary->resolveSoortHandeling($this->stringOrNull(value: $publication['soortHandeling'] ?? null));
 		if ($handling === null) {
 			return null;
@@ -228,6 +244,50 @@ class SitemapDocumentMapper {
 			],
 		];
 	}//end handlingElement()
+
+	/**
+	 * The titelcollectie element with the publication's title as officieleTitel, or null without a title.
+	 *
+	 * @param array $publication The publication as returned from ObjectService
+	 *
+	 * @return array|null The titelcollectie element, or null.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	private function titleElement(array $publication): ?array {
+		$title = $this->stringOrNull(value: ($publication['title'] ?? null));
+		if ($title === null) {
+			return null;
+		}
+
+		return ['diwoo:officieleTitel' => trim($title)];
+	}//end titleElement()
+
+	/**
+	 * A date or time as an xs:dateTime in UTC; a value without a zone is read as UTC.
+	 *
+	 * A value that does not parse gives the epoch, as strtotime() did before.
+	 *
+	 * @param mixed $value The stored date or time.
+	 *
+	 * @return string The moment in DATE_ATOM form, such as 2024-02-02T08:00:00+00:00.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	private static function utcDateTime(mixed $value): string {
+		$utc = new DateTimeZone('UTC');
+		if (is_string($value) === false) {
+			$value = '@0';
+		}
+
+		try {
+			$moment = new DateTimeImmutable($value, $utc);
+		} catch (Exception $e) {
+			$moment = new DateTimeImmutable('@0', $utc);
+		}
+
+		return $moment->setTimezone($utc)->format(DATE_ATOM);
+	}//end utcDateTime()
 
 	/**
 	 * Return the value as a string, or null when it is not a non-empty string.
@@ -267,75 +327,76 @@ class SitemapDocumentMapper {
 	 * Resolve the TOOI organisatie identifier for a publication's owning organisation.
 	 *
 	 * Prefers a publication-level `tooiIdentifier`, then a `@self.organisation` value
-	 * that is already a TOOI id URI, and finally the organisation object's own
-	 * `tooiIdentifier` property (resolved once per organisation via OpenRegister and
-	 * cached for the request). Returns null when none resolves.
+	 * that is already a TOOI id URI, and finally the TOOI identifier of the
+	 * OpenRegister organisation. Returns null when none resolves.
 	 *
 	 * @param array<string, mixed> $publication The publication object.
+	 * @param array<string, mixed> $organisation The organisation row, empty when there is none.
 	 *
 	 * @return string|null The candidate TOOI organisatie identifier, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function resolveOrganisationTooiIdentifier(array $publication): ?string {
+	private function resolveOrganisationTooiIdentifier(array $publication, array $organisation): ?string {
 		$direct = $this->stringOrNull(value: ($publication['tooiIdentifier'] ?? null));
-		$organisation = $this->stringOrNull(value: ($publication['@self']['organisation'] ?? null));
-		if ($direct !== null || $organisation === null) {
+		$envelope = $this->stringOrNull(value: ($publication['@self']['organisation'] ?? null));
+		if ($direct !== null || $envelope === null) {
 			return $direct;
 		}
 
 		// Already a TOOI id URI on the publication envelope.
-		if (str_starts_with($organisation, TooiVocabularyService::ORG_ID_BASE) === true) {
-			return $organisation;
+		if (str_starts_with($envelope, TooiVocabularyService::ORG_ID_BASE) === true) {
+			return $envelope;
 		}
 
-		if (array_key_exists($organisation, $this->orgTooiCache) === false) {
-			$this->orgTooiCache[$organisation] = $this->fetchOrganisationTooiIdentifier(organisation: $organisation);
-		}
-
-		return $this->orgTooiCache[$organisation];
+		return $this->stringOrNull(value: ($organisation['tooiIdentifier'] ?? null));
 	}//end resolveOrganisationTooiIdentifier()
 
 	/**
-	 * Fetch an organisation's `tooiIdentifier` via OpenRegister by its UUID.
+	 * The publication's organisation row, looked up once per organisation uuid for the
+	 * request; empty when the envelope names none, names a TOOI id, or nothing is found.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	private function organisationRow(array $publication): array {
+		$organisation = $this->stringOrNull(value: ($publication['@self']['organisation'] ?? null));
+		if ($organisation === null || str_starts_with($organisation, TooiVocabularyService::ORG_ID_BASE) === true) {
+			return [];
+		}
+
+		if (array_key_exists($organisation, $this->organisationCache) === false) {
+			$this->organisationCache[$organisation] = $this->fetchOrganisation(organisation: $organisation);
+		}
+
+		return $this->organisationCache[$organisation];
+	}//end organisationRow()
+
+	/**
+	 * Read an OpenRegister organisation's name and TOOI identifier by its UUID.
+	 *
+	 * `@self.organisation` names an OpenRegister organisation, not an object, so it
+	 * is read through the OrganisationMapper. Only the name and the TOOI identifier
+	 * leave this method.
 	 *
 	 * @param string $organisation The organisation UUID.
 	 *
-	 * @return string|null The tooiIdentifier, or null when unresolved/unavailable.
+	 * @return array{name?: mixed, tooiIdentifier?: mixed} The organisation, or empty when unresolved or unavailable.
 	 *
-	 * @spec exclude Object-lookup plumbing for the DIWOO publisher binding.
+	 * @spec exclude Organisation-lookup plumbing for the DIWOO publisher binding.
 	 */
-	private function fetchOrganisationTooiIdentifier(string $organisation): ?string {
+	private function fetchOrganisation(string $organisation): array {
 		try {
-			$objectService = $this->openRegister->installedService('OCA\OpenRegister\Service\ObjectService', 'OpenRegister service is not available.');
-			$results = $objectService->searchObjects(query: ['@self' => ['uuid' => $organisation]], _rbac: false, _multitenancy: false);
+			$found = $this->openRegister
+				->installedService('OCA\OpenRegister\Db\OrganisationMapper', 'OpenRegister organisations are not available.')
+				->findByUuid($organisation);
+
+			return ['name' => $found->getName(), 'tooiIdentifier' => $found->getTooi()];
 		} catch (\Throwable $e) {
-			return null;
+			return [];
 		}
-
-		if (is_array($results) === false || empty($results) === true) {
-			return null;
-		}
-
-		return $this->stringOrNull(value: (self::rowData(row: $results[0])['tooiIdentifier'] ?? null));
-	}//end fetchOrganisationTooiIdentifier()
-
-	/**
-	 * A search row as an array: itself, its jsonSerialize(), or empty.
-	 *
-	 * @param mixed $row The row.
-	 *
-	 * @return array<string, mixed>
-	 */
-	private static function rowData(mixed $row): array {
-		if (is_array($row) === true) {
-			return $row;
-		}
-
-		if (method_exists($row, 'jsonSerialize') === true) {
-			return $row->jsonSerialize();
-		}
-
-		return [];
-	}//end rowData()
+	}//end fetchOrganisation()
 }//end class

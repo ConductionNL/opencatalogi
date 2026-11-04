@@ -723,7 +723,7 @@ OC.L10N.register(
         "What is published, what is archived, and what retention says to do next.": "Що опубліковано, що заархівовано і що приписує зберігання далі.",
         "What people looked at and what they downloaded.": "На що люди дивилися і що завантажили.",
         "How mature the catalogs are, and how deeply the directory listings are integrated.": "Наскільки зрілі каталоги і наскільки глибоко інтегровані записи каталогу.",
-        "Store": "Магазин",
+        "Marketplace": "Магазин",
         "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them.": "Встановлюйте реєстри, схеми та потоки, опубліковані іншими організаціями.",
         "Could not load the catalog": "Не вдалося завантажити каталог",
         "Reload the page to try again.": "Перезавантажте сторінку, щоб спробувати знову.",

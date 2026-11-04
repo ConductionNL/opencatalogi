@@ -1,0 +1,273 @@
+{
+    "no OpenRegister": {
+        "slug": "",
+        "log": [
+            {
+                "warning": "[RetentionService] OpenRegister ObjectService unavailable: not installed: OCA\\OpenRegister\\Service\\ObjectService"
+            }
+        ]
+    },
+    "no catalog register configured": {
+        "slug": "",
+        "log": []
+    },
+    "no catalog schema configured": {
+        "slug": "",
+        "log": []
+    },
+    "search fails": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "warning": "[RetentionService] catalog lookup for retention defaults failed: store down"
+            }
+        ]
+    },
+    "no catalogs": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "no results key": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "register held, schema not": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "schema held, register not": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "held, ids as text": {
+        "slug": "open",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "two catalogs hold it, the first wins": {
+        "slug": "open",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "held by an entity row": {
+        "slug": "open",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "held, no slug": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "scalar lists": {
+        "slug": "scalar",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "other uuids do not match": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "the same uuids match": {
+        "slug": "by-uuid",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "a zero-padded id is another id": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "a zero-padded schema id is another id": {
+        "slug": "",
+        "log": [
+            {
+                "search": {
+                    "query": {
+                        "@self": {
+                            "register": "5",
+                            "schema": "6"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    }
+}

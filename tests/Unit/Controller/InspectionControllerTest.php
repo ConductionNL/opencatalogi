@@ -56,6 +56,15 @@ class InspectionControllerTest extends TestCase {
 	private ServiceCatalogueService|MockObject $objects;
 	private InspectionController $controller;
 
+	/**
+	 * The object service stand-in of the current case.
+	 *
+	 * @var object|null
+	 */
+	private ?object $store = null;
+
+	private const GOLDEN = __DIR__ . '/fixtures/inspection-follow-golden.json';
+
 	protected function setUp(): void {
 		$this->request = $this->createMock(IRequest::class);
 		$this->config = $this->createMock(IAppConfig::class);
@@ -118,19 +127,43 @@ class InspectionControllerTest extends TestCase {
 	 * @return void
 	 */
 	private function storedInspection(array $inspection): void {
-		$objectService = new class($inspection) {
+		$this->objects->method('getObjectService')->willReturn($this->inspectionStore(inspection: $inspection));
+
+	}//end storedInspection()
+
+	/**
+	 * An object service stand-in that answers one stored inspection and records every read.
+	 *
+	 * @param array<string, mixed>|null $inspection The stored inspection, or null for an unknown id.
+	 *
+	 * @return object The stand-in.
+	 */
+	private function inspectionStore(?array $inspection): object {
+		$this->store = new class($inspection) {
+			/**
+			 * Every find() call, in order.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $reads = [];
+
 			public function __construct(
-				private readonly array $inspection,
+				private readonly ?array $inspection,
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
+				$this->reads[] = ['id' => $id, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac];
+				if ($this->inspection === null) {
+					throw new \RuntimeException('Object not found');
+				}
+
 				return $this->inspection;
 			}
 		};
-		$this->objects->method('getObjectService')->willReturn($objectService);
 
-	}//end storedInspection()
+		return $this->store;
+	}//end inspectionStore()
 
 	/**
 	 * Answer the `token` query parameter.
@@ -222,6 +255,148 @@ class InspectionControllerTest extends TestCase {
 		$this->assertArrayNotHasKey('documents', $response->getData());
 
 	}//end testAWrongTokenAnswersNotFoundAndNoDocuments()
+
+	/**
+	 * The link is read without RBAC, so an anonymous reader reaches an inspection only administrators may read.
+	 */
+	public function testTheLinkIsReadWithoutRbac(): void {
+		$this->storedInspection(
+			[
+				'record' => 'besluit-1',
+				'documents' => ['doc-1'],
+				'startDate' => '2026-09-01T00:00:00+00:00',
+				'endDate' => '2099-01-01T00:00:00+00:00',
+				'token' => 'the-token',
+			]
+		);
+		$this->withToken('the-token');
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->follow('inspection-1')->getStatus());
+		$this->assertSame([['id' => 'inspection-1', 'register' => '42', 'schema' => '42', 'rbac' => false]], $this->store->reads);
+
+	}//end testTheLinkIsReadWithoutRbac()
+
+	/**
+	 * A request without a token reads nothing, even when the register is down.
+	 */
+	public function testARequestWithoutATokenReadsNothing(): void {
+		$this->objects->expects($this->never())->method('getObjectService');
+		$this->withToken('');
+
+		$response = $this->controller->follow('inspection-1');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame(['error' => 'unknown-inspection'], $response->getData());
+
+	}//end testARequestWithoutATokenReadsNothing()
+
+	/**
+	 * A forged token answers nothing that is stored on the inspection.
+	 *
+	 * The stored values a reader could try (the opener, the record, the dates)
+	 * and a token one character off all answer the same 404.
+	 */
+	public function testAForgedTokenAnswersNothingStored(): void {
+		$stored = [
+			'record' => 'besluit-1',
+			'documents' => ['doc-1'],
+			'startDate' => '2026-09-01T00:00:00+00:00',
+			'endDate' => '2099-01-01T00:00:00+00:00',
+			'token' => 'the-token',
+			'openedBy' => 'beheerder',
+		];
+
+		foreach (['beheerder', 'besluit-1', 'inspection-1', 'the-token ', ' the-token', 'the-tokeN'] as $forged) {
+			$this->setUp();
+			$this->storedInspection($stored);
+			$this->withToken($forged);
+
+			$response = $this->controller->follow('inspection-1');
+
+			$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus(), $forged);
+			$this->assertSame(['error' => 'unknown-inspection'], $response->getData(), $forged);
+		}
+
+	}//end testAForgedTokenAnswersNothingStored()
+
+	/**
+	 * The stored inspections and presented tokens the follow golden replays.
+	 *
+	 * @return array<string, array{0: array<string, mixed>|null, 1: string}>
+	 */
+	public static function followWorlds(): array {
+		$open = [
+			'record' => 'besluit-1',
+			'documents' => ['doc-1', 'doc-2'],
+			'startDate' => '2026-09-01T00:00:00+00:00',
+			'endDate' => '2099-01-01T00:00:00+00:00',
+			'token' => 'the-token',
+			'openedBy' => 'beheerder',
+		];
+		$closed = array_replace($open, ['startDate' => '2020-01-01T00:00:00+00:00', 'endDate' => '2020-02-01T00:00:00+00:00']);
+
+		return [
+			'open window, right token' => [$open, 'the-token'],
+			'closed window, right token' => [$closed, 'the-token'],
+			'open window, wrong token' => [$open, 'a-guess'],
+			'open window, token prefix' => [$open, 'the-tok'],
+			'open window, token in other case' => [$open, 'THE-TOKEN'],
+			'closed window, wrong token' => [$closed, 'a-guess'],
+			'open window, no token presented' => [$open, ''],
+			'stored token empty, none presented' => [array_replace($open, ['token' => '']), ''],
+			'stored token missing, one presented' => [array_diff_key($open, ['token' => true]), 'the-token'],
+			'unreadable window, right token' => [array_replace($open, ['endDate' => 'not a date']), 'the-token'],
+			'unreadable window, wrong token' => [array_replace($open, ['endDate' => 'not a date']), 'a-guess'],
+			'documents not a list, right token' => [array_replace($open, ['documents' => 'doc-1']), 'the-token'],
+			'unknown id, a token presented' => [null, 'the-token'],
+		];
+
+	}//end followWorlds()
+
+	/**
+	 * What following a link answers, and which inspection it read, matches the recording.
+	 *
+	 * @param array<string, mixed>|null $inspection The stored inspection, or null for an unknown id.
+	 * @param string $token The token the reader presented.
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('followWorlds')]
+	public function testFollowMatchesTheRecording(?array $inspection, string $token): void {
+		$this->objects->method('getObjectService')->willReturn($this->inspectionStore(inspection: $inspection));
+		$this->withToken($token);
+
+		$response = $this->controller->follow('inspection-1');
+		$headers = $response->getHeaders();
+		$actual = [
+			'status' => $response->getStatus(),
+			'data' => $response->getData(),
+			'cors' => [($headers['Access-Control-Allow-Origin'] ?? null), ($headers['Access-Control-Allow-Credentials'] ?? null)],
+		];
+
+		// Whether a request without a token reads anything is pinned by its own test.
+		if ($token !== '') {
+			$actual['reads'] = array_map(
+				static fn (array $read): array => array_diff_key($read, ['rbac' => true]),
+				$this->store->reads
+			);
+		}
+
+		$recorded = [];
+		if (file_exists(self::GOLDEN) === true) {
+			$recorded = json_decode((string)file_get_contents(self::GOLDEN), true);
+		}
+
+		$name = (string)$this->dataName();
+		if (getenv('GOLDEN_RECORD') === '1') {
+			$recorded[$name] = $actual;
+			file_put_contents(self::GOLDEN, json_encode($recorded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertArrayHasKey($name, $recorded, 'No recording for ' . $name);
+		$this->assertSame($recorded[$name], json_decode((string)json_encode($actual), true));
+
+	}//end testFollowMatchesTheRecording()
 
 	/**
 	 * A register this app cannot read answers 503, never an empty inspection.
