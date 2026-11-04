@@ -53,7 +53,7 @@
 				"title": "Service status",
 				"version": "0.1.2",
 				"authorization": {
-					"read": ["public"],
+					"read": [{"group": "public", "crossOrganisation": true}],
 					"create": ["admin"],
 					"update": ["admin"],
 					"delete": ["admin"]
@@ -248,7 +248,7 @@
 				"title": "Notice board",
 				"version": "0.1.2",
 				"authorization": {
-					"read": ["public"],
+					"read": [{"group": "public", "crossOrganisation": true}],
 					"create": ["admin"],
 					"update": ["admin"],
 					"delete": ["admin"]
@@ -297,7 +297,7 @@
 				"title": "Notice",
 				"version": "0.1.2",
 				"authorization": {
-					"read": [{"group": "public", "match": {"startDate": {"$lte": "$now"}, "endDate": {"$gte": "$now"}}}, "authenticated"],
+					"read": [{"group": "public", "match": {"startDate": {"$lte": "$now"}, "endDate": {"$gte": "$now"}}, "crossOrganisation": true}, "authenticated"],
 					"create": ["admin"],
 					"update": ["admin"],
 					"delete": ["admin"]
