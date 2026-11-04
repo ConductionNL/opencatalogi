@@ -66,6 +66,7 @@ class CommentPeriodFakeObjectService {
 		?string $uuid = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
+		bool $_unowned = false,
 	): array {
 		$this->counter++;
 		$object['id'] = 'period-' . $this->counter;

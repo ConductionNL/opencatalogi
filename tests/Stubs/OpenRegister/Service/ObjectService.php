@@ -110,8 +110,13 @@ class ObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 		bool $silent = false,
+		bool $_validation = true,
 		?array $uploadedFiles = null,
 		mixed $currentUser = null,
+		bool $failIfExists = false,
+		bool $_unowned = false,
+		bool $_dedupOverride = false,
+		?string $_owner = null,
 	): ObjectEntity {
 		return new ObjectEntity();
 	}//end saveObject()

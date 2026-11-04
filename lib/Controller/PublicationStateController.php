@@ -321,7 +321,8 @@ class PublicationStateController extends Controller {
 	 *
 	 * The depublication schema is writable by administrators only. Callers reach
 	 * this only after guardWrite() found the publication and the update right
-	 * on it, so the save skips RBAC and stores this one depublication.
+	 * on it, so the save skips RBAC and stores this one depublication. The system
+	 * owns the record, so the editor who wrote it cannot rewrite or delete it.
 	 *
 	 * @param array<string, mixed> $depublication The depublication.
 	 *
@@ -338,7 +339,8 @@ class PublicationStateController extends Controller {
 				extend: [],
 				register: $configuration['register'],
 				schema: $configuration['schema'],
-				_rbac: false
+				_rbac: false,
+				_unowned: true
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(

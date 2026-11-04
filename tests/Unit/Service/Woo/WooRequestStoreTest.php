@@ -67,6 +67,9 @@ class WooRequestShapedObjectService {
 
 	public bool $findThrows = false;
 
+	/** @var array<string, mixed> The named arguments of the last save. */
+	public array $lastSave = [];
+
 	public function find(string $id, mixed ...$rest): mixed {
 		if ($this->findThrows === true) {
 			throw new RuntimeException('not found');
@@ -76,6 +79,8 @@ class WooRequestShapedObjectService {
 	}//end find()
 
 	public function saveObject(array $object, mixed ...$rest): mixed {
+		$this->lastSave = $rest;
+
 		return $this->answer;
 	}//end saveObject()
 
@@ -100,6 +105,20 @@ class WooRequestStoreTest extends TestCase {
 		$this->objects = new WooRequestShapedObjectService();
 
 	}//end setUp()
+
+	/**
+	 * The system owns a stored request, so whoever registered it cannot rewrite or delete it.
+	 *
+	 * @return void
+	 */
+	public function testAStoredRequestIsOwnedByTheSystem(): void {
+		$this->objects->answer = ['id' => 'request-1'];
+
+		$this->build()->save(record: ['reference' => 'R-1']);
+
+		$this->assertTrue($this->objects->lastSave['_unowned']);
+		$this->assertFalse($this->objects->lastSave['_rbac']);
+	}//end testAStoredRequestIsOwnedByTheSystem()
 
 	/**
 	 * Build the store.
