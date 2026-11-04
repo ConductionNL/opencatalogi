@@ -264,7 +264,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		);
 
 		return $properties;
-
 	}//end createMenuProperties()
 
 	/**
@@ -288,7 +287,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		$properties += $this->groupsProperty(description: 'Nextcloud groups that can access this item (RBAC)');
 
 		return $this->objectParameters(properties: $properties, required: ['order', 'name', 'link']);
-
 	}//end menuItemSchema()
 
 	/**
@@ -335,8 +333,8 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	/**
 	 * A function definition from its name, subject, action and description, and its parameters.
 	 *
-	 * @param array{0: string, 1: string, 2: string, 3: string} $head       Name, subject, action and description.
-	 * @param array<string, mixed>                               $parameters The parameters schema.
+	 * @param array{0: string, 1: string, 2: string, 3: string} $head Name, subject, action and description.
+	 * @param array<string, mixed> $parameters The parameters schema.
 	 *
 	 * @return array<string, mixed> The function definition
 	 *
@@ -357,7 +355,7 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * An object schema with these properties, of which these are required.
 	 *
 	 * @param array<string, mixed> $properties The property schemas.
-	 * @param array<int, string>   $required   The required property names.
+	 * @param array<int, string> $required The required property names.
 	 *
 	 * @return array<string, mixed> The object schema
 	 *
@@ -375,7 +373,7 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	/**
 	 * Property schemas of one JSON type, keyed by property name, each with its description.
 	 *
-	 * @param string                $type         The JSON type.
+	 * @param string $type The JSON type.
 	 * @param array<string, string> $descriptions The description per property name.
 	 *
 	 * @return array<string, array{type: string, description: string}> The property schemas
@@ -401,7 +399,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 */
 	private function groupsProperty(string $description): array {
 		return ['groups' => ['type' => 'array', 'description' => $description, 'items' => ['type' => 'string']]];
-
 	}//end groupsProperty()
 
 	/**
@@ -440,7 +437,7 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 * Run the action a function name stands for, or answer 404 for an unknown name.
 	 *
 	 * @param string $functionName Function name
-	 * @param array  $parameters   Function parameters
+	 * @param array $parameters Function parameters
 	 *
 	 * @return array Execution result
 	 *
@@ -557,7 +554,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 */
 	private function organisationFilter(): array {
 		return ['organisation' => $this->agent?->getOrganisation()];
-
 	}//end organisationFilter()
 
 	/**
@@ -606,7 +602,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return $this->menuItemsRejection(items: ($parameters['items'] ?? null));
-
 	}//end menuRejection()
 
 	/**
@@ -624,7 +619,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return $this->firstIncompleteItem(items: $items);
-
 	}//end menuItemsRejection()
 
 	/**
@@ -645,7 +639,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return null;
-
 	}//end firstIncompleteItem()
 
 	/**
@@ -670,7 +663,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return null;
-
 	}//end menuItemRejection()
 
 	/**
@@ -689,7 +681,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		$itemOrder = ($item['order'] ?? null);
 
 		return (empty($itemOrder) === true && $itemOrder !== 0);
-
 	}//end lacksOrder()
 
 	/**
@@ -721,7 +712,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return $menuData;
-
 	}//end menuData()
 
 	/**
@@ -808,7 +798,6 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return null;
-
 	}//end addItemRejection()
 
 	/**
@@ -1000,8 +989,8 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 	 *
 	 * The LLM sends the text 'null' for an absent value; it becomes the parameter's default.
 	 *
-	 * @param ReflectionMethod $method    The method to call.
-	 * @param array            $arguments The arguments of the magic call.
+	 * @param ReflectionMethod $method The method to call.
+	 * @param array $arguments The arguments of the magic call.
 	 *
 	 * @return array The arguments to spread into the call.
 	 *
@@ -1018,6 +1007,5 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		return $typedArguments;
-
 	}//end callArguments()
 }//end class

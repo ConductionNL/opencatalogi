@@ -36,7 +36,7 @@ class PublicationRightsTest extends TestCase {
 	/**
 	 * The rights service over the given mapper and handler.
 	 *
-	 * @param SchemaMapper      $mapper  The schema mapper.
+	 * @param SchemaMapper $mapper The schema mapper.
 	 * @param PermissionHandler $handler The permission handler.
 	 */
 	private function rights(SchemaMapper $mapper, PermissionHandler $handler): PublicationRights {

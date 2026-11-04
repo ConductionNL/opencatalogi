@@ -38,8 +38,8 @@ class PublicationRuleChecksTest extends TestCase {
 	 * @return void
 	 */
 	public function testThePublicSearchPassesOnlyArrayEntries(): void {
-		$rule    = ['recordType' => 'besluit'];
-		$record  = ['@type' => 'besluit'];
+		$rule = ['recordType' => 'besluit'];
+		$record = ['@type' => 'besluit'];
 		$service = $this->createMock(PublicationRuleServiceInterface::class);
 		$service->expects($this->once())->method('indexByRecordType')
 			->with([$rule])

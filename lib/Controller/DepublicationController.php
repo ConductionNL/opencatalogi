@@ -95,7 +95,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $user->getUID();
-
 	}//end actor()
 
 	/**
@@ -140,7 +139,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->storeDepublication(depublication: $depublication);
-
 	}//end depublish()
 
 	/**
@@ -155,7 +153,6 @@ class DepublicationController extends Controller {
 		}
 
 		return array_map('strval', $channels);
-
 	}//end requestedChannels()
 
 	/**
@@ -191,7 +188,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->withOutstanding(saved: $saved);
-
 	}//end storeDepublication()
 
 	/**
@@ -263,7 +259,6 @@ class DepublicationController extends Controller {
 		);
 
 		return $this->storeAcknowledgement(found: $found);
-
 	}//end acknowledgeWithdrawal()
 
 	/**
@@ -306,7 +301,6 @@ class DepublicationController extends Controller {
 		}
 
 		return ['id' => $id, 'config' => $config, 'depublication' => $depublication];
-
 	}//end findDepublication()
 
 	/**
@@ -328,7 +322,6 @@ class DepublicationController extends Controller {
 		);
 
 		return in_array($channel, $channels, true);
-
 	}//end withdrawalWasSent()
 
 	/**
@@ -355,6 +348,5 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->withOutstanding(saved: $saved);
-
 	}//end storeAcknowledgement()
 }//end class

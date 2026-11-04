@@ -36,7 +36,7 @@ class SitemapStandards {
 	/**
 	 * Constructor.
 	 *
-	 * @param SitemapService          $sitemapService    The sitemap service.
+	 * @param SitemapService $sitemapService The sitemap service.
 	 * @param StandardsVersionService $standardsVersions Compares the emitted standard version with the published one.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
@@ -57,13 +57,12 @@ class SitemapStandards {
 	 */
 	public function sitemapFiles(): array {
 		return $this->sitemapService->sitemapFiles();
-
 	}//end sitemapFiles()
 
 	/**
 	 * Validate the first page of one catalog's sitemap output.
 	 *
-	 * @param string $catalogSlug  The catalog slug.
+	 * @param string $catalogSlug The catalog slug.
 	 * @param string $categoryCode The sitemap file name.
 	 *
 	 * @return array The validation report.
@@ -88,6 +87,5 @@ class SitemapStandards {
 	 */
 	public function versionComparison(): array {
 		return $this->standardsVersions->diwooVersion();
-
 	}//end versionComparison()
 }//end class

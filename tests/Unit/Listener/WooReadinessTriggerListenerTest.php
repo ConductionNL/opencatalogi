@@ -53,7 +53,7 @@ class WooReadinessTriggerListenerTest extends TestCase {
 	/**
 	 * A catalogue entity.
 	 *
-	 * @param bool   $woo    Whether it publishes a Woo sitemap.
+	 * @param bool $woo Whether it publishes a Woo sitemap.
 	 * @param string $schema The schema id.
 	 */
 	private function catalogue(bool $woo, string $schema = '5'): ObjectEntity {

@@ -180,7 +180,6 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 		}
 
 		return $this->bareType(marker: $marker);
-
 	}//end markerTypeForSchema()
 
 	/**
@@ -290,7 +289,7 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	 * The formatted attachments of a publication, or none when they cannot be loaded.
 	 *
 	 * @param object $fileService The OpenRegister FileService.
-	 * @param mixed  $objectId    The publication id or uuid.
+	 * @param mixed $objectId The publication id or uuid.
 	 *
 	 * @return mixed The formatFiles `results`.
 	 *
@@ -639,8 +638,8 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	 *
 	 * Results that are not a list are refused with a warning: no refs.
 	 *
-	 * @param mixed  $publications The search results.
-	 * @param string $catalogSlug  The catalog slug.
+	 * @param mixed $publications The search results.
+	 * @param string $catalogSlug The catalog slug.
 	 *
 	 * @return array<int, array<string, string>>
 	 *

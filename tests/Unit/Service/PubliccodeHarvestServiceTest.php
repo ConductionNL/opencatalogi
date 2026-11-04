@@ -23,8 +23,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
-use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
 use DateTime;
+use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
 use OCA\OpenRegister\Db\Flow;
 use OCA\OpenRegister\Db\FlowRun;
 use OCA\OpenRegister\Db\FlowRunMapper;
@@ -39,6 +39,7 @@ use RuntimeException;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\PubliccodeHarvestService
+ * @uses \OCA\OpenCatalogi\Service\FlowReport
  */
 class PubliccodeHarvestServiceTest extends TestCase {
 
@@ -48,6 +49,13 @@ class PubliccodeHarvestServiceTest extends TestCase {
 	 * @var array<string, ObjectEntity>
 	 */
 	private array $store = [];
+
+	/**
+	 * The ObjectService calls made, in order.
+	 *
+	 * @var list<mixed>
+	 */
+	private array $calls = [];
 
 	/**
 	 * Skip where OpenRegister's real classes are not next to the app.
@@ -91,10 +99,16 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			->getMock();
 
 		$objects->method('find')->willReturnCallback(
-			fn (int|string $id): ?ObjectEntity => ($this->store[(string)$id] ?? null)
+			function (int|string $id, ...$rest): ?ObjectEntity {
+				$this->calls[] = ['find', self::passedArguments(method: 'find', arguments: func_get_args())];
+				return ($this->store[(string)$id] ?? null);
+			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array|ObjectEntity $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): ObjectEntity {
+			function (array|ObjectEntity $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, mixed ...$rest): ObjectEntity {
+				$arguments = self::passedArguments(method: 'saveObject', arguments: func_get_args());
+				$arguments['object'] = $object['slug'];
+				$this->calls[] = ['saveObject', $arguments];
 				$entity = ($this->store[$object['slug']] ?? new ObjectEntity());
 				if ($uuid !== null) {
 					$this->assertSame($uuid, $entity->getUuid(), 'An update must name the stored object.');
@@ -110,6 +124,34 @@ class PubliccodeHarvestServiceTest extends TestCase {
 
 		return $objects;
 	}//end objects()
+
+	/**
+	 * The arguments of an ObjectService call by parameter name, without those left at their default.
+	 *
+	 * Recorded by name and not by position, so the recording does not follow the
+	 * signature of whichever OpenRegister version is loaded.
+	 *
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $arguments The arguments the double received.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private static function passedArguments(string $method, array $arguments): array {
+		$named = [];
+		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $index => $parameter) {
+			if (array_key_exists($index, $arguments) === false) {
+				break;
+			}
+
+			if ($parameter->isDefaultValueAvailable() === true && $arguments[$index] === $parameter->getDefaultValue()) {
+				continue;
+			}
+
+			$named[$parameter->getName()] = $arguments[$index];
+		}
+
+		return $named;
+	}//end passedArguments()
 
 	/**
 	 * A container resolving the given services.
@@ -149,6 +191,145 @@ class PubliccodeHarvestServiceTest extends TestCase {
 
 		return $flow;
 	}//end flow()
+
+	/**
+	 * The status in several worlds, and a set-up run, match the recording.
+	 *
+	 * @return void
+	 */
+	public function testStatusAndSetUpMatchTheRecording(): void {
+		$flow = $this->flow(enabled: true);
+		$flow->setNodes([['type' => 'openregister.trigger-schedule', 'config' => ['cron' => '1 2 * * *']], ['type' => 'other', 'config' => ['runAs' => 'x']]]);
+		$other = $this->flow(enabled: true);
+		$other->setName('Another flow');
+		$twoSchedules = $this->flow(enabled: true);
+		$twoSchedules->setNodes(
+			[
+				['type' => 'openregister.trigger-schedule', 'config' => ['cron' => '0 1 * * *', 'runAs' => 'first-user']],
+				['type' => 'openregister.trigger-schedule', 'config' => ['cron' => '30 4 * * 1']],
+			]
+		);
+		$finished = new FlowRun();
+		$finished->setUuid('run-9');
+		$finished->setStatus('finished');
+		$finished->setTrigger('schedule');
+		$finished->setCreated(new DateTime('2026-10-03T03:15:00+00:00'));
+		$finished->setUpdated(new DateTime('2026-10-03T03:41:07+00:00'));
+		$finished->setError('shard 07: page 3 refused');
+		$finished->setLog([['transition' => 'shard-07', 'status' => 'failed'], ['transition' => 'end', 'status' => 'completed']]);
+		$runsByWorld = ['two schedule nodes, a finished run' => [$finished]];
+		$worlds = [
+			'nothing installed' => [[], [], null],
+			'openregister only, flow off' => [['openregister'], [], $this->flow(enabled: false)],
+			'integriq, nothing stored, flow on' => [['integriq', 'openregister'], [], $flow],
+			'integriq, source disabled' => [['integriq', 'openregister'], ['github-api' => ['isEnabled' => 'yes']], null],
+			'integriq, source enabled, two shards' => [['integriq', 'openregister'], ['github-api' => ['isEnabled' => true], 'opencatalogi-publiccode-github-01' => [], 'opencatalogi-publiccode-github-24' => []], null],
+			'only another flow' => [['openregister'], [], $other],
+			'two schedule nodes, a finished run' => [['openregister'], [], $twoSchedules],
+		];
+		$actual = [];
+		foreach ($worlds as $name => [$apps, $stored, $world]) {
+			$runs = ($runsByWorld[$name] ?? []);
+			$runMapper = $this->getMockBuilder(FlowRunMapper::class)->disableOriginalConstructor()->onlyMethods(['findAllRuns'])->getMock();
+			$runMapper->method('findAllRuns')->willReturnCallback(
+				function (?string $flowId = null, ?string $status = null, int $limit = 50) use ($runs): array {
+					$this->calls[] = ['findAllRuns', $flowId, $status, $limit];
+					return $runs;
+				}
+			);
+			$this->calls = [];
+			$this->store = [];
+			foreach ($stored as $slug => $data) {
+				$this->stored(slug: $slug, data: $data);
+			}
+
+			$services = [
+				'OCA\OpenRegister\Service\ObjectService' => $this->objects(),
+				'OCA\OpenRegister\Service\Flow\FlowService' => $this->flows(flows: array_filter([$world])),
+				'OCA\OpenRegister\Db\FlowRunMapper' => $runMapper,
+			];
+			$service = new PubliccodeHarvestService($this->apps(enabled: $apps), $this->container(services: $services), $this->createMock(LoggerInterface::class));
+			$actual[$name] = ['status' => $service->status(), 'calls' => $this->calls];
+		}
+
+		$this->store = [];
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(services: ['OCA\OpenRegister\Service\ObjectService' => $this->objects()]),
+			$this->createMock(LoggerInterface::class)
+		);
+		$this->calls = [];
+		$actual['set up'] = $service->setUp();
+		$actual['set up again'] = $service->setUp();
+		$actual['saved'] = array_map(static fn (ObjectEntity $entity): array => $entity->getObject(), $this->store);
+		$actual['calls'] = $this->calls;
+
+		$fixture = __DIR__ . '/fixtures/publiccode-harvest-status-golden.json';
+		$actual = json_decode((string)json_encode($actual), true);
+		if (getenv('GOLDEN_RECORD') === '1') {
+			file_put_contents($fixture, json_encode($actual, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($fixture), true), $actual);
+	}//end testStatusAndSetUpMatchTheRecording()
+
+	/**
+	 * A secret in the source, in the flow's nodes or in a run's log never reaches
+	 * the status, a queued run, the log lines or the saved synchronizations.
+	 *
+	 * @return void
+	 */
+	public function testNoSecretReachesStatusRunsLogsOrSyncs(): void {
+		$secret = 'ghp_PLANTED_SECRET_0123456789';
+		$this->stored(slug: 'github-api', data: ['isEnabled' => true, 'authentication' => ['token' => $secret], 'headers' => ['Authorization' => 'Bearer ' . $secret]]);
+		$this->storeAllShards();
+		$flow = $this->flow(enabled: true);
+		$flow->setNodes(
+			[
+				['type' => 'openregister.trigger-schedule', 'config' => ['cron' => '15 3 * * *', 'runAs' => 'admin', 'token' => $secret]],
+				['type' => 'integriq.call', 'config' => ['headers' => ['Authorization' => 'Bearer ' . $secret]]],
+			]
+		);
+		$run = $this->suspendedRun();
+		$run->setLog([['transition' => 'call', 'status' => 'completed', 'request' => ['headers' => ['Authorization' => 'Bearer ' . $secret]]]]);
+		$flows = $this->flows(flows: [$flow], methods: ['run']);
+		$flows->method('run')->willReturn($run);
+
+		$logged = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		foreach (['info', 'warning', 'error', 'debug', 'notice'] as $level) {
+			$logger->method($level)->willReturnCallback(
+				static function (string|\Stringable $message, array $context = []) use (&$logged, $level): void {
+					$logged[] = [$level, (string)$message, $context];
+				}
+			);
+		}
+
+		$service = new PubliccodeHarvestService(
+			$this->apps(enabled: ['integriq', 'openregister']),
+			$this->container(
+				services: [
+					'OCA\OpenRegister\Service\ObjectService' => $this->objects(),
+					'OCA\OpenRegister\Service\Flow\FlowService' => $flows,
+					'OCA\OpenRegister\Db\FlowRunMapper' => $this->runs(runs: [$run]),
+				]
+			),
+			$logger
+		);
+
+		$outputs = [
+			'status' => $service->status(),
+			'run' => $service->runNow(),
+			'set up' => $service->setUp(),
+			'saved' => array_map(static fn (ObjectEntity $entity): array => $entity->getObject(), array_filter($this->store, static fn (string $slug): bool => $slug !== 'github-api', ARRAY_FILTER_USE_KEY)),
+			'logged' => $logged,
+		];
+		$this->assertSame('run-1', $outputs['run']['uuid'], 'The run was queued.');
+		$this->assertNotSame([], $outputs['logged'], 'The set-up was logged.');
+		foreach ($outputs as $name => $output) {
+			$this->assertStringNotContainsString('PLANTED_SECRET', (string)json_encode($output), $name);
+		}
+	}//end testNoSecretReachesStatusRunsLogsOrSyncs()
 
 	/**
 	 * Without integriq the status says so and every action refuses.

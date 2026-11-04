@@ -60,11 +60,11 @@ interface CmsMigrationServiceInterface {
 	 * is how they rendered before.
 	 *
 	 * @param array<int, mixed> $blocks The stored content blocks.
-	 * @param string            $pageId A stable prefix for widget ids.
+	 * @param string $pageId A stable prefix for widget ids.
 	 *
 	 * @return array{body: array<string, mixed>, unmapped: array<int, string>, dropped: array<int, string>}
-	 *         The body, plus any block type with no mapping and any prop the
-	 *         target widget does not declare.
+	 *
+	 * Returns: The body, plus any block type with no mapping and any prop the target widget does not declare.
 	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
 	 */
@@ -73,11 +73,12 @@ interface CmsMigrationServiceInterface {
 	/**
 	 * The Portaliq page one OpenCatalogi page becomes.
 	 *
-	 * @param array<string, mixed> $page   The source page's fields.
-	 * @param string               $portal The portal slug it belongs to.
+	 * @param array<string, mixed> $page The source page's fields.
+	 * @param string $portal The portal slug it belongs to.
 	 *
 	 * @return array{page: array<string, mixed>, unmapped: array<int, string>, dropped: array<int, string>}
-	 *         The page to write, and what could not be carried.
+	 *
+	 * Returns: The page to write, and what could not be carried.
 	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
@@ -89,8 +90,8 @@ interface CmsMigrationServiceInterface {
 	 * `groups`, `hideBeforeLogin` and `icon` have no counterpart and are
 	 * reported by the caller rather than carried.
 	 *
-	 * @param array<string, mixed> $menu   The source menu's fields.
-	 * @param string               $portal The portal slug it belongs to.
+	 * @param array<string, mixed> $menu The source menu's fields.
+	 * @param string $portal The portal slug it belongs to.
 	 *
 	 * @return array{menu: array<string, mixed>, dropped: array<int, string>} The menu, and what is lost.
 	 *

@@ -187,10 +187,13 @@ class DirectoryUniqueGoldenTest extends TestCase {
 
 		return new class($data, $shape === 'throws') implements \JsonSerializable {
 			/**
-			 * @param array<string, mixed> $data   The serialised listing.
-			 * @param bool                 $throws Whether serialising fails.
+			 * @param array<string, mixed> $data The serialised listing.
+			 * @param bool $throws Whether serialising fails.
 			 */
-			public function __construct(private array $data, private bool $throws) {
+			public function __construct(
+				private array $data,
+				private bool $throws,
+			) {
 			}
 
 			/**

@@ -1,0 +1,300 @@
+{
+    "both answer": {
+        "diwoo": null,
+        "dcat": "3.1",
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": "3.1",
+            "status": "behind",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": "3.1",
+        "requests": [
+            [
+                "https://standaarden.overheid.nl/diwoo/metadata",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ],
+            [
+                "https://docs.geostandaarden.nl/dcat/",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ]
+        ]
+    },
+    "answer as a stream": {
+        "diwoo": null,
+        "dcat": "3.1",
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": "3.1",
+            "status": "behind",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": "3.1",
+        "requests": [
+            [
+                "https://standaarden.overheid.nl/diwoo/metadata",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ],
+            [
+                "https://docs.geostandaarden.nl/dcat/",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ]
+        ]
+    },
+    "not found": {
+        "diwoo": null,
+        "dcat": null,
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": null,
+            "status": "unknown",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": "3.1",
+        "requests": [
+            [
+                "https://standaarden.overheid.nl/diwoo/metadata",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ],
+            [
+                "https://docs.geostandaarden.nl/dcat/",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ]
+        ]
+    },
+    "redirect": {
+        "diwoo": null,
+        "dcat": null,
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": null,
+            "status": "unknown",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": "3.1",
+        "requests": [
+            [
+                "https://standaarden.overheid.nl/diwoo/metadata",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ],
+            [
+                "https://docs.geostandaarden.nl/dcat/",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ]
+        ]
+    },
+    "network error": {
+        "diwoo": null,
+        "dcat": null,
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": null,
+            "status": "unknown",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": null,
+        "requests": [
+            [
+                "https://standaarden.overheid.nl/diwoo/metadata",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ],
+            [
+                "https://docs.geostandaarden.nl/dcat/",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ]
+        ]
+    },
+    "ssrf refused": {
+        "diwoo": null,
+        "dcat": null,
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": null,
+            "status": "unknown",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": null,
+        "requests": []
+    },
+    "no version in the page": {
+        "diwoo": null,
+        "dcat": null,
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": null,
+            "status": "unknown",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": null,
+        "requests": [
+            [
+                "https://standaarden.overheid.nl/diwoo/metadata",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ],
+            [
+                "https://docs.geostandaarden.nl/dcat/",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ]
+        ]
+    },
+    "dcat same date twice": {
+        "diwoo": null,
+        "dcat": "3.0",
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": "3.0",
+            "status": "current",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": "3.0",
+        "requests": [
+            [
+                "https://standaarden.overheid.nl/diwoo/metadata",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ],
+            [
+                "https://docs.geostandaarden.nl/dcat/",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ]
+        ]
+    },
+    "dcat three digits": {
+        "diwoo": null,
+        "dcat": "3.01",
+        "diwoo again": null,
+        "diwooComparison": {
+            "declared": "0.9.8",
+            "published": null,
+            "status": "unknown"
+        },
+        "dcatComparison": {
+            "declared": "3.0",
+            "published": "3.01",
+            "status": "behind",
+            "profile": "https://docs.geostandaarden.nl/dcat/dcat-ap-nl30/"
+        },
+        "parsedDcat": "3.01",
+        "requests": [
+            [
+                "https://standaarden.overheid.nl/diwoo/metadata",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ],
+            [
+                "https://docs.geostandaarden.nl/dcat/",
+                {
+                    "timeout": 10,
+                    "http_errors": false,
+                    "allow_redirects": false
+                }
+            ]
+        ]
+    }
+}

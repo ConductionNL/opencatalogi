@@ -47,8 +47,8 @@ final class SchemaObjects {
 	/**
 	 * Constructor.
 	 *
-	 * @param object                    $objects OpenRegister's ObjectService.
-	 * @param array{0: string, 1: string} $target  The register and the schema.
+	 * @param object $objects OpenRegister's ObjectService.
+	 * @param array{0: string, 1: string} $target The register and the schema.
 	 */
 	public function __construct(
 		private readonly object $objects,

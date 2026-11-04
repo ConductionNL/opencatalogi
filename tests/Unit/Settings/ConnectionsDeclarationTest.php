@@ -117,7 +117,7 @@ class ConnectionsDeclarationTest extends TestCase {
 			$errors = (new ErrorFormatter())->format($result->error());
 		}
 
-		$this->assertTrue($result->isValid(), (string) json_encode($errors, JSON_PRETTY_PRINT));
+		$this->assertTrue($result->isValid(), (string)json_encode($errors, JSON_PRETTY_PRINT));
 	}//end testTheFileValidatesAgainstIntegriqsSchema()
 
 	/**
@@ -153,7 +153,7 @@ class ConnectionsDeclarationTest extends TestCase {
 		);
 
 		$this->assertNotFalse($infoXml);
-		$this->assertSame((string) $infoXml->id, $this->declaration()['app']);
+		$this->assertSame((string)$infoXml->id, $this->declaration()['app']);
 		$this->assertSame(Application::APP_ID, $this->declaration()['app']);
 		$this->assertSame(ConnectionReporter::APP_ID, $this->declaration()['app']);
 	}//end testTheFileNamesThisApp()
@@ -169,7 +169,7 @@ class ConnectionsDeclarationTest extends TestCase {
 	 */
 	public function testTheKeysAreUniqueOrderedAndKnownToTheReporter(): void {
 		$connections = $this->declaration()['connections'];
-		$keys        = array_column($connections, 'key');
+		$keys = array_column($connections, 'key');
 
 		$this->assertSame(array_values(array_unique($keys)), $keys, 'a key is declared twice');
 		$this->assertSame(self::DECLARED_KEYS, $keys);
@@ -204,7 +204,7 @@ class ConnectionsDeclarationTest extends TestCase {
 		$this->assertStringNotContainsString('--', $this->raw());
 
 		foreach ($this->declaration()['connections'] as $connection) {
-			$words = explode(' ', (string) $connection['title']);
+			$words = explode(' ', (string)$connection['title']);
 			foreach (array_slice($words, 1) as $word) {
 				$this->assertSame(mb_strtolower($word), $word, $connection['key'] . ' title is not sentence case');
 			}
@@ -221,8 +221,8 @@ class ConnectionsDeclarationTest extends TestCase {
 	 * @return void
 	 */
 	public function testEverySettingsLinkPointsAtASectionThatExists(): void {
-		$settingsPage = (string) file_get_contents($this->root() . '/src/views/settings/Settings.vue');
-		$admin        = (string) file_get_contents($this->root() . '/lib/Settings/OpenCatalogiAdmin.php');
+		$settingsPage = (string)file_get_contents($this->root() . '/src/views/settings/Settings.vue');
+		$admin = (string)file_get_contents($this->root() . '/lib/Settings/OpenCatalogiAdmin.php');
 		$this->assertStringContainsString("\$sectionName = 'opencatalogi';", $admin);
 
 		$linked = [];
@@ -231,14 +231,14 @@ class ConnectionsDeclarationTest extends TestCase {
 				continue;
 			}
 
-			$url = (string) $connection['settingsUrl'];
+			$url = (string)$connection['settingsUrl'];
 			$this->assertMatchesRegularExpression(
 				'~^/settings/admin/opencatalogi#section-[a-z0-9-]+$~',
 				$url,
 				$connection['key'] . ' links somewhere other than an OpenCatalogi admin section'
 			);
 
-			$anchor = substr($url, ((int) strpos($url, '#') + 1));
+			$anchor = substr($url, ((int)strpos($url, '#') + 1));
 			$this->assertSame(
 				1,
 				substr_count($settingsPage, 'id="' . $anchor . '"'),
@@ -260,14 +260,14 @@ class ConnectionsDeclarationTest extends TestCase {
 	 */
 	public function testEveryConnectionIsReportedOnly(): void {
 		foreach ($this->declaration()['connections'] as $connection) {
-			$key = (string) $connection['key'];
+			$key = (string)$connection['key'];
 			$this->assertTrue($connection['reportedOnly'] ?? false, $key);
 			$this->assertArrayNotHasKey('requiredConfig', $connection, $key);
 			$this->assertArrayNotHasKey('adapter', $connection, $key);
-			$this->assertStringStartsWith('Not checked yet.', (string) ($connection['unconfiguredMessage'] ?? ''), $key);
+			$this->assertStringStartsWith('Not checked yet.', (string)($connection['unconfiguredMessage'] ?? ''), $key);
 		}
 
-		$directory = (string) file_get_contents($this->root() . '/lib/Service/DirectoryService.php');
+		$directory = (string)file_get_contents($this->root() . '/lib/Service/DirectoryService.php');
 		$this->assertStringContainsString('Application::DEFAULT_DIRECTORY_URL', $directory);
 	}//end testEveryConnectionIsReportedOnly()
 }//end class

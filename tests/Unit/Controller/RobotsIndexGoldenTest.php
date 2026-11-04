@@ -158,7 +158,9 @@ class RobotsIndexGoldenTest extends TestCase {
 	private static function catalog(mixed $slug, mixed $data): object {
 		if ($data === null) {
 			return new class($slug) {
-				public function __construct(private mixed $slug) {
+				public function __construct(
+					private mixed $slug,
+				) {
 				}
 
 				public function getSlug(): mixed {
@@ -168,7 +170,10 @@ class RobotsIndexGoldenTest extends TestCase {
 		}
 
 		return new class($slug, $data) {
-			public function __construct(private mixed $slug, private mixed $data) {
+			public function __construct(
+				private mixed $slug,
+				private mixed $data,
+			) {
 			}
 
 			public function getSlug(): mixed {
@@ -189,8 +194,8 @@ class RobotsIndexGoldenTest extends TestCase {
 	 * would record that class's signature: the test stub's locally and OpenRegister's
 	 * own in CI. Named and without defaults, the record is what the controller passed.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return array<string, mixed> The passed arguments by name.
 	 */
@@ -209,6 +214,5 @@ class RobotsIndexGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
 }//end class

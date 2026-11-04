@@ -44,6 +44,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for DcatService::buildInstanceDocument.
  *
  * @covers \OCA\OpenCatalogi\Service\DcatService
+ * @uses \OCA\OpenCatalogi\Service\JsonList
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\DcatAssurance
@@ -166,7 +167,9 @@ class DcatInstanceDocumentGoldenTest extends TestCase {
 						/**
 						 * @param array<string, mixed> $row The row.
 						 */
-						public function __construct(private array $row) {
+						public function __construct(
+							private array $row,
+						) {
 						}
 
 						/**

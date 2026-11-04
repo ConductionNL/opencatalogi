@@ -1,0 +1,193 @@
+{
+    "24h": {
+        "components": [
+            {
+                "component": "Future",
+                "state": "up",
+                "message": "",
+                "stateSetAt": "2026-11-04T10:00:00+00:00",
+                "stale": false,
+                "order": -1
+            },
+            {
+                "component": "Kaart",
+                "state": "",
+                "message": "",
+                "stateSetAt": "gisteren",
+                "stale": true,
+                "order": 0
+            },
+            {
+                "component": "",
+                "state": "up",
+                "message": "7",
+                "stateSetAt": null,
+                "stale": true,
+                "order": 0
+            },
+            {
+                "component": "Woo-index",
+                "state": "degraded",
+                "message": "",
+                "stateSetAt": "2026-11-01T12:00:00+01:00",
+                "stale": true,
+                "order": 1
+            },
+            {
+                "component": "Edge",
+                "state": "up",
+                "message": "",
+                "stateSetAt": "2026-11-02T10:00:00+00:00",
+                "stale": false,
+                "order": 1
+            },
+            {
+                "component": "Zoeken",
+                "state": "up",
+                "message": "ok",
+                "stateSetAt": "2026-11-03T09:00:00+00:00",
+                "stale": false,
+                "order": 2
+            },
+            {
+                "component": "Feed",
+                "state": "down",
+                "message": "",
+                "stateSetAt": null,
+                "stale": true,
+                "order": 3
+            }
+        ],
+        "stale": 4,
+        "probed": false
+    },
+    "48h": {
+        "components": [
+            {
+                "component": "Future",
+                "state": "up",
+                "message": "",
+                "stateSetAt": "2026-11-04T10:00:00+00:00",
+                "stale": false,
+                "order": -1
+            },
+            {
+                "component": "Kaart",
+                "state": "",
+                "message": "",
+                "stateSetAt": "gisteren",
+                "stale": true,
+                "order": 0
+            },
+            {
+                "component": "",
+                "state": "up",
+                "message": "7",
+                "stateSetAt": null,
+                "stale": true,
+                "order": 0
+            },
+            {
+                "component": "Woo-index",
+                "state": "degraded",
+                "message": "",
+                "stateSetAt": "2026-11-01T12:00:00+01:00",
+                "stale": false,
+                "order": 1
+            },
+            {
+                "component": "Edge",
+                "state": "up",
+                "message": "",
+                "stateSetAt": "2026-11-02T10:00:00+00:00",
+                "stale": false,
+                "order": 1
+            },
+            {
+                "component": "Zoeken",
+                "state": "up",
+                "message": "ok",
+                "stateSetAt": "2026-11-03T09:00:00+00:00",
+                "stale": false,
+                "order": 2
+            },
+            {
+                "component": "Feed",
+                "state": "down",
+                "message": "",
+                "stateSetAt": null,
+                "stale": true,
+                "order": 3
+            }
+        ],
+        "stale": 3,
+        "probed": false
+    },
+    "0h": {
+        "components": [
+            {
+                "component": "Future",
+                "state": "up",
+                "message": "",
+                "stateSetAt": "2026-11-04T10:00:00+00:00",
+                "stale": false,
+                "order": -1
+            },
+            {
+                "component": "Kaart",
+                "state": "",
+                "message": "",
+                "stateSetAt": "gisteren",
+                "stale": true,
+                "order": 0
+            },
+            {
+                "component": "",
+                "state": "up",
+                "message": "7",
+                "stateSetAt": null,
+                "stale": true,
+                "order": 0
+            },
+            {
+                "component": "Woo-index",
+                "state": "degraded",
+                "message": "",
+                "stateSetAt": "2026-11-01T12:00:00+01:00",
+                "stale": true,
+                "order": 1
+            },
+            {
+                "component": "Edge",
+                "state": "up",
+                "message": "",
+                "stateSetAt": "2026-11-02T10:00:00+00:00",
+                "stale": true,
+                "order": 1
+            },
+            {
+                "component": "Zoeken",
+                "state": "up",
+                "message": "ok",
+                "stateSetAt": "2026-11-03T09:00:00+00:00",
+                "stale": true,
+                "order": 2
+            },
+            {
+                "component": "Feed",
+                "state": "down",
+                "message": "",
+                "stateSetAt": null,
+                "stale": true,
+                "order": 3
+            }
+        ],
+        "stale": 6,
+        "probed": false
+    },
+    "none": {
+        "components": [],
+        "stale": 0,
+        "probed": false
+    }
+}

@@ -41,7 +41,6 @@ use Psr\Log\LoggerInterface;
  */
 class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 
-
 	/**
 	 * The only accepted JWS algorithm.
 	 */
@@ -70,14 +69,14 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig|null      $appConfig      Where portaliq keeps its secret.
-	 * @param LoggerInterface|null $logger         Rejection reasons, debug level only.
-	 * @param string|null          $secretOverride A plain secret for tests.
+	 * @param IAppConfig|null $appConfig Where portaliq keeps its secret.
+	 * @param LoggerInterface|null $logger Rejection reasons, debug level only.
+	 * @param string|null $secretOverride A plain secret for tests.
 	 */
 	public function __construct(
-		private readonly ?IAppConfig $appConfig=null,
-		private readonly ?LoggerInterface $logger=null,
-		private readonly ?string $secretOverride=null,
+		private readonly ?IAppConfig $appConfig = null,
+		private readonly ?LoggerInterface $logger = null,
+		private readonly ?string $secretOverride = null,
 	) {
 
 	}//end __construct()
@@ -108,7 +107,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return $claims;
-
 	}//end verify()
 
 	/**
@@ -138,7 +136,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return $claims;
-
 	}//end signedClaims()
 
 	/**
@@ -156,7 +153,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return $this->algorithmRejection(headerPart: $parts[0]);
-
 	}//end structureRejection()
 
 	/**
@@ -175,7 +171,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return null;
-
 	}//end algorithmRejection()
 
 	/**
@@ -194,7 +189,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		$expected = $this->b64UrlEncode(bytes: hash_hmac('sha256', $parts[0] . '.' . $parts[1], $secret, true));
 
 		return hash_equals($expected, $parts[2]);
-
 	}//end signatureHolds()
 
 	/**
@@ -230,7 +224,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return null;
-
 	}//end issuerRejection()
 
 	/**
@@ -250,7 +243,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return $this->issuedAtRejection(claims: $claims, now: $now);
-
 	}//end lifetimeRejection()
 
 	/**
@@ -270,7 +262,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return null;
-
 	}//end issuedAtRejection()
 
 	/**
@@ -289,7 +280,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return null;
-
 	}//end subjectRejection()
 
 	/**
@@ -312,7 +302,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return (string)$claims['sub'];
-
 	}//end subjectOf()
 
 	/**
@@ -331,7 +320,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return $secret;
-
 	}//end secret()
 
 	/**
@@ -344,7 +332,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 	private function reject(string $reason): null {
 		$this->logger?->debug('OpenCatalogi: portal assertion rejected', ['reason' => $reason]);
 		return null;
-
 	}//end reject()
 
 	/**
@@ -356,7 +343,6 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 	 */
 	private function b64UrlEncode(string $bytes): string {
 		return rtrim(strtr(base64_encode($bytes), '+/', '-_'), '=');
-
 	}//end b64UrlEncode()
 
 	/**
@@ -375,6 +361,5 @@ class PortalAssertionVerifier implements PortalAssertionVerifierInterface {
 		}
 
 		return $decoded;
-
 	}//end b64UrlDecode()
 }//end class

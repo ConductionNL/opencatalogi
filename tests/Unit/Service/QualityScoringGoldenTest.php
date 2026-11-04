@@ -97,7 +97,7 @@ class QualityScoringGoldenTest extends TestCase {
 	 * Replay a case and compare it to the recording.
 	 *
 	 * @param array<string, int> $weights The stored weights.
-	 * @param int                $worst   How many worst entries the roll-up lists.
+	 * @param int $worst How many worst entries the roll-up lists.
 	 *
 	 * @return void
 	 */

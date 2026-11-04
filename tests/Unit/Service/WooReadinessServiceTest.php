@@ -52,12 +52,15 @@ XML;
 
 	private const CATEGORY_SITEMAP_XML = <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
-<diwoo:Documents xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:diwoo="https://standaarden.overheid.nl/diwoo/metadata/">
-    <diwoo:Document>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:diwoo="https://standaarden.overheid.nl/diwoo/metadata/">
+    <url>
         <loc>https://example.org/downloads/document-1.pdf</loc>
-        <lastmod>2026-01-01</lastmod>
-    </diwoo:Document>
-</diwoo:Documents>
+        <lastmod>2026-01-01T00:00:00+00:00</lastmod>
+        <diwoo:Document>
+            <diwoo:DiWoo />
+        </diwoo:Document>
+    </url>
+</urlset>
 XML;
 
 	protected function setUp(): void {

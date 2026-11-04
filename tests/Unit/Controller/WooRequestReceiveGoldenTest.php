@@ -25,9 +25,9 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use DateTimeInterface;
-use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
+use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
 use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;

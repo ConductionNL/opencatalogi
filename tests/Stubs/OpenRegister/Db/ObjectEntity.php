@@ -124,7 +124,7 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
 	 */
 	public function getUuid(): ?string {
 		$value = ($this->_props['uuid'] ?? null);
-		return ($value === null) ? null : (string) $value;
+		return ($value === null) ? null : (string)$value;
 	}//end getUuid()
 
 	/**
@@ -134,7 +134,7 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
 	 */
 	public function getRegister(): ?string {
 		$value = ($this->_props['register'] ?? null);
-		return ($value === null) ? null : (string) $value;
+		return ($value === null) ? null : (string)$value;
 	}//end getRegister()
 
 	/**
@@ -144,7 +144,7 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
 	 */
 	public function getSchema(): ?string {
 		$value = ($this->_props['schema'] ?? null);
-		return ($value === null) ? null : (string) $value;
+		return ($value === null) ? null : (string)$value;
 	}//end getSchema()
 
 	/**

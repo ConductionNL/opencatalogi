@@ -119,7 +119,7 @@ class SettingsConfigMergeGoldenTest extends TestCase {
 	/**
 	 * deepMergeConfig() matches the recording.
 	 *
-	 * @param array<mixed> $base    The base.
+	 * @param array<mixed> $base The base.
 	 * @param array<mixed> $overlay The overlay.
 	 *
 	 * @return void
@@ -146,7 +146,7 @@ class SettingsConfigMergeGoldenTest extends TestCase {
 	/**
 	 * Call one private static method.
 	 *
-	 * @param string       $name The method.
+	 * @param string $name The method.
 	 * @param array<mixed> $args The arguments.
 	 *
 	 * @return mixed
@@ -154,7 +154,6 @@ class SettingsConfigMergeGoldenTest extends TestCase {
 	private function call(string $name, array $args): mixed {
 		$method = new ReflectionMethod(SettingsService::class, $name);
 		return $method->invoke(null, ...$args);
-
 	}//end call()
 
 	/**
@@ -162,8 +161,8 @@ class SettingsConfigMergeGoldenTest extends TestCase {
 	 *
 	 * The result is stored as JSON text, so empty and integer keys survive.
 	 *
-	 * @param string $name   The recording key.
-	 * @param mixed  $actual The result.
+	 * @param string $name The recording key.
+	 * @param mixed $actual The result.
 	 *
 	 * @return void
 	 */

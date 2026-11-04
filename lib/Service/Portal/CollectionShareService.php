@@ -47,14 +47,14 @@ class CollectionShareService implements CollectionShareServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param PortalObjectStore  $store        Reads and writes as the system.
-	 * @param PublicationLinker  $linker       The public link to a publication.
+	 * @param PortalObjectStore $store Reads and writes as the system.
+	 * @param PublicationLinker $linker The public link to a publication.
 	 * @param IURLGenerator|null $urlGenerator Makes the share link absolute.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
 		private readonly PublicationLinker $linker,
-		private readonly ?IURLGenerator $urlGenerator=null,
+		private readonly ?IURLGenerator $urlGenerator = null,
 	) {
 
 	}//end __construct()
@@ -65,7 +65,7 @@ class CollectionShareService implements CollectionShareServiceInterface {
 	 * Answers `url`, the JSON path, and `link`, the absolute address of the
 	 * page on the portal site that shows the shared dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array{token: string, createdAt: string, url: string, link: string}
@@ -77,7 +77,7 @@ class CollectionShareService implements CollectionShareServiceInterface {
 	 */
 	public function share(string $owner, string $collectionId): array {
 		$dossier = $this->owned(owner: $owner, collectionId: $collectionId);
-		$share = ['token' => $collectionId.'.'.bin2hex(random_bytes(24)), 'createdAt' => $this->now()];
+		$share = ['token' => $collectionId . '.' . bin2hex(random_bytes(24)), 'createdAt' => $this->now()];
 		$dossier['share'] = $share;
 		$this->store->save(schema: CitizenCollectionService::SCHEMA, data: $dossier, id: $collectionId);
 
@@ -85,20 +85,19 @@ class CollectionShareService implements CollectionShareServiceInterface {
 		// out: the shared-dossier page of the portal site, which reads that
 		// JSON and shows it to anyone. Shares are made through portaliq, so
 		// its site is there to open the link.
-		$path = '/index.php/apps/opencatalogi/api/collections/shared/'.$share['token'];
-		$link = self::SITE_PAGE.$share['token'];
+		$path = '/index.php/apps/opencatalogi/api/collections/shared/' . $share['token'];
+		$link = self::SITE_PAGE . $share['token'];
 		if ($this->urlGenerator !== null) {
 			$link = $this->urlGenerator->getAbsoluteURL($link);
 		}
 
 		return $share + ['url' => $path, 'link' => $link];
-
 	}//end share()
 
 	/**
 	 * Revoke the read-only link.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array{shared: bool}
@@ -113,7 +112,6 @@ class CollectionShareService implements CollectionShareServiceInterface {
 		$this->store->save(schema: CitizenCollectionService::SCHEMA, data: $dossier, id: $collectionId);
 
 		return ['shared' => false];
-
 	}//end unshare()
 
 	/**
@@ -168,7 +166,7 @@ class CollectionShareService implements CollectionShareServiceInterface {
 	/**
 	 * The dossier when this owner owns it.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array<string, mixed>
@@ -182,7 +180,6 @@ class CollectionShareService implements CollectionShareServiceInterface {
 		}
 
 		return $dossier;
-
 	}//end owned()
 
 	/**
@@ -192,6 +189,5 @@ class CollectionShareService implements CollectionShareServiceInterface {
 	 */
 	private function now(): string {
 		return (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-
 	}//end now()
 }//end class

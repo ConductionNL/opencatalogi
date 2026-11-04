@@ -182,7 +182,9 @@ class CommunityControllerTest extends TestCase {
 			/**
 			 * @param array<int, mixed> $rows The search rows.
 			 */
-			public function __construct(private array $rows) {
+			public function __construct(
+				private array $rows,
+			) {
 			}
 
 			/**
@@ -200,7 +202,7 @@ class CommunityControllerTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $object The object to store.
-			 * @param array<int, string>   $extend Unused here.
+			 * @param array<int, string> $extend Unused here.
 			 *
 			 * @return array<string, mixed> The stored object.
 			 */

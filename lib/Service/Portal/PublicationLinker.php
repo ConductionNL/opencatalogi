@@ -53,14 +53,14 @@ class PublicationLinker {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig       $appConfig    Holds the template.
-	 * @param IURLGenerator    $urlGenerator Makes a path absolute.
-	 * @param IAppManager|null $appManager   Tells whether portaliq, and so its site, is there.
+	 * @param IAppConfig $appConfig Holds the template.
+	 * @param IURLGenerator $urlGenerator Makes a path absolute.
+	 * @param IAppManager|null $appManager Tells whether portaliq, and so its site, is there.
 	 */
 	public function __construct(
 		private readonly IAppConfig $appConfig,
 		private readonly IURLGenerator $urlGenerator,
-		private readonly ?IAppManager $appManager=null,
+		private readonly ?IAppManager $appManager = null,
 	) {
 
 	}//end __construct()
@@ -82,7 +82,7 @@ class PublicationLinker {
 		}
 
 		if ($this->appManager?->isInstalled('portaliq') === true) {
-			return $this->urlGenerator->getAbsoluteURL(self::SITE_PUBLICATION_PAGE.rawurlencode($id));
+			return $this->urlGenerator->getAbsoluteURL(self::SITE_PUBLICATION_PAGE . rawurlencode($id));
 		}
 
 		$catalog = trim($this->appConfig->getValueString('opencatalogi', 'publication_url_catalog', 'publication'));
@@ -90,7 +90,6 @@ class PublicationLinker {
 			$catalog = 'publication';
 		}
 
-		return $this->urlGenerator->getAbsoluteURL('/index.php/apps/opencatalogi/api/'.rawurlencode($catalog).'/'.rawurlencode($id));
-
+		return $this->urlGenerator->getAbsoluteURL('/index.php/apps/opencatalogi/api/' . rawurlencode($catalog) . '/' . rawurlencode($id));
 	}//end url()
 }//end class

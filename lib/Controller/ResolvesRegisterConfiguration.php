@@ -58,7 +58,6 @@ trait ResolvesRegisterConfiguration {
 	 */
 	private function resolveRegisterConfiguration(string $registerKey, string $schemaKey): array {
 		return $this->registers->registerConfiguration(registerKey: $registerKey, schemaKey: $schemaKey);
-
 	}//end resolveRegisterConfiguration()
 
 	/**

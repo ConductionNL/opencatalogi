@@ -1,0 +1,74 @@
+{
+    "full": {
+        "total": 6,
+        "published": 2,
+        "late": 1,
+        "outstanding": 4,
+        "unreadSources": [
+            {
+                "appId": "broken",
+                "reason": "dossiq is down"
+            },
+            {
+                "appId": "silent",
+                "reason": "This source was never asked."
+            },
+            {
+                "appId": "scalar",
+                "reason": "This source was never asked."
+            }
+        ],
+        "obligations": [
+            {
+                "id": "a",
+                "dueDate": "2026-01-01",
+                "publishedAt": "2025-12-30",
+                "source": "filinq",
+                "state": "published"
+            },
+            {
+                "id": "b",
+                "dueDate": "2026-01-01",
+                "source": "filinq",
+                "state": "late"
+            },
+            {
+                "id": "c",
+                "dueDate": "2027-01-01",
+                "source": "filinq",
+                "state": "due"
+            },
+            {
+                "id": "c2",
+                "dueDate": "2027-02-01",
+                "source": "filinq",
+                "state": "due"
+            },
+            {
+                "id": "d",
+                "dueDate": "morgen",
+                "source": "filinq",
+                "state": "unknown"
+            },
+            {
+                "id": "e",
+                "dueDate": "2026-06-01",
+                "publishedAt": "2026-07-01",
+                "source": "",
+                "state": "published"
+            }
+        ],
+        "sourcesRead": 3,
+        "sourcesRegistered": 6
+    },
+    "empty": {
+        "total": 0,
+        "published": 0,
+        "late": 0,
+        "outstanding": 0,
+        "unreadSources": [],
+        "obligations": [],
+        "sourcesRead": 0,
+        "sourcesRegistered": 0
+    }
+}

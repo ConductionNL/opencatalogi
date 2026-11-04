@@ -100,8 +100,8 @@ class FakeLegacySearchObjectService {
 		}
 
 		$this->capturedCalls[] = [
-			'query'         => $query,
-			'_rbac'         => $_rbac,
+			'query' => $query,
+			'_rbac' => $_rbac,
 			'_multitenancy' => $_multitenancy,
 		];
 
@@ -205,16 +205,29 @@ class FakeSchemaMapper {
 	public array $authorizationById = [];
 
 	public function find(int|string $id): object {
-		$slug = ($this->slugById[(int) $id] ?? "schema-{$id}");
-		$authorization = array_key_exists((int) $id, $this->authorizationById)
-			? $this->authorizationById[(int) $id]
+		$slug = ($this->slugById[(int)$id] ?? "schema-{$id}");
+		$authorization = array_key_exists((int)$id, $this->authorizationById)
+			? $this->authorizationById[(int)$id]
 			: ['read' => [['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now']]]]];
-		return new class ((int) $id, $slug, $authorization) {
-			public function __construct(private int $id, private string $slug, private ?array $authorization) {}
-			public function getId(): int { return $this->id; }
-			public function getSlug(): string { return $this->slug; }
-			public function getTitle(): string { return ucfirst($this->slug); }
-			public function getAuthorization(): ?array { return $this->authorization; }
+		return new class((int)$id, $slug, $authorization) {
+			public function __construct(
+				private int $id,
+				private string $slug,
+				private ?array $authorization,
+			) {
+			}
+			public function getId(): int {
+				return $this->id;
+			}
+			public function getSlug(): string {
+				return $this->slug;
+			}
+			public function getTitle(): string {
+				return ucfirst($this->slug);
+			}
+			public function getAuthorization(): ?array {
+				return $this->authorization;
+			}
 		};
 	}
 }
@@ -449,14 +462,14 @@ class PublicationQueryServiceTest extends TestCase {
 		// Note: _catalog=default-catalog (present in fixture) is the OC-level scope
 		// resolver; every other listed key MUST be stripped before reaching OR.
 		$this->service->assemblePublicSearchResults([
-			'_search'     => 'x',
-			'_schema'     => 999,
-			'_registers'  => [999],
+			'_search' => 'x',
+			'_schema' => 999,
+			'_registers' => [999],
 			'catalogSlug' => 'evil',
-			'fq'          => 'evil',
-			'_content'    => 'true',
-			'_catalog'    => 'default-catalog',
-			'_catalogi'   => ['a', 'b'],
+			'fq' => 'evil',
+			'_content' => 'true',
+			'_catalog' => 'default-catalog',
+			'_catalogi' => ['a', 'b'],
 		], $fake);
 
 		$captured = $fake->capturedCalls[0]['query'];
@@ -481,11 +494,11 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	private function callerScopeOverride(): array {
 		return [
-			'@self'     => ['schema' => 56, 'register' => 20, 'schemas' => [56], 'registers' => [20], 'owner' => 'alice'],
-			'schema'    => 56,
-			'register'  => 20,
+			'@self' => ['schema' => 56, 'register' => 20, 'schemas' => [56], 'registers' => [20], 'owner' => 'alice'],
+			'schema' => 56,
+			'register' => 20,
 			'_register' => 99,
-			'_schemas'  => [56],
+			'_schemas' => [56],
 		];
 	}
 
@@ -550,9 +563,9 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	public static function catalogRegisterShapes(): array {
 		return [
-			'one register'         => [[20], true],
-			'several registers'    => [[20, 21], false],
-			'no register'          => [[], false],
+			'one register' => [[20], true],
+			'several registers' => [[20, 21], false],
+			'no register' => [[], false],
 			'JSON-string, several' => ['[20,21]', false],
 		];
 	}
@@ -566,8 +579,8 @@ class PublicationQueryServiceTest extends TestCase {
 	 *
 	 * @dataProvider catalogRegisterShapes
 	 *
-	 * @param array<int, int>|string $registers     The catalog's registers.
-	 * @param bool                   $scalarSchema  Whether `_schema` is expected.
+	 * @param array<int, int>|string $registers The catalog's registers.
+	 * @param bool $scalarSchema Whether `_schema` is expected.
 	 *
 	 * @return void
 	 */
@@ -685,7 +698,9 @@ class PublicationQueryServiceTest extends TestCase {
 	public function testRowGuardDropsRowsOfSchemasWithoutReadRulesForAnAnonymousCaller(): void {
 		$this->wireHappyPath(authorizationById: [56 => null]);
 		$entity = new class {
-			public function jsonSerialize(): array { return ['id' => 'doc-entity', '@self' => ['schema' => 3]]; }
+			public function jsonSerialize(): array {
+				return ['id' => 'doc-entity', '@self' => ['schema' => 3]];
+			}
 		};
 
 		$out = $this->service->applyReadRuleGuardToRows(result: [
@@ -942,8 +957,8 @@ class PublicationQueryServiceTest extends TestCase {
 		];
 		$documentRow = [
 			'@self' => [
-				'id'        => 'doc-uuid-1',
-				'schema'    => 2,
+				'id' => 'doc-uuid-1',
+				'schema' => 2,
 				'relations' => ['publication.slug' => 'my-report'],
 			],
 			'title' => 'My Report (PDF)',
@@ -991,7 +1006,7 @@ class PublicationQueryServiceTest extends TestCase {
 			'title' => 'Content Search Document',
 			// No id, and no `_relations` — exactly what createDocument() writes.
 			'publication' => [
-				'slug'  => 'content-search-publication',
+				'slug' => 'content-search-publication',
 				'title' => 'Content Search Publication',
 			],
 		];
@@ -1023,8 +1038,8 @@ class PublicationQueryServiceTest extends TestCase {
 		];
 		$documentRow = [
 			'@self' => [
-				'id'        => 'doc-uuid-2',
-				'schema'    => 2,
+				'id' => 'doc-uuid-2',
+				'schema' => 2,
 				'relations' => ['publication' => 'pub-uuid-2'],
 			],
 			'title' => 'KB artikel (PDF)',
@@ -1075,14 +1090,14 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	public function testDocumentDroppedWhenUuidFastPathPublicationIsArchived(): void {
 		$archivedPublication = [
-			'@self'  => ['id' => 'pub-archived-1', 'slug' => 'shelved-report', 'schema' => 1],
-			'title'  => 'Archived report',
+			'@self' => ['id' => 'pub-archived-1', 'slug' => 'shelved-report', 'schema' => 1],
+			'title' => 'Archived report',
 			'status' => 'archived',
 		];
 		$documentRow = [
 			'@self' => [
-				'id'        => 'doc-uuid-archived',
-				'schema'    => 2,
+				'id' => 'doc-uuid-archived',
+				'schema' => 2,
 				'relations' => ['publication' => 'pub-archived-1'],
 			],
 			'title' => 'PDF pointing at archived pub',
@@ -1109,14 +1124,14 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	public function testDocumentDroppedWhenSlugFastPathPublicationIsArchived(): void {
 		$archivedPublication = [
-			'@self'  => ['id' => 'pub-archived-2', 'slug' => 'shelved-slug', 'schema' => 1],
-			'title'  => 'Archived legacy report',
+			'@self' => ['id' => 'pub-archived-2', 'slug' => 'shelved-slug', 'schema' => 1],
+			'title' => 'Archived legacy report',
 			'status' => 'archived',
 		];
 		$documentRow = [
 			'@self' => [
-				'id'        => 'doc-slug-archived',
-				'schema'    => 2,
+				'id' => 'doc-slug-archived',
+				'schema' => 2,
 				'relations' => ['publication.slug' => 'shelved-slug'],
 			],
 			'title' => 'Legacy PDF pointing at archived pub',
@@ -1150,8 +1165,8 @@ class PublicationQueryServiceTest extends TestCase {
 		for ($i = 1; $i <= 3; $i++) {
 			$documentRows[] = [
 				'@self' => [
-					'id'        => "doc-shared-{$i}",
-					'schema'    => 2,
+					'id' => "doc-shared-{$i}",
+					'schema' => 2,
 					'relations' => ['publication.slug' => 'shared-slug'],
 				],
 				'title' => "Legacy PDF #{$i}",
@@ -1202,13 +1217,13 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	public function testFindObjectLocationLocatesViaObjectService(): void {
 		$this->container->method('get')->willReturnCallback(
-			fn(string $id) => $id === 'OCA\OpenRegister\Service\ObjectService' ? $this->objectService : null
+			fn (string $id) => $id === 'OCA\OpenRegister\Service\ObjectService' ? $this->objectService : null
 		);
 
 		$entity = $this->createMock(ObjectEntity::class);
 		$this->objectService->method('find')->willReturnCallback(
 			function (int|string $id, ?array $_extend, bool $files, $register, $schema) use ($entity) {
-				return ((int) $register === 21 && (int) $schema === 11) ? $entity : null;
+				return ((int)$register === 21 && (int)$schema === 11) ? $entity : null;
 			}
 		);
 
@@ -1233,10 +1248,10 @@ class PublicationQueryServiceTest extends TestCase {
 		$entity = $this->createMock(ObjectEntity::class);
 		$this->objectService->method('find')->willReturnCallback(
 			function (int|string $id, ?array $_extend, bool $files, $register, $schema) use ($entity) {
-				if ((int) $register === 1 && (int) $schema === 2) {
+				if ((int)$register === 1 && (int)$schema === 2) {
 					throw new \OCP\AppFramework\Db\DoesNotExistException('missing table');
 				}
-				return ((int) $register === 1 && (int) $schema === 3) ? $entity : null;
+				return ((int)$register === 1 && (int)$schema === 3) ? $entity : null;
 			}
 		);
 
@@ -1265,7 +1280,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
 			$this->stringContains('no authorization.read rules'),
-			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
+			$this->callback(fn (array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
 		);
 
 		$this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
@@ -1325,7 +1340,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
 			$this->stringContains('no authorization.read rules'),
-			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
+			$this->callback(fn (array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
 		);
 
 		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
@@ -1419,7 +1434,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
 			$this->stringContains('no authorization.read rules'),
-			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2)
+			$this->callback(fn (array $ctx) => ($ctx['schemaId'] ?? null) === 2)
 		);
 
 		$this->assertSame([1], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
@@ -1488,12 +1503,12 @@ class PublicationQueryServiceTest extends TestCase {
 		$fakeObjectService = new FakeSearchObjectService();
 
 		$catalog = [
-			'@self'     => ['slug' => 'default-catalog'],
-			'slug'      => 'default-catalog',
-			'listed'    => true,
+			'@self' => ['slug' => 'default-catalog'],
+			'slug' => 'default-catalog',
+			'listed' => true,
 			'published' => '2020-01-01T00:00:00+00:00',
 			'registers' => [1],
-			'schemas'   => [1, 2],
+			'schemas' => [1, 2],
 		];
 
 		$fakeCatalogiService = new FakeCatalogiService();
@@ -1506,9 +1521,9 @@ class PublicationQueryServiceTest extends TestCase {
 		// Config keys needed by the default-scope enumeration path; safe to set
 		// even for _catalog=<slug> tests since that path doesn't consult them.
 		$this->config->method('getValueString')->willReturnCallback(
-			fn(string $app, string $key, string $default = '') => match ($key) {
+			fn (string $app, string $key, string $default = '') => match ($key) {
 				'catalog_register' => '1',
-				'catalog_schema'   => '3',
+				'catalog_schema' => '3',
 				default => $default,
 			}
 		);
@@ -1517,15 +1532,23 @@ class PublicationQueryServiceTest extends TestCase {
 			function (string $key) use ($fakeCatalogiService, $fakeSchemaMapper, $fakeObjectService, $registerSchemas) {
 				return match ($key) {
 					'OCA\\OpenCatalogi\\Service\\CatalogiService' => $fakeCatalogiService,
-					'OCA\\OpenRegister\\Db\\SchemaMapper'         => $fakeSchemaMapper,
-					'OCA\\OpenRegister\\Service\\ObjectService'   => $fakeObjectService,
+					'OCA\\OpenRegister\\Db\\SchemaMapper' => $fakeSchemaMapper,
+					'OCA\\OpenRegister\\Service\\ObjectService' => $fakeObjectService,
 					'OCA\\OpenRegister\\Db\\RegisterMapper' => ($registerSchemas !== []
-						? new class ($registerSchemas) {
-							public function __construct(private array $map) {}
+						? new class($registerSchemas) {
+							public function __construct(
+								private array $map,
+							) {
+							}
 							public function find(int $id): object {
-								return new class (($this->map[$id] ?? [])) {
-									public function __construct(private array $schemas) {}
-									public function getSchemas(): array { return $this->schemas; }
+								return new class(($this->map[$id] ?? [])) {
+									public function __construct(
+										private array $schemas,
+									) {
+									}
+									public function getSchemas(): array {
+										return $this->schemas;
+									}
 								};
 							}
 						}
@@ -1682,7 +1705,7 @@ class PublicationQueryServiceTest extends TestCase {
 			}
 		};
 		$this->container->method('get')->willReturnCallback(
-			fn(string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
+			fn (string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
 		);
 
 		// Register 31 throws; register 32 yields 1114 and skips the unresolvable 9999.
@@ -1694,7 +1717,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * Wire container-resolved OR mappers from plain id maps.
 	 *
 	 * @param array<int, array<int, int>> $registerSchemas registerId => schema ids.
-	 * @param array<int, string>          $slugs           schemaId => slug.
+	 * @param array<int, string> $slugs schemaId => slug.
 	 *
 	 * @return void
 	 */
@@ -1703,7 +1726,9 @@ class PublicationQueryServiceTest extends TestCase {
 			/**
 			 * @param array<int, array<int, int>> $map Register id to schema ids.
 			 */
-			public function __construct(private array $map) {
+			public function __construct(
+				private array $map,
+			) {
 			}
 
 			public function find(int $id): object {
@@ -1711,7 +1736,9 @@ class PublicationQueryServiceTest extends TestCase {
 					/**
 					 * @param array<int, int> $schemas The schema ids.
 					 */
-					public function __construct(private array $schemas) {
+					public function __construct(
+						private array $schemas,
+					) {
 					}
 
 					/**
@@ -1728,12 +1755,16 @@ class PublicationQueryServiceTest extends TestCase {
 			/**
 			 * @param array<int, string> $slugs Schema id to slug.
 			 */
-			public function __construct(private array $slugs) {
+			public function __construct(
+				private array $slugs,
+			) {
 			}
 
 			public function find(int $id): object {
 				return new class(($this->slugs[$id] ?? null)) {
-					public function __construct(private ?string $slug) {
+					public function __construct(
+						private ?string $slug,
+					) {
 					}
 
 					public function getSlug(): ?string {
@@ -1744,11 +1775,10 @@ class PublicationQueryServiceTest extends TestCase {
 		};
 
 		$this->container->method('get')->willReturnCallback(
-			fn(string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
+			fn (string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
 		);
 
 	}//end wireMappers()
-
 
 	// -------------------------------------------------------------------------
 	// WOO-577 — pagination guards.
@@ -1846,7 +1876,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * @dataProvider provideEnvelopeShapes
 	 *
 	 * @param array $candidateRows Rows OR returns for the candidate call.
-	 * @param int   $orTotal       Global total OR reports.
+	 * @param int $orTotal Global total OR reports.
 	 */
 	public function testTotalIsNeverBelowTheNumberOfRowsShipped(array $candidateRows, int $orTotal): void {
 		$fake = $this->wireHappyPath();
@@ -1878,7 +1908,7 @@ class PublicationQueryServiceTest extends TestCase {
 		];
 
 		return [
-			'clean page'              => [[$pub], 42],
+			'clean page' => [[$pub], 42],
 			'every row dedups to one' => [[$pub, $pub, $pub], 10],
 			'or reports rows it does not return' => [[], 8],
 		];
@@ -1981,7 +2011,7 @@ class PublicationQueryServiceTest extends TestCase {
 	public static function provideLaterPageParams(): array {
 		return [
 			'explicit offset' => [['_offset' => 40, '_limit' => 10]],
-			'page two'        => [['_page' => 2, '_limit' => 10]],
+			'page two' => [['_page' => 2, '_limit' => 10]],
 			'page two, no limit' => [['_page' => 2]],
 			'offset without limit' => [['_offset' => 5]],
 		];
@@ -2020,8 +2050,8 @@ class PublicationQueryServiceTest extends TestCase {
 		return [
 			'no pagination params' => [[]],
 			'explicit offset zero' => [['_offset' => 0]],
-			'page one'             => [['_page' => 1]],
-			'page one with limit'  => [['_page' => 1, '_limit' => 10]],
+			'page one' => [['_page' => 1]],
+			'page one with limit' => [['_page' => 1, '_limit' => 10]],
 		];
 	}
 
@@ -2029,7 +2059,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * Invoke a private/protected method by name via reflection.
 	 *
 	 * @param string $method Method name.
-	 * @param array  $args   Positional arguments.
+	 * @param array $args Positional arguments.
 	 *
 	 * @return mixed
 	 */

@@ -37,8 +37,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Portal;
 
 use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
-use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
+use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
 
 /**
  * Declares what a resident may see and do in opencatalogi through the portal.
@@ -61,7 +61,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * The saved search schema (contract C2).
 	 */
 	public const SAVED_SEARCH_SCHEMA = 'savedSearch';
-
 
 	/**
 	 * The menu heading over the resident's dossiers and saved searches (portaliq `group`).
@@ -152,9 +151,9 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * @param ServiceStatusIndex|null $statusIndex The service status, for the public index.
 	 */
 	public function __construct(
-		private readonly ?CitizenCollectionServiceInterface $collections=null,
-		private readonly ?InformationRequestIntakeInterface $wooRequests=null,
-		private readonly ?ServiceStatusIndex $statusIndex=null,
+		private readonly ?CitizenCollectionServiceInterface $collections = null,
+		private readonly ?InformationRequestIntakeInterface $wooRequests = null,
+		private readonly ?ServiceStatusIndex $statusIndex = null,
 	) {
 
 	}//end __construct()
@@ -179,7 +178,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 		}
 
 		return $this->statusIndex->items();
-
 	}//end getPublicIndex()
 
 	/**
@@ -199,7 +197,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 		}
 
 		return [$this->statusIndex->kind()];
-
 	}//end getPublicIndexKinds()
 
 	/**
@@ -216,7 +213,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 *
 	 * @spec openspec/changes/portal-woo-request-intake/specs/woo-request-intake/spec.md#requirement-a-woo-request-delivered-by-the-portal-arms-its-term-req-wri-008
 	 */
-	public function receiveWooRequest(array $answers, string $receivedAt=''): array {
+	public function receiveWooRequest(array $answers, string $receivedAt = ''): array {
 		if ($this->wooRequests === null) {
 			return [
 				'outcome' => InformationRequestIntakeInterface::OUTCOME_UNAVAILABLE,
@@ -228,7 +225,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 		}
 
 		return $this->wooRequests->receive(answers: $answers, receivedAt: $receivedAt);
-
 	}//end receiveWooRequest()
 
 	/**
@@ -249,7 +245,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 		}
 
 		return $this->collections->itemList(collectionId: $collectionId);
-
 	}//end dossierItems()
 
 	/**
@@ -261,7 +256,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 */
 	public function getAudiences(): array {
 		return self::AUDIENCES;
-
 	}//end getAudiences()
 
 	/**
@@ -273,7 +267,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 */
 	public function getAudience(): string {
 		return 'citizen';
-
 	}//end getAudience()
 
 	/**
@@ -371,7 +364,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 			[
 				'id' => 'addToDossier',
 				'label' => 'Bewaar in mijn dossier',
-				'endpoint' => self::API.'/collections/items',
+				'endpoint' => self::API . '/collections/items',
 				'method' => 'POST',
 				'fields' => ['collection', 'title', 'publication', 'attachment', 'note'],
 				'successMessage' => 'Bewaard in uw dossier',
@@ -417,7 +410,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 			[
 				'id' => 'saveSearch',
 				'label' => 'Bewaar deze zoekopdracht',
-				'endpoint' => self::API.'/saved-searches',
+				'endpoint' => self::API . '/saved-searches',
 				'method' => 'POST',
 				'fields' => ['title', 'query', 'frequency'],
 				'successMessage' => 'Uw zoekopdracht is bewaard',
@@ -472,8 +465,8 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * Endpoint row actions. portaliq proves the row under the collection's
 	 * scope and sends its id under `rowField`.
 	 *
-	 * @param array<int, array{0: string, 1: string, 2: string, 3: list<string>}> $specs    Id, label, path, extra fields.
-	 * @param string                                                               $rowField The body field that carries the row id.
+	 * @param array<int, array{0: string, 1: string, 2: string, 3: list<string>}> $specs Id, label, path, extra fields.
+	 * @param string $rowField The body field that carries the row id.
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
@@ -484,7 +477,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 			static fn (array $spec): array => [
 				'id' => $spec[0],
 				'label' => $spec[1],
-				'endpoint' => self::API.$spec[2],
+				'endpoint' => self::API . $spec[2],
 				'method' => 'POST',
 				'rowField' => $rowField,
 				'fields' => $spec[3],
@@ -503,7 +496,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 */
 	private function pages(): array {
 		return [$this->dossiersPage(), $this->savedSearchesPage()];
-
 	}//end pages()
 
 	/**
@@ -520,7 +512,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 			'group' => self::GROUP,
 			'icon' => 'FolderStar',
 			'blocks' => [
-				['type' => 'richText', 'markdown' => "Bewaar openbare documenten in uw eigen dossier. Alleen u ziet het, tot u een deellink maakt."],
+				['type' => 'richText', 'markdown' => 'Bewaar openbare documenten in uw eigen dossier. Alleen u ziet het, tot u een deellink maakt.'],
 				['type' => 'action', 'action' => 'createDossier'],
 				['type' => 'collection', 'collection' => 'myDossiers'],
 				// The selected dossier in full: title, note, the items and
@@ -545,7 +537,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 			'group' => self::GROUP,
 			'icon' => 'BellRing',
 			'blocks' => [
-				['type' => 'richText', 'markdown' => "U krijgt bericht als er nieuwe documenten zijn die bij uw zoekopdracht passen."],
+				['type' => 'richText', 'markdown' => 'U krijgt bericht als er nieuwe documenten zijn die bij uw zoekopdracht passen.'],
 				['type' => 'collection', 'collection' => 'mySavedSearches'],
 			],
 		];

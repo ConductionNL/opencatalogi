@@ -165,10 +165,10 @@ class ObjectService {
 	/**
 	 * Build a search query.
 	 *
-	 * @param array<string,mixed>          $requestParams The request parameters.
-	 * @param int|string|array<mixed>|null $register      Register filter.
-	 * @param int|string|array<mixed>|null $schema        Schema filter.
-	 * @param array<mixed>|null            $ids           Object id filter.
+	 * @param array<string,mixed> $requestParams The request parameters.
+	 * @param int|string|array<mixed>|null $register Register filter.
+	 * @param int|string|array<mixed>|null $schema Schema filter.
+	 * @param array<mixed>|null $ids Object id filter.
 	 *
 	 * @return array<string,mixed>
 	 */

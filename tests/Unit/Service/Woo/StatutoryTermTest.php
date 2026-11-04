@@ -181,7 +181,9 @@ class FakeTermEngine {
  */
 class FakeTermStore {
 
-	public function __construct(private FakeTermEngine $engine) {
+	public function __construct(
+		private FakeTermEngine $engine,
+	) {
 	}//end __construct()
 
 	public function findByUuid(string $uuid): FakeFlowTimer {
@@ -250,7 +252,6 @@ class StatutoryTermTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return $appManager;
-
 	}//end appManager()
 
 	/**
@@ -474,15 +475,15 @@ class StatutoryTermTest extends TestCase {
 	 * it to.
 	 *
 	 * @param bool $engineBound Whether the FlowTimerService resolves.
-	 * @param bool $storeBound  Whether the FlowTimerMapper resolves.
-	 * @param bool $installed   Whether OpenRegister is installed.
+	 * @param bool $storeBound Whether the FlowTimerMapper resolves.
+	 * @param bool $installed Whether OpenRegister is installed.
 	 *
 	 * @return StatutoryTerm The service.
 	 */
 	private function buildTerms(
 		bool $engineBound = true,
 		bool $storeBound = true,
-		bool $installed = true
+		bool $installed = true,
 	): StatutoryTerm {
 		$store = new FakeTermStore($this->engine);
 
