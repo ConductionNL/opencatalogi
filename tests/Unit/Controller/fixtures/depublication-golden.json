@@ -69,7 +69,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false
                 ]
             },
             {
@@ -146,7 +147,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false
                 ]
             },
             {
@@ -220,7 +222,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false
                 ]
             },
             {
@@ -294,7 +297,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false
                 ]
             },
             {
@@ -419,7 +423,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false
                 ]
             }
         ]
@@ -518,7 +523,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false
                 ]
             },
             {
@@ -569,7 +575,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             },
             {
@@ -609,7 +616,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    "d-1"
+                    "d-1",
+                    false
                 ]
             },
             {
@@ -664,7 +672,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             },
             {
@@ -704,7 +713,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    "d-1"
+                    "d-1",
+                    false
                 ]
             },
             {
@@ -765,7 +775,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -796,7 +807,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -827,7 +839,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -857,7 +870,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -887,7 +901,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -997,7 +1012,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false
                 ]
             },
             {
@@ -1048,7 +1064,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             },
             {
@@ -1088,7 +1105,8 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    "d-1"
+                    "d-1",
+                    false
                 ]
             },
             {
@@ -1133,7 +1151,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -1164,7 +1183,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]

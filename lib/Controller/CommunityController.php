@@ -168,6 +168,10 @@ class CommunityController extends Controller {
 	/**
 	 * Set a component's state.
 	 *
+	 * The schema's writes name group admin, which leaves out the delegated
+	 * administrators the admin-setting check lets in. That check is the gate,
+	 * so the save skips RBAC.
+	 *
 	 * @return JSONResponse The saved status.
 	 *
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
@@ -202,7 +206,8 @@ class CommunityController extends Controller {
 				object: $status,
 				extend: [],
 				register: $config['register'],
-				schema: $config['schema']
+				schema: $config['schema'],
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'status-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);

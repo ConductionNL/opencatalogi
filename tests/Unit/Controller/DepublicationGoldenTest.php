@@ -229,8 +229,8 @@ class DepublicationGoldenTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, mixed $register = null, mixed $schema = null): array {
-				$this->log[] = ['find' => [$id, $register, $schema]];
+			public function find(string $id, mixed $register = null, mixed $schema = null, bool $_rbac = true): array {
+				$this->log[] = ['find' => [$id, $register, $schema, $_rbac]];
 				if (($this->case['fail'] ?? null) === 'find') {
 					throw new RuntimeException('no such object');
 				}
@@ -242,8 +242,8 @@ class DepublicationGoldenTest extends TestCase {
 				return ($this->case['stored'] ?? ['id' => $id, 'withdrawals' => [['channel' => 'koop2'], ['channel' => 'plooi']]]);
 			}
 
-			public function saveObject(array $object, array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): array {
-				$this->log[] = ['save' => [$object, $extend, $register, $schema, $uuid]];
+			public function saveObject(array $object, array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true): array {
+				$this->log[] = ['save' => [$object, $extend, $register, $schema, $uuid, $_rbac]];
 				if (($this->case['fail'] ?? null) === 'save') {
 					throw new RuntimeException('save broke');
 				}

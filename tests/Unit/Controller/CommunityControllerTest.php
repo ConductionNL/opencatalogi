@@ -212,6 +212,7 @@ class CommunityControllerTest extends TestCase {
 				string $register = '',
 				string $schema = '',
 				string $uuid = '',
+				bool $_rbac = true,
 			): array {
 				$this->saved[] = $object;
 
