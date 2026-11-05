@@ -60,16 +60,44 @@ describe('object store fetchRelatedData', () => {
 	])('builds the %s query from %j', async (dataType, params, expected) => {
 		answer({})
 
-		await store.fetchRelatedData('publication', 'p1', dataType, params, { pub: 1 })
+		await store.fetchRelatedData('publication', 'p1', dataType, params, {
+			pub: 1,
+		})
 
-		expect(store._constructApiUrl).toHaveBeenCalledWith('publication', 'p1', dataType, expected, { pub: 1 })
+		expect(store._constructApiUrl).toHaveBeenCalledWith(
+			'publication',
+			'p1',
+			dataType,
+			expected,
+			{ pub: 1 },
+		)
 	})
 
 	it.each([
-		['files', {}, { total: 1001 }, { total: 1001, page: 1, pages: 3, limit: 500, next: null, prev: null }],
-		['uses', {}, { total: 41 }, { total: 41, page: 1, pages: 3, limit: 20, next: null, prev: null }],
-		['uses', { limit: 10 }, { page: 2 }, { total: 0, page: 2, pages: 0, limit: 10, next: null, prev: null }],
-		['uses', { _limit: 7, limit: 10 }, { total: 15, limit: '4', pages: 9, next: 'n', prev: 'p' }, { total: 15, page: 1, pages: 9, limit: 4, next: 'n', prev: 'p' }],
+		[
+			'files',
+			{},
+			{ total: 1001 },
+			{ total: 1001, page: 1, pages: 3, limit: 500, next: null, prev: null },
+		],
+		[
+			'uses',
+			{},
+			{ total: 41 },
+			{ total: 41, page: 1, pages: 3, limit: 20, next: null, prev: null },
+		],
+		[
+			'uses',
+			{ limit: 10 },
+			{ page: 2 },
+			{ total: 0, page: 2, pages: 0, limit: 10, next: null, prev: null },
+		],
+		[
+			'uses',
+			{ _limit: 7, limit: 10 },
+			{ total: 15, limit: '4', pages: 9, next: 'n', prev: 'p' },
+			{ total: 15, page: 1, pages: 9, limit: 4, next: 'n', prev: 'p' },
+		],
 	])('derives the %s pagination', async (dataType, params, data, expected) => {
 		answer(data)
 
@@ -84,7 +112,10 @@ describe('object store fetchRelatedData', () => {
 		answer({ items: 1 })
 		await store.fetchRelatedData('publication', 'p1', 'uses')
 
-		expect(store.relatedData.publication).toEqual({ logs: [{ id: 'l' }], uses: { items: 1 } })
+		expect(store.relatedData.publication).toEqual({
+			logs: [{ id: 'l' }],
+			uses: { items: 1 },
+		})
 		expect(store.pagination.publication_logs).toBeUndefined()
 		expect(store.pagination.publication_uses).toBeUndefined()
 	})
@@ -92,7 +123,9 @@ describe('object store fetchRelatedData', () => {
 	it('records the failure and throws it on', async () => {
 		answer({}, false)
 
-		await expect(store.fetchRelatedData('publication', 'p1', 'files')).rejects.toThrow('Failed to fetch files for publication')
+		await expect(
+			store.fetchRelatedData('publication', 'p1', 'files'),
+		).rejects.toThrow('Failed to fetch files for publication')
 		expect(consoleError).toHaveBeenCalled()
 	})
 })
