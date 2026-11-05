@@ -950,6 +950,7 @@ import PropertiesPanel from '../../components/PropertiesPanel.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
+import { formValue } from '../../services/formValue.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 import '@toast-ui/editor/dist/toastui-editor.css'
@@ -1469,14 +1470,11 @@ export default {
 		 * Required keys whose effective value (formData override or current object value)
 		 * is empty. Used to disable Save and surface an inline error.
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-schema-driven-form-editing-req-objm-002 */
 		missingRequiredKeys() {
 			const result = []
-			const obj = this.currentObject || {}
 			for (const key of this.requiredPropertyKeys) {
-				const value = Object.hasOwn(this.formData, key)
-					? this.formData[key]
-					: obj[key]
+				const value = formValue(this.formData, this.currentObject, key)
 				if (value === null || value === undefined || value === '') {
 					result.push(key)
 					continue
@@ -1506,19 +1504,16 @@ export default {
 		 *
 		 * @return {Array<{ key: string, label: string, error: string }>}
 		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
+		/** @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-schema-driven-form-editing-req-objm-002 */
 		fieldErrors() {
 			const schema = this.resolvedSchema
 			if (!schema) return []
 			const props = schema.properties || {}
-			const obj = this.currentObject || {}
 			const errors = []
 			for (const [key, prop] of Object.entries(props)) {
 				if (!prop || prop.hideOnForm === true) continue
 				if (key === '@self' || key === 'id') continue
-				const value = Object.hasOwn(this.formData, key)
-					? this.formData[key]
-					: obj[key]
+				const value = formValue(this.formData, this.currentObject, key)
 				if (value === null || value === undefined || value === '') continue
 				const err = validateValue(value, prop)
 				if (err) {
@@ -2934,7 +2929,7 @@ export default {
 		/**
 		 * @param key
 		 * @param value
-		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
+		 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-schema-driven-form-editing-req-objm-002
 		 */
 		canDropProperty(key, value) {
 			// Don't show drop button for metadata properties
@@ -2950,9 +2945,7 @@ export default {
 			// Hide the X when there's effectively nothing to clear. Use the
 			// resolved value (formData override falls back to the persisted
 			// object value) so a property cleared in the form drops the X.
-			const resolved = Object.hasOwn(this.formData, key)
-				? this.formData[key]
-				: this.currentObject && this.currentObject[key]
+			const resolved = formValue(this.formData, this.currentObject, key)
 			if (resolved === null || resolved === undefined || resolved === '')
 				return false
 			if (Array.isArray(resolved) && resolved.length === 0) return false
