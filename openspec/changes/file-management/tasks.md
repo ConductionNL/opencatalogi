@@ -19,8 +19,8 @@
   - [ ] 2.1 Add `private readonly IURLGenerator $urlGenerator` as a constructor parameter in `FileService`.
   - [ ] 2.2 Update `lib/AppInfo/Application.php` (or the DI container configuration) if `FileService` is registered manually — verify that `IURLGenerator` is auto-wired by Nextcloud's DI; if not, register it.
   - [ ] 2.3 Rewrite `getShareLink()` (or `getCurrentDomain()`) to call `$this->urlGenerator->getAbsoluteURL("/index.php/s/{$share->getToken()}")` instead of reading `$_SERVER`.
-  - [ ] 2.4 Remove the `getCurrentDomain()` method entirely if it is no longer needed after the refactor, or mark it `@deprecated` if other callers exist (grep `lib/` to confirm).
-  - [ ] 2.5 Verify that the returned URL is correct in a running dev environment by creating a share and comparing the URL.
+  - [x] 2.4 Remove the `getCurrentDomain()` method entirely if it is no longer needed after the refactor, or mark it `@deprecated` if other callers exist (grep `lib/` to confirm). (verified: lib/Service/FileService.php has no getCurrentDomain() and no $_SERVER read)
+  - [ ] 2.5 Verify that the returned URL is correct in a running dev environment by creating a share and comparing the URL. (live pass, decision 139)
 
 ## Task 3: Fix mPDF use-statement typo
 
@@ -28,9 +28,9 @@
 - **Status**: todo
 - **Files**: `lib/Service/FileService.php`
 - **Acceptance criteria**:
-  - [ ] 3.1 Change `use Mpdf\MpMpdfdf;` to `use Mpdf\Mpdf;`.
+  - [x] 3.1 Change `use Mpdf\MpMpdfdf;` to `use Mpdf\Mpdf;`. (verified: lib/Service/FileService.php:40 uses Mpdf\Mpdf)
   - [ ] 3.2 Run `composer check:strict` (PHPCS / PHPMD / Psalm / PHPStan) and confirm zero errors related to this file.
-  - [ ] 3.3 Run `createPdf()` in a dev environment and confirm a PDF is generated without errors.
+  - [ ] 3.3 Run `createPdf()` in a dev environment and confirm a PDF is generated without errors. (live pass, decision 139)
 
 ## Task 4: Add @spec PHPDoc traceability tags
 
@@ -50,15 +50,15 @@
 - **Files**: `tests/Unit/Service/FileServiceTest.php` (create if absent)
 - **Acceptance criteria**:
   - [ ] 5.1 **REQ-FIL-007** — `testGetShareLinkUsesUrlGenerator()`: mock `IURLGenerator`; assert `getShareLink()` calls `getAbsoluteURL()` and the returned URL contains the share token; assert `$_SERVER` is never read.
-  - [ ] 5.2 **REQ-FIL-002** — `testUploadFileReturnsFalseWhenFileExists()`: mock `IRootFolder` to return an existing file node; assert `uploadFile()` returns `false` and logs a warning.
-  - [ ] 5.3 **REQ-FIL-002** — `testUploadFileReturnsTrueWhenFileIsNew()`: mock `IRootFolder` to throw `NotFoundException`; assert `uploadFile()` creates the file and returns `true`.
+  - [x] 5.2 **REQ-FIL-002** — `testUploadFileReturnsFalseWhenFileExists()`: mock `IRootFolder` to return an existing file node; assert `uploadFile()` returns `false` and logs a warning. (verified: tests/Unit/Service/FileServiceTest.php::testUploadFileExistingFile)
+  - [x] 5.3 **REQ-FIL-002** — `testUploadFileReturnsTrueWhenFileIsNew()`: mock `IRootFolder` to throw `NotFoundException`; assert `uploadFile()` creates the file and returns `true`. (verified: tests/Unit/Service/FileServiceTest.php::testUploadFileNewFile)
   - [ ] 5.4 **REQ-FIL-003** — `testUpdateFileCreatesNewFileWhenCreateNewIsTrue()`: assert file is created and `true` returned when `$createNew = true` and file is absent.
   - [ ] 5.5 **REQ-FIL-003** — `testUpdateFileReturnsFalseWhenFileAbsentAndCreateNewIsFalse()`: assert `false` returned when `$createNew = false` and file is absent.
   - [ ] 5.6 **REQ-FIL-004** — `testDeleteFileReturnsFalseWhenNotFound()`: mock `IRootFolder` to throw `NotFoundException`; assert `deleteFile()` returns `false` without exception.
   - [ ] 5.7 **REQ-FIL-005** — `testShareLinkDefaultsToReadOnlyForPublicShare()`: assert `permissions = 1` is set on the IShare when `$shareType = 3` and `$permissions = null`.
   - [ ] 5.8 **REQ-FIL-005** — `testShareLinkDefaultsToAllPermissionsForNonPublicShare()`: assert `permissions = 31` is set when `$shareType != 3` and `$permissions = null`.
-  - [ ] 5.9 **REQ-FIL-008** — `testHandleFileHappyPath()`: mock `IRequest` with a valid `_file`; assert folders created in order, file uploaded, and returned array contains `reference`, `type`, `size`, `title`, `extension`, `accessUrl`, `downloadUrl`.
-  - [ ] 5.10 **REQ-FIL-008** — `testHandleFileReturnsJsonResponseOnValidationError()`: mock `IRequest` with upload error; assert return type is `JSONResponse`.
+  - [x] 5.9 **REQ-FIL-008** — `testHandleFileHappyPath()`: mock `IRequest` with a valid `_file`; assert folders created in order, file uploaded, and returned array contains `reference`, `type`, `size`, `title`, `extension`, `accessUrl`, `downloadUrl`. (verified: tests/Unit/Service/FileServiceTest.php::testHandleFileSuccessfulUpload)
+  - [x] 5.10 **REQ-FIL-008** — `testHandleFileReturnsJsonResponseOnValidationError()`: mock `IRequest` with upload error; assert return type is `JSONResponse`. (verified: tests/Unit/Service/FileServiceTest.php::testHandleFileUploadError)
   - [ ] 5.11 **REQ-FIL-012** — `testCreateZipReturnsNullOnSuccess()`: use real temp directory with two test files; assert ZIP is created and return value is `null`.
   - [ ] 5.12 **REQ-FIL-012** — `testCreateZipReturnsErrorStringOnFailure()`: pass non-existent input folder; assert return value is a non-empty string.
   - [ ] 5.13 All tests pass via `./vendor/bin/phpunit tests/Unit/Service/FileServiceTest.php`.
@@ -67,8 +67,8 @@
 
 - **Status**: todo
 - **Acceptance criteria**:
-  - [ ] 6.1 In a running dev environment, upload a file attachment to a publication via the OpenCatalogi UI and confirm the file appears under `Publicaties/{id} {title}/Bijlagen/` in Nextcloud Files.
-  - [ ] 6.2 Confirm a public share link is generated and accessible in a browser (unauthenticated).
-  - [ ] 6.3 Run WOO sitemap generation as a background job and confirm share URLs are correctly formed (not empty or `://example.nl/...` artifacts from missing `$_SERVER`).
-  - [ ] 6.4 Download a publication as ZIP and confirm the archive contains the expected files and the temp file is deleted after download.
-  - [ ] 6.5 Tail the Nextcloud log during all operations and confirm no PHP warnings, `ini_set` failures, or Mpdf class-not-found errors appear.
+  - [ ] 6.1 In a running dev environment, upload a file attachment to a publication via the OpenCatalogi UI and confirm the file appears under `Publicaties/{id} {title}/Bijlagen/` in Nextcloud Files. (live pass, decision 139)
+  - [ ] 6.2 Confirm a public share link is generated and accessible in a browser (unauthenticated). (live pass, decision 139)
+  - [ ] 6.3 Run WOO sitemap generation as a background job and confirm share URLs are correctly formed (not empty or `://example.nl/...` artifacts from missing `$_SERVER`). (live pass, decision 139)
+  - [ ] 6.4 Download a publication as ZIP and confirm the archive contains the expected files and the temp file is deleted after download. (live pass, decision 139)
+  - [ ] 6.5 Tail the Nextcloud log during all operations and confirm no PHP warnings, `ini_set` failures, or Mpdf class-not-found errors appear. (live pass, decision 139)
