@@ -31,4 +31,4 @@
 
 ## 5. After integriq ships
 
-- [ ] 5.1 Run the e2e spec against an instance with both apps, then archive this change.
+- [ ] 5.1 Run the e2e spec against an instance with both apps, then archive this change. (live pass, decision 139)
