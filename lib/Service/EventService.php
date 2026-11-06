@@ -131,15 +131,15 @@ class EventService implements EventServiceInterface {
 	 * This method provides access to the FileMapper for direct database access
 	 * to file information without triggering object updates.
 	 *
-	 * @return \OCA\OpenRegister\Db\FileMapper The FileMapper instance.
+	 * @return \OCA\OpenRegister\Files\Db\FileMapper The FileMapper instance.
 	 * @throws \RuntimeException If the FileMapper is not available.
 	 *
 	 * @spec exclude Lazy dependency-injection accessor — resolves the OpenRegister
 	 *       FileMapper from the container; pure framework plumbing, no domain behavior.
 	 */
-	public function getFileMapper(): ?\OCA\OpenRegister\Db\FileMapper {
+	public function getFileMapper(): ?\OCA\OpenRegister\Files\Db\FileMapper {
 		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Db\FileMapper');
+			return $this->container->get('OCA\OpenRegister\Files\Db\FileMapper');
 		}
 
 		throw new RuntimeException('OpenRegister FileMapper is not available.');

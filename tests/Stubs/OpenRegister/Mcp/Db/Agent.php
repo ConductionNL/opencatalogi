@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Stub for OCA\OpenRegister\Db\Agent.
+ * Stub for OCA\OpenRegister\Mcp\Db\Agent.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests\Stubs
@@ -13,7 +13,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Db;
+namespace OCA\OpenRegister\Mcp\Db;
 
 /**
  * Minimal stub for Agent entity.

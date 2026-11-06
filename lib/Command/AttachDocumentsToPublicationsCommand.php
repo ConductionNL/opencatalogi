@@ -212,7 +212,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	private function openRegisterServices(): ?array {
 		$objects = $this->migration->openRegister(id: 'OCA\\OpenRegister\\Service\\ObjectService');
 		$files = $this->migration->openRegister(id: 'OCA\\OpenRegister\\Service\\FileService');
-		$fileMapper = $this->migration->openRegister(id: 'OCA\\OpenRegister\\Db\\FileMapper');
+		$fileMapper = $this->migration->openRegister(id: 'OCA\\OpenRegister\\Files\\Db\\FileMapper');
 
 		if ($objects === null || $files === null || $fileMapper === null) {
 			return null;

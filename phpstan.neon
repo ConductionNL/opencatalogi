@@ -16,8 +16,8 @@ parameters:
     # in this app's vendor tree; the test stubs mirror their real signatures, so the
     # analysis reads those instead of excluding the two files.
     scanFiles:
-        - tests/Stubs/OpenRegister/Tool/ToolInterface.php
-        - tests/Stubs/OpenRegister/Db/Agent.php
+        - tests/Stubs/OpenRegister/Mcp/Tool/ToolInterface.php
+        - tests/Stubs/OpenRegister/Mcp/Db/Agent.php
         - tests/Stubs/AppHost/IMetricsProvider.php
         - tests/Stubs/AppHost/MetricSample.php
 

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Stub for OCA\OpenRegister\Tool\ToolInterface.
+ * Stub for OCA\OpenRegister\Mcp\Tool\ToolInterface.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests\Stubs
@@ -13,9 +13,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Tool;
+namespace OCA\OpenRegister\Mcp\Tool;
 
-use OCA\OpenRegister\Db\Agent;
+use OCA\OpenRegister\Mcp\Db\Agent;
 
 /**
  * Stub interface for ToolInterface.
