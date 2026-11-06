@@ -35,10 +35,10 @@ namespace OCA\OpenCatalogi\Tool;
 
 use BadMethodCallException;
 use OCA\OpenCatalogi\Contract\CMSToolInterface;
-use OCA\OpenRegister\Db\Agent;
+use OCA\OpenRegister\Mcp\Db\Agent;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
-use OCA\OpenRegister\Tool\ToolInterface;
+use OCA\OpenRegister\Mcp\Tool\ToolInterface;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;

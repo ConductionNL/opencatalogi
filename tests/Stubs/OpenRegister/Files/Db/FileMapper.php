@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Stub for OCA\OpenRegister\Db\FileMapper.
+ * Stub for OCA\OpenRegister\Files\Db\FileMapper.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests\Stubs
@@ -13,7 +13,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Db;
+namespace OCA\OpenRegister\Files\Db;
+
+use OCA\OpenRegister\Db\ObjectEntity;
 
 /**
  * Minimal stub for FileMapper.

@@ -22,7 +22,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenRegister\Db\FileMapper;
+use OCA\OpenRegister\Files\Db\FileMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -62,7 +62,7 @@ class EventServiceMissingIdTest extends TestCase {
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static fn (string $id): object => match ($id) {
-				'OCA\OpenRegister\Db\FileMapper' => $files,
+				'OCA\OpenRegister\Files\Db\FileMapper' => $files,
 				'OCA\OpenRegister\Service\FileService' => $fileService,
 				default => $objects,
 			}

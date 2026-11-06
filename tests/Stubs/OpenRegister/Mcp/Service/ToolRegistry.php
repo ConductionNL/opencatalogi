@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Stub for OCA\OpenRegister\Service\ToolRegistry.
+ * Stub for OCA\OpenRegister\Mcp\Service\ToolRegistry.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests\Stubs
@@ -13,7 +13,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service;
+namespace OCA\OpenRegister\Mcp\Service;
 
 /**
  * Minimal stub for ToolRegistry used by PHPUnit mocks in bare CI.
