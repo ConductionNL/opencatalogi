@@ -229,7 +229,7 @@ class PublicationRulesController extends Controller {
 		}
 
 		$response = new JSONResponse(['results' => $results, 'total' => count($results)]);
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 
 		return $response;
 	}//end publicSearch()

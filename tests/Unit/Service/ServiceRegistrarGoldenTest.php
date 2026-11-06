@@ -72,4 +72,24 @@ class ServiceRegistrarGoldenTest extends TestCase {
 		);
 
 	}//end testRegistrationsMatchTheRecording()
+
+	/**
+	 * Every interface binding targets an existing class that implements the interface.
+	 *
+	 * The recording above accepts any target that was re-recorded; this pins
+	 * that a binding cannot point at a class of the wrong contract.
+	 *
+	 * @return void
+	 */
+	public function testEveryInterfaceBindingImplementsItsInterface(): void {
+		$bindings = (new \ReflectionClassConstant(ServiceRegistrar::class, 'INTERFACE_BINDINGS'))->getValue();
+
+		$this->assertNotEmpty($bindings);
+		foreach ($bindings as $interface => $target) {
+			$this->assertTrue(interface_exists($interface), $interface . ' is not an interface');
+			$this->assertTrue(class_exists($target), $target . ' does not exist');
+			$this->assertTrue(is_subclass_of($target, $interface), $target . ' does not implement ' . $interface);
+		}
+
+	}//end testEveryInterfaceBindingImplementsItsInterface()
 }//end class
