@@ -15,6 +15,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenRegister\Files\Db;
 
+use OCA\OpenRegister\Db\ObjectEntity;
+
 /**
  * Minimal stub for FileMapper.
  */
