@@ -35,10 +35,9 @@ use PHPUnit\Framework\TestCase;
  * `/api/{catalogSlug}/{id}` were declared above them, so `OPTIONS /api/dcat`,
  * `/api/status`, `/api/publications/search`, `/api/inspections/{id}` and the
  * rest were all answered by `PublicationsController::preflightedCors()` with
- * `PUT, POST, GET, DELETE, PATCH`. Measured on an NC 35 rig on 2026-11-06:
- * `OPTIONS /api/dcat` answered that, not the `GET, OPTIONS` its own controller
- * returns. The `GET` routes already had the wildcards last; the `OPTIONS`
- * block did not.
+ * `PUT, POST, GET, DELETE, PATCH` instead of their own controller's value.
+ * The `GET` routes already had the wildcards last; the `OPTIONS` block did
+ * not.
  *
  * 🔑 Neither the controller unit tests nor RouteNameUniquenessTest could see
  * it: the first call the method directly, the second checks that each route
@@ -46,13 +45,16 @@ use PHPUnit\Framework\TestCase;
  * replays the first-match rule over the route file itself.
  *
  * A path parameter matches its `requirements` pattern, or `[^/]+` without one
- * (Symfony's default). Sample values are picked per parameter so they satisfy
- * that pattern; a literal segment such as `/uses` only matches itself.
+ * (Symfony's default). Every sample value that satisfies a parameter's pattern
+ * is tried, in every combination, so an earlier route whose requirement only a
+ * real id meets (`\d+`) still shows up; a literal segment such as `/uses` only
+ * matches itself.
  */
 class RouteShadowingTest extends TestCase {
 
 	/**
-	 * Values tried, in order, for a path parameter in a sample URL.
+	 * Values tried for a path parameter in a sample URL; every one that fits
+	 * the parameter's pattern is used.
 	 *
 	 * @var string[]
 	 */
@@ -113,28 +115,46 @@ class RouteShadowingTest extends TestCase {
 	}//end pattern()
 
 	/**
-	 * A concrete URL this entry answers, with each parameter filled in.
+	 * The concrete URLs this entry answers: each parameter filled in with every
+	 * sample value that fits it, in every combination.
+	 *
+	 * One sample per parameter is not enough. An earlier route whose
+	 * requirement rejects the first sample (`x1` against `\d+`) but accepts a
+	 * real id would stay invisible, while the router sends that id to it.
 	 *
 	 * @param array<string, mixed> $route One route entry.
 	 *
-	 * @return string The sample path.
+	 * @return string[] The sample paths.
 	 */
-	private function samplePath(array $route): string {
-		return preg_replace_callback(
-			'/\{([A-Za-z_]+)\}/',
-			function (array $m) use ($route): string {
-				foreach (self::SAMPLES as $sample) {
-					if (preg_match('#^(?:' . $this->requirement(route: $route, name: $m[1]) . ')$#', $sample) === 1) {
-						return $sample;
-					}
+	private function samplePaths(array $route): array {
+		preg_match_all('/\{([A-Za-z_]+)\}/', $route['url'], $matches);
+
+		$paths = [$route['url']];
+		foreach (array_unique($matches[1]) as $name) {
+			$pattern = '#^(?:' . $this->requirement(route: $route, name: $name) . ')$#';
+			$fits = array_values(
+				array_filter(
+					self::SAMPLES,
+					static fn (string $sample): bool => preg_match($pattern, $sample) === 1
+				)
+			);
+			if ($fits === []) {
+				$this->fail(message: sprintf('No sample value fits {%s} of %s; extend SAMPLES', $name, $route['url']));
+			}
+
+			$next = [];
+			foreach ($paths as $path) {
+				foreach ($fits as $sample) {
+					$next[] = str_replace('{' . $name . '}', $sample, $path);
 				}
+			}
 
-				$this->fail(message: sprintf("No sample value fits {%s} of %s; extend SAMPLES", $m[1], $route['url']));
-			},
-			$route['url']
-		);
+			$paths = $next;
+		}
 
-	}//end samplePath()
+		return $paths;
+
+	}//end samplePaths()
 
 	/**
 	 * The entry the router picks for a path: the first OPTIONS entry that fits.
@@ -171,15 +191,16 @@ class RouteShadowingTest extends TestCase {
 
 		$shadowed = [];
 		foreach ($routes as $route) {
-			$path = $this->samplePath(route: $route);
-			$winner = $this->firstMatch(routes: $routes, path: $path);
+			foreach ($this->samplePaths(route: $route) as $path) {
+				$winner = $this->firstMatch(routes: $routes, path: $path);
 
-			$this->assertNotNull(
-				actual: $winner,
-				message: sprintf('%s does not even match its own sample path %s', $route['url'], $path)
-			);
-			if ($winner['name'] !== $route['name']) {
-				$shadowed[] = sprintf('  OPTIONS %s (%s) is answered by %s (%s)', $route['url'], $route['name'], $winner['name'], $winner['url']);
+				$this->assertNotNull(
+					actual: $winner,
+					message: sprintf('%s does not even match its own sample path %s', $route['url'], $path)
+				);
+				if ($winner['name'] !== $route['name']) {
+					$shadowed[] = sprintf('  OPTIONS %s (%s, as %s) is answered by %s (%s)', $route['url'], $route['name'], $path, $winner['name'], $winner['url']);
+				}
 			}
 		}
 
@@ -196,9 +217,10 @@ class RouteShadowingTest extends TestCase {
 	/**
 	 * Name the preflights whose answer differs from the publications one.
 	 *
-	 * These six were narrowed after the wildcards had already shadowed them,
-	 * so the narrowing had no effect until the order was fixed. Naming them
-	 * means a regression reports the URL, not just a count.
+	 * These six always answered with narrower methods than the publications
+	 * preflight, but the wildcards matched first, so no client saw that value
+	 * until the order was fixed. Naming them means a regression reports the
+	 * URL, not just a count.
 	 *
 	 * @return void
 	 */

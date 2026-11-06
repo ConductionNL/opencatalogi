@@ -274,7 +274,7 @@ return [
 		// Publications CORS (wildcard catalog-based endpoints). Like the GET wildcards
 		// below they MUST stay after every specific route: the router takes the first
 		// match, so placed earlier they answer the preflight of /api/dcat, /api/status
-		// and every other dedicated OPTIONS route (#1912).
+		// and every other one- or two-segment dedicated OPTIONS route (#1912).
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
