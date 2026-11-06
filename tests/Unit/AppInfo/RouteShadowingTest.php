@@ -35,7 +35,8 @@ use PHPUnit\Framework\TestCase;
  * `/api/{catalogSlug}/{id}` were declared above them, so `OPTIONS /api/dcat`,
  * `/api/status`, `/api/publications/search`, `/api/inspections/{id}` and the
  * rest were all answered by `PublicationsController::preflightedCors()` with
- * `PUT, POST, GET, DELETE, PATCH` instead of their own controller's value.
+ * `PUT, POST, GET, DELETE, PATCH`; for six of them that is wider than what
+ * their own controller returns.
  * The `GET` routes already had the wildcards last; the `OPTIONS` block did
  * not.
  *
@@ -217,10 +218,10 @@ class RouteShadowingTest extends TestCase {
 	/**
 	 * Name the preflights whose answer differs from the publications one.
 	 *
-	 * These six always answered with narrower methods than the publications
-	 * preflight, but the wildcards matched first, so no client saw that value
-	 * until the order was fixed. Naming them means a regression reports the
-	 * URL, not just a count.
+	 * Their controllers return narrower methods than the publications
+	 * preflight, but since 43a305a5f (2026-09-19) the wildcards matched first,
+	 * so clients got the publications value until the order was fixed. Naming
+	 * them means a regression reports the URL, not just a count.
 	 *
 	 * @return void
 	 */
