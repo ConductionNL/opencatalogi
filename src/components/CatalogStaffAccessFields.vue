@@ -90,6 +90,11 @@ export default {
 		},
 	},
 
+	/**
+	 * Load the Nextcloud groups the administrator can pick from.
+	 *
+	 * @spec openspec/changes/catalogue-staff-access/specs/catalogs/spec.md#requirement-the-administrator-sets-staff-access-on-the-catalogue-edit-page-req-csa-003
+	 */
 	async mounted() {
 		const groups = await getNextcloudGroups()
 		this.groupOptions = groups.map((group) => ({
