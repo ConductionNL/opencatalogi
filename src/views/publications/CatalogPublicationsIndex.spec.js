@@ -398,18 +398,39 @@ describe('CatalogPublicationsIndex', () => {
 		expect(page.vm.$attrs.columns).toEqual(otherPairConfig.columns)
 		expect(page.vm.$attrs.otherPairConfig).toBeUndefined()
 
-		page.vm.$emit('row-click', {
-			id: 'abc',
-			'@self': { register: 19, schema: 184 },
-		})
+		const row = { id: 'abc', '@self': { register: 19, schema: 184 } }
+		page.vm.$emit('row-click', row)
+
+		// This catalog has no publication pair of its own to single out, so
+		// its only schema is a different object type, not a publication — it
+		// opens the generic detail page, same as any other-schema row would.
 		expect(router.push).toHaveBeenCalledWith({
 			name: 'CatalogObjectDetail',
-			params: {
-				catalogSlug: 'code',
-				register: '19',
-				schema: '184',
-				id: 'abc',
-			},
+			params: { catalogSlug: 'code', register: '19', schema: '184', id: 'abc' },
+		})
+	})
+
+	it('treats no single schema as a publication in a catalog with several unrelated schemas and none of them the default pair', async () => {
+		// Mirrors a real, shipped catalog (Applicatielandschap, publish-from-
+		// stackiq.json): several structurally different schemas (module, suite,
+		// connection, usage) with no default pair among them. None of these is
+		// "a publication" just because the pair isn't the default — there is no
+		// signal in the data model that marks a schema as a publication
+		// independent of the one global default pair, so every row here opens
+		// its generic detail page, exactly like a catalog that DOES hold the
+		// default pair would treat its own other-schema rows.
+		objectStore.menuCatalogs = [catalog('applicatielandschap', [23], [192, 196, 201])]
+		const { wrapper, router } = mountPage({ slug: 'applicatielandschap' })
+		await flushPromises()
+
+		const page = indexPage(wrapper)
+		const connection = { id: 'c1', '@self': { register: 23, schema: 196 } }
+
+		page.vm.$emit('view', connection)
+
+		expect(router.push).toHaveBeenCalledWith({
+			name: 'CatalogObjectDetail',
+			params: { catalogSlug: 'applicatielandschap', register: '23', schema: '196', id: 'c1' },
 		})
 	})
 
