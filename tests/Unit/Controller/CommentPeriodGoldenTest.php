@@ -52,8 +52,8 @@ class CommentPeriodGoldenObjects {
 	/**
 	 * Constructor.
 	 *
-	 * @param \Closure             $record Records one call.
-	 * @param array<string, mixed> $case   The case.
+	 * @param \Closure $record Records one call.
+	 * @param array<string, mixed> $case The case.
 	 */
 	public function __construct(
 		private readonly \Closure $record,
@@ -64,9 +64,9 @@ class CommentPeriodGoldenObjects {
 	/**
 	 * Find a period.
 	 *
-	 * @param string $id       The id.
-	 * @param mixed  $register The register.
-	 * @param mixed  $schema   The schema.
+	 * @param string $id The id.
+	 * @param mixed $register The register.
+	 * @param mixed $schema The schema.
 	 *
 	 * @return mixed The stored period.
 	 */
@@ -82,11 +82,11 @@ class CommentPeriodGoldenObjects {
 	/**
 	 * Save a period.
 	 *
-	 * @param array<string, mixed> $object        The period.
-	 * @param mixed                $register      The register.
-	 * @param mixed                $schema        The schema.
-	 * @param bool                 $_rbac         Whether RBAC applies.
-	 * @param bool                 $_multitenancy Whether multitenancy applies.
+	 * @param array<string, mixed> $object The period.
+	 * @param mixed $register The register.
+	 * @param mixed $schema The schema.
+	 * @param bool $_rbac Whether RBAC applies.
+	 * @param bool $_multitenancy Whether multitenancy applies.
 	 *
 	 * @return mixed The saved period.
 	 */
@@ -95,9 +95,10 @@ class CommentPeriodGoldenObjects {
 		mixed $register = null,
 		mixed $schema = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true
+		bool $_multitenancy = true,
+		bool $_unowned = false,
 	): mixed {
-		($this->record)(['saveObject' => [$object, $register, $schema, $_rbac, $_multitenancy]]);
+		($this->record)(['saveObject' => [$object, $register, $schema, $_rbac, $_multitenancy, $_unowned]]);
 		if (($this->case['fail'] ?? null) === 'save') {
 			throw new RuntimeException('register write failed');
 		}
@@ -114,13 +115,15 @@ class CommentPeriodGoldenObjects {
 	 */
 	private function wrap(array $data): mixed {
 		if (($this->case['entity'] ?? false) === true) {
-			return new class (['id' => ($data['id'] ?? null), 'object' => $data]) implements \JsonSerializable {
+			return new class(['id' => ($data['id'] ?? null), 'object' => $data]) implements \JsonSerializable {
 				/**
 				 * Constructor.
 				 *
 				 * @param array<string, mixed> $data The serialised entity.
 				 */
-				public function __construct(private readonly array $data) {
+				public function __construct(
+					private readonly array $data,
+				) {
 				}//end __construct()
 
 				/**

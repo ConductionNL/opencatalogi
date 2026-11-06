@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Service\UsageCsvRollUp;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,6 +49,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/publication-quality/spec.md
  */
 class StatsController extends Controller {
+
 	/**
 	 * StatsController constructor.
 	 *
@@ -305,34 +307,12 @@ class StatsController extends Controller {
 	 *
 	 * @return string The CSV document including a UTF-8 BOM.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) UsageCsvRollUp::rollUp() is a pure function
+	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function buildCsv(array $rows): string {
-		// Roll counter rows up to one entry per publication.
-		$byPub = [];
-		foreach ($rows as $row) {
-			$pub = (string)($row['publication'] ?? '');
-			if ($pub === '') {
-				continue;
-			}
-
-			if (isset($byPub[$pub]) === false) {
-				$byPub[$pub] = [
-					'publication' => $pub,
-					'category' => (string)($row['category'] ?? ''),
-					'published' => (string)($row['published'] ?? ''),
-					'views' => 0,
-					'downloads' => 0,
-				];
-			}
-
-			$count = max(0, (int)($row['count'] ?? 0));
-			if (($row['kind'] ?? '') === UsageCounterServiceInterface::KIND_VIEW) {
-				$byPub[$pub]['views'] += $count;
-			} elseif (($row['kind'] ?? '') === UsageCounterServiceInterface::KIND_DOWNLOAD) {
-				$byPub[$pub]['downloads'] += $count;
-			}
-		}//end foreach
+		$byPub = UsageCsvRollUp::rollUp(rows: $rows);
 
 		$handle = fopen('php://temp', 'r+');
 		fputcsv($handle, ['Publication', 'Category', 'Published date', 'Views', 'Downloads']);

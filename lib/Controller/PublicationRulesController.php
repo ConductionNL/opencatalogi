@@ -102,7 +102,6 @@ class PublicationRulesController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->readWritePreflight();
-
 	}//end preflightedCors()
 
 	/**
@@ -143,7 +142,6 @@ class PublicationRulesController extends Controller {
 		}
 
 		return new JSONResponse($preview);
-
 	}//end previewRule()
 
 	/**
@@ -192,7 +190,6 @@ class PublicationRulesController extends Controller {
 		}
 
 		return new JSONResponse($validation);
-
 	}//end validateDecision()
 
 	/**
@@ -235,6 +232,5 @@ class PublicationRulesController extends Controller {
 		$this->addAllowedOriginHeaders(response: $response);
 
 		return $response;
-
 	}//end publicSearch()
 }//end class

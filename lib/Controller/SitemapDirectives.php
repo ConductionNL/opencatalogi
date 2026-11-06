@@ -46,8 +46,8 @@ class SitemapDirectives {
 	/**
 	 * Constructor.
 	 *
-	 * @param OpenRegisterLookupInterface          $openRegister Whether OpenRegister is installed, and its ObjectService.
-	 * @param InformationCategoryRegistryInterface $categories   The information categories, bundled plus local.
+	 * @param OpenRegisterLookupInterface $openRegister Whether OpenRegister is installed, and its ObjectService.
+	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookupInterface $openRegister,

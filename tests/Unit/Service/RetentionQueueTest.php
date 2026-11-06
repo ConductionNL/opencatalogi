@@ -82,8 +82,8 @@ class RetentionQueueTest extends TestCase {
 	/**
 	 * Each publication adds to the count its status, expiry and action call for.
 	 *
-	 * @param array<string, mixed> $data   The publication.
-	 * @param string|null          $bucket The expected summary key.
+	 * @param array<string, mixed> $data The publication.
+	 * @param string|null $bucket The expected summary key.
 	 *
 	 * @return void
 	 */

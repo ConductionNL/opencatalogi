@@ -121,7 +121,7 @@ class CaseTypeResyncServiceGoldenTest extends TestCase {
 	/**
 	 * Replay a diff and compare it to the recording.
 	 *
-	 * @param array<string, mixed> $local  The local definition.
+	 * @param array<string, mixed> $local The local definition.
 	 * @param array<string, mixed> $remote What the source answers.
 	 *
 	 * @return void
@@ -138,9 +138,9 @@ class CaseTypeResyncServiceGoldenTest extends TestCase {
 	/**
 	 * Replay a resynchronisation and compare it to the recording.
 	 *
-	 * @param array<string, mixed> $local    The local definition.
-	 * @param array<string, mixed> $diff     The diff.
-	 * @param array<int, mixed>    $accepted What was accepted.
+	 * @param array<string, mixed> $local The local definition.
+	 * @param array<string, mixed> $diff The diff.
+	 * @param array<int, mixed> $accepted What was accepted.
 	 *
 	 * @return void
 	 */
@@ -169,7 +169,7 @@ class CaseTypeResyncServiceGoldenTest extends TestCase {
 	/**
 	 * Compare an outcome to its recording, or record it.
 	 *
-	 * @param string               $name   The case name.
+	 * @param string $name The case name.
 	 * @param array<string, mixed> $actual The outcome.
 	 *
 	 * @return void

@@ -225,7 +225,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		}
 
 		return $this->timerService;
-
 	}//end engine()
 
 	/**
@@ -256,7 +255,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		}
 
 		return $this->timerMapper;
-
 	}//end store()
 
 	/**
@@ -287,7 +285,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end arm()
 
 	/**
@@ -324,7 +321,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end extendOnce()
 
 	/**
@@ -357,7 +353,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end pause()
 
 	/**
@@ -384,7 +379,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end resume()
 
 	/**
@@ -411,7 +405,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end describe()
 
 	/**
@@ -444,7 +437,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		}
 
 		return $rows;
-
 	}//end forRequest()
 
 	/**
@@ -467,7 +459,6 @@ class StatutoryTerm implements StatutoryTermInterface {
 		);
 
 		return new TermRefusedException(message: $error->getMessage(), code: 0, previous: $error);
-
 	}//end refusal()
 
 	/**

@@ -56,8 +56,8 @@ interface CatalogAccessServiceInterface {
 	/**
 	 * The authorization a schema should have, given the catalogues.
 	 *
-	 * @param int                              $schemaId The schema id.
-	 * @param array<string, mixed>             $current  Its authorization now.
+	 * @param int $schemaId The schema id.
+	 * @param array<string, mixed> $current Its authorization now.
 	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
 	 *
 	 * @return array<string, mixed> The authorization.

@@ -76,6 +76,7 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 use ReflectionMethod;
 use ReflectionNamedType;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Golden test for resolveAllowedOrigin() and the read-only CORS header set.
@@ -328,7 +329,7 @@ class CorsAllowedOriginGoldenTest extends TestCase {
 	 * @return object
 	 */
 	private function build(string $class, ?IAppConfig $config, string $origin, ?string $server = null): object {
-		$request = $this->createMock(IRequest::class);
+		$request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getHeader')->willReturnCallback(
 			static fn (string $name): string => ($name === 'Origin' ? $origin : '')
 		);

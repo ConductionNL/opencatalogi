@@ -76,4 +76,15 @@ class RegisterMapper {
 		return [];
 	}//end findAll()
 
+	/**
+	 * Persist a changed register.
+	 *
+	 * @param \OCP\AppFramework\Db\Entity $entity The register.
+	 *
+	 * @return \OCP\AppFramework\Db\Entity
+	 */
+	public function update(\OCP\AppFramework\Db\Entity $entity): \OCP\AppFramework\Db\Entity {
+		return $entity;
+	}//end update()
+
 }//end class

@@ -49,7 +49,6 @@ trait AnswersCrossOriginRequests {
 	 */
 	private function allowedOriginsSetting(): string {
 		return $this->config->getValueString($this->appName, 'cors_allowed_origins', '*');
-
 	}//end allowedOriginsSetting()
 
 	/**

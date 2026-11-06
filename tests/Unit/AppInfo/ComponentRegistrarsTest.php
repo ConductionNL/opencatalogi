@@ -170,9 +170,9 @@ class ComponentRegistrarsTest extends TestCase {
 	 * @return void
 	 */
 	public function testServiceRegistrarBindsReaderAndScopesCollectionsToTheApp(): void {
-		$aliases   = [];
+		$aliases = [];
 		$factories = [];
-		$context   = $this->createMock(IRegistrationContext::class);
+		$context = $this->createMock(IRegistrationContext::class);
 		$context->method('registerServiceAlias')->willReturnCallback(
 			static function (string $alias, string $target) use (&$aliases): void {
 				$aliases[$alias] = $target;

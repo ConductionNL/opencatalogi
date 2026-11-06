@@ -101,7 +101,6 @@ class CommunityController extends Controller {
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
-
 	}//end withCors()
 
 	/**
@@ -117,7 +116,6 @@ class CommunityController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->readWritePreflight();
-
 	}//end preflightedCors()
 
 	/**
@@ -170,6 +168,11 @@ class CommunityController extends Controller {
 	/**
 	 * Set a component's state.
 	 *
+	 * The schema's writes name group admin, which leaves out the delegated
+	 * administrators the admin-setting check lets in. That check is the gate,
+	 * so the save skips RBAC. The system owns the record, so whoever set the state
+	 * cannot rewrite or delete it.
+	 *
 	 * @return JSONResponse The saved status.
 	 *
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
@@ -204,7 +207,9 @@ class CommunityController extends Controller {
 				object: $status,
 				extend: [],
 				register: $config['register'],
-				schema: $config['schema']
+				schema: $config['schema'],
+				_rbac: false,
+				_unowned: true
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'status-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
@@ -213,7 +218,6 @@ class CommunityController extends Controller {
 		}
 
 		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end setStatus()
 
 	/**
@@ -270,7 +274,6 @@ class CommunityController extends Controller {
 		$this->addAllowedOriginHeaders(response: $response);
 
 		return $response;
-
 	}//end feed()
 
 	/**
@@ -303,6 +306,5 @@ class CommunityController extends Controller {
 		}
 
 		return $this->withCors(response: new JSONResponse($this->registers->renderMarkup(markup: $markup)));
-
 	}//end renderMarkup()
 }//end class

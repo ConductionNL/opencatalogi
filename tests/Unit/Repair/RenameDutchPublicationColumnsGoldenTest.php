@@ -131,7 +131,7 @@ class RenameDutchPublicationColumnsGoldenTest extends TestCase {
 	 * Whether the world fails at a point.
 	 *
 	 * @param array<string, mixed> $world The world.
-	 * @param string               $point The failure point.
+	 * @param string $point The failure point.
 	 *
 	 * @return bool
 	 */
@@ -143,7 +143,6 @@ class RenameDutchPublicationColumnsGoldenTest extends TestCase {
 		}
 
 		return false;
-
 	}//end fails()
 
 	/**
@@ -209,14 +208,13 @@ class RenameDutchPublicationColumnsGoldenTest extends TestCase {
 		);
 
 		return $db;
-
 	}//end db()
 
 	/**
 	 * A prepared statement over the world's tables or columns.
 	 *
 	 * @param array<string, mixed> $world The world.
-	 * @param string               $sql   The prepared SQL.
+	 * @param string $sql The prepared SQL.
 	 *
 	 * @return IPreparedStatement
 	 */
@@ -255,6 +253,5 @@ class RenameDutchPublicationColumnsGoldenTest extends TestCase {
 		);
 
 		return $stmt;
-
 	}//end statement()
 }//end class

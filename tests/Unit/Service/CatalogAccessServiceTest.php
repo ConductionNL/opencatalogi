@@ -88,19 +88,22 @@ class CatalogAccessServiceTest extends TestCase {
 		$objects = new class($catalogs, $this) {
 			/**
 			 * @param array<int, array<string, mixed>>|null $rows The rows; null throws.
-			 * @param CatalogAccessServiceTest              $test Counts the searches.
+			 * @param CatalogAccessServiceTest $test Counts the searches.
 			 */
-			public function __construct(private ?array $rows, private CatalogAccessServiceTest $test) {
+			public function __construct(
+				private ?array $rows,
+				private CatalogAccessServiceTest $test,
+			) {
 			}
 
 			/**
-			 * @param array<string, mixed> $query         The query.
-			 * @param bool                 $_rbac         Ignored.
-			 * @param bool                 $_multitenancy Ignored.
+			 * @param array<string, mixed> $query The query.
+			 * @param bool $_rbac Ignored.
+			 * @param bool $_multitenancy Ignored.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array {
+			public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
 				$this->test->searches++;
 				if ($this->rows === null) {
 					throw new \RuntimeException('search index unavailable');
@@ -114,13 +117,15 @@ class CatalogAccessServiceTest extends TestCase {
 			/**
 			 * @param CatalogAccessServiceTest $test The test holding the schema.
 			 */
-			public function __construct(private CatalogAccessServiceTest $test) {
+			public function __construct(
+				private CatalogAccessServiceTest $test,
+			) {
 			}
 
 			/**
 			 * @return object The schema.
 			 */
-			public function find(int $id, array $extend=[], bool $_rbac=true, bool $_multitenancy=true): object {
+			public function find(int $id, array $extend = [], bool $_rbac = true, bool $_multitenancy = true): object {
 				return clone $this->test->schema();
 			}
 
@@ -145,7 +150,6 @@ class CatalogAccessServiceTest extends TestCase {
 		);
 
 		return new CatalogAccessService($config, $container, $this->createMock(LoggerInterface::class));
-
 	}//end service()
 
 	/**
@@ -155,7 +159,6 @@ class CatalogAccessServiceTest extends TestCase {
 	 */
 	public function schema(): object {
 		return $this->schema;
-
 	}//end schema()
 
 	/**
@@ -210,9 +213,9 @@ class CatalogAccessServiceTest extends TestCase {
 		$service = $this->service(
 			[
 				[
-					'title'       => 'Woo-verzoeken',
-					'schemas'     => ['173'],
-					'filters'     => $filters,
+					'title' => 'Woo-verzoeken',
+					'schemas' => ['173'],
+					'filters' => $filters,
 					'staffAccess' => ['restricted' => true, 'readGroups' => ['juridisch'], 'editGroups' => ['woo-team']],
 				],
 			]
@@ -309,13 +312,13 @@ class CatalogAccessServiceTest extends TestCase {
 
 		$this->assertSame($rules, $this->schema->authorization);
 		$this->assertSame($snapshot, $this->stored);
-		$this->assertArrayHasKey(CatalogAccessService::PREVIOUS_KEY.'173', $this->stored);
+		$this->assertArrayHasKey(CatalogAccessService::PREVIOUS_KEY . '173', $this->stored);
 		$this->assertSame($writes, $this->writes);
 
 	}//end testAFailedCatalogueReadLeavesARestrictedSchemaAndItsSnapshotUnchanged()
 
 	public function testAFailedCatalogueReadStillListsTheSchemasWithASnapshot(): void {
-		$this->stored[CatalogAccessService::PREVIOUS_KEY.'173'] = '{"read":[]}';
+		$this->stored[CatalogAccessService::PREVIOUS_KEY . '173'] = '{"read":[]}';
 
 		$this->assertSame([173], $this->service(null)->coveredSchemaIds());
 

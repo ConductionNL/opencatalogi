@@ -110,8 +110,13 @@ class ObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 		bool $silent = false,
+		bool $_validation = true,
 		?array $uploadedFiles = null,
 		mixed $currentUser = null,
+		bool $failIfExists = false,
+		bool $_unowned = false,
+		bool $_dedupOverride = false,
+		?string $_owner = null,
 	): ObjectEntity {
 		return new ObjectEntity();
 	}//end saveObject()
@@ -165,10 +170,10 @@ class ObjectService {
 	/**
 	 * Build a search query.
 	 *
-	 * @param array<string,mixed>          $requestParams The request parameters.
-	 * @param int|string|array<mixed>|null $register      Register filter.
-	 * @param int|string|array<mixed>|null $schema        Schema filter.
-	 * @param array<mixed>|null            $ids           Object id filter.
+	 * @param array<string,mixed> $requestParams The request parameters.
+	 * @param int|string|array<mixed>|null $register Register filter.
+	 * @param int|string|array<mixed>|null $schema Schema filter.
+	 * @param array<mixed>|null $ids Object id filter.
 	 *
 	 * @return array<string,mixed>
 	 */

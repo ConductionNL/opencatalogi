@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Unit\Service\Portal;
 
-require_once __DIR__.'/FakePortalObjectStore.php';
+require_once __DIR__ . '/FakePortalObjectStore.php';
 
 use DateTimeImmutable;
 use DateTimeZone;
@@ -72,7 +72,7 @@ class SavedSearchMatcherTest extends TestCase {
 			return $this->rows;
 		});
 		$linker = $this->createMock(PublicationLinker::class);
-		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/'.$id);
+		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/' . $id);
 
 		$this->matcher = new SavedSearchMatcher(
 			store: $this->store,
@@ -91,14 +91,14 @@ class SavedSearchMatcherTest extends TestCase {
 	 * @return IFactory
 	 */
 	private function dutch(): IFactory {
-		$translations = json_decode((string)file_get_contents(dirname(__DIR__, 4).'/l10n/nl.json'), true)['translations'];
+		$translations = json_decode((string)file_get_contents(dirname(__DIR__, 4) . '/l10n/nl.json'), true)['translations'];
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(
-			static fn (string $text, array $parameters=[]): string => vsprintf((string)($translations[$text] ?? $text), $parameters)
+			static fn (string $text, array $parameters = []): string => vsprintf((string)($translations[$text] ?? $text), $parameters)
 		);
 		$factory = $this->createMock(IFactory::class);
 		$factory->method('get')->willReturnCallback(
-			function (string $app, ?string $lang=null) use ($l10n): IL10N {
+			function (string $app, ?string $lang = null) use ($l10n): IL10N {
 				$this->assertSame(['opencatalogi', 'nl'], [$app, $lang]);
 				return $l10n;
 			}
@@ -113,7 +113,7 @@ class SavedSearchMatcherTest extends TestCase {
 	 * @return void
 	 */
 	private function assertMessagesAreValid(): void {
-		$fragment = json_decode((string)file_get_contents(dirname(__DIR__, 3).'/fixtures/portaliq-portal-message-schema.json'), true);
+		$fragment = json_decode((string)file_get_contents(dirname(__DIR__, 3) . '/fixtures/portaliq-portal-message-schema.json'), true);
 		$schema = (string)json_encode(['type' => 'object', 'properties' => $fragment['properties'], 'required' => $fragment['required'], 'additionalProperties' => false]);
 		foreach ($this->store->messages as $message) {
 			$this->assertTrue((new Validator())->validate(json_decode((string)json_encode($message)), $schema)->isValid(), json_encode($message));
@@ -134,14 +134,14 @@ class SavedSearchMatcherTest extends TestCase {
 	/**
 	 * A saved search in the store.
 	 *
-	 * @param string      $id        The id.
-	 * @param string      $frequency The frequency.
+	 * @param string $id The id.
+	 * @param string $frequency The frequency.
 	 * @param string|null $lastRunAt The last run.
-	 * @param bool        $active    Whether it is active.
+	 * @param bool $active Whether it is active.
 	 *
 	 * @return void
 	 */
-	private function saved(string $id, string $frequency, ?string $lastRunAt, bool $active=true): void {
+	private function saved(string $id, string $frequency, ?string $lastRunAt, bool $active = true): void {
 		$this->store->objects['savedSearch'][$id] = array_filter([
 			'id' => $id,
 			'title' => 'Windpark',
@@ -156,13 +156,13 @@ class SavedSearchMatcherTest extends TestCase {
 	/**
 	 * A public publication row as the search returns it.
 	 *
-	 * @param string $id   The id.
+	 * @param string $id The id.
 	 * @param string $date The publication date.
 	 *
 	 * @return array<string, mixed>
 	 */
 	private function row(string $id, string $date): array {
-		return ['title' => 'Publicatie '.$id, 'publicationDate' => $date, '@self' => ['id' => $id, 'schema' => 'publication']];
+		return ['title' => 'Publicatie ' . $id, 'publicationDate' => $date, '@self' => ['id' => $id, 'schema' => 'publication']];
 	}
 
 	/**
@@ -172,7 +172,7 @@ class SavedSearchMatcherTest extends TestCase {
 	 */
 	private function assertSavesAreValid(): void {
 		$root = dirname(__DIR__, 4);
-		$fragment = json_decode((string)file_get_contents($root.'/lib/Settings/register.d/saved-searches-and-alerts.json'), true)['components']['schemas']['savedSearch'];
+		$fragment = json_decode((string)file_get_contents($root . '/lib/Settings/register.d/saved-searches-and-alerts.json'), true)['components']['schemas']['savedSearch'];
 		$schema = (string)json_encode(['type' => 'object', 'properties' => $fragment['properties'], 'required' => $fragment['required']]);
 		foreach ($this->store->saves as $save) {
 			$data = $save['data'];
@@ -328,7 +328,7 @@ class SavedSearchMatcherTest extends TestCase {
 	public function testADigestHoldsAtMostTwentyAndCountsAll(): void {
 		$this->saved('s1', 'weekly', '2026-09-28T07:05:00+02:00');
 		for ($i = 1; $i <= 25; $i++) {
-			$this->rows[] = $this->row('p'.$i, sprintf('2026-09-29T%02d:%02d:00+00:00', ($i % 20), $i));
+			$this->rows[] = $this->row('p' . $i, sprintf('2026-09-29T%02d:%02d:00+00:00', ($i % 20), $i));
 		}
 
 		$this->matcher->run(now: $this->at('2026-10-05 08:00'));
@@ -373,7 +373,7 @@ class SavedSearchMatcherTest extends TestCase {
 	public function testADigestIsOneMessageWithAtMostTwentyPublications(): void {
 		$this->saved('s1', 'weekly', '2026-09-28T07:05:00+02:00');
 		for ($i = 1; $i <= 25; $i++) {
-			$this->rows[] = $this->row('p'.$i, sprintf('2026-09-29T%02d:%02d:00+00:00', ($i % 20), $i));
+			$this->rows[] = $this->row('p' . $i, sprintf('2026-09-29T%02d:%02d:00+00:00', ($i % 20), $i));
 		}
 
 		$this->matcher->run(now: $this->at('2026-10-05 08:00'));

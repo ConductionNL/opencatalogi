@@ -102,7 +102,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return $this->objectService;
-
 	}//end objects()
 
 	/**
@@ -129,7 +128,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return ['register' => $register, 'schema' => $schema];
-
 	}//end target()
 
 	/**
@@ -154,7 +152,8 @@ class WooRequestStore implements InformationRequestStoreInterface {
 				schema: $target['schema'],
 				uuid: $uuid,
 				_rbac: false,
-				_multitenancy: false
+				_multitenancy: false,
+				_unowned: true
 			)
 		);
 
@@ -193,7 +192,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		$found['id'] = ($found['id'] ?? $requestId);
 
 		return $found;
-
 	}//end find()
 
 	/**
@@ -222,6 +220,5 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return $requests;
-
 	}//end all()
 }//end class

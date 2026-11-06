@@ -51,7 +51,13 @@
 			"publicationRule": {
 				"slug": "publicationRule",
 				"title": "Publication rule",
-				"version": "0.1.0",
+				"version": "0.1.1",
+				"authorization": {
+					"read": ["authenticated"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "A standing rule: for this record type, these parts are public",
 				"description": "Woo actieve openbaarmaking is a standing rule, not a person picking rows. The rule names the record type, the properties an anonymous reader may read, and the conditions under which a record of that type becomes public. A picked list goes stale the moment a new record arrives, and going stale here means failing to publish something the law says must be published.",
@@ -139,7 +145,13 @@
 			"inspection": {
 				"slug": "inspection",
 				"title": "Inspection",
-				"version": "0.1.0",
+				"version": "0.1.1",
+				"authorization": {
+					"read": ["admin"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "Terinzagelegging: a window, its documents and its link",
 				"description": "Which documents form part of a decision for inspection is a judgement made per case, not a rule per type, so the set is chosen when the publication is made. The link stops working because the window closed, checked at the read, not because a job ran.",
@@ -203,7 +215,13 @@
 			"publicationProcess": {
 				"slug": "publicationProcess",
 				"title": "Publication process",
-				"version": "0.1.0",
+				"version": "0.1.1",
+				"authorization": {
+					"read": ["authenticated"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "The four steps around one publication, each recorded",
 				"description": "Publish as a button hides four decisions: which documents, whether a zienswijze round is needed, who approves, and which channels receive it. A municipality that wants one action configures the steps away, and the skipped steps are recorded as configured off rather than as done.",
@@ -281,7 +299,13 @@
 			"zienswijzeAsk": {
 				"slug": "zienswijzeAsk",
 				"title": "Zienswijze ask",
-				"version": "0.1.0",
+				"version": "0.1.1",
+				"authorization": {
+					"read": ["admin"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "One ask to one interested party, and their answer",
 				"description": "Before information about an interested party is published, that party is asked, over a channel that identifies them. The publication is held while an ask is open inside its term.",
@@ -343,7 +367,13 @@
 			"depublication": {
 				"slug": "depublication",
 				"title": "Depublication",
-				"version": "0.2.0",
+				"version": "0.2.1",
+				"authorization": {
+					"read": ["admin"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "Taking a publication back, honestly",
 				"description": "One action takes a publication down, records who did it and why, and sends a withdrawal to every channel it reached, including the national ones. A withdrawal a channel has not acknowledged is shown as outstanding, because an undo that leaves the document in a harvester's copy is not one.",
@@ -419,7 +449,13 @@
 			"obligationSource": {
 				"slug": "obligationSource",
 				"title": "Obligation source",
-				"version": "0.1.0",
+				"version": "0.1.1",
+				"authorization": {
+					"read": ["admin"],
+					"create": ["admin"],
+					"update": ["admin"],
+					"delete": ["admin"]
+				},
 				"published": "2026-09-18T00:00:00+00:00",
 				"summary": "An application that registers as a source of publication obligations",
 				"description": "The publication obligation is on the organisation, not on one case system, so the overview reads from every registered source and from the harvest intake. Publishing only what one product holds is publishing part of it.",

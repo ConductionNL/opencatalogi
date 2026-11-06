@@ -43,8 +43,8 @@ class RecomputeCatalogAccess implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppManager          $appManager The app manager.
-	 * @param CatalogAccessServiceInterface $access     Writes the rules.
+	 * @param IAppManager $appManager The app manager.
+	 * @param CatalogAccessServiceInterface $access Writes the rules.
 	 */
 	public function __construct(
 		private readonly IAppManager $appManager,
@@ -62,7 +62,6 @@ class RecomputeCatalogAccess implements IRepairStep {
 	 */
 	public function getName(): string {
 		return 'Write the staff access of the catalogues onto the schemas they cover';
-
 	}//end getName()
 
 	/**
@@ -82,11 +81,11 @@ class RecomputeCatalogAccess implements IRepairStep {
 
 		$result = $this->access->recomputeMany(schemaIds: $this->access->coveredSchemaIds());
 
-		$output->info('Catalogue staff access written onto '.$result['written'].' schema(s)');
+		$output->info('Catalogue staff access written onto ' . $result['written'] . ' schema(s)');
 		if ($result['failed'] !== []) {
 			$output->warning(
-				'Catalogue staff access could not be written onto schema(s) '.implode(', ', $result['failed'])
-				.'; they keep their previous rules. Run `occ maintenance:repair` again once OpenRegister answers.'
+				'Catalogue staff access could not be written onto schema(s) ' . implode(', ', $result['failed'])
+				. '; they keep their previous rules. Run `occ maintenance:repair` again once OpenRegister answers.'
 			);
 		}
 

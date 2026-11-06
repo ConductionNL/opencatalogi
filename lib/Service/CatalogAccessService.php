@@ -78,9 +78,9 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig         $config    App configuration.
+	 * @param IAppConfig $config App configuration.
 	 * @param ContainerInterface $container For OpenRegister's services.
-	 * @param LoggerInterface    $logger    The logger.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -101,7 +101,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 */
 	public function recompute(int $schemaId): bool {
 		return $this->recomputeMany(schemaIds: [$schemaId])['written'] === 1;
-
 	}//end recompute()
 
 	/**
@@ -129,7 +128,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		// schemas and their snapshots are left exactly as they are.
 		$catalogs = $this->catalogs();
 		if ($catalogs === null) {
-			$this->logger->error('[CatalogAccessService] schema(s) '.implode(', ', $schemaIds).' left unchanged: the catalogues could not be read');
+			$this->logger->error('[CatalogAccessService] schema(s) ' . implode(', ', $schemaIds) . ' left unchanged: the catalogues could not be read');
 			return ['written' => 0, 'failed' => $schemaIds];
 		}
 
@@ -146,13 +145,12 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return ['written' => $written, 'failed' => $failed];
-
 	}//end recomputeMany()
 
 	/**
 	 * Recompute one schema from an already-read catalogue list and write it when it changed.
 	 *
-	 * @param int                              $schemaId The schema id.
+	 * @param int $schemaId The schema id.
 	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
 	 *
 	 * @return bool|null Whether the schema was written; null when it could not be read or written.
@@ -162,7 +160,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 			$mapper = $this->container->get(self::SCHEMA_MAPPER);
 			$schema = $mapper->find($schemaId, [], _rbac: false, _multitenancy: false);
 		} catch (\Throwable $e) {
-			$this->logger->error('[CatalogAccessService] schema '.$schemaId.' could not be read: '.$e->getMessage());
+			$this->logger->error('[CatalogAccessService] schema ' . $schemaId . ' could not be read: ' . $e->getMessage());
 			return null;
 		}
 
@@ -174,7 +172,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 			try {
 				$mapper->update($schema);
 			} catch (\Throwable $e) {
-				$this->logger->error('[CatalogAccessService] schema '.$schemaId.' could not be written: '.$e->getMessage());
+				$this->logger->error('[CatalogAccessService] schema ' . $schemaId . ' could not be written: ' . $e->getMessage());
 				return null;
 			}
 
@@ -188,14 +186,13 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return $written;
-
 	}//end recomputeWith()
 
 	/**
 	 * The authorization a schema should have, given the catalogues.
 	 *
-	 * @param int                              $schemaId The schema id.
-	 * @param array<string, mixed>             $current  Its authorization now.
+	 * @param int $schemaId The schema id.
+	 * @param array<string, mixed> $current Its authorization now.
 	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
 	 *
 	 * @return array<string, mixed> The authorization.
@@ -206,7 +203,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		$covering = $this->coveringCatalogs(schemaId: $schemaId, catalogs: $catalogs);
 		$restricted = $this->restrictingCatalogs(schemaId: $schemaId, catalogs: $catalogs);
 
-		$key = self::PREVIOUS_KEY.$schemaId;
+		$key = self::PREVIOUS_KEY . $schemaId;
 		$stored = $this->config->getValueString('opencatalogi', $key, '');
 
 		$previous = $this->decode(stored: $stored);
@@ -222,13 +219,12 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return $this->rulesFrom(base: ($previous ?? $current), catalogs: $covering);
-
 	}//end authorizationFor()
 
 	/**
 	 * The catalogues that cover a schema.
 	 *
-	 * @param int                              $schemaId The schema id.
+	 * @param int $schemaId The schema id.
 	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
 	 *
 	 * @return array<int, array<string, mixed>> The covering catalogues.
@@ -243,7 +239,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	/**
 	 * The restricted catalogues that cover a schema.
 	 *
-	 * @param int                              $schemaId The schema id.
+	 * @param int $schemaId The schema id.
 	 * @param array<int, array<string, mixed>> $catalogs Every catalogue.
 	 *
 	 * @return array<int, array<string, mixed>> The restricted covering catalogues.
@@ -251,7 +247,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	private function restrictingCatalogs(int $schemaId, array $catalogs): array {
 		$covering = $this->coveringCatalogs(schemaId: $schemaId, catalogs: $catalogs);
 		return array_values(array_filter($covering, fn (array $catalog): bool => $this->isRestricted(catalog: $catalog)));
-
 	}//end restrictingCatalogs()
 
 	/**
@@ -262,7 +257,7 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 * @return void
 	 */
 	private function forgetSnapshot(int $schemaId): void {
-		$key = self::PREVIOUS_KEY.$schemaId;
+		$key = self::PREVIOUS_KEY . $schemaId;
 		if ($this->config->getValueString('opencatalogi', $key, '') !== '') {
 			$this->config->deleteKey('opencatalogi', $key);
 		}
@@ -290,7 +285,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return array_values(array_unique($ids));
-
 	}//end coveredSchemaIds()
 
 	/**
@@ -319,7 +313,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return array_values(array_unique($ids));
-
 	}//end restrictedSchemaIds()
 
 	/**
@@ -333,13 +326,12 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	 */
 	public function schemaIdsOf(array $catalog): array {
 		return $this->ids(value: ($catalog['schemas'] ?? []));
-
 	}//end schemaIdsOf()
 
 	/**
 	 * The rule set from the catalogues that cover a schema.
 	 *
-	 * @param array<string, mixed>             $base     The authorization before any restriction.
+	 * @param array<string, mixed> $base The authorization before any restriction.
 	 * @param array<int, array<string, mixed>> $catalogs The covering catalogues.
 	 *
 	 * @return array<string, mixed> The authorization.
@@ -370,7 +362,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return $next;
-
 	}//end rulesFrom()
 
 	/**
@@ -405,7 +396,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return $actions;
-
 	}//end contributionOf()
 
 	/**
@@ -426,13 +416,12 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return $decoded;
-
 	}//end decode()
 
 	/**
 	 * One rule: the bare group, or the group narrowed to the catalogue's filters.
 	 *
-	 * @param string               $group   The group.
+	 * @param string $group The group.
 	 * @param array<string, mixed> $filters The catalogue's filters.
 	 *
 	 * @return string|array<string, mixed> The rule.
@@ -443,7 +432,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return ['group' => $group, 'match' => $filters];
-
 	}//end rule()
 
 	/**
@@ -456,7 +444,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 	private function isRestricted(array $catalog): bool {
 		$access = $catalog['staffAccess'] ?? null;
 		return is_array($access) === true && ($access['restricted'] ?? false) === true;
-
 	}//end isRestricted()
 
 	/**
@@ -472,7 +459,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return array_values(array_filter(array_map('strval', $value), static fn (string $group): bool => $group !== ''));
-
 	}//end groups()
 
 	/**
@@ -495,7 +481,6 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 		}
 
 		return $ids;
-
 	}//end ids()
 
 	/**
@@ -521,11 +506,10 @@ class CatalogAccessService implements CatalogAccessServiceInterface {
 				_multitenancy: false
 			);
 		} catch (\Throwable $e) {
-			$this->logger->warning('[CatalogAccessService] the catalogues could not be read: '.$e->getMessage());
+			$this->logger->warning('[CatalogAccessService] the catalogues could not be read: ' . $e->getMessage());
 			return null;
 		}
 
 		return array_values(array_filter(array_map(fn (mixed $object): array => $this->asArray(object: $object), ($result['results'] ?? []))));
-
 	}//end catalogs()
 }//end class

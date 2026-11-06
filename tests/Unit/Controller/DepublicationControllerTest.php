@@ -161,10 +161,12 @@ class DepublicationControllerTest extends TestCase {
 			/**
 			 * @param array<string, array<string, mixed>> $stored Objects by id.
 			 */
-			public function __construct(private array $stored) {
+			public function __construct(
+				private array $stored,
+			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
 				if (array_key_exists($id, $this->stored) === false) {
 					throw new \RuntimeException('no such object: ' . $id);
 				}
@@ -178,6 +180,8 @@ class DepublicationControllerTest extends TestCase {
 				string $register = '',
 				string $schema = '',
 				string $uuid = '',
+				bool $_rbac = true,
+				bool $_unowned = false,
 			): array {
 				$id = ($uuid !== '' ? $uuid : 'stored-1');
 				$object['id'] = $id;

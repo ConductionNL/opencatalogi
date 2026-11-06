@@ -55,6 +55,10 @@ use OCP\IUserSession;
 /**
  * Depublication and its acknowledgements. Every write here is admin-gated.
  *
+ * The depublication schema names group admin, which leaves out the delegated
+ * administrators the routes' admin-setting check lets in. That check is the
+ * gate, so these reads and saves skip RBAC.
+ *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
 class DepublicationController extends Controller {
@@ -95,7 +99,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $user->getUID();
-
 	}//end actor()
 
 	/**
@@ -140,7 +143,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->storeDepublication(depublication: $depublication);
-
 	}//end depublish()
 
 	/**
@@ -155,7 +157,6 @@ class DepublicationController extends Controller {
 		}
 
 		return array_map('strval', $channels);
-
 	}//end requestedChannels()
 
 	/**
@@ -165,6 +166,8 @@ class DepublicationController extends Controller {
 	 * channel's acknowledgement is recorded and an unacknowledged withdrawal is
 	 * shown as outstanding; neither is possible against a value that only ever
 	 * existed inside one response.
+	 *
+	 * The system owns the record, so whoever wrote it cannot rewrite or delete it.
 	 *
 	 * @param array<string, mixed> $depublication The depublication.
 	 *
@@ -176,7 +179,9 @@ class DepublicationController extends Controller {
 				object: $depublication,
 				extend: [],
 				register: $this->depublicationConfiguration()['register'],
-				schema: $this->depublicationConfiguration()['schema']
+				schema: $this->depublicationConfiguration()['schema'],
+				_rbac: false,
+				_unowned: true
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -191,7 +196,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->withOutstanding(saved: $saved);
-
 	}//end storeDepublication()
 
 	/**
@@ -263,7 +267,6 @@ class DepublicationController extends Controller {
 		);
 
 		return $this->storeAcknowledgement(found: $found);
-
 	}//end acknowledgeWithdrawal()
 
 	/**
@@ -294,7 +297,7 @@ class DepublicationController extends Controller {
 			$config = $this->depublicationConfiguration();
 			$objectService = $this->registers->getObjectService();
 			$depublication = $this->asArray(
-				object: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'])
+				object: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'], _rbac: false)
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -306,7 +309,6 @@ class DepublicationController extends Controller {
 		}
 
 		return ['id' => $id, 'config' => $config, 'depublication' => $depublication];
-
 	}//end findDepublication()
 
 	/**
@@ -328,7 +330,6 @@ class DepublicationController extends Controller {
 		);
 
 		return in_array($channel, $channels, true);
-
 	}//end withdrawalWasSent()
 
 	/**
@@ -345,7 +346,8 @@ class DepublicationController extends Controller {
 				extend: [],
 				register: $found['config']['register'],
 				schema: $found['config']['schema'],
-				uuid: $found['id']
+				uuid: $found['id'],
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -355,6 +357,5 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->withOutstanding(saved: $saved);
-
 	}//end storeAcknowledgement()
 }//end class

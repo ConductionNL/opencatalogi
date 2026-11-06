@@ -59,10 +59,10 @@ interface PublicationQueryServiceInterface {
 	 * to widen matching to document body text (WOO-517 add-on). Extraction is owned
 	 * by OR's TextExtractionService + ChunkMapper.
 	 *
-	 * @param array  $queryParams   Raw request query parameters from IRequest::getParams().
-	 *                              Recognised keys: `_content` (opt-in body-text search),
-	 *                              `_catalog` (single catalog slug), `_catalogi[]` (multi
-	 *                              catalog union).
+	 * @param array $queryParams Raw request query parameters from IRequest::getParams().
+	 *                           Recognised keys: `_content` (opt-in body-text search),
+	 *                           `_catalog` (single catalog slug), `_catalogi[]` (multi
+	 *                           catalog union).
 	 * @param object $objectService OpenRegister ObjectService instance (already resolved from container).
 	 *
 	 * @return array{results: array<int, array>, total: int} Flat mixed-type result envelope.
@@ -183,8 +183,8 @@ interface PublicationQueryServiceInterface {
 	 * page-local — `total` is lowered by the rows dropped from the page, which is
 	 * exact there.
 	 *
-	 * @param array                                   $result An OpenRegister relation envelope (`results`, `total`, …).
-	 * @param array{limit: int, offset: int}|null     $page   The caller's page when `$result` holds the full list.
+	 * @param array $result An OpenRegister relation envelope (`results`, `total`, …).
+	 * @param array{limit: int, offset: int}|null $page The caller's page when `$result` holds the full list.
 	 *
 	 * @return array The envelope with the guarded rows.
 	 *
@@ -238,9 +238,9 @@ interface PublicationQueryServiceInterface {
 	 * Callers MUST pass non-empty $allowedRegisters and $allowedSchemas; otherwise the
 	 * method returns null without touching OpenRegister.
 	 *
-	 * @param string                 $uuid             The UUID of the object to find.
+	 * @param string $uuid The UUID of the object to find.
 	 * @param array<int|string>|null $allowedRegisters Register IDs the search may touch.
-	 * @param array<int|string>|null $allowedSchemas   Schema IDs the search may touch.
+	 * @param array<int|string>|null $allowedSchemas Schema IDs the search may touch.
 	 *
 	 * @return array{register: int, schema: int}|null The register/schema IDs, or null.
 	 *
@@ -248,8 +248,8 @@ interface PublicationQueryServiceInterface {
 	 */
 	public function findObjectLocation(
 		string $uuid,
-		?array $allowedRegisters=null,
-		?array $allowedSchemas=null
+		?array $allowedRegisters = null,
+		?array $allowedSchemas = null,
 	): ?array;
 
 	/**
@@ -259,8 +259,8 @@ interface PublicationQueryServiceInterface {
 	 * handles multi-schema and multi-register cases, and strips non-universal _order fields
 	 * when searching across multiple registers.
 	 *
-	 * @param array  $catalog       Catalog data array (keys: schemas, registers).
-	 * @param array  $queryParams   Raw request query parameters from IRequest::getParams().
+	 * @param array $catalog Catalog data array (keys: schemas, registers).
+	 * @param array $queryParams Raw request query parameters from IRequest::getParams().
 	 * @param object $objectService ObjectService instance (already resolved from container).
 	 *
 	 * @return array The merged and sanitised search query ready for searchObjectsPaginated().
@@ -291,8 +291,8 @@ interface PublicationQueryServiceInterface {
 	 * Iterates over each (register, schema) combination in the catalog.
 	 * Returns the first matching object entity, or null if not found.
 	 *
-	 * @param array  $catalog       Catalog data array (keys: schemas, registers).
-	 * @param string $id            The UUID of the object to find.
+	 * @param array $catalog Catalog data array (keys: schemas, registers).
+	 * @param string $id The UUID of the object to find.
 	 * @param object $objectService ObjectService instance (already resolved from container).
 	 *
 	 * @return object|null The found object entity, or null.

@@ -61,11 +61,11 @@ class ObligationReadService implements ObligationReadServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param IEventDispatcher          $dispatcher The event dispatcher.
-	 * @param ObligationOverviewService $overview   The overview assembler.
-	 * @param IAppConfig                $config     App configuration.
-	 * @param ContainerInterface        $container  The container, for OpenRegister's ObjectService.
-	 * @param IAppManager               $appManager Tells whether OpenRegister is installed.
+	 * @param IEventDispatcher $dispatcher The event dispatcher.
+	 * @param ObligationOverviewService $overview The overview assembler.
+	 * @param IAppConfig $config App configuration.
+	 * @param ContainerInterface $container The container, for OpenRegister's ObjectService.
+	 * @param IAppManager $appManager Tells whether OpenRegister is installed.
 	 */
 	public function __construct(
 		private readonly IEventDispatcher $dispatcher,
@@ -93,7 +93,7 @@ class ObligationReadService implements ObligationReadServiceInterface {
 	 *
 	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
-	public function read(?DateTimeInterface $now=null): array {
+	public function read(?DateTimeInterface $now = null): array {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($now !== null) {
 			$moment = new DateTimeImmutable($now->format(DateTimeInterface::ATOM));
@@ -113,7 +113,6 @@ class ObligationReadService implements ObligationReadServiceInterface {
 		$overview = $this->overview->assemble(sources: $sources, obligationsBySource: $answers, now: $moment);
 
 		return $this->summarise(overview: $overview, sources: $sources, now: $moment);
-
 	}//end read()
 
 	/**
@@ -132,20 +131,19 @@ class ObligationReadService implements ObligationReadServiceInterface {
 		}
 
 		return ($event->getObligations() ?? new RuntimeException(self::NO_READER));
-
 	}//end ask()
 
 	/**
 	 * Add the totals and the per-source rows the page shows.
 	 *
-	 * @param array<string, mixed>             $overview The assembled overview.
-	 * @param array<int, array<string, mixed>> $sources  The registered sources.
-	 * @param DateTimeImmutable                $now      The moment.
+	 * @param array<string, mixed> $overview The assembled overview.
+	 * @param array<int, array<string, mixed>> $sources The registered sources.
+	 * @param DateTimeImmutable $now The moment.
 	 *
 	 * @return array<string, mixed> The overview with its summaries.
 	 */
 	private function summarise(array $overview, array $sources, DateTimeImmutable $now): array {
-		$weekEnd    = $now->add(new DateInterval('P7D'));
+		$weekEnd = $now->add(new DateInterval('P7D'));
 		$monthStart = $now->setDate((int)$now->format('Y'), (int)$now->format('m'), 1)->setTime(0, 0);
 
 		$dueThisWeek = 0;
@@ -177,7 +175,6 @@ class ObligationReadService implements ObligationReadServiceInterface {
 		$overview['bySource'] = array_values($bySource);
 
 		return $overview;
-
 	}//end summarise()
 
 	/**
@@ -196,24 +193,23 @@ class ObligationReadService implements ObligationReadServiceInterface {
 
 			$appId = (string)($source['appId'] ?? '');
 			$rows[$appId] = [
-				'appId'       => $appId,
-				'title'       => (string)($source['title'] ?? $appId),
+				'appId' => $appId,
+				'title' => (string)($source['title'] ?? $appId),
 				'outstanding' => 0,
-				'late'        => 0,
-				'nextDue'     => null,
+				'late' => 0,
+				'nextDue' => null,
 			];
 		}
 
 		return $rows;
-
 	}//end sourceRows()
 
 	/**
 	 * Count one outstanding obligation into its source's row.
 	 *
-	 * @param array<string, mixed>   $row   The source's row.
-	 * @param string                 $state The obligation's state.
-	 * @param DateTimeImmutable|null $due   Its due date.
+	 * @param array<string, mixed> $row The source's row.
+	 * @param string $state The obligation's state.
+	 * @param DateTimeImmutable|null $due Its due date.
 	 *
 	 * @return array<string, mixed> The row.
 	 */
@@ -227,7 +223,6 @@ class ObligationReadService implements ObligationReadServiceInterface {
 		}
 
 		return $row;
-
 	}//end countInto()
 
 	/**
@@ -272,14 +267,14 @@ class ObligationReadService implements ObligationReadServiceInterface {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 			$result = $objectService->searchObjectsPaginated(
 				query: [
-					'@self'  => ['register' => $register, 'schema' => $schema],
+					'@self' => ['register' => $register, 'schema' => $schema],
 					'_limit' => 200,
 				],
 				_rbac: false,
 				_multitenancy: false
 			);
 		} catch (\Throwable $e) {
-			throw new RuntimeException('The obligation sources could not be read: '.$e->getMessage(), 0, $e);
+			throw new RuntimeException('The obligation sources could not be read: ' . $e->getMessage(), 0, $e);
 		}
 
 		$sources = [];
@@ -288,7 +283,6 @@ class ObligationReadService implements ObligationReadServiceInterface {
 		}
 
 		return $sources;
-
 	}//end loadSources()
 
 	/**
@@ -315,6 +309,5 @@ class ObligationReadService implements ObligationReadServiceInterface {
 		}
 
 		return $object;
-
 	}//end asArray()
 }//end class

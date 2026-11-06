@@ -72,7 +72,7 @@ interface PortalContributionProviderInterface {
 	 *
 	 * @spec openspec/changes/portal-woo-request-intake/specs/woo-request-intake/spec.md#requirement-a-woo-request-delivered-by-the-portal-arms-its-term-req-wri-008
 	 */
-	public function receiveWooRequest(array $answers, string $receivedAt=''): array;
+	public function receiveWooRequest(array $answers, string $receivedAt = ''): array;
 
 	/**
 	 * The items of one dossier, for portaliq's `itemList` (hydra C7).

@@ -241,7 +241,7 @@ class PublicationRulesControllerTest extends TestCase {
 		);
 
 		$preview = $this->controller->previewRule()->getData();
-		$search  = $this->controller->publicSearch()->getData();
+		$search = $this->controller->publicSearch()->getData();
 
 		$this->assertSame([['title' => 'Een']], $preview['wouldPublish']);
 		$this->assertSame(1, $search['total']);

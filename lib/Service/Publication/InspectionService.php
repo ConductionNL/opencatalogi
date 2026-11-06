@@ -140,7 +140,6 @@ class InspectionService implements InspectionServiceInterface {
 		}
 
 		return ($moment >= $start && $moment <= $end);
-
 	}//end isOpen()
 
 	/**

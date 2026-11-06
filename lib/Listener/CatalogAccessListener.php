@@ -71,12 +71,12 @@ class CatalogAccessListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param CatalogAccessServiceInterface $access       Writes the rules.
-	 * @param IAppConfig                    $config       App configuration.
-	 * @param IUserSession                  $userSession  The session.
-	 * @param IGroupManager                 $groupManager For the administrator check.
-	 * @param CatalogiServiceInterface      $catalogi     Resolves schema slugs and UUIDs the way the save will.
-	 * @param LoggerInterface               $logger       Reports a recompute that could not finish.
+	 * @param CatalogAccessServiceInterface $access Writes the rules.
+	 * @param IAppConfig $config App configuration.
+	 * @param IUserSession $userSession The session.
+	 * @param IGroupManager $groupManager For the administrator check.
+	 * @param CatalogiServiceInterface $catalogi Resolves schema slugs and UUIDs the way the save will.
+	 * @param LoggerInterface $logger Reports a recompute that could not finish.
 	 */
 	public function __construct(
 		private readonly CatalogAccessServiceInterface $access,
@@ -137,8 +137,8 @@ class CatalogAccessListener implements IEventListener {
 			// so what the catalogue shows and what OpenRegister enforces differ until
 			// the next catalogue save or `occ maintenance:repair` recomputes them.
 			$this->logger->error(
-				'[CatalogAccessListener] staff access not written onto schema(s) '.implode(', ', $result['failed'])
-				.' after a catalogue save; they keep their previous rules until the next save or repair run'
+				'[CatalogAccessListener] staff access not written onto schema(s) ' . implode(', ', $result['failed'])
+				. ' after a catalogue save; they keep their previous rules until the next save or repair run'
 			);
 		}
 
@@ -156,8 +156,8 @@ class CatalogAccessListener implements IEventListener {
 	 * A write without a session (a background job, an import) is the system's own.
 	 *
 	 * @param ObjectCreatingEvent|ObjectUpdatingEvent|ObjectDeletingEvent $event The pre-save event.
-	 * @param ObjectEntity|null                                           $new   The object as it would be written; null on delete.
-	 * @param ObjectEntity|null                                           $old   The object as stored; null on create.
+	 * @param ObjectEntity|null $new The object as it would be written; null on delete.
+	 * @param ObjectEntity|null $old The object as stored; null on create.
 	 *
 	 * @return void
 	 */
@@ -195,7 +195,7 @@ class CatalogAccessListener implements IEventListener {
 	 * Whether the old or new schemas of a catalogue include one a restricted catalogue covers.
 	 *
 	 * @param array<string, mixed> $before The catalogue as stored.
-	 * @param array<string, mixed> $after  The catalogue as it would be written.
+	 * @param array<string, mixed> $after The catalogue as it would be written.
 	 *
 	 * @return bool True when it does, or when the catalogues cannot be read.
 	 */
@@ -217,7 +217,6 @@ class CatalogAccessListener implements IEventListener {
 		}
 
 		return array_intersect($touched, $restricted) !== [];
-
 	}//end touchesARestrictedSchema()
 
 	/**
@@ -242,7 +241,6 @@ class CatalogAccessListener implements IEventListener {
 		}
 
 		return $this->access->schemaIdsOf(catalog: array_merge($catalog, $rewritten));
-
 	}//end resolvedSchemaIds()
 
 	/**
@@ -263,7 +261,6 @@ class CatalogAccessListener implements IEventListener {
 		}
 
 		return ($object->getObject() ?? []);
-
 	}//end liveData()
 
 	/**
@@ -286,7 +283,6 @@ class CatalogAccessListener implements IEventListener {
 		}
 
 		return ['schemas' => array_values(array_unique($schemas)), 'filters' => $filters];
-
 	}//end scope()
 
 	/**
@@ -344,7 +340,6 @@ class CatalogAccessListener implements IEventListener {
 		}
 
 		return [];
-
 	}//end savedObjects()
 
 	/**

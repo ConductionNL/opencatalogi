@@ -48,8 +48,8 @@ class WooReadinessTriggerListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig $config  The catalogue register and schema.
-	 * @param IJobList   $jobList The background job list.
+	 * @param IAppConfig $config The catalogue register and schema.
+	 * @param IJobList $jobList The background job list.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -110,7 +110,6 @@ class WooReadinessTriggerListener implements IEventListener {
 		}
 
 		return (string)$object->getSchema() === $schema && (string)$object->getRegister() === $register;
-
 	}//end isCatalogue()
 
 	/**
@@ -122,6 +121,5 @@ class WooReadinessTriggerListener implements IEventListener {
 	 */
 	private function publishesWoo(object $object): bool {
 		return (($object->getObject()['hasWooSitemap'] ?? false) === true);
-
 	}//end publishesWoo()
 }//end class

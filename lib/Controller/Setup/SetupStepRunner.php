@@ -53,8 +53,8 @@ class SetupStepRunner {
 	/**
 	 * Run the setup step behind an action id, or answer null for an id that is no step.
 	 *
-	 * @param string   $actionId The action id from the manifest.
-	 * @param IRequest $request  The request, for the dataset a card posts.
+	 * @param string $actionId The action id from the manifest.
+	 * @param IRequest $request The request, for the dataset a card posts.
 	 *
 	 * @return JSONResponse|null The step's `{ success, message }` answer.
 	 *

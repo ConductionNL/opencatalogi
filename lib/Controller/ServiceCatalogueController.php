@@ -53,6 +53,10 @@ use OCP\IRequest;
 /**
  * Serves the published service catalogue and the case type catalogue.
  *
+ * The case type schema's writes and its stored snapshot name group admin, which
+ * leaves out the delegated administrators the admin-setting check lets in. That
+ * check is the gate, so the import and the resynchronisation skip RBAC.
+ *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
  * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md
@@ -100,7 +104,6 @@ class ServiceCatalogueController extends Controller {
 	 */
 	private function withCors(JSONResponse $response): JSONResponse {
 		return $this->withListPreflightHeaders(response: $response);
-
 	}//end withCors()
 
 	/**
@@ -116,7 +119,6 @@ class ServiceCatalogueController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->withListPreflightHeaders(response: new Response());
-
 	}//end preflightedCors()
 
 	/**
@@ -331,7 +333,8 @@ class ServiceCatalogueController extends Controller {
 				object: $definition,
 				extend: [],
 				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				schema: $caseTypeConfig['schema'],
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -341,7 +344,6 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end importCaseType()
 
 	/**
@@ -373,7 +375,6 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		return new JSONResponse($diff);
-
 	}//end previewResync()
 
 	/**
@@ -417,11 +418,11 @@ class ServiceCatalogueController extends Controller {
 			extend: [],
 			register: $target['config']['register'],
 			schema: $target['config']['schema'],
-			uuid: $id
+			uuid: $id,
+			_rbac: false
 		);
 
 		return new JSONResponse($this->asArray(object: $saved));
-
 	}//end applyResync()
 
 	/**
@@ -443,7 +444,8 @@ class ServiceCatalogueController extends Controller {
 				object: $objectService->find(
 					id: $id,
 					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema']
+					schema: $caseTypeConfig['schema'],
+					_rbac: false
 				)
 			);
 		} catch (CatalogueUnreadableException $e) {

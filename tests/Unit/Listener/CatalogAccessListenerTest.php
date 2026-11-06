@@ -68,17 +68,16 @@ class CatalogAccessListenerTest extends TestCase {
 	 * A catalogue entity.
 	 *
 	 * @param array<string, mixed> $data The catalogue.
-	 * @param string               $schema Its schema id.
+	 * @param string $schema Its schema id.
 	 *
 	 * @return ObjectEntity The entity.
 	 */
-	private function catalog(array $data, string $schema='172'): ObjectEntity {
+	private function catalog(array $data, string $schema = '172'): ObjectEntity {
 		$entity = new ObjectEntity();
 		$entity->setRegister('19');
 		$entity->setSchema($schema);
 		$entity->setObject($data);
 		return $entity;
-
 	}//end catalog()
 
 	/**

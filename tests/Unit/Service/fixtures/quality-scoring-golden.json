@@ -1,0 +1,2962 @@
+{
+    "default weights": {
+        "weights": {
+            "findability": 25,
+            "accessibility": 25,
+            "interoperability": 20,
+            "reusability": 20,
+            "contextuality": 10
+        },
+        "scores": {
+            "empty": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "complete": {
+                "total": 100,
+                "dimensions": {
+                    "findability": 100,
+                    "accessibility": 100,
+                    "interoperability": 100,
+                    "reusability": 100,
+                    "contextuality": 100
+                },
+                "missing": []
+            },
+            "literal theme, issued, landing page": {
+                "total": 10,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 100
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher"
+                ]
+            },
+            "single distribution node": {
+                "total": 33,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 100,
+                    "interoperability": 40,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "distribution by download URL only": {
+                "total": 31,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 100,
+                    "interoperability": 30,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "distribution not a list": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "two distributions, best wins": {
+                "total": 14,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 70,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "empty format and media type": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "media type only": {
+                "total": 6,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 30,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "open format in a quoted value": {
+                "total": 14,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 70,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            }
+        },
+        "measurements": {
+            "empty": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "complete": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 100
+                }
+            ],
+            "literal theme, issued, landing page": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 10
+                }
+            ],
+            "single distribution node": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 40
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 33
+                }
+            ],
+            "distribution by download URL only": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 30
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 31
+                }
+            ],
+            "distribution not a list": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "two distributions, best wins": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 70
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 14
+                }
+            ],
+            "empty format and media type": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "media type only": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 30
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 6
+                }
+            ],
+            "open format in a quoted value": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 70
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 14
+                }
+            ]
+        },
+        "rollup": {
+            "count": 10,
+            "average": 21,
+            "distribution": {
+                "0-25": 7,
+                "26-50": 2,
+                "51-75": 0,
+                "76-100": 1
+            },
+            "worst": [
+                {
+                    "iri": "",
+                    "total": 0,
+                    "dimensions": {
+                        "findability": 0,
+                        "accessibility": 0,
+                        "interoperability": 0,
+                        "reusability": 0,
+                        "contextuality": 0
+                    },
+                    "missing": [
+                        "dct:title",
+                        "dcat:keyword",
+                        "dcat:theme",
+                        "dcat:distribution",
+                        "dct:format",
+                        "dct:license",
+                        "dct:publisher",
+                        "dct:modified",
+                        "dct:identifier"
+                    ]
+                },
+                {
+                    "iri": "https://x/5",
+                    "total": 0,
+                    "dimensions": {
+                        "findability": 0,
+                        "accessibility": 0,
+                        "interoperability": 0,
+                        "reusability": 0,
+                        "contextuality": 0
+                    },
+                    "missing": [
+                        "dct:title",
+                        "dcat:keyword",
+                        "dcat:theme",
+                        "dcat:distribution",
+                        "dct:format",
+                        "dct:license",
+                        "dct:publisher",
+                        "dct:modified",
+                        "dct:identifier"
+                    ]
+                },
+                {
+                    "iri": "https://x/9",
+                    "total": 0,
+                    "dimensions": {
+                        "findability": 0,
+                        "accessibility": 0,
+                        "interoperability": 0,
+                        "reusability": 0,
+                        "contextuality": 0
+                    },
+                    "missing": [
+                        "dct:title",
+                        "dcat:keyword",
+                        "dcat:theme",
+                        "dcat:distribution",
+                        "dct:format",
+                        "dct:license",
+                        "dct:publisher",
+                        "dct:modified",
+                        "dct:identifier"
+                    ]
+                },
+                {
+                    "iri": "https://x/7",
+                    "total": 6,
+                    "dimensions": {
+                        "findability": 0,
+                        "accessibility": 0,
+                        "interoperability": 30,
+                        "reusability": 0,
+                        "contextuality": 0
+                    },
+                    "missing": [
+                        "dct:title",
+                        "dcat:keyword",
+                        "dcat:theme",
+                        "dcat:distribution",
+                        "dct:format",
+                        "dct:license",
+                        "dct:publisher",
+                        "dct:modified",
+                        "dct:identifier"
+                    ]
+                },
+                {
+                    "iri": "https://x/2",
+                    "total": 10,
+                    "dimensions": {
+                        "findability": 0,
+                        "accessibility": 0,
+                        "interoperability": 0,
+                        "reusability": 0,
+                        "contextuality": 100
+                    },
+                    "missing": [
+                        "dct:title",
+                        "dcat:keyword",
+                        "dcat:theme",
+                        "dcat:distribution",
+                        "dct:format",
+                        "dct:license",
+                        "dct:publisher"
+                    ]
+                }
+            ],
+            "missingBreakdown": {
+                "dct:title": 9,
+                "dcat:keyword": 9,
+                "dcat:theme": 9,
+                "dcat:distribution": 7,
+                "dct:format": 6,
+                "dct:license": 9,
+                "dct:publisher": 9,
+                "dct:modified": 8,
+                "dct:identifier": 8
+            }
+        },
+        "rollup of nothing": {
+            "count": 0,
+            "average": 0,
+            "distribution": {
+                "0-25": 0,
+                "26-50": 0,
+                "51-75": 0,
+                "76-100": 0
+            },
+            "worst": [],
+            "missingBreakdown": []
+        },
+        "measurements of text scores": [
+            {
+                "@type": "dqv:QualityMeasurement",
+                "dqv:isMeasurementOf": {
+                    "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                },
+                "dqv:value": 40
+            },
+            {
+                "@type": "dqv:QualityMeasurement",
+                "dqv:isMeasurementOf": {
+                    "@id": "https://data.overheid.nl/dqv/dimension/total"
+                },
+                "dqv:value": 7
+            }
+        ]
+    },
+    "custom weights": {
+        "weights": {
+            "findability": 50,
+            "accessibility": 0,
+            "interoperability": 10,
+            "reusability": 30,
+            "contextuality": 10
+        },
+        "scores": {
+            "empty": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "complete": {
+                "total": 100,
+                "dimensions": {
+                    "findability": 100,
+                    "accessibility": 100,
+                    "interoperability": 100,
+                    "reusability": 100,
+                    "contextuality": 100
+                },
+                "missing": []
+            },
+            "literal theme, issued, landing page": {
+                "total": 10,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 100
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher"
+                ]
+            },
+            "single distribution node": {
+                "total": 4,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 100,
+                    "interoperability": 40,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "distribution by download URL only": {
+                "total": 3,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 100,
+                    "interoperability": 30,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "distribution not a list": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "two distributions, best wins": {
+                "total": 7,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 70,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "empty format and media type": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "media type only": {
+                "total": 3,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 30,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "open format in a quoted value": {
+                "total": 7,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 70,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            }
+        },
+        "measurements": {
+            "empty": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "complete": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 100
+                }
+            ],
+            "literal theme, issued, landing page": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 10
+                }
+            ],
+            "single distribution node": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 40
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 4
+                }
+            ],
+            "distribution by download URL only": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 30
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 3
+                }
+            ],
+            "distribution not a list": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "two distributions, best wins": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 70
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 7
+                }
+            ],
+            "empty format and media type": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "media type only": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 30
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 3
+                }
+            ],
+            "open format in a quoted value": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 70
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 7
+                }
+            ]
+        },
+        "rollup": {
+            "count": 10,
+            "average": 13,
+            "distribution": {
+                "0-25": 9,
+                "26-50": 0,
+                "51-75": 0,
+                "76-100": 1
+            },
+            "worst": [
+                {
+                    "iri": "",
+                    "total": 0,
+                    "dimensions": {
+                        "findability": 0,
+                        "accessibility": 0,
+                        "interoperability": 0,
+                        "reusability": 0,
+                        "contextuality": 0
+                    },
+                    "missing": [
+                        "dct:title",
+                        "dcat:keyword",
+                        "dcat:theme",
+                        "dcat:distribution",
+                        "dct:format",
+                        "dct:license",
+                        "dct:publisher",
+                        "dct:modified",
+                        "dct:identifier"
+                    ]
+                },
+                {
+                    "iri": "https://x/5",
+                    "total": 0,
+                    "dimensions": {
+                        "findability": 0,
+                        "accessibility": 0,
+                        "interoperability": 0,
+                        "reusability": 0,
+                        "contextuality": 0
+                    },
+                    "missing": [
+                        "dct:title",
+                        "dcat:keyword",
+                        "dcat:theme",
+                        "dcat:distribution",
+                        "dct:format",
+                        "dct:license",
+                        "dct:publisher",
+                        "dct:modified",
+                        "dct:identifier"
+                    ]
+                },
+                {
+                    "iri": "https://x/9",
+                    "total": 0,
+                    "dimensions": {
+                        "findability": 0,
+                        "accessibility": 0,
+                        "interoperability": 0,
+                        "reusability": 0,
+                        "contextuality": 0
+                    },
+                    "missing": [
+                        "dct:title",
+                        "dcat:keyword",
+                        "dcat:theme",
+                        "dcat:distribution",
+                        "dct:format",
+                        "dct:license",
+                        "dct:publisher",
+                        "dct:modified",
+                        "dct:identifier"
+                    ]
+                }
+            ],
+            "missingBreakdown": {
+                "dct:title": 9,
+                "dcat:keyword": 9,
+                "dcat:theme": 9,
+                "dcat:distribution": 7,
+                "dct:format": 6,
+                "dct:license": 9,
+                "dct:publisher": 9,
+                "dct:modified": 8,
+                "dct:identifier": 8
+            }
+        },
+        "rollup of nothing": {
+            "count": 0,
+            "average": 0,
+            "distribution": {
+                "0-25": 0,
+                "26-50": 0,
+                "51-75": 0,
+                "76-100": 0
+            },
+            "worst": [],
+            "missingBreakdown": []
+        },
+        "measurements of text scores": [
+            {
+                "@type": "dqv:QualityMeasurement",
+                "dqv:isMeasurementOf": {
+                    "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                },
+                "dqv:value": 40
+            },
+            {
+                "@type": "dqv:QualityMeasurement",
+                "dqv:isMeasurementOf": {
+                    "@id": "https://data.overheid.nl/dqv/dimension/total"
+                },
+                "dqv:value": 7
+            }
+        ]
+    },
+    "all weights zero": {
+        "weights": {
+            "findability": 0,
+            "accessibility": 0,
+            "interoperability": 0,
+            "reusability": 0,
+            "contextuality": 0
+        },
+        "scores": {
+            "empty": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "complete": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 100,
+                    "accessibility": 100,
+                    "interoperability": 100,
+                    "reusability": 100,
+                    "contextuality": 100
+                },
+                "missing": []
+            },
+            "literal theme, issued, landing page": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 100
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher"
+                ]
+            },
+            "single distribution node": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 100,
+                    "interoperability": 40,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "distribution by download URL only": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 100,
+                    "interoperability": 30,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "distribution not a list": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "two distributions, best wins": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 70,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "empty format and media type": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "media type only": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 30,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "open format in a quoted value": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 70,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            }
+        },
+        "measurements": {
+            "empty": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "complete": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "literal theme, issued, landing page": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "single distribution node": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 40
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "distribution by download URL only": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 30
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "distribution not a list": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "two distributions, best wins": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 70
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "empty format and media type": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "media type only": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 30
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "open format in a quoted value": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 70
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ]
+        },
+        "rollup": {
+            "count": 10,
+            "average": 0,
+            "distribution": {
+                "0-25": 10,
+                "26-50": 0,
+                "51-75": 0,
+                "76-100": 0
+            },
+            "worst": [],
+            "missingBreakdown": {
+                "dct:title": 9,
+                "dcat:keyword": 9,
+                "dcat:theme": 9,
+                "dcat:distribution": 7,
+                "dct:format": 6,
+                "dct:license": 9,
+                "dct:publisher": 9,
+                "dct:modified": 8,
+                "dct:identifier": 8
+            }
+        },
+        "rollup of nothing": {
+            "count": 0,
+            "average": 0,
+            "distribution": {
+                "0-25": 0,
+                "26-50": 0,
+                "51-75": 0,
+                "76-100": 0
+            },
+            "worst": [],
+            "missingBreakdown": []
+        },
+        "measurements of text scores": [
+            {
+                "@type": "dqv:QualityMeasurement",
+                "dqv:isMeasurementOf": {
+                    "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                },
+                "dqv:value": 40
+            },
+            {
+                "@type": "dqv:QualityMeasurement",
+                "dqv:isMeasurementOf": {
+                    "@id": "https://data.overheid.nl/dqv/dimension/total"
+                },
+                "dqv:value": 7
+            }
+        ]
+    },
+    "negative worst": {
+        "weights": {
+            "findability": 25,
+            "accessibility": 25,
+            "interoperability": 20,
+            "reusability": 20,
+            "contextuality": 10
+        },
+        "scores": {
+            "empty": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "complete": {
+                "total": 100,
+                "dimensions": {
+                    "findability": 100,
+                    "accessibility": 100,
+                    "interoperability": 100,
+                    "reusability": 100,
+                    "contextuality": 100
+                },
+                "missing": []
+            },
+            "literal theme, issued, landing page": {
+                "total": 10,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 100
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher"
+                ]
+            },
+            "single distribution node": {
+                "total": 33,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 100,
+                    "interoperability": 40,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "distribution by download URL only": {
+                "total": 31,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 100,
+                    "interoperability": 30,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "distribution not a list": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "two distributions, best wins": {
+                "total": 14,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 70,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "empty format and media type": {
+                "total": 0,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 0,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "media type only": {
+                "total": 6,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 30,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:format",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            },
+            "open format in a quoted value": {
+                "total": 14,
+                "dimensions": {
+                    "findability": 0,
+                    "accessibility": 0,
+                    "interoperability": 70,
+                    "reusability": 0,
+                    "contextuality": 0
+                },
+                "missing": [
+                    "dct:title",
+                    "dcat:keyword",
+                    "dcat:theme",
+                    "dcat:distribution",
+                    "dct:license",
+                    "dct:publisher",
+                    "dct:modified",
+                    "dct:identifier"
+                ]
+            }
+        },
+        "measurements": {
+            "empty": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "complete": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 100
+                }
+            ],
+            "literal theme, issued, landing page": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 10
+                }
+            ],
+            "single distribution node": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 40
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 33
+                }
+            ],
+            "distribution by download URL only": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 100
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 30
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 31
+                }
+            ],
+            "distribution not a list": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "two distributions, best wins": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 70
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 14
+                }
+            ],
+            "empty format and media type": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 0
+                }
+            ],
+            "media type only": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 30
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 6
+                }
+            ],
+            "open format in a quoted value": [
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/accessibility"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/interoperability"
+                    },
+                    "dqv:value": 70
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/reusability"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/contextuality"
+                    },
+                    "dqv:value": 0
+                },
+                {
+                    "@type": "dqv:QualityMeasurement",
+                    "dqv:isMeasurementOf": {
+                        "@id": "https://data.overheid.nl/dqv/dimension/total"
+                    },
+                    "dqv:value": 14
+                }
+            ]
+        },
+        "rollup": {
+            "count": 10,
+            "average": 21,
+            "distribution": {
+                "0-25": 7,
+                "26-50": 2,
+                "51-75": 0,
+                "76-100": 1
+            },
+            "worst": [],
+            "missingBreakdown": {
+                "dct:title": 9,
+                "dcat:keyword": 9,
+                "dcat:theme": 9,
+                "dcat:distribution": 7,
+                "dct:format": 6,
+                "dct:license": 9,
+                "dct:publisher": 9,
+                "dct:modified": 8,
+                "dct:identifier": 8
+            }
+        },
+        "rollup of nothing": {
+            "count": 0,
+            "average": 0,
+            "distribution": {
+                "0-25": 0,
+                "26-50": 0,
+                "51-75": 0,
+                "76-100": 0
+            },
+            "worst": [],
+            "missingBreakdown": []
+        },
+        "measurements of text scores": [
+            {
+                "@type": "dqv:QualityMeasurement",
+                "dqv:isMeasurementOf": {
+                    "@id": "https://data.overheid.nl/dqv/dimension/findability"
+                },
+                "dqv:value": 40
+            },
+            {
+                "@type": "dqv:QualityMeasurement",
+                "dqv:isMeasurementOf": {
+                    "@id": "https://data.overheid.nl/dqv/dimension/total"
+                },
+                "dqv:value": 7
+            }
+        ]
+    }
+}
