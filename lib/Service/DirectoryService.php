@@ -401,6 +401,26 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end trustDirectory()
 
 	/**
+	 * Stop crawling a directory an administrator removed (its listing was deleted).
+	 *
+	 * @param string $directoryUrl The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function untrustDirectory(string $directoryUrl): void {
+		$trusted = $this->getTrustedDirectoryUrls();
+		$kept    = array_values(array_filter($trusted, static fn (string $url): bool => $url !== $directoryUrl));
+		if (count($kept) === count($trusted)) {
+			return;
+		}
+
+		$this->config->setValueString($this->appName, self::CONFIG_TRUSTED_DIRECTORIES, (string)json_encode($kept));
+
+	}//end untrustDirectory()
+
+	/**
 	 * The directories an administrator added; an unreadable value counts as none.
 	 *
 	 * @return array<string> The trusted directory URLs.

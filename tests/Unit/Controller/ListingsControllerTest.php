@@ -720,6 +720,44 @@ class ListingsControllerTest extends TestCase {
 	}//end testDestroyReturnsSuccessOnDeletion()
 
 	/**
+	 * pp-f4: deleting a directory's listing takes that directory out of the cron crawl set.
+	 *
+	 * @return void
+	 */
+	public function testDestroyUntrustsTheListingsDirectory(): void {
+		$this->mockListingConfig();
+		$mockObjService = $this->mockObjectService();
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['directory' => 'https://peer.example.org/api/directory']);
+		$mockObjService->method('find')->willReturn($entity);
+		$mockObjService->method('deleteObject')->willReturn(true);
+
+		$this->directoryService->expects($this->once())
+			->method('untrustDirectory')
+			->with('https://peer.example.org/api/directory');
+
+		$this->assertEquals(200, $this->controller->destroy('123')->getStatus());
+	}//end testDestroyUntrustsTheListingsDirectory()
+
+	/**
+	 * pp-f4: a delete that removes nothing untrusts nothing.
+	 *
+	 * @return void
+	 */
+	public function testDestroyThatDeletesNothingKeepsTheDirectoryTrusted(): void {
+		$this->mockListingConfig();
+		$mockObjService = $this->mockObjectService();
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['directory' => 'https://peer.example.org/api/directory']);
+		$mockObjService->method('find')->willReturn($entity);
+		$mockObjService->method('deleteObject')->willReturn(false);
+
+		$this->directoryService->expects($this->never())->method('untrustDirectory');
+
+		$this->assertEquals(404, $this->controller->destroy('123')->getStatus());
+	}//end testDestroyThatDeletesNothingKeepsTheDirectoryTrusted()
+
+	/**
 	 * Destroy() returns 404 with a message when the listing is not found.
 	 *
 	 * @return void
@@ -889,6 +927,24 @@ class ListingsControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(200, $response->getStatus());
 	}//end testAddReturnsSuccessWithValidUrl()
+
+	/**
+	 * pp-f4: when trusting the directory fails after a completed sync, the sync
+	 * result is still returned with 200.
+	 *
+	 * @return void
+	 */
+	public function testAddKeeps200WhenTrustingTheDirectoryFails(): void {
+		$this->request->method('getParam')->with('url')->willReturn('https://example.com/directory');
+		$this->directoryService->method('syncDirectory')->willReturn(['synced' => 3]);
+		$this->directoryService->method('trustDirectory')
+			->willThrowException(new \InvalidArgumentException('Directory URL host could not be resolved'));
+
+		$response = $this->controller->add();
+
+		$this->assertEquals(200, $response->getStatus());
+		$this->assertSame(['synced' => 3], $response->getData());
+	}//end testAddKeeps200WhenTrustingTheDirectoryFails()
 
 	/**
 	 * Add() returns 400 when syncDirectory() throws InvalidArgumentException.

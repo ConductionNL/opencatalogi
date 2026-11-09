@@ -90,6 +90,17 @@ interface DirectoryServiceInterface {
 	public function trustDirectory(string $directoryUrl): void;
 
 	/**
+	 * Stop crawling a directory an administrator removed.
+	 *
+	 * @param string $directoryUrl The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function untrustDirectory(string $directoryUrl): void;
+
+	/**
 	 * Get unique directory URLs from stored listings
 	 *
 	 * Retrieves all unique directory URLs from listings that are currently

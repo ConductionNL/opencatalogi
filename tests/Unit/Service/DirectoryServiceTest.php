@@ -4749,4 +4749,32 @@ class DirectoryServiceTest extends TestCase {
 		$this->expectException(InvalidArgumentException::class);
 		$this->service->trustDirectory('http://10.0.0.5/api/directory');
 	}
+
+	/**
+	 * pp-f4: untrustDirectory() removes exactly that directory and writes nothing when it was not trusted.
+	 */
+	public function testUntrustDirectoryRemovesOnlyThatDirectory(): void {
+		$stored = '["https://a.example.org/api/directory","https://b.example.org/api/directory"]';
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return match ($key) {
+					'trusted_directory_urls' => $stored,
+					default => $default,
+				};
+			}
+		);
+		$this->config->expects($this->once())
+			->method('setValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $value) use (&$stored): bool {
+					$stored = $value;
+					return true;
+				}
+			);
+
+		$this->service->untrustDirectory('https://a.example.org/api/directory');
+		$this->service->untrustDirectory('https://unknown.example.org/api/directory');
+
+		$this->assertSame('["https:\/\/b.example.org\/api\/directory"]', $stored);
+	}
 }
