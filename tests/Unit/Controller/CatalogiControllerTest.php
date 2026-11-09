@@ -229,6 +229,68 @@ class CatalogiControllerTest extends TestCase {
 		$this->assertEquals(200, $this->controller->index()->getStatus());
 	}
 
+	/**
+	 * oc-f10: the public catalog index only gives anonymous callers listed catalogs,
+	 * whatever `listed` they ask for; signed-in callers are not filtered.
+	 *
+	 * @return void
+	 */
+	public function testIndexOnlyListsListedCatalogsForAnonymousCallers(): void {
+		// Key: the signed-in user ('' = anonymous). Value: whether the query must carry listed=true.
+		foreach (['' => true, 'alice' => false] as $user => $expectListed) {
+			$this->setUp();
+			$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+			$userSession = $this->createMock(\OCP\IUserSession::class);
+			$userSession->method('getUser')->willReturn($user === '' ? null : $this->createMock(\OCP\IUser::class));
+
+			$captured = null;
+			$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+			$mockObjService->method('buildSearchQuery')->willReturn(['listed' => false]);
+			$mockObjService->method('searchObjectsPaginated')
+				->willReturnCallback(
+					static function (array $query) use (&$captured): array {
+						$captured = $query;
+						return ['results' => [], 'total' => 0];
+					}
+				);
+
+			$this->container->method('get')
+				->willReturnCallback(
+					function (string $id) use ($mockObjService, $userSession) {
+						if ($id === \OCP\IUserSession::class) {
+							return $userSession;
+						}
+
+						if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
+							return new class {
+								public function resolveRegisterId(string $a, string $k, ?string $d = null): string {
+									return '3';
+								}
+
+								public function resolveSchemaId(string $a, string $k, ?string $d = null): string {
+									return '5';
+								}
+							};
+						}
+						return $mockObjService;
+					}
+				);
+			$this->config->method('getValueString')
+				->willReturnCallback(static fn (string $app, string $key, string $default = ''): string => match ($key) {
+					'catalog_schema' => '5',
+					'catalog_register' => '3',
+					default => $default,
+				});
+			$this->request->method('getParams')->willReturn(['listed' => false]);
+			$this->request->server = [];
+
+			$this->controller->index();
+
+			$this->assertSame($expectListed, $captured['listed'], 'listed for caller '.var_export($user, true));
+		}//end foreach
+	}
+
 	public function testIndexReturns503WhenOpenRegisterNotInstalled(): void {
 		// With OpenRegister unavailable the resolver cannot be obtained; the
 		// controller degrades gracefully to a 503 instead of a raw 500.

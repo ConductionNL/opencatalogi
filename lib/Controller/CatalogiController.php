@@ -173,6 +173,13 @@ class CatalogiController extends Controller {
 			$searchQuery['@self']['register'] = $catalogConfig['register'];
 		}
 
+		// An unlisted catalog (listed is not true) is reachable by link but not
+		// advertised: anonymous callers only get listed ones, as on /api/search.
+		// Signed-in users (the management UI) keep seeing every catalog RBAC allows.
+		if ($this->isAnonymousCaller() === true) {
+			$searchQuery['listed'] = true;
+		}
+
 		// Fetch catalog objects using searchObjectsPaginated.
 		// _rbac: true enforces schema authorization rules (anonymous callers only see
 		// what RBAC permits); multitenancy is left enabled so org scoping is not bypassed.
@@ -188,6 +195,22 @@ class CatalogiController extends Controller {
 		$response = new JSONResponse($result);
 		return $this->withListCorsHeaders(response: $response);
 	}//end index()
+
+	/**
+	 * Whether the caller is anonymous. Fails closed: an unresolvable session counts as anonymous.
+	 *
+	 * @return bool True when no user is signed in.
+	 *
+	 * @spec exclude Visibility helper for the unlisted-catalog filter; no domain behaviour.
+	 */
+	private function isAnonymousCaller(): bool {
+		try {
+			return $this->container->get(\OCP\IUserSession::class)->getUser() === null;
+		} catch (\Throwable $e) {
+			return true;
+		}
+
+	}//end isAnonymousCaller()
 
 	/**
 	 * Retrieve a list of catalogs based on provided filters and parameters.

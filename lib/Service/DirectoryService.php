@@ -2959,9 +2959,15 @@ class DirectoryService implements DirectoryServiceInterface {
 		try {
 			// RBAC handles public visibility via conditional published date rule.
 			// ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
-			$catalogResult = $objectService->searchObjects(
-				$this->directoryQuery(scope: ['schema' => $catalogSchema, 'register' => $catalogRegister], requestParams: $requestParams)
-			);
+			$query = $this->directoryQuery(scope: ['schema' => $catalogSchema, 'register' => $catalogRegister], requestParams: $requestParams);
+			// An unlisted catalog (listed is not true) is reachable by link but not
+			// advertised: anonymous callers, and the peers that sync this directory into
+			// their own, do not get it. Same rule as /api/search.
+			if ($this->isAnonymousCaller() === true) {
+				$query['listed'] = true;
+			}
+
+			$catalogResult = $objectService->searchObjects($query);
 
 			return $this->convertCatalogiToListings(catalogs: $catalogResult);
 		} catch (\Exception $e) {
@@ -2969,6 +2975,22 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 	}//end directoryCatalogs()
+
+	/**
+	 * Whether the caller is anonymous. Fails closed: an unresolvable session counts as anonymous.
+	 *
+	 * @return bool True when no user is signed in.
+	 *
+	 * @spec exclude Visibility helper for the unlisted-catalog filter; no domain behaviour.
+	 */
+	private function isAnonymousCaller(): bool {
+		try {
+			return $this->container->get(\OCP\IUserSession::class)->getUser() === null;
+		} catch (\Throwable $e) {
+			return true;
+		}
+
+	}//end isAnonymousCaller()
 
 	/**
 	 * The search query for one part of the directory: its scope, the request's
