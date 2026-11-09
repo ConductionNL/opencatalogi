@@ -4133,6 +4133,56 @@ class PublicationServiceTest extends TestCase {
 		$this->assertSame('Files folder not found', $data['error']);
 	}
 
+	/**
+	 * oc-f9 (ADR-050): a file-layer failure on the public attachments path is logged,
+	 * the caller gets a generic message without paths or user ids.
+	 */
+	public function testAttachmentsReturnsGenericMessageOnUnexpectedException(): void {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+		$objectService->method('searchObjects')->willReturn([$catalog]);
+		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+		$this->container->method('get')
+			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+				if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+					return $queryService;
+				}
+
+				if ($class === 'OCA\OpenRegister\Service\ObjectService') {
+					return $objectService;
+				}
+
+				return $fileService;
+			});
+
+		$fileService->method('getFiles')
+			->willThrowException(new \Exception('Cannot read /admin/files/Open Registers/secret-folder for user admin'));
+
+		$response = $this->service->attachments('pub-1');
+		$this->assertSame(500, $response->getStatus());
+		$this->assertSame(['error' => 'Failed to retrieve attachments'], json_decode($response->render(), true));
+	}
+
+	/**
+	 * oc-f9 (ADR-050): an InvalidArgumentException from outside PublicationService is
+	 * masked; the class's own validation messages still reach the caller.
+	 */
+	public function testInvalidArgumentResponseMasksForeignMessages(): void {
+		$method = new \ReflectionMethod($this->service, 'invalidArgumentResponse');
+
+		$foreign = $method->invoke($this->service, new \InvalidArgumentException('Column oc_openregister_table_42.secret missing'));
+		$this->assertSame(400, $foreign->getStatus());
+		$this->assertSame(['error' => 'Invalid request parameters'], json_decode($foreign->render(), true));
+	}
+
 	// =======================================================================
 	// getFederatedUsed — with timeout params
 	// =======================================================================

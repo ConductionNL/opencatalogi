@@ -986,7 +986,7 @@ class PublicationService implements PublicationServiceInterface {
 			$result = $this->searchPublications(catalogId: $catalogId, ids: null, customParams: $customParams);
 			return new JSONResponse($result);
 		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], 400);
+			return $this->invalidArgumentResponse(exception: $e);
 		}
 
 	}//end index()
@@ -1096,6 +1096,33 @@ class PublicationService implements PublicationServiceInterface {
 	}//end isObjectInCatalogScope()
 
 	/**
+	 * Turn a rejected-parameter exception into a 400 response without leaking internals.
+	 *
+	 * The validation messages this class throws itself ("Invalid register(s) requested")
+	 * are written for the caller and pass through. An InvalidArgumentException raised
+	 * deeper down (OpenRegister) may carry internal detail, so it is logged and the
+	 * caller gets a generic message (ADR-050).
+	 *
+	 * @param \InvalidArgumentException $exception The rejected-parameter exception.
+	 *
+	 * @return JSONResponse The 400 response.
+	 *
+	 * @spec exclude ADR-050 error-envelope helper; no domain behaviour of its own.
+	 */
+	private function invalidArgumentResponse(\InvalidArgumentException $exception): JSONResponse {
+		if ($exception->getFile() === __FILE__) {
+			return new JSONResponse(['error' => $exception->getMessage()], 400);
+		}
+
+		$this->logger?->info(
+			'[PublicationService] Rejected request parameters: '.$exception->getMessage(),
+			['exception' => $exception]
+		);
+		return new JSONResponse(['error' => 'Invalid request parameters'], 400);
+
+	}//end invalidArgumentResponse()
+
+	/**
 	 * Shows attachments of a publication
 	 *
 	 * Retrieves and returns attachments of a publication using code from OpenRegister.
@@ -1145,7 +1172,13 @@ class PublicationService implements PublicationServiceInterface {
 		} catch (NotFoundException $e) {
 			return new JSONResponse(['error' => 'Files folder not found'], 404);
 		} catch (Exception $e) {
-			return new JSONResponse(['error' => $e->getMessage()], 500);
+			// ADR-050: OR file-layer messages carry folder paths and user ids; log them,
+			// return a generic message to the (often anonymous) caller.
+			$this->logger?->error(
+				'[PublicationService] Listing attachments failed: '.$e->getMessage(),
+				['objectId' => $id, 'exception' => $e]
+			);
+			return new JSONResponse(['error' => 'Failed to retrieve attachments'], 500);
 		}//end try
 
 	}//end attachments()
@@ -1481,7 +1514,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			return $this->relatedPublications(relations: $relations);
 		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], 400);
+			return $this->invalidArgumentResponse(exception: $e);
 		}//end try
 
 	}//end uses()
@@ -1532,7 +1565,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			return $this->relatedPublications(relations: $relations);
 		} catch (\InvalidArgumentException $e) {
-			return new JSONResponse(['error' => $e->getMessage()], 400);
+			return $this->invalidArgumentResponse(exception: $e);
 		}//end try
 
 	}//end used()
