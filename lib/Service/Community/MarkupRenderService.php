@@ -235,10 +235,9 @@ class MarkupRenderService implements MarkupRenderServiceInterface {
 		return (string)preg_replace_callback(
 			'/\[([^\]]+)\]\(([^)\s]+)\)/',
 			function (array $matches): string {
-				$href = html_entity_decode($matches[2], (ENT_QUOTES | ENT_HTML5), 'UTF-8');
-				$scheme = strtolower((string)parse_url($href, PHP_URL_SCHEME));
+				$href = $this->normaliseHref(href: html_entity_decode($matches[2], (ENT_QUOTES | ENT_HTML5), 'UTF-8'));
 
-				if ($scheme !== '' && in_array($scheme, self::ALLOWED_SCHEMES, true) === false) {
+				if ($this->isAllowedHref(href: $href) === false) {
 					// Rendered as the text it is, never as a link. A scheme this
 					// app does not allow is not a link it renders more
 					// carefully; it is not a link.
@@ -251,4 +250,63 @@ class MarkupRenderService implements MarkupRenderServiceInterface {
 		);
 
 	}//end inline()
+
+	/**
+	 * Strip what a browser strips from a URL before it reads the scheme.
+	 *
+	 * Browsers drop ASCII tab and newline anywhere in a URL and C0 controls and
+	 * spaces at either end, so `java&#9;script:` and ` javascript:` both run as
+	 * `javascript:`. Removing every C0 control, DEL and space here makes the href
+	 * that is checked the href that is emitted.
+	 *
+	 * @param string $href The entity-decoded href.
+	 *
+	 * @return string The href without control characters or spaces.
+	 */
+	private function normaliseHref(string $href): string {
+		return (string)preg_replace('/[\x00-\x20\x7F]+/', '', $href);
+
+	}//end normaliseHref()
+
+	/**
+	 * Whether an href may become a link: an allow-listed scheme or a relative reference.
+	 *
+	 * Fails closed. The scheme is read with an explicit pattern rather than
+	 * parse_url(), which returns false for some malformed URLs (for example a
+	 * port out of range) and so used to let them through as scheme-less. The
+	 * href is decoded until it is stable, so entity-encoded letters cannot hide
+	 * a scheme either.
+	 *
+	 * @param string $href The normalised href.
+	 *
+	 * @return bool True when the href may be rendered as a link.
+	 */
+	private function isAllowedHref(string $href): bool {
+		if ($href === '') {
+			return false;
+		}
+
+		$decoded = $href;
+		for ($round = 0; $round < 5; $round++) {
+			$next = $this->normaliseHref(href: html_entity_decode($decoded, (ENT_QUOTES | ENT_HTML5), 'UTF-8'));
+			if ($next === $decoded) {
+				break;
+			}
+
+			$decoded = $next;
+		}
+
+		foreach ([$href, $decoded] as $candidate) {
+			// A colon before the first `/`, `?` or `#` makes the part before it a scheme.
+			if (preg_match('/^([^\/?#]*):/', $candidate, $match) === 1) {
+				$scheme = strtolower($match[1]);
+				if (in_array($scheme, self::ALLOWED_SCHEMES, true) === false) {
+					return false;
+				}
+			}
+		}
+
+		return true;
+
+	}//end isAllowedHref()
 }//end class
