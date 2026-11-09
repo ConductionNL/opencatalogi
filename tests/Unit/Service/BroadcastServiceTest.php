@@ -118,7 +118,24 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$clientProperty->setAccessible(true);
 		$clientProperty->setValue($this->broadcastService, $this->clientMock);
 
+		// Every host name resolves to one public documentation address, so the SSRF
+		// guard that now runs before each POST attempt stays offline.
+		$this->setHostResolver(static fn (string $host): array => ['203.0.113.10']);
+
 	}//end setUp()
+
+	/**
+	 * Replace the DNS lookup of the SSRF guard.
+	 *
+	 * @param \Closure $resolver Maps a host name to its addresses.
+	 *
+	 * @return void
+	 */
+	private function setHostResolver(\Closure $resolver): void {
+		$property = (new \ReflectionClass($this->broadcastService))->getProperty('hostResolver');
+		$property->setValue($this->broadcastService, $resolver);
+
+	}//end setHostResolver()
 
 	/**
 	 * Helper to invoke private methods via reflection.
@@ -933,5 +950,61 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		);
 
 	}//end testBroadcastProceedsWhenTheLocalHostIsAllowlisted()
+
+	/**
+	 * dir-f1: the broadcast POST is pinned to the address the SSRF guard accepted,
+	 * with redirects off and a body cap, like DirectoryService::safeGet().
+	 */
+	public function testBroadcastPostIsPinnedToTheCheckedAddress(): void {
+		$this->appManagerMock->method('getAppInfo')->willReturn(['version' => '1.0.0']);
+
+		$options = [];
+		$this->clientMock->expects($this->once())
+			->method('post')
+			->willReturnCallback(
+				function (string $uri, array $opts) use (&$options): Response {
+					$options = $opts;
+					return new Response(200);
+				}
+			);
+
+		$result = $this->broadcastService->enqueueBroadcast('https://peer.example.org/api/directory', 'https://self.example.com/api/directory');
+
+		$this->assertTrue($result->isSuccessful());
+		$this->assertSame(['peer.example.org:443:203.0.113.10'], $options['curl'][\CURLOPT_RESOLVE]);
+		$this->assertSame(1048576, $options['curl'][\CURLOPT_MAXFILESIZE]);
+		$this->assertFalse($options['allow_redirects']);
+		$this->assertTrue($options['stream']);
+		$this->assertIsCallable($options['on_headers']);
+
+	}//end testBroadcastPostIsPinnedToTheCheckedAddress()
+
+	/**
+	 * dir-f1: every retry re-checks the name; when it now resolves internally the
+	 * retry is not sent.
+	 */
+	public function testBroadcastRetryIsNotSentWhenTheNameRebindsToAnInternalAddress(): void {
+		$this->appManagerMock->method('getAppInfo')->willReturn(['version' => '1.0.0']);
+
+		$answers = [['203.0.113.10'], ['127.0.0.1']];
+		$this->setHostResolver(
+			static function (string $host) use (&$answers): array {
+				return (array_shift($answers) ?? ['127.0.0.1']);
+			}
+		);
+
+		$this->clientMock->expects($this->once())
+			->method('post')
+			->willThrowException(new RequestException('Timeout', new Request('POST', 'https://peer.example.org/api/directory')));
+
+		$result = $this->invokePrivateMethod(
+			$this->broadcastService,
+			'sendBroadcastRequest',
+			['https://peer.example.org/api/directory', 'https://self.example.com/api/directory']
+		);
+
+		$this->assertFalse($result);
+
+	}//end testBroadcastRetryIsNotSentWhenTheNameRebindsToAnInternalAddress()
 
 }//end class
