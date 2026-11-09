@@ -517,8 +517,6 @@ class ListingsController extends Controller {
 		// controllers don't get an auto-translation to HTTP 404 (verified
 		// against OCS/Security/SameSiteCookie/RateLimiting middlewares), so
 		// catch it here and return 404 explicitly.
-		$directoryUrl = $this->listingDirectory(id: $id, register: $listingRegister, schema: $listingSchema);
-
 		try {
 			$result = $this->getObjectService()->deleteObject(
 				uuid: (string)$id,
@@ -537,12 +535,6 @@ class ListingsController extends Controller {
 		// exit paths of destroy() (the DoesNotExistException branch above already
 		// does — PR #86 round-3 review).
 		if ($result === true) {
-			// The admin removed this directory's listing: the cron sync stops crawling it,
-			// so the next run does not recreate what was just deleted.
-			if ($directoryUrl !== null) {
-				$this->directoryService->untrustDirectory($directoryUrl);
-			}
-
 			return new JSONResponse(
 				data: ['success' => true, 'message' => $this->l10n->t('Listing removed')],
 				statusCode: Http::STATUS_OK
@@ -555,42 +547,6 @@ class ListingsController extends Controller {
 		);
 
 	}//end destroy()
-
-	/**
-	 * The directory URL of a stored listing, or null when it cannot be read.
-	 *
-	 * @param string|int $id       The listing id.
-	 * @param string     $register The listing register.
-	 * @param string     $schema   The listing schema.
-	 *
-	 * @return string|null The directory URL.
-	 *
-	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
-	 */
-	private function listingDirectory(string|int $id, string $register, string $schema): ?string {
-		try {
-			$object = $this->getObjectService()->find((string)$id, [], false, $register, $schema);
-		} catch (\Throwable $e) {
-			return null;
-		}
-
-		$objectData = $object;
-		if ($object instanceof \OCP\AppFramework\Db\Entity) {
-			$objectData = $object->jsonSerialize();
-		}
-
-		if (is_array($objectData) === false) {
-			return null;
-		}
-
-		$directoryUrl = ($objectData['object']['directory'] ?? $objectData['directory'] ?? null);
-		if (is_string($directoryUrl) === false || $directoryUrl === '') {
-			return null;
-		}
-
-		return $directoryUrl;
-
-	}//end listingDirectory()
 
 	/**
 	 * Synchronize a specific directory or all directories. Admin-only

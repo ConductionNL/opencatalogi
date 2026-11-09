@@ -90,7 +90,8 @@ interface DirectoryServiceInterface {
 	public function trustDirectory(string $directoryUrl): void;
 
 	/**
-	 * Stop crawling a directory an administrator removed.
+	 * Stop crawling a directory, on an explicit administrator decision (never as a
+	 * side effect of deleting one of its listings).
 	 *
 	 * @param string $directoryUrl The directory URL.
 	 *

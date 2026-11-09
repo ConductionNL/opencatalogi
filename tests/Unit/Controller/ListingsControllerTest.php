@@ -720,42 +720,20 @@ class ListingsControllerTest extends TestCase {
 	}//end testDestroyReturnsSuccessOnDeletion()
 
 	/**
-	 * pp-f4: deleting a directory's listing takes that directory out of the cron crawl set.
+	 * pp-f7: deleting one catalog's listing does not stop the crawl of the
+	 * directory's other catalogs; untrusting is not a side effect of a delete.
 	 *
 	 * @return void
 	 */
-	public function testDestroyUntrustsTheListingsDirectory(): void {
+	public function testDestroyDoesNotUntrustTheListingsDirectory(): void {
 		$this->mockListingConfig();
 		$mockObjService = $this->mockObjectService();
-		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
-		$entity->method('jsonSerialize')->willReturn(['directory' => 'https://peer.example.org/api/directory']);
-		$mockObjService->method('find')->willReturn($entity);
 		$mockObjService->method('deleteObject')->willReturn(true);
-
-		$this->directoryService->expects($this->once())
-			->method('untrustDirectory')
-			->with('https://peer.example.org/api/directory');
-
-		$this->assertEquals(200, $this->controller->destroy('123')->getStatus());
-	}//end testDestroyUntrustsTheListingsDirectory()
-
-	/**
-	 * pp-f4: a delete that removes nothing untrusts nothing.
-	 *
-	 * @return void
-	 */
-	public function testDestroyThatDeletesNothingKeepsTheDirectoryTrusted(): void {
-		$this->mockListingConfig();
-		$mockObjService = $this->mockObjectService();
-		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
-		$entity->method('jsonSerialize')->willReturn(['directory' => 'https://peer.example.org/api/directory']);
-		$mockObjService->method('find')->willReturn($entity);
-		$mockObjService->method('deleteObject')->willReturn(false);
 
 		$this->directoryService->expects($this->never())->method('untrustDirectory');
 
-		$this->assertEquals(404, $this->controller->destroy('123')->getStatus());
-	}//end testDestroyThatDeletesNothingKeepsTheDirectoryTrusted()
+		$this->assertEquals(200, $this->controller->destroy('123')->getStatus());
+	}//end testDestroyDoesNotUntrustTheListingsDirectory()
 
 	/**
 	 * Destroy() returns 404 with a message when the listing is not found.

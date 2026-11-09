@@ -295,7 +295,9 @@ endpoint.
 The system MUST synchronize, via cron (every hour), the trusted directories
 plus the default directory. A directory is trusted when an administrator added
 it (`POST /api/listings/add`, or a listing created with a directory URL); it
-stops being trusted when an administrator removes its listing. A directory URL
+stops being trusted only through an explicit administrator action on the
+trusted list (the `trusted_directory_urls` app setting), never as a side effect
+of deleting one of its listings. A directory URL
 learned only from peer data (the `directory` field of a synced listing) MUST be
 stored but MUST NOT be crawled by the cron; its listings are accepted from the
 trusted directory that relays them. Only the listing register reads and writes

@@ -401,7 +401,11 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end trustDirectory()
 
 	/**
-	 * Stop crawling a directory an administrator removed (its listing was deleted).
+	 * Stop crawling a directory, on an explicit administrator decision.
+	 *
+	 * Not called when a listing is deleted: a directory has a listing per catalog,
+	 * and deleting one must not stop the crawl of the others. No UI action calls it
+	 * yet; administrators edit the `trusted_directory_urls` app setting.
 	 *
 	 * @param string $directoryUrl The directory URL.
 	 *
