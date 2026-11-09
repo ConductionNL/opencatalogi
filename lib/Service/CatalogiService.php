@@ -624,9 +624,18 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogBySlug(string $slug): ?array {
+		// The read below runs with RBAC on, so what it returns depends on the caller:
+		// signed-in users may read catalogs that are not (yet) published. The shared
+		// cache therefore only ever holds what an anonymous caller resolved, and only
+		// anonymous callers read from it; signed-in callers always query (oc-f3).
+		$useCache = ($this->userSession === null || $this->userSession->getUser() === null);
+
 		// Step 1: Try to get from cache.
 		$cacheKey = 'catalog_slug_' . $slug;
-		$cachedCatalog = $this->cache->get($cacheKey);
+		$cachedCatalog = null;
+		if ($useCache === true) {
+			$cachedCatalog = $this->cache->get($cacheKey);
+		}
 
 		if ($cachedCatalog !== null) {
 			$this->logger->debug('Catalog retrieved from cache', ['slug' => $slug]);
@@ -678,9 +687,11 @@ class CatalogiService implements CatalogiServiceInterface {
 			// (catalog schema grants public read only when published <= $now).
 			$catalog = $catalogs[0]->jsonSerialize();
 
-			// Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
-			$this->cache->set($cacheKey, $catalog, 3600);
-			$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+			// Step 3: Store in cache (TTL: 1 hour = 3600 seconds), anonymous reads only.
+			if ($useCache === true) {
+				$this->cache->set($cacheKey, $catalog, 3600);
+				$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+			}
 
 			return $catalog;
 		} catch (Exception $e) {

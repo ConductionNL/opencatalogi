@@ -389,6 +389,41 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertEquals($catalogData, $result);
 	}//end testGetCatalogBySlugCacheMissWithDbResult()
 
+	/**
+	 * oc-f3: a signed-in caller (who may read a draft catalog) neither reads nor
+	 * fills the shared slug cache, so an anonymous caller never gets its result.
+	 */
+	public function testGetCatalogBySlugForASignedInCallerBypassesTheSharedCache(): void {
+		$userSession = $this->createMock(IUserSession::class);
+		$userSession->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$service = new CatalogiService(
+			$this->config,
+			$this->request,
+			$this->container,
+			$this->appManager,
+			$this->cacheFactory,
+			$this->logger,
+			$userSession,
+		);
+
+		$draft = ['id' => '3', 'slug' => 'draft', 'title' => 'Draft', 'published' => null];
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('searchObjects')->willReturn([$this->createMockCatalogObject($draft)]);
+		$this->injectObjectService($objectService);
+
+		$this->cache->expects($this->never())->method('get');
+		$this->cache->expects($this->never())->method('set');
+
+		$this->assertEquals($draft, $service->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugForASignedInCallerBypassesTheSharedCache()
+
 	public function testGetCatalogBySlugNotFound(): void {
 		$this->cache->method('get')
 			->willReturn(null);
