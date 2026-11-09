@@ -24,10 +24,12 @@ namespace OCA\OpenCatalogi\BackgroundJob;
 
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\IJob;
 use OCP\BackgroundJob\TimedJob;
 use OCP\IAppConfig;
+use Psr\Container\ContainerInterface;
 
 /**
  * Background job for periodic directory synchronization.
@@ -69,11 +71,18 @@ class DirectorySync extends TimedJob {
 	 * @param ITimeFactory $time Time factory for scheduling.
 	 * @param DirectoryServiceInterface $directoryService The directory service.
 	 * @param IAppConfig $config App config for reading the sync interval.
+	 * @param ContainerInterface|null $container Resolves OpenRegister's ObjectService for the system context.
+	 * @param IAppManager|null $appManager Tells whether OpenRegister is installed.
 	 */
 	public function __construct(
 		ITimeFactory $time,
 		private readonly DirectoryServiceInterface $directoryService,
 		IAppConfig $config,
+		// Nullable and last so existing construction sites keep working; without
+		// them the job runs the sync as before (no user), which OpenRegister refuses
+		// to let write.
+		private readonly ?ContainerInterface $container = null,
+		private readonly ?IAppManager $appManager = null,
 	) {
 		parent::__construct(time: $time);
 
@@ -98,7 +107,17 @@ class DirectorySync extends TimedJob {
 	}//end __construct()
 
 	/**
-	 * Run the cron sync.
+	 * Run the cron sync in OpenRegister's system context.
+	 *
+	 * A cron run has no user session, and OpenRegister refuses anonymous writes
+	 * unless a schema grants them, so without the system context every listing
+	 * create/update of the periodic sync failed. The job is trusted to write
+	 * because Nextcloud's cron starts it, not a request: it only syncs the
+	 * directories already stored in the listing register (plus the configured
+	 * default directory), every fetch passes the SSRF guard, and a peer cannot
+	 * take over another directory's listing (see DirectoryService::newListingUuid()).
+	 * Anonymous directory requests (POST /api/directory) do not come through here
+	 * and still cannot write listings.
 	 *
 	 * @param array $argument Arguments passed to the job.
 	 *
@@ -109,7 +128,42 @@ class DirectorySync extends TimedJob {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	protected function run($argument): void {
-		$this->directoryService->doCronSync();
+		$objectService = $this->systemObjectService();
+		if ($objectService === null) {
+			$this->directoryService->doCronSync();
+			return;
+		}
+
+		// System context (rbac-bypass): cron-started sync of stored directories; the docblock says why it is trusted.
+		$objectService->runAsSystem(fn () => $this->directoryService->doCronSync());
 
 	}//end run()
+
+	/**
+	 * OpenRegister's ObjectService when it offers a system context, otherwise null.
+	 *
+	 * @return object|null The ObjectService.
+	 *
+	 * @spec exclude Lazy dependency lookup for the cron job; no domain behaviour.
+	 */
+	private function systemObjectService(): ?object {
+		if ($this->container === null || $this->appManager === null
+			|| in_array('openregister', $this->appManager->getInstalledApps(), true) === false
+		) {
+			return null;
+		}
+
+		try {
+			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if (is_object($objectService) === false || method_exists($objectService, 'runAsSystem') === false) {
+			return null;
+		}
+
+		return $objectService;
+
+	}//end systemObjectService()
 }//end class

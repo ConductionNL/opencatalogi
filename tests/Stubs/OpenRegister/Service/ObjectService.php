@@ -48,6 +48,17 @@ class ObjectService {
 	}//end setSchema()
 
 	/**
+	 * Run a callable in the system context.
+	 *
+	 * @param callable $operation The operation.
+	 *
+	 * @return mixed
+	 */
+	public function runAsSystem(callable $operation) {
+		return $operation();
+	}//end runAsSystem()
+
+	/**
 	 * Find an object by ID or UUID.
 	 *
 	 * @param integer|string $id Object identifier.
