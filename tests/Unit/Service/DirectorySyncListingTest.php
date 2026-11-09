@@ -190,6 +190,42 @@ class DirectorySyncListingTest extends TestCase {
 		);
 	}
 
+	/**
+	 * oc-f5: a peer that sends the UUID of another directory's listing gets a new
+	 * listing under a fresh UUID; the other listing is not overwritten.
+	 */
+	public function testCreateNeverReusesTheUuidOfAnExistingListing(): void {
+		$this->objectService->method('searchObjects')->willReturn([]);
+		$this->objectService->expects($this->once())
+			->method('find')
+			->with('victim-uuid')
+			->willReturn(new \OCA\OpenRegister\Db\ObjectEntity());
+
+		$result = $this->service->syncListing(
+			['id' => 'victim-uuid', 'title' => 'Hijack', 'directory' => 'https://source.example.org/api/directory', 'catalogusId' => 'cat-x'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('created', $result['action']);
+		$this->assertCount(1, $this->saved);
+		$this->assertNull($this->saved[0]['uuid']);
+	}
+
+	/**
+	 * oc-f5: when the UUID cannot be checked, it is not reused (fail closed).
+	 */
+	public function testCreateDoesNotReuseAUuidThatCannotBeChecked(): void {
+		$this->objectService->method('searchObjects')->willReturn([]);
+		$this->objectService->method('find')->willThrowException(new \RuntimeException('db down'));
+
+		$this->service->syncListing(
+			['id' => 'some-uuid', 'title' => 'T', 'directory' => 'https://source.example.org/api/directory'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertNull($this->saved[0]['uuid']);
+	}
+
 	public function testCreateWithoutDirectoryFallsBackToTheSourceAndDetectsTheEndpoint(): void {
 		$this->objectService->method('searchObjects')->willReturn([]);
 

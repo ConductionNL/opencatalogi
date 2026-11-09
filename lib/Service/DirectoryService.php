@@ -1127,7 +1127,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 */
 	private function storeListing(array $listingData, $existingListings, array $target): array {
 		if (empty($existingListings) === true) {
-			$this->saveListing(target: $target, listingData: $listingData, uuid: $target['uuid']);
+			$this->saveListing(target: $target, listingData: $listingData, uuid: $this->newListingUuid(target: $target));
 			return ['action' => 'created', 'success' => true];
 		}
 
@@ -1149,6 +1149,59 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		return ['action' => 'updated', 'success' => true];
 	}//end storeListing()
+
+	/**
+	 * The UUID to create a synced listing under: the peer's, unless it is already taken.
+	 *
+	 * No stored listing matched (catalogusId, directory), so this is a create. The
+	 * UUID comes from the peer, and listing UUIDs are public (GET /api/directory):
+	 * a peer that sends the UUID of another directory's listing would otherwise turn
+	 * this create into an overwrite of that listing (oc-f5). A UUID that already
+	 * exists, or that cannot be checked, is not used; OpenRegister then generates one.
+	 *
+	 * @param array $target The ObjectService, listing register/schema and the peer's uuid.
+	 *
+	 * @return string|null The peer's UUID when it is free, otherwise null.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function newListingUuid(array $target): ?string {
+		$uuid = ($target['uuid'] ?? null);
+		if (is_string($uuid) === false || $uuid === '') {
+			return null;
+		}
+
+		try {
+			// The ADR-055 marker must stay lower-case and on the bypass line itself.
+			// phpcs:disable Squiz.Commenting.InlineComment.NotCapital
+			$existing = $target['objectService']->find(
+				id: $uuid,
+				_extend: [],
+				register: $target['register'],
+				schema: $target['schema'],
+				_rbac: false, // rbac-bypass: existence check only, nothing is returned to the caller; a listing the caller cannot read must still count as taken.
+				_multitenancy: false // rbac-bypass: same existence check, across organisations.
+			);
+			// phpcs:enable Squiz.Commenting.InlineComment.NotCapital
+		} catch (DoesNotExistException $e) {
+			return $uuid;
+		} catch (\Throwable $e) {
+			// Fail closed: when it cannot be told whether the UUID is free, do not reuse it.
+			return null;
+		}
+
+		if ($existing === null) {
+			return $uuid;
+		}
+
+		$this->logger?->warning(
+			'[DirectoryService] Synced listing names a UUID that belongs to another listing; created under a new UUID',
+			['uuid' => $uuid]
+		);
+
+		return null;
+
+	}//end newListingUuid()
 
 	/**
 	 * Save a listing object in the listing register/schema.
