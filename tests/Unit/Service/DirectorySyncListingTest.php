@@ -42,6 +42,15 @@ class DirectorySyncListingTest extends TestCase {
 	/** Whether the first saveObject() call throws. */
 	private bool $failFirstSave = false;
 
+	/** Whether the code currently runs inside the listing write context. */
+	private bool $elevated = false;
+
+	/** @var array<int, bool> per saveObject() call, whether it ran elevated */
+	private array $savedElevated = [];
+
+	/** @var array<int, bool> per searchObjects() call, whether it ran elevated */
+	private array $searchedElevated = [];
+
 	protected function setUp(): void {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
@@ -63,6 +72,7 @@ class DirectorySyncListingTest extends TestCase {
 				);
 				$named = array_combine(array_slice($names, 0, count($args)), $args);
 				$this->saved[] = array_intersect_key($named, array_flip(['object', 'extend', 'register', 'schema', 'uuid']));
+				$this->savedElevated[] = $this->elevated;
 				if ($this->failFirstSave === true && count($this->saved) === 1) {
 					throw new RuntimeException('save refused');
 				}
@@ -293,6 +303,36 @@ class DirectorySyncListingTest extends TestCase {
 			$result
 		);
 		$this->assertSame([], $this->saved);
+	}
+
+	/**
+	 * aud-f1: with the cron sync's write context, only the listing lookup and save
+	 * are elevated; recording the failure on the stored listing is not.
+	 */
+	public function testOnlyTheListingLookupAndSaveRunInTheWriteContext(): void {
+		$this->objectService->method('searchObjects')->willReturnCallback(
+			function () {
+				$this->searchedElevated[] = $this->elevated;
+				return [$this->entity(['id' => 'existing-uuid', 'object' => ['title' => 'Kept']])];
+			}
+		);
+		$this->failFirstSave = true;
+		(new \ReflectionProperty(DirectoryService::class, 'listingWriteContext'))->setValue(
+			$this->service,
+			function (callable $operation) {
+				$this->elevated = true;
+				try {
+					return $operation();
+				} finally {
+					$this->elevated = false;
+				}
+			}
+		);
+
+		$this->service->syncListing(['id' => 'l-6', 'catalog' => 'c-6'], 'https://source.example.org/api/directory');
+
+		$this->assertSame([true], $this->searchedElevated);
+		$this->assertSame([true, false], $this->savedElevated);
 	}
 
 	public function testFailedSaveRecordsTheErrorOnTheExistingListing(): void {

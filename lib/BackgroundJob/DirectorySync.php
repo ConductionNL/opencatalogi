@@ -107,15 +107,20 @@ class DirectorySync extends TimedJob {
 	}//end __construct()
 
 	/**
-	 * Run the cron sync in OpenRegister's system context.
+	 * Run the cron sync, with OpenRegister's system context for the listing writes only.
 	 *
 	 * A cron run has no user session, and OpenRegister refuses anonymous writes
 	 * unless a schema grants them, so without the system context every listing
 	 * create/update of the periodic sync failed. The job is trusted to write
-	 * because Nextcloud's cron starts it, not a request: it only syncs the
-	 * directories already stored in the listing register (plus the configured
-	 * default directory), every fetch passes the SSRF guard, and a peer cannot
-	 * take over another directory's listing (see DirectoryService::newListingUuid()).
+	 * because Nextcloud's cron starts it, not a request, and the trust is scoped
+	 * to what needs it (aud-f1):
+	 * - it only crawls directories an administrator added plus the default
+	 *   directory, never a directory URL learned from peer data;
+	 * - the system context wraps only the listing register lookup and save
+	 *   (DirectoryService::withListingWriteRights()); fetching and parsing peer
+	 *   data, error recording, broadcasts and reporting run without it;
+	 * - every fetch passes the SSRF guard, and a peer cannot take over another
+	 *   directory's listing (see DirectoryService::newListingUuid()).
 	 * Anonymous directory requests (POST /api/directory) do not come through here
 	 * and still cannot write listings.
 	 *
@@ -134,8 +139,10 @@ class DirectorySync extends TimedJob {
 			return;
 		}
 
-		// System context (rbac-bypass): cron-started sync of stored directories; the docblock says why it is trusted.
-		$objectService->runAsSystem(fn () => $this->directoryService->doCronSync());
+		// System context (rbac-bypass): listing writes of the cron-started sync of admin-added directories; the docblock says why.
+		$this->directoryService->doCronSync(
+			listingWriteContext: static fn (callable $operation): mixed => $objectService->runAsSystem($operation)
+		);
 
 	}//end run()
 

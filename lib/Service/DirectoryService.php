@@ -165,6 +165,22 @@ class DirectoryService implements DirectoryServiceInterface {
 	private int $cacheTimestamp = 0;
 
 	/**
+	 * The app-config key holding the directories an administrator added (JSON list).
+	 *
+	 * @var string
+	 */
+	private const CONFIG_TRUSTED_DIRECTORIES = 'trusted_directory_urls';
+
+	/**
+	 * Runs a listing write with the rights the cron sync was given, or null for the caller's own.
+	 *
+	 * Set by doCronSync() for its own duration only.
+	 *
+	 * @var (\Closure(callable): mixed)|null
+	 */
+	private ?\Closure $listingWriteContext = null;
+
+	/**
 	 * Constructor for DirectoryService
 	 *
 	 * Initializes the DirectoryService with required dependencies for managing
@@ -227,8 +243,20 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Execute synchronization during cron job (asynchronous)
 	 *
-	 * Performs scheduled synchronization of all configured directories
-	 * asynchronously using React PHP promises for better performance.
+	 * Performs scheduled synchronization of the directories an administrator added
+	 * (plus the default directory) asynchronously using React PHP promises.
+	 *
+	 * Only those directories are crawled (aud-f1). A directory URL learned from peer
+	 * data (the `directory` of a synced listing) is stored and still guards the
+	 * cross-directory check, but is not crawled here: otherwise any peer could add
+	 * crawl targets, and with the cron job's system rights get their listings
+	 * written. An administrator trusts a directory by adding it
+	 * ({@see trustDirectory()}), or syncs one listing's directory by hand.
+	 *
+	 * @param (\Closure(callable): mixed)|null $listingWriteContext Runs the listing
+	 *        register reads and writes of the sync (and nothing else) with elevated
+	 *        rights, e.g. OpenRegister's runAsSystem() for the cron job; null keeps
+	 *        the caller's own rights.
 	 *
 	 * @return array<string, mixed> Array containing synchronization results
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
@@ -244,19 +272,45 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
-	public function doCronSync(): array {
-		// BFS-discovery: iterate over peer /api/directory URLs (not publications URLs).
-		// The publications-URL variant lives on getUniqueDirectories() and is used by
-		// the federation search flow.
-		$this->uniqueDirectories = $this->getKnownDirectoryUrls();
-
-		// Add default OpenCatalogi directory if not already present.
-		$defaultDirectory = $this->getDefaultDirectoryUrl();
-		if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
-			$this->uniqueDirectories[] = $defaultDirectory;
+	public function doCronSync(?\Closure $listingWriteContext = null): array {
+		$this->listingWriteContext = $listingWriteContext;
+		try {
+			return $this->syncTrustedDirectories();
+		} finally {
+			$this->listingWriteContext = null;
 		}
 
-		$uniqueDirectoryUrls = $this->uniqueDirectories;
+	}//end doCronSync()
+
+	/**
+	 * Sync every trusted directory and the default directory, and report the outcome.
+	 *
+	 * @return array<string, mixed> The synchronization results.
+	 *
+	 * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function syncTrustedDirectories(): array {
+		$defaultDirectory = $this->getDefaultDirectoryUrl();
+
+		// Crawl set: admin-added directories plus the default one, never URLs from peer data.
+		$uniqueDirectoryUrls = [];
+		foreach ($this->getTrustedDirectoryUrls() as $trustedUrl) {
+			if ($this->isSelfInstance(url: $trustedUrl) === false) {
+				$uniqueDirectoryUrls[] = $trustedUrl;
+			}
+		}
+
+		if (in_array($defaultDirectory, $uniqueDirectoryUrls, true) === false) {
+			$uniqueDirectoryUrls[] = $defaultDirectory;
+		}
+
+		// Cross-directory check set: every directory we know of, crawled or not, so a
+		// crawled peer cannot overwrite the listings of another known directory.
+		$this->uniqueDirectories = array_values(
+			array_unique(array_merge($this->getKnownDirectoryUrls(), $uniqueDirectoryUrls))
+		);
 
 		$results = [
 			'total_directories' => count($uniqueDirectoryUrls),
@@ -315,7 +369,79 @@ class DirectoryService implements DirectoryServiceInterface {
 		$this->connectionReporter?->reportDirectorySync(results: $results);
 
 		return $results;
-	}//end doCronSync()
+	}//end syncTrustedDirectories()
+
+	/**
+	 * Record a directory an administrator added, so the cron sync crawls it (aud-f1).
+	 *
+	 * Only admin entry points call this (adding a directory, creating a listing
+	 * with a directory). The URL must pass the SSRF guard.
+	 *
+	 * @param string $directoryUrl The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the URL is malformed or unsafe.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function trustDirectory(string $directoryUrl): void {
+		$this->assertSyncableDirectoryUrl(directoryUrl: $directoryUrl);
+		$this->assertSafeOutboundUrl(url: $directoryUrl);
+
+		$trusted = $this->getTrustedDirectoryUrls();
+		if (in_array($directoryUrl, $trusted, true) === true) {
+			return;
+		}
+
+		$trusted[] = $directoryUrl;
+		$this->config->setValueString($this->appName, self::CONFIG_TRUSTED_DIRECTORIES, (string)json_encode(array_values($trusted)));
+
+	}//end trustDirectory()
+
+	/**
+	 * The directories an administrator added; an unreadable value counts as none.
+	 *
+	 * @return array<string> The trusted directory URLs.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	private function getTrustedDirectoryUrls(): array {
+		$decoded = json_decode($this->config->getValueString($this->appName, self::CONFIG_TRUSTED_DIRECTORIES, '[]'), true);
+		if (is_array($decoded) === false) {
+			return [];
+		}
+
+		return array_values(
+			array_filter(
+				$decoded,
+				static fn ($url): bool => is_string($url) === true && filter_var($url, FILTER_VALIDATE_URL) !== false
+			)
+		);
+
+	}//end getTrustedDirectoryUrls()
+
+	/**
+	 * Run a listing register read or write with the rights doCronSync() was given.
+	 *
+	 * Only the listing lookup and save of a sync go through here; fetching and
+	 * parsing peer data, error recording, broadcasts and reporting keep the
+	 * caller's own rights (the workload identity is scoped to what needs it).
+	 *
+	 * @param callable $operation The listing register operation.
+	 *
+	 * @return mixed What the operation returns.
+	 *
+	 * @spec exclude Scoping helper for the cron sync's system context; no domain behaviour.
+	 */
+	private function withListingWriteRights(callable $operation): mixed {
+		if ($this->listingWriteContext === null) {
+			return $operation();
+		}
+
+		return ($this->listingWriteContext)($operation);
+
+	}//end withListingWriteRights()
 
 	/**
 	 * Get unique directory URLs from stored listings
@@ -425,8 +551,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * Distinct from getUniqueDirectories() which returns PUBLICATIONS URLs for the
 	 * federation search flow (getPublications / getUsed / getPublication) — this
-	 * method returns DIRECTORY URLs for the BFS-discovery sync flow (doCronSync,
-	 * syncDirectory).
+	 * method returns DIRECTORY URLs for the sync flow's cross-directory check
+	 * (doCronSync, syncDirectory). They are not the cron crawl set: the cron sync
+	 * only crawls admin-added directories and the default one (see trustDirectory()).
 	 *
 	 * Sources:
 	 *   - The `directory` field of every stored listing (populated by
@@ -859,9 +986,16 @@ class DirectoryService implements DirectoryServiceInterface {
 				sourceDirectoryUrl: $sourceDirectoryUrl,
 				listingDirectory: $listingDirectory
 			);
-			$existingListings = $this->findExistingListings(target: $target, listingData: $listingData);
+			// The lookup and the save run with the sync's listing rights (see doCronSync());
+			// the lookup too, so the create-or-update decision sees what the save sees.
+			$existingListings = $this->withListingWriteRights(
+				operation: fn () => $this->findExistingListings(target: $target, listingData: $listingData)
+			);
+			$stored = $this->withListingWriteRights(
+				operation: fn () => $this->storeListing(listingData: $listingData, existingListings: $existingListings, target: $target)
+			);
 
-			return array_merge($result, $this->storeListing(listingData: $listingData, existingListings: $existingListings, target: $target));
+			return array_merge($result, $stored);
 		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
 			$this->recordListingError(target: $target, existingListings: $existingListings, exception: $e);

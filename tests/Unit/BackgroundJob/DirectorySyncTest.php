@@ -46,10 +46,11 @@ class DirectorySyncTest extends TestCase {
 	}
 
 	/**
-	 * oc-f6: with OpenRegister present the cron sync runs inside its system context,
-	 * so the listing writes are not refused as anonymous.
+	 * oc-f6 / aud-f1: with OpenRegister present only the listing writes run in its
+	 * system context. The sync itself (peer fetches, error recording, broadcasts,
+	 * reporting) runs outside it, and receives a context that elevates what it is given.
 	 */
-	public function testRunSyncsInsideTheOpenRegisterSystemContext(): void {
+	public function testRunGivesTheSyncTheSystemContextForListingWritesOnly(): void {
 		$inSystemContext = false;
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$objectService->expects($this->once())
@@ -70,12 +71,20 @@ class DirectorySyncTest extends TestCase {
 		$appManager = $this->createMock(\OCP\App\IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn(['openregister', 'opencatalogi']);
 
-		$ranInSystemContext = null;
+		$syncRanInSystemContext  = null;
+		$writeRanInSystemContext = null;
 		$this->directoryService->expects($this->once())
 			->method('doCronSync')
 			->willReturnCallback(
-				static function () use (&$inSystemContext, &$ranInSystemContext): array {
-					$ranInSystemContext = $inSystemContext;
+				static function (?\Closure $listingWriteContext = null) use (&$inSystemContext, &$syncRanInSystemContext, &$writeRanInSystemContext): array {
+					$syncRanInSystemContext = $inSystemContext;
+					$result = $listingWriteContext(
+						static function () use (&$inSystemContext, &$writeRanInSystemContext): string {
+							$writeRanInSystemContext = $inSystemContext;
+							return 'saved';
+						}
+					);
+					\PHPUnit\Framework\Assert::assertSame('saved', $result);
 					return [];
 				}
 			);
@@ -84,7 +93,8 @@ class DirectorySyncTest extends TestCase {
 		$method = new \ReflectionMethod(DirectorySync::class, 'run');
 		$method->invoke($job, []);
 
-		$this->assertTrue($ranInSystemContext);
+		$this->assertFalse($syncRanInSystemContext);
+		$this->assertTrue($writeRanInSystemContext);
 	}
 
 	/**

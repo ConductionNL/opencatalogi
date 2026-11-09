@@ -642,6 +642,10 @@ class ListingsControllerTest extends TestCase {
 
 		$this->directoryService->method('validateOutboundUrl')
 			->with('https://federated-peer.example.com');
+		// aud-f1: an admin-registered directory joins the cron crawl set.
+		$this->directoryService->expects($this->once())
+			->method('trustDirectory')
+			->with('https://federated-peer.example.com');
 
 		$response = $this->controller->create();
 
@@ -875,6 +879,10 @@ class ListingsControllerTest extends TestCase {
 		$this->directoryService->method('syncDirectory')
 			->with('https://example.com/directory')
 			->willReturn(['synced' => 3]);
+		// aud-f1: a directory the admin added is crawled by the cron sync from now on.
+		$this->directoryService->expects($this->once())
+			->method('trustDirectory')
+			->with('https://example.com/directory');
 
 		$response = $this->controller->add();
 
@@ -894,6 +902,7 @@ class ListingsControllerTest extends TestCase {
 
 		$this->directoryService->method('syncDirectory')
 			->willThrowException(new \InvalidArgumentException('Invalid URL'));
+		$this->directoryService->expects($this->never())->method('trustDirectory');
 
 		$response = $this->controller->add();
 

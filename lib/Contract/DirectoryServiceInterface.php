@@ -53,8 +53,14 @@ interface DirectoryServiceInterface {
 	/**
 	 * Execute synchronization during cron job (asynchronous)
 	 *
-	 * Performs scheduled synchronization of all configured directories
-	 * asynchronously using React PHP promises for better performance.
+	 * Performs scheduled synchronization of the directories an administrator
+	 * added (see trustDirectory()) plus the default directory, asynchronously
+	 * using React PHP promises. Directory URLs learned from peer data are not
+	 * crawled.
+	 *
+	 * @param (\Closure(callable): mixed)|null $listingWriteContext Runs only the
+	 *        listing register reads and writes with elevated rights (the cron
+	 *        job passes OpenRegister's runAsSystem()); null keeps the caller's rights.
 	 *
 	 * @return array<string, mixed> Array containing synchronization results
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
@@ -68,7 +74,20 @@ interface DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
-	public function doCronSync(): array;
+	public function doCronSync(?\Closure $listingWriteContext = null): array;
+
+	/**
+	 * Record a directory an administrator added, so the cron sync crawls it.
+	 *
+	 * @param string $directoryUrl The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @throws \InvalidArgumentException When the URL is malformed or unsafe.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function trustDirectory(string $directoryUrl): void;
 
 	/**
 	 * Get unique directory URLs from stored listings
@@ -94,8 +113,9 @@ interface DirectoryServiceInterface {
 	 *
 	 * Distinct from getUniqueDirectories() which returns PUBLICATIONS URLs for the
 	 * federation search flow (getPublications / getUsed / getPublication) — this
-	 * method returns DIRECTORY URLs for the BFS-discovery sync flow (doCronSync,
-	 * syncDirectory).
+	 * method returns DIRECTORY URLs for the sync flow's cross-directory check
+	 * (doCronSync, syncDirectory). They are not the cron crawl set: the cron sync
+	 * only crawls admin-added directories and the default one (see trustDirectory()).
 	 *
 	 * Sources:
 	 *   - The `directory` field of every stored listing (populated by

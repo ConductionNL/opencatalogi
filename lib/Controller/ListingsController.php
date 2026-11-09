@@ -353,6 +353,16 @@ class ListingsController extends Controller {
 			schema: $listingSchema
 		);
 
+		// An admin-registered directory is crawled by the cron sync from now on. A
+		// directory that cannot be synced (this instance itself) is kept, not crawled.
+		if (empty($allowed['directory']) === false) {
+			try {
+				$this->directoryService->trustDirectory($allowed['directory']);
+			} catch (\InvalidArgumentException $exception) {
+				$this->logger?->info('[ListingsController::create] Directory not added to the cron sync', ['error' => $exception->getMessage()]);
+			}
+		}
+
 		// Return the created object as a JSON response.
 		return new JSONResponse($object);
 	}//end create()
@@ -546,8 +556,9 @@ class ListingsController extends Controller {
 	 * through this controller.
 	 *
 	 * When an ID is provided, the corresponding listing is looked up and its
-	 * directory URL is synced. When no ID is provided, all known directories
-	 * are synced (equivalent to a cron sync).
+	 * directory URL is synced. When no ID is provided, the directories an admin
+	 * added plus the default directory are synced (equivalent to a cron sync, with
+	 * the admin's own rights).
 	 *
 	 * @param string|null $id The ID of the listing whose directory to synchronize (optional).
 	 *
@@ -596,7 +607,7 @@ class ListingsController extends Controller {
 			}//end if
 
 			if ($id === null) {
-				// Sync all known directories.
+				// Sync the admin-added directories and the default one.
 				$result = $this->directoryService->doCronSync();
 			}
 
@@ -644,9 +655,11 @@ class ListingsController extends Controller {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Property "url" is required')], statusCode: 400);
 		}
 
-		// Add the new listing by syncing the provided directory URL.
+		// Add the new listing by syncing the provided directory URL; once it synced,
+		// the cron sync keeps crawling it (only admin-added directories are crawled).
 		try {
 			$result = $this->directoryService->syncDirectory($url);
+			$this->directoryService->trustDirectory($url);
 		} catch (\InvalidArgumentException $exception) {
 			// Validation errors: echo the caller's own input back as a safe message.
 			return new JSONResponse(
