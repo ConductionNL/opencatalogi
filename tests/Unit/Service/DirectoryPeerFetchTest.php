@@ -343,6 +343,27 @@ class DirectoryPeerFetchTest extends TestCase {
 	}
 
 	/**
+	 * pub-f1: refused candidates count toward the peer cap, so a list padded with
+	 * unsafe URLs cannot make one lookup resolve an unbounded number of names.
+	 */
+	public function testRefusedPeersCountTowardTheCap(): void {
+		$dirs = [];
+		for ($i = 1; $i <= 30; $i++) {
+			$dirs[] = 'http://10.0.0.'.$i.'/api/publications';
+		}
+
+		$dirs[] = self::PEER;
+
+		$ref = new ReflectionClass(DirectoryService::class);
+		$ref->getProperty('cachedUniqueDirs')->setValue($this->service, $dirs);
+
+		$result = $this->service->getPublications($this->guzzle([new Response(200, [], '{"results":[],"total":0}')]));
+
+		$this->assertSame([], $this->history);
+		$this->assertSame([], $result['results']);
+	}
+
+	/**
 	 * oc-f4: a public host is pinned to the address the SSRF guard accepted.
 	 *
 	 * @group network

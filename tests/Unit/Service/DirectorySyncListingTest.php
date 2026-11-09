@@ -208,7 +208,12 @@ class DirectorySyncListingTest extends TestCase {
 
 		$this->assertSame('created', $result['action']);
 		$this->assertCount(1, $this->saved);
-		$this->assertNull($this->saved[0]['uuid']);
+		// dir-f2: OpenRegister falls back to the object's `id` when no uuid is passed,
+		// so the taken UUID must be absent from both the uuid and the object.
+		$this->assertNotSame('victim-uuid', $this->saved[0]['uuid']);
+		$this->assertTrue(\Symfony\Component\Uid\Uuid::isValid((string)$this->saved[0]['uuid']));
+		$this->assertSame($this->saved[0]['uuid'], $this->saved[0]['object']['id']);
+		$this->assertArrayNotHasKey('@self', $this->saved[0]['object']);
 	}
 
 	/**
@@ -223,7 +228,8 @@ class DirectorySyncListingTest extends TestCase {
 			'https://source.example.org/api/directory'
 		);
 
-		$this->assertNull($this->saved[0]['uuid']);
+		$this->assertNotSame('some-uuid', $this->saved[0]['uuid']);
+		$this->assertSame($this->saved[0]['uuid'], $this->saved[0]['object']['id']);
 	}
 
 	public function testCreateWithoutDirectoryFallsBackToTheSourceAndDetectsTheEndpoint(): void {

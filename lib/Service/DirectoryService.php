@@ -55,6 +55,7 @@ use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use React\Promise\Promise;
 use RuntimeException;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * DirectoryService
@@ -112,6 +113,15 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * The longest a federated lookup waits for a peer connection, in seconds.
 	 */
 	private const MAX_PEER_CONNECT_TIMEOUT = 5.0;
+
+	/**
+	 * The longest a federated lookup spends resolving and checking peer addresses, in seconds.
+	 *
+	 * The SSRF guard resolves every peer name before the concurrent phase, and PHP's
+	 * DNS functions take no timeout, so the lookup stops picking peers once this
+	 * budget is spent (worst case: the budget plus one resolver timeout).
+	 */
+	private const MAX_PEER_RESOLVE_SECONDS = 5.0;
 
 	/**
 	 * The HTTP client for making requests.
@@ -1127,7 +1137,16 @@ class DirectoryService implements DirectoryServiceInterface {
 	 */
 	private function storeListing(array $listingData, $existingListings, array $target): array {
 		if (empty($existingListings) === true) {
-			$this->saveListing(target: $target, listingData: $listingData, uuid: $this->newListingUuid(target: $target));
+			// OpenRegister falls back to the object's `id` (or `@self.id`) when no uuid is
+			// passed, so a refused peer UUID must not stay in the object either: the
+			// listing gets a fresh UUID, passed explicitly and written as the object's `id`.
+			$uuid = $this->newListingUuid(target: $target);
+			if ($uuid === null) {
+				$uuid = Uuid::v4()->toRfc4122();
+				$listingData['id'] = $uuid;
+			}
+
+			$this->saveListing(target: $target, listingData: $listingData, uuid: $uuid);
 			return ['action' => 'created', 'success' => true];
 		}
 
@@ -1157,11 +1176,11 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * UUID comes from the peer, and listing UUIDs are public (GET /api/directory):
 	 * a peer that sends the UUID of another directory's listing would otherwise turn
 	 * this create into an overwrite of that listing (oc-f5). A UUID that already
-	 * exists, or that cannot be checked, is not used; OpenRegister then generates one.
+	 * exists, or that cannot be checked, is not used; storeListing() then generates one.
 	 *
 	 * @param array $target The ObjectService, listing register/schema and the peer's uuid.
 	 *
-	 * @return string|null The peer's UUID when it is free, otherwise null.
+	 * @return string|null The peer's UUID when it is free, otherwise null (the caller then generates one).
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
@@ -2655,8 +2674,11 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * The requests to send for a peer lookup, skipping our own directory and any unsafe URL.
 	 *
-	 * At most MAX_PEERS_PER_LOOKUP peers are asked. Each target carries the request
-	 * options that pin it to the address the SSRF guard accepted.
+	 * At most MAX_PEERS_PER_LOOKUP candidates are considered, whether or not they
+	 * pass the SSRF guard, and candidates stop once MAX_PEER_RESOLVE_SECONDS of
+	 * resolving is spent: a URL that resolves slowly or to a blocked address costs a
+	 * DNS lookup, so it counts too. Each peer is resolved once, and its target carries
+	 * the request options that pin it to the address the SSRF guard accepted.
 	 *
 	 * @param array $directories The directory URLs to ask
 	 * @param array $lookup      The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
@@ -2670,20 +2692,25 @@ class DirectoryService implements DirectoryServiceInterface {
 			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
 		);
 
-		$targets = [];
+		$targets    = [];
+		$candidates = 0;
+		$deadline   = (microtime(true) + self::MAX_PEER_RESOLVE_SECONDS);
 		foreach ($directories as $directoryUrl) {
-			if (count($targets) >= self::MAX_PEERS_PER_LOOKUP) {
-				break;
-			}
-
 			if ($directoryUrl === $ourDirectoryUrl) {
 				continue;
 			}
 
-			// Skip local/unsafe URLs — the guard performs DNS resolution, and the
-			// options it returns pin the request to the address it accepted.
+			// Count the candidate before resolving it (pub-f1): an unsafe or slow name
+			// costs a lookup as much as a good one does.
+			if ($candidates >= self::MAX_PEERS_PER_LOOKUP || microtime(true) >= $deadline) {
+				break;
+			}
+
+			$candidates++;
+
+			// Skip local/unsafe URLs. pinnedOutboundOptions() runs the SSRF guard once,
+			// on the URL that is fetched, and pins the request to the address it accepted.
 			try {
-				$this->assertSafeOutboundUrl(url: $directoryUrl);
 				$endpoint = $lookup['endpointFor']($directoryUrl);
 				$options  = $this->pinnedOutboundOptions(url: $endpoint);
 			} catch (InvalidArgumentException $e) {
