@@ -57,6 +57,7 @@ use OCP\IUserSession;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Log\LoggerInterface;
 use RuntimeException;
 use ZipArchive;
 
@@ -146,6 +147,8 @@ class PublicationService implements PublicationServiceInterface {
 	 *                                       Nullable/optional so existing call sites and
 	 *                                       tests keep working unmodified; a null session
 	 *                                       fails closed to the anonymous (stripped) envelope.
+	 * @param LoggerInterface|null $logger Logs failures server-side so public responses
+	 *                                     carry only a generic message (ADR-050).
 	 *
 	 * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
 	 */
@@ -157,6 +160,7 @@ class PublicationService implements PublicationServiceInterface {
 		private readonly DirectoryService $directoryService,
 		private readonly DownloadService $downloadService,
 		private readonly ?IUserSession $userSession = null,
+		private readonly ?LoggerInterface $logger = null,
 	) {
 		$this->appName = 'opencatalogi';
 
@@ -1147,11 +1151,13 @@ class PublicationService implements PublicationServiceInterface {
 	}//end attachments()
 
 	/**
-	 * Download all files of an object as a ZIP archive
+	 * Download the published files of an object as a ZIP archive
 	 *
-	 * This method creates a ZIP file containing all files associated with a specific object
-	 * and returns it as a downloadable file. The ZIP file includes all files stored in the
-	 * object's folder with their original names.
+	 * This method creates a ZIP file containing the published attachments of an object
+	 * plus the rendered metadata PDF, and returns it as a downloadable file. Only files
+	 * that carry a public share and that the caller may read (FileRestrictionGuard) go
+	 * into the archive: the same set the public attachments route lists. Unpublished
+	 * drafts and withdrawn files stay in the object folder but never leave through here.
 	 *
 	 * @param string $id The identifier of the object to download files for
 	 *
@@ -1190,12 +1196,15 @@ class PublicationService implements PublicationServiceInterface {
 				return new JSONResponse(['error' => 'Not Found'], 404);
 			}
 
-			// Create the ZIP archive.
+			// Collect only the published attachments. OpenRegister's createObjectFilesZip()
+			// takes every file in the object folder, including unpublished drafts and files
+			// withdrawn via unpublishFile(), so this route builds its own archive from the
+			// shared-only list the public attachments route serves.
 			$fileService = $this->getFileService();
-			$zipInfo = $fileService->createObjectFilesZip($id);
+			$files = $this->getPublishedAttachmentNodes(fileService: $fileService, id: $id);
 
-			// Render the publication metadata PDF and pipe it into the ZIP alongside the
-			// attachments streamed from OR's file service (DWN-OR-001 / DWN-OR-003).
+			// Render the publication metadata PDF that goes into the ZIP alongside the
+			// attachments read from OR's file service (DWN-OR-001 / DWN-OR-003).
 			$metadataPdf = $this->downloadService->createPublicationFile(
 				objectService: $objectService,
 				id: $id,
@@ -1206,17 +1215,14 @@ class PublicationService implements PublicationServiceInterface {
 			);
 
 			if ($metadataPdf instanceof JSONResponse) {
-				if (file_exists($zipInfo['path']) === true) {
-					unlink($zipInfo['path']);
-				}
-
 				return $metadataPdf;
 			}
 
-			$this->addFileToZip(
-				zipPath: $zipInfo['path'],
-				entryName: $metadataPdf['filename'],
-				content: $metadataPdf['content']
+			$zipInfo = $this->createPublishedFilesZip(
+				id: $id,
+				files: $files,
+				fileService: $fileService,
+				metadataPdf: $metadataPdf
 			);
 
 			// Read the ZIP file content.
@@ -1246,6 +1252,10 @@ class PublicationService implements PublicationServiceInterface {
 		} catch (\Exception $exception) {
 			// Log the exception server-side but return a generic body to the caller
 			// so that internal stack traces and file paths are never exposed (#735, H3).
+			$this->logger?->error(
+				'[PublicationService] Download archive failed: '.$exception->getMessage(),
+				['objectId' => $id, 'exception' => $exception]
+			);
 			return new JSONResponse(
 				['error' => 'Failed to create download archive'],
 				500
@@ -1255,36 +1265,98 @@ class PublicationService implements PublicationServiceInterface {
 	}//end download()
 
 	/**
-	 * Add an in-memory artefact to an existing ZIP archive.
+	 * List the attachments of an object that may leave through the public ZIP download.
 	 *
-	 * Used to pipe the rendered publication metadata PDF into the attachment ZIP
-	 * produced by OpenRegister's file service, so the archive matches the structure
-	 * required by DWN-OR-001 (metadata PDF at the root, attachments under Bijlagen/).
+	 * Two filters, both fail closed: OR's shared-only listing (a file without a public
+	 * share is not published, and a withdrawn file has had its share removed), then
+	 * OR's FileRestrictionGuard so a restricted file never reaches the archive even if
+	 * it still carries a share. When the guard cannot be resolved the download fails
+	 * rather than falling back to an unfiltered list.
 	 *
-	 * @param string $zipPath Absolute path of the ZIP archive to add to.
-	 * @param string $entryName The entry name to write inside the archive.
-	 * @param string $content The raw bytes to store under that entry.
+	 * @param object $fileService The OpenRegister FileService.
+	 * @param string $id The object identifier.
 	 *
-	 * @return void
+	 * @return list<object> The published, readable file nodes.
 	 *
-	 * @throws Exception When the archive cannot be opened or the entry cannot be added.
+	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface When the guard is unavailable.
 	 *
 	 * @spec openspec/specs/download-service/spec.md
 	 */
-	private function addFileToZip(string $zipPath, string $entryName, string $content): void {
+	private function getPublishedAttachmentNodes(object $fileService, string $id): array {
+		$sharedFiles = $fileService->getFiles(object: $id, sharedFilesOnly: true);
+
+		$guard = $this->container->get('OCA\OpenRegister\Service\File\FileRestrictionGuard');
+
+		return array_values($guard->readableNodes(nodes: $sharedFiles));
+
+	}//end getPublishedAttachmentNodes()
+
+	/**
+	 * Write the published attachments and the metadata PDF into a temporary ZIP archive.
+	 *
+	 * The archive matches DWN-OR-001: the metadata PDF at the root next to the
+	 * attachments. A publication without published attachments still yields an archive
+	 * that holds the metadata PDF. A file that cannot be read is skipped and logged,
+	 * as OpenRegister's own ZIP builder does.
+	 *
+	 * @param string $id The object identifier (used for the archive name).
+	 * @param array<int, object> $files The published file nodes.
+	 * @param object $fileService The OpenRegister FileService (readability check).
+	 * @param array{filename: string, content: string} $metadataPdf The rendered metadata PDF.
+	 *
+	 * @return array{path: string, filename: string, mimeType: string} The archive info.
+	 *
+	 * @throws Exception When the archive cannot be created or finalised.
+	 *
+	 * @spec openspec/specs/download-service/spec.md
+	 */
+	private function createPublishedFilesZip(string $id, array $files, object $fileService, array $metadataPdf): array {
+		$zipPath = tempnam(sys_get_temp_dir(), 'oc_publication_zip_');
+		if ($zipPath === false) {
+			throw new Exception('Failed to create a temporary file for the download archive');
+		}
+
 		$zip = new ZipArchive();
-		if ($zip->open($zipPath) !== true) {
-			throw new Exception('Failed to open ZIP archive to add the publication metadata PDF');
+		if ($zip->open($zipPath, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
+			unlink($zipPath);
+			throw new Exception('Failed to open the download archive');
 		}
 
-		if ($zip->addFromString($entryName, $content) === false) {
-			$zip->close();
-			throw new Exception('Failed to add the publication metadata PDF to the ZIP archive');
+		foreach ($files as $file) {
+			if ($file instanceof \OCP\Files\File === false) {
+				continue;
+			}
+
+			try {
+				$fileService->checkOwnership($file);
+				$zip->addFromString($file->getName(), $file->getContent());
+			} catch (\Throwable $e) {
+				$this->logger?->warning(
+					'[PublicationService] Skipping attachment in download archive: '.$e->getMessage(),
+					['objectId' => $id, 'exception' => $e]
+				);
+			}
 		}
 
-		$zip->close();
+		$pdfAdded = $zip->addFromString($metadataPdf['filename'], $metadataPdf['content']);
+		$closed = $zip->close();
+		if ($pdfAdded === false || $closed === false) {
+			if (file_exists($zipPath) === true) {
+				unlink($zipPath);
+			}
 
-	}//end addFileToZip()
+			throw new Exception('Failed to finalise the download archive');
+		}
+
+		$safeId = preg_replace('/[^A-Za-z0-9_-]/', '', $id);
+
+		return [
+			'path' => $zipPath,
+			'filename' => 'object_'.$safeId.'_files_'.date('Y-m-d_H-i-s').'.zip',
+			'mimeType' => 'application/zip',
+		];
+
+	}//end createPublishedFilesZip()
 
 	/**
 	 * Filter out unwanted properties from objects

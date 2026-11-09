@@ -304,8 +304,8 @@ class FederationController extends Controller {
 	 *
 	 * @no-admin-idor-exempt PublicationService::download() refuses an id outside the configured
 	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
-	 *   anonymous callers get public-group reads only) before any file is zipped, and OpenRegister's
-	 *   createObjectFilesZip() drops restricted files (FileRestrictionGuard).
+	 *   anonymous callers get public-group reads only) before any file is zipped, and zips only the
+	 *   published (shared) files that FileRestrictionGuard admits.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
