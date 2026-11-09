@@ -82,6 +82,14 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @var array{success: false, error: string, status: int}
 	 */
+	/**
+	 * The deepest merged window (page × limit) an aggregated listing fans out for.
+	 *
+	 * Beyond it the listing answers with the local page only, so one anonymous
+	 * request cannot ask every peer for an unbounded number of rows.
+	 */
+	private const FEDERATED_WINDOW_MAX = 1000;
+
 	private const PUBLICATION_NOT_FOUND = [
 		'success' => false,
 		'error' => 'Publication not found',
@@ -1632,6 +1640,13 @@ class PublicationService implements PublicationServiceInterface {
 		$localData = $this->fetchLocalPublicationData(queryParams: $queryParams);
 		$responseData = $this->buildLocalAggregateListing(localData: $localData, context: $context);
 
+		// A merged page deeper than FEDERATED_WINDOW_MAX would ask every peer for that
+		// many rows; answer with the local page instead.
+		if (($context['page'] * $context['limit']) > self::FEDERATED_WINDOW_MAX) {
+			$responseData['_performance'] = $this->aggregationPerformance(startTime: $startTime, federated: false);
+			return $responseData;
+		}
+
 		try {
 			$responseData = $this->buildFederatedListing(queryParams: $queryParams, localTotal: ($localData['total'] ?? 0), context: $context);
 			$responseData['_performance'] = $this->aggregationPerformance(startTime: $startTime, federated: true);
@@ -1656,10 +1671,16 @@ class PublicationService implements PublicationServiceInterface {
 	private function buildListingContext(array $queryParams, array $requestParams, string $baseUrl): array {
 		$pagination = $this->readPagination(queryParams: $queryParams);
 
+		// The route is public and an aggregated listing fans out to every peer, so the
+		// page is held to the same cap as the public search (PUBLIC_LIMIT_MAX). Peers are
+		// not sent `_limit` (buildFederatedQueryParams()), so they are not affected.
+		$limit = min(PublicationQueryService::PUBLIC_LIMIT_MAX, max(0, $pagination['limit']));
+		$page  = max(1, $pagination['page']);
+
 		return [
-			'limit' => max(0, $pagination['limit']),
-			'page' => max(1, $pagination['page']),
-			'offset' => max(0, $pagination['offset']),
+			'limit' => $limit,
+			'page' => $page,
+			'offset' => max(0, (int)($queryParams['offset'] ?? (($page - 1) * $limit))),
 			'requestParams' => $requestParams,
 			'baseUrl' => $baseUrl,
 		] + $this->readListingOptions(queryParams: $queryParams);
