@@ -476,6 +476,27 @@ class SettingsService implements SettingsServiceInterface {
 	}//end getRegisterMapper()
 
 	/**
+	 * Whether the current caller is a Nextcloud administrator. Fails closed to false.
+	 *
+	 * @return bool True for a signed-in administrator.
+	 *
+	 * @spec exclude Authorization helper for the settings register inventory; no domain behaviour.
+	 */
+	private function isCallerAdmin(): bool {
+		try {
+			$user = $this->container->get(\OCP\IUserSession::class)->getUser();
+			if ($user === null) {
+				return false;
+			}
+
+			return $this->container->get(\OCP\IGroupManager::class)->isAdmin($user->getUID()) === true;
+		} catch (\Throwable $e) {
+			return false;
+		}
+
+	}//end isCallerAdmin()
+
+	/**
 	 * Attempts to retrieve the Schema mapper from the container.
 	 *
 	 * @return \OCA\OpenRegister\Db\SchemaMapper|null The Schema mapper if available, null otherwise.
@@ -542,10 +563,20 @@ class SettingsService implements SettingsServiceInterface {
 			$registerMapper = $this->getRegisterMapper();
 			if ($registerMapper !== null) {
 				$data['openRegisters'] = true;
-				$registers = $registerMapper->findAll(
-					_rbac: false,
-					_multitenancy: false
-				);
+				// GET /api/settings is open to every signed-in user (the app's editors
+				// pick registers and schemas from this list), so only an administrator
+				// gets the instance-wide inventory; everyone else gets the registers of
+				// their own organisation, as OpenRegister's register API would give them.
+				if ($this->isCallerAdmin() === true) {
+					// phpcs:disable Squiz.Commenting.InlineComment.NotCapital
+					$registers = $registerMapper->findAll(
+						_rbac: false, // rbac-bypass: administrator, the instance-wide settings view.
+						_multitenancy: false // rbac-bypass: administrator, across organisations.
+					);
+					// phpcs:enable Squiz.Commenting.InlineComment.NotCapital
+				} else {
+					$registers = $registerMapper->findAll();
+				}
 
 				// Enrich registers with full schema objects instead of just IDs.
 				$data['availableRegisters'] = $this->enrichRegistersWithSchemas(registers: $registers);
