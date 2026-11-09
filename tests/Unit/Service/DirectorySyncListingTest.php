@@ -187,6 +187,8 @@ class DirectorySyncListingTest extends TestCase {
 				'publications' => 'https://peer.example.org/api/publications',
 				'catalogDirectory' => 'https://peer.example.org/api/directory',
 				'directory' => 'https://peer.example.org/api/directory',
+				// pp-f6: relayed by the source directory, recorded on create.
+				'relayedBy' => 'https://source.example.org/api/directory',
 				'lastSync' => 'NOW',
 				'lastSuccessAt' => 'NOW',
 				'lastError' => '',
@@ -283,7 +285,7 @@ class DirectorySyncListingTest extends TestCase {
 
 	public function testUpdateWithOlderIncomingDataIsSkipped(): void {
 		$this->objectService->method('searchObjects')->willReturn([
-			$this->entity(['id' => 'e', 'object' => ['lastSync' => '2030-01-01T00:00:00+00:00', 'updated' => '2030-01-01T00:00:00+00:00']]),
+			$this->entity(['id' => 'e', 'object' => ['lastSync' => '2020-01-01T00:00:00+00:00', 'updated' => '2020-01-01T00:00:00+00:00']]),
 		]);
 
 		$result = $this->service->syncListing(
@@ -407,6 +409,105 @@ class DirectorySyncListingTest extends TestCase {
 
 		$this->assertSame('skipped_other_directory', $result['action']);
 		$this->assertSame([], $this->saved);
+	}
+
+	/**
+	 * pp-f6: a relayed listing is updated only by the relay that created it; a
+	 * second trusted relay's update is skipped.
+	 */
+	public function testRelayedListingIsNotUpdatedByAnotherRelay(): void {
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'stored-uuid', 'object' => ['title' => 'Old', 'relayedBy' => 'https://first.example.org/api/directory']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-9', 'catalog' => 'c-9', 'title' => 'Hijack', 'directory' => 'https://peer.example.org/api/directory'],
+			'https://second.example.org/api/directory'
+		);
+
+		$this->assertSame('skipped_other_relay', $result['action']);
+		$this->assertSame([], $this->saved);
+	}
+
+	/**
+	 * pp-f6: the relay that created the listing may update it, and keeps owning it.
+	 */
+	public function testRelayedListingIsUpdatedByItsOwnRelay(): void {
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'stored-uuid', 'object' => ['title' => 'Old', 'relayedBy' => 'https://first.example.org/api/directory']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-9', 'catalog' => 'c-9', 'title' => 'New', 'directory' => 'https://peer.example.org/api/directory'],
+			'https://first.example.org/api/directory'
+		);
+
+		$this->assertSame('updated', $result['action']);
+		$this->assertSame('https://first.example.org/api/directory', $this->saved[0]['object']['relayedBy']);
+	}
+
+	/**
+	 * pp-f6: the listing's own directory, once crawled, may update it; the stored relay is kept.
+	 */
+	public function testRelayedListingIsUpdatedByItsOwnDirectory(): void {
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'stored-uuid', 'object' => ['title' => 'Old', 'relayedBy' => 'https://first.example.org/api/directory']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-9', 'catalog' => 'c-9', 'title' => 'New', 'directory' => 'https://peer.example.org/api/directory'],
+			'https://peer.example.org/api/directory'
+		);
+
+		$this->assertSame('updated', $result['action']);
+		$this->assertSame('https://first.example.org/api/directory', $this->saved[0]['object']['relayedBy']);
+	}
+
+	/**
+	 * pp-f6: a peer cannot name the relay itself; relayedBy comes from the sync.
+	 */
+	public function testPeerSuppliedRelayIsIgnored(): void {
+		$this->objectService->method('searchObjects')->willReturn([]);
+
+		$this->service->syncListing(
+			['id' => 'l-10', 'catalog' => 'c-10', 'directory' => 'https://source.example.org/api/directory', 'relayedBy' => 'https://evil.example.org/api/directory'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertArrayNotHasKey('relayedBy', $this->saved[0]['object']);
+	}
+
+	/**
+	 * pp-f6: a peer timestamp beyond the clock-skew horizon is not "newer".
+	 */
+	public function testFutureIncomingTimestampDoesNotWin(): void {
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'e', 'object' => ['lastSync' => '2020-01-01T00:00:00+00:00', 'updated' => '2020-01-01T00:00:00+00:00']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-11', 'catalog' => 'c-11', 'updated' => (new \DateTime('+1 day'))->format('c')],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('skipped_outdated', $result['action']);
+		$this->assertSame([], $this->saved);
+	}
+
+	/**
+	 * pp-f6: a stored future timestamp (planted earlier) does not block a current update.
+	 */
+	public function testStoredFutureTimestampDoesNotBlockAnUpdate(): void {
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'e', 'object' => ['lastSync' => '2020-01-01T00:00:00+00:00', 'updated' => '2099-01-01T00:00:00+00:00']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-12', 'catalog' => 'c-12', 'updated' => (new \DateTime())->format('c')],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('updated', $result['action']);
 	}
 
 	public function testFailedSaveRecordsTheErrorOnTheExistingListing(): void {

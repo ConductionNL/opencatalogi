@@ -148,7 +148,16 @@ class DirectoryService implements DirectoryServiceInterface {
 		'unchanged' => 'listings_unchanged',
 		'skipped_outdated' => 'listings_skipped',
 		'skipped_other_directory' => 'listings_skipped',
+		'skipped_other_relay' => 'listings_skipped',
 	];
+
+	/**
+	 * How far in the future a peer timestamp may lie and still count as "newer", in seconds.
+	 *
+	 * Covers clock skew between instances; a timestamp beyond it would otherwise
+	 * win every later comparison for good.
+	 */
+	private const MAX_TIMESTAMP_SKEW_SECONDS = 300;
 
 	/**
 	 * Cached unique directories to avoid repeated database queries.
@@ -1123,6 +1132,13 @@ class DirectoryService implements DirectoryServiceInterface {
 			$listingData['directory'] = $sourceDirectoryUrl;
 		}
 
+		// A listing for another directory is relayed: record which directory relayed
+		// it, so only that relay may update it later (pp-f6). Never taken from the peer.
+		unset($listingData['relayedBy']);
+		if ($listingData['directory'] !== $sourceDirectoryUrl) {
+			$listingData['relayedBy'] = $sourceDirectoryUrl;
+		}
+
 		$listingData = $this->withSyncStamps(listingData: $listingData);
 		if (empty($listingData['summary']) === true) {
 			$listingData['summary'] = 'unknown';
@@ -1312,6 +1328,20 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		$existingListingData = $existingListings[0]->jsonSerialize();
 		$existingObject = ($existingListingData['object'] ?? []);
+
+		// Relay ownership (pp-f6): a relayed listing is updated only by the directory that relayed it
+		// first; its own directory, when crawled, may always update it. A stored
+		// listing without a relay yet is claimed by the first relay that updates it.
+		$storedRelay = ($existingObject['relayedBy'] ?? null);
+		$hasStoredRelay = (is_string($storedRelay) === true && $storedRelay !== '');
+		if (isset($listingData['relayedBy']) === true && $hasStoredRelay === true && $storedRelay !== $listingData['relayedBy']) {
+			return ['action' => 'skipped_other_relay', 'success' => true, 'reason' => 'Listing is relayed by '.$storedRelay];
+		}
+
+		if (isset($listingData['relayedBy']) === false && $hasStoredRelay === true) {
+			$listingData['relayedBy'] = $storedRelay;
+		}
+
 		$listingData['default'] = ($existingObject['default'] ?? $listingData['default']);
 		$listingData['status'] = ($existingObject['status'] ?? 'development');
 		$listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
@@ -1796,8 +1826,15 @@ class DirectoryService implements DirectoryServiceInterface {
 			$incomingUpdated = $this->extractTimestamp(data: $incomingData);
 			$existingUpdated = $this->extractTimestamp(data: $existingObject);
 
+			// A peer timestamp beyond the clock-skew horizon is never "newer" (pp-f6);
+			// a stored one beyond it does not block later updates either.
+			$horizon = (new DateTime())->modify('+'.self::MAX_TIMESTAMP_SKEW_SECONDS.' seconds');
+			if ($incomingUpdated !== null && $incomingUpdated > $horizon) {
+				return true;
+			}
+
 			// If we can't determine timestamps, allow the update to be safe.
-			if ($incomingUpdated === null || $existingUpdated === null) {
+			if ($incomingUpdated === null || $existingUpdated === null || $existingUpdated > $horizon) {
 				return false;
 			}
 
@@ -3336,6 +3373,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			'lastError',
 			'available',
 			'default',
+			'relayedBy',
 			// Unwanted properties as requested.
 			'metadata',
 			'image',
