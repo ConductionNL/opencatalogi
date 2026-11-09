@@ -78,11 +78,6 @@ use ZipArchive;
 class PublicationService implements PublicationServiceInterface {
 
 	/**
-	 * The result of a single-publication lookup that found nothing.
-	 *
-	 * @var array{success: false, error: string, status: int}
-	 */
-	/**
 	 * The deepest merged window (page × limit) an aggregated listing fans out for.
 	 *
 	 * Beyond it the listing answers with the local page only, so one anonymous
@@ -90,6 +85,11 @@ class PublicationService implements PublicationServiceInterface {
 	 */
 	private const FEDERATED_WINDOW_MAX = 1000;
 
+	/**
+	 * The result of a single-publication lookup that found nothing.
+	 *
+	 * @var array{success: false, error: string, status: int}
+	 */
 	private const PUBLICATION_NOT_FOUND = [
 		'success' => false,
 		'error' => 'Publication not found',
