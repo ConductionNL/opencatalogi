@@ -476,6 +476,34 @@ class SettingsService implements SettingsServiceInterface {
 	}//end getRegisterMapper()
 
 	/**
+	 * The registers the settings view lists for the current caller.
+	 *
+	 * GET /api/settings is open to every signed-in user (the app's editors pick
+	 * registers and schemas from this list), so only an administrator gets the
+	 * instance-wide inventory; everyone else gets the registers of their own
+	 * organisation, as OpenRegister's register API would give them.
+	 *
+	 * @param object $registerMapper The OpenRegister RegisterMapper.
+	 *
+	 * @return array The registers.
+	 *
+	 * @spec exclude Authorization scoping of the settings register inventory; no domain behaviour.
+	 */
+	private function findCallerRegisters(object $registerMapper): array {
+		if ($this->isCallerAdmin() === false) {
+			return $registerMapper->findAll();
+		}
+
+		// phpcs:disable Squiz.Commenting.InlineComment.NotCapital
+		return $registerMapper->findAll(
+			_rbac: false, // rbac-bypass: administrator, the instance-wide settings view.
+			_multitenancy: false // rbac-bypass: administrator, across organisations.
+		);
+		// phpcs:enable Squiz.Commenting.InlineComment.NotCapital
+
+	}//end findCallerRegisters()
+
+	/**
 	 * Whether the current caller is a Nextcloud administrator. Fails closed to false.
 	 *
 	 * @return bool True for a signed-in administrator.
@@ -563,20 +591,7 @@ class SettingsService implements SettingsServiceInterface {
 			$registerMapper = $this->getRegisterMapper();
 			if ($registerMapper !== null) {
 				$data['openRegisters'] = true;
-				// GET /api/settings is open to every signed-in user (the app's editors
-				// pick registers and schemas from this list), so only an administrator
-				// gets the instance-wide inventory; everyone else gets the registers of
-				// their own organisation, as OpenRegister's register API would give them.
-				if ($this->isCallerAdmin() === true) {
-					// phpcs:disable Squiz.Commenting.InlineComment.NotCapital
-					$registers = $registerMapper->findAll(
-						_rbac: false, // rbac-bypass: administrator, the instance-wide settings view.
-						_multitenancy: false // rbac-bypass: administrator, across organisations.
-					);
-					// phpcs:enable Squiz.Commenting.InlineComment.NotCapital
-				} else {
-					$registers = $registerMapper->findAll();
-				}
+				$registers = $this->findCallerRegisters(registerMapper: $registerMapper);
 
 				// Enrich registers with full schema objects instead of just IDs.
 				$data['availableRegisters'] = $this->enrichRegistersWithSchemas(registers: $registers);
