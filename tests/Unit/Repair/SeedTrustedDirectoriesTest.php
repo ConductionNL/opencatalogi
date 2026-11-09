@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Tests for the one-time seed of the trusted directories (pp-f2).
+ * Tests for the one-time seed of the trusted directories (pp-f2, pp-f5).
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests
@@ -20,9 +20,11 @@ namespace Unit\Repair;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Repair\SeedTrustedDirectories;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -32,6 +34,9 @@ class SeedTrustedDirectoriesTest extends TestCase {
 	private array $stored = [];
 
 	private IAppConfig $config;
+
+	/** Whether the code currently runs inside runAsSystem(). */
+	private bool $inSystemContext = false;
 
 	protected function setUp(): void {
 		$this->config = $this->createMock(IAppConfig::class);
@@ -47,54 +52,81 @@ class SeedTrustedDirectoriesTest extends TestCase {
 	}
 
 	/**
-	 * Every directory the sync crawled before is trusted, an unsafe one is
-	 * skipped, the list is logged once, and the flag is set.
+	 * The step over a directory service, with OpenRegister installed and offering runAsSystem().
+	 *
+	 * @param DirectoryServiceInterface $service The directory service.
+	 * @param LoggerInterface|null      $logger  The logger.
+	 *
+	 * @return SeedTrustedDirectories
+	 */
+	private function step(DirectoryServiceInterface $service, ?LoggerInterface $logger = null): SeedTrustedDirectories {
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('runAsSystem')->willReturnCallback(
+			function (callable $operation) {
+				$this->inSystemContext = true;
+				try {
+					return $operation();
+				} finally {
+					$this->inSystemContext = false;
+				}
+			}
+		);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($objectService);
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		return new SeedTrustedDirectories($service, $this->config, ($logger ?? $this->createMock(LoggerInterface::class)), $container, $appManager);
+	}
+
+	/**
+	 * Every directory the sync crawled before is trusted; one that fails its
+	 * checks is parked for one retry; the lookup runs in the system context;
+	 * a second run does nothing.
 	 */
 	public function testSeedsThePreviouslyCrawledDirectoriesOnce(): void {
 		$trusted = [];
+		$lookupInSystemContext = null;
 		$service = $this->createMock(DirectoryServiceInterface::class);
-		$service->expects($this->once())->method('getKnownDirectoryUrls')->willReturn(
-			['https://a.example.org/api/directory', 'http://10.0.0.1/api/directory', 'https://b.example.org/api/directory']
+		$service->expects($this->once())->method('readAllKnownDirectoryUrls')->willReturnCallback(
+			function () use (&$lookupInSystemContext): array {
+				$lookupInSystemContext = $this->inSystemContext;
+				return ['https://a.example.org/api/directory', 'https://unresolved.example.org/api/directory', 'https://b.example.org/api/directory'];
+			}
 		);
 		$service->method('trustDirectory')->willReturnCallback(
 			static function (string $url) use (&$trusted): void {
-				if (str_contains($url, '10.0.0.1') === true) {
-					throw new InvalidArgumentException('Directory URL resolves to a disallowed (internal) address');
+				if (str_contains($url, 'unresolved') === true) {
+					throw new InvalidArgumentException('Directory URL host could not be resolved');
 				}
 
 				$trusted[] = $url;
 			}
 		);
-		$logger = $this->createMock(LoggerInterface::class);
-		$logger->expects($this->once())->method('info')->with(
-			$this->anything(),
-			$this->callback(
-				static fn (array $context): bool => $context['seeded'] === ['https://a.example.org/api/directory', 'https://b.example.org/api/directory']
-					&& array_keys($context['skipped']) === ['http://10.0.0.1/api/directory']
-			)
-		);
 
-		$step = new SeedTrustedDirectories($service, $this->config, $logger);
+		$step = $this->step($service);
 		$step->run($this->createMock(IOutput::class));
-		// A second run (a later upgrade) does nothing.
 		$step->run($this->createMock(IOutput::class));
 
+		$this->assertTrue($lookupInSystemContext);
 		$this->assertSame(['https://a.example.org/api/directory', 'https://b.example.org/api/directory'], $trusted);
+		$this->assertSame('["https:\/\/unresolved.example.org\/api\/directory"]', $this->stored[DirectoryServiceInterface::CONFIG_PENDING_TRUST]);
 		$this->assertSame('1', $this->stored[SeedTrustedDirectories::DONE_FLAG]);
 	}
 
 	/**
-	 * Without OpenRegister nothing was crawled beyond the default: nothing is
-	 * seeded and the flag is still set.
+	 * pp-f5: a failed lookup is not "nothing to seed": the flag stays unset, a
+	 * warning is logged, and the next run tries again.
 	 */
-	public function testWithoutOpenRegisterSeedsNothingAndMarksDone(): void {
+	public function testAFailedLookupLeavesTheFlagUnsetAndWarns(): void {
 		$service = $this->createMock(DirectoryServiceInterface::class);
-		$service->method('getKnownDirectoryUrls')->willThrowException(new RuntimeException('OpenRegister service is not available.'));
+		$service->method('readAllKnownDirectoryUrls')->willThrowException(new RuntimeException('OpenRegister schema not migrated yet'));
 		$service->expects($this->never())->method('trustDirectory');
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->expects($this->once())->method('warning');
 
-		(new SeedTrustedDirectories($service, $this->config, $this->createMock(LoggerInterface::class)))
-			->run($this->createMock(IOutput::class));
+		$this->step($service, $logger)->run($this->createMock(IOutput::class));
 
-		$this->assertSame('1', $this->stored[SeedTrustedDirectories::DONE_FLAG]);
+		$this->assertArrayNotHasKey(SeedTrustedDirectories::DONE_FLAG, $this->stored);
 	}
 }

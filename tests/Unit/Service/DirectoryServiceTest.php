@@ -4777,4 +4777,70 @@ class DirectoryServiceTest extends TestCase {
 
 		$this->assertSame('["https:\/\/b.example.org\/api\/directory"]', $stored);
 	}
+
+	/**
+	 * pp-f5: a seeded directory parked as pending is retried once by the next
+	 * sync: it is trusted when it now passes, dropped (and logged) when it fails
+	 * again, and the pending list is cleared.
+	 */
+	public function testPendingSeededDirectoriesAreRetriedOnce(): void {
+		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/api/directory');
+
+		$stored = [
+			'trusted_directory_urls' => '[]',
+			'trusted_directory_urls_pending' => '["https://203.0.113.9/api/directory","http://10.0.0.9/api/directory"]',
+		];
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return ($stored[$key] ?? $default);
+			}
+		);
+		$this->config->method('setValueString')->willReturnCallback(
+			static function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+
+		$method = new \ReflectionMethod(DirectoryService::class, 'retryPendingTrust');
+		$method->invoke($this->service);
+
+		$this->assertSame('["https:\/\/203.0.113.9\/api\/directory"]', $stored['trusted_directory_urls']);
+		$this->assertSame('[]', $stored['trusted_directory_urls_pending']);
+	}
+
+	/**
+	 * pp-f5: the seed lookup reads across organisations and tells a failure from an empty result.
+	 */
+	public function testReadAllKnownDirectoryUrlsIsUnscopedAndThrowsOnFailure(): void {
+		$objectService = $this->createMockObjectService();
+		$this->setupOpenRegisterAvailable($objectService);
+		$this->setupListingConfig();
+		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/api/directory');
+
+		$args = [];
+		$objectService->method('searchObjects')->willReturnCallback(
+			function (...$positional) use (&$args) {
+				$names = array_map(
+					static fn (\ReflectionParameter $param): string => $param->getName(),
+					(new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'searchObjects'))->getParameters()
+				);
+				$args  = array_combine(array_slice($names, 0, count($positional)), $positional);
+				throw new RuntimeException('schema not migrated');
+			}
+		);
+
+		try {
+			$this->service->readAllKnownDirectoryUrls();
+			$this->fail('A failed lookup must throw, not answer []');
+		} catch (RuntimeException $e) {
+			$this->assertSame('schema not migrated', $e->getMessage());
+		}
+
+		$this->assertFalse($args['_rbac']);
+		$this->assertFalse($args['_multitenancy']);
+	}
 }
+

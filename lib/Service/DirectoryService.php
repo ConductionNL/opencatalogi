@@ -301,6 +301,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function syncTrustedDirectories(): array {
+		$this->retryPendingTrust();
 		$defaultDirectory = $this->getDefaultDirectoryUrl();
 
 		// Crawl set: admin-added directories plus the default one, never URLs from peer data.
@@ -408,6 +409,43 @@ class DirectoryService implements DirectoryServiceInterface {
 		$this->config->setValueString($this->appName, self::CONFIG_TRUSTED_DIRECTORIES, (string)json_encode(array_values($trusted)));
 
 	}//end trustDirectory()
+
+	/**
+	 * Retry, once, the seeded directories that failed their checks at upgrade time.
+	 *
+	 * The seed (SeedTrustedDirectories) parks a directory whose name did not
+	 * resolve, or that failed the SSRF check, in the pending list instead of
+	 * dropping it. The next sync gives each one more try through trustDirectory()
+	 * (same checks); the list is cleared first, so each entry is retried once.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	private function retryPendingTrust(): void {
+		$pending = json_decode($this->config->getValueString($this->appName, self::CONFIG_PENDING_TRUST, '[]'), true);
+		if (is_array($pending) === false || $pending === []) {
+			return;
+		}
+
+		$this->config->setValueString($this->appName, self::CONFIG_PENDING_TRUST, '[]');
+		foreach ($pending as $directoryUrl) {
+			if (is_string($directoryUrl) === false) {
+				continue;
+			}
+
+			try {
+				$this->trustDirectory(directoryUrl: $directoryUrl);
+				$this->logger?->info('[DirectoryService] Pending directory trusted on retry', ['directory' => $directoryUrl]);
+			} catch (\Throwable $e) {
+				$this->logger?->warning(
+					'[DirectoryService] Pending directory failed its checks again and is not crawled; an admin can add it',
+					['directory' => $directoryUrl, 'error' => $e->getMessage()]
+				);
+			}
+		}
+
+	}//end retryPendingTrust()
 
 	/**
 	 * Stop crawling a directory, on an explicit administrator decision.
@@ -633,6 +671,62 @@ class DirectoryService implements DirectoryServiceInterface {
 			return [];
 		}
 
+		return $this->directoryUrlsOf(listings: $listings);
+	}//end getKnownDirectoryUrls()
+
+	/**
+	 * The known directory URLs across every organisation, or an exception when they cannot be read.
+	 *
+	 * Unlike getKnownDirectoryUrls(), which answers [] on any failure, this tells a
+	 * failed lookup from an empty one, for the one-time seed of the trusted
+	 * directories (SeedTrustedDirectories). Run it inside OpenRegister's system
+	 * context so the organisation filter does not apply in a web-started upgrade.
+	 *
+	 * @return array<string> Unique peer directory URLs.
+	 *
+	 * @throws RuntimeException When OpenRegister or the listing register/schema is unavailable.
+	 * @throws \Throwable      When the listing search fails.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function readAllKnownDirectoryUrls(): array {
+		if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
+			throw new RuntimeException('OpenRegister service is not available.');
+		}
+
+		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		if (empty($listingSchema) === true || empty($listingRegister) === true) {
+			throw new RuntimeException('Listing register or schema not configured');
+		}
+
+		// The ADR-055 marker must stay lower-case and on the bypass line itself.
+		// phpcs:disable Squiz.Commenting.InlineComment.NotCapital
+		$listings = $this->container->get('OCA\OpenRegister\Service\ObjectService')->searchObjects(
+			query: [
+				'@self' => [
+					'register' => $listingRegister,
+					'schema' => $listingSchema,
+				],
+			],
+			_rbac: false, // rbac-bypass: one-time upgrade seed reads only the directory URLs of every stored listing; nothing is returned to a caller.
+			_multitenancy: false // rbac-bypass: same seed, across organisations, so it sees what the cron crawled.
+		);
+		// phpcs:enable Squiz.Commenting.InlineComment.NotCapital
+
+		return $this->directoryUrlsOf(listings: $listings);
+	}//end readAllKnownDirectoryUrls()
+
+	/**
+	 * The unique `/api/directory` URLs the listings name, without this instance.
+	 *
+	 * @param iterable $listings The stored listing entities.
+	 *
+	 * @return array<string> Unique peer directory URLs.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	private function directoryUrlsOf(iterable $listings): array {
 		$urls = [];
 		foreach ($listings as $listing) {
 			$listingData = $listing->jsonSerialize();
@@ -657,7 +751,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		}//end foreach
 
 		return array_values($urls);
-	}//end getKnownDirectoryUrls()
+	}//end directoryUrlsOf()
 
 	/**
 	 * Synchronize a specific directory (asynchronous)

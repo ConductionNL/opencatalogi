@@ -304,7 +304,13 @@ trusted directory that relays them. Only the listing register reads and writes
 of the cron sync run with system rights. On the first upgrade to this
 behaviour, a one-time repair step MUST trust every directory the cron crawled
 before (each passing the syncable-URL and SSRF checks), so the crawl set is
-unchanged on day one; a fresh install trusts nothing.
+unchanged on day one; a fresh install trusts nothing. The seed reads every
+organisation's listings; when that read fails it MUST NOT mark itself done, so
+the next repair run retries it. A directory that fails its checks during the
+seed MUST be retried once by the next cron sync. A listing relayed for a
+directory that is not crawled MUST only be updated by the directory that first
+relayed it (or by its own directory once crawled), and a peer timestamp more
+than five minutes in the future MUST NOT count as newer.
 
 **Priority:** Must **Status:** Implemented
 

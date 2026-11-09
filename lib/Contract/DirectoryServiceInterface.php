@@ -37,6 +37,13 @@ use RuntimeException;
  */
 interface DirectoryServiceInterface {
 	/**
+	 * The app-config key of the seeded directories that wait for one retry of their checks (JSON list).
+	 *
+	 * @var string
+	 */
+	public const CONFIG_PENDING_TRUST = 'trusted_directory_urls_pending';
+
+	/**
 	 * Resolve the national OpenCatalogi directory URL.
 	 *
 	 * Returns the `default_directory_url` app-config override when set, otherwise
@@ -100,6 +107,17 @@ interface DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
 	 */
 	public function untrustDirectory(string $directoryUrl): void;
+
+	/**
+	 * The known directory URLs across every organisation; throws when they cannot be read.
+	 *
+	 * @return array<string> Unique peer directory URLs.
+	 *
+	 * @throws \Throwable When OpenRegister, the listing configuration or the search fails.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function readAllKnownDirectoryUrls(): array;
 
 	/**
 	 * Get unique directory URLs from stored listings
