@@ -245,6 +245,13 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				the step is idempotent either way.
 			-->
 			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
+			<!--
+				The cron directory sync crawls only trusted (admin-added) directories
+				plus the default one. Runs once (app-config flag) and trusts every
+				directory the sync crawled before, so day one behaves as before; after
+				CleanupOrphanDirectoryListings so removed rows are not trusted.
+			-->
+			<step>OCA\OpenCatalogi\Repair\SeedTrustedDirectories</step>
 		</post-migration>
 		<!--
 			Nextcloud runs migrateSchemaOnly() on a FIRST install, so NEITHER
@@ -259,6 +266,8 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		-->
 		<install>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<!-- Sets the run-once flag on a fresh install (nothing to grandfather). -->
+			<step>OCA\OpenCatalogi\Repair\SeedTrustedDirectories</step>
 		</install>
 	</repair-steps>
 
