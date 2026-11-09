@@ -129,4 +129,18 @@ class SeedTrustedDirectoriesTest extends TestCase {
 
 		$this->assertArrayNotHasKey(SeedTrustedDirectories::DONE_FLAG, $this->stored);
 	}
+
+	/**
+	 * pp-f8: an empty lookup (a fresh install, no listing register yet) marks the seed done.
+	 */
+	public function testAnEmptyLookupMarksTheSeedDone(): void {
+		$service = $this->createMock(DirectoryServiceInterface::class);
+		$service->method('readAllKnownDirectoryUrls')->willReturn([]);
+		$service->expects($this->never())->method('trustDirectory');
+
+		$this->step($service)->run($this->createMock(IOutput::class));
+
+		$this->assertSame('1', $this->stored[SeedTrustedDirectories::DONE_FLAG]);
+	}
 }
+

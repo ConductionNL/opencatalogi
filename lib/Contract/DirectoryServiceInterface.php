@@ -113,7 +113,7 @@ interface DirectoryServiceInterface {
 	 *
 	 * @return array<string> Unique peer directory URLs.
 	 *
-	 * @throws \Throwable When OpenRegister, the listing configuration or the search fails.
+	 * @throws \Throwable When OpenRegister or the search fails (no configured listing register answers []: nothing was crawled).
 	 *
 	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
 	 */

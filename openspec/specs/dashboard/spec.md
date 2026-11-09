@@ -273,7 +273,9 @@ parameter).
 
 The system MUST allow synchronising a specific listing's directory (or the
 trusted directories plus the default directory when no id is given, as in
-DIR-004) via `POST /api/listings/sync`. On-demand
+DIR-004) via `POST /api/listings/sync`. As in DIR-004, a trusted directory
+that relays listings of a directory this instance does not crawl can still
+update those listings (known limitation, tracked separately). On-demand
 synchronisation triggers outbound HTTP fetches and MUST be admin-gated via
 `#[AuthorizedAdminSetting]`; scheduled synchronisation for all users is
 provided by the hourly cron (DIR-004), which does not pass through this
@@ -307,10 +309,13 @@ before (each passing the syncable-URL and SSRF checks), so the crawl set is
 unchanged on day one; a fresh install trusts nothing. The seed reads every
 organisation's listings; when that read fails it MUST NOT mark itself done, so
 the next repair run retries it. A directory that fails its checks during the
-seed MUST be retried once by the next cron sync. A listing relayed for a
-directory that is not crawled MUST only be updated by the directory that first
-relayed it (or by its own directory once crawled), and a peer timestamp more
-than five minutes in the future MUST NOT count as newer.
+seed MUST be retried once by the next cron sync; when no listing register is
+configured there is nothing to grandfather and the seed is done. A peer
+timestamp more than five minutes in the future MUST NOT count as newer.
+
+Known limitation (tracked separately): any trusted directory that relays a
+listing of a directory this instance does not crawl can update that listing;
+relay ownership is not recorded.
 
 **Priority:** Must **Status:** Implemented
 

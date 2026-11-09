@@ -10,6 +10,8 @@ Directories worden tussen installaties onderling uitgewisseld en geupdate. Je ho
 
 De uurlijkse synchronisatie haalt alleen de vertrouwde directories op, plus de standaard-directory. Een directory wordt vertrouwd als een beheerder hem toevoegt (een directory toevoegen, of een listing aanmaken met een directory-URL). Directories die je installatie alleen via een andere installatie heeft leren kennen, worden wel opgeslagen maar niet zelf opgehaald; hun catalogi komen binnen via de vertrouwde directory die ze doorgeeft.
 
+Bekende beperking (apart opgevolgd): elke vertrouwde directory die zo'n listing doorgeeft, kan die listing bijwerken. Je installatie onthoudt niet welke directory een listing als eerste doorgaf.
+
 Bij de eerste update naar deze werkwijze worden alle directories die de synchronisatie daarvoor al ophaalde eenmalig vertrouwd.
 
 Een listing verwijderen laat de directory vertrouwd. Wil je een directory niet meer laten ophalen, haal hem dan uit de lijst `trusted_directory_urls` (een JSON-lijst van URL's):

@@ -4842,5 +4842,16 @@ class DirectoryServiceTest extends TestCase {
 		$this->assertFalse($args['_rbac']);
 		$this->assertFalse($args['_multitenancy']);
 	}
+
+	/**
+	 * pp-f8: without a configured listing register there are no stored listings,
+	 * so the seed lookup answers [] (nothing to grandfather) instead of failing.
+	 */
+	public function testReadAllKnownDirectoryUrlsWithoutListingConfigIsEmpty(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->expects($this->never())->method('get');
+
+		$this->assertSame([], $this->service->readAllKnownDirectoryUrls());
+	}
 }
 

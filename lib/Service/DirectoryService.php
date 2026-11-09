@@ -148,7 +148,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		'unchanged' => 'listings_unchanged',
 		'skipped_outdated' => 'listings_skipped',
 		'skipped_other_directory' => 'listings_skipped',
-		'skipped_other_relay' => 'listings_skipped',
 	];
 
 	/**
@@ -321,6 +320,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		// listing for a directory that is not crawled is accepted from the trusted
 		// directory that relays it, or it would never be updated again. A relayed
 		// listing still cannot take over another listing's UUID (newListingUuid()).
+		// Known limitation, tracked separately: any trusted relay can update the
+		// listings of a directory this instance does not crawl.
 		$this->uniqueDirectories = $uniqueDirectoryUrls;
 
 		$results = [
@@ -684,7 +685,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @return array<string> Unique peer directory URLs.
 	 *
-	 * @throws RuntimeException When OpenRegister or the listing register/schema is unavailable.
+	 * @throws RuntimeException When OpenRegister is unavailable.
 	 * @throws \Throwable      When the listing search fails.
 	 *
 	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
@@ -696,8 +697,10 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
 		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		// No listing register means no stored listings, so the cron crawled nothing
+		// besides the default directory (e.g. a fresh install): nothing to grandfather.
 		if (empty($listingSchema) === true || empty($listingRegister) === true) {
-			throw new RuntimeException('Listing register or schema not configured');
+			return [];
 		}
 
 		// The ADR-055 marker must stay lower-case and on the bypass line itself.
@@ -1226,13 +1229,6 @@ class DirectoryService implements DirectoryServiceInterface {
 			$listingData['directory'] = $sourceDirectoryUrl;
 		}
 
-		// A listing for another directory is relayed: record which directory relayed
-		// it, so only that relay may update it later (pp-f6). Never taken from the peer.
-		unset($listingData['relayedBy']);
-		if ($listingData['directory'] !== $sourceDirectoryUrl) {
-			$listingData['relayedBy'] = $sourceDirectoryUrl;
-		}
-
 		$listingData = $this->withSyncStamps(listingData: $listingData);
 		if (empty($listingData['summary']) === true) {
 			$listingData['summary'] = 'unknown';
@@ -1422,19 +1418,6 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		$existingListingData = $existingListings[0]->jsonSerialize();
 		$existingObject = ($existingListingData['object'] ?? []);
-
-		// Relay ownership (pp-f6): a relayed listing is updated only by the directory that relayed it
-		// first; its own directory, when crawled, may always update it. A stored
-		// listing without a relay yet is claimed by the first relay that updates it.
-		$storedRelay = ($existingObject['relayedBy'] ?? null);
-		$hasStoredRelay = (is_string($storedRelay) === true && $storedRelay !== '');
-		if (isset($listingData['relayedBy']) === true && $hasStoredRelay === true && $storedRelay !== $listingData['relayedBy']) {
-			return ['action' => 'skipped_other_relay', 'success' => true, 'reason' => 'Listing is relayed by '.$storedRelay];
-		}
-
-		if (isset($listingData['relayedBy']) === false && $hasStoredRelay === true) {
-			$listingData['relayedBy'] = $storedRelay;
-		}
 
 		$listingData['default'] = ($existingObject['default'] ?? $listingData['default']);
 		$listingData['status'] = ($existingObject['status'] ?? 'development');
@@ -1920,7 +1903,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			$incomingUpdated = $this->extractTimestamp(data: $incomingData);
 			$existingUpdated = $this->extractTimestamp(data: $existingObject);
 
-			// A peer timestamp beyond the clock-skew horizon is never "newer" (pp-f6);
+			// A peer timestamp beyond the clock-skew horizon is never "newer";
 			// a stored one beyond it does not block later updates either.
 			$horizon = (new DateTime())->modify('+'.self::MAX_TIMESTAMP_SKEW_SECONDS.' seconds');
 			if ($incomingUpdated !== null && $incomingUpdated > $horizon) {
@@ -3467,7 +3450,6 @@ class DirectoryService implements DirectoryServiceInterface {
 			'lastError',
 			'available',
 			'default',
-			'relayedBy',
 			// Unwanted properties as requested.
 			'metadata',
 			'image',
