@@ -116,9 +116,10 @@ class DirectorySync extends TimedJob {
 	 * to what needs it (aud-f1):
 	 * - it only crawls directories an administrator added plus the default
 	 *   directory, never a directory URL learned from peer data;
-	 * - the system context wraps only the listing register lookup and save
+	 * - the system context wraps only listing register operations: the lookup,
+	 *   the save and recording a sync failure on stored listings
 	 *   (DirectoryService::withListingWriteRights()); fetching and parsing peer
-	 *   data, error recording, broadcasts and reporting run without it;
+	 *   data, broadcasts and reporting run without it;
 	 * - every fetch passes the SSRF guard, and a peer cannot take over another
 	 *   directory's listing (see DirectoryService::newListingUuid()).
 	 * Anonymous directory requests (POST /api/directory) do not come through here

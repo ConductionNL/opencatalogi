@@ -425,9 +425,10 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Run a listing register read or write with the rights doCronSync() was given.
 	 *
-	 * Only the listing lookup and save of a sync go through here; fetching and
-	 * parsing peer data, error recording, broadcasts and reporting keep the
-	 * caller's own rights (the workload identity is scoped to what needs it).
+	 * Only listing register operations of a sync go through here: the lookup and
+	 * save, and recording a sync failure on the stored listings. Fetching and
+	 * parsing peer data, broadcasts and reporting keep the caller's own rights
+	 * (the workload identity is scoped to what needs it).
 	 *
 	 * @param callable $operation The listing register operation.
 	 *
@@ -1404,7 +1405,10 @@ class DirectoryService implements DirectoryServiceInterface {
 			$errorData['lastSync']   = (new DateTime())->format('c');
 			$errorData['lastError']  = self::sanitizeSyncError(message: $exception->getMessage());
 
-			$this->saveListing(target: $target, listingData: $errorData, uuid: $existingListingData['id']);
+			// A listing write like the save it records, so it runs with the same rights (pp-f3).
+			$this->withListingWriteRights(
+				operation: fn () => $this->saveListing(target: $target, listingData: $errorData, uuid: $existingListingData['id'])
+			);
 		} catch (\Exception $updateException) {
 			// A failure to record the error must not mask the sync failure.
 		}
@@ -1888,15 +1892,18 @@ class DirectoryService implements DirectoryServiceInterface {
 				// Can't update without schema/register configuration.
 			}
 
-			// Find all listings from this directory.
-			$existingListings = $objectService->searchObjects(
-				query: [
-					'@self' => [
-						'register' => $listingRegister,
-						'schema' => $listingSchema,
-					],
-					'directory' => $directoryUrl,
-				]
+			// Find all listings from this directory. Lookup and save are listing register
+			// operations, so they run with the sync's listing rights (pp-f3).
+			$existingListings = $this->withListingWriteRights(
+				operation: fn () => $objectService->searchObjects(
+					query: [
+						'@self' => [
+							'register' => $listingRegister,
+							'schema' => $listingSchema,
+						],
+						'directory' => $directoryUrl,
+					]
+				)
 			);
 
 			// Update each listing with error status.
@@ -1909,13 +1916,14 @@ class DirectoryService implements DirectoryServiceInterface {
 				$errorData['lastSync']   = (new DateTime())->format('c');
 				$errorData['lastError']  = self::sanitizeSyncError(message: $errorMessage);
 
-				// Use positional parameters for compatibility with different ObjectService versions.
-				$objectService->saveObject(
-					object: $errorData,
-					extend: [],
-					register: $listingRegister,
-					schema: $listingSchema,
-					uuid: $listingData['id']
+				$this->withListingWriteRights(
+					operation: fn () => $objectService->saveObject(
+						object: $errorData,
+						extend: [],
+						register: $listingRegister,
+						schema: $listingSchema,
+						uuid: $listingData['id']
+					)
 				);
 			}
 		} catch (\Exception $e) {

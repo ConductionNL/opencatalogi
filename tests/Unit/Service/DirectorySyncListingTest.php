@@ -306,17 +306,11 @@ class DirectorySyncListingTest extends TestCase {
 	}
 
 	/**
-	 * aud-f1: with the cron sync's write context, only the listing lookup and save
-	 * are elevated; recording the failure on the stored listing is not.
+	 * Give the service a listing write context that flags what runs inside it.
+	 *
+	 * @return void
 	 */
-	public function testOnlyTheListingLookupAndSaveRunInTheWriteContext(): void {
-		$this->objectService->method('searchObjects')->willReturnCallback(
-			function () {
-				$this->searchedElevated[] = $this->elevated;
-				return [$this->entity(['id' => 'existing-uuid', 'object' => ['title' => 'Kept']])];
-			}
-		);
-		$this->failFirstSave = true;
+	private function withWriteContext(): void {
 		(new \ReflectionProperty(DirectoryService::class, 'listingWriteContext'))->setValue(
 			$this->service,
 			function (callable $operation) {
@@ -328,11 +322,49 @@ class DirectorySyncListingTest extends TestCase {
 				}
 			}
 		);
+	}
+
+	/**
+	 * aud-f1 / pp-f3: with the cron sync's write context, the listing lookup, the
+	 * save and recording the failure on the stored listing all run elevated.
+	 */
+	public function testListingLookupSaveAndErrorRecordRunInTheWriteContext(): void {
+		$this->objectService->method('searchObjects')->willReturnCallback(
+			function () {
+				$this->searchedElevated[] = $this->elevated;
+				return [$this->entity(['id' => 'existing-uuid', 'object' => ['title' => 'Kept']])];
+			}
+		);
+		$this->failFirstSave = true;
+		$this->withWriteContext();
 
 		$this->service->syncListing(['id' => 'l-6', 'catalog' => 'c-6'], 'https://source.example.org/api/directory');
 
 		$this->assertSame([true], $this->searchedElevated);
-		$this->assertSame([true, false], $this->savedElevated);
+		$this->assertSame([true, true], $this->savedElevated);
+	}
+
+	/**
+	 * pp-f3: a failed directory fetch records statusCode and lastError on the
+	 * directory's listings inside the write context.
+	 */
+	public function testDirectoryFailureStatusIsWrittenInTheWriteContext(): void {
+		$this->objectService->method('searchObjects')->willReturnCallback(
+			function () {
+				$this->searchedElevated[] = $this->elevated;
+				return [$this->entity(['id' => 'dir-listing', 'object' => ['title' => 'Peer']])];
+			}
+		);
+		$this->withWriteContext();
+
+		$method = new \ReflectionMethod(DirectoryService::class, 'updateDirectoryStatusOnError');
+		$method->invoke($this->service, 'https://source.example.org/api/directory', 502, 'Bad gateway');
+
+		$this->assertSame([true], $this->searchedElevated);
+		$this->assertSame([true], $this->savedElevated);
+		$this->assertSame('dir-listing', $this->saved[0]['uuid']);
+		$this->assertSame(502, $this->saved[0]['object']['statusCode']);
+		$this->assertSame('Bad gateway', $this->saved[0]['object']['lastError']);
 	}
 
 	/**
