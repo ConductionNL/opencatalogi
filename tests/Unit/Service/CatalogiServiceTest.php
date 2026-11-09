@@ -78,7 +78,96 @@ class CatalogiServiceTest extends TestCase {
 			$this->logger,
 			$this->userSession,
 		);
+
+		// PHPUnit runs under the CLI, which the slug cache treats as a trusted,
+		// non-anonymous context; the default service models an anonymous web request.
+		$this->asWebRequest($this->service);
 	}//end setUp()
+
+	/**
+	 * Make a service behave as if it serves a web request (not the CLI).
+	 *
+	 * @param CatalogiService $service The service.
+	 *
+	 * @return void
+	 */
+	private function asWebRequest(CatalogiService $service): void {
+		(new \ReflectionProperty(CatalogiService::class, 'sapi'))->setValue($service, 'fpm-fcgi');
+	}//end asWebRequest()
+
+	/**
+	 * Configure the catalog register/schema and an ObjectService that returns one catalog.
+	 *
+	 * @param array $catalogData The catalog the search returns.
+	 *
+	 * @return void
+	 */
+	private function catalogSearchReturns(array $catalogData): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([$this->createMockCatalogObject($catalogData)]);
+		$this->injectObjectService($objectService);
+	}//end catalogSearchReturns()
+
+	/**
+	 * dir-f3: a userless read under the CLI (occ, cron, a repair step, or the
+	 * catalog-write listener's warmup there) is trusted by OpenRegister and may
+	 * return a draft, so it neither reads nor fills the shared slug cache.
+	 */
+	public function testGetCatalogBySlugUnderTheCliBypassesTheSharedCache(): void {
+		(new \ReflectionProperty(CatalogiService::class, 'sapi'))->setValue($this->service, 'cli');
+		$draft = ['id' => '4', 'slug' => 'draft', 'published' => null];
+		$this->catalogSearchReturns($draft);
+
+		$this->cache->expects($this->never())->method('get');
+		$this->cache->expects($this->never())->method('set');
+
+		$this->assertEquals($draft, $this->service->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugUnderTheCliBypassesTheSharedCache()
+
+	/**
+	 * dir-f3: inside OpenRegister's system-operation scope a userless read is
+	 * trusted too, also on a web request.
+	 */
+	public function testGetCatalogBySlugInTheSystemContextBypassesTheSharedCache(): void {
+		$draft = ['id' => '5', 'slug' => 'draft', 'published' => null];
+		$this->catalogSearchReturns($draft);
+
+		$this->cache->expects($this->never())->method('get');
+		$this->cache->expects($this->never())->method('set');
+
+		$result = \OCA\OpenRegister\Service\SystemOperationContext::run(fn () => $this->service->getCatalogBySlug('draft'));
+		$this->assertEquals($draft, $result);
+	}//end testGetCatalogBySlugInTheSystemContextBypassesTheSharedCache()
+
+	/**
+	 * dir-f3: without a session it cannot be told that the caller is anonymous,
+	 * so the shared cache is not used.
+	 */
+	public function testGetCatalogBySlugWithoutASessionBypassesTheSharedCache(): void {
+		$service = new CatalogiService(
+			$this->config,
+			$this->request,
+			$this->container,
+			$this->appManager,
+			$this->cacheFactory,
+			$this->logger,
+		);
+		$this->asWebRequest($service);
+		$draft = ['id' => '6', 'slug' => 'draft', 'published' => null];
+		$this->catalogSearchReturns($draft);
+
+		$this->cache->expects($this->never())->method('get');
+		$this->cache->expects($this->never())->method('set');
+
+		$this->assertEquals($draft, $service->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugWithoutASessionBypassesTheSharedCache()
 
 	// ──────────────────────────────────────────────────────────
 	// getObjectService
