@@ -84,6 +84,36 @@ class DirectoryService implements DirectoryServiceInterface {
 	private readonly string $appName;
 
 	/**
+	 * The largest outbound response body (directory or peer answer) read into memory.
+	 *
+	 * A peer or a URL handed to the anonymous sync endpoint could otherwise answer
+	 * with a body larger than memory_limit. 10 MiB holds thousands of listings.
+	 */
+	private const MAX_RESPONSE_BYTES = 10485760;
+
+	/**
+	 * The most peers one federated lookup calls.
+	 *
+	 * Public endpoints (federation listing, used, publication) fan out to every
+	 * known directory; the cap keeps one anonymous request from holding a worker
+	 * for an unbounded number of outbound calls.
+	 */
+	private const MAX_PEERS_PER_LOOKUP = 25;
+
+	/**
+	 * The longest a federated lookup waits for its peers, in seconds.
+	 *
+	 * The peers are called concurrently, so this is also the bound on the whole
+	 * fan-out of one request.
+	 */
+	private const MAX_PEER_TIMEOUT = 10.0;
+
+	/**
+	 * The longest a federated lookup waits for a peer connection, in seconds.
+	 */
+	private const MAX_PEER_CONNECT_TIMEOUT = 5.0;
+
+	/**
 	 * The HTTP client for making requests.
 	 *
 	 * @var Client
@@ -582,7 +612,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 */
 	private function fetchDirectoryData(string $directoryUrl) {
 		$response = $this->safeGet(url: $directoryUrl . '?_limit=10000&include-federated=1');
-		$directoryData = json_decode($response->getBody()->getContents(), true);
+		$directoryData = json_decode($this->readCappedBody(response: $response), true);
 		if (json_last_error() !== JSON_ERROR_NONE) {
 			throw new InvalidArgumentException('Invalid JSON response from directory');
 		}
@@ -1921,6 +1951,32 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *       plumbing that hardens an existing fetch, no new domain behavior.
 	 */
 	private function assertSafeOutboundUrl(string $url): void {
+		$this->resolveSafeOutboundUrl(url: $url);
+
+	}//end assertSafeOutboundUrl()
+
+	/**
+	 * Validate an outbound URL (SSRF guard) and return the addresses that passed.
+	 *
+	 * Same checks as {@see assertSafeOutboundUrl()}; the result lets the caller pin
+	 * the connection to a checked address so the HTTP client does not resolve the
+	 * name a second time (DNS-rebinding TOCTOU).
+	 *
+	 * @param string $url The URL to validate.
+	 *
+	 * @return array{host: string, ips: list<string>} The host and the checked addresses;
+	 *                                                 `ips` is empty for an allowlisted
+	 *                                                 host or a literal IP (nothing to pin).
+	 *
+	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 *
+	 * @spec exclude SSRF input-validation guard for outbound directory fetches; security
+	 *       plumbing that hardens an existing fetch, no new domain behavior.
+	 */
+	private function resolveSafeOutboundUrl(string $url): array {
 		$parsed = parse_url($url);
 		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
 			throw new InvalidArgumentException('Invalid directory URL provided');
@@ -1937,7 +1993,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		// two local instances on a private network can federate. Empty by default, so a
 		// production instance keeps the full SSRF protection below.
 		if ($this->isAllowlistedFederationHost(host: $host) === true) {
-			return;
+			return ['host' => $host, 'ips' => []];
 		}
 
 		// Reject obvious local hostnames outright.
@@ -1995,7 +2051,99 @@ class DirectoryService implements DirectoryServiceInterface {
 			}
 		}
 
-	}//end assertSafeOutboundUrl()
+		if (filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false) {
+			return ['host' => $host, 'ips' => []];
+		}
+
+		return ['host' => $host, 'ips' => array_values(array_unique($ipsToCheck))];
+
+	}//end resolveSafeOutboundUrl()
+
+	/**
+	 * Validate an outbound URL and build the request options that keep the fetch on the checked address.
+	 *
+	 * - CURLOPT_RESOLVE pins host:port to an address the SSRF guard accepted, so a DNS
+	 *   answer that changes between check and connect (rebinding) cannot reach an
+	 *   internal address.
+	 * - CURLOPT_MAXFILESIZE and an `on_headers` check refuse an announced body over
+	 *   MAX_RESPONSE_BYTES before it is downloaded; {@see readCappedBody()} bounds
+	 *   the rest.
+	 *
+	 * @param string $url The URL about to be fetched.
+	 *
+	 * @return array<string, mixed> Guzzle request options.
+	 *
+	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+	 *
+	 * @spec exclude SSRF hardening of an existing outbound fetch; no domain behavior.
+	 */
+	private function pinnedOutboundOptions(string $url): array {
+		$resolved = $this->resolveSafeOutboundUrl(url: $url);
+
+		$curl = [\CURLOPT_MAXFILESIZE => self::MAX_RESPONSE_BYTES];
+		if (empty($resolved['ips']) === false) {
+			$scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+			$port   = parse_url($url, PHP_URL_PORT);
+			if ($port === null || $port === false) {
+				$port = 80;
+				if ($scheme === 'https') {
+					$port = 443;
+				}
+			}
+
+			$address = $resolved['ips'][0];
+			if (str_contains($address, ':') === true) {
+				$address = '['.$address.']';
+			}
+
+			$curl[\CURLOPT_RESOLVE] = [$resolved['host'].':'.$port.':'.$address];
+		}
+
+		return [
+			RequestOptions::CURL => $curl,
+			RequestOptions::ON_HEADERS => static function (mixed $response): void {
+				if ($response instanceof \Psr\Http\Message\ResponseInterface === false) {
+					return;
+				}
+
+				$length = $response->getHeaderLine('Content-Length');
+				if ($length !== '' && (int) $length > self::MAX_RESPONSE_BYTES) {
+					throw new InvalidArgumentException('Response body exceeds the size limit');
+				}
+			},
+		];
+
+	}//end pinnedOutboundOptions()
+
+	/**
+	 * Read a response body, refusing one larger than MAX_RESPONSE_BYTES.
+	 *
+	 * @param \Psr\Http\Message\ResponseInterface $response The response.
+	 *
+	 * @return string The body.
+	 *
+	 * @throws InvalidArgumentException When the body exceeds the limit.
+	 *
+	 * @spec exclude Memory bound on an existing outbound fetch; no domain behavior.
+	 */
+	private function readCappedBody(\Psr\Http\Message\ResponseInterface $response): string {
+		$body    = $response->getBody();
+		$content = '';
+		while ($body->eof() === false) {
+			$chunk = $body->read(65536);
+			if ($chunk === '') {
+				break;
+			}
+
+			$content .= $chunk;
+			if (strlen($content) > self::MAX_RESPONSE_BYTES) {
+				throw new InvalidArgumentException('Response body exceeds the size limit');
+			}
+		}
+
+		return $content;
+
+	}//end readCappedBody()
 
 	/**
 	 * Validate that a URL is safe for outbound use (SSRF guard) without fetching it.
@@ -2166,13 +2314,15 @@ class DirectoryService implements DirectoryServiceInterface {
 		$current = $url;
 
 		for ($hop = 0; $hop <= $maxRedirects; $hop++) {
+			// Re-validate and pin every hop (the first one included) to the address the
+			// SSRF guard accepted, so the client never resolves the name on its own.
 			$response = $this->client->get(
 				$current,
 				[
 					RequestOptions::ALLOW_REDIRECTS => false,
 					RequestOptions::TIMEOUT => 10,
 					RequestOptions::CONNECT_TIMEOUT => 5,
-				]
+				] + $this->pinnedOutboundOptions(url: $current)
 			);
 
 			$status = $response->getStatusCode();
@@ -2203,7 +2353,6 @@ class DirectoryService implements DirectoryServiceInterface {
 				$location = $scheme . '://' . $hostPart . $path;
 			}
 
-			$this->assertSafeOutboundUrl(url: $location);
 			$current = $location;
 		}//end for
 
@@ -2453,10 +2602,13 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * The requests to send for a peer lookup, skipping our own directory and any unsafe URL.
 	 *
+	 * At most MAX_PEERS_PER_LOOKUP peers are asked. Each target carries the request
+	 * options that pin it to the address the SSRF guard accepted.
+	 *
 	 * @param array $directories The directory URLs to ask
 	 * @param array $lookup      The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
 	 *
-	 * @return array<int, array{url: string, name: string}> One entry per peer to call
+	 * @return array<int, array{url: string, name: string, options: array}> One entry per peer to call
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
@@ -2467,13 +2619,20 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		$targets = [];
 		foreach ($directories as $directoryUrl) {
+			if (count($targets) >= self::MAX_PEERS_PER_LOOKUP) {
+				break;
+			}
+
 			if ($directoryUrl === $ourDirectoryUrl) {
 				continue;
 			}
 
-			// Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
+			// Skip local/unsafe URLs — the guard performs DNS resolution, and the
+			// options it returns pin the request to the address it accepted.
 			try {
 				$this->assertSafeOutboundUrl(url: $directoryUrl);
+				$endpoint = $lookup['endpointFor']($directoryUrl);
+				$options  = $this->pinnedOutboundOptions(url: $endpoint);
 			} catch (InvalidArgumentException $e) {
 				continue;
 			}
@@ -2484,8 +2643,9 @@ class DirectoryService implements DirectoryServiceInterface {
 			}
 
 			$targets[] = [
-				'url' => $lookup['endpointFor']($directoryUrl).'?'.http_build_query($lookup['query']),
+				'url' => $endpoint.'?'.http_build_query($lookup['query']),
 				'name' => $host,
+				'options' => $options,
 			];
 		}//end foreach
 
@@ -2494,7 +2654,10 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end peerTargets()
 
 	/**
-	 * Call each peer and parse its answer.
+	 * Call the peers concurrently and parse their answers.
+	 *
+	 * The requests run in parallel, so one lookup takes about one peer timeout
+	 * however many peers answer slowly, instead of the sum of all timeouts.
 	 *
 	 * @param array $targets The peer requests, as built by peerTargets()
 	 * @param array $lookup  The lookup: the caller's `guzzleConfig`, merged over the defaults, and `parse`,
@@ -2514,11 +2677,34 @@ class DirectoryService implements DirectoryServiceInterface {
 			],
 			RequestOptions::HTTP_ERRORS => false,
 		];
-		$lookup['client'] = new Client(array_merge($defaultGuzzleConfig, $lookup['guzzleConfig']));
+		$clientConfig = array_merge($defaultGuzzleConfig, $lookup['guzzleConfig']);
+		// The lookups serve public endpoints that may pass `timeout`/`connect_timeout`
+		// from the query; cap them so one request cannot hold a worker for minutes.
+		$clientConfig[RequestOptions::TIMEOUT] = min((float) $clientConfig[RequestOptions::TIMEOUT], self::MAX_PEER_TIMEOUT);
+		$clientConfig[RequestOptions::CONNECT_TIMEOUT] = min((float) $clientConfig[RequestOptions::CONNECT_TIMEOUT], self::MAX_PEER_CONNECT_TIMEOUT);
+		$client = new Client($clientConfig);
+
+		// SSRF hardening (SB1 / wave-12): disable automatic redirect following so
+		// that a federated peer cannot pivot to cloud-metadata via a 302 response.
+		$promises = [];
+		foreach ($targets as $index => $target) {
+			$promises[$index] = $client->getAsync(
+				$target['url'],
+				[RequestOptions::ALLOW_REDIRECTS => false] + ($target['options'] ?? [])
+			);
+		}
+
+		$settled = \GuzzleHttp\Promise\Utils::settle($promises)->wait();
 
 		$answers = [];
-		foreach ($targets as $target) {
-			$answers[] = $this->fetchFromPeer(url: $target['url'], lookup: $lookup);
+		foreach (array_keys($targets) as $index) {
+			$outcome = ($settled[$index] ?? []);
+			if (($outcome['state'] ?? '') !== 'fulfilled') {
+				$answers[] = null;
+				continue;
+			}
+
+			$answers[] = $this->parsePeerResponse(response: $outcome['value'], lookup: $lookup);
 		}
 
 		return $answers;
@@ -2526,28 +2712,23 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end fetchFromPeers()
 
 	/**
-	 * Call one peer and parse its answer.
+	 * Parse one peer's answer.
 	 *
-	 * @param string $url    The URL to call
-	 * @param array  $lookup The lookup: the HTTP `client` and `parse`, which turns a decoded answer into a result or null
+	 * @param \Psr\Http\Message\ResponseInterface $response The peer response
+	 * @param array                               $lookup   The lookup: `parse`, which turns a decoded answer into a result or null
 	 *
-	 * @return array|null The parsed answer, or null on a non-2xx status, invalid JSON or a failed request
+	 * @return array|null The parsed answer, or null on a non-2xx status, an oversized body or invalid JSON
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function fetchFromPeer(string $url, array $lookup): ?array {
+	private function parsePeerResponse(\Psr\Http\Message\ResponseInterface $response, array $lookup): ?array {
 		try {
-			// SSRF hardening (SB1 / wave-12): disable automatic redirect following so
-			// that a federated peer cannot pivot to cloud-metadata via a 302 response.
-			// The URL is already validated by assertSafeOutboundUrl(); here we
-			// ensure Guzzle never silently follows a redirect to an unvalidated host.
-			$response   = $lookup['client']->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
 			$statusCode = $response->getStatusCode();
 			if ($statusCode < 200 || $statusCode >= 300) {
 				return null;
 			}
 
-			$data = json_decode($response->getBody()->getContents(), true);
+			$data = json_decode($this->readCappedBody(response: $response), true);
 			if (json_last_error() !== JSON_ERROR_NONE) {
 				return null;
 			}
@@ -2557,7 +2738,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			return null;
 		}//end try
 
-	}//end fetchFromPeer()
+	}//end parsePeerResponse()
 
 	/**
 	 * The peer's `/api/federation/publications` URL for a listing URL of any shape.
