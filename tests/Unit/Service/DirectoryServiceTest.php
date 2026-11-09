@@ -4669,8 +4669,9 @@ class DirectoryServiceTest extends TestCase {
 
 	/**
 	 * aud-f1: a directory URL learned from a peer's listing is not crawled; the
-	 * admin-added ones and the default directory are, and the peer-learned URL
-	 * still guards the cross-directory check.
+	 * admin-added ones and the default directory are. pp-f1: the cross-directory
+	 * check set is this run's crawl set, so listings of the peer-learned directory
+	 * are still accepted from the trusted directory that relays them.
 	 */
 	public function testCronSyncCrawlsOnlyAdminAddedDirectoriesAndTheDefault(): void {
 		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
@@ -4684,7 +4685,7 @@ class DirectoryServiceTest extends TestCase {
 		$this->assertSame(['https://added.example.org/api/directory', 'https://directory.example.nl/api/directory'], $synced);
 		$this->assertSame(2, $result['total_directories']);
 		$known = (new \ReflectionProperty(DirectoryService::class, 'uniqueDirectories'))->getValue($service);
-		$this->assertContains('https://planted.example.org/api/directory', $known);
+		$this->assertSame(['https://added.example.org/api/directory', 'https://directory.example.nl/api/directory'], $known);
 	}
 
 	/**

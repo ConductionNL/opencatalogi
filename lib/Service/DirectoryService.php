@@ -306,11 +306,12 @@ class DirectoryService implements DirectoryServiceInterface {
 			$uniqueDirectoryUrls[] = $defaultDirectory;
 		}
 
-		// Cross-directory check set: every directory we know of, crawled or not, so a
-		// crawled peer cannot overwrite the listings of another known directory.
-		$this->uniqueDirectories = array_values(
-			array_unique(array_merge($this->getKnownDirectoryUrls(), $uniqueDirectoryUrls))
-		);
+		// Cross-directory check set: the directories crawled in this run (pp-f1). A
+		// listing that names one of them is synced from that directory itself; a
+		// listing for a directory that is not crawled is accepted from the trusted
+		// directory that relays it, or it would never be updated again. A relayed
+		// listing still cannot take over another listing's UUID (newListingUuid()).
+		$this->uniqueDirectories = $uniqueDirectoryUrls;
 
 		$results = [
 			'total_directories' => count($uniqueDirectoryUrls),

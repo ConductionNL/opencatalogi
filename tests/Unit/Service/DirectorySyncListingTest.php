@@ -335,6 +335,48 @@ class DirectorySyncListingTest extends TestCase {
 		$this->assertSame([true, false], $this->savedElevated);
 	}
 
+	/**
+	 * pp-f1: a listing the default directory relays for a directory that is not
+	 * crawled this run is updated from the relay, not skipped as "processed separately".
+	 */
+	public function testRelayedListingOfAnUncrawledDirectoryIsUpdated(): void {
+		(new \ReflectionProperty(DirectoryService::class, 'uniqueDirectories'))->setValue(
+			$this->service,
+			['https://source.example.org/api/directory']
+		);
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'stored-uuid', 'object' => ['title' => 'Old', 'published' => '2020-01-01T00:00:00+00:00']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-7', 'catalog' => 'c-7', 'title' => 'New', 'published' => '2024-01-01T00:00:00+00:00', 'directory' => 'https://peer.example.org/api/directory'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('updated', $result['action']);
+		$this->assertSame('stored-uuid', $this->saved[0]['uuid']);
+		$this->assertSame('https://peer.example.org/api/directory', $this->saved[0]['object']['directory']);
+	}
+
+	/**
+	 * pp-f1: a relayed listing that names a directory crawled in this run is left
+	 * to that directory's own sync.
+	 */
+	public function testRelayedListingOfACrawledDirectoryIsSkipped(): void {
+		(new \ReflectionProperty(DirectoryService::class, 'uniqueDirectories'))->setValue(
+			$this->service,
+			['https://source.example.org/api/directory', 'https://peer.example.org/api/directory']
+		);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-8', 'catalog' => 'c-8', 'directory' => 'https://peer.example.org/api/directory'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('skipped_other_directory', $result['action']);
+		$this->assertSame([], $this->saved);
+	}
+
 	public function testFailedSaveRecordsTheErrorOnTheExistingListing(): void {
 		$this->objectService->method('searchObjects')->willReturn([
 			$this->entity(['id' => 'existing-uuid', 'object' => ['title' => 'Kept', 'lastSuccessAt' => 'earlier']]),
