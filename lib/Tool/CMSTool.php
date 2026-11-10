@@ -35,12 +35,11 @@ namespace OCA\OpenCatalogi\Tool;
 
 use BadMethodCallException;
 use OCA\OpenCatalogi\Contract\CMSToolInterface;
+use OCA\OpenCatalogi\Service\BuildsSaveOptions;
 use OCA\OpenRegister\Mcp\Db\Agent;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\OpenRegister\Mcp\Tool\ToolInterface;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
@@ -65,6 +64,8 @@ use ReflectionMethod;
  * @SuppressWarnings(PHPMD.TooManyMethods) Each input check is its own small private method.
  */
 class CMSTool implements ToolInterface, CMSToolInterface {
+
+	use BuildsSaveOptions;
 
 	/**
 	 * Agent context
@@ -477,7 +478,7 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		// ObjectService handles RBAC and validation; the page lives in the publication register.
 		$page = $this->objectService->saveObject(
 			object: $pageData,
-			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: 'page'))
+			options: $this->saveOptions(register: 'publication', schema: 'page')
 		);
 
 		return $this->successResponse(
@@ -580,7 +581,7 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 
 		$menu = $this->objectService->saveObject(
 			object: $menuData,
-			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: 'menu'))
+			options: $this->saveOptions(register: 'publication', schema: 'menu')
 		);
 
 		return $this->successResponse(
@@ -778,7 +779,7 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		$itemData = $this->menuItemData(parameters: $parameters);
 		$menuItem = $this->objectService->saveObject(
 			object: $itemData,
-			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: 'menuItem'))
+			options: $this->saveOptions(register: 'publication', schema: 'menuItem')
 		);
 
 		return $this->successResponse(

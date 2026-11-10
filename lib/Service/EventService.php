@@ -31,8 +31,6 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -49,6 +47,8 @@ use RuntimeException;
  * @spec openspec/specs/auto-publishing/spec.md
  */
 class EventService implements EventServiceInterface {
+
+	use BuildsSaveOptions;
 
 	/**
 	 * The tally of an event before any object is processed.
@@ -447,10 +447,7 @@ class EventService implements EventServiceInterface {
 
 			$objectService->saveObject(
 				object: $data,
-				options: new ObjectSaveOptions(
-					target: new ObjectFindTarget(register: (string)$target['register'], schema: (string)$target['schema']),
-					uuid: (string)$target['id']
-				)
+				options: $this->saveOptions(register: (string)$target['register'], schema: (string)$target['schema'], uuid: (string)$target['id'])
 			);
 
 			return ['success' => true, 'objectId' => $target['id'], 'publishedAt' => $data['publicationDate']];

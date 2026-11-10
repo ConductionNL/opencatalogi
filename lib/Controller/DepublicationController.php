@@ -42,11 +42,9 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
+use OCA\OpenCatalogi\Service\BuildsSaveOptions;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
-use OCA\OpenRegister\Service\Object\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -65,6 +63,8 @@ use OCP\IUserSession;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
 class DepublicationController extends Controller {
+
+	use BuildsSaveOptions;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
@@ -180,12 +180,9 @@ class DepublicationController extends Controller {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $depublication,
-				options: new ObjectSaveOptions(
-					target: new ObjectFindTarget(
-						register: $this->depublicationConfiguration()['register'],
-						schema: $this->depublicationConfiguration()['schema']
-					),
-					actor: new SaveActor(unowned: true)
+				options: $this->unownedSaveOptions(
+					register: $this->depublicationConfiguration()['register'],
+					schema: $this->depublicationConfiguration()['schema']
 				),
 				_rbac: false
 			);
@@ -349,10 +346,7 @@ class DepublicationController extends Controller {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $found['depublication'],
-				options: new ObjectSaveOptions(
-					target: new ObjectFindTarget(register: $found['config']['register'], schema: $found['config']['schema']),
-					uuid: $found['id']
-				),
+				options: $this->saveOptions(register: $found['config']['register'], schema: $found['config']['schema'], uuid: $found['id']),
 				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {

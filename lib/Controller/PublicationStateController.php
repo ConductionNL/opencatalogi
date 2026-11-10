@@ -34,10 +34,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
+use OCA\OpenCatalogi\Service\BuildsSaveOptions;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
-use OCA\OpenRegister\Service\Object\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -52,6 +50,8 @@ use OCP\IUserSession;
  * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
  */
 class PublicationStateController extends Controller {
+
+	use BuildsSaveOptions;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
@@ -339,10 +339,7 @@ class PublicationStateController extends Controller {
 			);
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $this->registers->storable(depublication: $depublication),
-				options: new ObjectSaveOptions(
-					target: new ObjectFindTarget(register: $configuration['register'], schema: $configuration['schema']),
-					actor: new SaveActor(unowned: true)
-				),
+				options: $this->unownedSaveOptions(register: $configuration['register'], schema: $configuration['schema']),
 				_rbac: false
 			);
 		} catch (\Throwable $e) {
@@ -419,10 +416,7 @@ class PublicationStateController extends Controller {
 
 		$this->registers->getObjectService()->saveObject(
 			object: $record,
-			options: new ObjectSaveOptions(
-				target: new ObjectFindTarget(register: $configuration['register'], schema: $configuration['schema']),
-				uuid: $id
-			),
+			options: $this->saveOptions(register: $configuration['register'], schema: $configuration['schema'], uuid: $id),
 			_rbac: true
 		);
 
