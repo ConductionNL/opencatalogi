@@ -21,27 +21,14 @@ namespace OCA\OpenRegister\Service;
 final class RegisterResolverService {
 
 	/**
-	 * Resolve a register ID.
+	 * Resolve a configured register or schema identifier (slug or UUID).
 	 *
-	 * @param string $appId Application ID.
-	 * @param string $key Config key.
+	 * @param ConfigLookup $lookup The app, config key, fallback and explicit tenant.
 	 *
-	 * @return integer
+	 * @return string
 	 */
-	public function resolveRegisterId(string $appId, string $key): int {
-		return 0;
-	}//end resolveRegisterId()
-
-	/**
-	 * Resolve a schema ID.
-	 *
-	 * @param string $appId Application ID.
-	 * @param string $key Config key.
-	 *
-	 * @return integer
-	 */
-	public function resolveSchemaId(string $appId, string $key): int {
-		return 0;
-	}//end resolveSchemaId()
+	public function lookupId(ConfigLookup $lookup): string {
+		return '';
+	}//end lookupId()
 
 }//end class

@@ -95,11 +95,11 @@ class CatalogiControllerTest extends TestCase {
 					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 						// RegisterResolverService is final; use a hand-rolled double.
 						return new class {
-							public function resolveRegisterId(string $a, string $k, ?string $d = null): string {
-								return '3';
-							}
+							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+								if (str_ends_with($lookup->configKey, '_register') === true) {
+									return '3';
+								}
 
-							public function resolveSchemaId(string $a, string $k, ?string $d = null): string {
 								return '5';
 							}
 						};
@@ -137,11 +137,11 @@ class CatalogiControllerTest extends TestCase {
 					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 						// RegisterResolverService is final; use a hand-rolled double.
 						return new class {
-							public function resolveRegisterId(string $a, string $k, ?string $d = null): string {
-								return '3';
-							}
+							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+								if (str_ends_with($lookup->configKey, '_register') === true) {
+									return '3';
+								}
 
-							public function resolveSchemaId(string $a, string $k, ?string $d = null): string {
 								return '5';
 							}
 						};
@@ -206,11 +206,11 @@ class CatalogiControllerTest extends TestCase {
 				function (string $id) use ($mockObjService) {
 					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 						return new class {
-							public function resolveRegisterId(string $a, string $k, ?string $d = null): string {
-								return '3';
-							}
+							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+								if (str_ends_with($lookup->configKey, '_register') === true) {
+									return '3';
+								}
 
-							public function resolveSchemaId(string $a, string $k, ?string $d = null): string {
 								return '5';
 							}
 						};

@@ -19,6 +19,8 @@ namespace Unit\Command;
 
 use OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand;
 use OCA\OpenCatalogi\Service\AttachmentMigrationService;
+use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Service\File\FileTransfer;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -47,15 +49,10 @@ class AttachDocumentsApplyTest extends TestCase {
 	private function commandOver(array $documents, array $fileIds, array $fail = []): CommandTester {
 		$calls = &$this->calls;
 
-		$entity = static fn (string $uuid): object => new class($uuid) {
-			public function __construct(
-				private string $uuid,
-			) {
-			}
-
-			public function getUuid(): string {
-				return $this->uuid;
-			}
+		$entity = static function (string $uuid): ObjectEntity {
+			$object = new ObjectEntity();
+			$object->setUuid($uuid);
+			return $object;
 		};
 
 		$objectService = new class($documents, $fail, $entity, $calls) {
@@ -117,8 +114,9 @@ class AttachDocumentsApplyTest extends TestCase {
 				);
 			}
 
-			public function moveFile(object $sourceObject, int $fileId, object $targetObject): object {
-				$this->calls[] = 'move ' . $fileId . ' from ' . $sourceObject->getUuid() . ' to ' . $targetObject->getUuid();
+			public function moveAttachedFile(FileTransfer $transfer): object {
+				$fileId = $transfer->fileId;
+				$this->calls[] = 'move ' . $fileId . ' from ' . $transfer->source->getUuid() . ' to ' . $transfer->target->getUuid();
 				if (($this->fail['moveFile'] ?? false) === true && $fileId === 8) {
 					throw new RuntimeException('move broke');
 				}

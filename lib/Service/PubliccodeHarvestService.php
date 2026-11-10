@@ -34,6 +34,10 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
+use OCA\OpenRegister\Db\FlowRunFilter;
+use OCA\OpenRegister\Db\FlowRunListing;
+use OCA\OpenRegister\Db\FlowRunMapper;
+use OCA\OpenRegister\Db\FlowRunViewer;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
@@ -525,7 +529,11 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	 */
 	private function lastRun(string $flowUuid): ?array {
 		try {
-			$runs = $this->container->get('OCA\OpenRegister\Db\FlowRunMapper')->findAllRuns(flowId: $flowUuid, limit: 1);
+			// A system read of the app's own harvest flow: no requester, so no per-user scoping.
+			$runs = $this->container->get(FlowRunMapper::class)->findAllRuns(
+				listing: new FlowRunListing(filter: new FlowRunFilter(flowId: $flowUuid), limit: 1),
+				viewer: new FlowRunViewer(requesterUid: null, ownedFlowIds: [])
+			);
 		} catch (Throwable) {
 			return null;
 		}
