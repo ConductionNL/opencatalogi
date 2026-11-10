@@ -486,57 +486,8 @@ import '../../css/json-highlight.css'
 				<div class="report-section">
 					<h4>{{ t('opencatalogi', 'Statistics') }}</h4>
 					<ul>
-						<li>
-							{{
-								t('opencatalogi', 'Properties changed: {count}', {
-									count:
-										mergeResult.statistics?.propertiesChanged
-										|| 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'Files transferred: {count}', {
-									count:
-										mergeResult.statistics?.filesTransferred
-										|| 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'Files deleted: {count}', {
-									count: mergeResult.statistics?.filesDeleted || 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'Relations transferred: {count}', {
-									count:
-										mergeResult.statistics?.relationsTransferred
-										|| 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'Relations dropped: {count}', {
-									count:
-										mergeResult.statistics?.relationsDropped
-										|| 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'References updated: {count}', {
-									count:
-										mergeResult.statistics?.referencesUpdated
-										|| 0,
-								})
-							}}
+						<li v-for="(line, index) in mergeStatisticLines" :key="index">
+							{{ line }}
 						</li>
 					</ul>
 				</div>
@@ -678,6 +629,7 @@ import '../../css/json-highlight.css'
 
 <script>
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
@@ -747,6 +699,24 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		sourceObject() {
 			return this.mergeSource ?? objectStore.objectItem ?? null
+		},
+
+		/**
+		 * The Statistics lines of the merge report; a counter the result
+		 * leaves out counts as 0.
+		 *
+		 * @return {Array<string>} The lines.
+		 */
+		mergeStatisticLines() {
+			const count = (key) => this.mergeResult.statistics?.[key] || 0
+			return [
+				t('opencatalogi', 'Properties changed: {count}', { count: count('propertiesChanged') }),
+				t('opencatalogi', 'Files transferred: {count}', { count: count('filesTransferred') }),
+				t('opencatalogi', 'Files deleted: {count}', { count: count('filesDeleted') }),
+				t('opencatalogi', 'Relations transferred: {count}', { count: count('relationsTransferred') }),
+				t('opencatalogi', 'Relations dropped: {count}', { count: count('relationsDropped') }),
+				t('opencatalogi', 'References updated: {count}', { count: count('referencesUpdated') }),
+			]
 		},
 
 		/**
