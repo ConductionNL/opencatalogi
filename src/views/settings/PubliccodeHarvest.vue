@@ -264,19 +264,18 @@ export default {
 		 * @return {string} The line.
 		 */
 		sourceSwitchLabel(source) {
+			const vars = { slug: source.slug }
 			if (!source.enabled) {
 				return this.t(
 					'opencatalogi',
 					'The GitHub source {slug} is switched off. Add the token and switch it on in integriq.',
-					{ slug: source.slug },
+					vars,
 				)
 			}
 			return this.t(
 				'opencatalogi',
 				'The GitHub source {slug} is switched on.',
-				{
-					slug: source.slug,
-				},
+				vars,
 			)
 		},
 
