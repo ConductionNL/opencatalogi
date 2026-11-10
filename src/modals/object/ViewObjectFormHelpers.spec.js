@@ -51,6 +51,11 @@ function vm(state = {}) {
  * @return {*} Its value
  */
 function computed(name, ctx) {
+	for (const [other, fn] of Object.entries(ViewObject.computed)) {
+		if (!(other in ctx)) {
+			Object.defineProperty(ctx, other, { get: () => fn.call(ctx), configurable: true })
+		}
+	}
 	return ViewObject.computed[name].call(ctx)
 }
 

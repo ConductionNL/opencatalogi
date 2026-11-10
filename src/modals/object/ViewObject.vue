@@ -956,6 +956,81 @@ import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 import '@toast-ui/editor/dist/toastui-editor.css'
 
 /**
+ * A list from an upload dialog event, or an empty list when it has none.
+ *
+ * @param {object|null} payload - The event payload
+ * @param {string} key - The list's key
+ * @return {Array} The list
+ */
+function payloadList(payload, key) {
+	return Array.isArray(payload && payload[key]) ? payload[key] : []
+}
+
+/**
+ * A tag list with the tag added once; a missing list starts empty.
+ *
+ * @param {Array<string>|*} list - The tag list
+ * @param {string} tag - The tag
+ * @return {Array<string>} The list with the tag
+ */
+function withTag(list, tag) {
+	const current = Array.isArray(list) ? list : []
+	return current.includes(tag) ? current : [...current, tag]
+}
+
+/**
+ * The cleared value of a schema property: an empty array or object for
+ * containers, null otherwise.
+ *
+ * @param {object} schemaProperty - The schema property
+ * @return {Array|object|null} The cleared value
+ */
+function clearedValue(schemaProperty) {
+	if (schemaProperty.type === 'array') return []
+	if (schemaProperty.type === 'object') return {}
+	return null
+}
+
+/**
+ * Add the properties flagged `required: true` to the required keys.
+ *
+ * @param {Set<string>} set - The required keys, changed in place
+ * @param {object} props - The schema properties
+ * @return {void}
+ */
+function addFlaggedRequired(set, props) {
+	for (const [key, prop] of Object.entries(props)) {
+		if (prop && prop.required === true) set.add(key)
+	}
+}
+
+/**
+ * Whether a required value is missing: blank or an empty array.
+ *
+ * @param {*} value - The value
+ * @return {boolean} True when missing
+ */
+function isMissingValue(value) {
+	if (value === null || value === undefined || value === '') return true
+	return Array.isArray(value) && value.length === 0
+}
+
+/**
+ * A filter that keeps the first schema per id.
+ *
+ * @return {Function} The filter
+ */
+function firstPerId() {
+	const seenIds = new Set()
+	return (schema) => {
+		const key = String(schema.id)
+		if (seenIds.has(key)) return false
+		seenIds.add(key)
+		return true
+	}
+}
+
+/**
  * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
@@ -1288,8 +1363,35 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		schemaOptions() {
-			if (!this.selectedRegister || !this.selectedCatalog) {
+			const validSchemaIds = this.selectableSchemaIds
+			if (!validSchemaIds) {
 				return []
+			}
+
+			// `objectStore.availableSchemas` is a `.flatMap()` across every
+			// register in settings — the SAME schema id appears once per
+			// register it is attached to. Without a dedupe step the dropdown
+			// renders duplicate entries for schemas that live in multiple
+			// registers (WOO-529: on a fresh install `Publication` showed up
+			// twice because schema #1 is bound to both the `publication`
+			// register AND the `opencatalogi` magic-mapper register). Keep
+			// the first match per id.
+			return sortOptionsByLabel(
+				objectStore.availableSchemas
+					.filter((schema) => validSchemaIds.includes(String(schema.id)))
+					.filter((schema) => this.hasSchemaReadRight(schema))
+					.filter(firstPerId())
+					.map((schema) => ({
+						id: schema.id,
+						label: schema.title,
+					})),
+			)
+		},
+
+		/** @return {Array<string>|null} The ids of the schemas both the selected register and the selected catalog hold, null without both */
+		selectableSchemaIds() {
+			if (!this.selectedRegister || !this.selectedCatalog) {
+				return null
 			}
 
 			const register = objectStore.availableRegisters.find(
@@ -1304,7 +1406,7 @@ export default {
 				)
 
 			if (!register || !catalog) {
-				return []
+				return null
 			}
 
 			// Same numeric/string-id mismatch guard as registerOptions above:
@@ -1315,34 +1417,7 @@ export default {
 			const catalogSchemaIds = (catalog.schemas || []).map(String)
 
 			// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
-			const validSchemaIds = registerSchemaIds.filter((id) =>
-				catalogSchemaIds.includes(id),
-			)
-
-			// `objectStore.availableSchemas` is a `.flatMap()` across every
-			// register in settings — the SAME schema id appears once per
-			// register it is attached to. Without a dedupe step the dropdown
-			// renders duplicate entries for schemas that live in multiple
-			// registers (WOO-529: on a fresh install `Publication` showed up
-			// twice because schema #1 is bound to both the `publication`
-			// register AND the `opencatalogi` magic-mapper register). Keep
-			// the first match per id.
-			const seenIds = new Set()
-			return sortOptionsByLabel(
-				objectStore.availableSchemas
-					.filter((schema) => validSchemaIds.includes(String(schema.id)))
-					.filter((schema) => this.hasSchemaReadRight(schema))
-					.filter((schema) => {
-						const key = String(schema.id)
-						if (seenIds.has(key)) return false
-						seenIds.add(key)
-						return true
-					})
-					.map((schema) => ({
-						id: schema.id,
-						label: schema.title,
-					})),
-			)
+			return registerSchemaIds.filter((id) => catalogSchemaIds.includes(id))
 		},
 
 		hasSelectedSchema() {
@@ -1367,16 +1442,21 @@ export default {
 		 * @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-object-view-edit-modal-req-objm-001
 		 */
 		selectionStalled() {
-			if (this.isLockedCatalog) return false
-			if (this.catalogOptions.length === 0) return false
-			if (!this.isNewObject) return false
-			if (this.hasSelectedSchema || this.allSelectionsComplete) return false
+			if (this.selectionNeedsNoNotice) return false
 			// One catalog auto-selected but no compatible register.
 			if (this.selectedCatalog && this.registerOptions.length === 0)
 				return true
 			// Register selected but no schema in scope.
 			if (this.selectedRegister && this.schemaOptions.length === 0) return true
 			return false
+		},
+
+		/** @return {boolean} True when the selection cannot be stalled: locked, without catalogs, editing, or done */
+		selectionNeedsNoNotice() {
+			if (this.isLockedCatalog) return true
+			if (this.catalogOptions.length === 0) return true
+			if (!this.isNewObject) return true
+			return Boolean(this.hasSelectedSchema || this.allSelectionsComplete)
 		},
 
 		/**
@@ -1456,11 +1536,8 @@ export default {
 		requiredPropertyKeys() {
 			const schema = this.resolvedSchema
 			if (!schema) return []
-			const props = schema.properties || {}
 			const set = new Set(schema.required || [])
-			for (const [key, prop] of Object.entries(props)) {
-				if (prop && prop.required === true) set.add(key)
-			}
+			addFlaggedRequired(set, schema.properties || {})
 			set.delete('@self')
 			set.delete('id')
 			return [...set]
@@ -1472,18 +1549,9 @@ export default {
 		 */
 		/** @spec openspec/specs/retrofit-2026-05-26-object-modals/spec.md#requirement-schema-driven-form-editing-req-objm-002 */
 		missingRequiredKeys() {
-			const result = []
-			for (const key of this.requiredPropertyKeys) {
-				const value = formValue(this.formData, this.currentObject, key)
-				if (value === null || value === undefined || value === '') {
-					result.push(key)
-					continue
-				}
-				if (Array.isArray(value) && value.length === 0) {
-					result.push(key)
-				}
-			}
-			return result
+			return this.requiredPropertyKeys.filter((key) =>
+				isMissingValue(formValue(this.formData, this.currentObject, key)),
+			)
 		},
 
 		/** Human-readable labels for the missing required keys. */
@@ -1711,12 +1779,8 @@ export default {
 		 */
 		onUploadFilesTagsUpdated(payload) {
 			try {
-				const tags = Array.isArray(payload && payload.tags)
-					? payload.tags
-					: []
-				const newTags = Array.isArray(payload && payload.newTags)
-					? payload.newTags
-					: []
+				const tags = payloadList(payload, 'tags')
+				const newTags = payloadList(payload, 'newTags')
 				console.info(
 					'>>> [VIEWOBJECT] RECEIVED TAGS-UPDATED FROM UPLOADFILES',
 					{
@@ -1724,17 +1788,28 @@ export default {
 						newTags,
 					},
 				)
-				if (!this.labelOptionsEdit) {
-					this.labelOptionsEdit = {
-						inputLabel: 'Labels',
-						multiple: true,
-						options: [],
-					}
-				}
-				this.labelOptionsEdit.options = [...tags]
+				this.setEditTagOptions(tags)
 			} catch (e) {
 				console.error('Failed to apply updated tags from UploadFiles', e)
 			}
+		},
+
+		/**
+		 * Show these tags as the label edit options, creating the options
+		 * settings when there are none yet.
+		 *
+		 * @param {Array<string>} tags - The tags
+		 * @return {void}
+		 */
+		setEditTagOptions(tags) {
+			if (!this.labelOptionsEdit) {
+				this.labelOptionsEdit = {
+					inputLabel: 'Labels',
+					multiple: true,
+					options: [],
+				}
+			}
+			this.labelOptionsEdit.options = [...tags]
 		},
 
 		/**
@@ -1765,27 +1840,13 @@ export default {
 					? payload.tags
 					: null
 				if (tagsFromPayload) {
-					if (!this.labelOptionsEdit) {
-						this.labelOptionsEdit = {
-							inputLabel: 'Labels',
-							multiple: true,
-							options: [],
-						}
-					}
-					this.labelOptionsEdit.options = [...tagsFromPayload]
+					this.setEditTagOptions(tagsFromPayload)
 					return
 				}
 				// fallback: from store or re-fetch
 				const stored = objectStore.getCollection('tags')
 				if (Array.isArray(stored)) {
-					if (!this.labelOptionsEdit) {
-						this.labelOptionsEdit = {
-							inputLabel: 'Labels',
-							multiple: true,
-							options: [],
-						}
-					}
-					this.labelOptionsEdit.options = [...stored]
+					this.setEditTagOptions(stored)
 				} else {
 					this.getAllTags()
 				}
@@ -2495,24 +2556,11 @@ export default {
 		 */
 		addNewTag(newTag) {
 			if (!newTag) return
-			if (
-				!this.labelOptionsEdit.options
-				|| !Array.isArray(this.labelOptionsEdit.options)
-			) {
-				this.labelOptionsEdit.options = []
-			}
-			if (!this.labelOptionsEdit.options.includes(newTag)) {
-				this.labelOptionsEdit.options = [
-					...this.labelOptionsEdit.options,
-					newTag,
-				]
-			}
-			if (!this.editedTags || !Array.isArray(this.editedTags)) {
-				this.editedTags = []
-			}
-			if (!this.editedTags.includes(newTag)) {
-				this.editedTags = [...this.editedTags, newTag]
-			}
+			this.labelOptionsEdit.options = withTag(
+				this.labelOptionsEdit.options,
+				newTag,
+			)
+			this.editedTags = withTag(this.editedTags, newTag)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -3018,42 +3066,40 @@ export default {
 		 */
 		dropProperty(key) {
 			const schemaProperties = this.getSchemaProperties()
-			const isSchemaProperty = Object.hasOwn(schemaProperties, key)
 
-			if (isSchemaProperty) {
+			if (Object.hasOwn(schemaProperties, key)) {
 				// Clear the value: null for primitives, empty container for
 				// arrays/objects. `null`/`''` is what the validator and the
 				// display logic both treat as empty, so the X-button gate
 				// (canDropProperty) hides itself afterward.
-				const schemaProperty = schemaProperties[key]
-				let cleared = null
-				switch (schemaProperty.type) {
-					case 'array':
-						cleared = []
-						break
-					case 'object':
-						cleared = {}
-						break
-					default:
-						cleared = null
-				}
-				this.formData[key] = cleared
+				this.formData[key] = clearedValue(schemaProperties[key])
 			} else {
-				// For non-schema properties, remove completely from formData
-				if (this.formData[key] !== undefined) {
-					delete this.formData[key]
-				}
-
-				// If it was in the original object, we need to track its removal
-				// We'll set it to a special marker that indicates deletion
-				if (this.currentObject && Object.hasOwn(this.currentObject, key)) {
-					this.formData[key] = undefined
-				}
+				this.removeExtraProperty(key)
 			}
 
 			// Clear selection if this property was selected
 			if (this.selectedProperty === key) {
 				this.selectedProperty = null
+			}
+		},
+
+		/**
+		 * Remove a property outside the schema from the form; one the object
+		 * holds is kept as undefined, which marks it for deletion.
+		 *
+		 * @param {string} key - The property key
+		 * @return {void}
+		 */
+		removeExtraProperty(key) {
+			// For non-schema properties, remove completely from formData
+			if (this.formData[key] !== undefined) {
+				delete this.formData[key]
+			}
+
+			// If it was in the original object, we need to track its removal
+			// We'll set it to a special marker that indicates deletion
+			if (this.currentObject && Object.hasOwn(this.currentObject, key)) {
+				this.formData[key] = undefined
 			}
 		},
 
@@ -3091,15 +3137,28 @@ export default {
 		applySchemaDefaults(schema) {
 			const props = schema?.properties || {}
 			for (const [key, prop] of Object.entries(props)) {
-				if (!prop) continue
-				if (prop.hideOnForm === true) continue
-				if (Object.hasOwn(this.formData, key)) continue
-				if (prop.default !== undefined) {
-					this.formData[key] = prop.default
-				} else if (prop.const !== undefined) {
-					this.formData[key] = prop.const
+				if (!this.takesSchemaDefault(key, prop)) continue
+				const value = prop.default !== undefined ? prop.default : prop.const
+				if (value !== undefined) {
+					this.formData[key] = value
 				}
 			}
+		},
+
+		/**
+		 * Whether a schema property gets its default: present, shown on the
+		 * form, and not filled in yet.
+		 *
+		 * @param {string} key - The property key
+		 * @param {object|null} prop - The schema property
+		 * @return {boolean} True when it gets its default
+		 */
+		takesSchemaDefault(key, prop) {
+			return (
+				Boolean(prop)
+				&& prop.hideOnForm !== true
+				&& !Object.hasOwn(this.formData, key)
+			)
 		},
 
 		/**
