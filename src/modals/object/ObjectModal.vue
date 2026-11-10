@@ -361,6 +361,32 @@ function optionOf(entry) {
 }
 
 /**
+ * Whether the navigation transfer data opens the modal to create an object.
+ *
+ * @param {*} transferData - The navigation transfer data
+ * @return {boolean} True in create mode
+ */
+function isCreateTransfer(transferData) {
+	return (
+		transferData === 'ignore selectedCatalogus' || transferData === 'create'
+	)
+}
+
+/**
+ * The listed catalog of the active catalog, or null without one.
+ *
+ * @param {object|undefined} activeCatalog - The active catalog
+ * @return {object|null|undefined} The listed catalog
+ */
+function listedCatalog(activeCatalog) {
+	return activeCatalog
+		? objectStore
+				.getCollection('catalog')
+				.results.find((catalog) => catalog.id === activeCatalog.id)
+		: null
+}
+
+/**
  * Whether a list holds exactly one entry.
  *
  * @param {Array|undefined} list - The list
@@ -613,9 +639,7 @@ export default {
 
 			// Check if we're in create mode based on navigation transfer data
 			const transferData = navigationStore.getTransferData()
-			const isCreateMode =
-				transferData === 'ignore selectedCatalogus'
-				|| transferData === 'create'
+			const isCreateMode = isCreateTransfer(transferData)
 
 			// Force new object detection in create mode, else detect it from the object
 			this.isNewObject = isCreateMode || looksLikeNewObject(activeObject)
@@ -628,10 +652,22 @@ export default {
 				isCreateMode,
 			})
 
+			this.applyInitialObject(activeObject, updatedActiveCatalog)
+		},
+
+		/**
+		 * Load an existing object into the form, or preselect the register
+		 * and schema of a new one from the catalog.
+		 *
+		 * @param {object|null|undefined} activeObject - The active publication
+		 * @param {object|undefined} catalog - The active catalog
+		 * @return {void}
+		 */
+		applyInitialObject(activeObject, catalog) {
 			if (!this.isNewObject) {
 				this.loadExistingObject(activeObject)
 			} else {
-				this.preselectFromCatalog(updatedActiveCatalog)
+				this.preselectFromCatalog(catalog)
 			}
 		},
 
@@ -643,12 +679,7 @@ export default {
 		 * @return {void}
 		 */
 		selectInitialCatalog(activeCatalog) {
-			const catalogMatch = activeCatalog
-				? objectStore
-						.getCollection('catalog')
-						.results.find((catalog) => catalog.id === activeCatalog.id)
-				: null
-
+			const catalogMatch = listedCatalog(activeCatalog)
 			this.selectedCatalogus = catalogMatch ? optionOf(catalogMatch) : null
 
 			// If no catalog is selected but there's only one available, auto-select it
