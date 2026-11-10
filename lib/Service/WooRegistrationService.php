@@ -110,21 +110,7 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 	 */
 	public function compose(): array {
 		$baseUrl = $this->baseUrl();
-		$sitemaps = [];
-		$organisations = [];
-
-		foreach ($this->readiness->getWooEnabledCatalogs() as $catalog) {
-			$slug = $catalog->getSlug();
-			if (is_string($slug) === false || $slug === '') {
-				continue;
-			}
-
-			$sitemaps = array_merge($sitemaps, $this->sitemapsOf(baseUrl: $baseUrl, slug: $slug));
-			$organisations = $this->withOrganisation(
-				organisations: $organisations,
-				organisation: $this->organisation(uuid: (string)($catalog->jsonSerialize()['organization'] ?? ''))
-			);
-		}
+		[$sitemaps, $organisations] = $this->catalogParts(baseUrl: $baseUrl);
 
 		return [
 			'organisations' => array_values($organisations),
@@ -134,6 +120,41 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 		];
 
 	}//end compose()
+
+	/**
+	 * The sitemap index URLs and the organisations of every Woo-enabled catalog
+	 * with a slug, read catalog by catalog.
+	 *
+	 * @param string $baseUrl The instance's base URL.
+	 *
+	 * @return array{0: list<string>, 1: array<string, array{name: string, tooiIdentifier: string}>}
+	 */
+	private function catalogParts(string $baseUrl): array {
+		$sitemaps = [];
+		$organisations = [];
+		foreach ($this->readiness->getWooEnabledCatalogs() as $catalog) {
+			$slug = $catalog->getSlug();
+			if (is_string($slug) === false || $slug === '') {
+				continue;
+			}
+
+			$sitemaps = array_merge($sitemaps, $this->sitemapsOf(baseUrl: $baseUrl, slug: $slug));
+			$organisations = $this->withOrganisation(organisations: $organisations, organisation: $this->catalogOrganisation(catalog: $catalog));
+		}
+
+		return [$sitemaps, $organisations];
+	}//end catalogParts()
+
+	/**
+	 * The organisation a catalog names, read from OpenRegister.
+	 *
+	 * @param object $catalog The catalog.
+	 *
+	 * @return array{name: string, tooiIdentifier: string}|null The organisation, or null when it cannot be read.
+	 */
+	private function catalogOrganisation(object $catalog): ?array {
+		return $this->organisation(uuid: (string)($catalog->jsonSerialize()['organization'] ?? ''));
+	}//end catalogOrganisation()
 
 	/**
 	 * A catalog's sitemap index URLs: one per category the registry serves, so a
