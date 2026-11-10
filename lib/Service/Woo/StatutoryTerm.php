@@ -30,14 +30,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
-use DateTimeImmutable;
 use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
-use OCA\OpenRegister\Service\Flow\Timer\FlowTimerAct;
 use OCA\OpenRegister\Service\Flow\Timer\FlowTimerService;
-use OCA\OpenRegister\Service\Flow\Timer\TimerDecision;
-use OCA\OpenRegister\Service\Flow\Timer\TimerExtensionRequest;
-use OCA\OpenRegister\Service\Flow\Timer\TimerSuspension;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -197,17 +192,15 @@ class StatutoryTerm implements StatutoryTermInterface {
 	}//end termConfig()
 
 	/**
-	 * Who acts on the term, and when: the engine's act for a change it records.
+	 * The builder of the engine's operation objects.
 	 *
-	 * @param string|null $actor The acting user, or null for the system.
+	 * @return TermEngineCall The builder.
 	 *
-	 * @return FlowTimerAct The act.
-	 *
-	 * @spec exclude internal helper — builds the engine's act value object.
+	 * @spec exclude internal helper — builds the engine's value objects.
 	 */
-	private static function act(?string $actor): FlowTimerAct {
-		return new FlowTimerAct(actor: $actor, now: new DateTimeImmutable());
-	}//end act()
+	private function calls(): TermEngineCall {
+		return new TermEngineCall();
+	}//end calls()
 
 	/**
 	 * Resolve the consumed term engine.
@@ -329,13 +322,13 @@ class StatutoryTerm implements StatutoryTermInterface {
 
 		try {
 			$timer = $engine->extend(
-				request: new TimerExtensionRequest(
-					uuid: $timerUuid,
+				request: $this->calls()->extension(
+					timerUuid: $timerUuid,
 					amount: self::EXTENSION_DAYS,
 					unit: self::TERM_UNIT,
 					rationale: $rationale
 				),
-				act: self::act(actor: $actor)
+				act: $this->calls()->act(actor: $actor)
 			);
 		} catch (\Throwable $e) {
 			throw $this->refusal(operation: 'extend', error: $e);
@@ -363,13 +356,8 @@ class StatutoryTerm implements StatutoryTermInterface {
 
 		try {
 			$timer = $engine->suspend(
-				suspension: new TimerSuspension(
-					uuid: $timerUuid,
-					reason: $reason,
-					until: null,
-					basis: self::BASIS_CLARIFICATION
-				),
-				act: self::act(actor: $actor)
+				suspension: $this->calls()->suspension(timerUuid: $timerUuid, reason: $reason, basis: self::BASIS_CLARIFICATION),
+				act: $this->calls()->act(actor: $actor)
 			);
 		} catch (\Throwable $e) {
 			throw $this->refusal(operation: 'pause', error: $e);
@@ -397,8 +385,8 @@ class StatutoryTerm implements StatutoryTermInterface {
 
 		try {
 			$timer = $engine->resume(
-				decision: new TimerDecision(uuid: $timerUuid, reason: $reason),
-				act: self::act(actor: $actor)
+				decision: $this->calls()->decision(timerUuid: $timerUuid, reason: $reason),
+				act: $this->calls()->act(actor: $actor)
 			);
 		} catch (\Throwable $e) {
 			throw $this->refusal(operation: 'resume', error: $e);
