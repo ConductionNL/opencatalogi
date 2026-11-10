@@ -107,4 +107,46 @@ class WithheldForPublicationTest extends TestCase {
 			$this->assertSame(['WithheldFromPublication: the catalogues could not be read', ['exception' => 'register down']], $logged[0]);
 		}
 	}//end testTheListIsAddedOnlyWhenEveryHoldingCatalogueOptedIn()
+
+	/**
+	 * The merged list: withheld assessments by their place in the batch, a
+	 * title only for a literal titlePublic with a file name, and the stored
+	 * rows with their recorded details, all ordered by position.
+	 *
+	 * @return void
+	 */
+	public function testTheEntriesOfTheBatchAndTheStoredRows(): void {
+		$store = $this->createMock(WithheldFromPublicationStore::class);
+		$store->method('batchAssessments')->willReturn(
+			[
+				['assessment' => 'openbaar', 'fileName' => 'open.pdf', 'titlePublic' => true],
+				['assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.1.2.e', 7], 'fileName' => 'nota.pdf', 'titlePublic' => true],
+				['assessment' => 'niet_openbaar', 'weigeringsgronden' => '5.1.1.c', 'fileName' => 'brief.pdf', 'titlePublic' => 'true'],
+				['assessment' => 'niet_openbaar', 'fileName' => '', 'titlePublic' => true],
+				['assessment' => 'niet_openbaar', 'weigeringsgronden' => ['5.2'], 'fileName' => 'advies.pdf'],
+			]
+		);
+		$store->method('storedEntries')->willReturn(
+			[
+				['position' => '3', 'grounds' => [['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Privacy'], ['code' => '5.2']]],
+				['grounds' => []],
+				['position' => 9],
+			]
+		);
+
+		$entries = (new WithheldFromPublication(store: $store, logger: $this->createMock(LoggerInterface::class)))->entries(publicationId: 'pub-1');
+
+		$this->assertSame(
+			[
+				['position' => 0, 'grounds' => [], 'groundDetails' => []],
+				['position' => 2, 'grounds' => ['5.1.2.e', '7'], 'groundDetails' => [['code' => '5.1.2.e', 'article' => '', 'label' => ''], ['code' => '7', 'article' => '', 'label' => '']], 'title' => 'nota.pdf'],
+				['position' => 3, 'grounds' => ['5.1.1.c'], 'groundDetails' => [['code' => '5.1.1.c', 'article' => '', 'label' => '']]],
+				['position' => 3, 'grounds' => ['5.1.2.e', '5.2'], 'groundDetails' => [['code' => '5.1.2.e', 'article' => '5.1', 'label' => 'Privacy'], ['code' => '5.2', 'article' => '', 'label' => '']]],
+				['position' => 4, 'grounds' => [], 'groundDetails' => []],
+				['position' => 5, 'grounds' => ['5.2'], 'groundDetails' => [['code' => '5.2', 'article' => '', 'label' => '']]],
+				['position' => 9, 'grounds' => [], 'groundDetails' => []],
+			],
+			$entries
+		);
+	}//end testTheEntriesOfTheBatchAndTheStoredRows()
 }//end class
