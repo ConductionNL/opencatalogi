@@ -46,76 +46,14 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							</p>
 						</NcNoteCard>
 					</div>
-					<div v-if="success !== null || error || duplicateWarning">
-						<NcNoteCard v-if="success" type="success">
-							<p>
-								{{ t('opencatalogi', 'Files added successfully') }}
-							</p>
-						</NcNoteCard>
-						<NcNoteCard v-if="error && !success" type="error">
-							<p>
-								{{
-									t(
-										'opencatalogi',
-										'Something went wrong when adding files',
-									)
-								}}
-							</p>
-						</NcNoteCard>
-						<NcNoteCard v-if="error && !success" type="error">
-							<p>{{ error }}</p>
-						</NcNoteCard>
-						<NcNoteCard v-if="duplicateWarning" type="warning">
-							<p>{{ duplicateWarning }}</p>
-						</NcNoteCard>
-						<div v-if="false">
-							<NcNoteCard type="error">
-								<p>
-									{{
-										t(
-											'opencatalogi',
-											'Select files with the correct extension',
-										)
-									}}
-								</p>
-							</NcNoteCard>
-						</div>
-					</div>
-					<div
-						class="filesListDragDropNoticeWrapper"
-						:class="{
-							'filesListDragDropNoticeWrapper--disabled':
-								!labelOptions.value?.length
-								|| loading
-								|| retryLoading,
-						}">
-						<div class="filesListDragDropNoticeWrapperIcon">
-							<TrayArrowDown :size="48" />
-							<h3 class="filesListDragDropNoticeTitle">
-								{{ t('opencatalogi', 'Drag a file or files here') }}
-							</h3>
-						</div>
-
-						<h3 class="filesListDragDropNoticeTitle">
-							{{ t('opencatalogi', 'Or') }}
-						</h3>
-
-						<div class="filesListDragDropNoticeTitle">
-							<NcButton
-								:disabled="
-									loading
-									|| retryLoading
-									|| !labelOptions.value?.length
-								"
-								variant="primary"
-								@click="openFileUpload()">
-								<template #icon>
-									<Plus :size="20" />
-								</template>
-								{{ t('opencatalogi', 'Add a file or files') }}
-							</NcButton>
-						</div>
-					</div>
+					<UploadDropNotice
+						:success="success"
+						:error="error"
+						:duplicateWarning="duplicateWarning"
+						:labelCount="labelOptions.value?.length"
+						:loading="loading"
+						:retryLoading="retryLoading"
+						@openFileUpload="openFileUpload()" />
 				</div>
 				<div
 					v-if="labelOptions.value?.length && !loading && !retryLoading"
@@ -162,76 +100,14 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							</p>
 						</NcNoteCard>
 					</div>
-					<div v-if="success !== null || error || duplicateWarning">
-						<NcNoteCard v-if="success" type="success">
-							<p>
-								{{ t('opencatalogi', 'Files added successfully') }}
-							</p>
-						</NcNoteCard>
-						<NcNoteCard v-if="error && !success" type="error">
-							<p>
-								{{
-									t(
-										'opencatalogi',
-										'Something went wrong when adding files',
-									)
-								}}
-							</p>
-						</NcNoteCard>
-						<NcNoteCard v-if="error && !success" type="error">
-							<p>{{ error }}</p>
-						</NcNoteCard>
-						<NcNoteCard v-if="duplicateWarning" type="warning">
-							<p>{{ duplicateWarning }}</p>
-						</NcNoteCard>
-						<div v-if="false">
-							<NcNoteCard type="error">
-								<p>
-									{{
-										t(
-											'opencatalogi',
-											'Select files with the correct extension',
-										)
-									}}
-								</p>
-							</NcNoteCard>
-						</div>
-					</div>
-					<div
-						class="filesListDragDropNoticeWrapper"
-						:class="{
-							'filesListDragDropNoticeWrapper--disabled':
-								!labelOptions.value?.length
-								|| loading
-								|| retryLoading,
-						}">
-						<div class="filesListDragDropNoticeWrapperIcon">
-							<TrayArrowDown :size="48" />
-							<h3 class="filesListDragDropNoticeTitle">
-								{{ t('opencatalogi', 'Drag a file or files here') }}
-							</h3>
-						</div>
-
-						<h3 class="filesListDragDropNoticeTitle">
-							{{ t('opencatalogi', 'Or') }}
-						</h3>
-
-						<div class="filesListDragDropNoticeTitle">
-							<NcButton
-								:disabled="
-									loading
-									|| retryLoading
-									|| !labelOptions.value?.length
-								"
-								variant="primary"
-								@click="openFileUpload()">
-								<template #icon>
-									<Plus :size="20" />
-								</template>
-								{{ t('opencatalogi', 'Add a file or files') }}
-							</NcButton>
-						</div>
-					</div>
+					<UploadDropNotice
+						:success="success"
+						:error="error"
+						:duplicateWarning="duplicateWarning"
+						:labelCount="labelOptions.value?.length"
+						:loading="loading"
+						:retryLoading="retryLoading"
+						@openFileUpload="openFileUpload()" />
 				</div>
 				<table v-if="files" class="files-table">
 					<thead>
@@ -487,10 +363,9 @@ import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue
 import Exclamation from 'vue-material-design-icons/Exclamation.vue'
 import FolderOutline from 'vue-material-design-icons/FolderOutline.vue'
 import Minus from 'vue-material-design-icons/Minus.vue'
-import Plus from 'vue-material-design-icons/Plus.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import TagEdit from 'vue-material-design-icons/TagEdit.vue'
-import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
+import UploadDropNotice from './UploadDropNotice.vue'
 import { Attachment } from '../../entities/index.js'
 import { EventBus } from '../../eventBus.js'
 import {
@@ -530,6 +405,7 @@ export default {
 		NcNoteCard,
 		NcSelect,
 		Cancel,
+		UploadDropNotice,
 	},
 
 	props: {
@@ -1389,10 +1265,6 @@ div[class='modal-container']:has(.TestMappingMainModal) .modal__content {
 	margin-block-start: var(--OC-margin-20);
 	margin-inline-start: var(--OC-margin-20);
 	margin-inline-end: var(--OC-margin-20);
-}
-
-.filesListDragDropNoticeWrapper--disabled {
-	opacity: 0.4;
 }
 
 .success {
