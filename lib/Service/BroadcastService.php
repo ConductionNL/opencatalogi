@@ -32,6 +32,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Service\Broadcast\BroadcastAttempt;
 use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\Federation\FederationHostPolicy;
@@ -333,59 +334,99 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function sendBroadcastRequest(string $url, string $directoryUrl): bool {
-		$attempt = 0;
+		$run = new BroadcastAttempt();
+		$run->url = $url;
 		$startTime = time();
-		$maxRetries = $this->getMaxRetries();
+		$run->maxRetries = $this->getMaxRetries();
 
 		// Retry loop with wall-clock cap to prevent indefinite blocking.
-		while ($attempt < $maxRetries) {
-			// Abort if we have exceeded the per-target wall-time budget.
-			if ((time() - $startTime) >= self::MAX_RETRY_WALL_SECONDS) {
-				$this->logger->warning(
-					"[BroadcastService] Wall-time cap reached for {$url}; aborting retries after {$attempt} attempt(s)"
-				);
+		while ($run->attempt < $run->maxRetries) {
+			if ($this->wallTimeSpent(run: $run, startTime: $startTime) === true) {
 				return false;
 			}
 
-			$attempt++;
+			$run->attempt++;
 
 			try {
-				// Send POST request with directory URL payload.
 				// SSRF hardening (WF4 / wave-12): disable automatic redirect following so that a
 				// broadcast target cannot redirect to cloud-metadata. The pre-flight
 				// assertSafeOutboundUrl() validates the initial URL; disabling redirects ensures
 				// Guzzle never silently follows a 302 to an unvalidated host.
 				$response = $this->postDirectory(url: $url, directoryUrl: $directoryUrl);
-
-				// Check if the response indicates success.
-				if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-					$this->logger->info("Successfully broadcasted to {$url} on attempt {$attempt}");
+				if ($this->accepted(run: $run, response: $response) === true) {
 					return true;
 				}
-
-				// Log non-success status code.
-				$this->logger->warning(
-					"Broadcast to {$url} returned status {$response->getStatusCode()} on attempt {$attempt}"
-				);
 			} catch (GuzzleException $e) {
-				// Log the attempt failure.
-				$this->logger->warning("Broadcast attempt {$attempt} to {$url} failed: " . $e->getMessage());
-
-				// If this was the last attempt, log as error and stop.
-				if ($attempt === $maxRetries) {
-					$this->logger->error(
-						"All {$attempt} broadcast attempts to {$url} failed. Final error: " . $e->getMessage()
-					);
+				if ($this->mayRetry(run: $run, exception: $e) === false) {
 					return false;
 				}
-
-				// Wait before retrying (exponential backoff).
-				sleep($attempt * 2);
-			}//end try
+			}
 		}//end while
 
 		return false;
 	}//end sendBroadcastRequest()
+
+	/**
+	 * Whether the per-target wall-time budget is spent; logged when it is.
+	 *
+	 * @param BroadcastAttempt $run The target and its attempts.
+	 * @param int $startTime When the first attempt started.
+	 *
+	 * @return bool
+	 */
+	private function wallTimeSpent(BroadcastAttempt $run, int $startTime): bool {
+		if ((time() - $startTime) < self::MAX_RETRY_WALL_SECONDS) {
+			return false;
+		}
+
+		$this->logger->warning(
+			"[BroadcastService] Wall-time cap reached for {$run->url}; aborting retries after {$run->attempt} attempt(s)"
+		);
+		return true;
+	}//end wallTimeSpent()
+
+	/**
+	 * Whether the target accepted the broadcast with a 2xx; either way logged.
+	 *
+	 * @param BroadcastAttempt $run The target and its attempts.
+	 * @param ResponseInterface $response The target's answer.
+	 *
+	 * @return bool
+	 */
+	private function accepted(BroadcastAttempt $run, ResponseInterface $response): bool {
+		if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+			$this->logger->info("Successfully broadcasted to {$run->url} on attempt {$run->attempt}");
+			return true;
+		}
+
+		$this->logger->warning(
+			"Broadcast to {$run->url} returned status {$response->getStatusCode()} on attempt {$run->attempt}"
+		);
+		return false;
+	}//end accepted()
+
+	/**
+	 * Log a failed attempt; after the last one log the final error and stop,
+	 * otherwise wait (exponential backoff) and try again.
+	 *
+	 * @param BroadcastAttempt $run The target and its attempts.
+	 * @param GuzzleException $exception Why the attempt failed.
+	 *
+	 * @return bool True when another attempt follows.
+	 */
+	private function mayRetry(BroadcastAttempt $run, GuzzleException $exception): bool {
+		$this->logger->warning("Broadcast attempt {$run->attempt} to {$run->url} failed: " . $exception->getMessage());
+
+		if ($run->attempt === $run->maxRetries) {
+			$this->logger->error(
+				"All {$run->attempt} broadcast attempts to {$run->url} failed. Final error: " . $exception->getMessage()
+			);
+			return false;
+		}
+
+		sleep($run->attempt * 2);
+		return true;
+	}//end mayRetry()
 
 	/**
 	 * POST this directory's URL to one broadcast target, without following redirects.
