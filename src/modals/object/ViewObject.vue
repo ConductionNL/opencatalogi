@@ -1275,10 +1275,7 @@ export default {
 				.filter((register) =>
 					selectedCatalogRegisterIds.includes(String(register.id)),
 				)
-				.map((register) => ({
-					id: register.id,
-					label: register.title,
-				}))
+				.map(toRegisterOption)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -3162,6 +3159,19 @@ function clearBorders(el) {
 	el.style.borderColor = 'transparent'
 	el.style.outline = 'none'
 	el.style.boxShadow = 'none'
+}
+
+/**
+ * A register as an option of the register dropdown.
+ *
+ * @param {object} register The register.
+ * @return {{id: (string|number), label: string}} The option.
+ */
+function toRegisterOption(register) {
+	return {
+		id: register.id,
+		label: register.title,
+	}
 }
 
 /**
