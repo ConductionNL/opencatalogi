@@ -116,11 +116,11 @@ class DcatVocabularyService {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md
 	 */
 	public function resolveHvdCategory(?string $value): ?array {
-		if ($value === null || trim($value) === '') {
+		$needle = self::needleOf(value: $value);
+		if ($needle === null) {
 			return null;
 		}
 
-		$needle = strtolower(trim($value));
 		foreach (self::HVD_CATEGORIES as $key => $entry) {
 			$candidates = array_merge([$key, $entry['id'], strtolower(self::HVD_BASE . $entry['id'])], $entry['aliases']);
 			if (in_array($needle, $candidates, true) === true) {
@@ -143,11 +143,11 @@ class DcatVocabularyService {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md
 	 */
 	public function resolveDataTheme(?string $value): ?string {
-		if ($value === null || trim($value) === '') {
+		$needle = self::needleOf(value: $value);
+		if ($needle === null) {
 			return null;
 		}
 
-		$needle = strtolower(trim($value));
 		foreach (self::DATA_THEMES as $code => $aliases) {
 			$candidates = array_merge([strtolower($code), strtolower(self::DATA_THEME_BASE . $code)], $aliases);
 			if (in_array($needle, $candidates, true) === true) {
@@ -157,6 +157,21 @@ class DcatVocabularyService {
 
 		return null;
 	}//end resolveDataTheme()
+
+	/**
+	 * A declared value as the resolvers compare it: trimmed and lowercased, or null when blank.
+	 *
+	 * @param string|null $value The declared value.
+	 *
+	 * @return string|null
+	 */
+	private static function needleOf(?string $value): ?string {
+		if ($value === null || trim($value) === '') {
+			return null;
+		}
+
+		return strtolower(trim($value));
+	}//end needleOf()
 
 	/**
 	 * The bundled HVD-category value list (id → uri + label).
