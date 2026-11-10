@@ -72,13 +72,7 @@ class StatusPageService implements StatusPageServiceInterface {
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	public function setState(StatusChange $change, ?DateTimeInterface $now = null): array {
-		if (in_array($change->state, self::STATES, true) === false) {
-			throw new DomainException(
-				message: 'A component cannot be set to "' . $change->state . '": the status page knows only '
-					. implode(', ', self::STATES) . '.'
-			);
-		}
-
+		self::assertKnownState(state: $change->state);
 		if (trim($change->component) === '') {
 			throw new DomainException(message: 'A status needs the component it is about.');
 		}
@@ -92,6 +86,24 @@ class StatusPageService implements StatusPageServiceInterface {
 		];
 
 	}//end setState()
+
+	/**
+	 * Refuse a state this page does not know.
+	 *
+	 * @param string $state The state.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the state is not one of STATES.
+	 */
+	private static function assertKnownState(string $state): void {
+		if (in_array($state, self::STATES, true) === false) {
+			throw new DomainException(
+				message: 'A component cannot be set to "' . $state . '": the status page knows only '
+					. implode(', ', self::STATES) . '.'
+			);
+		}
+	}//end assertKnownState()
 
 	/**
 	 * The given moment, else now in UTC.
@@ -124,14 +136,10 @@ class StatusPageService implements StatusPageServiceInterface {
 		int $stalenessHours = self::DEFAULT_STALENESS_HOURS,
 		?DateTimeInterface $now = null,
 	): array {
-		$moment = self::momentOf(now: $now);
-
-		$rendered = [];
-		foreach ($components as $component) {
-			if (is_array($component) === true) {
-				$rendered[] = self::renderComponent(component: $component, clock: ['now' => $moment, 'hours' => $stalenessHours]);
-			}
-		}
+		$rendered = self::renderedComponents(
+			components: $components,
+			clock: ['now' => self::momentOf(now: $now), 'hours' => $stalenessHours]
+		);
 
 		usort(
 			$rendered,
@@ -148,6 +156,25 @@ class StatusPageService implements StatusPageServiceInterface {
 		];
 
 	}//end render()
+
+	/**
+	 * Every stored component that is an array, as the page shows it.
+	 *
+	 * @param array<int, mixed> $components The stored statuses.
+	 * @param array{now: DateTimeImmutable, hours: int} $clock The moment of rendering and the staleness window.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function renderedComponents(array $components, array $clock): array {
+		$rendered = [];
+		foreach ($components as $component) {
+			if (is_array($component) === true) {
+				$rendered[] = self::renderComponent(component: $component, clock: $clock);
+			}
+		}
+
+		return $rendered;
+	}//end renderedComponents()
 
 	/**
 	 * One component as the page shows it, with whether its state is stale.
