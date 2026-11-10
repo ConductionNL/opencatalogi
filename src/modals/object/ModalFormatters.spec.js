@@ -24,7 +24,7 @@ jest.mock('../../store/store.js', () => ({
 }))
 
 describe('MergeObject displayValue', () => {
-	const show = (...args) => MergeObject.methods.displayValue(...args)
+	const show = (...args) => MergeObject.methods.displayValue.call(MergeObject.methods, ...args)
 
 	it.each([
 		[null, 'N/A'],
