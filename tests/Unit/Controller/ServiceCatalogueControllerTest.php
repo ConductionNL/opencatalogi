@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -326,18 +327,17 @@ class ServiceCatalogueControllerTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $object The object to store.
-			 * @param array<int, string> $extend Unused here.
+			 * @param ObjectSaveOptions $options The uuid, when updating.
 			 *
 			 * @return array<string, mixed> The stored object.
 			 */
 			public function saveObject(
 				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
+				bool $_multitenancy = true,
 			): array {
+				$uuid = ($options->uuid ?? '');
 				if ($uuid !== '') {
 					$object['id'] = $uuid;
 				}

@@ -12,6 +12,7 @@ use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IRequest;
@@ -3831,8 +3832,8 @@ class DirectoryServiceTest extends TestCase {
 
 		$savedUuid = null;
 		$objectService->method('saveObject')
-			->willReturnCallback(function ($data, $extend, $register, $schema, $uuid) use (&$savedUuid) {
-				$savedUuid = $uuid;
+			->willReturnCallback(function ($data, ObjectSaveOptions $options) use (&$savedUuid) {
+				$savedUuid = $options->uuid;
 			});
 
 		$listingData = [
@@ -3858,8 +3859,8 @@ class DirectoryServiceTest extends TestCase {
 
 		$savedUuid = null;
 		$objectService->method('saveObject')
-			->willReturnCallback(function ($data, $extend, $register, $schema, $uuid) use (&$savedUuid) {
-				$savedUuid = $uuid;
+			->willReturnCallback(function ($data, ObjectSaveOptions $options) use (&$savedUuid) {
+				$savedUuid = $options->uuid;
 			});
 
 		// No @self.id and no 'id' in @self, but 'catalog' exists

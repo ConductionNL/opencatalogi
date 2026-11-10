@@ -45,6 +45,7 @@ use OCP\IRequest;
 use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Unit\Support\SaveCallShape;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
@@ -246,7 +247,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 			$named[$parameter->getName()] = $args[$position];
 		}
 
-		return $named;
+		return ($method === 'saveObject' ? SaveCallShape::namedInOldOrder(args: $named) : $named);
 	}//end passedArguments()
 
 	/**

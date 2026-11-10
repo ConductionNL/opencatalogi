@@ -26,6 +26,7 @@ namespace Unit\Service\Woo;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Woo\WithheldDocumentStore;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -211,7 +212,9 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 				return ['results' => $rows];
 			}
 
-			public function saveObject(array $object, $register = null, $schema = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema   = $options->target->schema;
 				$this->saves++;
 				$object['recordedAt'] = (preg_match('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d$/', (string)$object['recordedAt']) === 1) ? '<now>' : $object['recordedAt'];
 				$this->log[] = ['save', $object, $register, $schema, $_rbac, $_multitenancy];

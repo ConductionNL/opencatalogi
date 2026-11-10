@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Controller\CommentPeriodController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -83,8 +84,7 @@ class CommentPeriodGoldenObjects {
 	 * Save a period.
 	 *
 	 * @param array<string, mixed> $object The period.
-	 * @param mixed $register The register.
-	 * @param mixed $schema The schema.
+	 * @param ObjectSaveOptions $options The target (register, schema) and actor (unowned).
 	 * @param bool $_rbac Whether RBAC applies.
 	 * @param bool $_multitenancy Whether multitenancy applies.
 	 *
@@ -92,12 +92,13 @@ class CommentPeriodGoldenObjects {
 	 */
 	public function saveObject(
 		array $object,
-		mixed $register = null,
-		mixed $schema = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_unowned = false,
 	): mixed {
+		$register = $options->target->register;
+		$schema   = $options->target->schema;
+		$_unowned = $options->actor->unowned;
 		($this->record)(['saveObject' => [$object, $register, $schema, $_rbac, $_multitenancy, $_unowned]]);
 		if (($this->case['fail'] ?? null) === 'save') {
 			throw new RuntimeException('register write failed');

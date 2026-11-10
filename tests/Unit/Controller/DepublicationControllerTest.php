@@ -34,6 +34,7 @@ use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -176,13 +177,11 @@ class DepublicationControllerTest extends TestCase {
 
 			public function saveObject(
 				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_unowned = false,
+				bool $_multitenancy = true,
 			): array {
+				$uuid = ($options->uuid ?? '');
 				$id = ($uuid !== '' ? $uuid : 'stored-1');
 				$object['id'] = $id;
 				$this->stored[$id] = $object;

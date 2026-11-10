@@ -53,6 +53,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
+use Unit\Support\SaveCallShape;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use ReflectionMethod;
@@ -639,6 +640,10 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			if ($parameter->isDefaultValueAvailable() === true && $named[$key] === $parameter->getDefaultValue()) {
 				unset($named[$key]);
 			}
+		}
+
+		if ($method->getName() === 'saveObject') {
+			$named = SaveCallShape::namedInOldOrder(args: $named);
 		}
 
 		return $this->normalise(value: $named);

@@ -46,6 +46,35 @@ final class SaveCallShape {
 	}//end named()
 
 	/**
+	 * Like named(), then sorted into the old saveObject() parameter order.
+	 *
+	 * named() keeps the spread where `options` was, ahead of `_rbac` and
+	 * `_multitenancy`; the old signature had those between `uuid` and `silent`.
+	 * Keys that are not old saveObject() parameters keep their order, at the end.
+	 *
+	 * @param array<int|string, mixed> $args The arguments as the double received them.
+	 *
+	 * @return array<int|string, mixed> The arguments in the old shape and order.
+	 */
+	public static function namedInOldOrder(array $args): array {
+		$named = self::named(args: $args);
+		$order = [
+			'object', 'extend', 'register', 'schema', 'uuid', '_rbac', '_multitenancy', 'silent',
+			'_validation', 'uploadedFiles', 'currentUser', 'failIfExists', '_unowned', '_dedupOverride', '_owner',
+		];
+
+		$out = [];
+		foreach ($order as $name) {
+			if (array_key_exists($name, $named) === true) {
+				$out[$name] = $named[$name];
+				unset($named[$name]);
+			}
+		}
+
+		return $out + $named;
+	}//end namedInOldOrder()
+
+	/**
 	 * The options' non-default values under the old parameter names, in the old parameter order.
 	 *
 	 * @param ObjectSaveOptions $options The options.

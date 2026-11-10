@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodWithdrawalService;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -65,13 +66,13 @@ class WithdrawalGoldenObjects {
 
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		$register = null,
-		$schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): array {
+		$register = $options->target->register;
+		$schema   = $options->target->schema;
+		$uuid     = $options->uuid;
 		$this->calls[] = ['save' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 		if ($uuid === null && $this->fail === 'save-depublication') {
 			throw new \RuntimeException('depublication save failed');

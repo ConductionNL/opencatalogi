@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodWithdrawalService;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -55,13 +56,12 @@ class PeriodFakeObjectService {
 
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		$register = null,
-		$schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): array {
+		$schema = $options->target->schema;
+		$uuid   = $options->uuid;
 		$this->writes[] = ['schema' => $schema, 'object' => $object];
 		$id = (string)($uuid ?? ($object['id'] ?? 'dep-1'));
 		$object['id'] = $id;

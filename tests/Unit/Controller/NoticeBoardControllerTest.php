@@ -34,6 +34,7 @@ use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -122,12 +123,11 @@ class NoticeBoardControllerTest extends TestCase {
 
 			public function saveObject(
 				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
+				bool $_multitenancy = true,
 			): array {
+				$uuid = ($options->uuid ?? '');
 				$id = ($uuid !== '' ? $uuid : 'notice-1');
 				$object['id'] = $id;
 				$this->stored[$id] = $object;

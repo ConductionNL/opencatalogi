@@ -27,6 +27,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\RetentionService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IAppConfig;
 use OCP\IUser;
 use OCP\IUserSession;
@@ -60,7 +61,7 @@ class FakeObjectService {
 		return ['id' => $id];
 	}//end find()
 
-	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true) {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) {
 		$this->saved[] = $object;
 		return $object;
 	}//end saveObject()

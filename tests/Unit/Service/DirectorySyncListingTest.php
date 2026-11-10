@@ -31,6 +31,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use Unit\Support\SaveCallShape;
 
 class DirectorySyncListingTest extends TestCase {
 	private ObjectService|MockObject $objectService;
@@ -57,11 +58,9 @@ class DirectorySyncListingTest extends TestCase {
 		$this->objectService = $this->createMock(ObjectService::class);
 		$this->objectService->method('saveObject')->willReturnCallback(
 			function (...$args) {
-				$names = array_map(
-					static fn (\ReflectionParameter $param): string => $param->getName(),
-					(new \ReflectionMethod(ObjectService::class, 'saveObject'))->getParameters()
-				);
-				$named = array_combine(array_slice($names, 0, count($args)), $args);
+				// The old fifteen-slot list, named by the old signature (object, extend, register, schema, uuid, ...).
+				$names = ['object', 'extend', 'register', 'schema', 'uuid', '_rbac', '_multitenancy', 'silent', '_validation', 'uploadedFiles', 'currentUser', 'failIfExists', '_unowned', '_dedupOverride', '_owner'];
+				$named = array_combine($names, SaveCallShape::positional(...$args));
 				$this->saved[] = array_intersect_key($named, array_flip(['object', 'extend', 'register', 'schema', 'uuid']));
 				if ($this->failFirstSave === true && count($this->saved) === 1) {
 					throw new RuntimeException('save refused');

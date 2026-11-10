@@ -35,6 +35,7 @@ use OCA\OpenCatalogi\Service\Community\StatusPageService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -202,18 +203,15 @@ class CommunityControllerTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $object The object to store.
-			 * @param array<int, string> $extend Unused here.
+			 * @param ObjectSaveOptions $options Unused here.
 			 *
 			 * @return array<string, mixed> The stored object.
 			 */
 			public function saveObject(
 				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_unowned = false,
+				bool $_multitenancy = true,
 			): array {
 				$this->saved[] = $object;
 

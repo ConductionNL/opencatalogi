@@ -31,6 +31,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use Unit\Support\SaveCallShape;
 
 /**
  * A result that answers jsonSerialize, as an OpenRegister entity does.
@@ -79,7 +80,7 @@ class WooRequestShapedObjectService {
 	}//end find()
 
 	public function saveObject(array $object, mixed ...$rest): mixed {
-		$this->lastSave = $rest;
+		$this->lastSave = SaveCallShape::named(args: $rest);
 
 		return $this->answer;
 	}//end saveObject()
