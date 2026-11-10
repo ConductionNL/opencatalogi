@@ -86,15 +86,38 @@ function publicationRefs(publication) {
  * @return {{slug: string|undefined, schema: any, register: any}|null} The object type
  */
 function publicationObjectType(publication, data) {
-	const { schemaRef, registerRef } = publicationRefs(publication)
-	if (!schemaRef || !registerRef) return null
+	const refs = publicationRefs(publication)
+	if (!refs.schemaRef || !refs.registerRef) return null
 
-	const schemaObj = resolveRef(schemaRef, data['@self']?.schemas || {})
-	const registerObj = resolveRef(registerRef, data['@self']?.registers || {})
+	return resolvedObjectType(refs, data['@self'] || {})
+}
+
+/**
+ * The id of a resolved schema or register, else the reference itself.
+ *
+ * @param {object|undefined} resolved - The resolved object
+ * @param {object|string|number} ref - The reference
+ * @return {object|string|number} The id
+ */
+function resolvedId(resolved, ref) {
+	return resolved?.id ?? ref
+}
+
+/**
+ * An object type from a publication's schema and register references,
+ * resolved through the page's schema and register maps.
+ *
+ * @param {{schemaRef: any, registerRef: any}} refs - The references
+ * @param {{schemas?: object, registers?: object}} maps - The page's `@self` maps
+ * @return {{slug: string|undefined, schema: any, register: any}} The object type
+ */
+function resolvedObjectType({ schemaRef, registerRef }, maps) {
+	const schemaObj = resolveRef(schemaRef, maps.schemas || {})
+	const registerObj = resolveRef(registerRef, maps.registers || {})
 	return {
 		slug: schemaObj?.slug,
-		schema: schemaObj?.id ?? schemaRef,
-		register: registerObj?.id ?? registerRef,
+		schema: resolvedId(schemaObj, schemaRef),
+		register: resolvedId(registerObj, registerRef),
 	}
 }
 

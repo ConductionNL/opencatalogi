@@ -431,6 +431,163 @@ async function sendObjectSave(endpoint, { objectItem, isNewObject }) {
 }
 
 /**
+ * The schema config of a type found in the object type registry.
+ *
+ * @param {{schema: string, register: string}} config - The registry entry
+ * @return {{source: string, schema: string, register: string}} The schema config
+ */
+function registeredSchemaConfig(config) {
+	return {
+		source: 'openregister',
+		schema: config.schema,
+		register: config.register,
+	}
+}
+
+/**
+ * Whether a publication has an id and a register and schema on `@self`.
+ *
+ * @param {object|undefined} publication - The publication
+ * @return {boolean} True when it is complete
+ */
+function isCompletePublication(publication) {
+	return Boolean(
+		publication?.id
+		&& publication['@self']?.register
+		&& publication['@self']?.schema,
+	)
+}
+
+/**
+ * The register, schema and id of the active publication.
+ *
+ * @param {object} store - The object store
+ * @return {{registerId: string, schemaId: string, publicationId: string}} The ids
+ * @throws {Error} When there is no complete active publication
+ */
+function activePublicationTarget(store) {
+	const activePublication = store.activeObjects?.publication
+	if (!isCompletePublication(activePublication)) {
+		throw new Error(
+			'Active publication is not set or missing register/schema',
+		)
+	}
+
+	return {
+		registerId: store.extractId(activePublication['@self'].register),
+		schemaId: store.extractId(activePublication['@self'].schema),
+		publicationId: activePublication.id,
+	}
+}
+
+/**
+ * POST a publish or depublish action for one attachment of the active
+ * publication, then refresh its files.
+ *
+ * @param {object} store - The object store
+ * @param {{target: object, fileId: string|number, action: string}} change - The publication ids, the attachment and the action
+ * @return {Promise<boolean>} True when done
+ * @throws {Error} When the answer is not ok
+ */
+async function sendAttachmentAction(store, { target, fileId, action }) {
+	const { registerId, schemaId, publicationId } = target
+	const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/${action}`
+	const response = await fetch(endpoint, { method: 'POST' })
+	if (!response.ok) {
+		throw new Error(
+			`Failed to ${action} file ${fileId}: ${response.status} ${response.statusText}`,
+		)
+	}
+	await store.refreshActivePublicationFiles()
+	return true
+}
+
+/**
+ * Publish or depublish one attachment of the active publication, with its
+ * loading and error bookkeeping.
+ *
+ * @param {object} store - The object store
+ * @param {{fileId: string|number, action: string, verb: string}} change - The attachment, the action and the verb for the log line
+ * @return {Promise<boolean>} True when done
+ */
+async function changeAttachmentPublication(store, { fileId, action, verb }) {
+	const target = activePublicationTarget(store)
+	const key = `${action}_file_${fileId}`
+
+	store.setLoading(key, true)
+	store.setError(key, null)
+
+	try {
+		return await sendAttachmentAction(store, { target, fileId, action })
+	} catch (error) {
+		console.error(`Error ${verb} attachment:`, error)
+		store.setError(key, error.message)
+		throw error
+	} finally {
+		store.setLoading(key, false)
+	}
+}
+
+/**
+ * Run one attachment action and settle it into a result, telling the
+ * progress callback either way.
+ *
+ * @param {string|number} fileId - The attachment
+ * @param {{act: Function, onProgress: Function|null}} run - The action and the progress callback
+ * @return {Promise<object>} The result
+ */
+async function settleAttachment(fileId, { act, onProgress }) {
+	try {
+		await act(fileId)
+		if (onProgress) onProgress(fileId, true)
+		return { success: true, id: fileId }
+	} catch (error) {
+		if (onProgress) onProgress(fileId, false, error.message)
+		return { success: false, id: fileId, error: error.message }
+	}
+}
+
+/**
+ * Drop the attachments that succeeded from the attachment selection.
+ *
+ * @param {object} store - The object store
+ * @param {Array<object>} successful - The successful results
+ * @return {void}
+ */
+function dropFromAttachmentSelection(store, successful) {
+	if (successful.length > 0) {
+		const successfulIds = successful.map((r) => r.id)
+		const remainingSelected = (store.selectedAttachments || []).filter(
+			(id) => !successfulIds.includes(id),
+		)
+		store.setSelectedAttachments(remainingSelected)
+	}
+}
+
+/**
+ * Run one action on every attachment at once; the ones that succeeded leave
+ * the attachment selection.
+ *
+ * @param {object} store - The object store
+ * @param {{fileIds: Array<string|number>, act: Function, onProgress: Function|null}} run - The attachments, the action and the progress callback
+ * @return {Promise<{successful: Array, failed: Array}>} Results of the operation
+ */
+async function applyToAttachments(store, { fileIds, act, onProgress }) {
+	if (!Array.isArray(fileIds) || fileIds.length === 0) {
+		return { successful: [], failed: [] }
+	}
+
+	const results = await Promise.allSettled(
+		fileIds.map((fileId) => settleAttachment(fileId, { act, onProgress })),
+	)
+
+	const { successful, failed } = splitSettled(results)
+	dropFromAttachmentSelection(store, successful)
+
+	return { successful, failed }
+}
+
+/**
  * Whether a collection fetch reloads the whole collection rather than one
  * paged, sorted or searched slice of it.
  *
@@ -1369,11 +1526,7 @@ export const useObjectStore = defineStore('object', {
 			// First check if this is a registered object type
 			let objectTypeConfig = this.objectTypeRegistry[objectType]
 			if (objectTypeConfig) {
-				return {
-					source: 'openregister',
-					schema: objectTypeConfig.schema,
-					register: objectTypeConfig.register,
-				}
+				return registeredSchemaConfig(objectTypeConfig)
 			}
 
 			// If settings are loaded but types aren't registered yet, register now
@@ -1381,11 +1534,7 @@ export const useObjectStore = defineStore('object', {
 				this._registerTypesFromSettings()
 				objectTypeConfig = this.objectTypeRegistry[objectType]
 				if (objectTypeConfig) {
-					return {
-						source: 'openregister',
-						schema: objectTypeConfig.schema,
-						register: objectTypeConfig.register,
-					}
+					return registeredSchemaConfig(objectTypeConfig)
 				}
 			}
 
@@ -2834,11 +2983,7 @@ export const useObjectStore = defineStore('object', {
 		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async refreshActivePublicationFiles() {
 			const activePublication = this.activeObjects?.publication
-			if (
-				!activePublication?.id
-				|| !activePublication['@self']?.register
-				|| !activePublication['@self']?.schema
-			) {
+			if (!isCompletePublication(activePublication)) {
 				return
 			}
 			const publicationData = {
@@ -2866,41 +3011,11 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async publishAttachment(fileId) {
-			const activePublication = this.activeObjects?.publication
-			if (
-				!activePublication?.id
-				|| !activePublication['@self']?.register
-				|| !activePublication['@self']?.schema
-			) {
-				throw new Error(
-					'Active publication is not set or missing register/schema',
-				)
-			}
-
-			const registerId = this.extractId(activePublication['@self'].register)
-			const schemaId = this.extractId(activePublication['@self'].schema)
-			const publicationId = activePublication.id
-
-			this.setLoading(`publish_file_${fileId}`, true)
-			this.setError(`publish_file_${fileId}`, null)
-
-			try {
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/publish`
-				const response = await fetch(endpoint, { method: 'POST' })
-				if (!response.ok) {
-					throw new Error(
-						`Failed to publish file ${fileId}: ${response.status} ${response.statusText}`,
-					)
-				}
-				await this.refreshActivePublicationFiles()
-				return true
-			} catch (error) {
-				console.error('Error publishing attachment:', error)
-				this.setError(`publish_file_${fileId}`, error.message)
-				throw error
-			} finally {
-				this.setLoading(`publish_file_${fileId}`, false)
-			}
+			return changeAttachmentPublication(this, {
+				fileId,
+				action: 'publish',
+				verb: 'publishing',
+			})
 		},
 
 		/**
@@ -2914,41 +3029,11 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async depublishAttachment(fileId) {
-			const activePublication = this.activeObjects?.publication
-			if (
-				!activePublication?.id
-				|| !activePublication['@self']?.register
-				|| !activePublication['@self']?.schema
-			) {
-				throw new Error(
-					'Active publication is not set or missing register/schema',
-				)
-			}
-
-			const registerId = this.extractId(activePublication['@self'].register)
-			const schemaId = this.extractId(activePublication['@self'].schema)
-			const publicationId = activePublication.id
-
-			this.setLoading(`depublish_file_${fileId}`, true)
-			this.setError(`depublish_file_${fileId}`, null)
-
-			try {
-				const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/depublish`
-				const response = await fetch(endpoint, { method: 'POST' })
-				if (!response.ok) {
-					throw new Error(
-						`Failed to depublish file ${fileId}: ${response.status} ${response.statusText}`,
-					)
-				}
-				await this.refreshActivePublicationFiles()
-				return true
-			} catch (error) {
-				console.error('Error depublishing attachment:', error)
-				this.setError(`depublish_file_${fileId}`, error.message)
-				throw error
-			} finally {
-				this.setLoading(`depublish_file_${fileId}`, false)
-			}
+			return changeAttachmentPublication(this, {
+				fileId,
+				action: 'depublish',
+				verb: 'depublishing',
+			})
 		},
 
 		/**
@@ -2964,34 +3049,11 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massPublishAttachments(fileIds, onProgress = null) {
-			if (!Array.isArray(fileIds) || fileIds.length === 0) {
-				return { successful: [], failed: [] }
-			}
-
-			const results = await Promise.allSettled(
-				fileIds.map(async (fileId) => {
-					try {
-						await this.publishAttachment(fileId)
-						if (onProgress) onProgress(fileId, true)
-						return { success: true, id: fileId }
-					} catch (error) {
-						if (onProgress) onProgress(fileId, false, error.message)
-						return { success: false, id: fileId, error: error.message }
-					}
-				}),
-			)
-
-			const { successful, failed } = splitSettled(results)
-
-			if (successful.length > 0) {
-				const successfulIds = successful.map((r) => r.id)
-				const remainingSelected = (this.selectedAttachments || []).filter(
-					(id) => !successfulIds.includes(id),
-				)
-				this.setSelectedAttachments(remainingSelected)
-			}
-
-			return { successful, failed }
+			return applyToAttachments(this, {
+				fileIds,
+				act: (fileId) => this.publishAttachment(fileId),
+				onProgress,
+			})
 		},
 
 		/**
@@ -3007,34 +3069,11 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async massDepublishAttachments(fileIds, onProgress = null) {
-			if (!Array.isArray(fileIds) || fileIds.length === 0) {
-				return { successful: [], failed: [] }
-			}
-
-			const results = await Promise.allSettled(
-				fileIds.map(async (fileId) => {
-					try {
-						await this.depublishAttachment(fileId)
-						if (onProgress) onProgress(fileId, true)
-						return { success: true, id: fileId }
-					} catch (error) {
-						if (onProgress) onProgress(fileId, false, error.message)
-						return { success: false, id: fileId, error: error.message }
-					}
-				}),
-			)
-
-			const { successful, failed } = splitSettled(results)
-
-			if (successful.length > 0) {
-				const successfulIds = successful.map((r) => r.id)
-				const remainingSelected = (this.selectedAttachments || []).filter(
-					(id) => !successfulIds.includes(id),
-				)
-				this.setSelectedAttachments(remainingSelected)
-			}
-
-			return { successful, failed }
+			return applyToAttachments(this, {
+				fileIds,
+				act: (fileId) => this.depublishAttachment(fileId),
+				onProgress,
+			})
 		},
 	},
 })
