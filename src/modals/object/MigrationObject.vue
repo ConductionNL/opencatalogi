@@ -795,14 +795,7 @@ export default {
 			try {
 				const { data } = await axios.post(
 					generateUrl('/apps/openregister/api/migrate'),
-					{
-						sourceRegister: this.sourceRegister.id,
-						sourceSchema: this.sourceSchema.id,
-						targetRegister: this.targetRegister.id,
-						targetSchema: this.targetSchema.id,
-						objects: this.selectedObjects.map((obj) => obj.id),
-						mapping: this.mapping,
-					},
+					this.migrationRequest(),
 				)
 
 				this.migrationResult = data
@@ -816,6 +809,23 @@ export default {
 				this.step = 4
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * The migration request: source and target register and schema, the
+		 * selected objects and the property mapping.
+		 *
+		 * @return {object} The request body
+		 */
+		migrationRequest() {
+			return {
+				sourceRegister: this.sourceRegister.id,
+				sourceSchema: this.sourceSchema.id,
+				targetRegister: this.targetRegister.id,
+				targetSchema: this.targetSchema.id,
+				objects: this.selectedObjects.map((obj) => obj.id),
+				mapping: this.mapping,
 			}
 		},
 

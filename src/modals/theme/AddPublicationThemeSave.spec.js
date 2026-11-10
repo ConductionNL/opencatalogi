@@ -31,7 +31,9 @@ let log
  */
 function vm(state) {
 	const ctx = { isSaving: false, successState: false, errorState: null, closeModal: jest.fn(), ...state }
-	ctx.saveTheme = AddPublicationThemeModal.methods.saveTheme.bind(ctx)
+	for (const [name, fn] of Object.entries(AddPublicationThemeModal.methods)) {
+		if (!(name in ctx)) ctx[name] = fn.bind(ctx)
+	}
 	return ctx
 }
 
