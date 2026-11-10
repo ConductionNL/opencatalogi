@@ -195,40 +195,11 @@ export default {
 	gap: var(--OC-margin-20);
 	margin-top: var(--OC-margin-20);
 }
+</style>
 
-.detailSection {
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius);
-	padding: var(--OC-margin-20);
-}
+<style scoped src="../directory/detailSections.css"></style>
 
-.detailSection h3 {
-	margin: 0 0 var(--OC-margin-15) 0;
-	color: var(--color-primary);
-	font-weight: bold;
-}
-
-.detailGrid {
-	display: grid;
-	grid-template-columns: 1fr;
-	gap: var(--OC-margin-10);
-}
-
-.detailItem {
-	display: flex;
-	flex-direction: column;
-	gap: var(--OC-margin-5);
-}
-
-.detailItem strong {
-	color: var(--color-text-maxcontrast);
-	font-size: 0.9em;
-}
-
-.detailItem span {
-	color: var(--color-main-text);
-}
-
+<style scoped>
 .detailItem a {
 	color: var(--color-primary);
 	text-decoration: none;
@@ -258,41 +229,6 @@ export default {
 	flex-wrap: wrap;
 	gap: var(--OC-margin-10);
 }
-
-.metadataContainer {
-	background-color: var(--color-background-dark);
-	border-radius: var(--border-radius);
-	padding: var(--OC-margin-15);
-	overflow-x: auto;
-}
-
-.metadataContainer pre {
-	margin: 0;
-	font-family: 'Courier New', monospace;
-	font-size: 0.85em;
-	color: var(--color-main-text);
-	white-space: pre-wrap;
-	overflow-wrap: break-word;
-}
-
-.emptyState {
-	text-align: center;
-	padding: var(--OC-margin-50);
-	color: var(--color-text-lighter);
-}
-
-.modalActions {
-	display: flex;
-	justify-content: flex-end;
-	gap: var(--OC-margin-10);
-	margin-top: var(--OC-margin-20);
-	padding-top: var(--OC-margin-20);
-	border-top: 1px solid var(--color-border);
-}
-
-@media (min-width: 768px) {
-	.detailGrid {
-		grid-template-columns: repeat(2, 1fr);
-	}
-}
 </style>
+
+<style scoped src="../directory/detailMetadata.css"></style>
