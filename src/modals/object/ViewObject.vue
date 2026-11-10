@@ -951,6 +951,7 @@ import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
 import { formValue } from '../../services/formValue.js'
+import { registerSchemaIdsOf } from '../../services/registerSchemaIds.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 import '@toast-ui/editor/dist/toastui-editor.css'
@@ -2594,17 +2595,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		getRegisterSchemaIds(publication) {
-			const registerId =
-				typeof publication['@self'].register === 'object'
-					? publication['@self'].register?.id
-						|| publication['@self'].register?.uuid
-					: publication['@self'].register
-			const schemaId =
-				typeof publication['@self'].schema === 'object'
-					? publication['@self'].schema?.id
-						|| publication['@self'].schema?.uuid
-					: publication['@self'].schema
-			return { registerId, schemaId }
+			return registerSchemaIdsOf(publication)
 		},
 
 		// Action button methods
