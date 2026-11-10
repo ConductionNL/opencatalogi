@@ -1147,9 +1147,7 @@ export default defineComponent({
 				)
 				await this.applyLoadedConfiguration(data)
 			} catch (error) {
-				this.configurationResults = {
-					error: 'Failed to load configuration: ' + error.message,
-				}
+				this.configurationResults = configurationFailure(error)
 			} finally {
 				this.loadingConfiguration = false
 			}
@@ -1232,18 +1230,28 @@ export default defineComponent({
 					'/index.php/apps/opencatalogi/api/settings/version',
 				)
 
-				if (!data.error) {
-					this.versionInfo = data
-				} else {
-					// eslint-disable-next-line no-console
-					console.error('Failed to load version info:', data.error)
-				}
+				this.applyVersionInfo(data)
 
 				this.loadingVersionInfo = false
 			} catch (error) {
 				// eslint-disable-next-line no-console
 				console.error('Failed to load version info:', error)
 				this.loadingVersionInfo = false
+			}
+		},
+
+		/**
+		 * Keep the version info the server sent, or log its error.
+		 *
+		 * @param {object} data The version endpoint's answer.
+		 * @return {void}
+		 */
+		applyVersionInfo(data) {
+			if (!data.error) {
+				this.versionInfo = data
+			} else {
+				// eslint-disable-next-line no-console
+				console.error('Failed to load version info:', data.error)
 			}
 		},
 
@@ -1266,16 +1274,27 @@ export default defineComponent({
 				const result = await requestImport(force)
 				this.importResult = result
 
-				// If successful, update version info and reload settings
-				if (result.success) {
-					await Promise.all([this.loadVersionInfo(), this.loadSettings()])
-				}
+				await this.reloadAfterImport(result)
 			} catch (error) {
 				// eslint-disable-next-line no-console
 				console.error('Failed to perform manual import:', error)
 				this.importResult = importFailure(error)
 			} finally {
 				this.importing = false
+			}
+		},
+
+		/**
+		 * After a successful import, update the version info and reload the
+		 * settings.
+		 *
+		 * @param {{success: boolean}} result The import result.
+		 * @return {Promise<void>}
+		 */
+		async reloadAfterImport(result) {
+			// If successful, update version info and reload settings
+			if (result.success) {
+				await Promise.all([this.loadVersionInfo(), this.loadSettings()])
 			}
 		},
 
@@ -1375,9 +1394,7 @@ export default defineComponent({
 			this.publicCacheError = ''
 
 			try {
-				const response = await putSettings({
-					public_api_cache_seconds: this.publicCacheSeconds,
-				})
+				const response = await putSettings({ public_api_cache_seconds: this.publicCacheSeconds })
 				this.showStoredCacheSeconds(response)
 			} catch {
 				this.publicCacheError = this.t(
@@ -1728,6 +1745,18 @@ async function requestImport(force) {
 		{ force },
 	)
 	return response.data
+}
+
+/**
+ * The configuration result shown when the load request failed.
+ *
+ * @param {Error} error The request error.
+ * @return {{error: string}} The result.
+ */
+function configurationFailure(error) {
+	return {
+		error: 'Failed to load configuration: ' + error.message,
+	}
 }
 
 /**
