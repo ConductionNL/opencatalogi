@@ -186,6 +186,20 @@ class WithheldDocuments {
 			return null;
 		}
 
+		return $this->resolveUnlessUnavailable(grounds: $grounds, entries: $entries);
+	}//end resolvedWithGrounds()
+
+	/**
+	 * The entries resolved, or null when dossiq says its list cannot be read.
+	 *
+	 * @param object|null $grounds dossiq's WooRefusalGrounds.
+	 * @param list<array{position: int, grounds: list<string>}> $entries The reduced entries.
+	 *
+	 * @return array{0: list<array<string, mixed>>, 1: list<array{position: int, code: string, reason: string}>}|null Accepted and refused.
+	 *
+	 * @throws Throwable When reading the list fails for another reason than dossiq's own.
+	 */
+	private function resolveUnlessUnavailable(?object $grounds, array $entries): ?array {
 		try {
 			return $this->resolveAll(grounds: $grounds, entries: $entries);
 		} catch (Throwable $e) {
@@ -195,7 +209,7 @@ class WithheldDocuments {
 
 			return null;
 		}
-	}//end resolvedWithGrounds()
+	}//end resolveUnlessUnavailable()
 
 	/**
 	 * Reduce an entry to `{position, grounds}`; a title or anything else is dropped here.
@@ -209,20 +223,43 @@ class WithheldDocuments {
 			return ['position' => 0, 'grounds' => []];
 		}
 
+		$grounds = $this->groundCodes(codes: ($entry['grounds'] ?? []));
+
+		return ['position' => $this->position(position: ($entry['position'] ?? null)), 'grounds' => $grounds];
+	}//end reduce()
+
+	/**
+	 * The trimmed, non-blank text codes of an entry's grounds.
+	 *
+	 * @param mixed $codes The entry's grounds.
+	 *
+	 * @return list<string>
+	 */
+	private function groundCodes(mixed $codes): array {
 		$grounds = [];
-		foreach ((array)($entry['grounds'] ?? []) as $code) {
+		foreach ((array)$codes as $code) {
 			if (is_string($code) === true && trim($code) !== '') {
 				$grounds[] = trim($code);
 			}
 		}
 
-		$position = 0;
-		if (is_numeric($entry['position'] ?? null) === true) {
-			$position = (int)$entry['position'];
+		return $grounds;
+	}//end groundCodes()
+
+	/**
+	 * An entry's position as a number, or 0 when it is not numeric.
+	 *
+	 * @param mixed $position The entry's position.
+	 *
+	 * @return int
+	 */
+	private function position(mixed $position): int {
+		if (is_numeric($position) === true) {
+			return (int)$position;
 		}
 
-		return ['position' => $position, 'grounds' => $grounds];
-	}//end reduce()
+		return 0;
+	}//end position()
 
 	/**
 	 * Resolve every entry, accepting each position once.
@@ -236,25 +273,12 @@ class WithheldDocuments {
 	 */
 	private function resolveAll(?object $grounds, array $entries): array {
 		$lookup = $this->lookup(grounds: $grounds, entries: $entries);
-		$accepted = [];
-		$refused = [];
-		$positions = [];
+		$resolution = new WithheldResolution();
 		foreach ($entries as $entry) {
-			$resolved = $this->resolve(lookup: $lookup, entry: $entry);
-			if (isset($resolved['refused']) === false && isset($positions[$entry['position']]) === true) {
-				$resolved = ['refused' => ['position' => $entry['position'], 'code' => $entry['grounds'][0], 'reason' => self::REASON_INVALID_ENTRY]];
-			}
-
-			if (isset($resolved['refused']) === true) {
-				$refused[] = $resolved['refused'];
-				continue;
-			}
-
-			$positions[$entry['position']] = true;
-			$accepted[] = $resolved['entry'];
+			$resolution->add(entry: $entry, resolved: $this->resolve(lookup: $lookup, entry: $entry));
 		}
 
-		return [$accepted, $refused];
+		return $resolution->result();
 	}//end resolveAll()
 
 	/**
@@ -411,18 +435,26 @@ class WithheldDocuments {
 			return null;
 		}
 
-		try {
-			$grounds = $this->container->get(self::GROUNDS_CLASS);
-		} catch (Throwable $e) {
-			return null;
-		}
-
+		$grounds = $this->builtGrounds();
 		if (is_object($grounds) === false || method_exists($grounds, 'byCode') === false) {
 			return null;
 		}
 
 		return $grounds;
 	}//end grounds()
+
+	/**
+	 * dossiq's grounds list as the container builds it, or null when it cannot.
+	 *
+	 * @return mixed
+	 */
+	private function builtGrounds(): mixed {
+		try {
+			return $this->container->get(self::GROUNDS_CLASS);
+		} catch (Throwable $e) {
+			return null;
+		}
+	}//end builtGrounds()
 
 	/**
 	 * Whether dossiq is installed and its grounds class is there.
