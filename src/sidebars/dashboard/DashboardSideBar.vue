@@ -294,6 +294,22 @@ const { files, reset } = useFileSelection({
 })
 
 /**
+ * A fresh, empty quick-publication form.
+ *
+ * @return {object} The form fields, all empty.
+ */
+function emptyPublicationItem() {
+	return {
+		title: '',
+		summary: '',
+		reference: '',
+		category: '',
+		portal: '',
+		license: '',
+	}
+}
+
+/**
  * DashboardSideBar — sidebar accompanying the dashboard overview.
  *
  * @spec openspec/specs/dashboard/spec.md
@@ -320,14 +336,7 @@ export default {
 		return {
 			publications: false,
 			attachments: false,
-			publicationItem: {
-				title: '',
-				summary: '',
-				reference: '',
-				category: '',
-				portal: '',
-				license: '',
-			},
+			publicationItem: emptyPublicationItem(),
 
 			catalogiLoading: false,
 			catalogiList: [],
@@ -416,14 +425,7 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		cleanup() {
 			if (this.success === true) {
-				this.publicationItem = {
-					title: '',
-					summary: '',
-					reference: '',
-					category: '',
-					portal: '',
-					license: '',
-				}
+				this.publicationItem = emptyPublicationItem()
 				this.catalogi.value = []
 				this.publicationType.value = []
 			}
