@@ -41,15 +41,18 @@ function publicationsPage(data) {
 }
 
 /**
- * The slug-based publications endpoint (GET /api/{catalogSlug}) with its query.
+ * The slug-based publications endpoint (GET /api/{catalogSlug}) with the
+ * page's query.
  *
- * @param {string} catalogId - The catalog slug or id
- * @param {object} query - The query parameters
+ * @param {{catalogId: string, params: object}} request - The catalog and the page parameters
+ * @param {object} pagination - The store's pagination
  * @return {string} The url
  */
-function publicationsUrl(catalogId, query) {
-	const queryParams = new URLSearchParams(query)
-	return `/index.php/apps/opencatalogi/api/${catalogId}?${queryParams}`
+function publicationsUrl(request, pagination) {
+	const queryParams = new URLSearchParams(
+		publicationSearchParams(request.params, pagination),
+	)
+	return `/index.php/apps/opencatalogi/api/${request.catalogId}?${queryParams}`
 }
 
 /**
@@ -64,10 +67,7 @@ async function loadPublications(store, request) {
 	store.loading = true
 	objectStore.setLoading('publication', true)
 
-	const url = publicationsUrl(
-		request.catalogId,
-		publicationSearchParams(request.params, store.pagination),
-	)
+	const url = publicationsUrl(request, store.pagination)
 
 	try {
 		await store.loadPublicationsPage(url)
