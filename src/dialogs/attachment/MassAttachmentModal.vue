@@ -244,9 +244,7 @@ export default {
 				}
 			} catch (error) {
 				this.success = false
-				this.error =
-					error.message
-					|| `An error occurred while ${this.operation === 'publish' ? 'publishing' : 'depublishing'} attachments`
+				this.error = this.errorMessage(error)
 			} finally {
 				this.loading = false
 			}
@@ -280,6 +278,19 @@ export default {
 					this.closeDialog()
 				}, 2000)
 			}
+		},
+
+		/**
+		 * What the store threw, or a message naming the operation when it said nothing.
+		 *
+		 * @param {Error} error The error.
+		 * @return {string} The message.
+		 */
+		errorMessage(error) {
+			return (
+				error.message
+				|| `An error occurred while ${this.operation === 'publish' ? 'publishing' : 'depublishing'} attachments`
+			)
 		},
 
 		/**
