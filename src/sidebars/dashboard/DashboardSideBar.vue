@@ -332,6 +332,55 @@ const { files, reset } = useFileSelection({
 })
 
 /**
+ * A publication type as an option of the publication type dropdown.
+ *
+ * @param {object} publicationType The publication type.
+ * @return {{id: (string|number), source: string, label: string}} The option.
+ */
+function toPublicationTypeOption(publicationType) {
+	return {
+		id: publicationType.id,
+		source: publicationType.source,
+		label: publicationType.title,
+	}
+}
+
+/**
+ * Upload the selected file as an attachment of `publicationItem`.
+ *
+ * @param {object} publicationItem The publication.
+ * @return {Promise<object>} The upload response.
+ */
+function postAttachment(publicationItem) {
+	return axios.post(
+		'/index.php/apps/opencatalogi/api/attachments',
+		{
+			published: null,
+			summary: '',
+			license: '',
+			_file: files.value ? files.value[0] : '',
+		},
+		{ headers: attachmentHeaders(publicationItem) },
+	)
+}
+
+/**
+ * The upload headers: multipart, plus the publication the file belongs to.
+ *
+ * @param {object} publicationItem The publication.
+ * @return {object} The headers.
+ */
+function attachmentHeaders(publicationItem) {
+	return {
+		'Content-Type': 'multipart/form-data',
+		// These headers are used to pass along some publication info to use as name for a Folder,
+		// to store (attachments/) files in for that specific publication,
+		'Publication-Id': publicationItem.id,
+		'Publication-Title': publicationItem.title,
+	}
+}
+
+/**
  * DashboardSideBar — sidebar accompanying the dashboard overview.
  *
  * @spec openspec/specs/dashboard/spec.md
@@ -394,14 +443,7 @@ export default {
 			if (!this.publicationTypeList?.length) return {}
 
 			// step 1: get the selected catalogus from the catalogi dropdown
-			const selectedCatalogus = objectStore
-				.getCollection('catalogus')
-				.results.find(
-					(catalogus) =>
-						(catalogus.id?.toString() || Symbol('catalogusId'))
-						=== (this.catalogi?.value.id?.toString()
-							|| Symbol('catalogiId')),
-				)
+			const selectedCatalogus = this.findSelectedCatalogus()
 
 			// step 2: get the full publicationType's from the publicationTypeIds
 			const filteredPublicationType = this.publicationTypeList.filter(
@@ -412,11 +454,7 @@ export default {
 			)
 
 			return {
-				options: filteredPublicationType.map((publicationType) => ({
-					id: publicationType.id,
-					source: publicationType.source,
-					label: publicationType.title,
-				})),
+				options: filteredPublicationType.map(toPublicationTypeOption),
 			}
 		},
 	},
@@ -547,67 +585,95 @@ export default {
 			this.loading = true
 			this.errorMessage = false
 
-			axios
-				.post(
-					'/index.php/apps/opencatalogi/api/attachments',
-					{
-						published: null,
-						summary: '',
-						license: '',
-						_file: files.value ? files.value[0] : '',
-					},
-					{
-						headers: {
-							'Content-Type': 'multipart/form-data',
-							// These headers are used to pass along some publication info to use as name for a Folder,
-							// to store (attachments/) files in for that specific publication,
-							'Publication-Id': publicationItem.id,
-							'Publication-Title': publicationItem.title,
-						},
-					},
-				)
+			postAttachment(publicationItem)
 				.then((response) => {
-					this.success = response.status
-					reset()
-					// Let's refresh the attachment list
-
-					objectStore.fetchCollection('attachment')
-
-					objectStore
-						.updateObject('publication', publicationItem.id, {
-							...publicationItem,
-							attachments: [
-								...publicationItem.attachments,
-								response.data.id,
-							],
-						})
-						.then((response) => {
-							this.success = response.ok
-							this.loading = false
-
-							// Let's refresh the publicationList
-							objectStore.fetchCollection('publication')
-							response.json().then((data) => {
-								objectStore.setActiveObject('publication', data)
-							})
-						})
-						.catch((err) => {
-							this.error = err
-							this.loading = false
-						})
-
-					objectStore.setActiveObject('attachment', response)
-
-					// Wait for the user to read the feedback then close the model
-					const self = this
-					setTimeout(function () {
-						self.success = null
-					}, 2000)
+					this.onAttachmentUploaded(publicationItem, response)
 				})
 				.catch((err) => {
 					this.error = err.response?.data?.error ?? err
 					this.loading = false
 				})
+		},
+
+		/**
+		 * The catalog chosen in the catalogi dropdown, from the store's catalogs.
+		 *
+		 * @return {object|undefined} The catalog.
+		 */
+		findSelectedCatalogus() {
+			return objectStore
+				.getCollection('catalogus')
+				.results.find(
+					(catalogus) =>
+						(catalogus.id?.toString() || Symbol('catalogusId'))
+						=== (this.catalogi?.value.id?.toString()
+							|| Symbol('catalogiId')),
+				)
+		},
+
+		/**
+		 * After the upload: refresh the attachments, link the new attachment to
+		 * the publication, make it active and clear the feedback after a while.
+		 *
+		 * @param {object} publicationItem The publication the file belongs to.
+		 * @param {object} response The upload response.
+		 * @return {void}
+		 */
+		onAttachmentUploaded(publicationItem, response) {
+			this.success = response.status
+			reset()
+			// Let's refresh the attachment list
+
+			objectStore.fetchCollection('attachment')
+
+			this.linkAttachment(publicationItem, response.data.id)
+
+			objectStore.setActiveObject('attachment', response)
+
+			// Wait for the user to read the feedback then close the model
+			const self = this
+			setTimeout(function () {
+				self.success = null
+			}, 2000)
+		},
+
+		/**
+		 * Add the uploaded attachment to the publication's attachments.
+		 *
+		 * @param {object} publicationItem The publication.
+		 * @param {string} attachmentId The new attachment's id.
+		 * @return {void}
+		 */
+		linkAttachment(publicationItem, attachmentId) {
+			objectStore
+				.updateObject('publication', publicationItem.id, {
+					...publicationItem,
+					attachments: [...publicationItem.attachments, attachmentId],
+				})
+				.then((response) => {
+					this.onAttachmentLinked(response)
+				})
+				.catch((err) => {
+					this.error = err
+					this.loading = false
+				})
+		},
+
+		/**
+		 * After the link: refresh the publications and make the saved one active.
+		 *
+		 * @param {Response} response The update response.
+		 * @return {void}
+		 */
+		onAttachmentLinked(response) {
+			this.success = response.ok
+			this.loading = false
+
+			// Let's refresh the publicationList
+			objectStore.fetchCollection('publication')
+			response.json().then((data) => {
+				objectStore.setActiveObject('publication', data)
+			})
 		},
 	},
 }
