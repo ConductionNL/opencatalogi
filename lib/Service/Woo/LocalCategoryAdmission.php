@@ -77,9 +77,13 @@ class LocalCategoryAdmission {
 			return $this->refused(code: self::CODE_MISSING, reason: 'the category stores no code');
 		}
 
-		$refusal = $this->codeRefusal(code: $code, bundled: $bundled);
-		if ($refusal !== null) {
-			return $this->refused(code: $code, reason: $refusal);
+		$sitemapFile = $this->sitemapFile(code: $code);
+		if ($sitemapFile === null) {
+			return $this->refused(code: $code, reason: 'the code cannot be part of a sitemap file name');
+		}
+
+		if (isset($bundled[$code]) === true) {
+			return $this->refused(code: $code, reason: 'the code is already a waardelijst member');
 		}
 
 		$member = $this->tooiVocabulary->resolveInformatiecategorie($this->text(value: ($stored['mapsTo'] ?? null)));
@@ -89,35 +93,31 @@ class LocalCategoryAdmission {
 
 		$record = ['code' => $code] + $this->labels(stored: $stored, member: $member) + $this->memberFields(member: $member, bundled: $bundled);
 
-		return ['code' => $code, 'reason' => null, 'record' => $record + $this->localFields(stored: $stored, code: $code)];
+		return ['code' => $code, 'reason' => null, 'record' => $record + $this->localFields(stored: $stored, sitemapFile: $sitemapFile)];
 
 	}//end admit()
 
 	/**
-	 * Why a category code cannot be admitted: it cannot be part of a sitemap
-	 * file name, or it is already a waardelijst member.
+	 * The sitemap file a category code publishes under, when the code survives
+	 * the file-name convention unchanged.
 	 *
 	 * @param string $code The normalised code.
-	 * @param array<string, array<string, mixed>> $bundled The waardelijst records.
 	 *
-	 * @return string|null The reason, or null when the code is fine.
+	 * @return string|null The file name, or null when the code cannot be part of one.
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) WooCategoryRegistry::sitemapFileFor() and
 	 *   ::codeOf() are pure string functions over the file-name convention. The point
 	 *   of calling them here is that the admission and the route cannot disagree
 	 *   about that convention, which a second copy of it would allow.
 	 */
-	private function codeRefusal(string $code, array $bundled): ?string {
-		if (WooCategoryRegistry::codeOf(sitemapFile: WooCategoryRegistry::sitemapFileFor(code: $code)) !== $code) {
-			return 'the code cannot be part of a sitemap file name';
+	private function sitemapFile(string $code): ?string {
+		$sitemapFile = WooCategoryRegistry::sitemapFileFor(code: $code);
+		if (WooCategoryRegistry::codeOf(sitemapFile: $sitemapFile) !== $code) {
+			return null;
 		}
 
-		if (isset($bundled[$code]) === true) {
-			return 'the code is already a waardelijst member';
-		}
-
-		return null;
-	}//end codeRefusal()
+		return $sitemapFile;
+	}//end sitemapFile()
 
 	/**
 	 * A refused category.
@@ -170,16 +170,14 @@ class LocalCategoryAdmission {
 	 * The admitted record's local fields: its origin, sitemap file and schemas.
 	 *
 	 * @param array<string, mixed> $stored The stored object.
-	 * @param string $code The normalised code.
+	 * @param string $sitemapFile The sitemap file the code publishes under.
 	 *
 	 * @return array{origin: string, sitemapFile: string, schemas: array<int, string>}
-	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) WooCategoryRegistry's file-name convention, shared with the route.
 	 */
-	private function localFields(array $stored, string $code): array {
+	private function localFields(array $stored, string $sitemapFile): array {
 		return [
 			'origin' => WooCategoryRegistry::ORIGIN_LOCAL,
-			'sitemapFile' => WooCategoryRegistry::sitemapFileFor(code: $code),
+			'sitemapFile' => $sitemapFile,
 			'schemas' => $this->schemaSlugs(value: ($stored['schemas'] ?? [])),
 		];
 	}//end localFields()
