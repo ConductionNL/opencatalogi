@@ -30,6 +30,7 @@ namespace OCA\OpenCatalogi\Command;
 
 use DateTime;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
+use OCA\OpenRegister\Service\File\FileTransfer;
 use OCA\OpenRegister\Service\Object\ObjectDeletion;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -479,10 +480,12 @@ class AttachDocumentsToPublicationsCommand extends Command {
 	 */
 	private function moveFile(object $file, array $doc): void {
 		$services = $doc['services'];
-		$movedFile = $services['files']->moveFile(
-			sourceObject: $this->migration->documentEntity(objectService: $services['objects'], uuid: $doc['uuid']),
-			fileId: (int)$file->getId(),
-			targetObject: $doc['publication']
+		$movedFile = $services['files']->moveAttachedFile(
+			transfer: new FileTransfer(
+				source: $this->migration->documentEntity(objectService: $services['objects'], uuid: $doc['uuid']),
+				fileId: (int)$file->getId(),
+				target: $doc['publication']
+			)
 		);
 		$this->applyMetadata(file: $movedFile, target: ['fileMapper' => $services['fileMapper'], 'metadata' => $doc['metadata']]);
 	}//end moveFile()
