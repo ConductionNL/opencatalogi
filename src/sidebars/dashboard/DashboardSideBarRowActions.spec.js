@@ -4,7 +4,8 @@
  *
  * Component test for the row actions of `DashboardSideBar.vue`: every
  * publication and attachment action makes the row the active object of its
- * type and opens the modal or dialog it names.
+ * type and opens the modal or dialog it names. It also pins the quick
+ * publication form's empty state and its reset.
  */
 
 import { mount } from '@vue/test-utils'
@@ -120,5 +121,49 @@ describe('DashboardSideBar row actions', () => {
 		const labels = wrapper.findAll('button.row-action').map((b) => b.text())
 
 		expect(labels).toEqual(['View', 'Edit', 'Publish', 'Delete', 'Edit', 'Publish', 'Delete'])
+	})
+
+	it('starts with an empty quick-publication form', () => {
+		// The component mixes <script setup> and options; its own proxy holds
+		// the options state.
+		const vm = mountSideBar().vm.$.proxy
+
+		expect(vm.publicationItem).toEqual({
+			title: '',
+			summary: '',
+			reference: '',
+			category: '',
+			portal: '',
+			license: '',
+		})
+	})
+
+	it('cleanup empties the form after a success and clears the error', () => {
+		// The component mixes <script setup> and options; its own proxy holds
+		// the options state.
+		const vm = mountSideBar().vm.$.proxy
+		const before = vm.publicationItem
+		vm.publicationItem = { ...before, title: 'Typed', summary: 'Text' }
+		vm.success = true
+		vm.error = 'boom'
+		vm.cleanup()
+
+		expect(vm.publicationItem).toEqual(before)
+		expect(vm.catalogi.value).toEqual([])
+		expect(vm.publicationType.value).toEqual([])
+		expect(vm.error).toBeNull()
+	})
+
+	it('cleanup keeps the form when the add failed', () => {
+		// The component mixes <script setup> and options; its own proxy holds
+		// the options state.
+		const vm = mountSideBar().vm.$.proxy
+		vm.publicationItem = { title: 'Typed' }
+		vm.success = false
+		vm.error = 'boom'
+		vm.cleanup()
+
+		expect(vm.publicationItem).toEqual({ title: 'Typed' })
+		expect(vm.error).toBeNull()
 	})
 })
