@@ -38,8 +38,6 @@ use OCA\OpenRegister\Db\FlowRunFilter;
 use OCA\OpenRegister\Db\FlowRunListing;
 use OCA\OpenRegister\Db\FlowRunMapper;
 use OCA\OpenRegister\Db\FlowRunViewer;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -50,6 +48,8 @@ use Throwable;
  * Status, set-up, switch and run for the GitHub publiccode harvest.
  */
 class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
+
+	use BuildsSaveOptions;
 
 	/**
 	 * The name the shipped flow carries. The flow store identifies a declared
@@ -202,10 +202,7 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 		$existing = $this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']);
 		$context['objects']->saveObject(
 			object: $synchronization,
-			options: new ObjectSaveOptions(
-				target: new ObjectFindTarget(register: self::INTEGRIQ_REGISTER, schema: 'synchronization'),
-				uuid: $existing
-			)
+			options: $this->saveOptions(register: self::INTEGRIQ_REGISTER, schema: 'synchronization', uuid: $existing)
 		);
 
 		if ($existing === null) {
