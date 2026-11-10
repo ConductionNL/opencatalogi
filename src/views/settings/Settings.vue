@@ -543,6 +543,42 @@ import WooIndexConnection from './WooIndexConnection.vue'
 import '@nextcloud/dialogs/style.css'
 
 /**
+ * The sync options of a backend answer, in minutes.
+ *
+ * @param {object} data - The answer
+ * @return {{intervalMinutes: number, minMinutes: number, maxMinutes: number, defaultMinutes: number}} The options
+ */
+function syncOptionsFrom(data) {
+	return {
+		intervalMinutes: Math.round(data.sync_interval_seconds / 60),
+		minMinutes: Math.round(data.min_interval_seconds / 60),
+		maxMinutes: Math.round(data.max_interval_seconds / 60),
+		defaultMinutes: Math.round(data.default_interval_seconds / 60),
+	}
+}
+
+/**
+ * The settings to store: per object type the openregister source, the
+ * selected register and the chosen schema (empty when none).
+ *
+ * @param {object} configuration - The per-type configuration
+ * @param {string} registerId - The selected register
+ * @return {object} The settings payload
+ */
+function settingsPayload(configuration, registerId) {
+	const configToSave = {}
+	Object.entries(configuration).forEach(([type, config]) => {
+		// Always use openregister as source
+		configToSave[`${type}_source`] = 'openregister'
+		// Set the register ID for all object types
+		configToSave[`${type}_register`] = registerId
+		// Set the schema ID if selected
+		configToSave[`${type}_schema`] = config.schema ? config.schema.value : ''
+	})
+	return configToSave
+}
+
+/**
  * @class Settings
  * @module Components
  * @package
@@ -1113,21 +1149,10 @@ export default defineComponent({
 
 			this.saving = true
 			try {
-				const configToSave = {}
-
-				// Set all object types to use openregister as source
-				Object.entries(this.configuration).forEach(([type, config]) => {
-					// Always use openregister as source
-					configToSave[`${type}_source`] = 'openregister'
-
-					// Set the register ID for all object types
-					configToSave[`${type}_register`] = this.selectedRegister.value
-
-					// Set the schema ID if selected
-					configToSave[`${type}_schema`] = config.schema
-						? config.schema.value
-						: ''
-				})
+				const configToSave = settingsPayload(
+					this.configuration,
+					this.selectedRegister.value,
+				)
 
 				// Send configuration to backend. PUT is the canonical settings
 				// write (`settings#update`); POST remains only as a legacy alias.
@@ -1337,14 +1362,7 @@ export default defineComponent({
 				// now. The error body is still the server's JSON payload.
 				const data = error.response?.data
 				if (data !== undefined) {
-					this.wooReadinessError =
-						data.error === 'not-configured'
-							? this.t(
-									'opencatalogi',
-									'No Woo-enabled catalog is configured yet — enable Woo sitemaps on a catalog first.',
-								)
-							: data.error
-								|| this.t('opencatalogi', 'Readiness check failed.')
+					this.wooReadinessError = this.readinessRefusal(data)
 					return
 				}
 
@@ -1357,6 +1375,23 @@ export default defineComponent({
 			} finally {
 				this.wooReadinessRunning = false
 			}
+		},
+
+		/**
+		 * The message of a refused readiness check: the not-configured hint,
+		 * else the server's error, else a generic failure.
+		 *
+		 * @param {object} data - The refusal body
+		 * @return {string} The message
+		 */
+		readinessRefusal(data) {
+			if (data.error === 'not-configured') {
+				return this.t(
+					'opencatalogi',
+					'No Woo-enabled catalog is configured yet — enable Woo sitemaps on a catalog first.',
+				)
+			}
+			return data.error || this.t('opencatalogi', 'Readiness check failed.')
 		},
 
 		/**
@@ -1570,14 +1605,7 @@ export default defineComponent({
 				const data = await response.json()
 
 				if (!data.error) {
-					this.syncOptions = {
-						intervalMinutes: Math.round(data.sync_interval_seconds / 60),
-						minMinutes: Math.round(data.min_interval_seconds / 60),
-						maxMinutes: Math.round(data.max_interval_seconds / 60),
-						defaultMinutes: Math.round(
-							data.default_interval_seconds / 60,
-						),
-					}
+					this.syncOptions = syncOptionsFrom(data)
 				}
 			} catch (error) {
 				// eslint-disable-next-line no-console
