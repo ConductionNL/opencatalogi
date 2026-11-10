@@ -40,6 +40,7 @@ use DateTimeZone;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -504,9 +505,12 @@ class SettingsService implements SettingsServiceInterface {
 	}//end findCallerRegisters()
 
 	/**
-	 * Whether the current caller is a Nextcloud administrator. Fails closed to false.
+	 * Whether the current caller administers OpenCatalogi: a Nextcloud administrator,
+	 * or a user an administrator delegated the OpenCatalogi admin settings to (the same
+	 * rule `#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]` applies).
+	 * Fails closed to false.
 	 *
-	 * @return bool True for a signed-in administrator.
+	 * @return bool True for a signed-in administrator or delegated OpenCatalogi admin.
 	 *
 	 * @spec exclude Authorization helper for the settings register inventory; no domain behaviour.
 	 */
@@ -517,7 +521,20 @@ class SettingsService implements SettingsServiceInterface {
 				return false;
 			}
 
-			return $this->container->get(\OCP\IGroupManager::class)->isAdmin($user->getUID()) === true;
+			if ($this->container->get(\OCP\IGroupManager::class)->isAdmin($user->getUID()) === true) {
+				return true;
+			}
+
+			$allowed = $this->container->get(\OCP\Settings\IManager::class)->getAllowedAdminSettings('opencatalogi', $user);
+			foreach ($allowed as $settings) {
+				foreach ($settings as $setting) {
+					if ($setting instanceof OpenCatalogiAdmin) {
+						return true;
+					}
+				}
+			}
+
+			return false;
 		} catch (\Throwable $e) {
 			return false;
 		}
