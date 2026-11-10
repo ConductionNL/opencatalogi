@@ -19,12 +19,14 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Listener;
 
 use OCA\OpenCatalogi\Listener\CatalogScopePendingListener;
+use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Db\Register;
 use OCA\OpenRegister\Event\ObjectCreatedEvent;
 use OCA\OpenRegister\Event\RegisterCreatedEvent;
 use OCA\OpenRegister\Event\RegisterUpdatedEvent;
+use OCP\AppFramework\Bootstrap\IRegistrationContext;
 use OCP\IAppConfig;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -171,9 +173,17 @@ class CatalogScopePendingListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheListenerIsRegistered(): void {
-		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Listener/ListenerRegistrar.php');
+		$pairs = [];
+		$context = $this->createMock(IRegistrationContext::class);
+		$context->method('registerEventListener')->willReturnCallback(
+			static function (string $event, string $listener) use (&$pairs): void {
+				$pairs[] = [$event, $listener];
+			}
+		);
 
-		$this->assertStringContainsString('registerEventListener(RegisterCreatedEvent::class, CatalogScopePendingListener::class)', $source);
-		$this->assertStringContainsString('registerEventListener(RegisterUpdatedEvent::class, CatalogScopePendingListener::class)', $source);
+		(new ListenerRegistrar())->register($context);
+
+		$this->assertContains([RegisterCreatedEvent::class, CatalogScopePendingListener::class], $pairs);
+		$this->assertContains([RegisterUpdatedEvent::class, CatalogScopePendingListener::class], $pairs);
 	}//end testTheListenerIsRegistered()
 }//end class
