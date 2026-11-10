@@ -170,8 +170,7 @@ class CatalogiController extends Controller {
 		// what RBAC permits); multitenancy is left enabled so org scoping is not bypassed.
 		$result = $this->getObjectService()->searchObjectsPaginated(
 			query: $searchQuery,
-			_rbac: true,
-			deleted: false
+			_rbac: true
 		);
 
 		// Visibility is governed by OpenRegister RBAC (the catalog schema grants the public

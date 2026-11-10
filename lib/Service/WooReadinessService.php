@@ -312,7 +312,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 
 		try {
 			$objectService = $this->settingsService->getObjectService();
-			$result = $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false, deleted: false);
+			$result = $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false);
 		} catch (\Throwable $e) {
 			return [];
 		}

@@ -287,8 +287,7 @@ class DcatService implements DcatServiceInterface {
 		return $this->getObjectService()->searchObjectsPaginated(
 			query: $searchQuery,
 			_rbac: true,
-			_multitenancy: false,
-			deleted: false
+			_multitenancy: false
 		);
 	}//end searchCatalogPage()
 
@@ -820,7 +819,7 @@ class DcatService implements DcatServiceInterface {
 		}
 
 		$query = ['@self' => ['register' => $register, 'schema' => $schema], 'hasDcat' => true, '_limit' => self::MAX_PER_PAGE];
-		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 
 		$catalogs = [];
 		foreach (($result['results'] ?? []) as $catalog) {

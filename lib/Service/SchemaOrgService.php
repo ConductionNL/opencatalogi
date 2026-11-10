@@ -600,7 +600,7 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 		}
 
 		try {
-			$result = $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false, deleted: false);
+			$result = $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false);
 		} catch (\Throwable $e) {
 			$this->logger->debug('[SchemaOrgService] Catalog dataset listing failed', ['catalog' => $catalogSlug, 'error' => $e->getMessage()]);
 			return [];

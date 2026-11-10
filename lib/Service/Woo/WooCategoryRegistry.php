@@ -414,8 +414,7 @@ class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 			$found = $objectService->searchObjectsPaginated(
 				query: ['@self' => ['schema' => $schema->getId()], '_limit' => 500],
 				_rbac: false,
-				_multitenancy: false,
-				deleted: false
+				_multitenancy: false
 			);
 		} catch (\Throwable $e) {
 			$this->logger->debug(

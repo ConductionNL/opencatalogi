@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Command;
 
 use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -217,11 +218,10 @@ class MigrateCmsToPortaliqCommand extends Command {
 	private function read(object $objectService, string $schema, OutputInterface $output): ?array {
 		try {
 			$rows = $objectService->searchObjectsBySlug(
-				CmsMigrationServiceInterface::SOURCE_REGISTER,
-				$schema,
-				['_limit' => 1000],
-				false,
-				false
+				target: new RegisterSchemaRef(register: CmsMigrationServiceInterface::SOURCE_REGISTER, schema: $schema),
+				filters: ['_limit' => 1000],
+				_rbac: false,
+				_multitenancy: false
 			);
 		} catch (Throwable $e) {
 			$output->writeln(sprintf('<error>Could not read %s rows: %s</error>', $schema, $e->getMessage()));

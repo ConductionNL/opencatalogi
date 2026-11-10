@@ -522,7 +522,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	private static function firstVisible(mixed $objectService, array $query): mixed {
-		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 		return ($result['results'][0] ?? []);
 	}//end firstVisible()
 
@@ -682,7 +682,7 @@ class SitemapService implements SitemapServiceInterface {
 
 		$scope = ['register' => $request->registerId, 'schema' => $request->schemaId];
 		$query = ['@self' => $scope, '_limit' => $this->getMaxPerPage(), '_page' => max(1, $page)];
-		$publicationResult = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$publicationResult = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false);
 		$violations = $this->collectDiwooViolations(publications: $this->publicationsWithFiles(rows: ($publicationResult['results'] ?? [])));
 
 		return ['catalogSlug' => $catalogSlug, 'categoryCode' => $categoryCode, 'valid' => ($violations === []), 'violations' => $violations];

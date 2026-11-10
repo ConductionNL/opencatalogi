@@ -45,6 +45,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Throwable;
@@ -231,11 +232,10 @@ class AttachmentMigrationService implements AttachmentMigrationServiceInterface 
 		// `PublicationQueryService::tryPublicationSlugLookup()` and scans client
 		// side; this does the same rather than inventing a second answer.
 		$matches = $objectService->searchObjectsBySlug(
-			self::REGISTER_SLUG,
-			self::PUBLICATION_SCHEMA_SLUG,
-			['_limit' => 500],
-			false,
-			false
+			target: new RegisterSchemaRef(register: self::REGISTER_SLUG, schema: self::PUBLICATION_SCHEMA_SLUG),
+			filters: ['_limit' => 500],
+			_rbac: false,
+			_multitenancy: false
 		);
 
 		if (is_array($matches) === false) {
