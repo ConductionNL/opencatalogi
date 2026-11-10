@@ -127,27 +127,53 @@ class SetupStatusReport {
 			return false;
 		}
 
-		$register = $this->config->getValueString(AppIdentity::APP_ID, 'listing_register', '');
-		$schema = $this->config->getValueString(AppIdentity::APP_ID, 'listing_schema', '');
-		if ($register === '' || $schema === '') {
+		$location = $this->listingLocation();
+		if ($location === null) {
 			return false;
 		}
 
 		$defaultUrl = $this->directoryService->getDefaultDirectoryUrl();
 
-		$listings = $this->catalogSteps->searchAll(objectService: $objectService, location: ['register' => $register, 'schema' => $schema]);
+		$listings = $this->catalogSteps->searchAll(objectService: $objectService, location: $location);
 		if (is_array($listings) === false) {
 			return false;
 		}
 
+		return $this->listsDirectory(listings: $listings, url: $defaultUrl);
+	}//end defaultDirectorySubscribed()
+
+	/**
+	 * The configured listing register and schema, or null when either is unset.
+	 *
+	 * @return array{register: string, schema: string}|null The location.
+	 */
+	private function listingLocation(): ?array {
+		$register = $this->config->getValueString(AppIdentity::APP_ID, 'listing_register', '');
+		$schema = $this->config->getValueString(AppIdentity::APP_ID, 'listing_schema', '');
+		if ($register === '' || $schema === '') {
+			return null;
+		}
+
+		return ['register' => $register, 'schema' => $schema];
+	}//end listingLocation()
+
+	/**
+	 * Whether one of the listings references a directory URL.
+	 *
+	 * @param array<int, object> $listings The listing objects.
+	 * @param mixed $url The directory URL.
+	 *
+	 * @return boolean True when a listing references it.
+	 */
+	private function listsDirectory(array $listings, mixed $url): bool {
 		foreach ($listings as $listing) {
 			$data = $listing->jsonSerialize();
 			$obj = ($data['object'] ?? $data);
-			if (($obj['directory'] ?? null) === $defaultUrl) {
+			if (($obj['directory'] ?? null) === $url) {
 				return true;
 			}
 		}
 
 		return false;
-	}//end defaultDirectorySubscribed()
+	}//end listsDirectory()
 }//end class
