@@ -573,22 +573,9 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
 	private function assertSafeOutboundUrl(string $url): void {
-		$parsed = parse_url($url);
-		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
-			throw new InvalidArgumentException('Invalid broadcast URL provided');
-		}
-
-		$scheme = strtolower($parsed['scheme']);
-		if (in_array($scheme, ['http', 'https'], true) === false) {
-			throw new InvalidArgumentException('Broadcast URL scheme must be http or https');
-		}
-
-		$host = strtolower($parsed['host']);
+		$host = $this->outboundHost(url: $url);
 
 		// Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
 		// two local instances on a private network can federate. Empty by default, so a
@@ -597,48 +584,9 @@ class BroadcastService implements BroadcastServiceInterface {
 			return;
 		}
 
-		// Reject obvious local hostnames outright.
-		if ($host === 'localhost' || str_ends_with($host, '.local') === true
-			|| str_ends_with($host, '.localhost') === true
-		) {
-			throw new InvalidArgumentException('Broadcast URL host is not allowed');
-		}
+		$this->assertNotLocalName(host: $host);
 
-		// Collect IPs to check: literal IP or DNS-resolved addresses.
-		$ipsToCheck = [];
-		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-			$ipsToCheck[] = $host;
-		}
-
-		if (empty($ipsToCheck) === true) {
-			$lookupHost = trim($host, '[]');
-			if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
-				$ipsToCheck[] = $lookupHost;
-			}
-
-			if (empty($ipsToCheck) === true) {
-				$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
-				if ($records !== false) {
-					foreach ($records as $record) {
-						if (isset($record['ip']) === true) {
-							$ipsToCheck[] = $record['ip'];
-						}
-
-						if (isset($record['ipv6']) === true) {
-							$ipsToCheck[] = $record['ipv6'];
-						}
-					}
-				}
-
-				if (empty($ipsToCheck) === true) {
-					$resolved = gethostbyname($lookupHost);
-					if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
-						$ipsToCheck[] = $resolved;
-					}
-				}
-			}//end if
-		}//end if
-
+		$ipsToCheck = $this->addressesOf(host: $host);
 		if (empty($ipsToCheck) === true) {
 			throw new InvalidArgumentException('Broadcast URL host could not be resolved');
 		}
@@ -650,6 +598,114 @@ class BroadcastService implements BroadcastServiceInterface {
 		}
 
 	}//end assertSafeOutboundUrl()
+
+	/**
+	 * The lower-cased host of an http or https URL.
+	 *
+	 * @param string $url The URL to validate.
+	 *
+	 * @return string The host.
+	 *
+	 * @throws InvalidArgumentException When the URL has no scheme or host, or another scheme.
+	 */
+	private function outboundHost(string $url): string {
+		$parsed = parse_url($url);
+		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
+			throw new InvalidArgumentException('Invalid broadcast URL provided');
+		}
+
+		if (in_array(strtolower($parsed['scheme']), ['http', 'https'], true) === false) {
+			throw new InvalidArgumentException('Broadcast URL scheme must be http or https');
+		}
+
+		return strtolower($parsed['host']);
+	}//end outboundHost()
+
+	/**
+	 * Reject obvious local hostnames outright.
+	 *
+	 * @param string $host The lower-cased host.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the host is localhost or under .local or .localhost.
+	 */
+	private function assertNotLocalName(string $host): void {
+		if ($host === 'localhost' || str_ends_with($host, '.local') === true
+			|| str_ends_with($host, '.localhost') === true
+		) {
+			throw new InvalidArgumentException('Broadcast URL host is not allowed');
+		}
+	}//end assertNotLocalName()
+
+	/**
+	 * The IPs to check for a host: the literal IP (bracketed or not), else its
+	 * DNS A/AAAA records, else what gethostbyname() resolves it to.
+	 *
+	 * @param string $host The lower-cased host.
+	 *
+	 * @return array<int, string> The addresses; none when the host does not resolve.
+	 */
+	private function addressesOf(string $host): array {
+		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+			return [$host];
+		}
+
+		$lookupHost = trim($host, '[]');
+		if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
+			return [$lookupHost];
+		}
+
+		$ipsToCheck = $this->dnsAddresses(lookupHost: $lookupHost);
+		if (empty($ipsToCheck) === false) {
+			return $ipsToCheck;
+		}
+
+		return $this->resolvedAddress(lookupHost: $lookupHost);
+	}//end addressesOf()
+
+	/**
+	 * The IPv4 and IPv6 addresses of a host's DNS A/AAAA records, in record order.
+	 *
+	 * @param string $lookupHost The host to look up.
+	 *
+	 * @return array<int, string> The addresses.
+	 */
+	private function dnsAddresses(string $lookupHost): array {
+		$ipsToCheck = [];
+		$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
+		if ($records === false) {
+			return $ipsToCheck;
+		}
+
+		foreach ($records as $record) {
+			if (isset($record['ip']) === true) {
+				$ipsToCheck[] = $record['ip'];
+			}
+
+			if (isset($record['ipv6']) === true) {
+				$ipsToCheck[] = $record['ipv6'];
+			}
+		}
+
+		return $ipsToCheck;
+	}//end dnsAddresses()
+
+	/**
+	 * The address gethostbyname() resolves a host to, or none when it does not resolve to an IP.
+	 *
+	 * @param string $lookupHost The host to look up.
+	 *
+	 * @return array<int, string> The address, or none.
+	 */
+	private function resolvedAddress(string $lookupHost): array {
+		$resolved = gethostbyname($lookupHost);
+		if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
+			return [$resolved];
+		}
+
+		return [];
+	}//end resolvedAddress()
 
 	/**
 	 * Determine whether an IP address falls in a blocked range.
