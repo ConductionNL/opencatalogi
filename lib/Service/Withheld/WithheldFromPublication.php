@@ -93,31 +93,61 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 	public function addForPublication(array $response): array {
 		$self = (array)($response['@self'] ?? []);
 		$publicationId = (string)($response['id'] ?? ($self['id'] ?? ''));
-		$register = $this->referenceId(value: ($self['register'] ?? ''));
-		$schema = $this->referenceId(value: ($self['schema'] ?? ''));
-		if ($publicationId === '' || $register === '' || $schema === '') {
-			return $response;
+		$catalogs = [];
+		if ($publicationId !== '') {
+			$catalogs = $this->holdingCatalogs(self: $self);
 		}
 
-		try {
-			$catalogs = $this->store->catalogsHolding(register: $register, schema: $schema);
-		} catch (Throwable $e) {
-			$this->logger->warning('WithheldFromPublication: the catalogues could not be read', ['exception' => $e->getMessage()]);
+		if ($this->allOptedIn(catalogs: $catalogs) === false) {
 			return $response;
-		}
-
-		if ($catalogs === []) {
-			return $response;
-		}
-
-		foreach ($catalogs as $catalog) {
-			if ($this->optedIn(catalog: $catalog) === false) {
-				return $response;
-			}
 		}
 
 		return $this->withList(response: $response, publicationId: $publicationId);
 	}//end addForPublication()
+
+	/**
+	 * The catalogues holding a publication's register and schema; none when
+	 * either is missing or the catalogues cannot be read.
+	 *
+	 * @param array<string, mixed> $self The publication's `@self`.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function holdingCatalogs(array $self): array {
+		$register = $this->referenceId(value: ($self['register'] ?? ''));
+		$schema = $this->referenceId(value: ($self['schema'] ?? ''));
+		if ($register === '' || $schema === '') {
+			return [];
+		}
+
+		try {
+			return $this->store->catalogsHolding(register: $register, schema: $schema);
+		} catch (Throwable $e) {
+			$this->logger->warning('WithheldFromPublication: the catalogues could not be read', ['exception' => $e->getMessage()]);
+			return [];
+		}
+	}//end holdingCatalogs()
+
+	/**
+	 * Whether there is a holding catalogue and every one of them opted in.
+	 *
+	 * @param array<int, array<string, mixed>> $catalogs The holding catalogues.
+	 *
+	 * @return bool
+	 */
+	private function allOptedIn(array $catalogs): bool {
+		if ($catalogs === []) {
+			return false;
+		}
+
+		foreach ($catalogs as $catalog) {
+			if ($this->optedIn(catalog: $catalog) === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end allOptedIn()
 
 	/**
 	 * The merged list, ordered by position.
