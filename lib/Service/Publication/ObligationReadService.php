@@ -279,17 +279,29 @@ class ObligationReadService implements ObligationReadServiceInterface {
 			}
 
 			$appId = (string)($source['appId'] ?? '');
-			$rows[$appId] = [
-				'appId' => $appId,
-				'title' => (string)($source['title'] ?? $appId),
-				'outstanding' => 0,
-				'late' => 0,
-				'nextDue' => null,
-			];
+			$rows[$appId] = $this->emptySourceRow(appId: $appId, title: (string)($source['title'] ?? $appId));
 		}
 
 		return $rows;
 	}//end sourceRows()
+
+	/**
+	 * A source's row before any obligation is counted in.
+	 *
+	 * @param string $appId The source's app id.
+	 * @param string $title The source's title.
+	 *
+	 * @return array<string, mixed> The row.
+	 */
+	private function emptySourceRow(string $appId, string $title): array {
+		return [
+			'appId' => $appId,
+			'title' => $title,
+			'outstanding' => 0,
+			'late' => 0,
+			'nextDue' => null,
+		];
+	}//end emptySourceRow()
 
 	/**
 	 * Count one outstanding obligation into its source's row.
