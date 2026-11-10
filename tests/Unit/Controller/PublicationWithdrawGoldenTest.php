@@ -43,6 +43,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Unit\Support\FindCallShape;
 
 /**
  * Golden test for PublicationStateController::withdraw().
@@ -344,7 +345,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('find')->willReturnCallback(
 			function (...$args) use (&$calls, $found): ?ObjectEntity {
-				$calls[] = ['find', self::passedArguments(method: 'find', args: $args)];
+				$calls[] = ['find', FindCallShape::named(args: self::passedArguments(method: 'find', args: $args))];
 				if (is_string($found) === true) {
 					throw self::failure(kind: $found);
 				}

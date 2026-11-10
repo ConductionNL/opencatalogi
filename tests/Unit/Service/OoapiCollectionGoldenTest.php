@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Contract\OoapiPage;
 use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Service\OoapiMappingService;
 use OCA\OpenCatalogi\Service\OoapiService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -181,7 +182,7 @@ class OoapiCollectionGoldenTest extends TestCase {
 			}
 		);
 		$objects->method('find')->willReturnCallback(
-			function (string|int $id, array $_extend): ?\OCA\OpenRegister\Db\ObjectEntity {
+			function (string|int $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): ?\OCA\OpenRegister\Db\ObjectEntity {
 				$this->calls[] = ['find' => $id];
 				$known = [
 					'course-1' => [['catalog' => 'catalog-1', 'code' => 'INF101', 'name' => 'Course'], '11', 'reg-1'],

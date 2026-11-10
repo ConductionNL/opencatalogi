@@ -60,6 +60,7 @@ use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
 use RuntimeException;
+use Unit\Support\FindCallShape;
 
 /**
  * Golden test for the register plumbing of the register-bound controllers.
@@ -639,6 +640,10 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			if ($parameter->isDefaultValueAvailable() === true && $named[$key] === $parameter->getDefaultValue()) {
 				unset($named[$key]);
 			}
+		}
+
+		if ($method->getDeclaringClass()->getName() === ObjectService::class && in_array($method->getName(), ['find', 'findSilent'], true) === true) {
+			$named = FindCallShape::named(args: $named);
 		}
 
 		return $this->normalise(value: $named);

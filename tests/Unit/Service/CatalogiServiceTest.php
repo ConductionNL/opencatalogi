@@ -27,6 +27,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Unit\Support\FindCallShape;
 
 /**
  * Unit tests for CatalogiService.
@@ -523,7 +524,8 @@ class CatalogiServiceTest extends TestCase {
 					$named[$param->getName()] = ($args[$param->getName()] ?? $args[$i] ?? null);
 				}
 
-				$finds[] = [$named['id'], $named['register'], $named['schema']];
+				$named = FindCallShape::named(args: $named);
+				$finds[] = [$named['id'], ($named['register'] ?? null), ($named['schema'] ?? null)];
 				return $catalogEntity;
 			}
 		);

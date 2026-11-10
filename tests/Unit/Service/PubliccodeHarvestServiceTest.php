@@ -36,6 +36,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Unit\Support\FindCallShape;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\PubliccodeHarvestService
@@ -100,7 +101,7 @@ class PubliccodeHarvestServiceTest extends TestCase {
 
 		$objects->method('find')->willReturnCallback(
 			function (int|string $id, ...$rest): ?ObjectEntity {
-				$this->calls[] = ['find', self::passedArguments(method: 'find', arguments: func_get_args())];
+				$this->calls[] = ['find', FindCallShape::named(args: self::passedArguments(method: 'find', arguments: func_get_args()))];
 				return ($this->store[(string)$id] ?? null);
 			}
 		);

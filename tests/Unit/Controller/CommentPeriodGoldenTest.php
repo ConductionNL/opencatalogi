@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Controller\CommentPeriodController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -65,13 +66,12 @@ class CommentPeriodGoldenObjects {
 	 * Find a period.
 	 *
 	 * @param string $id The id.
-	 * @param mixed $register The register.
-	 * @param mixed $schema The schema.
+	 * @param ObjectFindOptions|null $options The register and schema.
 	 *
 	 * @return mixed The stored period.
 	 */
-	public function find(string $id, mixed $register = null, mixed $schema = null): mixed {
-		($this->record)(['find' => [$id, $register, $schema]]);
+	public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+		($this->record)(['find' => [$id, $options?->register, $options?->schema]]);
 		if (($this->case['fail'] ?? null) === 'find') {
 			throw new RuntimeException('not found');
 		}

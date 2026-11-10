@@ -38,6 +38,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -112,8 +113,8 @@ class GoldenSearchObjectService {
 		return $this->script['main'];
 	}
 
-	public function find(string $id, array $_extend = [], bool $files = false, ?int $register = null, ?int $schema = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
-		$this->calls[] = ['find' => $id, 'register' => $register, 'schema' => $schema, 'depth' => $this->depth];
+	public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$this->calls[] = ['find' => $id, 'register' => $options?->register, 'schema' => $options?->schema, 'depth' => $this->depth];
 		$answer = ($this->script['finds'][$id] ?? 'throw');
 		if ($answer === 'throw') {
 			throw new \RuntimeException('not found');
