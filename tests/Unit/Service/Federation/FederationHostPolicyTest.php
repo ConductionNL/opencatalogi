@@ -70,6 +70,8 @@ class FederationHostPolicyTest extends TestCase {
 			'private 192.168/16' => ['http://192.168.1.10/api/directory'],
 			'private 172.16/12' => ['http://172.16.4.4/api/directory'],
 			'mdns .local' => ['http://my-laptop.local/api/directory'],
+			'upper-case localhost' => ['http://LOCALHOST/apps/opencatalogi/api/directory'],
+			'upper-case .local' => ['http://My-Laptop.LOCAL/api/directory'],
 			// An address we cannot parse is one we cannot reason about, and a
 			// value we cannot reason about must never be handed to a peer as
 			// our own address.
