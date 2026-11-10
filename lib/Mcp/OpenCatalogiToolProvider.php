@@ -249,50 +249,53 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	 * @return array<string, mixed> `catalogId` and `customParams`, or an `error` answer.
 	 */
 	private function searchCatalogRequest(array $args): array {
-		$query = $args['query'] ?? null;
-		if (is_string($query) === false || trim($query) === '') {
-			return $this->error(
-				code: 'invalid_arguments',
-				message: 'Required argument "query" is missing or empty.'
-			);
+		$query = $this->textArgument(args: $args, name: 'query');
+		if ($query === null) {
+			return $this->error(code: 'invalid_arguments', message: 'Required argument "query" is missing or empty.');
 		}
 
-		$limit = self::RESULTS_CAP;
-		if (isset($args['limit']) === true) {
-			$limit = (int)$args['limit'];
-			if ($limit < 1 || $limit > 50) {
-				return $this->error(
-					code: 'invalid_arguments',
-					message: "Invalid limit {$limit}. Must be between 1 and 50."
-				);
-			}
+		$limit = $this->limitArgument(args: $args);
+		if ($limit < 1 || $limit > 50) {
+			return $this->error(code: 'invalid_arguments', message: "Invalid limit {$limit}. Must be between 1 and 50.");
 		}
 
 		return [
-			'catalogId' => $this->catalogArgument(args: $args),
-			'customParams' => [
-				'_search' => trim($query),
-				'_limit' => $limit,
-				'_page' => 1,
-			],
+			'catalogId' => $this->textArgument(args: $args, name: 'catalog'),
+			'customParams' => ['_search' => $query, '_limit' => $limit, '_page' => 1],
 		];
 	}//end searchCatalogRequest()
 
 	/**
-	 * The trimmed `catalog` argument, or null when it is absent, blank or not a string.
+	 * The `limit` argument as an int, or RESULTS_CAP when it is absent or null.
 	 *
 	 * @param array<string, mixed> $args Tool arguments.
 	 *
+	 * @return int
+	 */
+	private function limitArgument(array $args): int {
+		if (isset($args['limit']) === false) {
+			return self::RESULTS_CAP;
+		}
+
+		return (int)$args['limit'];
+	}//end limitArgument()
+
+	/**
+	 * A trimmed string argument, or null when it is absent, blank or not a string.
+	 *
+	 * @param array<string, mixed> $args Tool arguments.
+	 * @param string $name The argument name.
+	 *
 	 * @return string|null
 	 */
-	private function catalogArgument(array $args): ?string {
-		$catalog = ($args['catalog'] ?? null);
-		if (is_string($catalog) === false || trim($catalog) === '') {
+	private function textArgument(array $args, string $name): ?string {
+		$value = ($args[$name] ?? null);
+		if (is_string($value) === false || trim($value) === '') {
 			return null;
 		}
 
-		return trim($catalog);
-	}//end catalogArgument()
+		return trim($value);
+	}//end textArgument()
 
 	/**
 	 * The searchCatalog answer: at most RESULTS_CAP publications with their sources.
@@ -346,15 +349,10 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	 * @return array<string, mixed>
 	 */
 	private function handleGetPublication(array $args): array {
-		$id = $args['id'] ?? null;
-		if (is_string($id) === false || trim($id) === '') {
-			return $this->error(
-				code: 'invalid_arguments',
-				message: 'Required argument "id" is missing or empty.'
-			);
+		$id = $this->textArgument(args: $args, name: 'id');
+		if ($id === null) {
+			return $this->error(code: 'invalid_arguments', message: 'Required argument "id" is missing or empty.');
 		}
-
-		$id = trim($id);
 
 		// Per-object authorisation (OpenRegister RBAC) runs inside show() -> find(_rbac: true).
 		try {
@@ -364,14 +362,24 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		}
 
 		$data = $this->jsonResponseData(response: $response);
-		$refusal = $this->showRefusal(statusCode: $response->getStatus(), data: $data);
-		if ($refusal !== null) {
-			return $refusal;
-		}
 
+		return ($this->showRefusal(statusCode: $response->getStatus(), data: $data) ?? $this->publicationAnswer(id: $id, data: $data));
+
+	}//end handleGetPublication()
+
+	/**
+	 * The getPublication answer: the publication, its attachments and its source.
+	 *
+	 * Best-effort on the attachments: a failure there does not fail the whole tool call.
+	 *
+	 * @param string $id The publication id.
+	 * @param mixed $data The show() response data.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function publicationAnswer(string $id, mixed $data): array {
 		$publication = $this->toArray(item: $data);
 
-		// Best-effort: fetch the attachment list. Failures here do not fail the whole tool call.
 		return [
 			'success' => true,
 			'publication' => $publication,
@@ -379,7 +387,7 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 			'sources' => [$this->buildSource(publication: $publication)],
 		];
 
-	}//end handleGetPublication()
+	}//end publicationAnswer()
 
 	/**
 	 * The forbidden envelope for a publication read that threw, logged with the caller.
