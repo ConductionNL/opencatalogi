@@ -1884,12 +1884,7 @@ export default {
 			}
 			const auth = schema.authorization
 			// No authorization rules means everyone has access
-			if (
-				!auth
-				|| !auth.read
-				|| !Array.isArray(auth.read)
-				|| auth.read.length === 0
-			) {
+			if (!hasReadRules(auth)) {
 				return true
 			}
 			// Admin group always has full access
@@ -1897,16 +1892,9 @@ export default {
 				return true
 			}
 			// Check if user belongs to any group that has read permission
-			return auth.read.some((entry) => {
-				if (typeof entry === 'string') {
-					return this.currentUserGroups.includes(entry)
-				}
-				// Complex entry with match conditions — check group membership only
-				if (entry && typeof entry === 'object' && entry.group) {
-					return this.currentUserGroups.includes(entry.group)
-				}
-				return true
-			})
+			return auth.read.some((entry) =>
+				readEntryAllows(entry, this.currentUserGroups),
+			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -3164,6 +3152,38 @@ export default {
 			}
 		},
 	},
+}
+
+/**
+ * Whether a schema's authorization has read rules: a non-empty `read` list.
+ *
+ * @param {object|undefined} auth The schema's authorization.
+ * @return {boolean} True when there are read rules.
+ */
+function hasReadRules(auth) {
+	return Boolean(
+		auth && auth.read && Array.isArray(auth.read) && auth.read.length !== 0,
+	)
+}
+
+/**
+ * Whether one read rule lets a user in `groups` read: a group name the user
+ * is in, an entry with match conditions whose group the user is in (only the
+ * group membership is checked), and any other entry.
+ *
+ * @param {string|object|null} entry The read rule.
+ * @param {Array<string>} groups The user's groups.
+ * @return {boolean} True when the rule allows reading.
+ */
+function readEntryAllows(entry, groups) {
+	if (typeof entry === 'string') {
+		return groups.includes(entry)
+	}
+	// Complex entry with match conditions — check group membership only
+	if (entry && typeof entry === 'object' && entry.group) {
+		return groups.includes(entry.group)
+	}
+	return true
 }
 </script>
 
