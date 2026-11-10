@@ -972,13 +972,13 @@ export const useObjectStore = defineStore('object', {
 					if (!this.relatedData[type][dataType]) {
 						const defaultLimit = dataType === 'files' ? 500 : 20
 						fetchPromises.push(
-							this.fetchRelatedData(
+							this.fetchRelatedData({
 								type,
-								object.id,
+								id: object.id,
 								dataType,
-								{ _limit: defaultLimit, _page: 1 },
+								params: { _limit: defaultLimit, _page: 1 },
 								publicationData,
-							),
+							}),
 						)
 					}
 				}
@@ -1587,13 +1587,13 @@ export const useObjectStore = defineStore('object', {
 		 * @param publicationData
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
-		async fetchRelatedData(
+		async fetchRelatedData({
 			type,
 			id,
 			dataType,
 			params = {},
 			publicationData = null,
-		) {
+		}) {
 			const loadingKey = `${type}_${id}_${dataType}`
 			const request = { type, id, dataType, params, publicationData }
 			this.setLoading(loadingKey, true)
@@ -2702,13 +2702,13 @@ export const useObjectStore = defineStore('object', {
 				schema: this.extractId(activePublication['@self'].schema),
 				register: this.extractId(activePublication['@self'].register),
 			}
-			await this.fetchRelatedData(
-				'publication',
-				activePublication.id,
-				'files',
-				{},
+			await this.fetchRelatedData({
+				type: 'publication',
+				id: activePublication.id,
+				dataType: 'files',
+				params: {},
 				publicationData,
-			)
+			})
 		},
 
 		/**

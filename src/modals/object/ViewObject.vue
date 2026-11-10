@@ -2309,17 +2309,17 @@ export default {
 			const { registerId, schemaId } = this.getRegisterSchemaIds(
 				this.currentObject,
 			)
-			await objectStore.fetchRelatedData(
-				'publication',
-				this.currentObject.id,
-				'files',
+			await objectStore.fetchRelatedData({
+				type: 'publication',
+				id: this.currentObject.id,
+				dataType: 'files',
 				params,
-				{
+				publicationData: {
 					source: 'openregister',
 					schema: schemaId,
 					register: registerId,
 				},
-			)
+			})
 		},
 
 		/**
@@ -2573,13 +2573,13 @@ export default {
 					schema: schemaId,
 					register: registerId,
 				}
-				await objectStore.fetchRelatedData(
-					'publication',
-					this.currentObject.id,
-					'files',
-					{},
+				await objectStore.fetchRelatedData({
+					type: 'publication',
+					id: this.currentObject.id,
+					dataType: 'files',
+					params: {},
 					publicationData,
-				)
+				})
 
 				this.editingTags = null
 				this.editedTags = []
