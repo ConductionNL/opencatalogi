@@ -112,6 +112,20 @@ export default {
 			this.error = false
 		},
 
+		/**
+		 * Show whether the download worked, and close two seconds after it did.
+		 *
+		 * @param {Response} response The download response.
+		 * @return {void}
+		 */
+		showDownloadResult(response) {
+			this.success = response.ok
+			this.error = false
+			if (response.ok) {
+				this.closeModalTimeout = setTimeout(this.closeModal, 2000)
+			}
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-5 */
 		async downloadObject() {
 			this.loading = true
@@ -120,11 +134,7 @@ export default {
 				const response = await objectStore.downloadObject(
 					objectStore.objectItem,
 				)
-				this.success = response.ok
-				this.error = false
-				if (response.ok) {
-					this.closeModalTimeout = setTimeout(this.closeModal, 2000)
-				}
+				this.showDownloadResult(response)
 			} catch (error) {
 				this.success = false
 				this.error =

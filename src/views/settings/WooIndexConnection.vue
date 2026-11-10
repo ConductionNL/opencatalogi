@@ -155,10 +155,7 @@ export default {
 				)
 			}
 			if (status === 'registered') {
-				return this.t('opencatalogi', 'Registered on {date} for {url}.', {
-					date: this.registration.registeredAt,
-					url: this.registration.registeredUrl,
-				})
+				return this.registeredLabel()
 			}
 			return this.t('opencatalogi', 'Not registered yet.')
 		},
@@ -169,6 +166,18 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * The status line of a confirmed registration: when, and for which url.
+		 *
+		 * @return {string} The line.
+		 */
+		registeredLabel() {
+			return this.t('opencatalogi', 'Registered on {date} for {url}.', {
+				date: this.registration.registeredAt,
+				url: this.registration.registeredUrl,
+			})
+		},
+
 		/**
 		 * Read the registration and the rules.
 		 *

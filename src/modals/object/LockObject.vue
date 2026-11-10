@@ -125,16 +125,25 @@ export default {
 			this.duration = 3600
 		},
 
+		/**
+		 * Lock the object, with the process and duration when they are set.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async requestLock() {
+			await objectStore.lockObject(
+				objectStore.objectItem.id,
+				this.process || undefined,
+				this.duration || undefined,
+			)
+		},
+
 		/** @spec openspec/specs/generic-object-modals/spec.md */
 		async lockObject() {
 			this.loading = true
 
 			try {
-				await objectStore.lockObject(
-					objectStore.objectItem.id,
-					this.process || undefined,
-					this.duration || undefined,
-				)
+				await this.requestLock()
 				this.success = true
 				this.error = null
 				this.closeModalTimeout = setTimeout(this.closeModal, 2000)
