@@ -80,17 +80,51 @@ class DcatSerializer implements DcatSerializerInterface {
 	 */
 	public function negotiate(?string $formatParam, ?string $acceptHeader): ?string {
 		// Explicit query parameter wins.
-		if ($formatParam !== null && $formatParam !== '') {
+		if ($this->namesExplicitFormat(formatParam: $formatParam) === true) {
 			// Unknown explicit format → signal 406.
-			return (self::FORMAT_ALIASES[strtolower(trim($formatParam))] ?? null);
+			return $this->formatFromAlias(formatParam: (string) $formatParam);
 		}
 
+		return $this->formatFromAcceptHeader(acceptHeader: $acceptHeader);
+	}//end negotiate()
+
+	/**
+	 * Whether the `?format=` query parameter was given a value.
+	 *
+	 * @param string|null $formatParam The `?format=` query value.
+	 *
+	 * @return bool True when the parameter decides the format.
+	 */
+	private function namesExplicitFormat(?string $formatParam): bool {
+		return $formatParam !== null && $formatParam !== '';
+	}//end namesExplicitFormat()
+
+	/**
+	 * The canonical format a `?format=` value names, case and whitespace
+	 * insensitive.
+	 *
+	 * @param string $formatParam The `?format=` query value.
+	 *
+	 * @return string|null The canonical format name, or null for an unknown one.
+	 */
+	private function formatFromAlias(string $formatParam): ?string {
+		return (self::FORMAT_ALIASES[strtolower(trim($formatParam))] ?? null);
+	}//end formatFromAlias()
+
+	/**
+	 * The format the Accept header asks for, JSON-LD when it leaves it open.
+	 *
+	 * @param string|null $acceptHeader The HTTP Accept header value.
+	 *
+	 * @return string|null The canonical format name, or null when none matched.
+	 */
+	private function formatFromAcceptHeader(?string $acceptHeader): ?string {
 		if ($acceptHeader === null || $this->acceptsAnyFormat(acceptHeader: $acceptHeader) === true) {
 			return 'jsonld';
 		}
 
 		return $this->formatFromAccept(accept: strtolower($acceptHeader));
-	}//end negotiate()
+	}//end formatFromAcceptHeader()
 
 	/**
 	 * Whether an Accept header leaves the format open: empty, or a wildcard.
