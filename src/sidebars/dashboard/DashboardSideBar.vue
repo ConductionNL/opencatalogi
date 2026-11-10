@@ -332,55 +332,6 @@ const { files, reset } = useFileSelection({
 })
 
 /**
- * A publication type as an option of the publication type dropdown.
- *
- * @param {object} publicationType The publication type.
- * @return {{id: (string|number), source: string, label: string}} The option.
- */
-function toPublicationTypeOption(publicationType) {
-	return {
-		id: publicationType.id,
-		source: publicationType.source,
-		label: publicationType.title,
-	}
-}
-
-/**
- * Upload the selected file as an attachment of `publicationItem`.
- *
- * @param {object} publicationItem The publication.
- * @return {Promise<object>} The upload response.
- */
-function postAttachment(publicationItem) {
-	return axios.post(
-		'/index.php/apps/opencatalogi/api/attachments',
-		{
-			published: null,
-			summary: '',
-			license: '',
-			_file: files.value ? files.value[0] : '',
-		},
-		{ headers: attachmentHeaders(publicationItem) },
-	)
-}
-
-/**
- * The upload headers: multipart, plus the publication the file belongs to.
- *
- * @param {object} publicationItem The publication.
- * @return {object} The headers.
- */
-function attachmentHeaders(publicationItem) {
-	return {
-		'Content-Type': 'multipart/form-data',
-		// These headers are used to pass along some publication info to use as name for a Folder,
-		// to store (attachments/) files in for that specific publication,
-		'Publication-Id': publicationItem.id,
-		'Publication-Title': publicationItem.title,
-	}
-}
-
-/**
  * DashboardSideBar — sidebar accompanying the dashboard overview.
  *
  * @spec openspec/specs/dashboard/spec.md
@@ -676,6 +627,55 @@ export default {
 			})
 		},
 	},
+}
+
+/**
+ * A publication type as an option of the publication type dropdown.
+ *
+ * @param {object} publicationType The publication type.
+ * @return {{id: (string|number), source: string, label: string}} The option.
+ */
+function toPublicationTypeOption(publicationType) {
+	return {
+		id: publicationType.id,
+		source: publicationType.source,
+		label: publicationType.title,
+	}
+}
+
+/**
+ * Upload the selected file as an attachment of `publicationItem`.
+ *
+ * @param {object} publicationItem The publication.
+ * @return {Promise<object>} The upload response.
+ */
+function postAttachment(publicationItem) {
+	return axios.post(
+		'/index.php/apps/opencatalogi/api/attachments',
+		{
+			published: null,
+			summary: '',
+			license: '',
+			_file: files.value ? files.value[0] : '',
+		},
+		{ headers: attachmentHeaders(publicationItem) },
+	)
+}
+
+/**
+ * The upload headers: multipart, plus the publication the file belongs to.
+ *
+ * @param {object} publicationItem The publication.
+ * @return {object} The headers.
+ */
+function attachmentHeaders(publicationItem) {
+	return {
+		'Content-Type': 'multipart/form-data',
+		// These headers are used to pass along some publication info to use as name for a Folder,
+		// to store (attachments/) files in for that specific publication,
+		'Publication-Id': publicationItem.id,
+		'Publication-Title': publicationItem.title,
+	}
 }
 </script>
 
