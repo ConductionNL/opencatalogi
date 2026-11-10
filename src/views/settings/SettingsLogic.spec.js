@@ -357,3 +357,43 @@ describe('Settings save and sync actions', () => {
 		expect(ctx.syncingDirectories).toBe(false)
 	})
 })
+
+describe('Settings register change and schema options', () => {
+	it.each([
+		[[3, 'x', 4], [{ label: 'Schema 3', value: '3' }, { label: 'Schema 4', value: '4' }]],
+		[[{ id: 1, title: 'A' }, null, { id: 2 }, 'x'], [{ label: 'A', value: '1' }]],
+		[undefined, []],
+	])('lists the schema options of %j', (schemas, options) => {
+		const ctx = vm({ settings: { availableRegisters: [{ id: 5, schemas }] } })
+		Settings.methods.updateSchemaOptions.call(ctx, '5')
+		expect(ctx.schemaOptions).toEqual(options)
+	})
+
+	it('lists no options for an unknown register', () => {
+		const ctx = vm({ settings: { availableRegisters: [] } })
+		Settings.methods.updateSchemaOptions.call(ctx, '5')
+		expect(ctx.schemaOptions).toEqual([])
+	})
+
+	it.each([
+		[[{ id: 1, title: 'Catalog' }], { catalog: { schema: { label: 'Catalog', value: '1' } }, theme: { x: 1, schema: null } }],
+		[[1, 2], { catalog: { schema: null }, theme: { x: 1, schema: null } }],
+		[[], { catalog: { schema: null }, theme: { x: 1, schema: null } }],
+	])('resets and re-matches the schemas on a register change (%j)', (schemas, configuration) => {
+		const ctx = vm({
+			selectedRegister: { label: 'R', value: '5' },
+			configuration: { catalog: { schema: { label: 'old', value: '9' } }, theme: { x: 1 } },
+			settings: { objectTypes: ['catalog', 'theme'], availableRegisters: [{ id: 5, schemas }] },
+		})
+		ctx.handleRegisterChange()
+		expect(ctx.updateSchemaOptions).toHaveBeenCalledWith('5')
+		expect(ctx.configuration).toEqual(configuration)
+	})
+
+	it('does nothing on a register change without a selection', () => {
+		const ctx = vm({ configuration: { a: 1 } })
+		ctx.handleRegisterChange()
+		expect(ctx.updateSchemaOptions).not.toHaveBeenCalled()
+		expect(ctx.configuration).toEqual({ a: 1 })
+	})
+})
