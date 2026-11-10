@@ -601,9 +601,7 @@ export default {
 					...publicationItem,
 					attachments: [...publicationItem.attachments, attachmentId],
 				})
-				.then((response) => {
-					this.onAttachmentLinked(response)
-				})
+				.then((response) => this.onAttachmentLinked(response))
 				.catch((err) => {
 					this.error = err
 					this.loading = false
