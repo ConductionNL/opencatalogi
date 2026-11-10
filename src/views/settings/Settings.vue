@@ -695,20 +695,7 @@ export default defineComponent({
 				(r) => r.id.toString() === this.selectedRegister.value,
 			)
 
-			// Check if register has schemas - accept both array of IDs or array of schema objects.
-			if (!register || !Array.isArray(register.schemas)) {
-				return false
-			}
-
-			// Accept either array of integers (schema IDs) or array of schema objects.
-			return (
-				register.schemas.length > 0
-				&& register.schemas.some(
-					(schema) =>
-						typeof schema === 'number'
-						|| (schema && typeof schema === 'object' && schema.id),
-				)
-			)
+			return hasSchemaEntries(register)
 		},
 
 		/**
@@ -1155,18 +1142,10 @@ export default defineComponent({
 			this.configurationResults = null
 
 			try {
-				const response = await fetch(
+				const data = await fetchJson(
 					'/index.php/apps/opencatalogi/api/settings/load',
 				)
-				const data = await response.json()
-
-				if (data.error) {
-					this.configurationResults = { error: data.error }
-				} else {
-					this.configurationResults = { success: true }
-					// Reload settings to reflect any changes
-					await this.loadSettings()
-				}
+				await this.applyLoadedConfiguration(data)
 			} catch (error) {
 				this.configurationResults = {
 					error: 'Failed to load configuration: ' + error.message,
@@ -1174,6 +1153,23 @@ export default defineComponent({
 			} finally {
 				this.loadingConfiguration = false
 			}
+		},
+
+		/**
+		 * Show the outcome of a configuration load, reloading the settings
+		 * after a success.
+		 *
+		 * @param {object} data The load endpoint's answer.
+		 * @return {Promise<void>}
+		 */
+		async applyLoadedConfiguration(data) {
+			if (data.error) {
+				this.configurationResults = { error: data.error }
+				return
+			}
+			this.configurationResults = { success: true }
+			// Reload settings to reflect any changes
+			await this.loadSettings()
 		},
 
 		/**
@@ -1232,10 +1228,9 @@ export default defineComponent({
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		async loadVersionInfo() {
 			try {
-				const response = await fetch(
+				const data = await fetchJson(
 					'/index.php/apps/opencatalogi/api/settings/version',
 				)
-				const data = await response.json()
 
 				if (!data.error) {
 					this.versionInfo = data
@@ -1268,12 +1263,7 @@ export default defineComponent({
 			this.importResult = null
 
 			try {
-				const response = await axios.post(
-					generateUrl('/apps/opencatalogi/api/settings/import'),
-					{ force },
-				)
-
-				const result = response.data
+				const result = await requestImport(force)
 				this.importResult = result
 
 				// If successful, update version info and reload settings
@@ -1283,10 +1273,7 @@ export default defineComponent({
 			} catch (error) {
 				// eslint-disable-next-line no-console
 				console.error('Failed to perform manual import:', error)
-				this.importResult = {
-					success: false,
-					message: 'Import failed: ' + error.message,
-				}
+				this.importResult = importFailure(error)
 			} finally {
 				this.importing = false
 			}
@@ -1388,17 +1375,10 @@ export default defineComponent({
 			this.publicCacheError = ''
 
 			try {
-				const response = await axios.put(
-					generateUrl('/apps/opencatalogi/api/settings'),
-					{
-						public_api_cache_seconds: this.publicCacheSeconds,
-					},
-				)
-				const stored =
-					response.data && response.data.public_api_cache_seconds
-				if (stored !== undefined) {
-					this.publicCacheSeconds = String(stored)
-				}
+				const response = await putSettings({
+					public_api_cache_seconds: this.publicCacheSeconds,
+				})
+				this.showStoredCacheSeconds(response)
 			} catch {
 				this.publicCacheError = this.t(
 					'opencatalogi',
@@ -1406,6 +1386,19 @@ export default defineComponent({
 				)
 			} finally {
 				this.savingPublicCache = false
+			}
+		},
+
+		/**
+		 * Show the cache time the server stored, when it sent one back.
+		 *
+		 * @param {object} response The save response.
+		 * @return {void}
+		 */
+		showStoredCacheSeconds(response) {
+			const stored = response.data && response.data.public_api_cache_seconds
+			if (stored !== undefined) {
+				this.publicCacheSeconds = String(stored)
 			}
 		},
 
@@ -1421,9 +1414,7 @@ export default defineComponent({
 			this.channelSourcesError = ''
 
 			try {
-				await axios.put(generateUrl('/apps/opencatalogi/api/settings'), {
-					channel_sources: { ...this.channelSources },
-				})
+				await putSettings({ channel_sources: { ...this.channelSources } })
 			} catch {
 				this.channelSourcesError = this.t(
 					'opencatalogi',
@@ -1703,6 +1694,83 @@ export default defineComponent({
 		},
 	},
 })
+
+/**
+ * GET a settings endpoint and parse its JSON body.
+ *
+ * @param {string} url The endpoint.
+ * @return {Promise<object>} The body.
+ */
+async function fetchJson(url) {
+	const response = await fetch(url)
+	return response.json()
+}
+
+/**
+ * Save part of the app settings.
+ *
+ * @param {object} payload The settings to save.
+ * @return {Promise<object>} The response.
+ */
+function putSettings(payload) {
+	return axios.put(generateUrl('/apps/opencatalogi/api/settings'), payload)
+}
+
+/**
+ * Run the configuration import.
+ *
+ * @param {boolean} force Whether to force the import.
+ * @return {Promise<object>} The import result.
+ */
+async function requestImport(force) {
+	const response = await axios.post(
+		generateUrl('/apps/opencatalogi/api/settings/import'),
+		{ force },
+	)
+	return response.data
+}
+
+/**
+ * The import result shown when the import request failed.
+ *
+ * @param {Error} error The request error.
+ * @return {{success: boolean, message: string}} The result.
+ */
+function importFailure(error) {
+	return {
+		success: false,
+		message: 'Import failed: ' + error.message,
+	}
+}
+
+/**
+ * Whether a register has schemas: a non-empty list of schema ids or of schema
+ * objects with an id.
+ *
+ * @param {object|undefined} register The register.
+ * @return {boolean} True when it has schemas.
+ */
+function hasSchemaEntries(register) {
+	// Check if register has schemas - accept both array of IDs or array of schema objects.
+	if (!register || !Array.isArray(register.schemas)) {
+		return false
+	}
+	// Accept either array of integers (schema IDs) or array of schema objects.
+	return register.schemas.length > 0 && register.schemas.some(isSchemaEntry)
+}
+
+/**
+ * Whether a register's schema entry is a schema id or a schema object with an id.
+ *
+ * @param {number|object|null} schema The entry.
+ * @return {boolean} True for a schema.
+ */
+function isSchemaEntry(schema) {
+	return (
+		typeof schema === 'number'
+		|| Boolean(schema && typeof schema === 'object' && schema.id)
+	)
+}
 </script>
 
 <style scoped>
