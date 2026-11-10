@@ -76,6 +76,14 @@ class WOO536RepairReadRules implements IRepairStep {
 	private const TWO_RULE_SLUGS = ['publication', 'document'];
 
 	/**
+	 * The Dutch 1.x match keys, each with the English name used since #850.
+	 */
+	private const DUTCH_MATCH_KEYS = [
+		'publicatiedatum' => 'publicationDate',
+		'depublicatiedatum' => 'depublicationDate',
+	];
+
+	/**
 	 * Constructor.
 	 *
 	 * @param IAppManager $appManager The app manager.
@@ -289,40 +297,95 @@ class WOO536RepairReadRules implements IRepairStep {
 	 * @spec openspec/specs/search/spec.md
 	 */
 	private function translateDutchKeys(array $authorization, array &$dropped): array {
-		$map = [
-			'publicatiedatum' => 'publicationDate',
-			'depublicatiedatum' => 'depublicationDate',
-		];
-
 		foreach ($authorization as $action => $rules) {
 			if (is_array($rules) === false) {
 				continue;
 			}
 
 			foreach ($rules as $index => $rule) {
-				if (is_array($rule) === false || isset($rule['match']) === false || is_array($rule['match']) === false) {
+				if ($this->hasMatchList(rule: $rule) === false) {
 					continue;
 				}
 
-				$match = [];
-				foreach ($rule['match'] as $key => $condition) {
-					$newKey = ($map[$key] ?? $key);
-					// An English key that already exists wins over the Dutch
-					// duplicate — never clobber a rule the admin already fixed.
-					if ($newKey !== $key && array_key_exists($newKey, $rule['match']) === true) {
-						$dropped[] = "{$action}[{$index}].{$key}";
-						continue;
-					}
-
-					$match[$newKey] = $condition;
-				}
-
-				$authorization[$action][$index]['match'] = $match;
+				$authorization[$action][$index]['match'] = $this->englishMatch(match: $rule['match']);
+				array_push($dropped, ...$this->droppedDutchKeys(match: $rule['match'], location: "{$action}[{$index}]"));
 			}
 		}
 
 		return $authorization;
 	}//end translateDutchKeys()
+
+	/**
+	 * Whether an action's element is a conditional rule with a match list.
+	 *
+	 * @param mixed $rule One element of an action's rule list.
+	 *
+	 * @return bool True when the rule has a `match` array.
+	 */
+	private function hasMatchList(mixed $rule): bool {
+		return is_array($rule) === true && isset($rule['match']) === true && is_array($rule['match']) === true;
+	}//end hasMatchList()
+
+	/**
+	 * The match list with its Dutch keys renamed to English, in place; a Dutch
+	 * key whose English name is already there is left out.
+	 *
+	 * @param array $match The rule's match list.
+	 *
+	 * @return array The match list with English keys.
+	 */
+	private function englishMatch(array $match): array {
+		$english = [];
+		foreach ($match as $key => $condition) {
+			$newKey = $this->englishKeyFor(match: $match, key: $key);
+			if ($newKey === null) {
+				continue;
+			}
+
+			$english[$newKey] = $condition;
+		}
+
+		return $english;
+	}//end englishMatch()
+
+	/**
+	 * Where each Dutch duplicate left out of a match list sat, as
+	 * "action[index].key".
+	 *
+	 * @param array $match The rule's match list.
+	 * @param string $location The rule's "action[index]".
+	 *
+	 * @return string[] One entry per dropped Dutch key, in match order.
+	 */
+	private function droppedDutchKeys(array $match, string $location): array {
+		$dropped = [];
+		foreach (array_keys($match) as $key) {
+			if ($this->englishKeyFor(match: $match, key: $key) === null) {
+				$dropped[] = "{$location}.{$key}";
+			}
+		}
+
+		return $dropped;
+	}//end droppedDutchKeys()
+
+	/**
+	 * The key a match condition goes under: the English name of a Dutch key,
+	 * any other key as it is. An English key that already exists wins over the
+	 * Dutch duplicate — never clobber a rule the admin already fixed.
+	 *
+	 * @param array $match The rule's match list.
+	 * @param int|string $key One key of that list.
+	 *
+	 * @return int|string|null The key to use, or null when the condition is dropped.
+	 */
+	private function englishKeyFor(array $match, int|string $key): int|string|null {
+		$newKey = (self::DUTCH_MATCH_KEYS[$key] ?? $key);
+		if ($newKey !== $key && array_key_exists($newKey, $match) === true) {
+			return null;
+		}
+
+		return $newKey;
+	}//end englishKeyFor()
 
 	/**
 	 * Detect the old single-rule shape.
