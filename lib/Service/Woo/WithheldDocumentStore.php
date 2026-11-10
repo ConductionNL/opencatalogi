@@ -187,7 +187,12 @@ class WithheldDocumentStore {
 
 		try {
 			[$register, $schema] = $this->target(key: 'publication_schema');
-			$found = $objects->find(id: $publicationId, options: new ObjectFindOptions(register: $register, schema: $schema), _rbac: false, _multitenancy: false);
+			$found = $objects->find(
+				id: $publicationId,
+				options: new ObjectFindOptions(register: $register, schema: $schema),
+				_rbac: false,
+				_multitenancy: false
+			);
 		} catch (DoesNotExistException $e) {
 			return false;
 		} catch (Throwable $e) {

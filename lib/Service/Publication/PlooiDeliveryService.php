@@ -83,7 +83,12 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		$objectService = $this->settingsService->getObjectService();
-		$entity = $objectService?->find(id: $uuid, options: new ObjectFindOptions(register: $register, schema: $schema), _rbac: false, _multitenancy: false);
+		$entity = $objectService?->find(
+			id: $uuid,
+			options: new ObjectFindOptions(register: $register, schema: $schema),
+			_rbac: false,
+			_multitenancy: false
+		);
 		if ($entity === null) {
 			return null;
 		}

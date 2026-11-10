@@ -257,7 +257,12 @@ class BatchPublicationWriter {
 		$earlier = (string)($batch['wooPublication']['publication'] ?? '');
 		if ($earlier !== '') {
 			try {
-				$entity = $objects->find(id: $earlier, options: new ObjectFindOptions(register: self::REGISTER, schema: self::SCHEMA), _rbac: false, _multitenancy: false);
+				$entity = $objects->find(
+					id: $earlier,
+					options: new ObjectFindOptions(register: self::REGISTER, schema: self::SCHEMA),
+					_rbac: false,
+					_multitenancy: false
+				);
 				if ($entity !== null) {
 					return ['id' => $earlier, 'entity' => $entity];
 				}

@@ -400,7 +400,11 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function findIntegriqEntity(string $schema, string $slug): ?object {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$object = $objectService->find(id: $slug, options: new ObjectFindOptions(register: self::INTEGRIQ_REGISTER, schema: $schema), _multitenancy: false);
+			$object = $objectService->find(
+				id: $slug,
+				options: new ObjectFindOptions(register: self::INTEGRIQ_REGISTER, schema: $schema),
+				_multitenancy: false
+			);
 		} catch (Throwable) {
 			return null;
 		}
