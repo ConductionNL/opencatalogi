@@ -491,6 +491,7 @@ import TagEdit from 'vue-material-design-icons/TagEdit.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import { Attachment } from '../../entities/index.js'
 import { EventBus } from '../../eventBus.js'
+import { fileSizeLabel } from '../../services/fileSizeLabel.js'
 import { registerSchemaIdsOf } from '../../services/registerSchemaIds.js'
 import {
 	closingTags,
@@ -802,12 +803,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
 		 */
 		bytesToSize(bytes) {
-			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-			if (bytes === 0) return 'n/a'
-			const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
-			if (i === 0 && sizes[i] === 'Bytes') return '< 1 KB'
-			if (i === 0) return bytes + ' ' + sizes[i]
-			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
+			return fileSizeLabel(bytes)
 		},
 
 		/**
