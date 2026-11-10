@@ -35,6 +35,7 @@ use OCP\IRequest;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Unit\Support\SearchCallShape;
 
 /**
  * Golden test for RobotsController::index().
@@ -213,6 +214,6 @@ class RobotsIndexGoldenTest extends TestCase {
 			$named[$parameter->getName()] = $args[$position];
 		}
 
-		return $named;
+		return SearchCallShape::named(args: $named);
 	}//end passedArguments()
 }//end class

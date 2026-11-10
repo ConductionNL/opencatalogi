@@ -49,6 +49,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Unit\Support\SearchCallShape;
 
 /**
  * Golden test for the setup endpoints.
@@ -427,7 +428,7 @@ class SetupEndpointsGoldenTest extends TestCase {
 			$named[$parameter->getName()] = $args[$position];
 		}
 
-		return $named;
+		return SearchCallShape::named(args: $named);
 	}//end passedArguments()
 
 	/**

@@ -40,6 +40,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\SearchOptions;
 
 class DcatCatalogDocumentTest extends TestCase {
 	private const SNAPSHOT = __DIR__ . '/../../fixtures/dcat/catalog-document-page-2.json';
@@ -68,7 +69,7 @@ class DcatCatalogDocumentTest extends TestCase {
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(
 			static function (...$args) use (&$searched): array {
-				$searched = $args;
+				$searched = self::oldSearchArguments(args: $args);
 				return [
 					'results' => [
 						['@self' => ['uuid' => 'u1', 'schema' => 28, 'updated' => '2026-02-03T04:05:06+00:00'], 'id' => 'u1', 'title' => 'Besluit een', 'summary' => 'Kort'],
@@ -184,4 +185,25 @@ class DcatCatalogDocumentTest extends TestCase {
 		$this->expectException(RuntimeException::class);
 		$service->buildCatalogDocument(catalog: ['schemas' => []], catalogSlug: 'leeg');
 	}
+
+	/**
+	 * The searchObjectsPaginated call in its recorded positional shape, from before SearchOptions:
+	 * query, _rbac, _multitenancy, deleted, ids, uses, views.
+	 *
+	 * @param array<int, mixed> $args The arguments the mock received.
+	 *
+	 * @return array<int, mixed> The arguments in the old positional shape.
+	 */
+	private static function oldSearchArguments(array $args): array {
+		$options = ($args[3] ?? new SearchOptions());
+		return [
+			$args[0],
+			$args[1],
+			$args[2],
+			$options->deleted,
+			$options->selection->ids,
+			$options->selection->uses,
+			$options->views,
+		];
+	}//end oldSearchArguments()
 }

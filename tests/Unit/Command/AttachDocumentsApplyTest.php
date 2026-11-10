@@ -19,6 +19,7 @@ namespace Unit\Command;
 
 use OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand;
 use OCA\OpenCatalogi\Service\AttachmentMigrationService;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -67,8 +68,8 @@ class AttachDocumentsApplyTest extends TestCase {
 			) {
 			}
 
-			public function searchObjectsBySlug(string $register, string $schema, array $filters = [], bool $rbac = true, bool $multitenancy = true): array {
-				return ($schema === 'document' ? $this->documents : []);
+			public function searchObjectsBySlug(RegisterSchemaRef $target, array $filters = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				return ($target->schema === 'document' ? $this->documents : []);
 			}
 
 			public function find(int|string $id, ...$rest): object {

@@ -60,6 +60,7 @@ use ReflectionNamedType;
 use ReflectionType;
 use ReflectionUnionType;
 use RuntimeException;
+use Unit\Support\SearchCallShape;
 
 /**
  * Golden test for the register plumbing of the register-bound controllers.
@@ -641,7 +642,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			}
 		}
 
-		return $this->normalise(value: $named);
+		return $this->normalise(value: SearchCallShape::named(args: $named));
 	}//end arguments()
 
 	/**

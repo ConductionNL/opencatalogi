@@ -26,6 +26,7 @@ namespace Unit\Command;
 
 use OCA\OpenCatalogi\Command\MigrateCmsToPortaliqCommand;
 use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -118,8 +119,10 @@ class MigrateCmsToPortaliqGoldenTest extends TestCase {
 			) {
 			}
 
-			public function searchObjectsBySlug(string $register, string $schema, array $filters = [], bool $rbac = true, bool $multitenancy = true): mixed {
-				$this->calls[] = ['read' => [$register, $schema, $filters, $rbac, $multitenancy]];
+			public function searchObjectsBySlug(RegisterSchemaRef $target, array $filters = [], bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $target->register;
+				$schema = $target->schema;
+				$this->calls[] = ['read' => [$register, $schema, $filters, $_rbac, $_multitenancy]];
 				if (($this->case['failRead'] ?? null) === $schema) {
 					throw new RuntimeException($schema . ' unreadable');
 				}

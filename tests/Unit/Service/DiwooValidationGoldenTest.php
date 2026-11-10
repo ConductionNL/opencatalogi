@@ -49,6 +49,7 @@ use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
+use OCA\OpenRegister\Kernel\Contracts\SearchOptions;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
@@ -190,8 +191,8 @@ class DiwooValidationGoldenTest extends TestCase {
 		$pages = ($case['rows'] ?? []);
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(
-			static function (array $query = [], bool $_rbac = true, bool $_multitenancy = true, bool $deleted = false) use (&$calls, $catalog, $pages): array {
-				$calls[] = ['searchObjectsPaginated', $query, $_rbac, $_multitenancy, $deleted];
+			static function (array $query = [], bool $_rbac = true, bool $_multitenancy = true, SearchOptions $options = new SearchOptions()) use (&$calls, $catalog, $pages): array {
+				$calls[] = ['searchObjectsPaginated', $query, $_rbac, $_multitenancy, $options->deleted];
 				if (isset($query['slug']) === true) {
 					if ($catalog === null) {
 						return ['results' => []];
