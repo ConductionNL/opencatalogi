@@ -26,6 +26,8 @@ namespace OCA\OpenCatalogi\Service\Woo;
  * The entries of one call as they are resolved, in order: each position is
  * accepted once, and a later entry for an accepted position is refused as
  * invalid. Built and read by WithheldDocuments only.
+ *
+ * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
  */
 final class WithheldResolution {
 
@@ -58,6 +60,8 @@ final class WithheldResolution {
 	 * @param array<string, mixed> $resolved `['entry' => ...]` or `['refused' => ...]`.
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
 	public function add(array $entry, array $resolved): void {
 		if (isset($resolved['refused']) === true) {
@@ -78,6 +82,8 @@ final class WithheldResolution {
 	 * The accepted and the refused entries.
 	 *
 	 * @return array{0: list<array<string, mixed>>, 1: list<array{position: int, code: string, reason: string}>}
+	 *
+	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
 	public function result(): array {
 		return [$this->accepted, $this->refused];
