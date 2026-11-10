@@ -16,10 +16,19 @@
  * @return {object} The context.
  */
 export function injectedObjectContext(vm) {
-	const injected =
-		vm.cnObjectContext && (vm.cnObjectContext.value || vm.cnObjectContext)
+	const injected = unwrapped(vm.cnObjectContext)
 	const holder = vm.cnDetailObjectContext && vm.cnDetailObjectContext.value
 	return injected || holder || {}
+}
+
+/**
+ * An injected context as it is used: a ref's value, or the plain object.
+ *
+ * @param {object|null} context The injected context.
+ * @return {object|null} The context, or a falsy value when there is none.
+ */
+function unwrapped(context) {
+	return context && (context.value || context)
 }
 
 /**
@@ -30,7 +39,18 @@ export function injectedObjectContext(vm) {
  * @return {string|number} The slug, or ''.
  */
 export function schemaSlug(schema) {
-	return typeof schema === 'string'
-		? schema
-		: (schema && (schema.slug || schema.name || schema.id)) || ''
+	if (typeof schema === 'string') {
+		return schema
+	}
+	return objectSlug(schema) || ''
+}
+
+/**
+ * The slug of a schema object: its slug, name or id.
+ *
+ * @param {object|null} schema The schema object.
+ * @return {string|number|null} The slug, or a falsy value.
+ */
+function objectSlug(schema) {
+	return schema && (schema.slug || schema.name || schema.id)
 }
