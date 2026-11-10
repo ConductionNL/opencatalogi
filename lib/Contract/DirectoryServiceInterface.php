@@ -93,6 +93,7 @@ interface DirectoryServiceInterface {
 	 * @throws \InvalidArgumentException When the URL is malformed or unsafe.
 	 *
 	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 * @contract-shift internal-only — only OpenCatalogi's DirectoryService implements it; no fleet app doubles it (grep, 2026-11-10).
 	 */
 	public function trustDirectory(string $directoryUrl): void;
 
@@ -105,6 +106,7 @@ interface DirectoryServiceInterface {
 	 * @return void
 	 *
 	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 * @contract-shift internal-only — only OpenCatalogi's DirectoryService implements it; no fleet app doubles it (grep, 2026-11-10).
 	 */
 	public function untrustDirectory(string $directoryUrl): void;
 
@@ -116,6 +118,7 @@ interface DirectoryServiceInterface {
 	 * @throws \Throwable When OpenRegister or the search fails (no configured listing register answers []: nothing was crawled).
 	 *
 	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 * @contract-shift internal-only — only OpenCatalogi's DirectoryService implements it; no fleet app doubles it (grep, 2026-11-10).
 	 */
 	public function readAllKnownDirectoryUrls(): array;
 

@@ -136,6 +136,8 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * dns_get_record()/gethostbyname() as before.
 	 *
 	 * @var (\Closure(string): list<string>)|null
+	 *
+	 * @phpstan-ignore property.unusedType (only the unit test assigns it, through reflection)
 	 */
 	private ?\Closure $hostResolver = null;
 

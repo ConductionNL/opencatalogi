@@ -28,6 +28,7 @@ use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
 use Psr\Container\ContainerInterface;
+use RuntimeException;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -166,7 +167,7 @@ class SeedTrustedDirectories implements IRepairStep {
 	 */
 	private function lookupKnownDirectories(): array {
 		if (in_array('openregister', $this->appManager->getInstalledApps(), true) === false) {
-			throw new \RuntimeException('OpenRegister is not installed');
+			throw new RuntimeException('OpenRegister is not installed');
 		}
 
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');

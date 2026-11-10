@@ -747,6 +747,8 @@ class CatalogiService implements CatalogiServiceInterface {
 		}
 
 		$context = self::SYSTEM_OPERATION_CONTEXT;
+		// OpenRegister is outside this app's analysis scope, so PHPStan cannot see the class exists.
+		// @phpstan-ignore function.impossibleType
 		if (class_exists($context) === true && method_exists($context, 'isActive') === true
 			&& $context::isActive() === true
 		) {

@@ -353,19 +353,36 @@ class ListingsController extends Controller {
 			schema: $listingSchema
 		);
 
-		// An admin-registered directory is crawled by the cron sync from now on. A
-		// directory that cannot be synced (this instance itself) is kept, not crawled.
-		if (empty($allowed['directory']) === false) {
-			try {
-				$this->directoryService->trustDirectory($allowed['directory']);
-			} catch (\InvalidArgumentException $exception) {
-				$this->logger?->info('[ListingsController::create] Directory not added to the cron sync', ['error' => $exception->getMessage()]);
-			}
-		}
+		$this->trustCreatedListingDirectory(directory: (string)($allowed['directory'] ?? ''));
 
 		// Return the created object as a JSON response.
 		return new JSONResponse($object);
 	}//end create()
+
+	/**
+	 * Add the directory of an admin-registered listing to the cron sync.
+	 *
+	 * A directory that cannot be synced (this instance itself) keeps its listing but
+	 * is not crawled; that refusal is logged, not returned.
+	 *
+	 * @param string $directory The listing's directory URL, empty when it has none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	private function trustCreatedListingDirectory(string $directory): void {
+		if ($directory === '') {
+			return;
+		}
+
+		try {
+			$this->directoryService->trustDirectory($directory);
+		} catch (\InvalidArgumentException $exception) {
+			$this->logger?->info('[ListingsController::create] Directory not added to the cron sync', ['error' => $exception->getMessage()]);
+		}
+
+	}//end trustCreatedListingDirectory()
 
 	/**
 	 * PUT /api/listings/{id} allow-list. Directory-identity URLs and server-managed
