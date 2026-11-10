@@ -1,33 +1,47 @@
 <script setup>
+import Delete from 'vue-material-design-icons/Delete.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<DeleteConfirmationDialog
+	<ConfirmObjectActionDialog
 		dialog="deleteCategory"
 		objectType="category"
 		:canClose="false"
 		:title="t('opencatalogi', 'Delete Category')"
-		:successText="t('opencatalogi', 'Category successfully deleted')"
-		:failureText="
-			t(
-				'opencatalogi',
-				'Something went wrong while deleting the category',
-			)
-		"
-		:loadingText="t('opencatalogi', 'Category is being deleted...')"
-		:question="
-			t(
-				'opencatalogi',
-				'Do you want to delete {name}? This action cannot be undone.',
-				{ name: objectStore.getActiveObject('category')?.name },
-			)
-		"
-		@delete="deleteCategory()" />
+		:actionLabel="t('opencatalogi', 'Delete')"
+		:actionIcon="Delete"
+		actionIconName="Delete"
+		actionVariant="error"
+		@confirm="deleteCategory()">
+		<template #success>
+			{{ t('opencatalogi', 'Category successfully deleted') }}
+		</template>
+		<template #failure>
+			{{
+				t(
+					'opencatalogi',
+					'Something went wrong while deleting the category',
+				)
+			}}
+		</template>
+		<template #loading>
+			{{ t('opencatalogi', 'Category is being deleted...') }}
+		</template>
+		<template #question>
+			{{
+				t(
+					'opencatalogi',
+					'Do you want to delete {name}? This action cannot be undone.',
+					{ name: objectStore.getActiveObject('category')?.name },
+				)
+			}}
+		</template>
+	</ConfirmObjectActionDialog>
 </template>
 
 <script>
-import DeleteConfirmationDialog from '../generic/DeleteConfirmationDialog.vue'
+import ConfirmObjectActionDialog from '../generic/ConfirmObjectActionDialog.vue'
 
 /**
  * Delete Category Dialog Component
@@ -44,7 +58,7 @@ import DeleteConfirmationDialog from '../generic/DeleteConfirmationDialog.vue'
 export default {
 	name: 'DeleteCategoryDialog',
 	components: {
-		DeleteConfirmationDialog,
+		ConfirmObjectActionDialog,
 	},
 
 	methods: {

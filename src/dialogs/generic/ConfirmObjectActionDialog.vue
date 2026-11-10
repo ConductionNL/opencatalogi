@@ -1,9 +1,10 @@
 <script setup>
 /**
- * Confirm-and-delete dialog for one object type: asks the question, shows
- * the store's progress, success and error for that type, and emits `delete`
- * when the user confirms. The dialog that uses it does the deleting; its
- * other attributes fall through to NcDialog.
+ * Confirm-an-action dialog for one object type (delete, copy): asks the
+ * question, shows the store's progress, success and error for that type, and
+ * emits `confirm` when the user confirms. The dialog that uses it fills the
+ * texts through the `success`, `failure`, `loading` and `question` slots and
+ * does the work; its other attributes fall through to NcDialog.
  *
  * @module Dialogs
  * @package
@@ -12,10 +13,9 @@
  */
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
-import Delete from 'vue-material-design-icons/Delete.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
 
-defineOptions({ name: 'DeleteConfirmationDialog' })
+defineOptions({ name: 'ConfirmObjectActionDialog' })
 
 defineProps({
 	/** The navigation store's dialog name that opens this dialog. */
@@ -24,17 +24,17 @@ defineProps({
 	objectType: { type: String, required: true },
 	/** The dialog's title. */
 	title: { type: String, required: true },
-	/** The text after a successful delete. */
-	successText: { type: String, required: true },
-	/** The text when the delete did not succeed. */
-	failureText: { type: String, required: true },
-	/** The text while deleting. */
-	loadingText: { type: String, required: true },
-	/** The question asked before deleting. */
-	question: { type: String, required: true },
+	/** The confirm button's label. */
+	actionLabel: { type: String, required: true },
+	/** The confirm button's icon component. */
+	actionIcon: { type: [Object, Function], required: true },
+	/** The icon name the confirm button carries. */
+	actionIconName: { type: String, required: true },
+	/** The confirm button's variant. */
+	actionVariant: { type: String, required: true },
 })
 
-defineEmits(['delete'])
+defineEmits(['confirm'])
 </script>
 
 <template>
@@ -47,12 +47,12 @@ defineEmits(['delete'])
 			<NcNoteCard
 				v-if="objectStore.getState(objectType).success"
 				type="success">
-				<p>{{ successText }}</p>
+				<p><slot name="success" /></p>
 			</NcNoteCard>
 			<NcNoteCard
 				v-if="!objectStore.getState(objectType).success"
 				type="error">
-				<p>{{ failureText }}</p>
+				<p><slot name="failure" /></p>
 			</NcNoteCard>
 			<NcNoteCard v-if="objectStore.getState(objectType).error" type="error">
 				<p>{{ objectStore.getState(objectType).error }}</p>
@@ -60,14 +60,14 @@ defineEmits(['delete'])
 		</div>
 		<div v-if="objectStore.isLoading(objectType)" class="loading-status">
 			<NcLoadingIcon :size="20" />
-			<span>{{ loadingText }}</span>
+			<span><slot name="loading" /></span>
 		</div>
 		<p
 			v-if="
 				objectStore.getState(objectType).success === null
 				&& !objectStore.isLoading(objectType)
 			">
-			{{ question }}
+			<slot name="question" />
 		</p>
 		<template
 			v-if="
@@ -86,13 +86,13 @@ defineEmits(['delete'])
 			</NcButton>
 			<NcButton
 				:disabled="objectStore.isLoading(objectType)"
-				icon="Delete"
-				variant="error"
-				@click="$emit('delete')">
+				:icon="actionIconName"
+				:variant="actionVariant"
+				@click="$emit('confirm')">
 				<template #icon>
-					<Delete :size="20" />
+					<component :is="actionIcon" :size="20" />
 				</template>
-				{{ t('opencatalogi', 'Delete') }}
+				{{ actionLabel }}
 			</NcButton>
 		</template>
 		<template v-else #actions>

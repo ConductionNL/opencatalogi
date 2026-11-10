@@ -1,32 +1,46 @@
 <script setup>
+import Delete from 'vue-material-design-icons/Delete.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
 <template>
-	<DeleteConfirmationDialog
+	<ConfirmObjectActionDialog
 		dialog="deleteMultipleCategories"
 		objectType="category"
 		:canClose="false"
 		:title="t('opencatalogi', 'Delete Categories')"
-		:successText="t('opencatalogi', 'Categories successfully deleted')"
-		:failureText="
-			t(
-				'opencatalogi',
-				'Something went wrong while deleting the categories',
-			)
-		"
-		:loadingText="t('opencatalogi', 'Categories are being deleted...')"
-		:question="
-			t(
-				'opencatalogi',
-				'Do you want to delete the selected categories? This action cannot be undone.',
-			)
-		"
-		@delete="deleteCategories()" />
+		:actionLabel="t('opencatalogi', 'Delete')"
+		:actionIcon="Delete"
+		actionIconName="Delete"
+		actionVariant="error"
+		@confirm="deleteCategories()">
+		<template #success>
+			{{ t('opencatalogi', 'Categories successfully deleted') }}
+		</template>
+		<template #failure>
+			{{
+				t(
+					'opencatalogi',
+					'Something went wrong while deleting the categories',
+				)
+			}}
+		</template>
+		<template #loading>
+			{{ t('opencatalogi', 'Categories are being deleted...') }}
+		</template>
+		<template #question>
+			{{
+				t(
+					'opencatalogi',
+					'Do you want to delete the selected categories? This action cannot be undone.',
+				)
+			}}
+		</template>
+	</ConfirmObjectActionDialog>
 </template>
 
 <script>
-import DeleteConfirmationDialog from '../generic/DeleteConfirmationDialog.vue'
+import ConfirmObjectActionDialog from '../generic/ConfirmObjectActionDialog.vue'
 
 /**
  * Delete Multiple Categories Dialog Component
@@ -43,7 +57,7 @@ import DeleteConfirmationDialog from '../generic/DeleteConfirmationDialog.vue'
 export default {
 	name: 'DeleteMultipleCategoriesDialog',
 	components: {
-		DeleteConfirmationDialog,
+		ConfirmObjectActionDialog,
 	},
 
 	methods: {

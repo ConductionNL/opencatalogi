@@ -109,9 +109,6 @@
     "@nextcloud/l10n-enforce-ellipsis": {
       "count": 2
     },
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
-    },
     "vue/prefer-define-options": {
       "count": 1
     }

@@ -7,8 +7,8 @@
  * after an error, and what pressing Copy does.
  */
 
-import { h } from 'vue'
 import { flushPromises, mount } from '@vue/test-utils'
+import { h } from 'vue'
 import CopyObjectDialog from './CopyObjectDialog.vue'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 
