@@ -1263,13 +1263,7 @@ export default {
 				return []
 			}
 
-			// Catalog.registers arrives as a string array (`["1"]`) while
-			// `register.id` from OpenRegister is numeric — `.includes` uses
-			// strict equality so the raw check would drop every match and
-			// leave the modal stalled on the empty-state (WOO-527 followup).
-			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(
-				String,
-			)
+			const selectedCatalogRegisterIds = registerIdsOf(fullCatalog)
 
 			return objectStore.availableRegisters
 				.filter((register) =>
@@ -3159,6 +3153,21 @@ function clearBorders(el) {
 	el.style.borderColor = 'transparent'
 	el.style.outline = 'none'
 	el.style.boxShadow = 'none'
+}
+
+/**
+ * A catalog's register ids as text.
+ *
+ * Catalog.registers arrives as a string array (`["1"]`) while `register.id`
+ * from OpenRegister is numeric — `.includes` uses strict equality so the raw
+ * check would drop every match and leave the modal stalled on the
+ * empty-state (WOO-527 followup).
+ *
+ * @param {object} catalog The catalog.
+ * @return {Array<string>} The register ids.
+ */
+function registerIdsOf(catalog) {
+	return (catalog.registers || []).map(String)
 }
 
 /**
