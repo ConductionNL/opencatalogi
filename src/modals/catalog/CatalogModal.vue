@@ -285,6 +285,19 @@ function firstOfEachId(schemas) {
 	})
 }
 
+/**
+ * A schema as a select option, labelled with its register.
+ *
+ * @param {object} schema The schema.
+ * @return {object} The option.
+ */
+function schemaOption(schema) {
+	return {
+		id: schema.id,
+		label: `${schema.title} (${schema.registerTitle})`,
+	}
+}
+
 export default {
 	name: 'CatalogModal',
 	components: {
@@ -357,10 +370,7 @@ export default {
 							availableSchemaIds.includes(schema.id)
 							&& !selectedSchemaIds.includes(schema.id),
 					),
-				).map((schema) => ({
-					id: schema.id,
-					label: `${schema.title} (${schema.registerTitle})`,
-				})),
+				).map(schemaOption),
 			)
 		},
 
@@ -425,18 +435,25 @@ export default {
 			const registers = this.selectedRegisters.map((register) => register.id)
 			const schemas = this.selectedSchemas.map((schema) => schema.id)
 
-			const status =
-				typeof this.catalogi.status === 'object'
-					? this.catalogi.status.id
-					: this.catalogi.status.toLowerCase()
 			return new Catalogi({
 				...this.catalogi,
-				status,
+				status: this.statusId(),
 				organization: this.selectedOrganization?.id,
 				registers,
 				schemas,
 				filters: this.catalogi.filters || {},
 			})
+		},
+
+		/**
+		 * The form's status as its id: the option's id, or the text lowercased.
+		 *
+		 * @return {string} The status id.
+		 */
+		statusId() {
+			return typeof this.catalogi.status === 'object'
+				? this.catalogi.status.id
+				: this.catalogi.status.toLowerCase()
 		},
 
 		/**
