@@ -244,16 +244,27 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 				customParams: $request['customParams']
 			);
 		} catch (\Throwable $e) {
-			$this->logger->error(
-				'OpenCatalogi MCP: searchCatalog failed',
-				['caller' => $this->callerUid(), 'exception' => $e->getMessage()]
-			);
-			return $this->error(
-				code: 'internal_error',
-				message: 'Failed to search publications. See server log for details.'
-			);
-		}//end try
+			return $this->searchFailure(exception: $e);
+		}
 	}//end searchIndex()
+
+	/**
+	 * Log a search that threw and answer the internal-error envelope.
+	 *
+	 * @param \Throwable $exception What index() threw.
+	 *
+	 * @return array<string, mixed> The error envelope.
+	 */
+	private function searchFailure(\Throwable $exception): array {
+		$this->logger->error(
+			'OpenCatalogi MCP: searchCatalog failed',
+			['caller' => $this->callerUid(), 'exception' => $exception->getMessage()]
+		);
+		return $this->error(
+			code: 'internal_error',
+			message: 'Failed to search publications. See server log for details.'
+		);
+	}//end searchFailure()
 
 	/**
 	 * The validated searchCatalog arguments as an index() call, or the argument error.
@@ -263,12 +274,9 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	 * @return array<string, mixed> `catalogId` and `customParams`, or an `error` answer.
 	 */
 	private function searchCatalogRequest(array $args): array {
-		$query = $args['query'] ?? null;
-		if (is_string($query) === false || trim($query) === '') {
-			return $this->error(
-				code: 'invalid_arguments',
-				message: 'Required argument "query" is missing or empty.'
-			);
+		$query = $this->textArgument(args: $args, name: 'query');
+		if ($query === null) {
+			return $this->missingArgument(name: 'query');
 		}
 
 		$limit = $this->limitArgument(args: $args);
@@ -281,13 +289,56 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 
 		return [
 			'catalogId' => $this->catalogArgument(args: $args),
-			'customParams' => [
-				'_search' => trim($query),
-				'_limit' => $limit,
-				'_page' => 1,
-			],
+			'customParams' => $this->searchParams(query: $query, limit: $limit),
 		];
 	}//end searchCatalogRequest()
+
+	/**
+	 * The index() parameters of a search: the query, the limit and the first page.
+	 *
+	 * @param string $query The trimmed query.
+	 * @param int $limit The checked limit.
+	 *
+	 * @return array{_search: string, _limit: int, _page: int}
+	 */
+	private function searchParams(string $query, int $limit): array {
+		return [
+			'_search' => $query,
+			'_limit' => $limit,
+			'_page' => 1,
+		];
+	}//end searchParams()
+
+	/**
+	 * The trimmed text of a required argument, or null when it is absent, blank or not a string.
+	 *
+	 * @param array<string, mixed> $args Tool arguments.
+	 * @param string $name The argument's name.
+	 *
+	 * @return string|null
+	 */
+	private function textArgument(array $args, string $name): ?string {
+		$value = $args[$name] ?? null;
+		if (is_string($value) === false || trim($value) === '') {
+			return null;
+		}
+
+		return trim($value);
+	}//end textArgument()
+
+	/**
+	 * The error envelope for a required argument that is missing or empty.
+	 *
+	 * @param string $name The argument's name.
+	 *
+	 * @return array<string, mixed> The error envelope.
+	 */
+	private function missingArgument(string $name): array {
+		return $this->error(
+			code: 'invalid_arguments',
+			message: 'Required argument "' . $name . '" is missing or empty.'
+		);
+	}//end missingArgument()
 
 	/**
 	 * The `limit` argument as a number, or the results cap when it is absent.
@@ -340,13 +391,26 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 			'sources' => $this->sourcesOf(publications: $results),
 		];
 
-		if ($total > self::RESULTS_CAP) {
-			$result['resultsTruncated'] = true;
-			$result['resultsTotalCount'] = $total;
+		return $result + $this->truncation(total: $total);
+	}//end searchCatalogResult()
+
+	/**
+	 * The truncation flags of a search that found more than the results cap, else none.
+	 *
+	 * @param int $total How many results the search found.
+	 *
+	 * @return array{resultsTruncated?: true, resultsTotalCount?: int}
+	 */
+	private function truncation(int $total): array {
+		if ($total <= self::RESULTS_CAP) {
+			return [];
 		}
 
-		return $result;
-	}//end searchCatalogResult()
+		return [
+			'resultsTruncated' => true,
+			'resultsTotalCount' => $total,
+		];
+	}//end truncation()
 
 	/**
 	 * The `results` list of an index() answer, or an empty list when it has none.
@@ -394,12 +458,9 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 	 * @return array<string, mixed>
 	 */
 	private function handleGetPublication(array $args): array {
-		$id = $this->idArgument(args: $args);
+		$id = $this->textArgument(args: $args, name: 'id');
 		if ($id === null) {
-			return $this->error(
-				code: 'invalid_arguments',
-				message: 'Required argument "id" is missing or empty.'
-			);
+			return $this->missingArgument(name: 'id');
 		}
 
 		$response = $this->shownPublication(id: $id);
@@ -407,6 +468,19 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 			return $response;
 		}
 
+		return $this->answeredPublication(id: $id, response: $response);
+
+	}//end handleGetPublication()
+
+	/**
+	 * The getPublication answer for a show() response: its refusal, else the publication.
+	 *
+	 * @param string $id The publication id.
+	 * @param JSONResponse $response The show() answer.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function answeredPublication(string $id, JSONResponse $response): array {
 		$data = $this->jsonResponseData(response: $response);
 		$refusal = $this->showRefusal(statusCode: $response->getStatus(), data: $data);
 		if ($refusal !== null) {
@@ -414,24 +488,7 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		}
 
 		return $this->publicationAnswer(id: $id, publication: $this->toArray(item: $data));
-
-	}//end handleGetPublication()
-
-	/**
-	 * The trimmed `id` argument, or null when it is absent, blank or not a string.
-	 *
-	 * @param array<string, mixed> $args Tool arguments.
-	 *
-	 * @return string|null
-	 */
-	private function idArgument(array $args): ?string {
-		$id = $args['id'] ?? null;
-		if (is_string($id) === false || trim($id) === '') {
-			return null;
-		}
-
-		return trim($id);
-	}//end idArgument()
+	}//end answeredPublication()
 
 	/**
 	 * The show() answer for a publication, or the forbidden envelope when it throws.
