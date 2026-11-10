@@ -651,24 +651,42 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
 		async onRegisterChange() {
 			if (!this.targetRegister) {
-				this.availableSchemas = []
-				this.targetSchema = null
+				this.clearSchemaChoice()
 				return
 			}
 
 			this.loading = true
 			try {
-				const response = await fetch(
-					`/index.php/apps/openregister/api/schemas?register=${this.targetRegister.id}`,
-				)
-				const data = await response.json()
-				this.availableSchemas = data.results || []
+				this.availableSchemas = await this.fetchRegisterSchemas()
 			} catch (error) {
 				console.error('Error loading schemas:', error)
 				this.availableSchemas = []
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Forget the schemas and the chosen schema of the previous register.
+		 *
+		 * @return {void}
+		 */
+		clearSchemaChoice() {
+			this.availableSchemas = []
+			this.targetSchema = null
+		},
+
+		/**
+		 * The schemas of the chosen target register.
+		 *
+		 * @return {Promise<Array<object>>} The schemas.
+		 */
+		async fetchRegisterSchemas() {
+			const response = await fetch(
+				`/index.php/apps/openregister/api/schemas?register=${this.targetRegister.id}`,
+			)
+			const data = await response.json()
+			return data.results || []
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
@@ -696,9 +714,18 @@ export default {
 		nextStep() {
 			if (this.step === 1 && this.selectedObjects.length > 0) {
 				this.step = 2
-			} else if (this.step === 2 && this.targetRegister && this.targetSchema) {
+			} else if (this.step === 2 && this.hasTargetSchema()) {
 				this.step = 3
 			}
+		},
+
+		/**
+		 * Whether a target register and schema are both chosen.
+		 *
+		 * @return {boolean} True when both are.
+		 */
+		hasTargetSchema() {
+			return Boolean(this.targetRegister && this.targetSchema)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-7 */
@@ -715,18 +742,7 @@ export default {
 			}
 
 			try {
-				// Load source schema properties
-				this.sourceProperties = this.extractSchemaProperties(
-					this.sourceSchema,
-				)
-
-				// Load target schema properties
-				const response = await fetch(
-					`/index.php/apps/openregister/api/schemas/${this.targetSchema.id}`,
-				)
-				const targetSchemaData = await response.json()
-				this.targetProperties =
-					this.extractSchemaProperties(targetSchemaData)
+				await this.loadPropertyLists()
 
 				// Initialize property mappings
 				this.initializePropertyMappings()
@@ -736,6 +752,24 @@ export default {
 			} catch (error) {
 				console.error('Error loading schema properties:', error)
 			}
+		},
+
+		/**
+		 * Read the source schema's properties, then fetch the target schema
+		 * and read its properties.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async loadPropertyLists() {
+			// Load source schema properties
+			this.sourceProperties = this.extractSchemaProperties(this.sourceSchema)
+
+			// Load target schema properties
+			const response = await fetch(
+				`/index.php/apps/openregister/api/schemas/${this.targetSchema.id}`,
+			)
+			const targetSchemaData = await response.json()
+			this.targetProperties = this.extractSchemaProperties(targetSchemaData)
 		},
 
 		/**
