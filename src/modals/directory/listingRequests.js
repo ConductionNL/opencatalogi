@@ -51,7 +51,7 @@ function listingError(body, status) {
  * @param {{method: string, payload: object}} request - The HTTP method and the payload
  * @return {Promise<{res: Response, body: object}>} The answer and its body
  */
-export async function sendListingJson(endpoint, { method, payload }) {
+async function sendListingJson(endpoint, { method, payload }) {
 	const res = await fetch(endpoint, {
 		method,
 		headers: {
@@ -102,4 +102,23 @@ export async function deleteListing(listingId) {
 	if (!res.ok) {
 		throw listingError(await answerBody(res), res.status)
 	}
+}
+
+/**
+ * Add a peer directory by its URL.
+ *
+ * @param {string} url - The directory URL
+ * @return {Promise<object>} The answer
+ * @throws {Error} With the API's message, else the HTTP status, when refused
+ */
+export async function addDirectory(url) {
+	const endpoint = generateUrl('/apps/opencatalogi/api/listings/add')
+	const { res, body } = await sendListingJson(endpoint, {
+		method: 'POST',
+		payload: { url },
+	})
+	if (!res.ok) {
+		throw new Error(body.message || `HTTP ${res.status}`)
+	}
+	return body
 }
