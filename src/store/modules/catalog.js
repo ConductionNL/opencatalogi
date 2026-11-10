@@ -37,14 +37,28 @@ function publicationSearchParams(params, pagination) {
  * @return {{results: Array, total: number, page: number, pages: number, limit: number, offset: number}} The page
  */
 function publicationsPage(data) {
-	return {
-		results: data.results || [],
-		total: data.total || 0,
-		page: data.page || 1,
-		pages: data.pages || 0,
-		limit: data.limit || 20,
-		offset: data.offset || 0,
-	}
+	return { results: data.results || [], ...withPageFallbacks(data) }
+}
+
+/**
+ * What a publications page falls back to, field by field, when a value is
+ * missing or falsy.
+ */
+const PAGE_FALLBACK = { total: 0, page: 1, pages: 0, limit: 20, offset: 0 }
+
+/**
+ * The paging fields of `values`, each falling back to PAGE_FALLBACK.
+ *
+ * @param {object} values - The page or API answer
+ * @return {{total: number, page: number, pages: number, limit: number, offset: number}} The fields
+ */
+function withPageFallbacks(values) {
+	return Object.fromEntries(
+		Object.entries(PAGE_FALLBACK).map(([key, fallback]) => [
+			key,
+			values[key] || fallback,
+		]),
+	)
 }
 
 /**
@@ -336,14 +350,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 			this.activeCatalog = null
 			this.activePublication = null
-			this.publications = {
-				results: [],
-				total: 0,
-				page: 1,
-				pages: 0,
-				limit: 20,
-				offset: 0,
-			}
+			this.publications = publicationsPage({})
 		},
 	},
 
@@ -419,13 +426,10 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @return {object} The pagination info
 		 */
 		publicationPagination: (state) => {
-			return {
-				page: state.publications.page || 1,
-				pages: state.publications.pages || 0,
-				total: state.publications.total || 0,
-				limit: state.publications.limit || 20,
-				offset: state.publications.offset || 0,
-			}
+			const { page, pages, total, limit, offset } = withPageFallbacks(
+				state.publications,
+			)
+			return { page, pages, total, limit, offset }
 		},
 	},
 })
