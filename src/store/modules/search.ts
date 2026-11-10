@@ -99,6 +99,20 @@ function appendFacetCategory(
 		appendSelfFacets(searchParams, facets as Record<string, ActiveFacetConfig>)
 		return
 	}
+	appendObjectFieldFacet(searchParams, [category, facets])
+}
+
+/**
+ * Append the facet query of one object field.
+ *
+ * @param searchParams The params to extend
+ * @param entry The field name and its facet config
+ * @spec openspec/specs/search/spec.md
+ */
+function appendObjectFieldFacet(
+	searchParams: URLSearchParams,
+	[category, facets]: [string, object],
+): void {
 	console.log(`🎛️ Processing object field: "${category}", config:`, facets)
 	appendFacetParams(searchParams, {
 		prefix: `_facets[${category}]`,
@@ -169,6 +183,20 @@ interface RelationQuery {
 	params: Record<string, string | number | boolean>
 }
 
+/**
+ * The federation path of a publication's related publications, with the query.
+ *
+ * @param publicationId The ID of the publication
+ * @param query Which relation, and the query parameters
+ * @return The path and query string
+ */
+function relationPath(publicationId: string, query: RelationQuery): string {
+	const searchParams = new URLSearchParams(
+		query.params as Record<string, string>,
+	)
+	return `/${publicationId}/${query.relation}?${searchParams.toString()}`
+}
+
 /** What is logged after fetching each kind of related publications. */
 const RELATION_LOG = {
 	uses: {
@@ -194,12 +222,7 @@ async function fetchPublicationRelation(
 ) {
 	const log = RELATION_LOG[query.relation]
 	try {
-		const searchParams = new URLSearchParams(
-			query.params as Record<string, string>,
-		)
-		const data = await getFederationJson(
-			`/${publicationId}/${query.relation}?${searchParams.toString()}`,
-		)
+		const data = await getFederationJson(relationPath(publicationId, query))
 		console.log(log.fetched, data)
 		return data
 	} catch (error) {
