@@ -569,6 +569,101 @@ const DEFAULT_LAYOUT = [
 ]
 
 /**
+ * One custom dashboard widget.
+ *
+ * @param {string} id - The widget id
+ * @param {string} title - The translated title
+ * @return {{id: string, title: string, type: string}} The definition
+ */
+function customWidget(id, title) {
+	return { id, title, type: 'custom' }
+}
+
+/**
+ * A publication list widget whose title icon shows the status colour.
+ *
+ * @param {string} id - The widget id
+ * @param {{title: string, color: string}} look - The translated title and the icon colour
+ * @return {object} The definition
+ */
+function statusListWidget(id, { title, color }) {
+	return {
+		...customWidget(id, title),
+		titleIconPosition: 'left',
+		titleIconColor: color,
+	}
+}
+
+/**
+ * The publication count widgets.
+ *
+ * @return {Array<object>} The definitions
+ */
+function countWidgetDefs() {
+	return [
+		customWidget('count-publications', t('opencatalogi', 'Publications')),
+		customWidget(
+			'count-concept-publications',
+			t('opencatalogi', 'Concept Publications'),
+		),
+		customWidget(
+			'count-published-publications',
+			t('opencatalogi', 'Published Publications'),
+		),
+		customWidget(
+			'count-depublished-publications',
+			t('opencatalogi', 'Depublished Publications'),
+		),
+		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+		// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+	]
+}
+
+/**
+ * The chart and statistics widgets.
+ *
+ * @return {Array<object>} The definitions
+ */
+function chartWidgetDefs() {
+	return [
+		customWidget(
+			'publications-by-category',
+			t('opencatalogi', 'Publications by Category'),
+		),
+		customWidget('activity', t('opencatalogi', 'Activity')),
+		customWidget('usage', t('opencatalogi', 'Publication views')),
+		customWidget(
+			'popular-searches',
+			t('opencatalogi', 'Popular Search Terms'),
+		),
+	]
+}
+
+/**
+ * The publication list widgets per status.
+ *
+ * @return {Array<object>} The definitions
+ */
+function statusListWidgetDefs() {
+	return [
+		statusListWidget('concept-publications', {
+			title: t('opencatalogi', 'Concept Publications'),
+			color: 'var(--color-warning)',
+		}),
+		statusListWidget('published-publications', {
+			title: t('opencatalogi', 'Published Publications'),
+			color: 'var(--color-success)',
+		}),
+		statusListWidget('depublished-publications', {
+			title: t('opencatalogi', 'Depublished Publications'),
+			color: 'var(--color-error)',
+		}),
+		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+		// { id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+	]
+}
+
+/**
  * Dashboard — overview view: catalogs, publication totals, activity chart.
  *
  * @spec openspec/specs/dashboard/spec.md
@@ -741,71 +836,9 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		widgetDefs() {
 			return [
-				{
-					id: 'count-publications',
-					title: t('opencatalogi', 'Publications'),
-					type: 'custom',
-				},
-				{
-					id: 'count-concept-publications',
-					title: t('opencatalogi', 'Concept Publications'),
-					type: 'custom',
-				},
-				{
-					id: 'count-published-publications',
-					title: t('opencatalogi', 'Published Publications'),
-					type: 'custom',
-				},
-				{
-					id: 'count-depublished-publications',
-					title: t('opencatalogi', 'Depublished Publications'),
-					type: 'custom',
-				},
-				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
-				// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
-				{
-					id: 'publications-by-category',
-					title: t('opencatalogi', 'Publications by Category'),
-					type: 'custom',
-				},
-				{
-					id: 'activity',
-					title: t('opencatalogi', 'Activity'),
-					type: 'custom',
-				},
-				{
-					id: 'usage',
-					title: t('opencatalogi', 'Publication views'),
-					type: 'custom',
-				},
-				{
-					id: 'popular-searches',
-					title: t('opencatalogi', 'Popular Search Terms'),
-					type: 'custom',
-				},
-				{
-					id: 'concept-publications',
-					title: t('opencatalogi', 'Concept Publications'),
-					type: 'custom',
-					titleIconPosition: 'left',
-					titleIconColor: 'var(--color-warning)',
-				},
-				{
-					id: 'published-publications',
-					title: t('opencatalogi', 'Published Publications'),
-					type: 'custom',
-					titleIconPosition: 'left',
-					titleIconColor: 'var(--color-success)',
-				},
-				{
-					id: 'depublished-publications',
-					title: t('opencatalogi', 'Depublished Publications'),
-					type: 'custom',
-					titleIconPosition: 'left',
-					titleIconColor: 'var(--color-error)',
-				},
-				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
-				// { id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+				...countWidgetDefs(),
+				...chartWidgetDefs(),
+				...statusListWidgetDefs(),
 			]
 		},
 	},
