@@ -1087,10 +1087,8 @@ export default {
 					) || null
 				)
 			}
-			return referencedSchema(
-				this.currentObject?.['@self']?.schema,
-				objectStore.availableSchemas,
-			)
+			const schemaRef = this.currentObject?.['@self']?.schema
+			return referencedSchema(schemaRef, objectStore.availableSchemas)
 		},
 
 		/**
@@ -2586,10 +2584,8 @@ export default {
 				)
 				return fullSchema?.properties || {}
 			}
-			return referencedSchemaProperties(
-				this.currentObject?.['@self']?.schema,
-				objectStore.availableSchemas,
-			)
+			const schemaRef = this.currentObject?.['@self']?.schema
+			return referencedSchemaProperties(schemaRef, objectStore.availableSchemas)
 		},
 
 		// Helper method to rebuild object with schema properties after API operations

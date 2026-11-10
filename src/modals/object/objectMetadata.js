@@ -272,6 +272,18 @@ function propertiesLookupId(schemaRef) {
 }
 
 /**
+ * The properties of an embedded schema object, when it carries any.
+ *
+ * @param {object|string|number} schemaRef - The reference
+ * @return {object|null} The properties
+ */
+function embeddedSchemaProperties(schemaRef) {
+	return typeof schemaRef === 'object' && schemaRef.properties
+		? schemaRef.properties
+		: null
+}
+
+/**
  * The properties of the schema an object's `@self.schema` refers to: the
  * embedded schema's own properties, else the listed schema's, else none.
  *
@@ -283,9 +295,8 @@ export function referencedSchemaProperties(schemaRef, schemas) {
 	if (!schemaRef) return {}
 
 	// If schema is already an extended object, use its properties directly
-	if (typeof schemaRef === 'object' && schemaRef.properties) {
-		return schemaRef.properties
-	}
+	const embedded = embeddedSchemaProperties(schemaRef)
+	if (embedded) return embedded
 
 	// @self.schema can be a UUID string, numeric ID, or slug — match against all
 	const schemaId = propertiesLookupId(schemaRef)

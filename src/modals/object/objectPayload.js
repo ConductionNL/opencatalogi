@@ -189,6 +189,22 @@ function withoutId(currentObjectData) {
 }
 
 /**
+ * Put the edited properties outside the schema into the payload, except
+ * the ones marked for deletion (undefined).
+ *
+ * @param {object} objectData - The payload, changed in place
+ * @param {{schemaProperties: object, form: object}} input - The schema properties and the cleaned form values
+ * @return {void}
+ */
+function addExtraFormValues(objectData, { schemaProperties, form }) {
+	for (const [key, value] of Object.entries(form)) {
+		if (isExtraFormKey(key, schemaProperties) && value !== undefined) {
+			objectData[key] = value
+		}
+	}
+}
+
+/**
  * The complete save payload of an object: its current values without the
  * id, every schema property, and the edited properties outside the schema
  * that are not marked for deletion.
@@ -205,12 +221,7 @@ export function buildObjectPayload(currentObject, { schemaProperties, form }) {
 		applySchemaProperty(objectData, { key, schemaProperty, form, current })
 	}
 
-	for (const [key, value] of Object.entries(form)) {
-		if (isExtraFormKey(key, schemaProperties) && value !== undefined) {
-			objectData[key] = value
-		}
-	}
-
+	addExtraFormValues(objectData, { schemaProperties, form })
 	return objectData
 }
 
