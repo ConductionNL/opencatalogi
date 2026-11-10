@@ -520,6 +520,27 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 	 * Test broadcast with a specific valid URL.
 	 */
 	/**
+	 * Test broadcast counts an unsafe target as not reached, without calling it.
+	 */
+	public function testBroadcastToAnUnsafeTargetIsNotASuccess(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+		$this->containerMock->method('get')
+			->willReturn($this->createMockObjectService([]));
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$result = $this->broadcastService->broadcast('http://169.254.169.254/latest/meta-data');
+
+		$this->assertSame(['http://169.254.169.254/latest/meta-data' => false], $result);
+
+	}//end testBroadcastToAnUnsafeTargetIsNotASuccess()
+
+	/**
 	 * @group network
 	 */
 	public function testBroadcastWithSpecificUrl(): void {
