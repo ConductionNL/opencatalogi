@@ -641,8 +641,45 @@ class RegisterPlumbingGoldenTest extends TestCase {
 			}
 		}
 
-		return $this->normalise(value: $named);
+		return $this->normalise(value: self::spreadDeletion(named: $named));
 	}//end arguments()
+
+	/**
+	 * A deleteObject call's ObjectDeletion read back into the recorded argument names.
+	 *
+	 * The recording predates the value object; its uuid, register and schema
+	 * (and a non-default user or permanent flag) take the place it had.
+	 *
+	 * @param array<string, mixed> $named The named arguments.
+	 *
+	 * @return array<string, mixed> The arguments in the recorded shape.
+	 */
+	private static function spreadDeletion(array $named): array {
+		if (($named['deletion'] ?? null) instanceof \OCA\OpenRegister\Service\Object\ObjectDeletion === false) {
+			return $named;
+		}
+
+		$out = [];
+		foreach ($named as $key => $value) {
+			if ($key !== 'deletion') {
+				$out[$key] = $value;
+				continue;
+			}
+
+			$out['uuid'] = $value->uuid;
+			$spread = [
+				'register' => $value->target->register,
+				'schema' => $value->target->schema,
+				'currentUser' => $value->currentUser,
+			];
+			$out += array_filter($spread, static fn (mixed $part): bool => $part !== null);
+			if ($value->permanent === true) {
+				$out['permanent'] = true;
+			}
+		}
+
+		return $out;
+	}//end spreadDeletion()
 
 	/**
 	 * A typed default for a return type.

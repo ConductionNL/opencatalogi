@@ -22,6 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Repair;
 
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
 use OCP\Migration\IOutput;
 
 /**
@@ -85,9 +87,10 @@ final class OrphanListingSweep {
 
 		try {
 			$this->objectService->deleteObject(
-				uuid: (string)$uuid,
-				register: (string)$table->registerId,
-				schema: (string)$table->schemaId,
+				deletion: new ObjectDeletion(
+					uuid: (string)$uuid,
+					target: new ObjectFindTarget(register: (string)$table->registerId, schema: (string)$table->schemaId)
+				),
 				_rbac: false,
 				_multitenancy: false
 			);

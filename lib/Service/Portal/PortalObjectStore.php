@@ -28,6 +28,8 @@ namespace OCA\OpenCatalogi\Service\Portal;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -187,9 +189,7 @@ class PortalObjectStore {
 	 */
 	public function delete(string $schema, string $id): bool {
 		return (bool)$this->objectService()->deleteObject(
-			uuid: $id,
-			register: self::REGISTER,
-			schema: $schema,
+			deletion: new ObjectDeletion(uuid: $id, target: new ObjectFindTarget(register: self::REGISTER, schema: $schema)),
 			_rbac: false,
 			_multitenancy: false
 		);

@@ -288,7 +288,10 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase {
 			) {
 			}
 
-			public function deleteObject(string $uuid, string $register, string $schema, bool $_rbac, bool $_multitenancy): bool {
+			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion, bool $_rbac, bool $_multitenancy): bool {
+				$uuid = $deletion->uuid;
+				$register = $deletion->target->register;
+				$schema = $deletion->target->schema;
 				if ($uuid === 'boom') {
 					throw new \RuntimeException('locked row ' . $uuid);
 				}
