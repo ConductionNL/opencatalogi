@@ -43,6 +43,60 @@ use OCP\AppFramework\Http\Events\BeforeTemplateRenderedEvent;
 class ListenerRegistrar {
 
 	/**
+	 * Every event and its listener, in the order they are registered, which is
+	 * the order the listeners of one event run in.
+	 *
+	 * @var array<int, array{0: class-string, 1: class-string}>
+	 */
+	private const LISTENERS = [
+		[ObjectCreatedEvent::class, ObjectCreatedEventListener::class],
+		[ObjectUpdatedEvent::class, ObjectUpdatedEventListener::class],
+		// Woo citizen journey (citizen-collections, REQ-CCOL-007): when portaliq
+		// marks a portal account removed, delete that resident's dossiers and
+		// saved searches. portaliq has no removal event; the account update is it.
+		[ObjectUpdatedEvent::class, PortalAccountRemovedListener::class],
+		// PLOOI delivery (woo-national-delivery-repair, REQ-WND-003): queue a
+		// delivery when a publication has just become public.
+		[ObjectUpdatedEvent::class, PlooiDeliveryListener::class],
+		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
+		[ObjectCreatedEvent::class, WooReadinessTriggerListener::class],
+		[ObjectUpdatedEvent::class, WooReadinessTriggerListener::class],
+		// Catalog cache event listeners.
+		[ObjectCreatedEvent::class, CatalogCacheEventListener::class],
+		[ObjectUpdatedEvent::class, CatalogCacheEventListener::class],
+		[ObjectDeletedEvent::class, CatalogCacheEventListener::class],
+		// Catalog rewrite event listeners on the *pre-save* events so the
+		// listener can mutate the in-flight payload via `setModifiedData(...)` instead
+		// of issuing a second save. Subscribing to the post-save events caused an
+		// infinite event loop on every catalog update/soft-delete.
+		[ObjectCreatingEvent::class, CatalogSchemaEventListener::class],
+		[ObjectUpdatingEvent::class, CatalogSchemaEventListener::class],
+		// Catalogue staff access (catalogue-staff-access): refuse a change by a
+		// non-administrator before the write, recompute the covered schemas' rules after it.
+		[ObjectCreatingEvent::class, CatalogAccessListener::class],
+		[ObjectUpdatingEvent::class, CatalogAccessListener::class],
+		[ObjectCreatedEvent::class, CatalogAccessListener::class],
+		[ObjectUpdatedEvent::class, CatalogAccessListener::class],
+		[ObjectDeletedEvent::class, CatalogAccessListener::class],
+		// A seeded catalogue can name another app's register by slug (the
+		// applicatielandschap catalogue names stackiq's). When that app is
+		// installed after OpenCatalogi, its register event completes the scope
+		// (publish-from-stackiq, REQ-PFS-004).
+		[RegisterCreatedEvent::class, CatalogScopePendingListener::class],
+		[RegisterUpdatedEvent::class, CatalogScopePendingListener::class],
+		// Tool registration listener for OpenRegister agents.
+		[ToolRegistrationEvent::class, ToolRegistrationListener::class],
+		// Provide the manifest-config initial state on every SPA `index` render,
+		// controller-independent. After the AppHost adoption (ADR-040) the `/`
+		// index route resolves to OpenRegister's shared AppHost dashboard
+		// controller, which serves templates/index.php without OpenCatalogi's
+		// register/schema config, so a clean install then rendered no SPA. Hooking
+		// the provision to BeforeTemplateRenderedEvent restores it for both the
+		// AppHost `/` page and the UiController-served deep-link routes.
+		[BeforeTemplateRenderedEvent::class, ProvideManifestConfigStateListener::class],
+	];
+
+	/**
 	 * Register the event listeners.
 	 *
 	 * @param IRegistrationContext $context The registration context.
@@ -54,98 +108,9 @@ class ListenerRegistrar {
 	 * @spec exclude Component wiring; subscribes existing listeners, no behaviour of its own.
 	 */
 	public function register(IRegistrationContext $context): void {
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: ObjectCreatedEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: ObjectUpdatedEventListener::class
-		);
-
-		// Woo citizen journey (citizen-collections, REQ-CCOL-007): when portaliq
-		// marks a portal account removed, delete that resident's dossiers and
-		// saved searches. portaliq has no removal event; the account update is it.
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: PortalAccountRemovedListener::class
-		);
-
-		// PLOOI delivery (woo-national-delivery-repair, REQ-WND-003): queue a
-		// delivery when a publication has just become public.
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: PlooiDeliveryListener::class
-		);
-
-		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: WooReadinessTriggerListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: WooReadinessTriggerListener::class
-		);
-
-		// Register catalog cache event listeners.
-		$context->registerEventListener(
-			event: ObjectCreatedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectUpdatedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-		$context->registerEventListener(
-			event: ObjectDeletedEvent::class,
-			listener: CatalogCacheEventListener::class
-		);
-
-		// Register catalog rewrite event listeners on the *pre-save* events so the
-		// listener can mutate the in-flight payload via `setModifiedData(...)` instead
-		// of issuing a second save. Subscribing to the post-save events caused an
-		// infinite event loop on every catalog update/soft-delete.
-		$context->registerEventListener(ObjectCreatingEvent::class, CatalogSchemaEventListener::class);
-		$context->registerEventListener(ObjectUpdatingEvent::class, CatalogSchemaEventListener::class);
-
-		// Catalogue staff access (catalogue-staff-access): refuse a change by a
-		// non-administrator before the write, recompute the covered schemas' rules after it.
-		$catalogAccessEvents = [
-			ObjectCreatingEvent::class,
-			ObjectUpdatingEvent::class,
-			ObjectCreatedEvent::class,
-			ObjectUpdatedEvent::class,
-			ObjectDeletedEvent::class,
-		];
-		foreach ($catalogAccessEvents as $catalogAccessEvent) {
-			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
+		foreach (self::LISTENERS as [$event, $listener]) {
+			$context->registerEventListener(event: $event, listener: $listener);
 		}
-
-		// A seeded catalogue can name another app's register by slug (the
-		// applicatielandschap catalogue names stackiq's). When that app is
-		// installed after OpenCatalogi, its register event completes the scope
-		// (publish-from-stackiq, REQ-PFS-004).
-		$context->registerEventListener(RegisterCreatedEvent::class, CatalogScopePendingListener::class);
-		$context->registerEventListener(RegisterUpdatedEvent::class, CatalogScopePendingListener::class);
-
-		// Register tool registration listener for OpenRegister agents.
-		$context->registerEventListener(
-			event: ToolRegistrationEvent::class,
-			listener: ToolRegistrationListener::class
-		);
-
-		// Provide the manifest-config initial state on every SPA `index` render,
-		// controller-independent. After the AppHost adoption (ADR-040) the `/`
-		// index route resolves to OpenRegister's shared AppHost dashboard
-		// controller, which serves templates/index.php without OpenCatalogi's
-		// register/schema config, so a clean install then rendered no SPA. Hooking
-		// the provision to BeforeTemplateRenderedEvent restores it for both the
-		// AppHost `/` page and the UiController-served deep-link routes.
-		$context->registerEventListener(
-			event: BeforeTemplateRenderedEvent::class,
-			listener: ProvideManifestConfigStateListener::class
-		);
 
 	}//end register()
 }//end class
