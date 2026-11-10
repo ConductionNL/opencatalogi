@@ -716,16 +716,7 @@ export default {
 				objectStore.setCollection('tags', tagsToEmit)
 			} catch (e) {}
 			// emit closed and tags-updated once
-			EventBus.$emit('upload-files:closed', {
-				tags: tagsToEmit,
-				newTags: this.newTags,
-			})
-			if (tagsToEmit.length > 0) {
-				EventBus.$emit('upload-files:tags-updated', {
-					tags: tagsToEmit,
-					newTags: this.newTags,
-				})
-			}
+			this.emitClosingTags(tagsToEmit, this.newTags)
 			navigationStore.setDialog(null)
 			objectStore.setActiveObject(
 				'publication',
@@ -823,36 +814,73 @@ export default {
 				)
 				const data = await response.json().catch(() => [])
 
-				const lists = labelOptionLists(
-					knownTags(data, objectStore),
-					noLabelOption(),
+				this.applyTagLists(
+					labelOptionLists(knownTags(data, objectStore), noLabelOption()),
 				)
-				const newLabelOptions = lists.options
-				const newLabelOptionsEdit = lists.edit
-
-				this.labelOptions.options = newLabelOptions
-				this.labelOptionsEdit.options = newLabelOptionsEdit
-
-				if (this.initialTags.length === 0) {
-					this.initialTags = [...newLabelOptionsEdit]
-				}
-				this.latestTags = [...newLabelOptionsEdit]
-				this.newTags = this.latestTags.filter(
-					(t) => !this.initialTags.includes(t),
-				)
-				// save globally so other views may pull
-				try {
-					objectStore.setCollection('tags', this.latestTags)
-				} catch (e) {}
-				// notify listeners about fresh tags
-				EventBus.$emit('upload-files:tags-fetched', {
-					tags: this.latestTags,
-					newTags: this.newTags,
-				})
+				this.shareLatestTags()
 			} catch (e) {
 				console.error('Failed to fetch tags', e)
 			} finally {
 				this.tagsLoading = false
+			}
+		},
+
+		/**
+		 * Take fetched label lists as the options, and track the latest tags
+		 * and the ones new since the dialog opened.
+		 *
+		 * @param {{options: Array<string>, edit: Array<string>}} lists - The label option lists
+		 * @return {void}
+		 */
+		applyTagLists(lists) {
+			this.labelOptions.options = lists.options
+			this.labelOptionsEdit.options = lists.edit
+
+			if (this.initialTags.length === 0) {
+				this.initialTags = [...lists.edit]
+			}
+			this.latestTags = [...lists.edit]
+			this.newTags = this.latestTags.filter(
+				(t) => !this.initialTags.includes(t),
+			)
+		},
+
+		/**
+		 * Share the latest tags: in the store for other views, and as an
+		 * event for listeners.
+		 *
+		 * @return {void}
+		 */
+		shareLatestTags() {
+			// save globally so other views may pull
+			try {
+				objectStore.setCollection('tags', this.latestTags)
+			} catch (e) {}
+			// notify listeners about fresh tags
+			EventBus.$emit('upload-files:tags-fetched', {
+				tags: this.latestTags,
+				newTags: this.newTags,
+			})
+		},
+
+		/**
+		 * Announce the dialog closing with its tags, and the updated tags
+		 * when there are any.
+		 *
+		 * @param {Array<string>} tagsToEmit - The tags
+		 * @param {Array<string>|undefined} newTags - The tags new since opening
+		 * @return {void}
+		 */
+		emitClosingTags(tagsToEmit, newTags) {
+			EventBus.$emit('upload-files:closed', {
+				tags: tagsToEmit,
+				newTags,
+			})
+			if (tagsToEmit.length > 0) {
+				EventBus.$emit('upload-files:tags-updated', {
+					tags: tagsToEmit,
+					newTags,
+				})
 			}
 		},
 
@@ -919,16 +947,7 @@ export default {
 			}
 			const tagsToEmit = closingTags(this.latestTags, objectStore)
 			// emit the same close events as closeDialog
-			EventBus.$emit('upload-files:closed', {
-				tags: tagsToEmit,
-				newTags: this.newTags || [],
-			})
-			if (tagsToEmit.length > 0) {
-				EventBus.$emit('upload-files:tags-updated', {
-					tags: tagsToEmit,
-					newTags: this.newTags || [],
-				})
-			}
+			this.emitClosingTags(tagsToEmit, this.newTags || [])
 			this.resetDialogState()
 		},
 
