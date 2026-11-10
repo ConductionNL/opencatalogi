@@ -168,20 +168,7 @@ export default {
 		statusTextFor(listing) {
 			const status = this.syncStatusFor(listing)
 			const label = this.statusLabelFor(listing)
-			if (status.neverSucceeded) {
-				return (
-					label
-					+ ', '
-					+ t('opencatalogi', 'never synchronised successfully')
-				)
-			}
-			return (
-				label
-				+ ', '
-				+ t('opencatalogi', 'last successful sync {time}', {
-					time: new Date(status.lastSuccessAt).toLocaleString(),
-				})
-			)
+			return label + ', ' + lastSyncPhrase(status)
 		},
 
 		/**
@@ -196,19 +183,14 @@ export default {
 			if (!this.isAdmin || this.syncingId !== null) return
 			this.syncingId = listing.id
 			try {
-				await axios.post(
-					generateUrl('/apps/opencatalogi/api/listings/sync'),
-					{ id: listing.id },
-				)
+				await requestListingSync(listing)
 				showSuccess(
-					t('opencatalogi', 'Synchronised {name}', {
-						name: listing.title || listing.directory,
-					}),
+					t('opencatalogi', 'Synchronised {name}', { name: listingName(listing) }),
 				)
 			} catch {
 				showError(
 					t('opencatalogi', 'Could not synchronise {name}', {
-						name: listing.title || listing.directory,
+						name: listingName(listing),
 					}),
 				)
 			} finally {
@@ -312,6 +294,44 @@ export default {
 			return raw
 		},
 	},
+}
+
+/**
+ * When a listing last synchronised: never, or the last successful sync in
+ * the viewer's locale.
+ *
+ * @param {{neverSucceeded: boolean, lastSuccessAt?: string}} status The listing's sync status.
+ * @return {string} The phrase.
+ */
+function lastSyncPhrase(status) {
+	if (status.neverSucceeded) {
+		return t('opencatalogi', 'never synchronised successfully')
+	}
+	return t('opencatalogi', 'last successful sync {time}', {
+		time: new Date(status.lastSuccessAt).toLocaleString(),
+	})
+}
+
+/**
+ * Ask the server to synchronise one listing.
+ *
+ * @param {object} listing The listing.
+ * @return {Promise<object>} The response.
+ */
+function requestListingSync(listing) {
+	return axios.post(generateUrl('/apps/opencatalogi/api/listings/sync'), {
+		id: listing.id,
+	})
+}
+
+/**
+ * The name a sync message uses for a listing: its title, else its directory.
+ *
+ * @param {object} listing The listing.
+ * @return {string} The name.
+ */
+function listingName(listing) {
+	return listing.title || listing.directory
 }
 </script>
 
