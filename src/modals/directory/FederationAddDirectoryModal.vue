@@ -20,6 +20,7 @@ import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcModal, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
+import { sendListingJson } from './listingRequests.js'
 
 export default {
 	name: 'FederationAddDirectoryModal',
@@ -105,16 +106,10 @@ export default {
 			this.error = null
 			try {
 				const endpoint = generateUrl('/apps/opencatalogi/api/listings/add')
-				const res = await fetch(endpoint, {
+				const { res, body } = await sendListingJson(endpoint, {
 					method: 'POST',
-					headers: {
-						'OCS-APIRequest': 'true',
-						'Content-Type': 'application/json',
-						Accept: 'application/json',
-					},
-					body: JSON.stringify({ url: trimmed }),
+					payload: { url: trimmed },
 				})
-				const body = await res.json().catch(() => ({}))
 				if (!res.ok) {
 					throw new Error(body.message || `HTTP ${res.status}`)
 				}
