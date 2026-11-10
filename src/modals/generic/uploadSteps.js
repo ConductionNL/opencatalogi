@@ -13,6 +13,18 @@ import { generateUrl } from '@nextcloud/router'
  */
 
 /**
+ * The id of the first attachment an upload answer lists as created.
+ *
+ * @param {object} response - The upload answer
+ * @return {string|undefined} The id
+ */
+function createdAttachmentId(response) {
+	const payload = Array.isArray(response?.data) ? response.data : []
+	const created = payload && payload[0]
+	return created && created.id
+}
+
+/**
  * Note the id of the attachment an upload created, on the file and in the
  * id map. An answer without a created id changes nothing.
  *
@@ -22,11 +34,10 @@ import { generateUrl } from '@nextcloud/router'
  */
 export function recordCreatedId(file, { response, idMap }) {
 	try {
-		const payload = Array.isArray(response?.data) ? response.data : []
-		const created = payload && payload[0]
-		if (created && created.id) {
-			file.id = created.id
-			idMap[file.name] = created.id
+		const createdId = createdAttachmentId(response)
+		if (createdId) {
+			file.id = createdId
+			idMap[file.name] = createdId
 		}
 	} catch {
 		// An answer that cannot be read creates no id.
