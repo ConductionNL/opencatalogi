@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
 use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
+use OCA\OpenCatalogi\Contract\StatusChange;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 
 /**
@@ -83,12 +84,13 @@ class CommunityPages {
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
 	public function setState(array $change): array {
-		return $this->statusService->setState(
-			component: $change['component'],
-			state: $change['state'],
-			message: $change['message'],
-			setBy: $change['setBy']
-		);
+		$statusChange = new StatusChange();
+		$statusChange->component = $change['component'];
+		$statusChange->state = $change['state'];
+		$statusChange->message = $change['message'];
+		$statusChange->setBy = $change['setBy'];
+
+		return $this->statusService->setState(change: $statusChange);
 
 	}//end setState()
 

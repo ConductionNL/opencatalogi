@@ -24,6 +24,7 @@ namespace Unit\Service\Community;
 
 use DateTimeImmutable;
 use DomainException;
+use OCA\OpenCatalogi\Contract\StatusChange;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
 use PHPUnit\Framework\TestCase;
 
@@ -60,7 +61,7 @@ class StatusPageSetStateTest extends TestCase {
 	 */
 	public function testWithoutAMomentTheStatusIsStampedNowInUtc(): void {
 		$before = time();
-		$status = (new StatusPageService())->setState(component: 'DigiD', state: 'available', message: '', setBy: 'a');
+		$status = (new StatusPageService())->setState(change: $this->change(component: 'DigiD', state: 'available'));
 		$after = time();
 
 		$this->assertStringEndsWith('+00:00', $status['stateSetAt']);
@@ -103,11 +104,26 @@ class StatusPageSetStateTest extends TestCase {
 	 */
 	private function setState(string $component, string $state): array {
 		return (new StatusPageService())->setState(
-			component: $component,
-			state: $state,
-			message: 'Onderhoud tot 12:00.',
-			setBy: 'beheerder',
+			change: $this->change(component: $component, state: $state),
 			now: new DateTimeImmutable('2026-09-18T11:30:00+02:00')
 		);
 	}//end setState()
+
+	/**
+	 * A state change with its message, set by the administrator.
+	 *
+	 * @param string $component The component.
+	 * @param string $state The state.
+	 *
+	 * @return StatusChange
+	 */
+	private function change(string $component, string $state): StatusChange {
+		$change = new StatusChange();
+		$change->component = $component;
+		$change->state = $state;
+		$change->message = 'Onderhoud tot 12:00.';
+		$change->setBy = 'beheerder';
+
+		return $change;
+	}//end change()
 }//end class

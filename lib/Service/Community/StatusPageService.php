@@ -38,6 +38,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\StatusChange;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 
 /**
@@ -61,10 +62,7 @@ class StatusPageService implements StatusPageServiceInterface {
 	 * path in this class that derives a state from anything, which is what
 	 * makes "the page probes nothing" true rather than merely intended.
 	 *
-	 * @param string $component The component a reader recognises.
-	 * @param string $state The state.
-	 * @param string $message What a reader should do about it.
-	 * @param string $setBy Who set it.
+	 * @param StatusChange $change The component, its state, the message and who set it.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
 	 *
 	 * @return array<string, mixed> The status to save.
@@ -73,38 +71,42 @@ class StatusPageService implements StatusPageServiceInterface {
 	 *
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
-	public function setState(
-		string $component,
-		string $state,
-		string $message,
-		string $setBy,
-		?DateTimeInterface $now = null,
-	): array {
-		if (in_array($state, self::STATES, true) === false) {
+	public function setState(StatusChange $change, ?DateTimeInterface $now = null): array {
+		if (in_array($change->state, self::STATES, true) === false) {
 			throw new DomainException(
-				message: 'A component cannot be set to "' . $state . '": the status page knows only '
+				message: 'A component cannot be set to "' . $change->state . '": the status page knows only '
 					. implode(', ', self::STATES) . '.'
 			);
 		}
 
-		if (trim($component) === '') {
+		if (trim($change->component) === '') {
 			throw new DomainException(message: 'A status needs the component it is about.');
 		}
 
-		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		if ($now !== null) {
-			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
-		}
-
 		return [
-			'component' => trim($component),
-			'state' => $state,
-			'message' => $message,
-			'stateSetAt' => $moment->format(DateTimeInterface::ATOM),
-			'stateSetBy' => $setBy,
+			'component' => trim($change->component),
+			'state' => $change->state,
+			'message' => $change->message,
+			'stateSetAt' => self::momentOf(now: $now)->format(DateTimeInterface::ATOM),
+			'stateSetBy' => $change->setBy,
 		];
 
 	}//end setState()
+
+	/**
+	 * The given moment, else now in UTC.
+	 *
+	 * @param DateTimeInterface|null $now The moment.
+	 *
+	 * @return DateTimeImmutable
+	 */
+	private static function momentOf(?DateTimeInterface $now): DateTimeImmutable {
+		if ($now === null) {
+			return new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		}
+
+		return new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+	}//end momentOf()
 
 	/**
 	 * The page as an anonymous reader sees it.
@@ -122,10 +124,7 @@ class StatusPageService implements StatusPageServiceInterface {
 		int $stalenessHours = self::DEFAULT_STALENESS_HOURS,
 		?DateTimeInterface $now = null,
 	): array {
-		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		if ($now !== null) {
-			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
-		}
+		$moment = self::momentOf(now: $now);
 
 		$rendered = [];
 		foreach ($components as $component) {
