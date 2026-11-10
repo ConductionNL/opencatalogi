@@ -119,16 +119,11 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 				continue;
 			}
 
-			// One sitemap per category the registry serves, so a category this instance
-			// added as data is registered with the index too (REQ-WIC-001).
-			foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
-				$sitemaps[] = $baseUrl . '/apps/opencatalogi/api/' . $slug . '/sitemaps/' . $categoryCode;
-			}
-
-			$organisation = $this->organisation(uuid: (string)($catalog->jsonSerialize()['organization'] ?? ''));
-			if ($organisation !== null) {
-				$organisations[$organisation['name'] . '|' . $organisation['tooiIdentifier']] = $organisation;
-			}
+			$sitemaps = array_merge($sitemaps, $this->sitemapsOf(baseUrl: $baseUrl, slug: $slug));
+			$organisations = $this->withOrganisation(
+				organisations: $organisations,
+				organisation: $this->organisation(uuid: (string)($catalog->jsonSerialize()['organization'] ?? ''))
+			);
 		}
 
 		return [
@@ -139,6 +134,41 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 		];
 
 	}//end compose()
+
+	/**
+	 * A catalog's sitemap index URLs: one per category the registry serves, so a
+	 * category this instance added as data is registered with the index too (REQ-WIC-001).
+	 *
+	 * @param string $baseUrl The instance's base URL.
+	 * @param string $slug The catalog's slug.
+	 *
+	 * @return list<string>
+	 */
+	private function sitemapsOf(string $baseUrl, string $slug): array {
+		$sitemaps = [];
+		foreach (array_keys($this->categories->sitemapFiles()) as $categoryCode) {
+			$sitemaps[] = $baseUrl . '/apps/opencatalogi/api/' . $slug . '/sitemaps/' . $categoryCode;
+		}
+
+		return $sitemaps;
+	}//end sitemapsOf()
+
+	/**
+	 * The organisations with one more, keyed by name and TOOI identifier so a
+	 * shared organisation is listed once; unchanged when there is none.
+	 *
+	 * @param array<string, array{name: string, tooiIdentifier: string}> $organisations The organisations so far.
+	 * @param array{name: string, tooiIdentifier: string}|null $organisation The catalog's organisation.
+	 *
+	 * @return array<string, array{name: string, tooiIdentifier: string}>
+	 */
+	private function withOrganisation(array $organisations, ?array $organisation): array {
+		if ($organisation !== null) {
+			$organisations[$organisation['name'] . '|' . $organisation['tooiIdentifier']] = $organisation;
+		}
+
+		return $organisations;
+	}//end withOrganisation()
 
 	/**
 	 * Hand the registration to the gateway and record what it answered.
@@ -250,7 +280,18 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 			return null;
 		}
 
-		$found = ($results[0] ?? null);
+		return $this->organisationFields(found: ($results[0] ?? null));
+
+	}//end organisation()
+
+	/**
+	 * The name and TOOI identifier of a found organisation, or null when it is no object.
+	 *
+	 * @param mixed $found The first search result.
+	 *
+	 * @return array{name: string, tooiIdentifier: string}|null
+	 */
+	private function organisationFields(mixed $found): ?array {
 		if (is_object($found) === true && method_exists($found, 'jsonSerialize') === true) {
 			$found = $found->jsonSerialize();
 		}
@@ -263,6 +304,5 @@ class WooRegistrationService implements IndexRegistrationServiceInterface {
 			'name' => (string)($found['name'] ?? ($found['title'] ?? '')),
 			'tooiIdentifier' => (string)($found['tooiIdentifier'] ?? ''),
 		];
-
-	}//end organisation()
+	}//end organisationFields()
 }//end class
