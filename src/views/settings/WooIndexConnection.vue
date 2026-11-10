@@ -225,18 +225,29 @@ export default {
 				)
 				this.registration = data.registration
 			} catch (error) {
-				const data = error && error.response ? error.response.data : null
-				if (data && data.request) {
-					this.unsent = JSON.stringify(data.request, null, 2)
-				} else {
-					this.error = this.t(
-						'opencatalogi',
-						'The registration could not be requested. Try again.',
-					)
-				}
+				this.showRegistrationFailure(error)
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/**
+		 * Show why the registration request failed: the request the gateway
+		 * could not send when it returns one, else a fixed message.
+		 *
+		 * @param {object|null} error The request error.
+		 * @return {void}
+		 */
+		showRegistrationFailure(error) {
+			const data = error && error.response ? error.response.data : null
+			if (data && data.request) {
+				this.unsent = JSON.stringify(data.request, null, 2)
+				return
+			}
+			this.error = this.t(
+				'opencatalogi',
+				'The registration could not be requested. Try again.',
+			)
 		},
 
 		/**
