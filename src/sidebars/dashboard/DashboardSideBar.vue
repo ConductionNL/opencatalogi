@@ -324,6 +324,7 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import { useFileSelection } from '../../composables/UseFileSelection.js'
 import { Publication } from '../../entities/index.js'
+import { listedCatalogSlug } from '../../services/publicationCatalogSlug.js'
 
 const dropZoneRef = ref()
 const { files, reset } = useFileSelection({
@@ -436,14 +437,9 @@ export default {
 		 */
 		handleViewPublication(publication) {
 			objectStore.setActiveObject('publication', publication)
-			const catalogId = publication?.catalog?.id || publication?.catalog
 			const catalogs = objectStore.getCollection('catalogus')?.results || []
-			const matchedCatalog = catalogs.find(
-				(c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''),
-			)
 			const slug =
-				matchedCatalog?.slug
-				|| publication?.catalog?.slug
+				listedCatalogSlug(publication, catalogs)
 				|| this.$route?.params?.catalogSlug
 			if (!slug || !publication?.id) return
 			this.$router.push(`/publications/${slug}/${publication.id}`)

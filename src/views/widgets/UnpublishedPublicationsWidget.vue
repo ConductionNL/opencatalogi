@@ -31,6 +31,7 @@ import { NcEmptyContent } from '@nextcloud/vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
+import { listedCatalogSlug } from '../../services/publicationCatalogSlug.js'
 import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
 
 // The row's leading icon renders through CnDataTable's shared CnIcon
@@ -108,12 +109,8 @@ export default {
 		 */
 		onRowClick(row) {
 			const publication = row.publication
-			const catalogId = publication?.catalog?.id || publication?.catalog
 			const catalogs = objectStore.getCollection('catalog')?.results || []
-			const matchedCatalog = catalogs.find(
-				(c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''),
-			)
-			const slug = matchedCatalog?.slug || publication?.catalog?.slug
+			const slug = listedCatalogSlug(publication, catalogs)
 			if (!slug || !publication?.id) return
 			navigateTo(
 				generateUrl(
