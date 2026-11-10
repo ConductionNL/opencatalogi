@@ -569,6 +569,47 @@ const DEFAULT_LAYOUT = [
 ]
 
 /**
+ * The category name of an embedded schema: its title or name.
+ *
+ * @param {object} schema - The embedded schema
+ * @return {string} The name
+ */
+function embeddedSchemaName(schema) {
+	return schema.title || schema.name || t('opencatalogi', 'Unknown')
+}
+
+/**
+ * The category name of a schema id: the listed schema's title or name, else
+ * the id as text.
+ *
+ * @param {string|number} schemaRef - The schema id
+ * @return {string} The name
+ */
+function listedSchemaName(schemaRef) {
+	const match = objectStore.availableSchemas.find(
+		(s) => Number(s.id) === Number(schemaRef),
+	)
+	return match?.title || match?.name || String(schemaRef)
+}
+
+/**
+ * The category a publication is counted under: the name of its schema.
+ *
+ * @param {object} pub - The publication
+ * @return {string} The category name
+ */
+function publicationCategory(pub) {
+	const schemaRef = pub['@self']?.schema
+	if (typeof schemaRef === 'object' && schemaRef) {
+		return embeddedSchemaName(schemaRef)
+	}
+	if (schemaRef) {
+		return listedSchemaName(schemaRef)
+	}
+	return t('opencatalogi', 'Unknown')
+}
+
+/**
  * One custom dashboard widget.
  *
  * @param {string} id - The widget id
@@ -796,21 +837,7 @@ export default {
 		publicationsByCategoryData() {
 			const counts = {}
 			for (const pub of this.allPublications) {
-				const schemaRef = pub['@self']?.schema
-				let name
-				if (typeof schemaRef === 'object' && schemaRef) {
-					name =
-						schemaRef.title
-						|| schemaRef.name
-						|| t('opencatalogi', 'Unknown')
-				} else if (schemaRef) {
-					const match = objectStore.availableSchemas.find(
-						(s) => Number(s.id) === Number(schemaRef),
-					)
-					name = match?.title || match?.name || String(schemaRef)
-				} else {
-					name = t('opencatalogi', 'Unknown')
-				}
+				const name = publicationCategory(pub)
 				counts[name] = (counts[name] || 0) + 1
 			}
 			return {
