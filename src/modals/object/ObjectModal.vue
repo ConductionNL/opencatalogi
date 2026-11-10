@@ -351,6 +351,65 @@ import { getTheme } from '../../services/getTheme.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 /**
+ * A select option of a catalog, register or schema.
+ *
+ * @param {{id: string|number, title: string}} entry - The entry
+ * @return {{id: string|number, label: string}} The option
+ */
+function optionOf(entry) {
+	return { id: entry.id, label: entry.title }
+}
+
+/**
+ * Whether a list holds exactly one entry.
+ *
+ * @param {Array|undefined} list - The list
+ * @return {boolean} True for a one-entry list
+ */
+function hasSingleEntry(list) {
+	return Boolean(list && list.length === 1)
+}
+
+/**
+ * Whether an active publication is a new object: missing, empty, or
+ * without an id on itself or on `@self`.
+ *
+ * @param {object|null|undefined} activeObject - The active publication
+ * @return {boolean} True when it is new
+ */
+function looksLikeNewObject(activeObject) {
+	if (isMissingOrEmpty(activeObject)) {
+		return true
+	}
+	// More robust detection of new vs existing objects
+	return !activeObject || lacksIds(activeObject)
+}
+
+/**
+ * Whether an active publication is missing or has no keys.
+ *
+ * @param {object|null|undefined} activeObject - The active publication
+ * @return {boolean} True when missing or empty
+ */
+function isMissingOrEmpty(activeObject) {
+	return (
+		activeObject === null
+		|| activeObject === undefined
+		|| Object.keys(activeObject || {}).length === 0
+	)
+}
+
+/**
+ * Whether a publication has no id on `@self` and none on itself.
+ *
+ * @param {object} activeObject - The active publication
+ * @return {boolean} True without ids
+ */
+function lacksIds(activeObject) {
+	return !activeObject?.['@self']?.id && !activeObject?.id
+}
+
+/**
  * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
@@ -546,34 +605,7 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-2 */
 		initializeData() {
 			const activeCatalog = objectStore.getActiveObject('catalog')
-
-			// Set selected catalog based on active catalog
-			const catalogMatch = activeCatalog
-				? objectStore
-						.getCollection('catalog')
-						.results.find((catalog) => catalog.id === activeCatalog.id)
-				: null
-
-			this.selectedCatalogus = catalogMatch
-				? {
-						id: catalogMatch.id,
-						label: catalogMatch.title,
-					}
-				: null
-
-			// If no catalog is selected but there's only one available, auto-select it
-			if (
-				!this.selectedCatalogus
-				&& objectStore.getCollection('catalog').results.length === 1
-			) {
-				const onlyCatalog = objectStore.getCollection('catalog').results[0]
-				this.selectedCatalogus = {
-					id: onlyCatalog.id,
-					label: onlyCatalog.title,
-				}
-				// Also set it as the active catalog in the store
-				objectStore.setActiveObject('catalog', onlyCatalog)
-			}
+			this.selectInitialCatalog(activeCatalog)
 
 			const activeObject = objectStore.getActiveObject('publication')
 			// Update activeCatalog reference in case we auto-selected one above
@@ -585,92 +617,123 @@ export default {
 				transferData === 'ignore selectedCatalogus'
 				|| transferData === 'create'
 
-			// Force new object detection if in create mode or if activeObject is null/empty
-			if (
-				isCreateMode
-				|| activeObject === null
-				|| activeObject === undefined
-				|| Object.keys(activeObject || {}).length === 0
-			) {
-				this.isNewObject = true
-			} else {
-				// More robust detection of new vs existing objects
-				this.isNewObject =
-					!activeObject
-					|| (!activeObject?.['@self']?.id && !activeObject?.id)
-			}
+			// Force new object detection in create mode, else detect it from the object
+			this.isNewObject = isCreateMode || looksLikeNewObject(activeObject)
 
-			// Temporary debug to understand the state
+			this.logInitialState({
+				activeObject,
+				activeCatalog,
+				updatedActiveCatalog,
+				transferData,
+				isCreateMode,
+			})
+
+			if (!this.isNewObject) {
+				this.loadExistingObject(activeObject)
+			} else {
+				this.preselectFromCatalog(updatedActiveCatalog)
+			}
+		},
+
+		/**
+		 * Select the listed active catalog, else the only catalog there is,
+		 * which then also becomes the active catalog.
+		 *
+		 * @param {object|undefined} activeCatalog - The active catalog
+		 * @return {void}
+		 */
+		selectInitialCatalog(activeCatalog) {
+			const catalogMatch = activeCatalog
+				? objectStore
+						.getCollection('catalog')
+						.results.find((catalog) => catalog.id === activeCatalog.id)
+				: null
+
+			this.selectedCatalogus = catalogMatch ? optionOf(catalogMatch) : null
+
+			// If no catalog is selected but there's only one available, auto-select it
+			if (
+				!this.selectedCatalogus
+				&& objectStore.getCollection('catalog').results.length === 1
+			) {
+				const onlyCatalog = objectStore.getCollection('catalog').results[0]
+				this.selectedCatalogus = optionOf(onlyCatalog)
+				// Also set it as the active catalog in the store
+				objectStore.setActiveObject('catalog', onlyCatalog)
+			}
+		},
+
+		/**
+		 * Temporary debug log of the initial state, on the local development
+		 * host only.
+		 *
+		 * @param {object} state - The objects and transfer data initializeData read
+		 * @return {void}
+		 */
+		logInitialState(state) {
 			if (window.location.hostname === 'nextcloud.local') {
 				// eslint-disable-next-line no-console
 				console.log('ObjectModal debug:', {
-					activeObject,
-					activeCatalog,
-					updatedActiveCatalog,
+					activeObject: state.activeObject,
+					activeCatalog: state.activeCatalog,
+					updatedActiveCatalog: state.updatedActiveCatalog,
 					selectedCatalogus: this.selectedCatalogus,
-					transferData,
-					isCreateMode,
+					transferData: state.transferData,
+					isCreateMode: state.isCreateMode,
 					isNewObject: this.isNewObject,
-					objectKeys: activeObject ? Object.keys(activeObject) : 'null',
+					objectKeys: state.activeObject
+						? Object.keys(state.activeObject)
+						: 'null',
 				})
 			}
+		},
 
-			if (!this.isNewObject) {
-				// is edit modal
-				// Initialize form with existing object data
+		/**
+		 * Load an existing object into the form, with its register and schema
+		 * selected.
+		 *
+		 * @param {object} activeObject - The object
+		 * @return {void}
+		 */
+		loadExistingObject(activeObject) {
+			this.formData = structuredClone(activeObject)
+			this.jsonData = JSON.stringify(activeObject, null, 2)
 
-				this.formData = structuredClone(activeObject)
-				this.jsonData = JSON.stringify(activeObject, null, 2)
+			// Set register and schema from existing object
+			const register = objectStore.availableRegisters.find(
+				(register) =>
+					String(register.id) === String(activeObject['@self'].register),
+			)
+			this.selectedRegister = register && optionOf(register)
 
-				// Set register and schema from existing object
-				const register = objectStore.availableRegisters.find(
-					(register) =>
-						String(register.id)
-						=== String(activeObject['@self'].register),
-				)
-				this.selectedRegister = register && {
-					id: register.id,
-					label: register.title,
-				}
+			const schema = objectStore.availableSchemas.find(
+				(schema) => String(schema.id) === String(activeObject['@self'].schema),
+			)
+			this.selectedSchema = schema && optionOf(schema)
+		},
 
+		/**
+		 * For a new object, preselect the register when the catalog has only
+		 * one, and then the schema when it has only one.
+		 *
+		 * @param {object|undefined} catalog - The active catalog
+		 * @return {void}
+		 */
+		preselectFromCatalog(catalog) {
+			if (!catalog || !hasSingleEntry(catalog.registers)) {
+				return
+			}
+
+			const register = objectStore.availableRegisters.find(
+				(register) => register.id === catalog.registers[0],
+			)
+			this.selectedRegister = register && optionOf(register)
+
+			if (hasSingleEntry(catalog.schemas)) {
 				const schema = objectStore.availableSchemas.find(
-					(schema) =>
-						String(schema.id) === String(activeObject['@self'].schema),
+					(schema) => schema.id === catalog.schemas[0],
 				)
-				this.selectedSchema = schema && {
-					id: schema.id,
-					label: schema.title,
-				}
-			} else {
-				// For new objects, auto-select register/schema if catalog only has one
-				if (
-					updatedActiveCatalog
-					&& updatedActiveCatalog.registers
-					&& updatedActiveCatalog.registers.length === 1
-				) {
-					const register = objectStore.availableRegisters.find(
-						(register) =>
-							register.id === updatedActiveCatalog.registers[0],
-					)
-					this.selectedRegister = register && {
-						id: register.id,
-						label: register.title,
-					}
-
-					if (
-						updatedActiveCatalog.schemas
-						&& updatedActiveCatalog.schemas.length === 1
-					) {
-						const schema = objectStore.availableSchemas.find(
-							(schema) =>
-								schema.id === updatedActiveCatalog.schemas[0],
-						)
-						this.selectedSchema = schema && {
-							id: schema.id,
-							label: schema.title,
-						}
-					}
-				}
+				this.selectedSchema = schema && optionOf(schema)
 			}
 		},
 

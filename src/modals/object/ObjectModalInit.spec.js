@@ -57,7 +57,10 @@ function initialize() {
 		jsonData: 'old',
 		isNewObject: 'old',
 	}
-	ObjectModal.methods.initializeData.call(ctx)
+	for (const [name, fn] of Object.entries(ObjectModal.methods)) {
+		ctx[name] = fn.bind(ctx)
+	}
+	ctx.initializeData()
 	return ctx
 }
 
