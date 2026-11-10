@@ -50,6 +50,32 @@ class InspectionServiceTest extends TestCase {
 
 	}//end testTheEndDateIsComputedFromTheTypesTerm()
 
+	public function testTheInspectionIsShapedWholeWithUniqueDocuments(): void {
+		$inspection = $this->service->open(
+			record: ['title' => 'no id'],
+			recordType: ['recordType' => 'aanwijzing', 'inspectionTermDays' => '3'],
+			documents: [7, 'd1', '7', 'd1', 'd2'],
+			openedBy: 'admin',
+			start: new DateTimeImmutable('2026-09-01T12:00:00+02:00')
+		);
+
+		$this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $inspection['token']);
+		unset($inspection['token']);
+		$this->assertSame(
+			[
+				'record' => '',
+				'recordType' => 'aanwijzing',
+				'documents' => ['7', 'd1', 'd2'],
+				'startDate' => '2026-09-01T12:00:00+02:00',
+				'endDate' => '2026-09-04T12:00:00+02:00',
+				'termDays' => 3,
+				'openedBy' => 'admin',
+			],
+			$inspection
+		);
+
+	}//end testTheInspectionIsShapedWholeWithUniqueDocuments()
+
 	public function testASecondTypeUsesTheSameMechanismWithItsOwnTerm(): void {
 		$inspection = $this->service->open(
 			record: ['id' => 'r2'],
