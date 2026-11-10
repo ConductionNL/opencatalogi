@@ -1258,12 +1258,7 @@ export default {
 				return []
 			}
 
-			const fullCatalog = objectStore
-				.getCollection('catalog')
-				.results.find(
-					(catalog) =>
-						String(catalog.id) === String(this.selectedCatalog.id),
-				)
+			const fullCatalog = findCatalog(this.selectedCatalog.id)
 			if (!fullCatalog) {
 				return []
 			}
@@ -2184,22 +2179,10 @@ export default {
 				if (editorEl) {
 					// Remove borders from all nested elements
 					const allElements = editorEl.querySelectorAll('*')
-					allElements.forEach((el) => {
-						el.style.border = 'none'
-						el.style.borderWidth = '0'
-						el.style.borderStyle = 'none'
-						el.style.borderColor = 'transparent'
-						el.style.outline = 'none'
-						el.style.boxShadow = 'none'
-					})
+					allElements.forEach(clearBorders)
 
 					// Also remove from the container itself
-					editorEl.style.border = 'none'
-					editorEl.style.borderWidth = '0'
-					editorEl.style.borderStyle = 'none'
-					editorEl.style.borderColor = 'transparent'
-					editorEl.style.outline = 'none'
-					editorEl.style.boxShadow = 'none'
+					clearBorders(editorEl)
 				}
 			} catch (error) {
 				console.warn('Could not remove borders from editor:', error)
@@ -3164,6 +3147,33 @@ export default {
 			}
 		},
 	},
+}
+
+/**
+ * Take every border, outline and shadow off an element.
+ *
+ * @param {HTMLElement} el The element.
+ * @return {void}
+ */
+function clearBorders(el) {
+	el.style.border = 'none'
+	el.style.borderWidth = '0'
+	el.style.borderStyle = 'none'
+	el.style.borderColor = 'transparent'
+	el.style.outline = 'none'
+	el.style.boxShadow = 'none'
+}
+
+/**
+ * The catalog with `catalogId` from the store's catalogs, matched as text.
+ *
+ * @param {string|number} catalogId The catalog id.
+ * @return {object|undefined} The catalog.
+ */
+function findCatalog(catalogId) {
+	return objectStore
+		.getCollection('catalog')
+		.results.find((catalog) => String(catalog.id) === String(catalogId))
 }
 </script>
 
