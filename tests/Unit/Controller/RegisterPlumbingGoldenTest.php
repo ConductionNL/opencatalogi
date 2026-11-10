@@ -433,7 +433,31 @@ class RegisterPlumbingGoldenTest extends TestCase {
 	 * @return object The resolver.
 	 */
 	private function resolver(): object {
-		return $this->recorder(label: 'resolver', answers: ['resolveRegisterId' => 'res-reg', 'resolveSchemaId' => 'res-sch']);
+		$log = function (array $args): void {
+			$this->log[] = ['resolver.lookupId' => $this->normalise(value: $args)];
+		};
+
+		$resolver = new class($log) {
+			/**
+			 * @param \Closure $log Where calls are logged.
+			 */
+			public function __construct(
+				private \Closure $log,
+			) {
+			}
+
+			/**
+			 * @param \OCA\OpenRegister\Service\ConfigLookup $lookup The lookup.
+			 *
+			 * @return string The id: res-reg for a register key, res-sch for a schema key.
+			 */
+			public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+				($this->log)([$lookup->appId, $lookup->configKey]);
+				return (str_ends_with($lookup->configKey, '_register') === true ? 'res-reg' : 'res-sch');
+			}
+		};
+		$this->labels[$resolver] = 'resolver';
+		return $resolver;
 	}//end resolver()
 
 	/**

@@ -93,12 +93,8 @@ class PublicObjectListControllersTest extends TestCase {
 			) {
 			}
 
-			public function resolveRegisterId(string $appId, string $key, ?string $default = null): string {
-				return $this->config->getValueString($appId, $key, '');
-			}
-
-			public function resolveSchemaId(string $appId, string $key, ?string $default = null): string {
-				return $this->config->getValueString($appId, $key, '');
+			public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+				return $this->config->getValueString($lookup->appId, $lookup->configKey, '');
 			}
 		};
 		$container = $this->createMock(ContainerInterface::class);

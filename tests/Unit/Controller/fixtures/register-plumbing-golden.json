@@ -8,13 +8,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "catalog_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "catalog_schema"
                 ]
@@ -63,13 +63,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "catalog_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "catalog_schema"
                 ]
@@ -328,13 +328,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "catalog_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "catalog_schema"
                 ]
@@ -905,13 +905,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "comment_period_schema"
                 ]
@@ -1094,13 +1094,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "comment_period_schema"
                 ]
@@ -1211,13 +1211,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "comment_period_schema"
                 ]
@@ -1372,13 +1372,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "comment_period_schema"
                 ]
@@ -1457,13 +1457,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_rule_schema"
                 ]
@@ -1500,13 +1500,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_rule_schema"
                 ]
@@ -1531,13 +1531,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "notice_schema"
                 ]
@@ -1562,13 +1562,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -1911,13 +1911,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_rule_schema"
                 ]
@@ -1942,13 +1942,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "notice_schema"
                 ]
@@ -1973,13 +1973,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -2502,13 +2502,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_status_schema"
                 ]
@@ -2544,13 +2544,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_status_schema"
                 ]
@@ -2737,13 +2737,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_status_schema"
                 ]
@@ -2835,13 +2835,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_status_schema"
                 ]
@@ -2878,13 +2878,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_status_schema"
                 ]
@@ -3107,13 +3107,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_status_schema"
                 ]
@@ -3460,13 +3460,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_schema"
                 ]
@@ -3515,13 +3515,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_schema"
                 ]
@@ -3752,13 +3752,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_schema"
                 ]
@@ -4027,13 +4027,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_schema"
                 ]
@@ -4073,13 +4073,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_schema"
                 ]
@@ -4284,13 +4284,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "glossary_schema"
                 ]
@@ -4386,13 +4386,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "inspection_schema"
                 ]
@@ -4434,13 +4434,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "inspection_schema"
                 ]
@@ -4643,13 +4643,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "inspection_schema"
                 ]
@@ -4756,13 +4756,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "inspection_schema"
                 ]
@@ -4798,13 +4798,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "inspection_schema"
                 ]
@@ -4991,13 +4991,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "inspection_schema"
                 ]
@@ -5376,13 +5376,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -5410,13 +5410,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -5573,13 +5573,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -5909,13 +5909,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -6112,13 +6112,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -6371,13 +6371,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -6405,13 +6405,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -6562,13 +6562,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -6767,13 +6767,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -6801,13 +6801,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -6990,13 +6990,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "listing_schema"
                 ]
@@ -7091,13 +7091,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "instance_banner_schema"
                 ]
@@ -7286,13 +7286,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "instance_banner_schema"
                 ]
@@ -9977,13 +9977,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -10142,13 +10142,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -10225,13 +10225,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -10390,13 +10390,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -10473,13 +10473,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -10638,13 +10638,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -10721,13 +10721,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -10886,13 +10886,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "publication_schema"
                 ]
@@ -10968,13 +10968,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -11004,13 +11004,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -11161,13 +11161,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -11250,13 +11250,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -11299,13 +11299,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -11500,13 +11500,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -11742,13 +11742,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_entry_schema"
                 ]
@@ -11757,13 +11757,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -11836,13 +11836,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_entry_schema"
                 ]
@@ -11851,13 +11851,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -12098,13 +12098,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_entry_schema"
                 ]
@@ -12113,13 +12113,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -12396,13 +12396,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -12433,13 +12433,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -12592,13 +12592,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -12681,13 +12681,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_entry_schema"
                 ]
@@ -12696,13 +12696,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -12750,13 +12750,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_entry_schema"
                 ]
@@ -12765,13 +12765,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -12962,13 +12962,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_entry_schema"
                 ]
@@ -12977,13 +12977,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "service_catalogue_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "case_type_definition_schema"
                 ]
@@ -13053,13 +13053,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_schema"
                 ]
@@ -13108,13 +13108,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_schema"
                 ]
@@ -13345,13 +13345,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_schema"
                 ]
@@ -13620,13 +13620,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_schema"
                 ]
@@ -13656,13 +13656,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_schema"
                 ]
@@ -13819,13 +13819,13 @@
                 "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
             },
             {
-                "resolver.resolveRegisterId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_register"
                 ]
             },
             {
-                "resolver.resolveSchemaId": [
+                "resolver.lookupId": [
                     "opencatalogi",
                     "theme_schema"
                 ]

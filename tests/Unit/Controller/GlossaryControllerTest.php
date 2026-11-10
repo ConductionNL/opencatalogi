@@ -79,7 +79,7 @@ class GlossaryControllerTest extends TestCase {
 	 *
 	 * @param IAppConfig $config The (mocked) app config the double reads from.
 	 *
-	 * @return object A double exposing resolveRegisterId / resolveSchemaId.
+	 * @return object A double exposing lookupId.
 	 */
 	private function makeResolverDouble(IAppConfig $config): object {
 		return new class($config) {
@@ -88,11 +88,15 @@ class GlossaryControllerTest extends TestCase {
 			) {
 			}
 
-			public function resolveRegisterId(string $appId, string $key, ?string $default = null): string {
-				return $this->resolve($appId, $key);
-			}
+			public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+				if (str_ends_with($lookup->configKey, '_register') === true) {
+					$appId = $lookup->appId;
+					$key = $lookup->configKey;
+					return $this->resolve($appId, $key);
+				}
 
-			public function resolveSchemaId(string $appId, string $key, ?string $default = null): string {
+				$appId = $lookup->appId;
+				$key = $lookup->configKey;
 				return $this->resolve($appId, $key);
 			}
 
