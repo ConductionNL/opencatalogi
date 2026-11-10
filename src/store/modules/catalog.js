@@ -41,6 +41,46 @@ function publicationsPage(data) {
 }
 
 /**
+ * The slug-based publications endpoint (GET /api/{catalogSlug}) with its query.
+ *
+ * @param {string} catalogId - The catalog slug or id
+ * @param {object} query - The query parameters
+ * @return {string} The url
+ */
+function publicationsUrl(catalogId, query) {
+	const queryParams = new URLSearchParams(query)
+	return `/index.php/apps/opencatalogi/api/${catalogId}?${queryParams}`
+}
+
+/**
+ * Load a catalog's publications page into the store, with both loading flags
+ * on while it runs; a failure leaves an empty page.
+ *
+ * @param {object} store - The catalog store
+ * @param {{catalogId: string, params: object}} request - The catalog and the page parameters
+ * @return {Promise<void>}
+ */
+async function loadPublications(store, request) {
+	store.loading = true
+	objectStore.setLoading('publication', true)
+
+	const url = publicationsUrl(
+		request.catalogId,
+		publicationSearchParams(request.params, store.pagination),
+	)
+
+	try {
+		await store.loadPublicationsPage(url)
+	} catch (error) {
+		console.error('Error fetching publications:', error)
+		store.publications = publicationsPage({})
+	} finally {
+		store.loading = false
+		objectStore.setLoading('publication', false)
+	}
+}
+
+/**
  * What a publications page falls back to, field by field, when a value is
  * missing or falsy.
  */
@@ -223,24 +263,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 			this.lastCatalogId = resolvedCatalogId
 
-			this.loading = true
-			objectStore.setLoading('publication', true)
-
-			const queryParams = new URLSearchParams(
-				publicationSearchParams(params, this.pagination),
-			)
-			// Use the slug-based publications endpoint (GET /api/{catalogSlug})
-			const url = `/index.php/apps/opencatalogi/api/${resolvedCatalogId}?${queryParams}`
-
-			try {
-				await this.loadPublicationsPage(url)
-			} catch (error) {
-				console.error('Error fetching publications:', error)
-				this.publications = publicationsPage({})
-			} finally {
-				this.loading = false
-				objectStore.setLoading('publication', false)
-			}
+			await loadPublications(this, { catalogId: resolvedCatalogId, params })
 		},
 
 		/**
