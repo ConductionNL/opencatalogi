@@ -1014,12 +1014,7 @@ export default {
 				return 'N/A'
 			}
 
-			let displayText = ''
-			if (typeof value === 'object') {
-				displayText = JSON.stringify(value, null, 2)
-			} else {
-				displayText = String(value)
-			}
+			const displayText = toDisplayText(value)
 
 			// Truncate if too long
 			if (displayText.length > maxLength) {
@@ -1203,6 +1198,19 @@ export default {
 			navigationStore.setModal(false)
 		},
 	},
+}
+
+/**
+ * A merge value as text: objects as indented JSON, anything else as a string.
+ *
+ * @param {unknown} value The value, not null or undefined.
+ * @return {string} The text.
+ */
+function toDisplayText(value) {
+	if (typeof value === 'object') {
+		return JSON.stringify(value, null, 2)
+	}
+	return String(value)
 }
 </script>
 
