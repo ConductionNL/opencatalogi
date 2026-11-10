@@ -48,13 +48,10 @@ class ObjectService {
 	}//end setSchema()
 
 	/**
-	 * Find an object by ID or UUID.
+	 * Find an object.
 	 *
 	 * @param integer|string $id Object identifier.
-	 * @param array<string,mixed>|null $_extend Extension config.
-	 * @param boolean $files Include files.
-	 * @param Register|string|integer|null $register Register context.
-	 * @param Schema|string|integer|null $schema Schema context.
+	 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions|null $options Register, schema, extend, files, render and audit.
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
 	 *
@@ -62,10 +59,7 @@ class ObjectService {
 	 */
 	public function find(
 		int|string $id,
-		?array $_extend = [],
-		bool $files = false,
-		Register|string|int|null $register = null,
-		Schema|string|int|null $schema = null,
+		?\OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions $options = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): ?ObjectEntity {
