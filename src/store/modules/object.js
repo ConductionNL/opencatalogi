@@ -192,6 +192,49 @@ async function loadRelatedData(store, request) {
 }
 
 /**
+ * The error for an object the inner store did not return: the inner store's
+ * own error message, else a generic one.
+ *
+ * @param {object} store - The object store
+ * @param {string} type - The object type
+ * @return {Error} The error
+ */
+function missingObjectError(store, type) {
+	// fetchObject returns null on error and stores error on inner
+	const innerErr = store._inner().getError(type)
+	return new Error(innerErr?.message || `Failed to fetch ${type} object`)
+}
+
+/**
+ * Fetch one object through the inner store, loading the settings first when
+ * they are not there yet; cache it and refresh the active object when it is
+ * the same one.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, id: string}} ref - The object type and id
+ * @return {Promise<void>}
+ * @throws {Error} When the inner store returns no object
+ */
+async function loadObjectThroughInner(store, { type, id }) {
+	if (!store.settings) {
+		await store.fetchSettings()
+	}
+
+	store._ensureInnerType(type)
+	const data = await store._inner().fetchObject(type, id)
+	if (!data) {
+		throw missingObjectError(store, type)
+	}
+
+	if (!store.objects[type]) store.objects[type] = {}
+	store.objects[type][id] = data
+
+	if (store.activeObjects[type]?.id === id) {
+		await store.setActiveObject(type, data)
+	}
+}
+
+/**
  * Whether a collection fetch reloads the whole collection rather than one
  * paged, sorted or searched slice of it.
  *
@@ -1561,27 +1604,7 @@ export const useObjectStore = defineStore('object', {
 			this.setState(type, { success: null, error: null })
 
 			try {
-				if (!this.settings) {
-					await this.fetchSettings()
-				}
-
-				this._ensureInnerType(type)
-				const data = await this._inner().fetchObject(type, id)
-
-				if (data) {
-					if (!this.objects[type]) this.objects[type] = {}
-					this.objects[type][id] = data
-
-					if (this.activeObjects[type]?.id === id) {
-						await this.setActiveObject(type, data)
-					}
-				} else {
-					// fetchObject returns null on error and stores error on inner
-					const innerErr = this._inner().getError(type)
-					throw new Error(
-						innerErr?.message || `Failed to fetch ${type} object`,
-					)
-				}
+				await loadObjectThroughInner(this, { type, id })
 			} catch (error) {
 				console.error(`Error fetching ${type} object:`, error)
 				this.setState(type, { success: false, error: error.message })
