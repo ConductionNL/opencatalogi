@@ -850,10 +850,7 @@ export default {
 
 			this.loading = true
 			try {
-				this.availableObjects = await this.fetchMergeCandidates({
-					register,
-					schema,
-				})
+				this.availableObjects = await this.fetchMergeCandidates({ register, schema })
 			} catch (error) {
 				console.error('Error searching objects:', error)
 				this.availableObjects = []
