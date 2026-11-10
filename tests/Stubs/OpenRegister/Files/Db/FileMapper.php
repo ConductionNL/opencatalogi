@@ -36,9 +36,12 @@ class FileMapper {
 	/**
 	 * Stub for getFiles.
 	 *
+	 * @param integer|null $node The parent folder id, or null for any.
+	 * @param array<int>|null $ids The file ids, or null for any.
+	 *
 	 * @return array<mixed>
 	 */
-	public function getFiles(): array {
+	public function getFiles(?int $node = null, ?array $ids = null): array {
 		return [];
 	}//end getFiles()
 

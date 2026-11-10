@@ -44,7 +44,7 @@ class GoldenSlaCalculator {
 		return DateTimeImmutable::createFromInterface($from)->modify(sprintf('%+d days', (int)$value));
 	}//end add()
 
-	public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+	public function roll(\DateTimeInterface $moment, \OCA\OpenRegister\Service\Flow\Timer\RollRule $rule): array {
 		$at = DateTimeImmutable::createFromInterface($moment);
 		$day = (int)$at->format('N');
 		if ($day < 6) {
@@ -66,12 +66,12 @@ class GoldenStillCalculator extends GoldenSlaCalculator {
 }//end class
 
 /**
- * A term engine calendar service that resolves to an empty calendar.
+ * A term engine calendar service that resolves to no calendar.
  */
 class GoldenCalendarService {
 
-	public function resolve(?string $slug, ?string $organisation): object {
-		return new \stdClass();
+	public function resolve(?string $slug, ?string $organisation): ?object {
+		return null;
 	}//end resolve()
 }//end class
 

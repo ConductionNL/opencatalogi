@@ -34,6 +34,8 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
 use DateTimeInterface;
+use OCA\OpenRegister\Service\Flow\Timer\RollRule;
+use OCA\OpenRegister\Service\Flow\Timer\SlaCalculatorInterface;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 
@@ -97,7 +99,7 @@ class TermRoll {
 		// Calendar days, because a public comment period is a span of calendar
 		// time; only its LANDING is moved off a non-working day.
 		$landed = $calculator->add($start, (float)$days, 'calendarDays', $calendar);
-		$rolled = $calculator->roll($landed, 'next', $calendar);
+		$rolled = $calculator->roll(moment: $landed, rule: new RollRule(roll: SlaCalculatorInterface::ROLL_NEXT, calendar: $calendar));
 
 		$endsAt = ($rolled['at'] ?? $landed);
 		if (($endsAt instanceof DateTimeInterface) === false) {
