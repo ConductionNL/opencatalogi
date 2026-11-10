@@ -43,6 +43,7 @@ use OCP\IURLGenerator;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -354,21 +355,7 @@ class BroadcastService implements BroadcastServiceInterface {
 				// broadcast target cannot redirect to cloud-metadata. The pre-flight
 				// assertSafeOutboundUrl() validates the initial URL; disabling redirects ensures
 				// Guzzle never silently follows a 302 to an unvalidated host.
-				$response = $this->client->post(
-					uri: $url,
-					options: [
-						'json' => [
-							'directory' => $directoryUrl,
-							'timestamp' => (new DateTime())->format('c'),
-							'source' => $this->appName,
-						],
-						'headers' => [
-							'User-Agent' => 'OpenCatalogi-Broadcast/' . $this->getAppVersion(),
-							'Content-Type' => 'application/json',
-						],
-						RequestOptions::ALLOW_REDIRECTS => false,
-					]
-				);
+				$response = $this->postDirectory(url: $url, directoryUrl: $directoryUrl);
 
 				// Check if the response indicates success.
 				if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
@@ -399,6 +386,34 @@ class BroadcastService implements BroadcastServiceInterface {
 
 		return false;
 	}//end sendBroadcastRequest()
+
+	/**
+	 * POST this directory's URL to one broadcast target, without following redirects.
+	 *
+	 * @param string $url The target URL to broadcast to.
+	 * @param string $directoryUrl The URL of this directory to include in the broadcast.
+	 *
+	 * @return ResponseInterface The target's answer.
+	 *
+	 * @throws GuzzleException When the request fails.
+	 */
+	private function postDirectory(string $url, string $directoryUrl): ResponseInterface {
+		return $this->client->post(
+			uri: $url,
+			options: [
+				'json' => [
+					'directory' => $directoryUrl,
+					'timestamp' => (new DateTime())->format('c'),
+					'source' => $this->appName,
+				],
+				'headers' => [
+					'User-Agent' => 'OpenCatalogi-Broadcast/' . $this->getAppVersion(),
+					'Content-Type' => 'application/json',
+				],
+				RequestOptions::ALLOW_REDIRECTS => false,
+			]
+		);
+	}//end postDirectory()
 
 	/**
 	 * Broadcast this OpenCatalogi directory to one or more instances.
@@ -746,35 +761,73 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @return boolean True if the IP is in the range, false otherwise.
 	 */
 	private function ipInRange(string $ipAddress, string $range): bool {
-		[$subnet, $bits] = explode('/', $range);
+		[$subnet] = explode('/', $range);
 
-		if (filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
-			&& filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
+		if ($this->isIpOfKind(ipAddress: $ipAddress, flag: FILTER_FLAG_IPV6) === true
+			&& $this->isIpOfKind(ipAddress: $subnet, flag: FILTER_FLAG_IPV6) === true
 		) {
-			$ipBin = inet_pton($ipAddress);
-			$subnetBin = inet_pton($subnet);
-			if ($ipBin === false || $subnetBin === false) {
-				return false;
-			}
+			return $this->ipv6InRange(ipAddress: $ipAddress, range: $range);
+		}
 
-			$mask = str_repeat("\xff", intdiv((int)$bits, 8));
-			if (((int)$bits % 8) !== 0) {
-				$mask .= chr(0xff & (0xff << (8 - ((int)$bits % 8))));
-			}
-
-			$mask = str_pad($mask, 16, "\x00");
-			return (($ipBin & $mask) === ($subnetBin & $mask));
-		}//end if
-
-		if (filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
-			&& filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
+		if ($this->isIpOfKind(ipAddress: $ipAddress, flag: FILTER_FLAG_IPV4) === true
+			&& $this->isIpOfKind(ipAddress: $subnet, flag: FILTER_FLAG_IPV4) === true
 		) {
-			$ipLong = ip2long($ipAddress);
-			$subnetLong = ip2long($subnet);
-			$maskLong = (~0 << (32 - (int)$bits));
-			return (($ipLong & $maskLong) === ($subnetLong & $maskLong));
+			return $this->ipv4InRange(ipAddress: $ipAddress, range: $range);
 		}
 
 		return false;
 	}//end ipInRange()
+
+	/**
+	 * Whether a value is an IP address of one family.
+	 *
+	 * @param string $ipAddress The value.
+	 * @param int $flag FILTER_FLAG_IPV4 or FILTER_FLAG_IPV6.
+	 *
+	 * @return bool
+	 */
+	private function isIpOfKind(string $ipAddress, int $flag): bool {
+		return filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: $flag) !== false;
+	}//end isIpOfKind()
+
+	/**
+	 * Whether an IPv6 address falls within an IPv6 CIDR range.
+	 *
+	 * @param string $ipAddress The IPv6 address.
+	 * @param string $range The IPv6 CIDR range.
+	 *
+	 * @return bool
+	 */
+	private function ipv6InRange(string $ipAddress, string $range): bool {
+		[$subnet, $bits] = explode('/', $range);
+		$ipBin = inet_pton($ipAddress);
+		$subnetBin = inet_pton($subnet);
+		if ($ipBin === false || $subnetBin === false) {
+			return false;
+		}
+
+		$mask = str_repeat("\xff", intdiv((int)$bits, 8));
+		if (((int)$bits % 8) !== 0) {
+			$mask .= chr(0xff & (0xff << (8 - ((int)$bits % 8))));
+		}
+
+		$mask = str_pad($mask, 16, "\x00");
+		return (($ipBin & $mask) === ($subnetBin & $mask));
+	}//end ipv6InRange()
+
+	/**
+	 * Whether an IPv4 address falls within an IPv4 CIDR range.
+	 *
+	 * @param string $ipAddress The IPv4 address.
+	 * @param string $range The IPv4 CIDR range.
+	 *
+	 * @return bool
+	 */
+	private function ipv4InRange(string $ipAddress, string $range): bool {
+		[$subnet, $bits] = explode('/', $range);
+		$ipLong = ip2long($ipAddress);
+		$subnetLong = ip2long($subnet);
+		$maskLong = (~0 << (32 - (int)$bits));
+		return (($ipLong & $maskLong) === ($subnetLong & $maskLong));
+	}//end ipv4InRange()
 }//end class
