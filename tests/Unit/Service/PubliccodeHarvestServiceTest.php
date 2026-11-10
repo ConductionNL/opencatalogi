@@ -524,9 +524,10 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			->onlyMethods(['findAllRuns'])
 			->getMock();
 		$mapper->method('findAllRuns')->willReturnCallback(
-			function (?string $flowId = null, ?string $status = null, int $limit = 50) use ($runs): array {
-				$this->assertSame('flow-1', $flowId, 'The last run is read for the harvest flow only.');
-				$this->assertSame(1, $limit);
+			function (FlowRunListing $listing, FlowRunViewer $viewer) use ($runs): array {
+				$this->assertSame('flow-1', $listing->filter->flowId, 'The last run is read for the harvest flow only.');
+				$this->assertSame(1, $listing->limit);
+				$this->assertNull($viewer->requesterUid, 'The harvest status reads its own flow as the system.');
 				return $runs;
 			}
 		);
