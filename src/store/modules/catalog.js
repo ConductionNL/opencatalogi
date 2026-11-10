@@ -62,6 +62,42 @@ function resolveRef(ref, map) {
 
 	return map[String(ref)] || map[Number(ref)]
 }
+/**
+ * The schema and register references a publication carries: on `@self`, or
+ * on the publication itself in the older shape.
+ *
+ * @param {object} publication - The publication
+ * @return {{schemaRef: any, registerRef: any}} The references
+ */
+function publicationRefs(publication) {
+	return {
+		schemaRef: publication['@self']?.schema ?? publication.schema,
+		registerRef: publication['@self']?.register ?? publication.register,
+	}
+}
+
+/**
+ * The object type of a publication in a page: its schema slug and the schema
+ * and register ids, resolved through the page's `@self.schemas` and
+ * `@self.registers` maps. Null when the publication lacks either reference.
+ *
+ * @param {object} publication - The publication
+ * @param {object} data - The publications page from the API
+ * @return {{slug: string|undefined, schema: any, register: any}|null} The object type
+ */
+function publicationObjectType(publication, data) {
+	const { schemaRef, registerRef } = publicationRefs(publication)
+	if (!schemaRef || !registerRef) return null
+
+	const schemaObj = resolveRef(schemaRef, data['@self']?.schemas || {})
+	const registerObj = resolveRef(registerRef, data['@self']?.registers || {})
+	return {
+		slug: schemaObj?.slug,
+		schema: schemaObj?.id ?? schemaRef,
+		register: registerObj?.id ?? registerRef,
+	}
+}
+
 /** @typedef {{id: string, title: string, [key: string]: any}} ObjectEntity */
 
 /**
@@ -284,25 +320,15 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		async registerPublicationTypes(data) {
-			const schemasMap = data['@self']?.schemas || {}
-			const registersMap = data['@self']?.registers || {}
 			for (const publication of data.results || []) {
-				const schemaRef = publication['@self']?.schema ?? publication.schema
-				const registerRef =
-					publication['@self']?.register ?? publication.register
-				if (!schemaRef || !registerRef) continue
-
-				const schemaObj = resolveRef(schemaRef, schemasMap)
-				const registerObj = resolveRef(registerRef, registersMap)
-				const slug = schemaObj?.slug
-
-				if (slug && !this.registeredTypes.has(slug)) {
+				const type = publicationObjectType(publication, data)
+				if (type?.slug && !this.registeredTypes.has(type.slug)) {
 					await objectStore.registerObjectType(
-						slug,
-						schemaObj?.id ?? schemaRef,
-						registerObj?.id ?? registerRef,
+						type.slug,
+						type.schema,
+						type.register,
 					)
-					this.registeredTypes.add(slug)
+					this.registeredTypes.add(type.slug)
 				}
 			}
 		},

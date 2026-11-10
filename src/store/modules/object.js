@@ -94,30 +94,73 @@ function relatedQueryParams(dataType, params) {
 }
 
 /**
+ * The page size an API answer states, when it states one.
+ *
+ * @param {object} data - The API answer
+ * @return {number|null} The stated limit
+ */
+function statedRelatedLimit(data) {
+	return data.limit ? parseInt(data.limit, 10) : null
+}
+
+/**
+ * The page size used when neither the API nor the caller gives one: 500 for
+ * files and 20 for anything else.
+ *
+ * @param {string} dataType - The kind of related data
+ * @return {number} The default limit
+ */
+function defaultRelatedLimit(dataType) {
+	return dataType === 'files' ? 500 : 20
+}
+
+/**
+ * The page size of a related-data answer: the API's, else the requested one,
+ * else the default for the kind of data.
+ *
+ * @param {object} data - The API answer
+ * @param {{params: object, dataType: string}} request - The caller's params and the kind of related data
+ * @return {number} The limit
+ */
+function relatedLimit(data, { params, dataType }) {
+	return (
+		statedRelatedLimit(data)
+		|| params._limit
+		|| params.limit
+		|| defaultRelatedLimit(dataType)
+	)
+}
+
+/**
+ * The next and previous page links of a related-data answer.
+ *
+ * @param {object} data - The API answer
+ * @return {{next: string|null, prev: string|null}} The links
+ */
+function relatedLinks(data) {
+	return { next: data.next || null, prev: data.prev || null }
+}
+
+/**
  * The pagination of a related-data answer. The limit is the API's, else the
  * requested one, else 500 for files and 20 for anything else.
  *
  * @param {object} data - The API answer
- * @param {object} params - The caller's params
- * @param {string} dataType - The kind of related data
+ * @param {{params: object, dataType: string}} request - The caller's params and the kind of related data
  * @return {object} The pagination info
  */
-function relatedPagination(data, params, dataType) {
-	const apiLimit = data.limit ? parseInt(data.limit, 10) : null
-	const limit =
-		apiLimit
-		|| params._limit
-		|| params.limit
-		|| (dataType === 'files' ? 500 : 20)
+function relatedPagination(data, request) {
+	const limit = relatedLimit(data, request)
 	const total = data.total || 0
+	const links = relatedLinks(data)
 
 	return {
 		total,
 		page: data.page || 1,
 		pages: data.pages || Math.ceil(total / limit),
 		limit,
-		next: data.next || null,
-		prev: data.prev || null,
+		next: links.next,
+		prev: links.prev,
 	}
 }
 
@@ -165,7 +208,7 @@ function storeRelatedData(store, { type, dataType, params, data }) {
 	if (data.total !== undefined || data.page !== undefined) {
 		store.setPagination(
 			`${type}_${dataType}`,
-			relatedPagination(data, params, dataType),
+			relatedPagination(data, { params, dataType }),
 		)
 	}
 	store.relatedData[type][dataType] = relatedValue(dataType, data)
@@ -189,6 +232,202 @@ async function loadRelatedData(store, request) {
 	const url = store._constructApiUrl(type, id, dataType, query, publicationData)
 	const data = await fetchRelatedJson(url, request)
 	storeRelatedData(store, { type, dataType, params, data })
+}
+
+/**
+ * Load the settings when they are not there yet.
+ *
+ * @param {object} store - The object store
+ * @return {Promise<void>}
+ */
+async function ensureSettings(store) {
+	if (!store.settings) {
+		await store.fetchSettings()
+	}
+}
+
+/**
+ * Send an object as JSON.
+ *
+ * @param {string} url - The endpoint
+ * @param {{method: string, data: object}} request - The HTTP method and the object to send
+ * @return {Promise<Response>} The response
+ */
+function sendObjectJson(url, { method, data }) {
+	return fetch(url, {
+		method,
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify(data),
+	})
+}
+
+/**
+ * Keep a written object in the store's object cache under its id.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, id: string, object: object}} written - The object type, id and object
+ * @return {void}
+ */
+function cacheWrittenObject(store, { type, id, object }) {
+	if (!store.objects[type]) store.objects[type] = {}
+	store.objects[type][id] = object
+}
+
+/**
+ * Run an object write with its loading, error and state bookkeeping: both
+ * cleared before, the error recorded and rethrown on failure, the loading
+ * flag dropped afterwards.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, key: string, verb: string, perform: Function}} write - The object type, the loading/error key, the verb for the log line and the write itself
+ * @return {Promise<object>} What the write returns
+ */
+async function runObjectWrite(store, write) {
+	store.setLoading(write.key, true)
+	store.setError(write.key, null)
+	store.setState(write.type, { success: null, error: null })
+
+	try {
+		return await write.perform()
+	} catch (error) {
+		console.error(`Error ${write.verb} ${write.type} object:`, error)
+		store.setError(write.key, error.message)
+		store.setState(write.type, { success: false, error: error.message })
+		throw error
+	} finally {
+		store.setLoading(write.key, false)
+	}
+}
+
+/**
+ * POST a new object, cache it, refresh its collection and make it active.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, data: object, publicationData: object|null}} creation - The object type, the object and the optional register/schema override
+ * @return {Promise<object>} The created object
+ */
+async function postNewObject(store, { type, data, publicationData }) {
+	await ensureSettings(store)
+
+	const url = store._constructApiUrl(type, null, null, {}, publicationData)
+	const response = await sendObjectJson(url, { method: 'POST', data })
+	if (!response.ok) throw new Error(`Failed to create ${type} object`)
+
+	const newObject = await response.json()
+	cacheWrittenObject(store, { type, id: newObject.id, object: newObject })
+
+	// Refresh the collection to ensure it's up to date.
+	// Publications are not loaded via fetchCollection — they use the
+	// catalog-aware /api/{catalogSlug} endpoint via catalogStore.fetchPublications().
+	if (type !== 'publication') {
+		await store.fetchCollection(type)
+	}
+
+	store.setActiveObject(type, newObject)
+	store.setState(type, { success: true, error: null })
+
+	return newObject
+}
+
+/**
+ * PUT an existing object, cache it, refresh its collection and replace the
+ * active object when it is the same one.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, id: string, data: object}} update - The object type, id and data
+ * @return {Promise<object>} The updated object
+ */
+async function putExistingObject(store, { type, id, data }) {
+	await ensureSettings(store)
+
+	const url = store._constructApiUrl(type, id)
+	const response = await sendObjectJson(url, { method: 'PUT', data })
+	if (!response.ok) throw new Error(`Failed to update ${type} object`)
+
+	const updatedObject = await response.json()
+	cacheWrittenObject(store, { type, id, object: updatedObject })
+
+	await store.fetchCollection(type)
+
+	if (store.activeObjects[type]?.id === id) {
+		store.activeObjects[type] = updatedObject
+	}
+
+	store.setState(type, { success: true, error: null })
+
+	return updatedObject
+}
+
+/**
+ * The register and schema ids an object is saved under.
+ *
+ * @param {object} store - The object store
+ * @param {{register: string|object, schema: string|object}} options - Register/schema config
+ * @return {{registerId: string, schemaId: string}} The ids
+ * @throws {Error} When either id cannot be extracted
+ */
+function objectSaveIds(store, { register, schema }) {
+	const registerId = store.extractId(register)
+	const schemaId = store.extractId(schema)
+
+	if (!registerId || !schemaId) {
+		throw new Error('Could not extract register or schema ID')
+	}
+
+	return { registerId, schemaId }
+}
+
+/**
+ * The endpoint an object is saved to: the schema's collection for a new
+ * object, the object's own URL for an existing one.
+ *
+ * @param {object} objectItem - The object to save
+ * @param {{registerId: string, schemaId: string}} ids - The register and schema ids
+ * @return {string} The endpoint
+ */
+function objectSaveEndpoint(objectItem, { registerId, schemaId }) {
+	const objectId = objectItem['@self']?.id
+
+	let endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}`
+	if (objectId) {
+		endpoint += `/${objectId}`
+	}
+	return endpoint
+}
+
+/**
+ * Stamp the object's `@self.updated` with the current time.
+ *
+ * @param {object} objectItem - The object to save
+ * @return {void}
+ */
+function stampObjectUpdated(objectItem) {
+	if (!objectItem['@self']) {
+		objectItem['@self'] = {}
+	}
+	objectItem['@self'].updated = new Date().toISOString()
+}
+
+/**
+ * Send an object save: POST for a new object, PUT for an existing one.
+ *
+ * @param {string} endpoint - The endpoint
+ * @param {{objectItem: object, isNewObject: boolean}} save - The object and whether it is new
+ * @return {Promise<{response: Response, data: object}>} The response and its parsed body
+ * @throws {Error} When the answer is not ok
+ */
+async function sendObjectSave(endpoint, { objectItem, isNewObject }) {
+	const method = isNewObject ? 'POST' : 'PUT'
+	const response = await sendObjectJson(endpoint, { method, data: objectItem })
+
+	if (!response.ok) {
+		throw new Error(
+			`Failed to save object: ${response.status} ${response.statusText}`,
+		)
+	}
+
+	const data = await response.json()
+	return { response, data }
 }
 
 /**
@@ -1646,48 +1885,12 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async createObject(type, data, publicationData = null) {
-			this.setLoading(`${type}_create`, true)
-			this.setError(`${type}_create`, null)
-			this.setState(type, { success: null, error: null })
-
-			try {
-				if (!this.settings) {
-					await this.fetchSettings()
-				}
-
-				const response = await fetch(
-					this._constructApiUrl(type, null, null, {}, publicationData),
-					{
-						method: 'POST',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify(data),
-					},
-				)
-				if (!response.ok) throw new Error(`Failed to create ${type} object`)
-
-				const newObject = await response.json()
-				if (!this.objects[type]) this.objects[type] = {}
-				this.objects[type][newObject.id] = newObject
-
-				// Refresh the collection to ensure it's up to date.
-				// Publications are not loaded via fetchCollection — they use the
-				// catalog-aware /api/{catalogSlug} endpoint via catalogStore.fetchPublications().
-				if (type !== 'publication') {
-					await this.fetchCollection(type)
-				}
-
-				this.setActiveObject(type, newObject)
-				this.setState(type, { success: true, error: null })
-
-				return newObject
-			} catch (error) {
-				console.error(`Error creating ${type} object:`, error)
-				this.setError(`${type}_create`, error.message)
-				this.setState(type, { success: false, error: error.message })
-				throw error
-			} finally {
-				this.setLoading(`${type}_create`, false)
-			}
+			return runObjectWrite(this, {
+				type,
+				key: `${type}_create`,
+				verb: 'creating',
+				perform: () => postNewObject(this, { type, data, publicationData }),
+			})
 		},
 
 		/**
@@ -1712,41 +1915,13 @@ export const useObjectStore = defineStore('object', {
 				throw new Error('Object item, register and schema are required')
 			}
 
-			const registerId = this.extractId(register)
-			const schemaId = this.extractId(schema)
-
-			if (!registerId || !schemaId) {
-				throw new Error('Could not extract register or schema ID')
-			}
-
+			const ids = objectSaveIds(this, { register, schema })
 			const isNewObject = !objectItem['@self']?.id
-			const objectId = objectItem['@self']?.id
-
-			let endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}`
-			if (!isNewObject && objectId) {
-				endpoint += `/${objectId}`
-			}
-
-			if (!objectItem['@self']) {
-				objectItem['@self'] = {}
-			}
-			objectItem['@self'].updated = new Date().toISOString()
+			const endpoint = objectSaveEndpoint(objectItem, ids)
+			stampObjectUpdated(objectItem)
 
 			try {
-				const response = await fetch(endpoint, {
-					method: isNewObject ? 'POST' : 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(objectItem),
-				})
-
-				if (!response.ok) {
-					throw new Error(
-						`Failed to save object: ${response.status} ${response.statusText}`,
-					)
-				}
-
-				const data = await response.json()
-				return { response, data }
+				return await sendObjectSave(endpoint, { objectItem, isNewObject })
 			} catch (error) {
 				console.error('Error saving object:', error)
 				throw error
@@ -1768,43 +1943,12 @@ export const useObjectStore = defineStore('object', {
 		 * @spec openspec/specs/generic-object-modals/spec.md
 		 */
 		async updateObject(type, id, data) {
-			this.setLoading(`${type}_${id}`, true)
-			this.setError(`${type}_${id}`, null)
-			this.setState(type, { success: null, error: null })
-
-			try {
-				if (!this.settings) {
-					await this.fetchSettings()
-				}
-
-				const response = await fetch(this._constructApiUrl(type, id), {
-					method: 'PUT',
-					headers: { 'Content-Type': 'application/json' },
-					body: JSON.stringify(data),
-				})
-				if (!response.ok) throw new Error(`Failed to update ${type} object`)
-
-				const updatedObject = await response.json()
-				if (!this.objects[type]) this.objects[type] = {}
-				this.objects[type][id] = updatedObject
-
-				await this.fetchCollection(type)
-
-				if (this.activeObjects[type]?.id === id) {
-					this.activeObjects[type] = updatedObject
-				}
-
-				this.setState(type, { success: true, error: null })
-
-				return updatedObject
-			} catch (error) {
-				console.error(`Error updating ${type} object:`, error)
-				this.setError(`${type}_${id}`, error.message)
-				this.setState(type, { success: false, error: error.message })
-				throw error
-			} finally {
-				this.setLoading(`${type}_${id}`, false)
-			}
+			return runObjectWrite(this, {
+				type,
+				key: `${type}_${id}`,
+				verb: 'updating',
+				perform: () => putExistingObject(this, { type, id, data }),
+			})
 		},
 
 		/**
