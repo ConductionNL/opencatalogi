@@ -157,44 +157,77 @@ class SearchController extends Controller {
 			// REQ-PAC-001/002: public cache headers for an anonymous caller only.
 			return $this->cacheableForCaller(response: new JSONResponse(data: $result, statusCode: Http::STATUS_OK));
 		} catch (MalformedSearchParameterException $e) {
-			// A range bound that is not a date or a number (REQ-SCF-002).
-			return new JSONResponse(
-				data: [
-					'error' => $this->l10n->t('%s must be a date, such as 2026-04-01, or a number.', [$e->getParameter()]),
-					'parameter' => $e->getParameter(),
-				],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->malformedParameterAnswer(exception: $e);
 		} catch (RuntimeException $e) {
-			// OR isn't installed — this is a deploy issue, not a code bug. Callers
-			// (and operators) benefit from a 503 that distinguishes "backend not
-			// ready" from "backend crashed"; keep the generic 500 branch below for
-			// truly unexpected errors. Log-level `warning` because the app can't
-			// do its job right now but nothing is broken in this code path.
-			$this->logger->warning(
-				'[SearchController::index] OpenRegister not installed — public search unavailable',
-				['error' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				data: ['error' => $this->l10n->t('Search backend is not available.')],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			return $this->backendUnavailableAnswer(exception: $e);
 		} catch (\Exception $e) {
-			// Public endpoint — log exception details server-side only and return a
-			// generic error body to the caller; never leak raw $e->getMessage().
-			$this->logger->error(
-				'[SearchController::index] Failed to execute public search',
-				['error' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				data: ['error' => $this->l10n->t('Internal server error')],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->searchFailedAnswer(exception: $e);
 		}//end try
 
 	}//end index()
+
+	/**
+	 * The 400 for a range bound that is not a date or a number (REQ-SCF-002).
+	 *
+	 * @param MalformedSearchParameterException $exception The refusal.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function malformedParameterAnswer(MalformedSearchParameterException $exception): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'error' => $this->l10n->t('%s must be a date, such as 2026-04-01, or a number.', [$exception->getParameter()]),
+				'parameter' => $exception->getParameter(),
+			],
+			statusCode: Http::STATUS_BAD_REQUEST
+		);
+	}//end malformedParameterAnswer()
+
+	/**
+	 * The 503 when OpenRegister is not installed.
+	 *
+	 * This is a deploy issue, not a code bug. Callers (and operators) benefit
+	 * from a 503 that distinguishes "backend not ready" from "backend crashed";
+	 * the generic 500 stays for truly unexpected errors. Log-level `warning`
+	 * because the app can't do its job right now but nothing is broken in this
+	 * code path.
+	 *
+	 * @param RuntimeException $exception Why OpenRegister cannot be reached.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function backendUnavailableAnswer(RuntimeException $exception): JSONResponse {
+		$this->logger->warning(
+			'[SearchController::index] OpenRegister not installed — public search unavailable',
+			['error' => $exception->getMessage()]
+		);
+
+		return new JSONResponse(
+			data: ['error' => $this->l10n->t('Search backend is not available.')],
+			statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+		);
+	}//end backendUnavailableAnswer()
+
+	/**
+	 * The 500 for an unexpected failure. Public endpoint: the exception details
+	 * are logged server-side only and the caller gets a generic error body;
+	 * never leak the raw message.
+	 *
+	 * @param \Exception $exception The failure.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function searchFailedAnswer(\Exception $exception): JSONResponse {
+		$this->logger->error(
+			'[SearchController::index] Failed to execute public search',
+			['error' => $exception->getMessage()]
+		);
+
+		return new JSONResponse(
+			data: ['error' => $this->l10n->t('Internal server error')],
+			statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end searchFailedAnswer()
 
 	/**
 	 * Retrieve a specific publication by its ID.
