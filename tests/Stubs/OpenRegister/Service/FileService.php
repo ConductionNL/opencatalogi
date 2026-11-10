@@ -61,10 +61,11 @@ class FileService {
 	 * Get files for an entity.
 	 *
 	 * @param mixed $entity Entity.
+	 * @param boolean|null $sharedFilesOnly Only shared files.
 	 *
 	 * @return array<mixed>
 	 */
-	public function getFilesForEntity(mixed $entity): array {
+	public function getFilesForEntity(mixed $entity, ?bool $sharedFilesOnly = false): array {
 		return [];
 	}//end getFilesForEntity()
 

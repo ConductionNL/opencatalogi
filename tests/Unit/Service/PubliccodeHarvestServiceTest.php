@@ -27,7 +27,9 @@ use DateTime;
 use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
 use OCA\OpenRegister\Db\Flow;
 use OCA\OpenRegister\Db\FlowRun;
+use OCA\OpenRegister\Db\FlowRunListing;
 use OCA\OpenRegister\Db\FlowRunMapper;
+use OCA\OpenRegister\Db\FlowRunViewer;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\Flow\FlowService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -236,8 +238,9 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			$runs = ($runsByWorld[$name] ?? []);
 			$runMapper = $this->getMockBuilder(FlowRunMapper::class)->disableOriginalConstructor()->onlyMethods(['findAllRuns'])->getMock();
 			$runMapper->method('findAllRuns')->willReturnCallback(
-				function (?string $flowId = null, ?string $status = null, int $limit = 50) use ($runs): array {
-					$this->calls[] = ['findAllRuns', $flowId, $status, $limit];
+				function (FlowRunListing $listing, FlowRunViewer $viewer) use ($runs): array {
+					$this->assertNull($viewer->requesterUid, 'The harvest status reads its own flow as the system.');
+					$this->calls[] = ['findAllRuns', $listing->filter->flowId, $listing->filter->status, $listing->limit];
 					return $runs;
 				}
 			);
@@ -525,9 +528,10 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			->onlyMethods(['findAllRuns'])
 			->getMock();
 		$mapper->method('findAllRuns')->willReturnCallback(
-			function (?string $flowId = null, ?string $status = null, int $limit = 50) use ($runs): array {
-				$this->assertSame('flow-1', $flowId, 'The last run is read for the harvest flow only.');
-				$this->assertSame(1, $limit);
+			function (FlowRunListing $listing, FlowRunViewer $viewer) use ($runs): array {
+				$this->assertSame('flow-1', $listing->filter->flowId, 'The last run is read for the harvest flow only.');
+				$this->assertSame(1, $listing->limit);
+				$this->assertNull($viewer->requesterUid, 'The harvest status reads its own flow as the system.');
 				return $runs;
 			}
 		);
