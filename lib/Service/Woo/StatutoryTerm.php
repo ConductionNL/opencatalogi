@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
+use OCA\OpenCatalogi\Service\Term\TermEngineCall;
 use OCA\OpenRegister\Service\Flow\Timer\FlowTimerService;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
