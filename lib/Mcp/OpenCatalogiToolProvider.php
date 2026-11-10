@@ -280,11 +280,9 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 		}
 
 		$limit = $this->limitArgument(args: $args);
-		if ($limit < 1 || $limit > 50) {
-			return $this->error(
-				code: 'invalid_arguments',
-				message: "Invalid limit {$limit}. Must be between 1 and 50."
-			);
+		$refusal = $this->limitRefusal(limit: $limit);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		return [
@@ -292,6 +290,24 @@ class OpenCatalogiToolProvider implements IMcpToolProvider {
 			'customParams' => $this->searchParams(query: $query, limit: $limit),
 		];
 	}//end searchCatalogRequest()
+
+	/**
+	 * The error envelope for a limit outside 1 to 50, or null when it is inside.
+	 *
+	 * @param int $limit The asked limit.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function limitRefusal(int $limit): ?array {
+		if ($limit >= 1 && $limit <= 50) {
+			return null;
+		}
+
+		return $this->error(
+			code: 'invalid_arguments',
+			message: "Invalid limit {$limit}. Must be between 1 and 50."
+		);
+	}//end limitRefusal()
 
 	/**
 	 * The index() parameters of a search: the query, the limit and the first page.
