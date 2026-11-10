@@ -35,3 +35,30 @@ export function navigateTo(url) {
 		window.location.href = url
 	}
 }
+
+/**
+ * The component options every compact list widget shares: a required title,
+ * the loading flag and list columns as initial data, and a data fetch on
+ * mount (each widget brings its own `fetchData`).
+ *
+ * @type {object}
+ */
+export const LIST_WIDGET_OPTIONS = {
+	props: {
+		title: {
+			type: String,
+			required: true,
+		},
+	},
+
+	data() {
+		return {
+			loading: false,
+			columns: LIST_COLUMNS,
+		}
+	},
+
+	mounted() {
+		this.fetchData()
+	},
+}
