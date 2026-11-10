@@ -51,3 +51,27 @@ describe('Dashboard widgetDefs', () => {
 		expect(Object.keys(defs[8])).toEqual(['id', 'title', 'type', 'titleIconPosition', 'titleIconColor'])
 	})
 })
+
+describe('Dashboard publicationsByCategoryData', () => {
+	it('counts publications per schema name', () => {
+		const { objectStore } = jest.requireMock('../../store/store.js')
+		objectStore.availableSchemas = [{ id: 1, title: 'Doc' }, { id: 2, name: 'Note' }, { id: 3 }]
+		const allPublications = [
+			{ '@self': { schema: { title: 'Embedded' } } },
+			{ '@self': { schema: { name: 'Named' } } },
+			{ '@self': { schema: {} } },
+			{ '@self': { schema: '1' } },
+			{ '@self': { schema: 1 } },
+			{ '@self': { schema: 2 } },
+			{ '@self': { schema: 3 } },
+			{ '@self': { schema: 99 } },
+			{ '@self': {} },
+			{},
+		]
+		expect(Dashboard.computed.publicationsByCategoryData.call({ allPublications })).toEqual({
+			// Integer-like names come first, as object keys do.
+			labels: ['3', '99', 'Embedded', 'Named', 'Unknown', 'Doc', 'Note'],
+			series: [1, 1, 1, 1, 3, 2, 1],
+		})
+	})
+})
