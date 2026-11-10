@@ -952,6 +952,22 @@ import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
 import { formValue } from '../../services/formValue.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
+import {
+	findSchemaByAnyId,
+	metadataRows,
+	objectDisplayName,
+	objectSchemaName,
+	referencedSchema,
+	referencedSchemaProperties,
+} from './objectMetadata.js'
+import {
+	buildObjectPayload,
+	cleanFormValues,
+	isEmptyValue,
+	offersPublishAction,
+	propertyErrors,
+	withSchemaFillValues,
+} from './objectPayload.js'
 
 import '@toast-ui/editor/dist/toastui-editor.css'
 
@@ -1071,33 +1087,9 @@ export default {
 					) || null
 				)
 			}
-			const schemaRef = this.currentObject?.['@self']?.schema
-			if (!schemaRef) return null
-
-			// `@self.schema` is the full embedded schema object when the API
-			// extends it; prefer it directly so we keep `properties`.
-			if (typeof schemaRef === 'object' && schemaRef.properties) {
-				return schemaRef
-			}
-
-			// Fall back to looking up by id/uuid in availableSchemas. The id
-			// in @self.schema arrives as a string (e.g. "1") while
-			// availableSchemas[i].id is a number — match on both id and uuid
-			// using loose comparison, plus slug as a last resort.
-			const schemaId =
-				typeof schemaRef === 'object'
-					? (schemaRef.id ?? schemaRef.uuid ?? schemaRef.slug)
-					: schemaRef
-			if (schemaId === null || schemaId === undefined || schemaId === '')
-				return null
-			const idStr = String(schemaId)
-			return (
-				objectStore.availableSchemas.find(
-					(schema) =>
-						String(schema.id) === idStr
-						|| String(schema.uuid) === idStr
-						|| String(schema.slug) === idStr,
-				) || null
+			return referencedSchema(
+				this.currentObject?.['@self']?.schema,
+				objectStore.availableSchemas,
 			)
 		},
 
@@ -1123,68 +1115,10 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		metadataExtraRows() {
 			if (!this.currentObject) return []
-			const obj = this.currentObject
-
-			const register = obj['@self']?.register
-			let registerDisplay = 'Not set'
-			if (register) {
-				if (typeof register === 'object') {
-					registerDisplay =
-						register.title || register.name || register.id || register
-				} else {
-					const availableRegister = objectStore.availableRegisters.find(
-						(r) => r.id === register,
-					)
-					registerDisplay = availableRegister?.title || register
-				}
-			}
-
-			const schema = obj['@self']?.schema
-			let schemaDisplay = 'Not set'
-			if (schema) {
-				if (typeof schema === 'object') {
-					schemaDisplay =
-						schema.title || schema.name || schema.id || schema
-				} else {
-					const availableSchema = objectStore.availableSchemas.find(
-						(s) => s.id === schema,
-					)
-					schemaDisplay = availableSchema?.title || schema
-				}
-			}
-
-			const locked = obj['@self']?.locked
-			let lockedDisplay = 'Not locked'
-			if (locked) {
-				if (typeof locked === 'object') {
-					const lockedBy = locked.lockedBy || 'Unknown user'
-					const lockedAt = locked.lockedAt
-						? new Date(locked.lockedAt).toLocaleString()
-						: 'Unknown time'
-					const proc = locked.process ? ` (${locked.process})` : ''
-					lockedDisplay = `Locked by ${lockedBy} at ${lockedAt}${proc}`
-				} else {
-					lockedDisplay = 'Locked'
-				}
-			}
-
-			const fmtDate = (v, fallback) =>
-				v ? new Date(v).toLocaleString() : fallback
-
-			return [
-				['ID', obj.id || 'Not set'],
-				['Version', obj['@self']?.version || 'Not set'],
-				['Register', registerDisplay],
-				['Schema', schemaDisplay],
-				['Locked', lockedDisplay],
-				['Created', fmtDate(obj['@self']?.created, 'Not set')],
-				['Updated', fmtDate(obj['@self']?.updated, 'Not set')],
-				['Published', fmtDate(obj['@self']?.published, 'Not published')],
-				[
-					'Depublished',
-					fmtDate(obj['@self']?.depublished, 'Not depublished'),
-				],
-			]
+			return metadataRows(this.currentObject, {
+				registers: objectStore.availableRegisters,
+				schemas: objectStore.availableSchemas,
+			})
 		},
 
 		// Files tab computed properties
@@ -1508,23 +1442,10 @@ export default {
 		fieldErrors() {
 			const schema = this.resolvedSchema
 			if (!schema) return []
-			const props = schema.properties || {}
-			const errors = []
-			for (const [key, prop] of Object.entries(props)) {
-				if (!prop || prop.hideOnForm === true) continue
-				if (key === '@self' || key === 'id') continue
-				const value = formValue(this.formData, this.currentObject, key)
-				if (value === null || value === undefined || value === '') continue
-				const err = validateValue(value, prop)
-				if (err) {
-					errors.push({
-						key,
-						label: prop.title || key,
-						error: err,
-					})
-				}
-			}
-			return errors
+			return propertyErrors(schema.properties || {}, {
+				valueOf: (key) => formValue(this.formData, this.currentObject, key),
+				validate: validateValue,
+			})
 		},
 
 		hasFieldErrors() {
@@ -1803,31 +1724,11 @@ export default {
 
 			if (!this.currentObject) return t('opencatalogi', 'View Object')
 
-			const name =
-				this.currentObject['@self']?.name
-				|| this.currentObject.name
-				|| this.currentObject.title
-				|| this.currentObject.id
-				|| 'Untitled'
-
-			// Try to get schema name from the object itself
-			let schemaName = 'Publication'
-			const rawSchema =
-				this.currentObject.schema ?? this.currentObject['@self']?.schema
-
-			if (rawSchema && typeof rawSchema === 'object') {
-				schemaName =
-					rawSchema.title
-					|| rawSchema.name
-					|| rawSchema.id
-					|| 'Publication'
-			} else if (rawSchema != null && rawSchema !== '') {
-				const match = objectStore.availableSchemas.find(
-					(s) => Number(s.id) === Number(rawSchema),
-				)
-				schemaName = match?.title || match?.name || String(rawSchema)
-			}
-
+			const name = objectDisplayName(this.currentObject)
+			const schemaName = objectSchemaName(
+				this.currentObject,
+				objectStore.availableSchemas,
+			)
 			return `${name} (${schemaName})`
 		},
 
@@ -2619,19 +2520,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		shouldShowPublishAction(object) {
-			if (!object) return false
-			const now = new Date()
-			const published = object.publicationDate
-				? new Date(object.publicationDate)
-				: null
-			const depublished = object.depublicationDate
-				? new Date(object.depublicationDate)
-				: null
-
-			if (depublished && depublished < now) return true // currently depublished
-			if (!published && !depublished) return true // never published
-			if (!depublished && published && published > now) return true // scheduled but not yet live
-			return false
+			return offersPublishAction(object, new Date())
 		},
 
 		/**
@@ -2689,49 +2578,18 @@ export default {
 		// Schema handling methods
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		getSchemaProperties() {
-			let properties = {}
-
-			const findSchema = (schemaId) =>
-				objectStore.availableSchemas.find(
-					(schema) =>
-						String(schema.id) === String(schemaId)
-						|| schema.uuid === schemaId
-						|| schema.slug === schemaId,
-				)
-
 			// For new objects, use the selected schema
 			if (this.isNewObject && this.selectedSchema) {
-				const fullSchema = findSchema(this.selectedSchema.id)
-				properties = fullSchema?.properties || {}
-			} else if (this.currentObject && this.currentObject['@self']?.schema) {
-				// For existing objects, try to get schema from the object's schema reference
-				const schemaRef = this.currentObject['@self'].schema
-
-				// If schema is already an extended object, use its properties directly
-				if (
-					typeof schemaRef === 'object'
-					&& schemaRef !== null
-					&& schemaRef.properties
-				) {
-					return schemaRef.properties
-				}
-
-				// Handle both object and string schema references
-				// @self.schema can be a UUID string, numeric ID, or slug — match against all
-				const schemaId =
-					typeof schemaRef === 'object' && schemaRef !== null
-						? schemaRef.id || schemaRef.uuid
-						: schemaRef
-
-				if (schemaId) {
-					const fullSchema = findSchema(schemaId)
-					if (fullSchema?.properties) {
-						properties = fullSchema.properties
-					}
-				}
+				const fullSchema = findSchemaByAnyId(
+					objectStore.availableSchemas,
+					this.selectedSchema.id,
+				)
+				return fullSchema?.properties || {}
 			}
-
-			return properties
+			return referencedSchemaProperties(
+				this.currentObject?.['@self']?.schema,
+				objectStore.availableSchemas,
+			)
 		},
 
 		// Helper method to rebuild object with schema properties after API operations
@@ -2750,39 +2608,8 @@ export default {
 				},
 			}
 
-			// Get schema properties to ensure we don't lose any
-			const schemaProperties = this.getSchemaProperties()
-
-			// Add missing schema properties with default values
-			for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
-				if (!Object.hasOwn(mergedObject, key)) {
-					// Add with appropriate default value based on type
-					let defaultValue = ''
-					switch (schemaProperty.type) {
-						case 'string':
-							defaultValue = schemaProperty.const || ''
-							break
-						case 'number':
-						case 'integer':
-							defaultValue = 0
-							break
-						case 'boolean':
-							defaultValue = false
-							break
-						case 'array':
-							defaultValue = []
-							break
-						case 'object':
-							defaultValue = {}
-							break
-						default:
-							defaultValue = ''
-					}
-					mergedObject[key] = defaultValue
-				}
-			}
-
-			return mergedObject
+			// Add the schema properties the result lacks, so none get lost
+			return withSchemaFillValues(mergedObject, this.getSchemaProperties())
 		},
 
 		/**
@@ -2792,33 +2619,7 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		cleanFormData() {
-			const cleaned = {}
-
-			// If formData is somehow an array, convert it properly
-			if (Array.isArray(this.formData)) {
-				// This should never happen, but just in case
-				return {}
-			}
-
-			// Copy all valid properties from formData
-			for (const [key, value] of Object.entries(this.formData || {})) {
-				// Only include valid property names:
-				// - Must be a string
-				// - Must not be empty
-				// - Must not be purely numeric (array indices)
-				// - Must not be special Vue/internal keys
-				if (
-					typeof key === 'string'
-					&& key.length > 0
-					&& !/^\d+$/.test(key)
-					&& !key.startsWith('_')
-					&& !key.startsWith('$')
-				) {
-					cleaned[key] = value
-				}
-			}
-
-			return cleaned
+			return cleanFormValues(this.formData)
 		},
 
 		/**
@@ -2829,100 +2630,8 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		buildCompleteObjectData() {
 			const schemaProperties = this.getSchemaProperties()
-			const cleanedFormData = this.cleanFormData()
-			const currentObjectData = this.currentObject || {}
-
-			// Start with current object data (excluding id but keeping @self for updates)
-			const objectData = {}
-			for (const [key, value] of Object.entries(currentObjectData)) {
-				if (key !== 'id') {
-					objectData[key] = value
-				}
-			}
-
-			// Add all schema properties with appropriate values
-			for (const [propertyKey, schemaProperty] of Object.entries(
-				schemaProperties,
-			)) {
-				if (Object.hasOwn(cleanedFormData, propertyKey)) {
-					// Check if property was marked for deletion (undefined)
-					if (cleanedFormData[propertyKey] === undefined) {
-						// For schema properties, don't include undefined values - let backend handle defaults
-						// This effectively removes the property from the payload
-						delete objectData[propertyKey]
-					} else {
-						// Use edited value from formData; normalize arrays if schema type is array
-						const formValue = cleanedFormData[propertyKey]
-						if (schemaProperty.type === 'array') {
-							let normalized
-							if (Array.isArray(formValue)) {
-								normalized = formValue
-							} else if (typeof formValue === 'string') {
-								normalized = formValue
-									.split(/ *, */g)
-									.filter(Boolean)
-							} else if (formValue === null) {
-								normalized = null
-							} else if (formValue === false) {
-								// Edge case: some inputs may pass boolean false; treat as empty array
-								normalized = []
-							} else {
-								normalized = [String(formValue)].filter(Boolean)
-							}
-							objectData[propertyKey] = normalized
-						} else {
-							objectData[propertyKey] = formValue
-						}
-					}
-				} else if (Object.hasOwn(currentObjectData, propertyKey)) {
-					// Keep existing value from current object
-					objectData[propertyKey] = currentObjectData[propertyKey]
-				} else {
-					// Property doesn't exist, set appropriate default or null
-					let defaultValue = null
-
-					// Only set non-null defaults for specific cases
-					switch (schemaProperty.type) {
-						case 'string':
-							defaultValue = schemaProperty.const || null
-							break
-						case 'number':
-						case 'integer':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'boolean':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'array':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'object':
-							defaultValue = null // Let backend handle defaults
-							break
-						default:
-							defaultValue = null
-					}
-
-					objectData[propertyKey] = defaultValue
-				}
-			}
-
-			// Also include any edited properties that might not be in the schema
-			// But only include valid property names (not numeric indices) and not undefined values
-			for (const [key, value] of Object.entries(cleanedFormData)) {
-				if (
-					!Object.hasOwn(schemaProperties, key)
-					&& typeof key === 'string'
-					&& key.length > 0
-					&& !/^\d+$/.test(key)
-					&& value !== undefined
-				) {
-					// Don't include properties marked for deletion
-					objectData[key] = value
-				}
-			}
-
-			return objectData
+			const form = this.cleanFormData()
+			return buildObjectPayload(this.currentObject, { schemaProperties, form })
 		},
 
 		// Property dropping methods
@@ -2945,13 +2654,7 @@ export default {
 			// Hide the X when there's effectively nothing to clear. Use the
 			// resolved value (formData override falls back to the persisted
 			// object value) so a property cleared in the form drops the X.
-			const resolved = formValue(this.formData, this.currentObject, key)
-			if (resolved === null || resolved === undefined || resolved === '')
-				return false
-			if (Array.isArray(resolved) && resolved.length === 0) return false
-			if (typeof resolved === 'object' && Object.keys(resolved).length === 0)
-				return false
-			return true
+			return !isEmptyValue(formValue(this.formData, this.currentObject, key))
 		},
 
 		/**
