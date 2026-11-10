@@ -244,21 +244,34 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 				continue;
 			}
 
-			$codes = array_values(array_map('strval', (array)($assessment['weigeringsgronden'] ?? [])));
-			$entry = [
-				'position' => ($index + 1),
-				'grounds' => $codes,
-				'groundDetails' => array_map(static fn (string $code): array => ['code' => $code, 'article' => '', 'label' => ''], $codes),
-			];
-			if (($assessment['titlePublic'] ?? false) === true && (string)($assessment['fileName'] ?? '') !== '') {
-				$entry['title'] = (string)$assessment['fileName'];
-			}
-
-			$entries[] = $entry;
+			$entries[] = $this->batchEntry(position: ($index + 1), assessment: $assessment);
 		}
 
 		return $entries;
 	}//end batchEntries()
+
+	/**
+	 * One withheld assessment's entry, with its title only when the title is
+	 * public (a literal true) and there is a file name.
+	 *
+	 * @param int $position The document's place in the batch, from 1.
+	 * @param array<string, mixed> $assessment The assessment.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function batchEntry(int $position, array $assessment): array {
+		$codes = array_values(array_map('strval', (array)($assessment['weigeringsgronden'] ?? [])));
+		$entry = [
+			'position' => $position,
+			'grounds' => $codes,
+			'groundDetails' => array_map(static fn (string $code): array => ['code' => $code, 'article' => '', 'label' => ''], $codes),
+		];
+		if (($assessment['titlePublic'] ?? false) === true && (string)($assessment['fileName'] ?? '') !== '') {
+			$entry['title'] = (string)$assessment['fileName'];
+		}
+
+		return $entry;
+	}//end batchEntry()
 
 	/**
 	 * One entry per stored row, with the details stored at recording time and no title.
@@ -270,15 +283,7 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 	private function storedEntries(array $rows): array {
 		$entries = [];
 		foreach ($rows as $row) {
-			$details = [];
-			foreach ((array)($row['grounds'] ?? []) as $ground) {
-				$details[] = [
-					'code' => (string)($ground['code'] ?? ''),
-					'article' => (string)($ground['article'] ?? ''),
-					'label' => (string)($ground['label'] ?? ''),
-				];
-			}
-
+			$details = $this->groundDetails(grounds: ($row['grounds'] ?? []));
 			$entries[] = [
 				'position' => (int)($row['position'] ?? 0),
 				'grounds' => array_column($details, 'code'),
@@ -288,4 +293,24 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 
 		return $entries;
 	}//end storedEntries()
+
+	/**
+	 * The code, article and label of every ground stored on a row.
+	 *
+	 * @param mixed $grounds The row's grounds.
+	 *
+	 * @return list<array{code: string, article: string, label: string}>
+	 */
+	private function groundDetails(mixed $grounds): array {
+		$details = [];
+		foreach ((array)$grounds as $ground) {
+			$details[] = [
+				'code' => (string)($ground['code'] ?? ''),
+				'article' => (string)($ground['article'] ?? ''),
+				'label' => (string)($ground['label'] ?? ''),
+			];
+		}
+
+		return $details;
+	}//end groundDetails()
 }//end class
