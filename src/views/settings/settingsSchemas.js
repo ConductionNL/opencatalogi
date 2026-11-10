@@ -86,3 +86,28 @@ export function schemaNamedLike(schemas, type) {
 		.filter(isSchemaObject)
 		.find((schema) => schema.title.toLowerCase() === type.toLowerCase())
 }
+
+/**
+ * The select options of a register's schemas: bare ids as generic schema
+ * options, else the schema objects by title.
+ *
+ * @param {Array} schemas - The register's schemas
+ * @return {Array<{label: string, value: string}>} The options
+ */
+export function schemaOptionsOf(schemas) {
+	// Handle both schema IDs (numbers) and schema objects.
+	if (schemas.some((s) => typeof s === 'number')) {
+		// Schemas are just IDs, create options with ID as both label and value.
+		return schemas
+			.filter((schemaId) => typeof schemaId === 'number')
+			.map((schemaId) => ({
+				label: `Schema ${schemaId}`,
+				value: schemaId.toString(),
+			}))
+	}
+	// Schemas are objects: only include valid schema objects.
+	return schemas.filter(isSchemaObject).map((schema) => ({
+		label: schema.title,
+		value: schema.id.toString(),
+	}))
+}

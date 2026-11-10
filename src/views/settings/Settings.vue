@@ -554,6 +554,7 @@ import {
 	configuredSchema,
 	hasSchemaObjects,
 	schemaNamedLike,
+	schemaOptionsOf,
 } from './settingsSchemas.js'
 
 import '@nextcloud/dialogs/style.css'
@@ -1022,33 +1023,10 @@ export default defineComponent({
 			const register = this.settings.availableRegisters.find(
 				(r) => r.id.toString() === registerId,
 			)
-			if (register && Array.isArray(register.schemas)) {
-				// Handle both schema IDs (numbers) and schema objects.
-				if (register.schemas.some((s) => typeof s === 'number')) {
-					// Schemas are just IDs, create options with ID as both label and value.
-					this.schemaOptions = register.schemas
-						.filter((schemaId) => typeof schemaId === 'number')
-						.map((schemaId) => ({
-							label: `Schema ${schemaId}`,
-							value: schemaId.toString(),
-						}))
-				} else {
-					// Schemas are objects, filter out non-object schemas and only include valid schema objects.
-					const validSchemas = register.schemas.filter(
-						(schema) =>
-							schema
-							&& typeof schema === 'object'
-							&& schema.id
-							&& schema.title,
-					)
-					this.schemaOptions = validSchemas.map((schema) => ({
-						label: schema.title,
-						value: schema.id.toString(),
-					}))
-				}
-			} else {
-				this.schemaOptions = []
-			}
+			this.schemaOptions =
+				register && Array.isArray(register.schemas)
+					? schemaOptionsOf(register.schemas)
+					: []
 		},
 
 		/**
@@ -1070,42 +1048,40 @@ export default defineComponent({
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		handleRegisterChange() {
-			if (this.selectedRegister) {
-				// Update schema options for the new register
-				this.updateSchemaOptions(this.selectedRegister.value)
+			if (!this.selectedRegister) {
+				return
+			}
 
-				// Reset all schema selections
-				this.settings.objectTypes.forEach((type) => {
-					this.configuration = {
-						...this.configuration,
-						[type]: {
-							...this.configuration[type],
-							schema: null,
-						},
-					}
-				})
+			// Update schema options for the new register
+			this.updateSchemaOptions(this.selectedRegister.value)
 
-				// Auto-select matching schemas.
-				const register = this.settings.availableRegisters.find(
-					(r) => r.id.toString() === this.selectedRegister.value,
-				)
-				if (
-					register
-					&& Array.isArray(register.schemas)
-					&& register.schemas.length > 0
-				) {
-					// Check if schemas are objects or just IDs.
-					const hasSchemaObjects = register.schemas.some(
-						(schema) =>
-							schema
-							&& typeof schema === 'object'
-							&& schema.id
-							&& schema.title,
-					)
-					if (hasSchemaObjects) {
-						this.autoSelectMatchingSchemas(register)
-					}
-				}
+			// Reset all schema selections
+			this.settings.objectTypes.forEach((type) => {
+				this.clearTypeSchema(type)
+			})
+
+			// Auto-select matching schemas when the register lists schema objects.
+			const register = this.settings.availableRegisters.find(
+				(r) => r.id.toString() === this.selectedRegister.value,
+			)
+			if (register && hasSchemaObjects(register.schemas)) {
+				this.autoSelectMatchingSchemas(register)
+			}
+		},
+
+		/**
+		 * Clear the schema of an object type's configuration.
+		 *
+		 * @param {string} type - The object type
+		 * @return {void}
+		 */
+		clearTypeSchema(type) {
+			this.configuration = {
+				...this.configuration,
+				[type]: {
+					...this.configuration[type],
+					schema: null,
+				},
 			}
 		},
 

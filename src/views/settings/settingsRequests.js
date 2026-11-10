@@ -52,6 +52,21 @@ export function syncIntervalSeconds(syncOptions) {
 }
 
 /**
+ * The request options of a JSON POST to an OCS-aware endpoint.
+ *
+ * @return {{method: string, headers: object}} The request options
+ */
+function ocsJsonPost() {
+	return {
+		method: 'POST',
+		headers: {
+			'Content-Type': 'application/json',
+			'OCS-APIRequest': 'true',
+		},
+	}
+}
+
+/**
  * POST a sync interval to the backend.
  *
  * @param {number} seconds - The interval in seconds
@@ -61,11 +76,7 @@ export async function postSyncInterval(seconds) {
 	const response = await fetch(
 		'/index.php/apps/opencatalogi/api/settings/sync',
 		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'OCS-APIRequest': 'true',
-			},
+			...ocsJsonPost(),
 			body: JSON.stringify({ sync_interval_seconds: seconds }),
 		},
 	)
@@ -80,13 +91,7 @@ export async function postSyncInterval(seconds) {
 export async function requestDirectorySync() {
 	const response = await fetch(
 		'/index.php/apps/opencatalogi/api/listings/sync',
-		{
-			method: 'POST',
-			headers: {
-				'Content-Type': 'application/json',
-				'OCS-APIRequest': 'true',
-			},
-		},
+		ocsJsonPost(),
 	)
 	const data = await response.json()
 	return { response, data }
