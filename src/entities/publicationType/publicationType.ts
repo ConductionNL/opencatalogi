@@ -90,7 +90,7 @@ const PROPERTY_FORMATS = [
 ] as const
 
 /**
- * The zod shape of what a property is: its name, type, format and flags.
+ * The zod shape of what a property is: its name, type and format.
  *
  * @return The descriptive part of the property shape
  */
@@ -106,18 +106,18 @@ function propertyDescriptionShape() {
 		pattern: z.string(),
 		default: z.union([z.string(), z.boolean()]),
 		behavior: z.string(),
-		required: z.boolean(),
-		deprecated: z.boolean(),
 	}
 }
 
 /**
- * The zod shape of a property's limits and example.
+ * The zod shape of a property's flags, limits and example.
  *
- * @return The limit part of the property shape
+ * @return The rule part of the property shape
  */
-function propertyLimitShape() {
+function propertyRuleShape() {
 	return {
+		required: z.boolean(),
+		deprecated: z.boolean(),
 		minLength: z.number(),
 		maxLength: z.number(),
 		example: z.string(),
@@ -139,7 +139,7 @@ function propertyLimitShape() {
 function propertySchema() {
 	return z.object({
 		...propertyDescriptionShape(),
-		...propertyLimitShape(),
+		...propertyRuleShape(),
 	})
 }
 

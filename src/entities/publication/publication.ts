@@ -6,6 +6,7 @@ import type { TPublication } from './publication.types'
 import { z } from 'zod'
 import { fillDefaults, objectOr } from '../fillDefaults.js'
 import { languageSchema } from '../languageSchema.js'
+import { publicationStatusSchema } from '../publicationStatus.js'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
@@ -177,14 +178,7 @@ export class Publication implements TPublication {
 			featured: z.boolean(),
 			source: z.string(),
 			organization: z.string(),
-			status: z.enum([
-				'Concept',
-				'Published',
-				'Withdrawn',
-				'Archived',
-				'Revised',
-				'Rejected',
-			]),
+			status: publicationStatusSchema(),
 			themes: z.array(z.union([z.string(), z.number()])),
 			data: z.record(z.string(), z.any()),
 			anonymization: z.object({
