@@ -39,6 +39,8 @@ use OCA\OpenRegister\Mcp\Db\Agent;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCA\OpenRegister\Mcp\Tool\ToolInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
@@ -473,7 +475,10 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		$pageData = $this->pageData(parameters: $parameters);
 
 		// ObjectService handles RBAC and validation; the page lives in the publication register.
-		$page = $this->objectService->saveObject(object: $pageData, extend: [], register: 'publication', schema: 'page');
+		$page = $this->objectService->saveObject(
+			object: $pageData,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: 'page'))
+		);
 
 		return $this->successResponse(
 			message: 'Page created successfully',
@@ -573,7 +578,10 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 
 		$menuData = $this->menuData(parameters: $parameters);
 
-		$menu = $this->objectService->saveObject(object: $menuData, extend: [], register: 'publication', schema: 'menu');
+		$menu = $this->objectService->saveObject(
+			object: $menuData,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: 'menu'))
+		);
 
 		return $this->successResponse(
 			message: 'Menu created successfully',
@@ -768,7 +776,10 @@ class CMSTool implements ToolInterface, CMSToolInterface {
 		}
 
 		$itemData = $this->menuItemData(parameters: $parameters);
-		$menuItem = $this->objectService->saveObject(object: $itemData, extend: [], register: 'publication', schema: 'menuItem');
+		$menuItem = $this->objectService->saveObject(
+			object: $itemData,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: 'menuItem'))
+		);
 
 		return $this->successResponse(
 			message: 'Menu item added successfully',

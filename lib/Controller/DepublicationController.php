@@ -44,6 +44,9 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Service\Object\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -177,11 +180,14 @@ class DepublicationController extends Controller {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $depublication,
-				extend: [],
-				register: $this->depublicationConfiguration()['register'],
-				schema: $this->depublicationConfiguration()['schema'],
-				_rbac: false,
-				_unowned: true
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+						register: $this->depublicationConfiguration()['register'],
+						schema: $this->depublicationConfiguration()['schema']
+					),
+					actor: new SaveActor(unowned: true)
+				),
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -343,10 +349,10 @@ class DepublicationController extends Controller {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $found['depublication'],
-				extend: [],
-				register: $found['config']['register'],
-				schema: $found['config']['schema'],
-				uuid: $found['id'],
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $found['config']['register'], schema: $found['config']['schema']),
+					uuid: $found['id']
+				),
 				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {

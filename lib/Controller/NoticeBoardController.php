@@ -43,6 +43,8 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -166,10 +168,10 @@ class NoticeBoardController extends Controller {
 			$config = $this->configurationFor(schemaKey: 'notice_board_schema');
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $checked,
-				extend: [],
-				register: $config['register'],
-				schema: $config['schema'],
-				uuid: (string)($board['id'] ?? ''),
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $config['register'], schema: $config['schema']),
+					uuid: (string)($board['id'] ?? '')
+				),
 				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
@@ -221,10 +223,10 @@ class NoticeBoardController extends Controller {
 			$config = $this->configurationFor(schemaKey: 'notice_schema');
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $checked,
-				extend: [],
-				register: $config['register'],
-				schema: $config['schema'],
-				uuid: (string)($notice['id'] ?? ''),
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $config['register'], schema: $config['schema']),
+					uuid: (string)($notice['id'] ?? '')
+				),
 				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {

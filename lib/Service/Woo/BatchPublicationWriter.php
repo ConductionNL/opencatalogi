@@ -32,6 +32,8 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\WooCategory;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
@@ -267,8 +269,7 @@ class BatchPublicationWriter {
 
 		$entity = $objects->saveObject(
 			object: $this->payload(batch: $batch, now: $now),
-			register: self::REGISTER,
-			schema: self::SCHEMA,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA)),
 			_rbac: false,
 			_multitenancy: false
 		);

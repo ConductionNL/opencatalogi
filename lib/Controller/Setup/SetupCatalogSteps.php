@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller\Setup;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -125,10 +127,9 @@ class SetupCatalogSteps {
 		try {
 			$objectService->saveObject(
 				object: $catalog,
-				register: $target['register'],
-				schema: $target['schema'],
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $target['register'], schema: $target['schema'])),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 		} catch (\Exception $e) {
 			$this->logger->error('Setup create-first-catalog failed: ' . $e->getMessage(), ['app' => AppIdentity::APP_ID]);

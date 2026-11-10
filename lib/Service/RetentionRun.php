@@ -25,6 +25,8 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 
 /**
  * The object service, publication register and schema, and the moment one
@@ -79,11 +81,12 @@ final class RetentionRun {
 	public function save(array $data): mixed {
 		return $this->objectService->saveObject(
 			object: $data,
-			register: $this->register,
-			schema: $this->schema,
-			uuid: (string)($data['id'] ?? $data['uuid'] ?? ''),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $this->register, schema: $this->schema),
+				uuid: (string)($data['id'] ?? $data['uuid'] ?? '')
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 	}//end save()
 

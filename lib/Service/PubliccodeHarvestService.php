@@ -34,6 +34,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -194,7 +196,13 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function saveShard(array $shard, array $context): string {
 		$synchronization = self::synchronizationFor(definitions: $context['definitions'], shard: $shard);
 		$existing = $this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']);
-		$context['objects']->saveObject(object: $synchronization, register: self::INTEGRIQ_REGISTER, schema: 'synchronization', uuid: $existing);
+		$context['objects']->saveObject(
+			object: $synchronization,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::INTEGRIQ_REGISTER, schema: 'synchronization'),
+				uuid: $existing
+			)
+		);
 
 		if ($existing === null) {
 			return 'created';
