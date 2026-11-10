@@ -34,6 +34,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -82,7 +83,7 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		$objectService = $this->settingsService->getObjectService();
-		$entity = $objectService?->find(id: $uuid, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+		$entity = $objectService?->find(id: $uuid, options: new ObjectFindOptions(register: $register, schema: $schema), _rbac: false, _multitenancy: false);
 		if ($entity === null) {
 			return null;
 		}

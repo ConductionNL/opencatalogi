@@ -268,7 +268,7 @@ class OoapiService implements OoapiServiceInterface {
 	 */
 	private function fetchObject(string $id, string $kind): ?array {
 		try {
-			$object = $this->getObjectService()->find(id: $id, _extend: []);
+			$object = $this->getObjectService()->find(id: $id);
 		} catch (\Throwable $e) {
 			$this->logger->debug('[OoapiService] ' . $kind . ' not found', ['id' => $id, 'error' => $e->getMessage()]);
 			return null;

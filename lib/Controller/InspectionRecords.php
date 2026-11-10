@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * Opens an inspection window and resolves its link, and stores and reads the
@@ -138,8 +139,7 @@ class InspectionRecords {
 		return $this->toArray(
 			object: $this->registers->getObjectService()->find(
 				id: $id,
-				register: $config['register'],
-				schema: $config['schema'],
+				options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
 				_rbac: false
 			)
 		);

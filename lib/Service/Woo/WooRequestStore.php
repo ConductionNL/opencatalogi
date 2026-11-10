@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Service\Woo;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -177,8 +178,7 @@ class WooRequestStore implements InformationRequestStoreInterface {
 			$found = $this->asArray(
 				object: $this->objects()->find(
 					id: $requestId,
-					register: $target['register'],
-					schema: $target['schema']
+					options: new ObjectFindOptions(register: $target['register'], schema: $target['schema'])
 				)
 			);
 		} catch (\Throwable $e) {

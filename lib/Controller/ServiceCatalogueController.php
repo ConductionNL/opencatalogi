@@ -40,6 +40,7 @@ use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -264,8 +265,7 @@ class ServiceCatalogueController extends Controller {
 			$objectService = $this->catalogueService->getObjectService();
 			$found = $objectService->find(
 				id: $id,
-				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				options: new ObjectFindOptions(register: $caseTypeConfig['register'], schema: $caseTypeConfig['schema'])
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
@@ -443,8 +443,7 @@ class ServiceCatalogueController extends Controller {
 			$local = $this->asArray(
 				object: $objectService->find(
 					id: $id,
-					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema'],
+					options: new ObjectFindOptions(register: $caseTypeConfig['register'], schema: $caseTypeConfig['schema']),
 					_rbac: false
 				)
 			);

@@ -26,6 +26,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -184,10 +185,7 @@ class ThemesController extends Controller {
 		try {
 			$theme = $this->getObjectService()->find(
 				$id,
-				[],
-				false,
-				$themeConfig['register'],
-				$themeConfig['schema'],
+				options: new ObjectFindOptions(register: $themeConfig['register'], schema: $themeConfig['schema']),
 				_rbac: true,
 				_multitenancy: false
 			);

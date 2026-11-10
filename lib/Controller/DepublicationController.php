@@ -44,6 +44,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -297,7 +298,7 @@ class DepublicationController extends Controller {
 			$config = $this->depublicationConfiguration();
 			$objectService = $this->registers->getObjectService();
 			$depublication = $this->asArray(
-				object: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'], _rbac: false)
+				object: $objectService->find(id: $id, options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']), _rbac: false)
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
