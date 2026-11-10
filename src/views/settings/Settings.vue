@@ -543,6 +543,21 @@ import WooIndexConnection from './WooIndexConnection.vue'
 import '@nextcloud/dialogs/style.css'
 
 /**
+ * Fetch the federation sync options.
+ *
+ * @return {Promise<object>} The parsed answer
+ */
+async function fetchSyncOptions() {
+	const response = await fetch(
+		'/index.php/apps/opencatalogi/api/settings/sync',
+		{
+			headers: { 'OCS-APIRequest': 'true' },
+		},
+	)
+	return response.json()
+}
+
+/**
  * The sync options of a backend answer, in minutes.
  *
  * @param {object} data - The answer
@@ -1357,24 +1372,32 @@ export default defineComponent({
 
 				this.wooReadinessReport = response.data
 			} catch (error) {
-				// axios rejects on a non-2xx status, so the 409 `not-configured`
-				// branch that used to sit behind `if (!response.ok)` lives here
-				// now. The error body is still the server's JSON payload.
-				const data = error.response?.data
-				if (data !== undefined) {
-					this.wooReadinessError = this.readinessRefusal(data)
-					return
-				}
-
-				// eslint-disable-next-line no-console
-				console.error('Failed to run Woo readiness check:', error)
-				this.wooReadinessError = this.t(
-					'opencatalogi',
-					'Readiness check failed.',
-				)
+				this.applyReadinessFailure(error)
 			} finally {
 				this.wooReadinessRunning = false
 			}
+		},
+
+		/**
+		 * Show why the readiness check failed: the server's refusal, or a
+		 * logged generic failure when there is no answer body.
+		 *
+		 * @param {Error} error - The rejection
+		 * @return {void}
+		 */
+		applyReadinessFailure(error) {
+			// axios rejects on a non-2xx status, so the 409 `not-configured`
+			// branch that used to sit behind `if (!response.ok)` lives here
+			// now. The error body is still the server's JSON payload.
+			const data = error.response?.data
+			if (data !== undefined) {
+				this.wooReadinessError = this.readinessRefusal(data)
+				return
+			}
+
+			// eslint-disable-next-line no-console
+			console.error('Failed to run Woo readiness check:', error)
+			this.wooReadinessError = this.t('opencatalogi', 'Readiness check failed.')
 		},
 
 		/**
@@ -1596,13 +1619,7 @@ export default defineComponent({
 		async loadSyncOptions() {
 			this.loadingSyncOptions = true
 			try {
-				const response = await fetch(
-					'/index.php/apps/opencatalogi/api/settings/sync',
-					{
-						headers: { 'OCS-APIRequest': 'true' },
-					},
-				)
-				const data = await response.json()
+				const data = await fetchSyncOptions()
 
 				if (!data.error) {
 					this.syncOptions = syncOptionsFrom(data)
