@@ -202,26 +202,9 @@ export default {
 		sourceLabel() {
 			const source = this.status.source
 			if (!source || !source.exists) {
-				return this.t(
-					'opencatalogi',
-					'integriq has no GitHub source {slug}. Update integriq.',
-					{ slug: source?.slug ?? 'github-api' },
-				)
+				return this.missingSourceLabel(source)
 			}
-			if (!source.enabled) {
-				return this.t(
-					'opencatalogi',
-					'The GitHub source {slug} is switched off. Add the token and switch it on in integriq.',
-					{ slug: source.slug },
-				)
-			}
-			return this.t(
-				'opencatalogi',
-				'The GitHub source {slug} is switched on.',
-				{
-					slug: source.slug,
-				},
-			)
+			return this.sourceSwitchLabel(source)
 		},
 
 		/** @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi */
@@ -236,11 +219,7 @@ export default {
 			if (!flow.enabled) {
 				return this.t('opencatalogi', 'The harvest is off.')
 			}
-			return this.t(
-				'opencatalogi',
-				'The harvest is on. It runs as {user} on schedule {cron}.',
-				{ user: flow.runAs ?? '', cron: flow.cron ?? '' },
-			)
+			return this.flowScheduleLabel(flow)
 		},
 
 		/** @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-004-a-file-that-cannot-be-read-is-skipped-not-written */
@@ -264,6 +243,57 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * The status line for a GitHub source integriq does not have.
+		 *
+		 * @param {object|null} source The source status, when there is one.
+		 * @return {string} The line.
+		 */
+		missingSourceLabel(source) {
+			return this.t(
+				'opencatalogi',
+				'integriq has no GitHub source {slug}. Update integriq.',
+				{ slug: source?.slug ?? 'github-api' },
+			)
+		},
+
+		/**
+		 * The status line for an existing GitHub source: off or on.
+		 *
+		 * @param {object} source The source status.
+		 * @return {string} The line.
+		 */
+		sourceSwitchLabel(source) {
+			if (!source.enabled) {
+				return this.t(
+					'opencatalogi',
+					'The GitHub source {slug} is switched off. Add the token and switch it on in integriq.',
+					{ slug: source.slug },
+				)
+			}
+			return this.t(
+				'opencatalogi',
+				'The GitHub source {slug} is switched on.',
+				{
+					slug: source.slug,
+				},
+			)
+		},
+
+		/**
+		 * The status line for a harvest flow that is on: who it runs as and when.
+		 *
+		 * @param {object} flow The flow status.
+		 * @return {string} The line.
+		 */
+		flowScheduleLabel(flow) {
+			return this.t(
+				'opencatalogi',
+				'The harvest is on. It runs as {user} on schedule {cron}.',
+				{ user: flow.runAs ?? '', cron: flow.cron ?? '' },
+			)
+		},
+
 		/**
 		 * Read the harvest status.
 		 *
