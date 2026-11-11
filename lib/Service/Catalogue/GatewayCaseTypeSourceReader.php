@@ -194,30 +194,62 @@ class GatewayCaseTypeSourceReader implements CaseTypeSourceReader {
 	 */
 	private function decode(mixed $response): array {
 		if (is_string($response) === true) {
-			$decoded = json_decode($response, true);
-			if (is_array($decoded) === false) {
-				throw new ExternalCatalogueUnreachableException(
-					message: 'The external case type catalogue answered something this app cannot read.'
-				);
-			}
-
-			return $decoded;
+			return $this->decodeJson(json: $response);
 		}
 
 		if (is_array($response) === true) {
-			if (isset($response['body']) === true && is_string($response['body']) === true) {
-				$decoded = json_decode($response['body'], true);
-				if (is_array($decoded) === true) {
-					return $decoded;
-				}
-			}
-
-			return $response;
+			return $this->bodyOrAnswer(response: $response);
 		}
 
-		throw new ExternalCatalogueUnreachableException(
-			message: 'The external case type catalogue answered something this app cannot read.'
-		);
+		throw $this->unreadableAnswer();
 
 	}//end decode()
+
+	/**
+	 * A raw JSON answer, decoded.
+	 *
+	 * @param string $json The answer.
+	 *
+	 * @return array<string, mixed> The decoded answer.
+	 *
+	 * @throws ExternalCatalogueUnreachableException When it is not a JSON object or list.
+	 */
+	private function decodeJson(string $json): array {
+		$decoded = json_decode($json, true);
+		if (is_array($decoded) === false) {
+			throw $this->unreadableAnswer();
+		}
+
+		return $decoded;
+	}//end decodeJson()
+
+	/**
+	 * An array answer: its JSON `body` decoded when it carries one, else the
+	 * answer itself.
+	 *
+	 * @param array<string, mixed> $response The answer.
+	 *
+	 * @return array<string, mixed> The decoded answer.
+	 */
+	private function bodyOrAnswer(array $response): array {
+		if (isset($response['body']) === true && is_string($response['body']) === true) {
+			$decoded = json_decode($response['body'], true);
+			if (is_array($decoded) === true) {
+				return $decoded;
+			}
+		}
+
+		return $response;
+	}//end bodyOrAnswer()
+
+	/**
+	 * The refusal of an answer this app cannot read.
+	 *
+	 * @return ExternalCatalogueUnreachableException The refusal.
+	 */
+	private function unreadableAnswer(): ExternalCatalogueUnreachableException {
+		return new ExternalCatalogueUnreachableException(
+			message: 'The external case type catalogue answered something this app cannot read.'
+		);
+	}//end unreadableAnswer()
 }//end class

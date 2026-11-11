@@ -1,0 +1,161 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`SelectAttachmentsList hides the remove buttons on request 1`] = `
+"<div class="selected-objects-container">
+  <h4>Selected Attachments (1)</h4>
+  <div class="selected-objects-list">
+    <transition-group-stub name="list" tag="div" appear="false" persisted="false" css="true">
+      <div class="selected-object-item">
+        <div class="object-info"><strong>besluit.pdf</strong>
+          <p class="object-schema">2.0 KB</p>
+          <!--v-if-->
+        </div>
+        <!--v-if-->
+      </div>
+    </transition-group-stub>
+  </div>
+</div>"
+`;
+
+exports[`SelectAttachmentsList renders the attachments it is given 1`] = `
+"<div class="selected-objects-container">
+  <h4>Selected Attachments (4)</h4>
+  <div class="selected-objects-list">
+    <transition-group-stub name="list" tag="div" appear="false" persisted="false" css="true">
+      <div class="selected-object-item">
+        <div class="object-info"><strong>besluit.pdf</strong>
+          <p class="object-schema">2.0 KB</p>
+          <!--v-if-->
+        </div><button class="nc-button-stub" aria-label="Remove besluit.pdf"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+      <div class="selected-object-item">
+        <div class="object-info"><strong>bijlage</strong>
+          <p class="object-schema">n/a</p>
+          <!--v-if-->
+        </div><button class="nc-button-stub" aria-label="Remove bijlage"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+      <div class="selected-object-item has-error">
+        <div class="object-info"><strong>groot.pdf</strong>
+          <p class="object-schema">5.0 MB</p>
+          <p class="object-error"><span class="material-design-icon-stub"></span> failed 3</p>
+        </div><button class="nc-button-stub" aria-label="Remove groot.pdf"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+      <div class="selected-object-item">
+        <div class="object-info"><strong>#9</strong>
+          <p class="object-schema"></p>
+          <!--v-if-->
+        </div><button class="nc-button-stub" aria-label="Remove #9"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+    </transition-group-stub>
+  </div>
+</div>"
+`;
+
+exports[`SelectAttachmentsList renders the empty state, and nothing without an active publication 1`] = `
+"<div class="selected-objects-container">
+  <h4>Selected Attachments (0)</h4>
+  <div class="nc-empty-content-stub">No attachments selected
+    <!---->
+    <!---->
+    <!---->
+  </div>
+</div>"
+`;
+
+exports[`SelectAttachmentsList renders the empty state, and nothing without an active publication 2`] = `
+"<div class="selected-objects-container">
+  <h4>T (0)</h4>
+  <div class="nc-empty-content-stub">E
+    <!---->
+    <!---->
+    <!---->
+  </div>
+</div>"
+`;
+
+exports[`SelectedObjectsList renders another subtitle field, a hidden title and disabled items 1`] = `
+"<div class="selected-objects-container">
+  <!--v-if-->
+  <div class="selected-objects-list">
+    <transition-group-stub name="list" tag="div" appear="false" persisted="false" css="true">
+      <div class="selected-object-item is-disabled" title="not allowed">
+        <div class="object-info"><strong>Object A</strong>
+          <p class="object-schema">Sum A</p>
+          <!--v-if-->
+        </div><button class="nc-button-stub" aria-label="Remove Object A"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+      <div class="selected-object-item has-error">
+        <div class="object-info"><strong>Object B</strong>
+          <p class="object-schema"></p>
+          <p class="object-error"><span class="material-design-icon-stub"></span> failed b</p>
+        </div><button class="nc-button-stub" aria-label="Remove Object B"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+      <div class="selected-object-item is-disabled">
+        <div class="object-info"><strong>Object C</strong>
+          <p class="object-schema"></p>
+          <!--v-if-->
+        </div><button class="nc-button-stub" aria-label="Remove Object C"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+    </transition-group-stub>
+  </div>
+</div>"
+`;
+
+exports[`SelectedObjectsList renders the empty state 1`] = `
+"<div class="selected-objects-container">
+  <h4>Selected Publications (0)</h4>
+  <div class="nc-empty-content-stub">No publications selected
+    <!---->
+    <!---->
+    <!---->
+  </div>
+</div>"
+`;
+
+exports[`SelectedObjectsList renders the objects it is given, with schema subtitles 1`] = `
+"<div class="selected-objects-container">
+  <h4>Selected Publications (3)</h4>
+  <div class="selected-objects-list">
+    <transition-group-stub name="list" tag="div" appear="false" persisted="false" css="true">
+      <div class="selected-object-item">
+        <div class="object-info"><strong>Object A</strong>
+          <p class="object-schema">Besluit</p>
+          <!--v-if-->
+        </div><button class="nc-button-stub" aria-label="Remove Object A"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+      <div class="selected-object-item has-error">
+        <div class="object-info"><strong>Object B</strong>
+          <p class="object-schema">Document</p>
+          <p class="object-error"><span class="material-design-icon-stub"></span> failed b</p>
+        </div><button class="nc-button-stub" aria-label="Remove Object B"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+      <div class="selected-object-item">
+        <div class="object-info"><strong>Object C</strong>
+          <p class="object-schema">No Schema</p>
+          <!--v-if-->
+        </div><button class="nc-button-stub" aria-label="Remove Object C"><span class="material-design-icon-stub"></span>
+          <!---->
+        </button>
+      </div>
+    </transition-group-stub>
+  </div>
+</div>"
+`;

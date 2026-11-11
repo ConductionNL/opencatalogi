@@ -744,6 +744,11 @@ class RegisterPlumbingGoldenTest extends TestCase {
 				return $this->normalise(value: $value->jsonSerialize());
 			}
 
+			if ($value instanceof \OCA\OpenCatalogi\Contract\StatusChange) {
+				// An operation object: the fields it carries are what the call sent.
+				return $this->normalise(value: get_object_vars($value));
+			}
+
 			return 'object:' . ((new ReflectionClass($value))->isAnonymous() === true ? 'anonymous' : get_class($value));
 		}
 

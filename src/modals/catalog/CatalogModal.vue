@@ -225,6 +225,79 @@ import {
 } from '../../services/catalogForm.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
+/**
+ * The form of a catalog that is being added.
+ *
+ * @return {object} A fresh, empty form.
+ */
+function emptyCatalogForm() {
+	return {
+		title: '',
+		summary: '',
+		description: '',
+		slug: '',
+		listed: false,
+		registers: [],
+		schemas: [],
+		filters: {},
+		status: { id: 'development', label: 'Development' },
+		hasWooSitemap: false,
+		hasOoapi: false,
+		showWithheld: false,
+		staffAccess: null,
+	}
+}
+
+/**
+ * The ids of every schema the selected registers list, once each.
+ *
+ * @param {Array<object>} registers The available registers.
+ * @param {Array<object>} selectedRegisters The selected register options.
+ * @return {Array<number|string>} The schema ids.
+ */
+function schemaIdsOfSelected(registers, selectedRegisters) {
+	const selectedRegisterIds = selectedRegisters.map((register) => register.id)
+	return [
+		...new Set(
+			registers
+				.filter((register) => selectedRegisterIds.includes(register.id))
+				.flatMap((register) => register.schemas.map((schema) => schema.id)),
+		),
+	]
+}
+
+/**
+ * The first schema of each id, in order.
+ *
+ * availableSchemas holds one entry per (register, schema) pair, so a schema
+ * exposed by several selected registers would otherwise appear several times
+ * and trigger Vue duplicate-key warnings in NcSelect.
+ *
+ * @param {Array<object>} schemas The schemas.
+ * @return {Array<object>} The schemas, one per id.
+ */
+function firstOfEachId(schemas) {
+	const seen = new Set()
+	return schemas.filter((schema) => {
+		if (seen.has(schema.id)) return false
+		seen.add(schema.id)
+		return true
+	})
+}
+
+/**
+ * A schema as a select option, labelled with its register.
+ *
+ * @param {object} schema The schema.
+ * @return {object} The option.
+ */
+function schemaOption(schema) {
+	return {
+		id: schema.id,
+		label: `${schema.title} (${schema.registerTitle})`,
+	}
+}
+
 export default {
 	name: 'CatalogModal',
 	components: {
@@ -243,21 +316,7 @@ export default {
 
 	data() {
 		return {
-			catalogi: {
-				title: '',
-				summary: '',
-				description: '',
-				slug: '',
-				listed: false,
-				registers: [],
-				schemas: [],
-				filters: {},
-				status: { id: 'development', label: 'Development' },
-				hasWooSitemap: false,
-				hasOoapi: false,
-				showWithheld: false,
-				staffAccess: null,
-			},
+			catalogi: emptyCatalogForm(),
 
 			selectedOrganization: null,
 			selectedRegisters: [],
@@ -297,71 +356,27 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		schemaOptions() {
-			// Get the selected register IDs
-			const selectedRegisterIds = this.selectedRegisters.map(
-				(register) => register.id,
+			// The schemas of the selected registers, without the ones already selected.
+			const availableSchemaIds = schemaIdsOfSelected(
+				objectStore.availableRegisters,
+				this.selectedRegisters,
 			)
-
-			// Filter available registers to only those that are selected
-			const selectedAvailableRegisters = objectStore.availableRegisters.filter(
-				(register) => selectedRegisterIds.includes(register.id),
-			)
-
-			// Get all unique schema IDs from the selected registers
-			const availableSchemaIds = [
-				...new Set(
-					selectedAvailableRegisters.flatMap((register) =>
-						register.schemas.map((schema) => schema.id),
-					),
-				),
-			]
-
-			// Exclude schemas that are already selected
 			const selectedSchemaIds = this.selectedSchemas.map((schema) => schema.id)
 
-			// Dedupe by schema id — availableSchemas contains one entry per (register, schema) pair,
-			// so a schema exposed by multiple selected registers would otherwise appear multiple times
-			// and trigger Vue duplicate-key warnings in NcSelect.
-			const seen = new Set()
 			return sortOptionsByLabel(
-				objectStore.availableSchemas
-					.filter(
+				firstOfEachId(
+					objectStore.availableSchemas.filter(
 						(schema) =>
 							availableSchemaIds.includes(schema.id)
 							&& !selectedSchemaIds.includes(schema.id),
-					)
-					.filter((schema) => {
-						if (seen.has(schema.id)) return false
-						seen.add(schema.id)
-						return true
-					})
-					.map((schema) => ({
-						id: schema.id,
-						label: `${schema.title} (${schema.registerTitle})`,
-					})),
+					),
+				).map(schemaOption),
 			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		inputValidation() {
-			// Map selected objects to their IDs for validation
-			const registers = this.selectedRegisters.map((register) => register.id)
-			const schemas = this.selectedSchemas.map((schema) => schema.id)
-
-			const status =
-				typeof this.catalogi.status === 'object'
-					? this.catalogi.status.id
-					: this.catalogi.status.toLowerCase()
-			const catalogiItem = new Catalogi({
-				...this.catalogi,
-				status,
-				organization: this.selectedOrganization?.id,
-				registers,
-				schemas,
-				filters: this.catalogi.filters || {},
-			})
-
-			const result = catalogiItem.validate()
+			const result = this.catalogItem().validate()
 
 			return {
 				success: result.success,
@@ -384,42 +399,80 @@ export default {
 		if (!this.isEdit) {
 			return
 		}
-		const activeCatalog = objectStore.getActiveObject('catalog')
-		this.catalogi = catalogFormFromObject(activeCatalog, this.statusOptions)
-		this.selectedOrganization = catalogOrganizationOption(
-			activeCatalog,
-			objectStore.getCollection('organization').results,
-		)
-		this.selectedRegisters = idOptions(
-			activeCatalog.registers,
-			objectStore.availableRegisters,
-		)
-		this.selectedSchemas = idOptions(
-			activeCatalog.schemas,
-			objectStore.availableSchemas,
-		)
+		this.fillFromCatalog(objectStore.getActiveObject('catalog'))
 	},
 
 	methods: {
+		/**
+		 * Fill the form from a catalog that is being edited.
+		 *
+		 * @param {object} activeCatalog The catalog.
+		 * @return {void}
+		 */
+		fillFromCatalog(activeCatalog) {
+			this.catalogi = catalogFormFromObject(activeCatalog, this.statusOptions)
+			this.selectedOrganization = catalogOrganizationOption(
+				activeCatalog,
+				objectStore.getCollection('organization').results,
+			)
+			this.selectedRegisters = idOptions(
+				activeCatalog.registers,
+				objectStore.availableRegisters,
+			)
+			this.selectedSchemas = idOptions(
+				activeCatalog.schemas,
+				objectStore.availableSchemas,
+			)
+		},
+
+		/**
+		 * The form as a Catalogi entity: the selected options as their ids and the
+		 * status as its id.
+		 *
+		 * @return {Catalogi} The catalog.
+		 */
+		catalogItem() {
+			const registers = this.selectedRegisters.map((register) => register.id)
+			const schemas = this.selectedSchemas.map((schema) => schema.id)
+
+			return new Catalogi({
+				...this.catalogi,
+				status: this.statusId(),
+				organization: this.selectedOrganization?.id,
+				registers,
+				schemas,
+				filters: this.catalogi.filters || {},
+			})
+		},
+
+		/**
+		 * The form's status as its id: the option's id, or the text lowercased.
+		 *
+		 * @return {string} The status id.
+		 */
+		statusId() {
+			return typeof this.catalogi.status === 'object'
+				? this.catalogi.status.id
+				: this.catalogi.status.toLowerCase()
+		},
+
+		/**
+		 * Close the modal once the user has had two seconds to read the feedback.
+		 *
+		 * @return {void}
+		 */
+		closeAfterFeedback() {
+			const self = this
+			setTimeout(function () {
+				self.closeModal()
+			}, 2000)
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-1 */
 		closeModal() {
 			navigationStore.setModal(false)
 			this.hasUpdated = false
-			this.catalogi = {
-				title: '',
-				summary: '',
-				description: '',
-				slug: '',
-				listed: false,
-				registers: [],
-				schemas: [],
-				filters: {},
-				status: { id: 'development', label: 'Development' },
-				hasWooSitemap: false,
-				hasOoapi: false,
-				showWithheld: false,
-				staffAccess: null,
-			}
+			this.catalogi = emptyCatalogForm()
 			this.selectedOrganization = null
 			this.selectedRegisters = []
 			this.selectedSchemas = []
@@ -433,42 +486,19 @@ export default {
 		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		saveCatalog() {
-			// Map selected objects to their IDs for saving
-			const registers = this.selectedRegisters.map((register) => register.id)
-			const schemas = this.selectedSchemas.map((schema) => schema.id)
-
-			const status =
-				typeof this.catalogi.status === 'object'
-					? this.catalogi.status.id
-					: this.catalogi.status.toLowerCase()
-			const catalogiItem = new Catalogi({
-				...this.catalogi,
-				status,
-				organization: this.selectedOrganization?.id,
-				registers,
-				schemas,
-				filters: this.catalogi.filters || {},
-			})
+			const catalogiItem = this.catalogItem()
 
 			if (this.isEdit) {
 				objectStore
 					.updateObject('catalog', catalogiItem.id, catalogiItem)
 					.then(() => {
-						// Wait for the user to read the feedback then close the model
-						const self = this
-						setTimeout(function () {
-							self.closeModal()
-						}, 2000)
+						this.closeAfterFeedback()
 					})
 			} else {
 				delete catalogiItem.id
 
 				objectStore.createObject('catalog', catalogiItem).then(() => {
-					// Wait for the user to read the feedback then close the model
-					const self = this
-					setTimeout(function () {
-						self.closeModal()
-					}, 2000)
+					this.closeAfterFeedback()
 				})
 			}
 		},

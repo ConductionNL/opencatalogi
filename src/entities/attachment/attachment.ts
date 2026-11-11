@@ -3,6 +3,34 @@ import type { TAttachment } from './attachment.types'
 
 import { z } from 'zod'
 import { languageSchema } from '../languageSchema.js'
+import { publicationStatusSchema } from '../publicationStatus.js'
+
+/**
+ * The zod shape of an attachment's reference, texts and labels.
+ *
+ * @return The text part of the attachment shape
+ */
+function attachmentTextShape() {
+	return {
+		reference: z.string().max(255, 'kan niet langer dan 255 zijn'),
+		title: z.string().max(255, 'kan niet langer dan 255 zijn'), // .min(1) on a string functionally works the same as a nonEmpty check (SHOULD NOT BE COMBINED WITH .OPTIONAL())
+		summary: z.string().max(255, 'kan niet langer dan 255 zijn'),
+		description: z.string().max(2555, 'kan niet langer dan 2555 zijn'),
+		labels: z.string().array(),
+	}
+}
+
+/**
+ * The zod schema of an attachment's anonymization state.
+ *
+ * @return The anonymization schema
+ */
+function anonymizationSchema() {
+	return z.object({
+		anonymized: z.boolean().or(z.enum(['true', 'false'])), // because the backend turns booleans into strings for some stupid reason
+		results: z.string().max(2500, 'kan niet langer dan 2500 zijn'),
+	})
+}
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
@@ -113,26 +141,12 @@ export class Attachment implements TAttachment {
 	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/lsigtx7cafbr7-create-attachment
 		const schema = z.object({
-			reference: z.string().max(255, 'kan niet langer dan 255 zijn'),
-			title: z.string().max(255, 'kan niet langer dan 255 zijn'), // .min(1) on a string functionally works the same as a nonEmpty check (SHOULD NOT BE COMBINED WITH .OPTIONAL())
-			summary: z.string().max(255, 'kan niet langer dan 255 zijn'),
-			description: z.string().max(2555, 'kan niet langer dan 2555 zijn'),
-			labels: z.string().array(),
+			...attachmentTextShape(),
 			accessUrl: z.string().url('is niet een url').or(z.literal('')),
 			downloadUrl: z.string().url('is niet een url').or(z.literal('')),
-			status: z.enum([
-				'Concept',
-				'Published',
-				'Withdrawn',
-				'Archived',
-				'Revised',
-				'Rejected',
-			]),
+			status: publicationStatusSchema(),
 			type: z.string(),
-			anonymization: z.object({
-				anonymized: z.boolean().or(z.enum(['true', 'false'])), // because the backend turns booleans into strings for some stupid reason
-				results: z.string().max(2500, 'kan niet langer dan 2500 zijn'),
-			}),
+			anonymization: anonymizationSchema(),
 			language: languageSchema(),
 			versionOf: z.string(),
 			published: z

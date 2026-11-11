@@ -278,6 +278,29 @@ class InspectionControllerTest extends TestCase {
 	}//end testTheLinkIsReadWithoutRbac()
 
 	/**
+	 * An object found in another schema is not an inspection, even with the right token.
+	 */
+	public function testAnObjectOfAnotherSchemaIsNotAnInspection(): void {
+		$this->storedInspection(
+			[
+				'@self' => ['register' => '42', 'schema' => '7'],
+				'record' => 'besluit-1',
+				'documents' => ['doc-1'],
+				'startDate' => '2026-09-01T00:00:00+00:00',
+				'endDate' => '2099-01-01T00:00:00+00:00',
+				'token' => 'the-token',
+			]
+		);
+		$this->withToken('the-token');
+
+		$response = $this->controller->follow('inspection-1');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertArrayNotHasKey('documents', $response->getData());
+
+	}//end testAnObjectOfAnotherSchemaIsNotAnInspection()
+
+	/**
 	 * A request without a token reads nothing, even when the register is down.
 	 */
 	public function testARequestWithoutATokenReadsNothing(): void {
@@ -551,6 +574,27 @@ class InspectionControllerTest extends TestCase {
 		$this->assertSame([], $store->saved);
 
 	}//end testParametersOfTheWrongShapeAreRefused()
+
+	/**
+	 * Documents that are not a list are refused like any other parameter, and
+	 * a refused inspection names why.
+	 */
+	public function testTheRefusalsNameWhy(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(['record' => ['id' => 'b'], 'recordType' => ['inspectionTermDays' => 4], 'documents' => 'doc-a']);
+		$this->assertSame(['error' => 'missing-parameters'], $this->controller->open()->getData());
+
+		$this->setUp();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(['record' => ['id' => 'b'], 'recordType' => ['slug' => 'x', 'inspectionTermDays' => 4], 'documents' => []]);
+		$this->assertSame(
+			['error' => 'inspection-refused', 'message' => 'An inspection needs the documents chosen for it. An inspection over nothing is not an inspection.'],
+			$this->controller->open()->getData()
+		);
+		$this->assertSame([], $store->saved);
+
+	}//end testTheRefusalsNameWhy()
 
 	/**
 	 * An inspection that cannot be stored answers 503, never a quiet success.

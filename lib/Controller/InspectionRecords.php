@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
+use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
@@ -137,10 +138,13 @@ class InspectionRecords {
 	public function find(string $id): array {
 		$config = $this->inspectionConfiguration();
 		return $this->toArray(
-			object: $this->registers->getObjectService()->find(
-				id: $id,
-				options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
-				_rbac: false
+			object: ObjectInPair::require(
+				found: $this->registers->getObjectService()->find(
+					id: $id,
+					options: new ObjectFindOptions(register: $config['register'], schema: $config['schema']),
+					_rbac: false
+				),
+				config: $config
 			)
 		);
 
