@@ -603,6 +603,35 @@ function isBareFetch(params) {
 }
 
 /**
+ * Whether a type config names both a schema and a register.
+ *
+ * @param {object|null|undefined} config - The type config
+ * @return {boolean} True when both are named
+ */
+function hasSchemaAndRegister(config) {
+	return Boolean(config?.schema && config?.register)
+}
+
+/**
+ * Copy collection items into the per-id objects cache, by id or `@self` id.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, items: Array<object>}} collection - The object type and its items
+ * @return {void}
+ */
+function mirrorIntoObjects(store, { type, items }) {
+	if (!store.objects[type]) {
+		store.objects[type] = {}
+	}
+	for (const item of items || []) {
+		const itemId = item?.id ?? item?.['@self']?.id
+		if (itemId) {
+			store.objects[type][itemId] = { ...item }
+		}
+	}
+}
+
+/**
  * A catalog as the navigation and the publications page use it.
  *
  * @param {object} catalog A catalog object from the API.
@@ -1235,26 +1264,35 @@ export const useObjectStore = defineStore('object', {
 			const inner = this._inner()
 			if (inner.objectTypeRegistry?.[type]) return
 
-			// Resolve register/schema from outer registry first; fall back to
-			// `getSchemaConfig` so apps that drive type configuration purely
-			// through `settings.configuration` (without `availableRegisters`)
-			// still wire the inner store correctly.
-			let config = this.objectTypeRegistry[type]
-			if (!config?.schema || !config?.register) {
-				try {
-					config = this.getSchemaConfig(type)
-				} catch {
-					// settings not loaded yet, or no config — caller will
-					// retry once settings are fetched
-					return
-				}
-			}
-			if (!config?.schema || !config?.register) return
+			const config = this._innerTypeConfig(type)
+			if (!hasSchemaAndRegister(config)) return
 			inner.registerObjectType(
 				type,
 				String(config.schema),
 				String(config.register),
 			)
+		},
+
+		/**
+		 * The register and schema to wire a type into the inner store with.
+		 * Resolve register/schema from outer registry first; fall back to
+		 * `getSchemaConfig` so apps that drive type configuration purely
+		 * through `settings.configuration` (without `availableRegisters`)
+		 * still wire the inner store correctly.
+		 *
+		 * @param {string} type - The object type
+		 * @return {object|null} The config, null when there is none yet
+		 */
+		_innerTypeConfig(type) {
+			const config = this.objectTypeRegistry[type]
+			if (hasSchemaAndRegister(config)) return config
+			try {
+				return this.getSchemaConfig(type)
+			} catch {
+				// settings not loaded yet, or no config — caller will
+				// retry once settings are fetched
+				return null
+			}
 		},
 
 		/**
@@ -1289,15 +1327,7 @@ export const useObjectStore = defineStore('object', {
 			// Mirror results into the per-id objects cache so lookups like
 			// copyObject's this.objects[type][id] work for callers (e.g. catalog.js
 			// fetchPublications) that bypass fetchCollection.
-			if (!this.objects[type]) {
-				this.objects[type] = {}
-			}
-			for (const item of newResults || []) {
-				const itemId = item?.id ?? item?.['@self']?.id
-				if (itemId) {
-					this.objects[type][itemId] = { ...item }
-				}
-			}
+			mirrorIntoObjects(this, { type, items: newResults })
 		},
 
 		/**
