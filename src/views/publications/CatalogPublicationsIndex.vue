@@ -93,6 +93,20 @@ const RENDERER_ROW_LISTENERS = [
 ]
 
 /**
+ * Whether a row action shows on a row by its own rule: its visible
+ * function, else unless it is switched off.
+ *
+ * @param {object} action - The row action
+ * @param {object} row - The row
+ * @return {boolean} True when it shows
+ */
+function isActionVisible(action, row) {
+	return typeof action.visible === 'function'
+		? action.visible(row)
+		: action.visible !== false
+}
+
+/**
  * CatalogPublicationsIndex: the publications of one catalog, scoped like the
  * backend's `/api/{catalogSlug}`, to the catalog's registers × schemas.
  *
@@ -274,31 +288,11 @@ export default {
 			if (!this.isPublicationPagePair) {
 				return { ...this.actionToggles, ...attrs, ...this.otherPairConfig }
 			}
-			const config = { ...this.publicationPairConfig }
-			if (Array.isArray(config.actions)) {
-				// The publication's own actions (e.g. its file list) do not fit a row of another schema.
-				config.actions = config.actions.map((action) =>
-					action && typeof action === 'object'
-						? {
-								...action,
-								visible: (row) =>
-									this.isPublicationRow(row)
-									&& (typeof action.visible === 'function'
-										? action.visible(row)
-										: action.visible !== false),
-							}
-						: action,
-				)
+			return {
+				...this.actionToggles,
+				...attrs,
+				...this.publicationPairIndexConfig(),
 			}
-			if (Array.isArray(config.bulkActions)) {
-				config.bulkActions =
-					this.actionToggles.showDeleteAction === false
-						? []
-						: config.bulkActions.map((action) =>
-								this.bindBulkAction(action),
-							)
-			}
-			return { ...this.actionToggles, ...attrs, ...config }
 		},
 
 		/**
@@ -358,6 +352,58 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * The publication pair's config for the index page: its row actions
+		 * kept to publication rows, its bulk actions bound (none without the
+		 * delete action).
+		 *
+		 * @return {object} The config
+		 */
+		publicationPairIndexConfig() {
+			const config = { ...this.publicationPairConfig }
+			if (Array.isArray(config.actions)) {
+				config.actions = config.actions.map((action) =>
+					this.publicationRowAction(action),
+				)
+			}
+			if (Array.isArray(config.bulkActions)) {
+				config.bulkActions = this.boundBulkActions(config.bulkActions)
+			}
+			return config
+		},
+
+		/**
+		 * A row action shown on publication rows only. The publication's own
+		 * actions (e.g. its file list) do not fit a row of another schema.
+		 *
+		 * @param {object|*} action - The row action
+		 * @return {object|*} The action
+		 */
+		publicationRowAction(action) {
+			if (!action || typeof action !== 'object') {
+				return action
+			}
+			return {
+				...action,
+				visible: (row) =>
+					this.isPublicationRow(row) && isActionVisible(action, row),
+			}
+		},
+
+		/**
+		 * The bulk actions bound to this page, or none when the delete action
+		 * is switched off.
+		 *
+		 * @param {Array<object>} bulkActions - The bulk actions
+		 * @return {Array<object>} The bound actions
+		 */
+		boundBulkActions(bulkActions) {
+			if (this.actionToggles.showDeleteAction === false) {
+				return []
+			}
+			return bulkActions.map((action) => this.bindBulkAction(action))
+		},
+
 		/**
 		 * Find the catalog for the current slug. The menu list is the source;
 		 * on a deep link it may still be loading, so wait for it, and look the

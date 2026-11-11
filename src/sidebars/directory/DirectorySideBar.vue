@@ -295,20 +295,7 @@ export default {
 
 					// Checks which switch has been updated by checking the old value of that switch
 					if (value[1] !== oldValueObject[idx][1]) {
-						// Sets publicationTypeUrl and shouldCopyPublicationType with the right values
-						const publicationTypeUrl = value[0]
-						const shouldCopyPublicationType = value[1]
-
-						if (shouldCopyPublicationType === true) {
-							this.copyPublicationType(publicationTypeUrl)
-						} else if (
-							shouldCopyPublicationType === false
-							&& publicationTypeUrl
-							&& objectStore.getCollection('publication_type').results
-								.length > 0
-						) {
-							this.deletePublicationType(publicationTypeUrl)
-						}
+						this.applyPublicationTypeSwitch(value[0], value[1])
 					}
 					return {}
 				})
@@ -345,6 +332,26 @@ export default {
 	},
 
 	methods: {
+		/**
+		 * Copy the publication type a switch turned on, or delete the one a
+		 * switch turned off while publication types are loaded.
+		 *
+		 * @param {string} publicationTypeUrl The switch's publication type.
+		 * @param {boolean} shouldCopyPublicationType The switch's new value.
+		 * @return {void}
+		 */
+		applyPublicationTypeSwitch(publicationTypeUrl, shouldCopyPublicationType) {
+			if (shouldCopyPublicationType === true) {
+				this.copyPublicationType(publicationTypeUrl)
+			} else if (
+				shouldCopyPublicationType === false
+				&& publicationTypeUrl
+				&& objectStore.getCollection('publication_type').results.length > 0
+			) {
+				this.deletePublicationType(publicationTypeUrl)
+			}
+		},
+
 		/**
 		 * @param url
 		 * @param type
