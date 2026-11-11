@@ -251,16 +251,19 @@
 			<template #widget-concept-publications-title-icon>
 				<FileDocumentEditOutline :size="20" />
 			</template>
-			<template #widget-concept-publications>
+			<template
+				v-for="list in statusPublicationLists"
+				:key="list.id"
+				#[`widget-${list.id}`]>
 				<div class="concept-widget-content" tabindex="0">
 					<div
-						v-if="conceptPublications.length === 0"
+						v-if="list.publications.length === 0"
 						class="widget-empty">
-						{{ t('opencatalogi', 'No concept publications') }}
+						{{ list.emptyText }}
 					</div>
 					<div v-else class="concept-list">
 						<div
-							v-for="publication in conceptPublications"
+							v-for="publication in list.publications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
 							role="button"
@@ -280,9 +283,7 @@
 									resolveSchemaName(publication)
 								}}</span>
 							</div>
-							<span class="concept-item-status">{{
-								t('opencatalogi', 'Concept')
-							}}</span>
+							<span :class="list.statusClass">{{ list.statusLabel }}</span>
 						</div>
 					</div>
 				</div>
@@ -318,82 +319,10 @@
 			<template #widget-published-publications-title-icon>
 				<FileDocumentCheckOutline :size="20" />
 			</template>
-			<template #widget-published-publications>
-				<div class="concept-widget-content" tabindex="0">
-					<div
-						v-if="publishedPublications.length === 0"
-						class="widget-empty">
-						{{ t('opencatalogi', 'No published publications') }}
-					</div>
-					<div v-else class="concept-list">
-						<div
-							v-for="publication in publishedPublications"
-							:key="publication.id"
-							class="concept-item concept-item-clickable"
-							role="button"
-							tabindex="0"
-							@click="openPublication(publication)"
-							@keydown.enter="openPublication(publication)"
-							@keydown.space.prevent="openPublication(publication)">
-							<div class="concept-item-content">
-								<span class="concept-item-title">{{
-									publication.title
-									|| publication.name
-									|| publication.titel
-									|| publication.naam
-									|| publication.id
-								}}</span>
-								<span class="concept-item-schema">{{
-									resolveSchemaName(publication)
-								}}</span>
-							</div>
-							<span class="published-item-status">{{
-								t('opencatalogi', 'Published')
-							}}</span>
-						</div>
-					</div>
-				</div>
-			</template>
 
 			<!-- Depublished Publications widget -->
 			<template #widget-depublished-publications-title-icon>
 				<AlertOutline :size="20" />
-			</template>
-			<template #widget-depublished-publications>
-				<div class="concept-widget-content" tabindex="0">
-					<div
-						v-if="depublishedPublications.length === 0"
-						class="widget-empty">
-						{{ t('opencatalogi', 'No depublished publications') }}
-					</div>
-					<div v-else class="concept-list">
-						<div
-							v-for="publication in depublishedPublications"
-							:key="publication.id"
-							class="concept-item concept-item-clickable"
-							role="button"
-							tabindex="0"
-							@click="openPublication(publication)"
-							@keydown.enter="openPublication(publication)"
-							@keydown.space.prevent="openPublication(publication)">
-							<div class="concept-item-content">
-								<span class="concept-item-title">{{
-									publication.title
-									|| publication.name
-									|| publication.titel
-									|| publication.naam
-									|| publication.id
-								}}</span>
-								<span class="concept-item-schema">{{
-									resolveSchemaName(publication)
-								}}</span>
-							</div>
-							<span class="depublished-item-status">{{
-								t('opencatalogi', 'Depublished')
-							}}</span>
-						</div>
-					</div>
-				</div>
 			</template>
 
 			<!-- Empty state -->
@@ -858,6 +787,38 @@ export default {
 		 */
 		firstCatalogSlug() {
 			return this.catalogs[0]?.slug || null
+		},
+
+		/**
+		 * The publication list widgets per status: the publications, the text
+		 * without any, and the class and label of their status badge.
+		 *
+		 * @return {Array<object>} The lists
+		 */
+		statusPublicationLists() {
+			return [
+				{
+					id: 'concept-publications',
+					publications: this.conceptPublications,
+					emptyText: t('opencatalogi', 'No concept publications'),
+					statusClass: 'concept-item-status',
+					statusLabel: t('opencatalogi', 'Concept'),
+				},
+				{
+					id: 'published-publications',
+					publications: this.publishedPublications,
+					emptyText: t('opencatalogi', 'No published publications'),
+					statusClass: 'published-item-status',
+					statusLabel: t('opencatalogi', 'Published'),
+				},
+				{
+					id: 'depublished-publications',
+					publications: this.depublishedPublications,
+					emptyText: t('opencatalogi', 'No depublished publications'),
+					statusClass: 'depublished-item-status',
+					statusLabel: t('opencatalogi', 'Depublished'),
+				},
+			]
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
