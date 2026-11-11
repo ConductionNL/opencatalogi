@@ -1,5 +1,279 @@
 <script setup>
 import { objectStore } from '../../store/store.js'
+defineOptions({
+	name: 'DashboardSideBar',
+	components: {
+		NcAppSidebar,
+		NcAppSidebarTab,
+		NcTextField,
+		NcNoteCard,
+		NcListItem,
+		NcActionButton,
+		// Icons
+		Magnify,
+		ListBoxOutline,
+		FileOutline,
+		Pencil,
+		Publish,
+		Delete,
+	},
+
+	data() {
+		return {
+			publications: false,
+			attachments: false,
+			publicationItem: emptyPublicationItem(),
+
+			catalogiLoading: false,
+			catalogiList: [],
+			catalogi: {
+				options: [],
+				value: null,
+			},
+
+			publicationTypeLoading: false,
+			publicationTypeList: [], // this is the entire dataset of publicationType
+			publicationType: {},
+			loading: false,
+			error: null,
+			success: null,
+		}
+	},
+
+	computed: {
+		/**
+		 * Filters publicationType (Now known as Publication Type) based on the catalogi
+		 */
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+		filteredPublicationTypeOptions() {
+			if (!this.catalogi?.options?.length) return {}
+			if (!this.catalogi?.value?.id) return {}
+			if (!this.publicationTypeList?.length) return {}
+
+			// step 1: get the selected catalogus from the catalogi dropdown
+			const selectedCatalogus = this.findSelectedCatalogus()
+
+			// step 2: get the full publicationType's from the publicationTypeIds
+			const filteredPublicationType = this.publicationTypeList.filter(
+				(publicationType) =>
+					selectedCatalogus.publicationTypes
+						.map(String)
+						.includes(publicationType.id.toString()),
+			)
+
+			return {
+				options: filteredPublicationType.map(toPublicationTypeOption),
+			}
+		},
+	},
+
+	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+	mounted() {
+		objectStore.fetchCollection('publication')
+		objectStore.fetchCollection('attachment')
+		this.fetchCatalogi()
+		this.fetchPublicationType()
+	},
+
+	methods: {
+		openForObject,
+
+		/**
+		 * @param publication
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
+		 */
+		handleViewPublication(publication) {
+			objectStore.setActiveObject('publication', publication)
+			const catalogs = objectStore.getCollection('catalogus')?.results || []
+			const slug =
+				listedCatalogSlug(publication, catalogs)
+				|| this.$route?.params?.catalogSlug
+			if (!slug || !publication?.id) return
+			this.$router.push(`/publications/${slug}/${publication.id}`)
+		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+		cleanup() {
+			if (this.success === true) {
+				this.publicationItem = emptyPublicationItem()
+				this.catalogi.value = []
+				this.publicationType.value = []
+			}
+			this.error = null
+		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+		fetchCatalogi() {
+			this.catalogiLoading = true
+
+			objectStore
+				.fetchCollection('catalogus')
+				.then(({ response, data }) => {
+					this.catalogiList = data
+					this.catalogi.options = this.catalogiList.map((catalog) => ({
+						id: catalog.id,
+						label: catalog.title,
+					}))
+					this.catalogi.value = null
+					this.catalogiLoading = false
+				})
+				.catch((err) => {
+					console.error(err)
+					this.catalogiLoading = false
+				})
+		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+		fetchPublicationType() {
+			this.publicationTypeLoading = true
+
+			objectStore
+				.fetchCollection('publication_type')
+				.then(({ response, data }) => {
+					this.publicationTypeList = data.results
+					this.publicationTypeLoading = false
+				})
+				.catch((err) => {
+					console.error(err)
+					this.publicationTypeLoading = false
+				})
+		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
+		addPublication() {
+			this.loading = true
+			this.error = false
+
+			// create the publication
+			objectStore
+				.createObject('publication', {
+					...this.publicationItem,
+					catalog: this.catalogi.value.id,
+					publicationType: this.publicationType.value.id,
+				})
+				.then(async (response) => {
+					this.loading = false
+					this.success = response.ok
+
+					// if response is ok, and files exist, we add the attachment
+					const publicationItem = new Publication(await response.json())
+					if (response.ok && files.value)
+						this.addAttachment(publicationItem)
+
+					// Let's refresh the publicationList
+					objectStore.fetchCollection('publication')
+					// Wait for the user to read the feedback then close the model
+					setTimeout(this.cleanup, 2000)
+					if (!files.value && files.value?.length === 0) {
+						setTimeout((this.success = null), 2000)
+					}
+				})
+				.catch((err) => {
+					this.error = err
+					this.loading = false
+					this.hasUpdated = false
+				})
+		},
+
+		/**
+		 * @param publicationItem
+		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
+		 */
+		addAttachment(publicationItem) {
+			this.loading = true
+			this.errorMessage = false
+
+			postAttachment(publicationItem)
+				.then((response) => {
+					this.onAttachmentUploaded(publicationItem, response)
+				})
+				.catch((err) => {
+					this.error = err.response?.data?.error ?? err
+					this.loading = false
+				})
+		},
+
+		/**
+		 * The catalog chosen in the catalogi dropdown, from the store's catalogs.
+		 *
+		 * @return {object|undefined} The catalog.
+		 */
+		findSelectedCatalogus() {
+			return objectStore
+				.getCollection('catalogus')
+				.results.find(
+					(catalogus) =>
+						(catalogus.id?.toString() || Symbol('catalogusId'))
+						=== (this.catalogi?.value.id?.toString()
+							|| Symbol('catalogiId')),
+				)
+		},
+
+		/**
+		 * After the upload: refresh the attachments, link the new attachment to
+		 * the publication, make it active and clear the feedback after a while.
+		 *
+		 * @param {object} publicationItem The publication the file belongs to.
+		 * @param {object} response The upload response.
+		 * @return {void}
+		 */
+		onAttachmentUploaded(publicationItem, response) {
+			this.success = response.status
+			reset()
+			// Let's refresh the attachment list
+
+			objectStore.fetchCollection('attachment')
+
+			this.linkAttachment(publicationItem, response.data.id)
+
+			objectStore.setActiveObject('attachment', response)
+
+			// Wait for the user to read the feedback then close the model
+			const self = this
+			setTimeout(function () {
+				self.success = null
+			}, 2000)
+		},
+
+		/**
+		 * Add the uploaded attachment to the publication's attachments.
+		 *
+		 * @param {object} publicationItem The publication.
+		 * @param {string} attachmentId The new attachment's id.
+		 * @return {void}
+		 */
+		linkAttachment(publicationItem, attachmentId) {
+			objectStore
+				.updateObject('publication', publicationItem.id, {
+					...publicationItem,
+					attachments: [...publicationItem.attachments, attachmentId],
+				})
+				.then((response) => this.onAttachmentLinked(response))
+				.catch((err) => {
+					this.error = err
+					this.loading = false
+				})
+		},
+
+		/**
+		 * After the link: refresh the publications and make the saved one active.
+		 *
+		 * @param {Response} response The update response.
+		 * @return {void}
+		 */
+		onAttachmentLinked(response) {
+			this.success = response.ok
+			this.loading = false
+
+			// Let's refresh the publicationList
+			objectStore.fetchCollection('publication')
+			response.json().then((data) => {
+				objectStore.setActiveObject('publication', data)
+			})
+		},
+	},
+})
+
 </script>
 
 <template>
@@ -286,6 +560,7 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import { useFileSelection } from '../../composables/UseFileSelection.js'
 import { Publication } from '../../entities/index.js'
 import { openForObject } from '../../services/openForObject.js'
+import { listedCatalogSlug } from '../../services/publicationCatalogSlug.js'
 
 const dropZoneRef = ref()
 const { files, reset } = useFileSelection({
@@ -314,284 +589,6 @@ function emptyPublicationItem() {
  *
  * @spec openspec/specs/dashboard/spec.md
  */
-export default {
-	name: 'DashboardSideBar',
-	components: {
-		NcAppSidebar,
-		NcAppSidebarTab,
-		NcTextField,
-		NcNoteCard,
-		NcListItem,
-		NcActionButton,
-		// Icons
-		Magnify,
-		ListBoxOutline,
-		FileOutline,
-		Pencil,
-		Publish,
-		Delete,
-	},
-
-	data() {
-		return {
-			publications: false,
-			attachments: false,
-			publicationItem: emptyPublicationItem(),
-
-			catalogiLoading: false,
-			catalogiList: [],
-			catalogi: {
-				options: [],
-				value: null,
-			},
-
-			publicationTypeLoading: false,
-			publicationTypeList: [], // this is the entire dataset of publicationType
-			publicationType: {},
-			loading: false,
-			error: null,
-			success: null,
-		}
-	},
-
-	computed: {
-		/**
-		 * Filters publicationType (Now known as Publication Type) based on the catalogi
-		 */
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
-		filteredPublicationTypeOptions() {
-			if (!this.catalogi?.options?.length) return {}
-			if (!this.catalogi?.value?.id) return {}
-			if (!this.publicationTypeList?.length) return {}
-
-			// step 1: get the selected catalogus from the catalogi dropdown
-			const selectedCatalogus = this.findSelectedCatalogus()
-
-			// step 2: get the full publicationType's from the publicationTypeIds
-			const filteredPublicationType = this.publicationTypeList.filter(
-				(publicationType) =>
-					selectedCatalogus.publicationTypes
-						.map(String)
-						.includes(publicationType.id.toString()),
-			)
-
-			return {
-				options: filteredPublicationType.map(toPublicationTypeOption),
-			}
-		},
-	},
-
-	/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
-	mounted() {
-		objectStore.fetchCollection('publication')
-		objectStore.fetchCollection('attachment')
-		this.fetchCatalogi()
-		this.fetchPublicationType()
-	},
-
-	methods: {
-		openForObject,
-
-		/**
-		 * @param publication
-		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
-		 */
-		handleViewPublication(publication) {
-			objectStore.setActiveObject('publication', publication)
-			const catalogId = publication?.catalog?.id || publication?.catalog
-			const catalogs = objectStore.getCollection('catalogus')?.results || []
-			const matchedCatalog = catalogs.find(
-				(c) => (c?.id?.toString() || '') === (catalogId?.toString() || ''),
-			)
-			const slug =
-				matchedCatalog?.slug
-				|| publication?.catalog?.slug
-				|| this.$route?.params?.catalogSlug
-			if (!slug || !publication?.id) return
-			this.$router.push(`/publications/${slug}/${publication.id}`)
-		},
-
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
-		cleanup() {
-			if (this.success === true) {
-				this.publicationItem = emptyPublicationItem()
-				this.catalogi.value = []
-				this.publicationType.value = []
-			}
-			this.error = null
-		},
-
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
-		fetchCatalogi() {
-			this.catalogiLoading = true
-
-			objectStore
-				.fetchCollection('catalogus')
-				.then(({ response, data }) => {
-					this.catalogiList = data
-					this.catalogi.options = this.catalogiList.map((catalog) => ({
-						id: catalog.id,
-						label: catalog.title,
-					}))
-					this.catalogi.value = null
-					this.catalogiLoading = false
-				})
-				.catch((err) => {
-					console.error(err)
-					this.catalogiLoading = false
-				})
-		},
-
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
-		fetchPublicationType() {
-			this.publicationTypeLoading = true
-
-			objectStore
-				.fetchCollection('publication_type')
-				.then(({ response, data }) => {
-					this.publicationTypeList = data.results
-					this.publicationTypeLoading = false
-				})
-				.catch((err) => {
-					console.error(err)
-					this.publicationTypeLoading = false
-				})
-		},
-
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
-		addPublication() {
-			this.loading = true
-			this.error = false
-
-			// create the publication
-			objectStore
-				.createObject('publication', {
-					...this.publicationItem,
-					catalog: this.catalogi.value.id,
-					publicationType: this.publicationType.value.id,
-				})
-				.then(async (response) => {
-					this.loading = false
-					this.success = response.ok
-
-					// if response is ok, and files exist, we add the attachment
-					const publicationItem = new Publication(await response.json())
-					if (response.ok && files.value)
-						this.addAttachment(publicationItem)
-
-					// Let's refresh the publicationList
-					objectStore.fetchCollection('publication')
-					// Wait for the user to read the feedback then close the model
-					setTimeout(this.cleanup, 2000)
-					if (!files.value && files.value?.length === 0) {
-						setTimeout((this.success = null), 2000)
-					}
-				})
-				.catch((err) => {
-					this.error = err
-					this.loading = false
-					this.hasUpdated = false
-				})
-		},
-
-		/**
-		 * @param publicationItem
-		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
-		 */
-		addAttachment(publicationItem) {
-			this.loading = true
-			this.errorMessage = false
-
-			postAttachment(publicationItem)
-				.then((response) => {
-					this.onAttachmentUploaded(publicationItem, response)
-				})
-				.catch((err) => {
-					this.error = err.response?.data?.error ?? err
-					this.loading = false
-				})
-		},
-
-		/**
-		 * The catalog chosen in the catalogi dropdown, from the store's catalogs.
-		 *
-		 * @return {object|undefined} The catalog.
-		 */
-		findSelectedCatalogus() {
-			return objectStore
-				.getCollection('catalogus')
-				.results.find(
-					(catalogus) =>
-						(catalogus.id?.toString() || Symbol('catalogusId'))
-						=== (this.catalogi?.value.id?.toString()
-							|| Symbol('catalogiId')),
-				)
-		},
-
-		/**
-		 * After the upload: refresh the attachments, link the new attachment to
-		 * the publication, make it active and clear the feedback after a while.
-		 *
-		 * @param {object} publicationItem The publication the file belongs to.
-		 * @param {object} response The upload response.
-		 * @return {void}
-		 */
-		onAttachmentUploaded(publicationItem, response) {
-			this.success = response.status
-			reset()
-			// Let's refresh the attachment list
-
-			objectStore.fetchCollection('attachment')
-
-			this.linkAttachment(publicationItem, response.data.id)
-
-			objectStore.setActiveObject('attachment', response)
-
-			// Wait for the user to read the feedback then close the model
-			const self = this
-			setTimeout(function () {
-				self.success = null
-			}, 2000)
-		},
-
-		/**
-		 * Add the uploaded attachment to the publication's attachments.
-		 *
-		 * @param {object} publicationItem The publication.
-		 * @param {string} attachmentId The new attachment's id.
-		 * @return {void}
-		 */
-		linkAttachment(publicationItem, attachmentId) {
-			objectStore
-				.updateObject('publication', publicationItem.id, {
-					...publicationItem,
-					attachments: [...publicationItem.attachments, attachmentId],
-				})
-				.then((response) => this.onAttachmentLinked(response))
-				.catch((err) => {
-					this.error = err
-					this.loading = false
-				})
-		},
-
-		/**
-		 * After the link: refresh the publications and make the saved one active.
-		 *
-		 * @param {Response} response The update response.
-		 * @return {void}
-		 */
-		onAttachmentLinked(response) {
-			this.success = response.ok
-			this.loading = false
-
-			// Let's refresh the publicationList
-			objectStore.fetchCollection('publication')
-			response.json().then((data) => {
-				objectStore.setActiveObject('publication', data)
-			})
-		},
-	},
-}
 
 /**
  * A publication type as an option of the publication type dropdown.

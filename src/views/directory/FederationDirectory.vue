@@ -26,6 +26,26 @@ import { listingSyncStatus } from '../../services/listingSyncStatus.js'
 import { navigationStore } from '../../store/store.js'
 
 /**
+ * The status of a listing's last HTTP status code: up for 2xx, down for
+ * 5xx, degraded otherwise.
+ *
+ * @param {number} statusCode - The status code
+ * @return {string} The status
+ */
+function statusOfCode(statusCode) {
+	if (statusCode >= 200 && statusCode < 300) return 'up'
+	if (statusCode >= 500) return 'down'
+	return 'degraded'
+}
+
+/** The label of each known integration level, translated when shown. */
+const INTEGRATION_LEVEL_LABELS = {
+	search: () => t('opencatalogi', 'Federated search'),
+	sync: () => t('opencatalogi', 'Full sync'),
+	none: () => t('opencatalogi', 'Disabled'),
+}
+
+/**
  * Fetch one page of peer listings.
  *
  * @param {{page: number, limit: number}} pageRef - The page and its size
@@ -243,10 +263,7 @@ export default {
 		statusFor(listing) {
 			if (listing.available === false) return 'down'
 			if (typeof listing.statusCode === 'number') {
-				if (listing.statusCode >= 200 && listing.statusCode < 300)
-					return 'up'
-				if (listing.statusCode >= 500) return 'down'
-				return 'degraded'
+				return statusOfCode(listing.statusCode)
 			}
 			return 'unknown'
 		},
@@ -312,10 +329,9 @@ export default {
 			const raw = listing.integrationLevel
 			if (raw === undefined || raw === null || raw === '')
 				return t('opencatalogi', 'not set')
-			if (raw === 'search') return t('opencatalogi', 'Federated search')
-			if (raw === 'sync') return t('opencatalogi', 'Full sync')
-			if (raw === 'none') return t('opencatalogi', 'Disabled')
-			return raw
+			return Object.hasOwn(INTEGRATION_LEVEL_LABELS, raw)
+				? INTEGRATION_LEVEL_LABELS[raw]()
+				: raw
 		},
 	},
 }
