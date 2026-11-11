@@ -1,5 +1,5 @@
 <script setup>
-import { navigationStore, objectStore } from '../../store/store.js'
+import { objectStore } from '../../store/store.js'
 </script>
 
 <template>
@@ -150,15 +150,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</NcActionButton>
 					<NcActionButton
 						closeAfterClick
-						@click="
-							() => {
-								objectStore.setActiveObject(
-									'publication',
-									publication,
-								)
-								navigationStore.setModal('editPublication')
-							}
-						">
+						@click="openForObject(publication, { type: 'publication', modal: 'editPublication' })">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
@@ -166,15 +158,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</NcActionButton>
 					<NcActionButton
 						closeAfterClick
-						@click="
-							() => {
-								objectStore.setActiveObject(
-									'publication',
-									publication,
-								)
-								navigationStore.setDialog('publishPublication')
-							}
-						">
+						@click="openForObject(publication, { type: 'publication', dialog: 'publishPublication' })">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
@@ -182,15 +166,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</NcActionButton>
 					<NcActionButton
 						closeAfterClick
-						@click="
-							() => {
-								objectStore.setActiveObject(
-									'publication',
-									publication,
-								)
-								navigationStore.setDialog('deletePublication')
-							}
-						">
+						@click="openForObject(publication, { type: 'publication', dialog: 'deletePublication' })">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
@@ -246,12 +222,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 				<template #actions>
 					<NcActionButton
 						closeAfterClick
-						@click="
-							() => {
-								objectStore.setActiveObject('attachment', attachment)
-								navigationStore.setModal('editAttachment')
-							}
-						">
+						@click="openForObject(attachment, { type: 'attachment', modal: 'editAttachment' })">
 						<template #icon>
 							<Pencil :size="20" />
 						</template>
@@ -259,12 +230,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</NcActionButton>
 					<NcActionButton
 						closeAfterClick
-						@click="
-							() => {
-								objectStore.setActiveObject('attachment', attachment)
-								navigationStore.setDialog('publishAttachment')
-							}
-						">
+						@click="openForObject(attachment, { type: 'attachment', dialog: 'publishAttachment' })">
 						<template #icon>
 							<Publish :size="20" />
 						</template>
@@ -272,12 +238,7 @@ import { navigationStore, objectStore } from '../../store/store.js'
 					</NcActionButton>
 					<NcActionButton
 						closeAfterClick
-						@click="
-							() => {
-								objectStore.setActiveObject('attachment', attachment)
-								navigationStore.setDialog('deleteAttachment')
-							}
-						">
+						@click="openForObject(attachment, { type: 'attachment', dialog: 'deleteAttachment' })">
 						<template #icon>
 							<Delete :size="20" />
 						</template>
@@ -324,12 +285,29 @@ import Plus from 'vue-material-design-icons/Plus.vue'
 import Publish from 'vue-material-design-icons/Publish.vue'
 import { useFileSelection } from '../../composables/UseFileSelection.js'
 import { Publication } from '../../entities/index.js'
+import { openForObject } from '../../services/openForObject.js'
 
 const dropZoneRef = ref()
 const { files, reset } = useFileSelection({
 	allowMultiple: false,
 	dropzone: dropZoneRef,
 })
+
+/**
+ * A fresh, empty quick-publication form.
+ *
+ * @return {object} The form fields, all empty.
+ */
+function emptyPublicationItem() {
+	return {
+		title: '',
+		summary: '',
+		reference: '',
+		category: '',
+		portal: '',
+		license: '',
+	}
+}
 
 /**
  * DashboardSideBar — sidebar accompanying the dashboard overview.
@@ -358,14 +336,7 @@ export default {
 		return {
 			publications: false,
 			attachments: false,
-			publicationItem: {
-				title: '',
-				summary: '',
-				reference: '',
-				category: '',
-				portal: '',
-				license: '',
-			},
+			publicationItem: emptyPublicationItem(),
 
 			catalogiLoading: false,
 			catalogiList: [],
@@ -430,6 +401,8 @@ export default {
 	},
 
 	methods: {
+		openForObject,
+
 		/**
 		 * @param publication
 		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2
@@ -452,14 +425,7 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-2 */
 		cleanup() {
 			if (this.success === true) {
-				this.publicationItem = {
-					title: '',
-					summary: '',
-					reference: '',
-					category: '',
-					portal: '',
-					license: '',
-				}
+				this.publicationItem = emptyPublicationItem()
 				this.catalogi.value = []
 				this.publicationType.value = []
 			}
