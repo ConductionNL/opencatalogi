@@ -365,6 +365,33 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testGetDirectoryUrlsFiltersInvalid()
 
+	/**
+	 * Test getDirectoryUrls reads a listing's nested `object` before its own
+	 * fields, and answers the unique valid URLs under their first position.
+	 */
+	public function testGetDirectoryUrlsReadsTheNestedObjectAndKeepsPositions(): void {
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+
+		$listings = [
+			['object' => ['directory' => 'https://nested.example/api/directory'], 'directory' => 'https://outer.example/api/directory'],
+			['directory' => 'not-a-url'],
+			['object' => ['title' => 'no directory'], 'directory' => 'https://ignored.example/api/directory'],
+			['directory' => 'https://flat.example/api/directory'],
+			['object' => ['directory' => 'https://nested.example/api/directory']],
+		];
+
+		$mockObjectService = $this->createMockObjectService($listings);
+
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+
+		$this->assertSame([0 => 'https://nested.example/api/directory', 2 => 'https://flat.example/api/directory'], $result);
+
+	}//end testGetDirectoryUrlsReadsTheNestedObjectAndKeepsPositions()
+
 	// ===== sendBroadcastRequest tests =====
 
 	/**
@@ -492,6 +519,27 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 	/**
 	 * Test broadcast with a specific valid URL.
 	 */
+	/**
+	 * Test broadcast counts an unsafe target as not reached, without calling it.
+	 */
+	public function testBroadcastToAnUnsafeTargetIsNotASuccess(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+		$this->containerMock->method('get')
+			->willReturn($this->createMockObjectService([]));
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$result = $this->broadcastService->broadcast('http://169.254.169.254/latest/meta-data');
+
+		$this->assertSame(['http://169.254.169.254/latest/meta-data' => false], $result);
+
+	}//end testBroadcastToAnUnsafeTargetIsNotASuccess()
+
 	/**
 	 * @group network
 	 */

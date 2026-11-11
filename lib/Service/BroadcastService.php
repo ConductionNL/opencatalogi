@@ -280,35 +280,13 @@ class BroadcastService implements BroadcastServiceInterface {
 				return [];
 			}//end if
 
-			// Retrieve all listing objects from OpenRegister via the canonical search API.
-			$query = [
-				'@self' => [
-					'register' => $listingRegister,
-					'schema' => $listingSchema,
-				],
-			];
-
 			// Directory data is public by design; RBAC is disabled for discovery (see ADR-002).
-			$listings = $this->getObjectService()->searchObjects($query, _rbac: false);
-
-			// Extract directory URLs from each listing's object data.
-			$directoryUrls = [];
-			foreach ($listings as $listing) {
-				$listingData = $listing->jsonSerialize();
-				$objectData = ($listingData['object'] ?? $listingData);
-				$url = ($objectData['directory'] ?? null);
-				if (empty($url) === false) {
-					$directoryUrls[] = $url;
-				}//end if
-			}//end foreach
-
-			// Filter to unique, valid URLs.
-			return array_filter(
-				array_unique($directoryUrls),
-				function ($url) {
-					return empty($url) === false && filter_var($url, FILTER_VALIDATE_URL) !== false;
-				}
+			$listings = $this->getObjectService()->searchObjects(
+				['@self' => ['register' => $listingRegister, 'schema' => $listingSchema]],
+				_rbac: false
 			);
+
+			return $this->uniqueDirectoryUrls(listings: $listings);
 		} catch (\Exception $e) {
 			// Log the error and re-throw for caller handling.
 			$this->logger->error('Failed to retrieve directory URLs: ' . $e->getMessage());
@@ -316,6 +294,34 @@ class BroadcastService implements BroadcastServiceInterface {
 		}//end try
 
 	}//end getDirectoryUrls()
+
+	/**
+	 * The unique, valid directory URLs the listings name, each under the
+	 * position of its first listing.
+	 *
+	 * @param iterable<object> $listings The listing objects.
+	 *
+	 * @return array<int, string> The directory URLs.
+	 */
+	private function uniqueDirectoryUrls(iterable $listings): array {
+		$directoryUrls = [];
+		foreach ($listings as $listing) {
+			$listingData = $listing->jsonSerialize();
+			$objectData = ($listingData['object'] ?? $listingData);
+			$url = ($objectData['directory'] ?? null);
+			if (empty($url) === false) {
+				$directoryUrls[] = $url;
+			}
+		}
+
+		// Filter to unique, valid URLs.
+		return array_filter(
+			array_unique($directoryUrls),
+			function ($url) {
+				return empty($url) === false && filter_var($url, FILTER_VALIDATE_URL) !== false;
+			}
+		);
+	}//end uniqueDirectoryUrls()
 
 	/**
 	 * Send broadcast request to a specific URL with retry logic.
@@ -447,16 +453,50 @@ class BroadcastService implements BroadcastServiceInterface {
 		// validates the TARGET, and the target (the national directory) is
 		// perfectly safe. It is the payload that is unroutable.
 		if ($this->hostPolicy->isLocalUrl(url: $directoryUrl) === true) {
-			$this->logger->warning(
-				'Refusing to broadcast: this instance advertises a local address (' . $directoryUrl
-				. '). Set overwrite.cli.url to a URL peers can resolve, or add the host to '
-				. 'the opencatalogi `local_federation_hosts` allowlist for a local rig.'
-			);
-			$this->connectionReporter?->reportBroadcastFromLocalAddress();
+			$this->refuseLocalBroadcast(directoryUrl: $directoryUrl);
 			return $results;
 		}
 
-		// Determine target URLs for broadcasting.
+		$targetUrls = $this->broadcastTargets(url: $url);
+
+		// If no target URLs found, log warning and return empty results.
+		if (empty($targetUrls) === true) {
+			$this->logger->warning('No target URLs found for broadcasting');
+			$this->connectionReporter?->reportBroadcast(results: $results);
+			return $results;
+		}
+
+		return $this->broadcastTo(targetUrls: $targetUrls, directoryUrl: $directoryUrl);
+	}//end broadcast()
+
+	/**
+	 * Log and report a broadcast refused because this instance advertises a
+	 * local address.
+	 *
+	 * @param string $directoryUrl The address this instance would advertise.
+	 *
+	 * @return void
+	 */
+	private function refuseLocalBroadcast(string $directoryUrl): void {
+		$this->logger->warning(
+			'Refusing to broadcast: this instance advertises a local address (' . $directoryUrl
+			. '). Set overwrite.cli.url to a URL peers can resolve, or add the host to '
+			. 'the opencatalogi `local_federation_hosts` allowlist for a local rig.'
+		);
+		$this->connectionReporter?->reportBroadcastFromLocalAddress();
+	}//end refuseLocalBroadcast()
+
+	/**
+	 * The URLs to broadcast to: the given one, or else every known directory.
+	 * The known directories are read either way.
+	 *
+	 * @param string|null $url The one instance to broadcast to, or null for all.
+	 *
+	 * @return array<string> The target URLs.
+	 *
+	 * @throws InvalidArgumentException When the given URL is not a URL.
+	 */
+	private function broadcastTargets(?string $url): array {
 		$targetUrls = $this->getDirectoryUrls();
 		if ($url !== null) {
 			// Validate the provided URL.
@@ -467,17 +507,22 @@ class BroadcastService implements BroadcastServiceInterface {
 			$targetUrls = [$url];
 		}
 
-		// If no target URLs found, log warning and return empty results.
-		if (empty($targetUrls) === true) {
-			$this->logger->warning('No target URLs found for broadcasting');
-			$this->connectionReporter?->reportBroadcast(results: $results);
-			return $results;
-		}
+		return $targetUrls;
+	}//end broadcastTargets()
 
-		// Log the start of broadcast operation.
+	/**
+	 * Broadcast this directory to every target but itself, then log and
+	 * report the outcome.
+	 *
+	 * @param array<string> $targetUrls The target URLs.
+	 * @param string $directoryUrl The URL of this directory.
+	 *
+	 * @return array<string, bool> Each target URL and whether it accepted the broadcast.
+	 */
+	private function broadcastTo(array $targetUrls, string $directoryUrl): array {
 		$this->logger->info('Starting broadcast to ' . count($targetUrls) . ' target(s)');
 
-		// Broadcast to each target URL.
+		$results = [];
 		foreach ($targetUrls as $targetUrl) {
 			// Skip broadcasting to self to avoid loops.
 			if ($targetUrl === $directoryUrl) {
@@ -485,14 +530,7 @@ class BroadcastService implements BroadcastServiceInterface {
 				continue;
 			}
 
-			// Validate the outbound URL and deliver via the enqueueBroadcast adapter
-			// (SSRF pre-flight guard, then the synchronous retry loop).
-			try {
-				$results[$targetUrl] = $this->enqueueBroadcast(url: $targetUrl, directoryUrl: $directoryUrl)->isSuccessful();
-			} catch (InvalidArgumentException $e) {
-				$this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
-				$results[$targetUrl] = false;
-			}
+			$results[$targetUrl] = $this->deliverTo(targetUrl: $targetUrl, directoryUrl: $directoryUrl);
 		}
 
 		// Log summary of broadcast operation.
@@ -502,7 +540,25 @@ class BroadcastService implements BroadcastServiceInterface {
 		$this->connectionReporter?->reportBroadcast(results: $results);
 
 		return $results;
-	}//end broadcast()
+	}//end broadcastTo()
+
+	/**
+	 * Validate one outbound URL and deliver via the enqueueBroadcast adapter
+	 * (SSRF pre-flight guard, then the synchronous retry loop).
+	 *
+	 * @param string $targetUrl The target URL.
+	 * @param string $directoryUrl The URL of this directory.
+	 *
+	 * @return bool Whether the target accepted the broadcast; false for an unsafe target.
+	 */
+	private function deliverTo(string $targetUrl, string $directoryUrl): bool {
+		try {
+			return $this->enqueueBroadcast(url: $targetUrl, directoryUrl: $directoryUrl)->isSuccessful();
+		} catch (InvalidArgumentException $e) {
+			$this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
+			return false;
+		}
+	}//end deliverTo()
 
 	/**
 	 * Send a broadcast to a single target and report the outcome as a
