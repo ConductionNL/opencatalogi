@@ -143,30 +143,7 @@
 					:series="activityChartData.series"
 					:categories="activityChartData.labels"
 					:height="280"
-					:options="{
-						stroke: { curve: 'smooth', width: 2 },
-						fill: {
-							type: 'gradient',
-							gradient: {
-								shadeIntensity: 1,
-								opacityFrom: 0.4,
-								opacityTo: 0.05,
-								stops: [0, 90, 100],
-							},
-						},
-						xaxis: {
-							labels: { rotate: -30, style: { fontSize: '11px' } },
-							axisBorder: { show: false },
-							axisTicks: { show: false },
-						},
-						yaxis: { labels: { style: { fontSize: '11px' } } },
-						grid: {
-							borderColor: 'var(--color-border, #e0e0e0)',
-							strokeDashArray: 4,
-						},
-						dataLabels: { enabled: false },
-						tooltip: { shared: true, intersect: false },
-					}" />
+					:options="areaChartOptions()" />
 				<div v-else class="widget-empty">
 					<ChartAreaspline :size="40" class="widget-empty-icon" />
 					<p>{{ t('opencatalogi', 'No activity recorded yet') }}</p>
@@ -188,31 +165,7 @@
 					:series="usageChartData.series"
 					:categories="usageChartData.labels"
 					:height="240"
-					:options="{
-						stroke: { curve: 'smooth', width: 2 },
-						colors: usageChartColors,
-						fill: {
-							type: 'gradient',
-							gradient: {
-								shadeIntensity: 1,
-								opacityFrom: 0.4,
-								opacityTo: 0.05,
-								stops: [0, 90, 100],
-							},
-						},
-						xaxis: {
-							labels: { rotate: -30, style: { fontSize: '11px' } },
-							axisBorder: { show: false },
-							axisTicks: { show: false },
-						},
-						yaxis: { labels: { style: { fontSize: '11px' } } },
-						grid: {
-							borderColor: 'var(--color-border, #e0e0e0)',
-							strokeDashArray: 4,
-						},
-						dataLabels: { enabled: false },
-						tooltip: { shared: true, intersect: false },
-					}" />
+					:options="areaChartOptions(usageChartColors)" />
 				<div v-else class="widget-empty">
 					<ChartAreaspline :size="40" class="widget-empty-icon" />
 					<p>{{ t('opencatalogi', 'No usage data yet') }}</p>
@@ -851,6 +804,8 @@ export default {
 	},
 
 	methods: {
+		areaChartOptions,
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		async loadDashboardData() {
 			this.globalLoading = true
@@ -1153,6 +1108,41 @@ export default {
 			this.dashboardLayout = newLayout
 		},
 	},
+}
+
+/**
+ * The options of the dashboard's smooth gradient area charts, built fresh for
+ * each chart; `colors` (when given) sets the series colours.
+ *
+ * @param {Array<string>} [colors] The series colours.
+ * @return {object} The chart options.
+ */
+function areaChartOptions(colors) {
+	return {
+		stroke: { curve: 'smooth', width: 2 },
+		...(colors && { colors }),
+		fill: {
+			type: 'gradient',
+			gradient: {
+				shadeIntensity: 1,
+				opacityFrom: 0.4,
+				opacityTo: 0.05,
+				stops: [0, 90, 100],
+			},
+		},
+		xaxis: {
+			labels: { rotate: -30, style: { fontSize: '11px' } },
+			axisBorder: { show: false },
+			axisTicks: { show: false },
+		},
+		yaxis: { labels: { style: { fontSize: '11px' } } },
+		grid: {
+			borderColor: 'var(--color-border, #e0e0e0)',
+			strokeDashArray: 4,
+		},
+		dataLabels: { enabled: false },
+		tooltip: { shared: true, intersect: false },
+	}
 }
 </script>
 
