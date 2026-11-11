@@ -322,7 +322,7 @@
       "count": 2
     },
     "@typescript-eslint/no-this-alias": {
-      "count": 2
+      "count": 1
     },
     "vue/prefer-define-options": {
       "count": 1
