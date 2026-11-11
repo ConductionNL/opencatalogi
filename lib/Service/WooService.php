@@ -3,6 +3,9 @@
 /**
  * Service for the WOO (Wet open overheid) transparency workflow.
  *
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Implements the WOO-specific domain logic described in
  * openspec/changes/woo-transparency. Per hydra ADR-022 this service builds NO
  * bespoke queue/board, NO bespoke state machine and NO bespoke audit store:
@@ -27,9 +30,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
  *
  * @version GIT: <git_id>
  *

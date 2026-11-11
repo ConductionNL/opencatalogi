@@ -14,6 +14,9 @@
  * @category Test
  * @package  OCA\OpenCatalogi\Tests\Stubs\Doctrine
  * @license  EUPL-1.2
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

@@ -3,6 +3,9 @@
 /**
  * Unit tests for PublicationQueryService.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers the WOO-536 Fase-5 refactor of `assemblePublicSearchResults`
  * (catalog-derived scope, dynamic schema discriminator, N4a
  * document-transitive visibility), the M2 fast-path added 2026-08-31
@@ -27,9 +30,6 @@
  * `PublicationQueryService::assemblePublicSearchResults()`.
  *
  * @spec openspec/specs/search/spec.md
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  */
 
 declare(strict_types=1);

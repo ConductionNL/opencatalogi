@@ -3,6 +3,9 @@
 /**
  * The GitHub publiccode harvest, as the administrator sees and drives it.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The harvest itself is a flow OpenCatalogi ships on the `publiccode` schema
  * (`lib/Settings/register.d/publiccode-github-harvest.json`) and OpenRegister
  * runs. This service is the admin's handle on it: it reports whether the pieces

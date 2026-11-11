@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Resolve the active Nextcloud theme ('light' | 'dark') from body data-theme attributes.
  *
  * @return {string} 'light' or 'dark'

@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 /** * EditListingModal.vue * Modal for editing a directory listing * @category
 Components * @package opencatalogi * @author Ruben Linde * @copyright 2024 * @license
 EUPL-1.2 * @version 1.0.0 * @link https://github.com/opencatalogi/opencatalogi * *

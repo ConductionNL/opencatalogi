@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Jest mock for any `vue-material-design-icons/*.vue` import.
  *
  * These are raw, untranspiled `.vue` SFCs shipped inside `node_modules`;

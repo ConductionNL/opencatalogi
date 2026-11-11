@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Nextcloud Groups Service
  *
  * Service for fetching and managing Nextcloud groups from the Nextcloud API.
