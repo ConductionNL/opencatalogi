@@ -552,6 +552,27 @@ class InspectionControllerTest extends TestCase {
 	}//end testParametersOfTheWrongShapeAreRefused()
 
 	/**
+	 * Documents that are not a list are refused like any other parameter, and
+	 * a refused inspection names why.
+	 */
+	public function testTheRefusalsNameWhy(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(['record' => ['id' => 'b'], 'recordType' => ['inspectionTermDays' => 4], 'documents' => 'doc-a']);
+		$this->assertSame(['error' => 'missing-parameters'], $this->controller->open()->getData());
+
+		$this->setUp();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(['record' => ['id' => 'b'], 'recordType' => ['slug' => 'x', 'inspectionTermDays' => 4], 'documents' => []]);
+		$this->assertSame(
+			['error' => 'inspection-refused', 'message' => 'An inspection needs the documents chosen for it. An inspection over nothing is not an inspection.'],
+			$this->controller->open()->getData()
+		);
+		$this->assertSame([], $store->saved);
+
+	}//end testTheRefusalsNameWhy()
+
+	/**
 	 * An inspection that cannot be stored answers 503, never a quiet success.
 	 *
 	 * The caller is told the documents are on inspection; if the write was
