@@ -344,6 +344,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -352,7 +353,6 @@ import {
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-import axios from 'axios'
 import { isRef, ref } from 'vue'
 import AlphaXCircle from 'vue-material-design-icons/AlphaXCircle.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'

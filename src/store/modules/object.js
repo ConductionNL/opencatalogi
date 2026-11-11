@@ -7,6 +7,7 @@ import {
 	relationsPlugin,
 	selectionPlugin,
 } from '@conduction/nextcloud-vue'
+import { getRequestToken } from '@nextcloud/auth'
 import { defineStore } from 'pinia'
 import { normaliseIdList } from '../../services/catalogScope.js'
 
@@ -533,7 +534,10 @@ function activePublicationTarget(store) {
 async function sendAttachmentAction(store, { target, fileId, action }) {
 	const { registerId, schemaId, publicationId } = target
 	const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publicationId}/files/${fileId}/${action}`
-	const response = await fetch(endpoint, { method: 'POST' })
+	const response = await fetch(endpoint, {
+		method: 'POST',
+		headers: { requesttoken: getRequestToken() },
+	})
 	if (!response.ok) {
 		throw new Error(
 			`Failed to ${action} file ${fileId}: ${response.status} ${response.statusText}`,
@@ -724,9 +728,10 @@ function objectRefs(objectItem) {
  */
 async function objectRequest(target, request) {
 	const suffix = request.action === 'delete' ? '' : `/${request.action}`
+	const init = request.init || { method: 'POST' }
 	const response = await fetch(
 		`/index.php/apps/openregister/api/objects/${target.registerId}/${target.schemaId}/${target.objectId}${suffix}`,
-		request.init || { method: 'POST' },
+		{ ...init, headers: { ...init.headers, requesttoken: getRequestToken() } },
 	)
 	if (!response.ok) {
 		throw new Error(

@@ -537,6 +537,7 @@ defineOptions({
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
 import {
 	NcActionButton,
 	NcAppSidebar,
@@ -548,7 +549,6 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
-import axios from 'axios'
 import { ref } from 'vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import FileOutline from 'vue-material-design-icons/FileOutline.vue'
