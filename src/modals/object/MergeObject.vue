@@ -699,6 +699,41 @@ import Eye from 'vue-material-design-icons/Eye.vue'
 import Merge from 'vue-material-design-icons/Merge.vue'
 
 /**
+ * Whether a merge side holds a value: not undefined, null or empty.
+ *
+ * @param {*} value - The value
+ * @return {boolean} True when it holds a value
+ */
+function hasMergeValue(value) {
+	return value !== undefined && value !== null && value !== ''
+}
+
+/**
+ * Whether a chosen value is a dropdown option object with a value.
+ *
+ * @param {*} value - The chosen value
+ * @return {boolean} True for an option object
+ */
+function isOptionObject(value) {
+	return Boolean(value && typeof value === 'object' && value.value !== undefined)
+}
+
+/**
+ * The default merge value of a property: the target's value when it has
+ * one, else the source's, else undefined (the caller picks 'custom').
+ *
+ * @param {*} targetValue - The target's value
+ * @param {*} sourceValue - The source's value
+ * @return {*} The default value
+ */
+function defaultMergeValue(targetValue, sourceValue) {
+	// Always store the actual value, never the option object
+	if (hasMergeValue(targetValue)) return targetValue
+	if (hasMergeValue(sourceValue)) return sourceValue
+	return undefined
+}
+
+/**
  * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
@@ -893,43 +928,7 @@ export default {
 			this.propertySelections = {}
 
 			this.mergeableProperties.forEach((property) => {
-				if (property === 'id') {
-					// ID always uses target value
-					this.mergedData[property] = this.selectedTargetObject[property]
-				} else {
-					// Default selection logic:
-					// 1. Target value if it exists
-					// 2. Source value if target doesn't exist but source does
-					// 3. 'custom' if neither exists
-					const targetValue = this.selectedTargetObject[property]
-					const sourceValue = this.sourceObject[property]
-
-					let selectedValue
-					// Always store the actual value, never the option object
-					if (
-						targetValue !== undefined
-						&& targetValue !== null
-						&& targetValue !== ''
-					) {
-						selectedValue = targetValue
-					} else if (
-						sourceValue !== undefined
-						&& sourceValue !== null
-						&& sourceValue !== ''
-					) {
-						selectedValue = sourceValue
-					} else {
-						selectedValue = 'custom'
-						this.customValues[property] = ''
-					}
-
-					this.mergedData[property] = selectedValue
-
-					// Set up the selection object for the dropdown
-					const options = this.getMergeOptions(property)
-					this.propertySelections[property] =
-						options.find((opt) => opt.value === selectedValue) || null
-				}
+				this.initializeMergeProperty(property)
 			})
 
 			// eslint-disable-next-line no-console
@@ -942,31 +941,56 @@ export default {
 		},
 
 		/**
+		 * Set one property's default merge value and dropdown selection. The
+		 * id always takes the target's value.
+		 *
+		 * @param {string} property - The property
+		 * @return {void}
+		 */
+		initializeMergeProperty(property) {
+			if (property === 'id') {
+				// ID always uses target value
+				this.mergedData[property] = this.selectedTargetObject[property]
+				return
+			}
+
+			let selectedValue = defaultMergeValue(
+				this.selectedTargetObject[property],
+				this.sourceObject[property],
+			)
+			if (selectedValue === undefined) {
+				selectedValue = 'custom'
+				this.customValues[property] = ''
+			}
+
+			this.mergedData[property] = selectedValue
+
+			// Set up the selection object for the dropdown
+			const options = this.getMergeOptions(property)
+			this.propertySelections[property] =
+				options.find((opt) => opt.value === selectedValue) || null
+		},
+
+		/**
 		 * @param property
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6
 		 */
 		getMergeOptions(property) {
 			const options = []
+			const sourceValue = this.sourceObject[property]
+			const targetValue = this.selectedTargetObject[property]
 
-			if (
-				this.sourceObject[property] !== undefined
-				&& this.sourceObject[property] !== null
-				&& this.sourceObject[property] !== ''
-			) {
+			if (hasMergeValue(sourceValue)) {
 				options.push({
-					label: `From Source: ${this.displayValue(this.sourceObject[property])}`,
-					value: this.sourceObject[property],
+					label: `From Source: ${this.displayValue(sourceValue)}`,
+					value: sourceValue,
 				})
 			}
 
-			if (
-				this.selectedTargetObject[property] !== undefined
-				&& this.selectedTargetObject[property] !== null
-				&& this.selectedTargetObject[property] !== ''
-			) {
+			if (hasMergeValue(targetValue)) {
 				options.push({
-					label: `From Target: ${this.displayValue(this.selectedTargetObject[property])}`,
-					value: this.selectedTargetObject[property],
+					label: `From Target: ${this.displayValue(targetValue)}`,
+					value: targetValue,
 				})
 			}
 
@@ -1048,57 +1072,8 @@ export default {
 
 			this.loading = true
 			try {
-				// Prepare merged data with custom values resolved - ensure no ID is included
-				const finalMergedData = {}
-				// eslint-disable-next-line no-console
-				console.log('Raw mergedData before processing:', this.mergedData)
-
-				Object.keys(this.mergedData).forEach((property) => {
-					// Skip any ID-related properties
-					if (property === 'id' || property === '@self') {
-						return
-					}
-
-					if (this.mergedData[property] === 'custom') {
-						finalMergedData[property] = this.customValues[property] || ''
-					} else {
-						// Ensure we extract the actual value if it's an object with label/value structure
-						const value = this.mergedData[property]
-						if (
-							value
-							&& typeof value === 'object'
-							&& value.value !== undefined
-						) {
-							// eslint-disable-next-line no-console
-							console.log(
-								'Extracting value from object for',
-								property,
-								':',
-								value.value,
-							)
-							finalMergedData[property] = value.value
-						} else {
-							finalMergedData[property] = value
-						}
-					}
-				})
-
-				// eslint-disable-next-line no-console
-				console.log('Final merged data to send:', finalMergedData)
-
-				const { register, schema } = this.sourcePair
-				const result = await axios.post(
-					generateUrl(
-						'/apps/openregister/api/objects/{register}/{schema}/{id}/merge',
-						{ register, schema, id: this.sourceObject['@self'].id },
-					),
-					{
-						target: this.selectedTargetObject['@self'].id,
-						object: finalMergedData,
-						fileAction: this.fileAction,
-						relationAction: this.relationAction,
-					},
-				)
+				const finalMergedData = this.resolvedMergedData()
+				const result = await this.postMerge(finalMergedData)
 
 				this.mergeResult = result.data
 				this.step = 3
@@ -1112,6 +1087,74 @@ export default {
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The merged data to send: every chosen value with custom values
+		 * filled in and option objects unwrapped, without any id.
+		 *
+		 * @return {object} The merged data
+		 */
+		resolvedMergedData() {
+			const finalMergedData = {}
+			// eslint-disable-next-line no-console
+			console.log('Raw mergedData before processing:', this.mergedData)
+
+			Object.keys(this.mergedData).forEach((property) => {
+				// Skip any ID-related properties
+				if (property === 'id' || property === '@self') {
+					return
+				}
+				finalMergedData[property] = this.resolvedMergeValue(property)
+			})
+
+			// eslint-disable-next-line no-console
+			console.log('Final merged data to send:', finalMergedData)
+			return finalMergedData
+		},
+
+		/**
+		 * One property's value to send: the custom value, the value of an
+		 * option object, or the chosen value itself.
+		 *
+		 * @param {string} property - The property
+		 * @return {*} The value
+		 */
+		resolvedMergeValue(property) {
+			if (this.mergedData[property] === 'custom') {
+				return this.customValues[property] || ''
+			}
+
+			// Ensure we extract the actual value if it's an object with label/value structure
+			const value = this.mergedData[property]
+			if (isOptionObject(value)) {
+				// eslint-disable-next-line no-console
+				console.log('Extracting value from object for', property, ':', value.value)
+				return value.value
+			}
+			return value
+		},
+
+		/**
+		 * POST the merge of the source into the selected target.
+		 *
+		 * @param {object} finalMergedData - The merged data
+		 * @return {Promise<object>} The response
+		 */
+		postMerge(finalMergedData) {
+			const { register, schema } = this.sourcePair
+			return axios.post(
+				generateUrl(
+					'/apps/openregister/api/objects/{register}/{schema}/{id}/merge',
+					{ register, schema, id: this.sourceObject['@self'].id },
+				),
+				{
+					target: this.selectedTargetObject['@self'].id,
+					object: finalMergedData,
+					fileAction: this.fileAction,
+					relationAction: this.relationAction,
+				},
+			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
