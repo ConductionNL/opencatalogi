@@ -974,6 +974,97 @@ import {
 import '@toast-ui/editor/dist/toastui-editor.css'
 
 /**
+ * Whether a property name marks it as immutable, readonly or constant
+ * (case insensitive).
+ *
+ * @param {string} key - The property key
+ * @return {boolean} True when the name says so
+ */
+function hasImmutableName(key) {
+	const immutablePatterns = ['immutable', 'readonly', 'constant']
+	return immutablePatterns.some((pattern) => key.toLowerCase().includes(pattern))
+}
+
+/**
+ * Whether a schema property is flagged read-only or immutable.
+ *
+ * @param {object} schemaProperty - The schema property
+ * @return {boolean} True when flagged
+ */
+function isReadOnlyProperty(schemaProperty) {
+	return schemaProperty.readOnly === true || schemaProperty.immutable === true
+}
+
+/**
+ * Whether a schema title can be shown: a non-blank string that is not the
+ * "new" placeholder.
+ *
+ * @param {unknown} title - The title
+ * @return {boolean} True when usable
+ */
+function isUsableTitle(title) {
+	return Boolean(
+		title
+		&& typeof title === 'string'
+		&& title.trim() !== ''
+		&& title.trim().toLowerCase() !== 'new',
+	)
+}
+
+/**
+ * Whether an editor instance offers a method.
+ *
+ * @param {object|null|undefined} editorInstance - The editor
+ * @param {string} name - The method name
+ * @return {boolean} True when it does
+ */
+function hasEditorMethod(editorInstance, name) {
+	return Boolean(editorInstance) && typeof editorInstance[name] === 'function'
+}
+
+/**
+ * The content of a markdown editor: its markdown, else its HTML, else the
+ * value itself when it is text.
+ *
+ * @param {object|string|null|undefined} editorInstance - The editor or a text value
+ * @return {string} The content
+ */
+function editorContent(editorInstance) {
+	if (hasEditorMethod(editorInstance, 'getMarkdown')) {
+		return editorInstance.getMarkdown()
+	}
+	if (hasEditorMethod(editorInstance, 'getHTML')) {
+		return editorInstance.getHTML()
+	}
+	return typeof editorInstance === 'string' ? editorInstance : ''
+}
+
+/**
+ * A date value as a Date, or null when there is none.
+ *
+ * @param {string|null|undefined} value - The date
+ * @return {Date|null} The date
+ */
+function optionalDate(value) {
+	return value ? new Date(value) : null
+}
+
+/**
+ * Whether an object is live: published by now and not depublished yet.
+ *
+ * @param {object} object - The object
+ * @param {Date} now - The current time
+ * @return {boolean} True when live
+ */
+function isLiveNow(object, now) {
+	const published = optionalDate(object.publicationDate)
+	const depublished = optionalDate(object.depublicationDate)
+
+	// Currently live: published in the past and not yet depublished
+	return !!(published && published <= now && (!depublished || depublished > now))
+}
+
+/**
  * @spec openspec/specs/generic-object-modals/spec.md
  */
 export default {
@@ -1993,16 +2084,7 @@ export default {
 
 			// Return the title if it exists and is not empty or just "new" (placeholder)
 			const title = schemaProperty?.title
-			if (
-				title
-				&& typeof title === 'string'
-				&& title.trim() !== ''
-				&& title.trim().toLowerCase() !== 'new'
-			) {
-				return title
-			}
-
-			return key
+			return isUsableTitle(title) ? title : key
 		},
 
 		/**
@@ -2476,20 +2558,7 @@ export default {
 		 */
 		shouldShowDepublishAction(object) {
 			if (!object) return false
-			const now = new Date()
-			const published = object.publicationDate
-				? new Date(object.publicationDate)
-				: null
-			const depublished = object.depublicationDate
-				? new Date(object.depublicationDate)
-				: null
-
-			// Currently live: published in the past and not yet depublished
-			return !!(
-				published
-				&& published <= now
-				&& (!depublished || depublished > now)
-			)
+			return isLiveNow(object, new Date())
 		},
 
 		/**
@@ -2617,32 +2686,37 @@ export default {
 			const schemaProperty = schemaProperties[key]
 
 			// Check by property name patterns (case insensitive)
-			const immutablePatterns = ['immutable', 'readonly', 'constant']
-			const isImmutableByName = immutablePatterns.some((pattern) =>
-				key.toLowerCase().includes(pattern),
-			)
+			const isImmutableByName = hasImmutableName(key)
 
-			if (schemaProperty) {
-				const isConstant = schemaProperty.const !== undefined
-				const isImmutable =
-					schemaProperty.readOnly === true
-					|| schemaProperty.immutable === true
-
-				// Debug: Log all detection methods
-				if (process.env.NODE_ENV === 'development') {
-					// eslint-disable-next-line no-console
-					console.log(`Property ${key} detection:`, {
-						isConstant,
-						isImmutable,
-						isImmutableByName,
-						schemaProperty,
-					})
-				}
-
-				return isConstant || isImmutable || isImmutableByName
+			if (!schemaProperty) {
+				return isImmutableByName
 			}
 
-			return isImmutableByName
+			const isConstant = schemaProperty.const !== undefined
+			const isImmutable = isReadOnlyProperty(schemaProperty)
+			this.logImmutability(key, {
+				isConstant,
+				isImmutable,
+				isImmutableByName,
+				schemaProperty,
+			})
+
+			return isConstant || isImmutable || isImmutableByName
+		},
+
+		/**
+		 * Debug: log how a property's immutability was detected, in
+		 * development only.
+		 *
+		 * @param {string} key - The property key
+		 * @param {object} detection - The detection results
+		 * @return {void}
+		 */
+		logImmutability(key, detection) {
+			if (process.env.NODE_ENV === 'development') {
+				// eslint-disable-next-line no-console
+				console.log(`Property ${key} detection:`, detection)
+			}
 		},
 
 		/**
@@ -2796,16 +2870,7 @@ export default {
 		 */
 		getMarkdownContent(editorInstance) {
 			try {
-				if (
-					editorInstance
-					&& typeof editorInstance.getMarkdown === 'function'
-				) {
-					return editorInstance.getMarkdown()
-				}
-				if (editorInstance && typeof editorInstance.getHTML === 'function') {
-					return editorInstance.getHTML()
-				}
-				return typeof editorInstance === 'string' ? editorInstance : ''
+				return editorContent(editorInstance)
 			} catch (error) {
 				console.warn('Error getting content from markdown editor:', error)
 				return ''
