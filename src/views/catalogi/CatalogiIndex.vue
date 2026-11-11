@@ -250,6 +250,22 @@ export default {
 		},
 
 		/**
+		 * Open the detail page of the catalog `row` names, when it has an id.
+		 *
+		 * @param {object} row The catalog row.
+		 * @return {boolean} Whether the page opened.
+		 */
+		openCatalogDetail(row) {
+			const id = resolveObjectId(row)
+			if (!id) return false
+			this.$router.push({
+				name: 'CatalogDetail',
+				params: { id: String(id) },
+			})
+			return true
+		},
+
+		/**
 		 * Open the clicked row's catalog detail page by route id.
 		 *
 		 * @param {object} row The clicked table row.
@@ -257,14 +273,7 @@ export default {
 		 * @spec openspec/specs/catalogs/spec.md#requirement-view-catalog-details-and-detail-page-cat-015
 		 */
 		onRowClick(row) {
-			const id = resolveObjectId(row)
-			if (id) {
-				this.$router.push({
-					name: 'CatalogDetail',
-					params: { id: String(id) },
-				})
-				return
-			}
+			if (this.openCatalogDetail(row)) return
 			// No id resolvable — log the row so misshapen payloads surface
 			// in the browser console instead of silently doing nothing.
 			// eslint-disable-next-line no-console
@@ -279,14 +288,7 @@ export default {
 		 * @spec openspec/specs/catalogs/spec.md#requirement-view-catalog-details-and-detail-page-cat-015
 		 */
 		viewCatalog(catalog) {
-			const id = resolveObjectId(catalog)
-			if (id) {
-				this.$router.push({
-					name: 'CatalogDetail',
-					params: { id: String(id) },
-				})
-				return
-			}
+			if (this.openCatalogDetail(catalog)) return
 			// eslint-disable-next-line no-console
 			console.warn(
 				'[opencatalogi] viewCatalog: no id resolvable from row',
