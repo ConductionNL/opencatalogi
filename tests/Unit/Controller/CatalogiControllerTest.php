@@ -6,6 +6,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\CatalogiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -15,6 +16,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Unit tests for CatalogiController.
@@ -29,7 +31,7 @@ class CatalogiControllerTest extends TestCase {
 	private CatalogiController $controller;
 
 	protected function setUp(): void {
-		$this->request = $this->createMock(IRequest::class);
+		$this->request = $this->createMock(ServerAwareRequest::class);
 		$this->catalogiService = $this->createMock(CatalogiService::class);
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->container = $this->createMock(ContainerInterface::class);
@@ -40,8 +42,7 @@ class CatalogiControllerTest extends TestCase {
 			$this->request,
 			$this->catalogiService,
 			$this->config,
-			$this->container,
-			$this->appManager
+			new OpenRegisterLookup($this->container, $this->appManager)
 		);
 	}
 
@@ -94,11 +95,11 @@ class CatalogiControllerTest extends TestCase {
 					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 						// RegisterResolverService is final; use a hand-rolled double.
 						return new class {
-							public function resolveRegisterId(string $a, string $k, ?string $d = null): string {
-								return '3';
-							}
+							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+								if (str_ends_with($lookup->configKey, '_register') === true) {
+									return '3';
+								}
 
-							public function resolveSchemaId(string $a, string $k, ?string $d = null): string {
 								return '5';
 							}
 						};
@@ -136,11 +137,11 @@ class CatalogiControllerTest extends TestCase {
 					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 						// RegisterResolverService is final; use a hand-rolled double.
 						return new class {
-							public function resolveRegisterId(string $a, string $k, ?string $d = null): string {
-								return '3';
-							}
+							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+								if (str_ends_with($lookup->configKey, '_register') === true) {
+									return '3';
+								}
 
-							public function resolveSchemaId(string $a, string $k, ?string $d = null): string {
 								return '5';
 							}
 						};
@@ -181,12 +182,12 @@ class CatalogiControllerTest extends TestCase {
 	public function testIndexStripsTheCallersScopeKeys(): void {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$caller = [
-				'_schemas' => [56],
-				'_registers' => [99],
-				'_schema' => 56,
-				'schema' => 56,
-				'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
-			];
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+		];
 
 		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		// OR's buildSearchQuery() keeps these keys; the strip after it is the control.
@@ -205,11 +206,11 @@ class CatalogiControllerTest extends TestCase {
 				function (string $id) use ($mockObjService) {
 					if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 						return new class {
-							public function resolveRegisterId(string $a, string $k, ?string $d = null): string {
-								return '3';
-							}
+							public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+								if (str_ends_with($lookup->configKey, '_register') === true) {
+									return '3';
+								}
 
-							public function resolveSchemaId(string $a, string $k, ?string $d = null): string {
 								return '5';
 							}
 						};

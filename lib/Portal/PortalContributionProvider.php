@@ -37,8 +37,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Portal;
 
 use OCA\OpenCatalogi\Contract\CitizenCollectionServiceInterface;
-use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
+use OCA\OpenCatalogi\Contract\PortalContributionProviderInterface;
 
 /**
  * Declares what a resident may see and do in opencatalogi through the portal.
@@ -61,7 +61,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * The saved search schema (contract C2).
 	 */
 	public const SAVED_SEARCH_SCHEMA = 'savedSearch';
-
 
 	/**
 	 * The menu heading over the resident's dossiers and saved searches (portaliq `group`).
@@ -88,6 +87,61 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	private const API = '/index.php/apps/opencatalogi/api/portal';
 
 	/**
+	 * The dossier row actions: id, label, path below the portal API, extra whitelisted fields.
+	 */
+	private const DOSSIER_ROW_ACTIONS = [
+		['viewDossier', 'Openen', '/collections/view', []],
+		['removeFromDossier', 'Uit dossier halen', '/collections/items/remove', ['itemId']],
+		['noteOnDossier', 'Notitie schrijven', '/collections/note', ['itemId', 'note']],
+		['shareDossier', 'Deellink maken', '/collections/share', []],
+		['unshareDossier', 'Deellink intrekken', '/collections/unshare', []],
+		['deleteDossier', 'Dossier verwijderen', '/collections/delete', []],
+	];
+
+	/**
+	 * The saved-search row actions: id, label, path below the portal API, extra whitelisted fields.
+	 */
+	private const SAVED_SEARCH_ROW_ACTIONS = [
+		['pauseSavedSearch', 'Geen berichten meer', '/saved-searches/pause', []],
+		['deleteSavedSearch', 'Zoekopdracht verwijderen', '/saved-searches/delete', []],
+	];
+
+	/**
+	 * The fields of the create-dossier form.
+	 */
+	private const DOSSIER_FIELD_CONFIGS = [
+		'title' => ['label' => 'Naam van het dossier', 'required' => true, 'placeholder' => 'Bijvoorbeeld: windpark'],
+		'description' => ['label' => 'Notitie', 'size' => 'full'],
+	];
+
+	/**
+	 * The fields of the change-saved-search form.
+	 */
+	private const SAVED_SEARCH_FIELD_CONFIGS = [
+		'title' => ['label' => 'Naam', 'required' => true],
+		'frequency' => ['label' => 'Hoe vaak wilt u bericht?'],
+		'active' => ['label' => 'Stuur mij berichten'],
+	];
+
+	/**
+	 * The dossier table columns.
+	 */
+	private const DOSSIER_COLUMNS = [
+		['field' => 'title', 'label' => 'Dossier'],
+		['field' => 'description', 'label' => 'Notitie'],
+	];
+
+	/**
+	 * The saved-search table columns.
+	 */
+	private const SAVED_SEARCH_COLUMNS = [
+		['field' => 'title', 'label' => 'Zoekopdracht'],
+		['field' => 'frequency', 'label' => 'Hoe vaak', 'render' => 'badge', 'valueLabels' => self::FREQUENCY_LABELS],
+		['field' => 'active', 'label' => 'Actief', 'render' => 'boolean'],
+		['field' => 'lastNotifiedAt', 'label' => 'Laatste bericht', 'render' => 'datetime'],
+	];
+
+	/**
 	 * Constructor. The manifest itself needs nothing; the dossier service is
 	 * only for `dossierItems()`, which portaliq calls after its own scoped read,
 	 * and the Woo intake only for `receiveWooRequest()`.
@@ -97,9 +151,9 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * @param ServiceStatusIndex|null $statusIndex The service status, for the public index.
 	 */
 	public function __construct(
-		private readonly ?CitizenCollectionServiceInterface $collections=null,
-		private readonly ?InformationRequestIntakeInterface $wooRequests=null,
-		private readonly ?ServiceStatusIndex $statusIndex=null,
+		private readonly ?CitizenCollectionServiceInterface $collections = null,
+		private readonly ?InformationRequestIntakeInterface $wooRequests = null,
+		private readonly ?ServiceStatusIndex $statusIndex = null,
 	) {
 
 	}//end __construct()
@@ -124,7 +178,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 		}
 
 		return $this->statusIndex->items();
-
 	}//end getPublicIndex()
 
 	/**
@@ -144,7 +197,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 		}
 
 		return [$this->statusIndex->kind()];
-
 	}//end getPublicIndexKinds()
 
 	/**
@@ -161,7 +213,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 *
 	 * @spec openspec/changes/portal-woo-request-intake/specs/woo-request-intake/spec.md#requirement-a-woo-request-delivered-by-the-portal-arms-its-term-req-wri-008
 	 */
-	public function receiveWooRequest(array $answers, string $receivedAt=''): array {
+	public function receiveWooRequest(array $answers, string $receivedAt = ''): array {
 		if ($this->wooRequests === null) {
 			return [
 				'outcome' => InformationRequestIntakeInterface::OUTCOME_UNAVAILABLE,
@@ -173,7 +225,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 		}
 
 		return $this->wooRequests->receive(answers: $answers, receivedAt: $receivedAt);
-
 	}//end receiveWooRequest()
 
 	/**
@@ -194,7 +245,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 		}
 
 		return $this->collections->itemList(collectionId: $collectionId);
-
 	}//end dossierItems()
 
 	/**
@@ -206,7 +256,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 */
 	public function getAudiences(): array {
 		return self::AUDIENCES;
-
 	}//end getAudiences()
 
 	/**
@@ -218,7 +267,6 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 */
 	public function getAudience(): string {
 		return 'citizen';
-
 	}//end getAudience()
 
 	/**
@@ -267,10 +315,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 			'label' => 'Mijn dossiers',
 			'listable' => true,
 			'fields' => ['title', 'description', 'items', 'share', 'sourceOf'],
-			'columns' => [
-				['field' => 'title', 'label' => 'Dossier'],
-				['field' => 'description', 'label' => 'Notitie'],
-			],
+			'columns' => self::DOSSIER_COLUMNS,
 			// The items are shown by the item list below, with their links,
 			// notes and a "no longer public" mark, so the card does not print
 			// them raw.
@@ -299,12 +344,7 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 			'label' => 'Mijn zoekopdrachten',
 			'listable' => true,
 			'fields' => ['title', 'query', 'frequency', 'active', 'lastNotifiedAt', 'lastMatches', 'matchCount'],
-			'columns' => [
-				['field' => 'title', 'label' => 'Zoekopdracht'],
-				['field' => 'frequency', 'label' => 'Hoe vaak', 'render' => 'badge', 'valueLabels' => self::FREQUENCY_LABELS],
-				['field' => 'active', 'label' => 'Actief', 'render' => 'boolean'],
-				['field' => 'lastNotifiedAt', 'label' => 'Laatste bericht', 'render' => 'datetime'],
-			],
+			'columns' => self::SAVED_SEARCH_COLUMNS,
 			'detail' => ['layout' => 'card', 'fields' => ['title', 'frequency', 'active', 'lastNotifiedAt', 'matchCount', 'lastMatches']],
 			'rowActions' => ['pauseSavedSearch', 'deleteSavedSearch'],
 		];
@@ -312,122 +352,140 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	}//end savedSearchCollection()
 
 	/**
-	 * The dossier actions.
+	 * The dossier actions: create, add a publication, and the row actions on a dossier.
 	 *
 	 * @return array<int, array<string, mixed>>
+	 *
+	 * @spec openspec/specs/citizen-collections/spec.md
 	 */
 	private function dossierActions(): array {
 		return [
-			[
-				'id' => 'createDossier',
-				'type' => 'create',
-				'label' => 'Nieuw dossier',
-				'register' => self::REGISTER,
-				'schema' => self::COLLECTION_SCHEMA,
-				'scopeField' => 'owner',
-				'defaults' => ['items' => [], 'sourceOf' => []],
-				'fields' => ['title', 'description'],
-				'fieldConfigs' => [
-					'title' => ['label' => 'Naam van het dossier', 'required' => true, 'placeholder' => 'Bijvoorbeeld: windpark'],
-					'description' => ['label' => 'Notitie', 'size' => 'full'],
-				],
-				'submitLabel' => 'Dossier maken',
-				'successMessage' => 'Uw dossier is gemaakt',
-			],
+			$this->createDossierAction(),
 			[
 				'id' => 'addToDossier',
 				'label' => 'Bewaar in mijn dossier',
-				'endpoint' => self::API.'/collections/items',
+				'endpoint' => self::API . '/collections/items',
 				'method' => 'POST',
 				'fields' => ['collection', 'title', 'publication', 'attachment', 'note'],
 				'successMessage' => 'Bewaard in uw dossier',
 			],
-			$this->rowAction(id: 'viewDossier', label: 'Openen', path: '/collections/view', rowField: 'collection', fields: []),
-			$this->rowAction(
-				id: 'removeFromDossier',
-				label: 'Uit dossier halen',
-				path: '/collections/items/remove',
-				rowField: 'collection',
-				fields: ['itemId']
-			),
-			$this->rowAction(id: 'noteOnDossier', label: 'Notitie schrijven', path: '/collections/note', rowField: 'collection', fields: ['itemId', 'note']),
-			$this->rowAction(id: 'shareDossier', label: 'Deellink maken', path: '/collections/share', rowField: 'collection', fields: []),
-			$this->rowAction(id: 'unshareDossier', label: 'Deellink intrekken', path: '/collections/unshare', rowField: 'collection', fields: []),
-			$this->rowAction(id: 'deleteDossier', label: 'Dossier verwijderen', path: '/collections/delete', rowField: 'collection', fields: []),
+			...$this->rowActions(specs: self::DOSSIER_ROW_ACTIONS, rowField: 'collection'),
 		];
 
 	}//end dossierActions()
 
 	/**
-	 * The saved-search actions.
+	 * The form that creates a dossier owned by the resident.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/specs/citizen-collections/spec.md
+	 */
+	private function createDossierAction(): array {
+		return [
+			'id' => 'createDossier',
+			'type' => 'create',
+			'label' => 'Nieuw dossier',
+			'register' => self::REGISTER,
+			'schema' => self::COLLECTION_SCHEMA,
+			'scopeField' => 'owner',
+			'defaults' => ['items' => [], 'sourceOf' => []],
+			'fields' => ['title', 'description'],
+			'fieldConfigs' => self::DOSSIER_FIELD_CONFIGS,
+			'submitLabel' => 'Dossier maken',
+			'successMessage' => 'Uw dossier is gemaakt',
+		];
+
+	}//end createDossierAction()
+
+	/**
+	 * The saved-search actions: save, change, and the row actions on a saved search.
 	 *
 	 * @return array<int, array<string, mixed>>
+	 *
+	 * @spec openspec/specs/saved-searches/spec.md
 	 */
 	private function savedSearchActions(): array {
 		return [
 			[
 				'id' => 'saveSearch',
 				'label' => 'Bewaar deze zoekopdracht',
-				'endpoint' => self::API.'/saved-searches',
+				'endpoint' => self::API . '/saved-searches',
 				'method' => 'POST',
 				'fields' => ['title', 'query', 'frequency'],
 				'successMessage' => 'Uw zoekopdracht is bewaard',
 			],
-			[
-				'id' => 'updateSavedSearch',
-				'type' => 'update',
-				'label' => 'Zoekopdracht wijzigen',
-				'register' => self::REGISTER,
-				'schema' => self::SAVED_SEARCH_SCHEMA,
-				'scopeField' => 'owner',
-				'fields' => ['title', 'frequency', 'active'],
-				'fieldConfigs' => [
-					'title' => ['label' => 'Naam', 'required' => true],
-					'frequency' => ['label' => 'Hoe vaak wilt u bericht?'],
-					'active' => ['label' => 'Stuur mij berichten'],
-				],
-				'optionsProviders' => [
-					'frequency' => [
-						'type' => 'static',
-						'options' => [
-							['value' => 'immediate', 'label' => self::FREQUENCY_LABELS['immediate']],
-							['value' => 'daily', 'label' => self::FREQUENCY_LABELS['daily']],
-							['value' => 'weekly', 'label' => self::FREQUENCY_LABELS['weekly']],
-						],
-					],
-				],
-				'submitLabel' => 'Opslaan',
-				'successMessage' => 'Uw zoekopdracht is gewijzigd',
-			],
-			$this->rowAction(id: 'pauseSavedSearch', label: 'Geen berichten meer', path: '/saved-searches/pause', rowField: 'savedSearch', fields: []),
-			$this->rowAction(id: 'deleteSavedSearch', label: 'Zoekopdracht verwijderen', path: '/saved-searches/delete', rowField: 'savedSearch', fields: []),
+			$this->updateSavedSearchAction(),
+			...$this->rowActions(specs: self::SAVED_SEARCH_ROW_ACTIONS, rowField: 'savedSearch'),
 		];
 
 	}//end savedSearchActions()
 
 	/**
-	 * One endpoint row action. portaliq proves the row under the collection's
-	 * scope and sends its id under `rowField`.
-	 *
-	 * @param string             $id       The action id.
-	 * @param string             $label    The label.
-	 * @param string             $path     The path below the portal API.
-	 * @param string             $rowField The body field that carries the row id.
-	 * @param array<int, string> $fields   Extra whitelisted fields.
+	 * The form that changes the resident's own saved search.
 	 *
 	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/specs/saved-searches/spec.md
 	 */
-	private function rowAction(string $id, string $label, string $path, string $rowField, array $fields): array {
+	private function updateSavedSearchAction(): array {
 		return [
-			'id' => $id,
-			'label' => $label,
-			'endpoint' => self::API.$path,
-			'method' => 'POST',
-			'rowField' => $rowField,
-			'fields' => $fields,
+			'id' => 'updateSavedSearch',
+			'type' => 'update',
+			'label' => 'Zoekopdracht wijzigen',
+			'register' => self::REGISTER,
+			'schema' => self::SAVED_SEARCH_SCHEMA,
+			'scopeField' => 'owner',
+			'fields' => ['title', 'frequency', 'active'],
+			'fieldConfigs' => self::SAVED_SEARCH_FIELD_CONFIGS,
+			'optionsProviders' => ['frequency' => ['type' => 'static', 'options' => $this->frequencyOptions()]],
+			'submitLabel' => 'Opslaan',
+			'successMessage' => 'Uw zoekopdracht is gewijzigd',
 		];
 
-	}//end rowAction()
+	}//end updateSavedSearchAction()
+
+	/**
+	 * The notice frequencies as select options, in the order of FREQUENCY_LABELS.
+	 *
+	 * @return array<int, array{value: string, label: string}>
+	 *
+	 * @spec openspec/specs/saved-searches/spec.md
+	 */
+	private function frequencyOptions(): array {
+		return array_map(
+			static fn (string $value, string $label): array => ['value' => $value, 'label' => $label],
+			array_keys(self::FREQUENCY_LABELS),
+			self::FREQUENCY_LABELS
+		);
+
+	}//end frequencyOptions()
+
+	/**
+	 * Endpoint row actions. portaliq proves the row under the collection's
+	 * scope and sends its id under `rowField`.
+	 *
+	 * @param array<int, array{0: string, 1: string, 2: string, 3: list<string>}> $specs Id, label, path, extra fields.
+	 * @param string $rowField The body field that carries the row id.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 *
+	 * @spec openspec/specs/citizen-collections/spec.md
+	 */
+	private function rowActions(array $specs, string $rowField): array {
+		return array_map(
+			static fn (array $spec): array => [
+				'id' => $spec[0],
+				'label' => $spec[1],
+				'endpoint' => self::API . $spec[2],
+				'method' => 'POST',
+				'rowField' => $rowField,
+				'fields' => $spec[3],
+			],
+			$specs
+		);
+
+	}//end rowActions()
 
 	/**
 	 * The pages: Mijn dossiers and Mijn zoekopdrachten.
@@ -437,38 +495,52 @@ class PortalContributionProvider implements PortalContributionProviderInterface 
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-the-dossier-page-shows-one-dossier-in-full-req-ccol-008
 	 */
 	private function pages(): array {
+		return [$this->dossiersPage(), $this->savedSearchesPage()];
+	}//end pages()
+
+	/**
+	 * The Mijn dossiers page: the create form, the dossier list and the selected dossier.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-the-dossier-page-shows-one-dossier-in-full-req-ccol-008
+	 */
+	private function dossiersPage(): array {
 		return [
-			[
-				'id' => 'dossiers',
-				'label' => 'Mijn dossiers',
-				'group' => self::GROUP,
-				'icon' => 'FolderStar',
-				'blocks' => [
-					[
-						'type' => 'richText',
-						'markdown' => "Bewaar openbare documenten in uw eigen dossier. Alleen u ziet het, tot u een deellink maakt.",
-					],
-					['type' => 'action', 'action' => 'createDossier'],
-					['type' => 'collection', 'collection' => 'myDossiers'],
-					// The selected dossier in full: title, note, the items and
-					// the actions pipelinq and dossiq attach to a dossier.
-					['type' => 'detail', 'collection' => 'myDossiers'],
-				],
-			],
-			[
-				'id' => 'zoekopdrachten',
-				'label' => 'Mijn zoekopdrachten',
-				'group' => self::GROUP,
-				'icon' => 'BellRing',
-				'blocks' => [
-					[
-						'type' => 'richText',
-						'markdown' => "U krijgt bericht als er nieuwe documenten zijn die bij uw zoekopdracht passen.",
-					],
-					['type' => 'collection', 'collection' => 'mySavedSearches'],
-				],
+			'id' => 'dossiers',
+			'label' => 'Mijn dossiers',
+			'group' => self::GROUP,
+			'icon' => 'FolderStar',
+			'blocks' => [
+				['type' => 'richText', 'markdown' => 'Bewaar openbare documenten in uw eigen dossier. Alleen u ziet het, tot u een deellink maakt.'],
+				['type' => 'action', 'action' => 'createDossier'],
+				['type' => 'collection', 'collection' => 'myDossiers'],
+				// The selected dossier in full: title, note, the items and
+				// the actions pipelinq and dossiq attach to a dossier.
+				['type' => 'detail', 'collection' => 'myDossiers'],
 			],
 		];
 
-	}//end pages()
+	}//end dossiersPage()
+
+	/**
+	 * The Mijn zoekopdrachten page: the saved-search list.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/specs/saved-searches/spec.md
+	 */
+	private function savedSearchesPage(): array {
+		return [
+			'id' => 'zoekopdrachten',
+			'label' => 'Mijn zoekopdrachten',
+			'group' => self::GROUP,
+			'icon' => 'BellRing',
+			'blocks' => [
+				['type' => 'richText', 'markdown' => 'U krijgt bericht als er nieuwe documenten zijn die bij uw zoekopdracht passen.'],
+				['type' => 'collection', 'collection' => 'mySavedSearches'],
+			],
+		];
+
+	}//end savedSearchesPage()
 }//end class

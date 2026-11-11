@@ -12,16 +12,14 @@ includes:
 parameters:
     # App-specific only. The base already sets level, paths, bootstrapFiles,
     # excludePaths, scanDirectories and every fleet-wide ignore.
-    excludePaths:
-        # CMSTool implements OCA\OpenRegister\Tool\ToolInterface, which is unavailable during
-        # static analysis. PHPStan cannot ignore "implements unknown interface" via ignoreErrors
-        # (rule requires excludePaths), so the file is excluded. Tracked for re-enable post
-        # peer-app interface stubbing.
-        - lib/Tool/CMSTool.php
-        # OpenCatalogiMetricsProvider implements OCA\OpenRegister\AppHost\IMetricsProvider,
-        # which is unavailable during static analysis. PHPStan cannot ignore "implements
-        # unknown interface" via ignoreErrors (rule requires excludePaths), same as CMSTool.
-        - lib/Observability/OpenCatalogiMetricsProvider.php
+    # CMSTool and OpenCatalogiMetricsProvider implement OpenRegister interfaces that are not
+    # in this app's vendor tree; the test stubs mirror their real signatures, so the
+    # analysis reads those instead of excluding the two files.
+    scanFiles:
+        - tests/Stubs/OpenRegister/Mcp/Tool/ToolInterface.php
+        - tests/Stubs/OpenRegister/Mcp/Db/Agent.php
+        - tests/Stubs/AppHost/IMetricsProvider.php
+        - tests/Stubs/AppHost/MetricSample.php
 
     ignoreErrors:
         # OCP\Files\Node::putContent() exists on File but not on the Node interface stub

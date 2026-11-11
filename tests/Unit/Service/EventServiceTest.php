@@ -6,7 +6,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenRegister\Db\FileMapper;
+use OCA\OpenRegister\Files\Db\FileMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -160,7 +160,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 			->willReturn(['openregister']);
 
 		$this->containerMock->method('get')
-			->with('OCA\OpenRegister\Db\FileMapper')
+			->with('OCA\OpenRegister\Files\Db\FileMapper')
 			->willReturn($mockMapper);
 
 		$result = $this->eventService->getFileMapper();
@@ -664,7 +664,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -705,7 +705,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -778,7 +778,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -831,7 +831,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -1055,7 +1055,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -1228,7 +1228,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 

@@ -66,7 +66,6 @@ class FederationHostPolicy {
 	) {
 	}//end __construct()
 
-
 	/**
 	 * Whether a host is explicitly allowlisted for local federation.
 	 *
@@ -91,7 +90,6 @@ class FederationHostPolicy {
 
 		return in_array($host, $allowedHosts, true);
 	}//end isAllowlistedFederationHost()
-
 
 	/**
 	 * Whether a URL names an address no other instance could reach.
@@ -118,26 +116,41 @@ class FederationHostPolicy {
 			return false;
 		}
 
-		if (in_array($host, self::LOCAL_HOSTS, true) === true) {
-			return true;
-		}
-
-		// Private, loopback and reserved IP ranges.
-		if (filter_var(value: $host, filter: FILTER_VALIDATE_IP) !== false) {
-			$isPublicIp = filter_var(
-				value: $host,
-				filter: FILTER_VALIDATE_IP,
-				options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
-			);
-			if ($isPublicIp === false) {
-				return true;
-			}
-		}
-
-		if (str_ends_with($host, '.local') === true) {
-			return true;
-		}
-
-		return false;
+		return $this->isLocalHost(host: $host);
 	}//end isLocalUrl()
+
+	/**
+	 * Whether a lower-cased host names a local machine: a local name, a
+	 * private, loopback or reserved IP address, or an mDNS `.local` name.
+	 *
+	 * @param string $host The host.
+	 *
+	 * @return boolean True when no other instance could reach it.
+	 */
+	private function isLocalHost(string $host): bool {
+		return in_array($host, self::LOCAL_HOSTS, true) === true
+			|| $this->isNonPublicIp(host: $host) === true
+			|| str_ends_with($host, '.local') === true;
+	}//end isLocalHost()
+
+	/**
+	 * Whether a host is an IP address in a private, loopback or reserved range.
+	 *
+	 * @param string $host The host.
+	 *
+	 * @return boolean True for such an address; false for a public one or a name.
+	 */
+	private function isNonPublicIp(string $host): bool {
+		if (filter_var(value: $host, filter: FILTER_VALIDATE_IP) === false) {
+			return false;
+		}
+
+		$isPublicIp = filter_var(
+			value: $host,
+			filter: FILTER_VALIDATE_IP,
+			options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
+		);
+
+		return $isPublicIp === false;
+	}//end isNonPublicIp()
 }//end class

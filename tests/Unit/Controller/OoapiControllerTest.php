@@ -31,6 +31,8 @@ use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Controller\OoapiController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\OoapiService;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IL10N;
@@ -72,7 +74,7 @@ class OoapiControllerTest extends TestCase {
 			$this->userSession,
 			$l10n,
 			$this->createMock(LoggerInterface::class),
-			$this->container,
+			new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)),
 			null
 		);
 	}
@@ -142,11 +144,13 @@ class OoapiControllerTest extends TestCase {
 			static function (string $id) {
 				if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 					return new class {
-						public function resolveRegisterId(string $a, string $k): string {
-							throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException('unconfigured: ' . $k);
-						}
+						public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+							if (str_ends_with($lookup->configKey, '_register') === true) {
+								$a = $lookup->appId;
+								$k = $lookup->configKey;
+								throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException($a, $k);
+							}
 
-						public function resolveSchemaId(string $a, string $k): string {
 							return '0';
 						}
 					};
@@ -159,6 +163,10 @@ class OoapiControllerTest extends TestCase {
 		$response = $this->controller->courses('hva-onderwijs');
 
 		$this->assertSame(503, $response->getStatus());
+		$this->assertSame(
+			['error' => 'register_not_configured', 'detail' => 'Resolver config key "ooapi_courses_register" is not set for app "opencatalogi" and no default was provided.'],
+			$response->getData()
+		);
 	}
 
 	public function testCoursesSuccessReturnsPaginatedEnvelope(): void {
@@ -260,11 +268,11 @@ class OoapiControllerTest extends TestCase {
 						) {
 						}
 
-						public function resolveRegisterId(string $a, string $k): string {
-							return $this->register;
-						}
+						public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+							if (str_ends_with($lookup->configKey, '_register') === true) {
+								return $this->register;
+							}
 
-						public function resolveSchemaId(string $a, string $k): string {
 							return $this->schema;
 						}
 					};
@@ -509,12 +517,14 @@ class OoapiControllerTest extends TestCase {
 				) {
 				}
 
-				public function resolveRegisterId(string $a, string $k): string {
-					$this->keys[] = $k;
-					return '3';
-				}
+				public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+					if (str_ends_with($lookup->configKey, '_register') === true) {
+						$k = $lookup->configKey;
+						$this->keys[] = $k;
+						return '3';
+					}
 
-				public function resolveSchemaId(string $a, string $k): string {
+					$k = $lookup->configKey;
 					$this->keys[] = $k;
 					return '5';
 				}
@@ -522,7 +532,7 @@ class OoapiControllerTest extends TestCase {
 		);
 
 		$this->assertSame(200, $this->controller->$method(...$args)->getStatus());
-		$this->assertSame([$context.'_register', $context.'_schema'], $keys->getArrayCopy());
+		$this->assertSame([$context . '_register', $context . '_schema'], $keys->getArrayCopy());
 	}
 
 	/**
@@ -620,9 +630,9 @@ class OoapiControllerTest extends TestCase {
 	/**
 	 * Matches an OoapiScope on the given register/schema pair and, when given, catalog.
 	 *
-	 * @param string                    $register The register id.
-	 * @param string                    $schema   The schema id.
-	 * @param array<string, mixed>|null $catalog  The catalog, or null for any.
+	 * @param string $register The register id.
+	 * @param string $schema The schema id.
+	 * @param array<string, mixed>|null $catalog The catalog, or null for any.
 	 *
 	 * @return \PHPUnit\Framework\Constraint\Callback<OoapiScope> The constraint.
 	 */
@@ -638,7 +648,7 @@ class OoapiControllerTest extends TestCase {
 	 * Matches an OoapiPage with the given number and size and no filter.
 	 *
 	 * @param int $number The page number.
-	 * @param int $size   The page size.
+	 * @param int $size The page size.
 	 *
 	 * @return \PHPUnit\Framework\Constraint\Callback<OoapiPage> The constraint.
 	 */

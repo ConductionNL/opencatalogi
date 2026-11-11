@@ -58,7 +58,7 @@ class RedactorFakeFileService {
 	/** @var array<int, array<int, array<string, string>>> */
 	public array $calls = [];
 
-	public function anonymizeDocument(Node $node, array $entities, string $scope='document', ?string $fileKey=null, ?bool $preserveStructure=null): Node {
+	public function anonymizeDocument(Node $node, array $entities, string $scope = 'document', ?string $fileKey = null, ?bool $preserveStructure = null): Node {
 		$this->calls[] = $entities;
 		if ($this->throw !== null) {
 			throw $this->throw;
@@ -144,7 +144,7 @@ class DocumentRedactorTest extends TestCase {
 
 		$this->l10n = $this->createMock(IL10N::class);
 		$this->l10n->method('t')->willReturnCallback(
-			static fn (string $text, mixed $parameters=[]): string => vsprintf($text, (array)$parameters)
+			static fn (string $text, mixed $parameters = []): string => vsprintf($text, (array)$parameters)
 		);
 
 	}//end setUp()
@@ -152,7 +152,7 @@ class DocumentRedactorTest extends TestCase {
 	/**
 	 * A file double with an id and content, hashed like Nextcloud does.
 	 *
-	 * @param int    $id      The file id.
+	 * @param int $id The file id.
 	 * @param string $content The bytes.
 	 *
 	 * @return File
@@ -188,7 +188,7 @@ class DocumentRedactorTest extends TestCase {
 	 * Assert a result leaves nothing to publish.
 	 *
 	 * @param array<string, string> $result The redaction result.
-	 * @param string                $reason A fragment of the officer's reason.
+	 * @param string $reason A fragment of the officer's reason.
 	 *
 	 * @return void
 	 */
@@ -280,4 +280,58 @@ class DocumentRedactorTest extends TestCase {
 		$file->method('hash')->willThrowException(new \RuntimeException('storage gone'));
 		$this->assertFailedClosed($this->redactor()->verify($this->original, $file, []), 'cannot be verified');
 	}//end testAnUnhashableRedactedFileFailsClosed()
+	/**
+	 * A redacted file whose hash reads as empty cannot be verified.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyHashFailsClosed(): void {
+		$file = $this->createMock(File::class);
+		$file->method('getId')->willReturn(15);
+		$file->method('hash')->willReturn('');
+		$this->assertFailedClosed($this->redactor()->verify($this->original, $file, []), 'cannot be verified');
+	}//end testAnEmptyHashFailsClosed()
+
+	/**
+	 * Each OpenRegister failure is logged with the file and the exception
+	 * class only, never the message, which may quote the text to redact.
+	 *
+	 * @return void
+	 */
+	public function testFailuresAreLoggedWithoutTheirMessage(): void {
+		$logged = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(
+			static function (string $message) use (&$logged): void {
+				$logged[] = $message;
+			}
+		);
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isInstalled')->willReturn(true);
+		$redactor = new DocumentRedactor($this->writer, $this->container, $this->l10n, $logger, $apps);
+
+		$this->files->throw = new \RuntimeException('Jan Jansen could not be removed');
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->files->throw = null;
+		$broken = new class extends RedactorFakeEntityRelationMapper {
+			public function findEntitiesForAnonymization(int $fileId): array {
+				throw new \LogicException('Jan Jansen');
+			}
+		};
+		$this->relations = $broken;
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->containerBroken = true;
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->assertSame(
+			[
+				'[DocumentRedactor] redaction failed for file 11: RuntimeException',
+				'[DocumentRedactor] findings unreadable for file 11: LogicException',
+				'[DocumentRedactor] OpenRegister redaction unavailable: RuntimeException',
+			],
+			$logged
+		);
+	}//end testFailuresAreLoggedWithoutTheirMessage()
 }//end class

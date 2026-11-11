@@ -44,9 +44,9 @@ class WooReadinessCheck extends TimedJob {
 	/**
 	 * Constructor.
 	 *
-	 * @param ITimeFactory        $time      The time factory.
+	 * @param ITimeFactory $time The time factory.
 	 * @param HarvesterReadinessServiceInterface $readiness The readiness check.
-	 * @param LoggerInterface     $logger    Logger.
+	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,

@@ -37,6 +37,7 @@ use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiPage;
 use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,7 +49,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -71,11 +71,11 @@ class OoapiController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param OoapiServiceInterface $ooapiService The OOAPI 5.0 orchestration service.
 	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug →
-	 *                                         catalog).
+	 *                                                  catalog).
 	 * @param IUserSession $userSession Nextcloud user session (OOAPI-008 auth gate).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param ContainerInterface $container Server container (ResolvesRegisterConfiguration).
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -88,7 +88,7 @@ class OoapiController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -254,8 +254,8 @@ class OoapiController extends Controller {
 	 * answers 500.
 	 *
 	 * @param array{catalogSlug: string, context: string} $lookup The catalog slug and the `<context>` of the
-	 *                                                           `<context>_register`/`<context>_schema` config keys.
-	 * @param callable                                    $render Builds the answer from the OoapiScope of the catalog and its pair.
+	 *                                                            `<context>_register`/`<context>_schema` config keys.
+	 * @param callable $render Builds the answer from the OoapiScope of the catalog and its pair.
 	 *
 	 * @return JSONResponse The answer, or the refusal.
 	 *
@@ -269,36 +269,63 @@ class OoapiController extends Controller {
 
 		return $this->guard(
 			action: function () use ($lookup, $render): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $lookup['catalogSlug']);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
+				$scope = $this->catalogContextScope(lookup: $lookup);
+				if ($scope instanceof JSONResponse) {
+					return $scope;
 				}
 
-				$context = $this->resolveContext(
-					registerKey: $lookup['context'].'_register',
-					schemaKey: $lookup['context'].'_schema'
-				);
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				return $render(
-					new OoapiScope(
-						catalog: $resolved['catalog'],
-						register: $context['pair']['register'],
-						schema: $context['pair']['schema']
-					)
-				);
+				return $render($scope);
 			}
 		);
 
 	}//end inCatalogContext()
 
 	/**
+	 * The scope of an enabled catalog and its configured context, or the refusal
+	 * of an unknown or disabled catalog or an unconfigured context, in that order.
+	 *
+	 * @param array{catalogSlug: string, context: string} $lookup The catalog slug and the context.
+	 *
+	 * @return OoapiScope|JSONResponse The scope, or the refusal.
+	 */
+	private function catalogContextScope(array $lookup): OoapiScope|JSONResponse {
+		$resolved = $this->resolveEnabledCatalog(catalogSlug: $lookup['catalogSlug']);
+		if ($resolved['error'] !== null) {
+			return $resolved['error'];
+		}
+
+		$context = $this->resolveContext(
+			registerKey: $lookup['context'] . '_register',
+			schemaKey: $lookup['context'] . '_schema'
+		);
+		if ($context['error'] !== null) {
+			return $context['error'];
+		}
+
+		return $this->scopeOf(catalog: $resolved['catalog'], pair: $context['pair']);
+	}//end catalogContextScope()
+
+	/**
+	 * A catalog with its register/schema pair as an OOAPI scope.
+	 *
+	 * @param array<string, mixed> $catalog The catalog.
+	 * @param array{register: mixed, schema: mixed} $pair The register and schema.
+	 *
+	 * @return OoapiScope
+	 */
+	private function scopeOf(array $catalog, array $pair): OoapiScope {
+		return new OoapiScope(
+			catalog: $catalog,
+			register: $pair['register'],
+			schema: $pair['schema']
+		);
+	}//end scopeOf()
+
+	/**
 	 * A single resource, or a 404 with the given message when there is none.
 	 *
 	 * @param array<string, mixed>|null $resource The resource.
-	 * @param string                    $notFound The translated not-found message.
+	 * @param string $notFound The translated not-found message.
 	 *
 	 * @return JSONResponse The resource, or the 404.
 	 *
@@ -310,15 +337,14 @@ class OoapiController extends Controller {
 		}
 
 		return $this->json(data: $resource, status: Http::STATUS_OK);
-
 	}//end resourceOrNotFound()
 
 	/**
 	 * Fetch one materialized resource by its OOAPI id field.
 	 *
-	 * @param array{catalogSlug: string, context: string, id: string, idField: string} $lookup   The catalog slug, config context,
-	 *                                                                                           id and the field that holds it.
-	 * @param string                                                                   $notFound The translated not-found message.
+	 * @param array{catalogSlug: string, context: string, id: string, idField: string} $lookup The catalog slug, config context,
+	 *                                                                                         id and the field that holds it.
+	 * @param string $notFound The translated not-found message.
 	 *
 	 * @return JSONResponse The resource, or a 404 or refusal.
 	 *
@@ -552,34 +578,39 @@ class OoapiController extends Controller {
 	public function validate(string $catalogSlug): JSONResponse {
 		return $this->guard(
 			action: function () use ($catalogSlug): JSONResponse {
-				$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-				if ($catalog === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Catalog not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$violations = $this->ooapiService->validateCatalog(
-					scope: new OoapiScope(
-						catalog: $catalog,
-						register: $context['pair']['register'],
-						schema: $context['pair']['schema']
-					)
-				);
-
-				return $this->json(
-					data: [
-						'catalogSlug' => $catalogSlug,
-						'valid' => empty($violations),
-						'violations' => $violations,
-					],
-					status: Http::STATUS_OK
-				);
+				return $this->validation(catalogSlug: $catalogSlug);
 			}
 		);
 
 	}//end validate()
+
+	/**
+	 * Validate one catalog's courses, or refuse an unknown catalog or an unconfigured context.
+	 *
+	 * @param string $catalogSlug The catalog slug.
+	 *
+	 * @return JSONResponse The violations, or the refusal.
+	 */
+	private function validation(string $catalogSlug): JSONResponse {
+		$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+		if ($catalog === null) {
+			return $this->json(data: ['error' => $this->l10n->t('Catalog not found')], status: Http::STATUS_NOT_FOUND);
+		}
+
+		$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
+		if ($context['error'] !== null) {
+			return $context['error'];
+		}
+
+		$violations = $this->ooapiService->validateCatalog(scope: $this->scopeOf(catalog: $catalog, pair: $context['pair']));
+
+		return $this->json(
+			data: [
+				'catalogSlug' => $catalogSlug,
+				'valid' => empty($violations),
+				'violations' => $violations,
+			],
+			status: Http::STATUS_OK
+		);
+	}//end validation()
 }//end class

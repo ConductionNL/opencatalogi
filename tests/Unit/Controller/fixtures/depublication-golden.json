@@ -69,7 +69,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false,
+                    true
                 ]
             },
             {
@@ -146,7 +148,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false,
+                    true
                 ]
             },
             {
@@ -220,7 +224,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false,
+                    true
                 ]
             },
             {
@@ -294,7 +300,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false,
+                    true
                 ]
             },
             {
@@ -419,7 +427,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false,
+                    true
                 ]
             }
         ]
@@ -428,7 +438,7 @@
         "status": 503,
         "data": {
             "error": "register_not_configured",
-            "detail": "Too few arguments to function OCA\\OpenRegister\\Service\\Resolver\\Exception\\MissingConfigException::__construct(), 1 passed in lib/Controller/ResolvesRegisterConfiguration.php on line 124 and at least 2 expected"
+            "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
         },
         "log": [
             {
@@ -518,7 +528,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false,
+                    true
                 ]
             },
             {
@@ -569,7 +581,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             },
             {
@@ -609,7 +622,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    "d-1"
+                    "d-1",
+                    false,
+                    false
                 ]
             },
             {
@@ -664,7 +679,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             },
             {
@@ -704,7 +720,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    "d-1"
+                    "d-1",
+                    false,
+                    false
                 ]
             },
             {
@@ -765,7 +783,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -796,7 +815,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -827,7 +847,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -857,7 +878,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -887,7 +909,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -997,7 +1020,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    null
+                    null,
+                    false,
+                    true
                 ]
             },
             {
@@ -1048,7 +1073,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             },
             {
@@ -1088,7 +1114,9 @@
                     [],
                     "publication_register-id",
                     "depublication_schema-id",
-                    "d-1"
+                    "d-1",
+                    false,
+                    false
                 ]
             },
             {
@@ -1133,7 +1161,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]
@@ -1164,7 +1193,8 @@
                 "find": [
                     "d-1",
                     "publication_register-id",
-                    "depublication_schema-id"
+                    "depublication_schema-id",
+                    false
                 ]
             }
         ]

@@ -46,20 +46,36 @@ final class SearchRangeGuard {
 	 */
 	public static function malformedParameter(array $queryParams): ?string {
 		foreach ($queryParams as $name => $value) {
-			if (is_array($value) === false || str_starts_with((string) $name, '_') === true) {
+			if (is_array($value) === false || str_starts_with((string)$name, '_') === true) {
 				continue;
 			}
 
-			foreach (['gte', 'lte', 'gt', 'lt'] as $operator) {
-				if (array_key_exists($operator, $value) === true && self::isRangeBound(value: $value[$operator]) === false) {
-					return $name.'['.$operator.']';
-				}
+			$operator = self::malformedOperator(bounds: $value);
+			if ($operator !== null) {
+				return $name . '[' . $operator . ']';
 			}
 		}
 
 		return null;
-
 	}//end malformedParameter()
+
+	/**
+	 * The first range operator of a parameter whose bound OpenRegister cannot
+	 * compare on.
+	 *
+	 * @param array<string, mixed> $bounds The parameter's operators and bounds.
+	 *
+	 * @return string|null The operator, or null when every bound is fine.
+	 */
+	private static function malformedOperator(array $bounds): ?string {
+		foreach (['gte', 'lte', 'gt', 'lt'] as $operator) {
+			if (array_key_exists($operator, $bounds) === true && self::isRangeBound(value: $bounds[$operator]) === false) {
+				return $operator;
+			}
+		}
+
+		return null;
+	}//end malformedOperator()
 
 	/**
 	 * Whether a range bound is an ISO date, an ISO date-time or a number.
@@ -88,7 +104,6 @@ final class SearchRangeGuard {
 			return false;
 		}
 
-		return checkdate((int) $parts[2], (int) $parts[3], (int) $parts[1]);
-
+		return checkdate((int)$parts[2], (int)$parts[3], (int)$parts[1]);
 	}//end isRangeBound()
 }//end class

@@ -34,8 +34,8 @@ class PortalInput {
 	/**
 	 * A trimmed string within a length, or a refusal.
 	 *
-	 * @param mixed  $value The value.
-	 * @param int    $max   The most characters.
+	 * @param mixed $value The value.
+	 * @param int $max The most characters.
 	 * @param string $field The field, for the message.
 	 *
 	 * @return string
@@ -49,16 +49,15 @@ class PortalInput {
 		}
 
 		if (is_string($value) === false) {
-			throw new PortalInputException(message: $field.' must be text');
+			throw new PortalInputException(message: $field . ' must be text');
 		}
 
 		$value = trim($value);
 		if (mb_strlen($value) > $max) {
-			throw new PortalInputException(message: $field.' is too long');
+			throw new PortalInputException(message: $field . ' is too long');
 		}
 
 		return $value;
-
 	}//end text()
 
 	/**
@@ -76,19 +75,30 @@ class PortalInput {
 			return null;
 		}
 
-		if (is_int($value) === true) {
-			$value = (string)$value;
-		}
-
-		if (is_string($value) === false) {
-			$value = '';
-		}
-
+		$value = $this->asText(value: $value);
 		if (preg_match('/^\d{1,20}$/', $value) !== 1) {
 			throw new PortalInputException(message: 'attachment must be a file id');
 		}
 
 		return $value;
-
 	}//end attachment()
+
+	/**
+	 * An int as text, text as itself, anything else as empty text.
+	 *
+	 * @param mixed $value The value.
+	 *
+	 * @return string
+	 */
+	private function asText(mixed $value): string {
+		if (is_int($value) === true) {
+			return (string)$value;
+		}
+
+		if (is_string($value) === false) {
+			return '';
+		}
+
+		return $value;
+	}//end asText()
 }//end class

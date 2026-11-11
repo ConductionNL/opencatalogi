@@ -39,9 +39,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
-use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -56,7 +53,6 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * The public and community surface.
@@ -77,27 +73,17 @@ class CommunityController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param StatusPageServiceInterface $statusService The status page.
-	 * @param AtomFeedServiceInterface $feedService The catalogue feed.
-	 * @param MarkupRenderServiceInterface $markupService The markup renderer.
-	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+	 * @param CommunityPages $registers The status page, the feed and the markup renderer, and the configured register pairs and ObjectService they use.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly StatusPageServiceInterface $statusService,
-		private readonly AtomFeedServiceInterface $feedService,
-		private readonly MarkupRenderServiceInterface $markupService,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly CommunityPages $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -115,7 +101,6 @@ class CommunityController extends Controller {
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
-
 	}//end withCors()
 
 	/**
@@ -131,7 +116,6 @@ class CommunityController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->readWritePreflight();
-
 	}//end preflightedCors()
 
 	/**
@@ -175,7 +159,7 @@ class CommunityController extends Controller {
 
 		return $this->withCors(
 			response: new JSONResponse(
-				$this->statusService->render(components: $components, stalenessHours: $stalenessHours)
+				$this->registers->renderStatus(components: $components, stalenessHours: $stalenessHours)
 			)
 		);
 
@@ -183,6 +167,11 @@ class CommunityController extends Controller {
 
 	/**
 	 * Set a component's state.
+	 *
+	 * The schema's writes name group admin, which leaves out the delegated
+	 * administrators the admin-setting check lets in. That check is the gate,
+	 * so the save skips RBAC. The system owns the record, so whoever set the state
+	 * cannot rewrite or delete it.
 	 *
 	 * @return JSONResponse The saved status.
 	 *
@@ -197,11 +186,13 @@ class CommunityController extends Controller {
 		}
 
 		try {
-			$status = $this->statusService->setState(
-				component: trim((string)$this->request->getParam('component', '')),
-				state: trim((string)$this->request->getParam('state', '')),
-				message: (string)$this->request->getParam('message', ''),
-				setBy: $setBy
+			$status = $this->registers->setState(
+				change: [
+					'component' => trim((string)$this->request->getParam('component', '')),
+					'state' => trim((string)$this->request->getParam('state', '')),
+					'message' => (string)$this->request->getParam('message', ''),
+					'setBy' => $setBy,
+				]
 			);
 		} catch (\DomainException $e) {
 			return new JSONResponse(
@@ -212,11 +203,13 @@ class CommunityController extends Controller {
 
 		try {
 			$config = $this->configurationFor(schemaKey: 'service_status_schema');
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $status,
 				extend: [],
 				register: $config['register'],
-				schema: $config['schema']
+				schema: $config['schema'],
+				_rbac: false,
+				_unowned: true
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'status-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
@@ -225,7 +218,6 @@ class CommunityController extends Controller {
 		}
 
 		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end setStatus()
 
 	/**
@@ -264,18 +256,20 @@ class CommunityController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		$entries = $this->feedService->entries(records: $records, notices: $notices, rules: $rules);
-		$atom = $this->feedService->toAtom(
-			catalogTitle: $catalogSlug,
-			selfUrl: $this->request->getRequestUri(),
-			entries: $entries
+		$atom = $this->registers->atom(
+			feed: [
+				'records' => $records,
+				'notices' => $notices,
+				'rules' => $rules,
+				'catalogTitle' => $catalogSlug,
+				'selfUrl' => $this->request->getRequestUri(),
+			]
 		);
 
 		$response = new DataDisplayResponse($atom, Http::STATUS_OK, ['Content-Type' => 'application/atom+xml; charset=UTF-8']);
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
 
 		return $response;
-
 	}//end feed()
 
 	/**
@@ -307,7 +301,6 @@ class CommunityController extends Controller {
 			);
 		}
 
-		return $this->withCors(response: new JSONResponse($this->markupService->render(markup: $markup)));
-
+		return $this->withCors(response: new JSONResponse($this->registers->renderMarkup(markup: $markup)));
 	}//end renderMarkup()
 }//end class

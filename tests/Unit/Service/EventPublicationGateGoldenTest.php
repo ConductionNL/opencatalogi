@@ -32,7 +32,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenRegister\Db\FileMapper;
+use OCA\OpenRegister\Files\Db\FileMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -188,7 +188,7 @@ class EventPublicationGateGoldenTest extends TestCase {
 	/**
 	 * Record one collaborator call by parameter name, without arguments left at their default.
 	 *
-	 * @param string            $call The class and method, as `Class::method`.
+	 * @param string $call The class and method, as `Class::method`.
 	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return void
@@ -250,7 +250,9 @@ class EventPublicationGateGoldenTest extends TestCase {
 						/**
 						 * @param array<string, mixed> $data The catalog data.
 						 */
-						public function __construct(private array $data) {
+						public function __construct(
+							private array $data,
+						) {
 						}
 
 						/**
@@ -310,7 +312,7 @@ class EventPublicationGateGoldenTest extends TestCase {
 		$container->method('get')->willReturnCallback(
 			static fn (string $id) => match ($id) {
 				'OCA\OpenRegister\Service\FileService' => $fileService,
-				'OCA\OpenRegister\Db\FileMapper' => $fileMapper,
+				'OCA\OpenRegister\Files\Db\FileMapper' => $fileMapper,
 				default => $objectService,
 			}
 		);
@@ -326,6 +328,5 @@ class EventPublicationGateGoldenTest extends TestCase {
 		);
 
 		return new EventService($container, $appManager, $settings, $logger);
-
 	}//end service()
 }//end class

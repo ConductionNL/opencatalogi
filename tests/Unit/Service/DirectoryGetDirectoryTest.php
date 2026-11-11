@@ -47,7 +47,7 @@ class DirectoryGetDirectoryTest extends TestCase {
 		$urlGenerator->method('getAbsoluteURL')->willReturnCallback(
 			static fn (string $route): string => match ($route) {
 				'opencatalogi.directory.index' => self::OWN,
-				default => 'https://me.example.org/'.$route,
+				default => 'https://me.example.org/' . $route,
 			}
 		);
 		$urlGenerator->method('getBaseUrl')->willReturn('https://me.example.org/');
@@ -81,7 +81,7 @@ class DirectoryGetDirectoryTest extends TestCase {
 
 		$schemaMapper = new class {
 			public function findMultiple(array $ids): array {
-				return array_map(static fn ($id): array => ['id' => $id, 'title' => 'Schema '.$id], $ids);
+				return array_map(static fn ($id): array => ['id' => $id, 'title' => 'Schema ' . $id], $ids);
 			}
 		};
 

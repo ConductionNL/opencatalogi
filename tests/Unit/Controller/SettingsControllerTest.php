@@ -156,6 +156,24 @@ class SettingsControllerTest extends TestCase {
 	}
 
 	/**
+	 * A rejected value is the caller's error: 400 with the reason, not 500.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+	 */
+	public function testUpdateReturns400WhenAValueIsRejected(): void {
+		$this->request->method('getParams')
+			->willReturn(['ooapi_consumers' => ['alice']]);
+
+		$this->settingsService->method('updateSettings')
+			->willThrowException(new \InvalidArgumentException('Setting ooapi_consumers takes a single value, not a list or an object'));
+
+		$response = $this->controller->update();
+
+		$this->assertSame(400, $response->getStatus());
+		$this->assertSame(['error' => 'Setting ooapi_consumers takes a single value, not a list or an object'], $response->getData());
+	}
+
+	/**
 	 * `create()` (the legacy POST alias) delegates to `update()` and is
 	 * behaviourally identical — same service call, same payload out.
 	 *

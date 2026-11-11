@@ -74,7 +74,7 @@ class CatalogScopeResolveGoldenTest extends TestCase {
 	 * Replay a case and compare it to the recording.
 	 *
 	 * @param array<int, mixed> $registers The registers.
-	 * @param array<int, mixed> $schemas   The schemas.
+	 * @param array<int, mixed> $schemas The schemas.
 	 *
 	 * @return void
 	 */
@@ -102,7 +102,7 @@ class CatalogScopeResolveGoldenTest extends TestCase {
 	 * Resolve a scope against a small register/schema world.
 	 *
 	 * @param array<int, mixed> $registers The registers.
-	 * @param array<int, mixed> $schemas   The schemas.
+	 * @param array<int, mixed> $schemas The schemas.
 	 *
 	 * @return array<string, mixed> The resolved scope.
 	 */

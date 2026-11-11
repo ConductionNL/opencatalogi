@@ -2400,8 +2400,8 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 	 * @return void
 	 */
 	public function testSettingsServiceUsesNoPrivateOcAppApi(): void {
-		$source = (string) file_get_contents(__DIR__ . '/../../../lib/Service/SettingsService.php');
-		$code   = (string) preg_replace('#/\*.*?\*/|//[^\n]*#s', '', $source);
+		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Service/SettingsService.php');
+		$code = (string)preg_replace('#/\*.*?\*/|//[^\n]*#s', '', $source);
 		$this->assertStringNotContainsString('OC_App', $code);
 
 	}//end testSettingsServiceUsesNoPrivateOcAppApi()

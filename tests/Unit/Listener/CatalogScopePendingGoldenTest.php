@@ -175,6 +175,5 @@ class CatalogScopePendingGoldenTest extends TestCase {
 		$old->setSlug('old-slug');
 
 		return new RegisterUpdatedEvent(newRegister: $register, oldRegister: $old);
-
 	}//end event()
 }//end class

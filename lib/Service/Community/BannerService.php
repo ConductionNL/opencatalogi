@@ -93,7 +93,6 @@ class BannerService implements BannerServiceInterface {
 		$banner['dismissable'] = (bool)($banner['dismissable'] ?? true);
 
 		return $banner;
-
 	}//end validate()
 
 	/**
@@ -123,7 +122,6 @@ class BannerService implements BannerServiceInterface {
 		}
 
 		return ($moment >= $start && $moment <= $end);
-
 	}//end isCurrent()
 
 	/**
@@ -164,6 +162,5 @@ class BannerService implements BannerServiceInterface {
 		}
 
 		return $shown;
-
 	}//end forUser()
 }//end class

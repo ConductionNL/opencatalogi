@@ -88,6 +88,19 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
+import { injectedObjectContext, schemaSlug } from './objectContext.js'
+
+/**
+ * Whether a failed request still answered with an announce body.
+ *
+ * @param {object} error The request error.
+ * @return {boolean} True when the response carries notices.
+ */
+function answeredWithNotices(error) {
+	return Boolean(
+		error.response && error.response.data && error.response.data.notices,
+	)
+}
 
 /**
  * The Announce action on the publication page (REQ-WND-004).
@@ -126,12 +139,7 @@ export default {
 	computed: {
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
 		ctx() {
-			const inj =
-				this.cnObjectContext
-				&& (this.cnObjectContext.value || this.cnObjectContext)
-			const holder =
-				this.cnDetailObjectContext && this.cnDetailObjectContext.value
-			return inj || holder || {}
+			return injectedObjectContext(this)
 		},
 
 		/** @spec exclude presentational widget adapter; derives the object id. */
@@ -156,9 +164,7 @@ export default {
 				|| this.ctx.schema
 				|| this.content.schema
 				|| 'publication'
-			return typeof s === 'string'
-				? s
-				: (s && (s.slug || s.name || s.id)) || ''
+			return schemaSlug(s)
 		},
 
 		/** @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004 */
@@ -220,46 +226,10 @@ export default {
 			this.results = []
 
 			try {
-				const { data: publication } = await axios.get(
-					generateUrl(
-						'/apps/openregister/api/objects/{register}/{schema}/{id}',
-						{
-							register: this.resolvedRegister,
-							schema: this.resolvedSchema,
-							id: this.resolvedObjectId,
-						},
-					),
+				const publication = await this.fetchPublication()
+				const body = await this.postAnnouncement(
+					this.announcementDecision(publication),
 				)
-
-				const type = this.publicationType ? this.publicationType.value : ''
-				const decision = {
-					...publication,
-					id: this.resolvedObjectId,
-					url: window.location.href,
-					publicationType: type,
-					effectiveDate: this.effectiveDate,
-				}
-
-				let body
-				try {
-					const response = await axios.post(
-						generateUrl('/apps/opencatalogi/api/publications/announce'),
-						{ decision },
-					)
-					body = response.data
-				} catch (error) {
-					// A channel that could not be reached answers 502 with the same body.
-					if (
-						error.response
-						&& error.response.data
-						&& error.response.data.notices
-					) {
-						body = error.response.data
-					} else {
-						throw error
-					}
-				}
-
 				this.results = this.toResults(body)
 			} catch {
 				this.error = this.t(
@@ -268,6 +238,68 @@ export default {
 				)
 			} finally {
 				this.announcing = false
+			}
+		},
+
+		/**
+		 * Read the publication as OpenRegister stores it.
+		 *
+		 * @return {Promise<object>} The publication.
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
+		 */
+		async fetchPublication() {
+			const { data } = await axios.get(
+				generateUrl(
+					'/apps/openregister/api/objects/{register}/{schema}/{id}',
+					{
+						register: this.resolvedRegister,
+						schema: this.resolvedSchema,
+						id: this.resolvedObjectId,
+					},
+				),
+			)
+			return data
+		},
+
+		/**
+		 * The decision to announce: the publication with its page, the chosen
+		 * publication type and the effective date.
+		 *
+		 * @param {object} publication The stored publication.
+		 * @return {object} The decision.
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
+		 */
+		announcementDecision(publication) {
+			const type = this.publicationType ? this.publicationType.value : ''
+			return {
+				...publication,
+				id: this.resolvedObjectId,
+				url: window.location.href,
+				publicationType: type,
+				effectiveDate: this.effectiveDate,
+			}
+		},
+
+		/**
+		 * Post the decision to the announce endpoint. A channel that could not be
+		 * reached answers 502 with the same body, which is an answer too.
+		 *
+		 * @param {object} decision The decision.
+		 * @return {Promise<object>} The announce response.
+		 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-announce-endpoint-has-a-screen-req-wnd-004
+		 */
+		async postAnnouncement(decision) {
+			try {
+				const response = await axios.post(
+					generateUrl('/apps/opencatalogi/api/publications/announce'),
+					{ decision },
+				)
+				return response.data
+			} catch (error) {
+				if (answeredWithNotices(error)) {
+					return error.response.data
+				}
+				throw error
 			}
 		},
 

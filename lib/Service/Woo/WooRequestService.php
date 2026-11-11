@@ -171,7 +171,6 @@ class WooRequestService implements InformationRequestServiceInterface {
 		// enough to read out over the phone and not a counter, because a counter
 		// tells a requester how many other people asked.
 		return 'WOO-' . $now->format('Y') . '-' . strtoupper(bin2hex(random_bytes(3)));
-
 	}//end mintReference()
 
 	/**
@@ -199,7 +198,6 @@ class WooRequestService implements InformationRequestServiceInterface {
 		$request['termBasis'] = (string)($term['basis'] ?? StatutoryTerm::BASIS_TERM);
 
 		return $request;
-
 	}//end withTerm()
 
 	/**
@@ -263,7 +261,6 @@ class WooRequestService implements InformationRequestServiceInterface {
 		}
 
 		return $request;
-
 	}//end attachBatch()
 
 	/**
@@ -283,43 +280,78 @@ class WooRequestService implements InformationRequestServiceInterface {
 	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-terms-met-and-missed-are-reported-req-wri-006
 	 */
 	public function termsReport(array $requests, ?DateTimeInterface $now = null): array {
-		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		if ($now !== null) {
-			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
-		}
+		$moment = $this->reportMoment(now: $now);
 
 		$counts = ['met' => 0, 'missed' => 0, 'running' => 0, 'suspended' => 0, 'unknown' => 0];
 		$rows = [];
 		foreach ($requests as $request) {
 			$outcome = $this->outcome(request: $request, now: $moment);
 			$counts[$outcome]++;
-			$rows[] = [
-				'reference' => (string)($request['reference'] ?? ''),
-				'status' => (string)($request['status'] ?? ''),
-				'dueAt' => ($request['dueAt'] ?? null),
-				'decidedAt' => ($request['decidedAt'] ?? null),
-				'extensionCount' => (int)($request['extensionCount'] ?? 0),
-				'outcome' => $outcome,
-			];
-		}
-
-		$decided = ($counts['met'] + $counts['missed']);
-		$metShare = null;
-		if ($decided > 0) {
-			$metShare = round(($counts['met'] / $decided), 4);
+			$rows[] = $this->reportRow(request: $request, outcome: $outcome);
 		}
 
 		return [
 			'total' => count($requests),
 			'counts' => $counts,
-			// Null rather than 100% when nothing is decided yet. A share of
-			// nothing read as perfect compliance is the kind of number somebody
-			// puts in a council answer.
-			'metShare' => $metShare,
+			'metShare' => $this->metShare(counts: $counts),
 			'requests' => $rows,
 		];
 
 	}//end termsReport()
+
+	/**
+	 * The moment the report is made: the given one, or now in UTC.
+	 *
+	 * @param DateTimeInterface|null $now The moment.
+	 *
+	 * @return DateTimeImmutable The moment.
+	 */
+	private function reportMoment(?DateTimeInterface $now): DateTimeImmutable {
+		if ($now === null) {
+			return new DateTimeImmutable('now', new DateTimeZone('UTC'));
+		}
+
+		return new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+	}//end reportMoment()
+
+	/**
+	 * One request as the report lists it.
+	 *
+	 * @param array<string, mixed> $request The request.
+	 * @param string $outcome Its term's outcome.
+	 *
+	 * @return array{reference: string, status: string, dueAt: mixed, decidedAt: mixed, extensionCount: int, outcome: string}
+	 */
+	private function reportRow(array $request, string $outcome): array {
+		return [
+			'reference' => (string)($request['reference'] ?? ''),
+			'status' => (string)($request['status'] ?? ''),
+			'dueAt' => ($request['dueAt'] ?? null),
+			'decidedAt' => ($request['decidedAt'] ?? null),
+			'extensionCount' => (int)($request['extensionCount'] ?? 0),
+			'outcome' => $outcome,
+		];
+	}//end reportRow()
+
+	/**
+	 * The share of decided terms that were met, to four decimals.
+	 *
+	 * Null rather than 100% when nothing is decided yet. A share of nothing
+	 * read as perfect compliance is the kind of number somebody puts in a
+	 * council answer.
+	 *
+	 * @param array<string, int> $counts The outcome counts.
+	 *
+	 * @return float|null The share, or null when nothing is decided.
+	 */
+	private function metShare(array $counts): ?float {
+		$decided = ($counts['met'] + $counts['missed']);
+		if ($decided === 0) {
+			return null;
+		}
+
+		return round(($counts['met'] / $decided), 4);
+	}//end metShare()
 
 	/**
 	 * The outcome of one request's term.
@@ -340,19 +372,44 @@ class WooRequestService implements InformationRequestServiceInterface {
 		}
 
 		if ($decided !== null) {
-			if ($due === null) {
-				// Decided against a term nobody can read is not compliance
-				// evidence, and it is not a breach either. It is a gap, named.
-				return 'unknown';
-			}
-
-			if ($decided <= $due) {
-				return 'met';
-			}
-
-			return 'missed';
+			return $this->decidedOutcome(due: $due, decided: $decided);
 		}
 
+		return $this->undecidedOutcome(due: $due, now: $now);
+	}//end outcome()
+
+	/**
+	 * The outcome of a decided request: met on or before the due date, missed
+	 * after it.
+	 *
+	 * @param DateTimeImmutable|null $due The due date, when readable.
+	 * @param DateTimeImmutable $decided When it was decided.
+	 *
+	 * @return string met, missed or unknown.
+	 */
+	private function decidedOutcome(?DateTimeImmutable $due, DateTimeImmutable $decided): string {
+		if ($due === null) {
+			// Decided against a term nobody can read is not compliance
+			// evidence, and it is not a breach either. It is a gap, named.
+			return 'unknown';
+		}
+
+		if ($decided <= $due) {
+			return 'met';
+		}
+
+		return 'missed';
+	}//end decidedOutcome()
+
+	/**
+	 * The outcome of an undecided request: missed once overdue, else running.
+	 *
+	 * @param DateTimeImmutable|null $due The due date, when readable.
+	 * @param DateTimeImmutable $now The moment.
+	 *
+	 * @return string missed, running or unknown.
+	 */
+	private function undecidedOutcome(?DateTimeImmutable $due, DateTimeImmutable $now): string {
 		if ($due === null) {
 			return 'unknown';
 		}
@@ -362,8 +419,7 @@ class WooRequestService implements InformationRequestServiceInterface {
 		}
 
 		return 'running';
-
-	}//end outcome()
+	}//end undecidedOutcome()
 
 	/**
 	 * Read a stored moment, or null when it is absent or unreadable.

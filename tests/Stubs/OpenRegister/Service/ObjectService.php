@@ -57,6 +57,8 @@ class ObjectService {
 	 * @param Schema|string|integer|null $schema Schema context.
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
+	 * @param boolean $_render Render the object.
+	 * @param boolean $_audit Record the read in the audit trail.
 	 *
 	 * @return ObjectEntity|null
 	 */
@@ -68,6 +70,8 @@ class ObjectService {
 		Schema|string|int|null $schema = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
+		bool $_render = true,
+		bool $_audit = true,
 	): ?ObjectEntity {
 		return null;
 	}//end find()
@@ -110,8 +114,13 @@ class ObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 		bool $silent = false,
+		bool $_validation = true,
 		?array $uploadedFiles = null,
 		mixed $currentUser = null,
+		bool $failIfExists = false,
+		bool $_unowned = false,
+		bool $_dedupOverride = false,
+		?string $_owner = null,
 	): ObjectEntity {
 		return new ObjectEntity();
 	}//end saveObject()
@@ -125,6 +134,8 @@ class ObjectService {
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
 	 * @param boolean $_retentionSweep Retention sweep mode.
+	 * @param \OCP\IUser|null $currentUser The acting user.
+	 * @param boolean $permanent Delete permanently.
 	 *
 	 * @return boolean
 	 */
@@ -135,6 +146,8 @@ class ObjectService {
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 		bool $_retentionSweep = false,
+		?\OCP\IUser $currentUser = null,
+		bool $permanent = false,
 	): bool {
 		return true;
 	}//end deleteObject()
@@ -148,6 +161,7 @@ class ObjectService {
 	 * @param array<mixed>|null $ids IDs to restrict search to.
 	 * @param string|null $uses Filter by uses relation.
 	 * @param array<mixed>|null $views Views to search.
+	 * @param boolean $_viewScopeRequired Require a view scope.
 	 *
 	 * @return array<ObjectEntity>|integer
 	 */
@@ -158,6 +172,7 @@ class ObjectService {
 		?array $ids = null,
 		?string $uses = null,
 		?array $views = null,
+		bool $_viewScopeRequired = false,
 	): array|int {
 		return [];
 	}//end searchObjects()
@@ -165,11 +180,19 @@ class ObjectService {
 	/**
 	 * Build a search query.
 	 *
-	 * @param array<string,mixed> $filters Filter parameters.
+	 * @param array<string,mixed> $requestParams The request parameters.
+	 * @param int|string|array<mixed>|null $register Register filter.
+	 * @param int|string|array<mixed>|null $schema Schema filter.
+	 * @param array<mixed>|null $ids Object id filter.
 	 *
 	 * @return array<string,mixed>
 	 */
-	public function buildSearchQuery(array $filters = []): array {
+	public function buildSearchQuery(
+		array $requestParams,
+		int|string|array|null $register = null,
+		int|string|array|null $schema = null,
+		?array $ids = null,
+	): array {
 		return [];
 	}//end buildSearchQuery()
 
@@ -281,7 +304,8 @@ class ObjectService {
 	 * @return \OCA\OpenRegister\Service\Object\PermissionHandler
 	 */
 	public function getPermissionHandler(): \OCA\OpenRegister\Service\Object\PermissionHandler {
-		return new \OCA\OpenRegister\Service\Object\PermissionHandler();
+		// The real handler takes four service bundles; a stub instance needs none of them.
+		return (new \ReflectionClass(\OCA\OpenRegister\Service\Object\PermissionHandler::class))->newInstanceWithoutConstructor();
 	}//end getPermissionHandler()
 
 }//end class

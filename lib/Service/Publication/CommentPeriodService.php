@@ -148,7 +148,6 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		];
 
 		return $this->withRollExplanation(period: $period, end: $end);
-
 	}//end open()
 
 	/**
@@ -185,7 +184,6 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		}
 
 		return $publicationId;
-
 	}//end validatePublicationTerm()
 
 	/**
@@ -211,7 +209,6 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		}
 
 		return $period;
-
 	}//end withRollExplanation()
 
 	/**
@@ -274,9 +271,33 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
+		[$start, $end] = $this->window(period: $period);
+		if ($moment < $start) {
+			return 'upcoming';
+		}
+
+		if ($moment > $end) {
+			return 'closed';
+		}
+
+		return 'open';
+	}//end state()
+
+	/**
+	 * The period's start and end.
+	 *
+	 * @param array<string, mixed> $period The period.
+	 *
+	 * @return array{0: DateTimeImmutable, 1: DateTimeImmutable} The start and the end.
+	 *
+	 * @throws DomainException When the period's dates cannot be read.
+	 */
+	private function window(array $period): array {
 		try {
-			$start = new DateTimeImmutable((string)($period['startDate'] ?? ''));
-			$end = new DateTimeImmutable((string)($period['endDate'] ?? ''));
+			return [
+				new DateTimeImmutable((string)($period['startDate'] ?? '')),
+				new DateTimeImmutable((string)($period['endDate'] ?? '')),
+			];
 		} catch (\Throwable $e) {
 			// Read as open it invites comment on a closed draft; read as closed
 			// it withholds a right that is owed. Neither default is worth
@@ -287,18 +308,7 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 				previous: $e
 			);
 		}
-
-		if ($moment < $start) {
-			return 'upcoming';
-		}
-
-		if ($moment > $end) {
-			return 'closed';
-		}
-
-		return 'open';
-
-	}//end state()
+	}//end window()
 
 	/**
 	 * What the portal is told about a period: the three states, the remedy, the
@@ -394,18 +404,7 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 			);
 		}
 
-		$host = (string)parse_url($trimmed, PHP_URL_HOST);
-		$scheme = strtolower((string)parse_url($trimmed, PHP_URL_SCHEME));
-		if ($scheme !== 'https' || $host === '') {
-			throw new DomainException(
-				message: 'The announcement has to be an absolute https url.'
-			);
-		}
-
-		$host = strtolower($host);
-		if ($host !== self::ANNOUNCEMENT_HOST
-			&& str_ends_with($host, '.' . self::ANNOUNCEMENT_HOST) === false
-		) {
+		if ($this->isAnnouncementHost(host: $this->httpsHost(url: $trimmed)) === false) {
 			throw new DomainException(
 				message: 'The announcement has to point at ' . self::ANNOUNCEMENT_HOST
 					. ', which is where an official announcement of a Dutch public body appears. A link to an '
@@ -414,6 +413,37 @@ class CommentPeriodService implements CommentPeriodServiceInterface {
 		}
 
 		return $trimmed;
-
 	}//end validateAnnouncement()
+
+	/**
+	 * The lower-cased host of an absolute https url.
+	 *
+	 * @param string $url The trimmed announcement url.
+	 *
+	 * @return string The host.
+	 *
+	 * @throws DomainException When it is not an absolute https url.
+	 */
+	private function httpsHost(string $url): string {
+		$host = (string)parse_url($url, PHP_URL_HOST);
+		$scheme = strtolower((string)parse_url($url, PHP_URL_SCHEME));
+		if ($scheme !== 'https' || $host === '') {
+			throw new DomainException(
+				message: 'The announcement has to be an absolute https url.'
+			);
+		}
+
+		return strtolower($host);
+	}//end httpsHost()
+
+	/**
+	 * Whether a host is the official announcement host or one of its subdomains.
+	 *
+	 * @param string $host The lower-cased host.
+	 *
+	 * @return bool
+	 */
+	private function isAnnouncementHost(string $host): bool {
+		return $host === self::ANNOUNCEMENT_HOST || str_ends_with($host, '.' . self::ANNOUNCEMENT_HOST) === true;
+	}//end isAnnouncementHost()
 }//end class

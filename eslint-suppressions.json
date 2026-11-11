@@ -12,20 +12,6 @@
       "count": 16
     }
   },
-  "src/components/GenericObjectTable.vue": {
-    "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
-    "jsdoc/require-param-type": {
-      "count": 17
-    },
-    "no-console": {
-      "count": 4
-    },
-    "vue/prefer-define-options": {
-      "count": 1
-    }
-  },
   "src/components/MarkdownEditor.vue": {
     "jsdoc/require-param-type": {
       "count": 2
@@ -70,7 +56,7 @@
   },
   "src/composables/UseFileSelection.js": {
     "no-unused-vars": {
-      "count": 3
+      "count": 2
     },
     "no-use-before-define": {
       "count": 13
@@ -107,18 +93,12 @@
     "@nextcloud/l10n-enforce-ellipsis": {
       "count": 1
     },
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
-    },
     "vue/prefer-define-options": {
       "count": 1
     }
   },
   "src/dialogs/category/DeleteMultipleCategoriesDialog.vue": {
     "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
-    "@nextcloud/no-deprecated-library-props": {
       "count": 1
     },
     "vue/prefer-define-options": {
@@ -128,9 +108,6 @@
   "src/dialogs/generic/CopyObjectDialog.vue": {
     "@nextcloud/l10n-enforce-ellipsis": {
       "count": 2
-    },
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
     },
     "vue/prefer-define-options": {
       "count": 1
@@ -201,9 +178,6 @@
   },
   "src/dialogs/theme/DeleteMultipleThemesDialog.vue": {
     "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
-    "@nextcloud/no-deprecated-library-props": {
       "count": 1
     },
     "vue/prefer-define-options": {
@@ -330,11 +304,6 @@
       "count": 1
     }
   },
-  "src/main.js": {
-    "no-unused-vars": {
-      "count": 1
-    }
-  },
   "src/modals/Modals.vue": {
     "vue/multi-word-component-names": {
       "count": 1
@@ -353,7 +322,7 @@
       "count": 2
     },
     "@typescript-eslint/no-this-alias": {
-      "count": 2
+      "count": 1
     },
     "vue/prefer-define-options": {
       "count": 1
@@ -412,7 +381,7 @@
       "count": 1
     },
     "@typescript-eslint/no-unused-vars": {
-      "count": 10
+      "count": 9
     },
     "jsdoc/require-param-type": {
       "count": 15
@@ -421,10 +390,10 @@
       "count": 4
     },
     "no-empty": {
-      "count": 7
+      "count": 6
     },
     "vue/custom-event-name-casing": {
-      "count": 8
+      "count": 6
     },
     "vue/prefer-define-options": {
       "count": 1
@@ -595,9 +564,6 @@
     "no-console": {
       "count": 3
     },
-    "no-useless-assignment": {
-      "count": 1
-    },
     "vue/prefer-define-options": {
       "count": 1
     }
@@ -675,9 +641,6 @@
     "@typescript-eslint/no-unused-vars": {
       "count": 4
     },
-    "eqeqeq": {
-      "count": 1
-    },
     "jsdoc/require-param-type": {
       "count": 55
     },
@@ -685,7 +648,7 @@
       "count": 12
     },
     "no-useless-assignment": {
-      "count": 3
+      "count": 1
     },
     "vue/prefer-define-options": {
       "count": 1
@@ -798,7 +761,7 @@
       "count": 1
     },
     "jsdoc/require-param-type": {
-      "count": 12
+      "count": 9
     },
     "no-console": {
       "count": 1
@@ -821,7 +784,7 @@
   },
   "src/store/modules/object.js": {
     "no-console": {
-      "count": 16
+      "count": 14
     },
     "no-unused-vars": {
       "count": 10
@@ -886,7 +849,7 @@
       "count": 3
     },
     "no-console": {
-      "count": 4
+      "count": 3
     },
     "vue/prefer-define-options": {
       "count": 1

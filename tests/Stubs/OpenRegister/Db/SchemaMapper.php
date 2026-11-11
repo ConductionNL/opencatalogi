@@ -72,9 +72,27 @@ class SchemaMapper {
 	/**
 	 * Find all schemas.
 	 *
+	 * @param integer|null $limit The limit.
+	 * @param integer|null $offset The offset.
+	 * @param array|null $filters The filters.
+	 * @param array|null $searchConditions The search conditions.
+	 * @param array|null $searchParams The search parameters.
+	 * @param array|null $_extend The extensions.
+	 * @param boolean $_rbac Whether to apply RBAC.
+	 * @param boolean $_multitenancy Whether to apply multitenancy.
+	 *
 	 * @return array<Schema>
 	 */
-	public function findAll(): array {
+	public function findAll(
+		int|null $limit = null,
+		int|null $offset = null,
+		array|null $filters = [],
+		array|null $searchConditions = [],
+		array|null $searchParams = [],
+		array|null $_extend = [],
+		bool $_rbac = true,
+		bool $_multitenancy = true,
+	): array {
 		return [];
 	}//end findAll()
 

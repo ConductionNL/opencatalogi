@@ -27,6 +27,7 @@ namespace Unit\Controller;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Controller\RobotsController;
+use OCA\OpenCatalogi\Controller\SitemapDirectives;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\IL10N;
@@ -39,6 +40,7 @@ use PHPUnit\Framework\TestCase;
  * Golden test for RobotsController::index().
  *
  * @covers \OCA\OpenCatalogi\Controller\RobotsController
+ * @covers \OCA\OpenCatalogi\Controller\SitemapDirectives
  * @uses   \OCA\OpenCatalogi\Http\TextResponse
  */
 class RobotsIndexGoldenTest extends TestCase {
@@ -119,7 +121,7 @@ class RobotsIndexGoldenTest extends TestCase {
 		$categories = $this->createMock(InformationCategoryRegistryInterface::class);
 		$categories->method('sitemapFiles')->willReturn($case['categories'] ?? ['c1' => 'a.xml']);
 
-		$controller = new RobotsController('opencatalogi', $this->createMock(IRequest::class), $settings, $lookup, $urls, $l10n, $categories);
+		$controller = new RobotsController('opencatalogi', $this->createMock(IRequest::class), $settings, $urls, $l10n, new SitemapDirectives($lookup, $categories));
 
 		try {
 			$response = $controller->index();
@@ -156,7 +158,9 @@ class RobotsIndexGoldenTest extends TestCase {
 	private static function catalog(mixed $slug, mixed $data): object {
 		if ($data === null) {
 			return new class($slug) {
-				public function __construct(private mixed $slug) {
+				public function __construct(
+					private mixed $slug,
+				) {
 				}
 
 				public function getSlug(): mixed {
@@ -166,7 +170,10 @@ class RobotsIndexGoldenTest extends TestCase {
 		}
 
 		return new class($slug, $data) {
-			public function __construct(private mixed $slug, private mixed $data) {
+			public function __construct(
+				private mixed $slug,
+				private mixed $data,
+			) {
 			}
 
 			public function getSlug(): mixed {
@@ -187,8 +194,8 @@ class RobotsIndexGoldenTest extends TestCase {
 	 * would record that class's signature: the test stub's locally and OpenRegister's
 	 * own in CI. Named and without defaults, the record is what the controller passed.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return array<string, mixed> The passed arguments by name.
 	 */
@@ -207,6 +214,5 @@ class RobotsIndexGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
 }//end class

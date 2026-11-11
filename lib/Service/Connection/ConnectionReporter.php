@@ -155,9 +155,9 @@ class ConnectionReporter implements ConnectionReporterInterface {
 	 * Constructor.
 	 *
 	 * @param IEventDispatcher $eventDispatcher Sends the integriq events (ADR-041).
-	 * @param IAppConfig       $appConfig       Keeps the report memory of throttled connections.
-	 * @param ITimeFactory     $timeFactory     Tells the time for the report memory.
-	 * @param LoggerInterface  $logger          Records what could not be sent.
+	 * @param IAppConfig $appConfig Keeps the report memory of throttled connections.
+	 * @param ITimeFactory $timeFactory Tells the time for the report memory.
+	 * @param LoggerInterface $logger Records what could not be sent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -285,21 +285,33 @@ class ConnectionReporter implements ConnectionReporterInterface {
 				continue;
 			}
 
-			$this->forget(key: $key);
-			$sent = $this->send(
-				key: $key,
-				build: static fn (): object => new $eventClass(
-					app: self::APP_ID,
-					key: $key,
-				)
-			);
-			if ($sent === true) {
+			if ($this->refresh(key: $key, eventClass: $eventClass) === true) {
 				$refreshed[] = $key;
 			}
 		}
 
 		return $refreshed;
 	}//end refreshFromSave()
+
+	/**
+	 * Clear one connection's report memory and ask integriq to resolve it again.
+	 *
+	 * @param string $key The connection key.
+	 * @param string $eventClass The refresh event class.
+	 *
+	 * @return bool True when the refresh was sent.
+	 */
+	private function refresh(string $key, string $eventClass): bool {
+		$this->forget(key: $key);
+
+		return $this->send(
+			key: $key,
+			build: static fn (): object => new $eventClass(
+				app: self::APP_ID,
+				key: $key,
+			)
+		);
+	}//end refresh()
 
 	/**
 	 * The event class to instantiate, or null when integriq does not ship it.
@@ -325,7 +337,7 @@ class ConnectionReporter implements ConnectionReporterInterface {
 	 * Without integriq the class check fails first, so nothing is read,
 	 * stored, sent or logged.
 	 *
-	 * @param string                               $key     One of {@see self::KEYS}.
+	 * @param string $key One of {@see self::KEYS}.
 	 * @param callable(): array{0: string, 1: string} $observe Works out the status and message.
 	 *
 	 * @return bool True when a report was sent.
@@ -339,14 +351,8 @@ class ConnectionReporter implements ConnectionReporterInterface {
 		try {
 			[$status, $message] = $observe();
 
-			$throttled = in_array($key, self::THROTTLED_KEYS, true);
-			$now       = $this->timeFactory->getTime();
-			if ($throttled === true && $this->isDue(key: $key, status: $status, now: $now) === false) {
-				return false;
-			}
-
-			$sent = $this->send(
-				key: $key,
+			return $this->sendStatus(
+				report: new StatusReport(key: $key, status: $status),
 				build: static fn (): object => new $eventClass(
 					app: self::APP_ID,
 					key: $key,
@@ -354,19 +360,50 @@ class ConnectionReporter implements ConnectionReporterInterface {
 					message: $message,
 				)
 			);
-			if ($sent === true && $throttled === true) {
-				$this->appConfig->setValueString(self::APP_ID, self::MEMORY_KEY_PREFIX . $key, $status . '|' . $now);
-			}
-
-			return $sent;
 		} catch (Throwable $e) {
-			$this->logger->warning(
-				'OpenCatalogi: could not report a connection to integriq',
-				['key' => $key, 'exception' => $e->getMessage()]
-			);
-			return false;
-		}//end try
+			return $this->reportFailed(key: $key, exception: $e);
+		}
 	}//end reportObserved()
+
+	/**
+	 * Send one status report unless the throttle holds it back, and remember a
+	 * sent report of a throttled key with the moment read before the send.
+	 *
+	 * @param StatusReport $report The key and the status.
+	 * @param callable(): object $build Builds the status event.
+	 *
+	 * @return bool True when a report was sent.
+	 */
+	private function sendStatus(StatusReport $report, callable $build): bool {
+		$throttled = in_array($report->key, self::THROTTLED_KEYS, true);
+		$now = $this->timeFactory->getTime();
+		if ($throttled === true && $this->isDue(key: $report->key, status: $report->status, now: $now) === false) {
+			return false;
+		}
+
+		$sent = $this->send(key: $report->key, build: $build);
+		if ($sent === true && $throttled === true) {
+			$this->appConfig->setValueString(self::APP_ID, self::MEMORY_KEY_PREFIX . $report->key, $report->status . '|' . $now);
+		}
+
+		return $sent;
+	}//end sendStatus()
+
+	/**
+	 * Log a report whose outcome could not be worked out or sent. Never throws.
+	 *
+	 * @param string $key The connection key.
+	 * @param Throwable $exception What went wrong.
+	 *
+	 * @return bool Always false: no report was sent.
+	 */
+	private function reportFailed(string $key, Throwable $exception): bool {
+		$this->logger->warning(
+			'OpenCatalogi: could not report a connection to integriq',
+			['key' => $key, 'exception' => $exception->getMessage()]
+		);
+		return false;
+	}//end reportFailed()
 
 	/**
 	 * Whether the report memory allows a report with this status now.
@@ -375,20 +412,20 @@ class ConnectionReporter implements ConnectionReporterInterface {
 	 * that disagree cannot report on every broadcast. The same status reports
 	 * again after an hour.
 	 *
-	 * @param string $key    The connection key.
+	 * @param string $key The connection key.
 	 * @param string $status The status the outcome says.
-	 * @param int    $now    The current Unix time.
+	 * @param int $now The current Unix time.
 	 *
 	 * @return bool
 	 */
 	private function isDue(string $key, string $status, int $now): bool {
 		$memory = $this->appConfig->getValueString(self::APP_ID, self::MEMORY_KEY_PREFIX . $key, '');
-		$parts  = explode('|', $memory, 2);
+		$parts = explode('|', $memory, 2);
 		if (count($parts) !== 2 || ctype_digit($parts[1]) === false) {
 			return true;
 		}
 
-		$elapsed = ($now - (int) $parts[1]);
+		$elapsed = ($now - (int)$parts[1]);
 		if ($parts[0] === $status) {
 			return $elapsed >= self::REPEAT_SECONDS;
 		}
@@ -421,7 +458,7 @@ class ConnectionReporter implements ConnectionReporterInterface {
 	/**
 	 * Build and dispatch one event, swallowing anything a listener throws.
 	 *
-	 * @param string             $key   The connection the event is about, for the log.
+	 * @param string $key The connection the event is about, for the log.
 	 * @param callable(): object $build Builds the event.
 	 *
 	 * @return bool True when the event was dispatched without an exception.

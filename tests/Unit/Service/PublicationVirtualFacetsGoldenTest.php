@@ -90,12 +90,12 @@ class PublicationVirtualFacetsGoldenTest extends TestCase {
 	}
 
 	/**
-	 * @param array        $facets      The facets the search returned.
-	 * @param bool         $directories Whether to add directory facets.
-	 * @param bool         $catalogs    Whether to add catalog facets.
-	 * @param array|string $urls        What the directory lists, or 'throw'.
-	 * @param array        $sources     Local catalogues and directory listings.
-	 * @param array        $expected    The facets returned.
+	 * @param array $facets The facets the search returned.
+	 * @param bool $directories Whether to add directory facets.
+	 * @param bool $catalogs Whether to add catalog facets.
+	 * @param array|string $urls What the directory lists, or 'throw'.
+	 * @param array $sources Local catalogues and directory listings.
+	 * @param array $expected The facets returned.
 	 */
 	#[DataProvider('cases')]
 	public function testTheVirtualFacetsMatchTheRecordedOutput(array $facets, bool $directories, bool $catalogs, array|string $urls, array $sources, array $expected): void {

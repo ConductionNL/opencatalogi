@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapRequest;
 use OCA\OpenCatalogi\Service\SitemapService;
+use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -34,14 +37,14 @@ class SitemapServiceTest extends TestCase {
 	 *
 	 * Same helper as RegisterSchemaLinkServiceTest::environmentAwareDouble().
 	 *
-	 * @param class-string       $class   The class to double.
+	 * @param class-string $class The class to double.
 	 * @param array<int, string> $methods The methods to configure.
 	 *
 	 * @return MockObject The double.
 	 */
 	private function environmentAwareDouble(string $class, array $methods): MockObject {
 		$existing = [];
-		$absent   = [];
+		$absent = [];
 		foreach ($methods as $method) {
 			if (method_exists($class, $method) === true) {
 				$existing[] = $method;
@@ -108,14 +111,12 @@ class SitemapServiceTest extends TestCase {
 		);
 
 		$this->service = new SitemapService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
-			$this->urlGenerator,
-			$this->config,
+			new InstanceSettings($this->urlGenerator, $this->config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories,
+			$this->wooCategories
 		);
 	}
 
@@ -412,6 +413,7 @@ class SitemapServiceTest extends TestCase {
 		// handling type resolves through the DiWoo value list.
 		$publication = [
 			'id' => 'pub-1',
+			'title' => '  Besluit op het Woo-verzoek  ',
 			'category' => 'infocat014',
 			'soortHandeling' => 'vaststelling',
 			'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855',
@@ -434,17 +436,20 @@ class SitemapServiceTest extends TestCase {
 		$method = $this->getPrivateMethod('mapDiwooDocument');
 		$result = $method->invoke($this->service, $publication, $file);
 
-		$this->assertArrayHasKey('diwoo:Document', $result);
+		$this->assertSame(['loc', 'lastmod', 'diwoo:Document'], array_keys($result));
+		$this->assertSame('https://example.com/files/doc.pdf', $result['loc']);
+		$this->assertSame('2024-05-10T12:00:00+00:00', $result['lastmod']);
 
 		$doc = $result['diwoo:Document']['diwoo:DiWoo'];
 
-		$this->assertEquals('https://example.com/files/doc.pdf', $doc['loc']);
-		$this->assertEquals(date('Y-m-d H:i:s', strtotime('2024-05-10 12:00:00')), $doc['lastmod']);
+		$this->assertArrayNotHasKey('loc', $doc);
+		$this->assertArrayNotHasKey('lastmod', $doc);
 		$this->assertEquals('2024-01-15', $doc['diwoo:creatiedatum']);
+		$this->assertSame(['diwoo:officieleTitel' => 'Besluit op het Woo-verzoek'], $doc['diwoo:titelcollectie']);
 
 		// Publisher @resource is bound to the TOOI organisatie identifier (WOO-TOOI-002).
 		$this->assertEquals('https://identifier.overheid.nl/tooi/id/gemeente/gm0855', $doc['diwoo:publisher']['@resource']);
-		$this->assertEquals('file-owner', $doc['diwoo:publisher']['#text']);
+		$this->assertSame('', $doc['diwoo:publisher']['#text'], 'A user id is never the publisher.');
 
 		// Format.
 		$this->assertStringContainsString('PDF', $doc['diwoo:format']['@resource']);
@@ -459,7 +464,7 @@ class SitemapServiceTest extends TestCase {
 		$handling = $doc['diwoo:documenthandelingen']['diwoo:documenthandeling'];
 		$this->assertEquals('vaststelling', $handling['diwoo:soortHandeling']['#text']);
 		$this->assertEquals('https://identifier.overheid.nl/tooi/def/thes/kern/c_641ecd76', $handling['diwoo:soortHandeling']['@resource']);
-		$this->assertEquals('2024-05-10 12:00:00', $handling['diwoo:atTime']);
+		$this->assertSame('2024-05-10T12:00:00+00:00', $handling['diwoo:atTime']);
 	}
 
 	/**
@@ -471,13 +476,15 @@ class SitemapServiceTest extends TestCase {
 	 */
 	public function testThePublisherIsLookedUpOncePerOrganisation(): void {
 		$tooi = 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855';
-		$objectService = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjects']);
-		$objectService->expects($this->once())
-			->method('searchObjects')
-			->with(['@self' => ['uuid' => 'org-uuid-123']])
-			->willReturn([['tooiIdentifier' => $tooi]]);
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuidFollowingMerge']);
+		$organisations->expects($this->once())
+			->method('findByUuidFollowingMerge')
+			->with('org-uuid-123')
+			->willReturn($this->organisation(name: 'Gemeente Zuiddrecht', tooi: $tooi));
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
-		$this->container->method('get')->willReturn($objectService);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id): mixed => ($id === 'OCA\OpenRegister\Db\OrganisationMapper' ? $organisations : null)
+		);
 
 		$file = ['downloadUrl' => 'https://example.com/files/doc.pdf', 'extension' => 'pdf', 'owner' => 'file-owner'];
 		$method = $this->getPrivateMethod('mapDiwooDocument');
@@ -486,6 +493,27 @@ class SitemapServiceTest extends TestCase {
 			$doc = $method->invoke($this->service, $publication, $file)['diwoo:Document']['diwoo:DiWoo'];
 			$this->assertSame($tooi, $doc['diwoo:publisher']['@resource'], $id);
 		}
+	}
+
+	/**
+	 * A publication stamped with an organisation that was merged names the surviving organisation.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testAMergedOrganisationPublishesUnderTheOneItMergedInto(): void {
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuid', 'findByUuidFollowingMerge']);
+		$organisations->method('findByUuid')->willReturn($this->organisation(name: 'Gemeente Oud', tooi: null));
+		$organisations->method('findByUuidFollowingMerge')->with('org-merged')->willReturn($this->organisation(name: 'Gemeente Samengevoegd', tooi: null));
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id): mixed => ($id === 'OCA\OpenRegister\Db\OrganisationMapper' ? $organisations : null)
+		);
+
+		$file = ['downloadUrl' => 'https://example.com/files/doc.pdf', 'extension' => 'pdf', 'owner' => 'file-owner'];
+		$publication = ['id' => 'pub-m', 'category' => 'infocat014', '@self' => ['created' => '2024-01-15 10:00:00', 'organisation' => 'org-merged']];
+		$doc = $this->getPrivateMethod('mapDiwooDocument')->invoke($this->service, $publication, $file)['diwoo:Document']['diwoo:DiWoo'];
+
+		$this->assertSame('Gemeente Samengevoegd', $doc['diwoo:publisher']['#text']);
 	}
 
 	/**
@@ -514,7 +542,7 @@ class SitemapServiceTest extends TestCase {
 		$result = $method->invoke($this->service, $publication, $file);
 
 		$handling = $result['diwoo:Document']['diwoo:DiWoo']['diwoo:documenthandelingen']['diwoo:documenthandeling'];
-		$this->assertEquals('2024-04-02 09:30:00', $handling['diwoo:atTime']);
+		$this->assertSame('2024-04-02T09:30:00+00:00', $handling['diwoo:atTime']);
 	}
 
 	public function testMapDiwooDocumentOmitsUnresolvedAxesAndReports(): void {
@@ -555,6 +583,8 @@ class SitemapServiceTest extends TestCase {
 		$axes = array_column($violations, 'axis');
 		$this->assertContains('publisher', $axes);
 		$this->assertContains('informatiecategorie', $axes);
+		$this->assertContains('officieleTitel', $axes);
+		$this->assertArrayNotHasKey('diwoo:titelcollectie', $doc);
 	}
 
 	// ──────────────────────────────────────────────────────────
@@ -748,7 +778,346 @@ class SitemapServiceTest extends TestCase {
 		$this->assertInstanceOf(XMLResponse::class, $result);
 	}
 
-	public function testBuildSitemapWithNoFiles(): void {
+	/**
+	 * An OpenRegister organisation: the real entity when OpenRegister is loaded, otherwise a double with its getters.
+	 *
+	 * @param string|null $name The name.
+	 * @param string|null $tooi The TOOI identifier.
+	 *
+	 * @return object The organisation.
+	 */
+	private function organisation(?string $name, ?string $tooi): object {
+		if (class_exists('OCA\OpenRegister\Db\Organisation') === true) {
+			$organisation = new \OCA\OpenRegister\Db\Organisation();
+			$organisation->setName($name);
+			$organisation->setTooi($tooi);
+
+			return $organisation;
+		}
+
+		return new class($name, $tooi) {
+			public function __construct(
+				private ?string $name,
+				private ?string $tooi,
+			) {
+			}
+
+			public function getName(): ?string {
+				return $this->name;
+			}
+
+			public function getTooi(): ?string {
+				return $this->tooi;
+			}
+		};
+	}//end organisation()
+
+	/**
+	 * The documents XML of one page with three files, the organisation looked up by uuid.
+	 *
+	 * @param array<int, mixed> $calls The organisation lookups, recorded by parameter name.
+	 *
+	 * @return string
+	 */
+	private function documentsPage(array &$calls): string {
+		$this->setupValidSitemapContext('reg-woo', 'sch-1');
+		$catalogObj = $this->createCatalogObj(['sch-1']);
+		$pubObject = $this->createSerializableObject([
+			'id' => 'pub-1',
+			'title' => 'Besluit & bijlagen <2024>',
+			'publicationDate' => '2024-02-02 08:00:00',
+			'category' => 'infocat014',
+			'soortHandeling' => 'vaststelling',
+			'@self' => ['created' => '2024-01-01', 'updated' => '2024-06-01', 'owner' => 'admin', 'organisation' => 'org-uuid-1'],
+		]);
+		$files = ['results' => [
+			['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf', 'published' => '2024-03-01'],
+			['extension' => 'txt'],
+			['downloadUrl' => 'https://example.com/b.odt', 'extension' => 'odt', 'owner' => 'file-owner'],
+		]];
+		$fileService = $this->createMock(\OCA\OpenRegister\Service\FileService::class);
+		$fileService->method('getFiles')->willReturn(['some-file-data']);
+		$fileService->method('formatFiles')->willReturn($files);
+
+		$objectService = $this->environmentAwareDouble(\OCA\OpenRegister\Service\ObjectService::class, ['searchObjectsPaginated', 'searchObjects']);
+		$objectService->method('searchObjectsPaginated')->willReturnCallback(
+			static function (array $query = []) use ($pubObject, $catalogObj): array {
+				if (isset($query['slug']) === true) {
+					return ['results' => [$catalogObj]];
+				}
+
+				return ['results' => [$pubObject]];
+			}
+		);
+		$objectService->method('searchObjects')->willReturnCallback(
+			static function () use (&$calls): array {
+				// OpenRegister answers nothing to a query without a register and schema.
+				$calls[] = 'searchObjects';
+				return [];
+			}
+		);
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuidFollowingMerge']);
+		$organisations->method('findByUuidFollowingMerge')->willReturnCallback(
+			function (string $uuid) use (&$calls): object {
+				$calls[] = ['findByUuidFollowingMerge' => $uuid];
+				return $this->organisation(name: 'Gemeente Voorbeeld & Omstreken', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855');
+			}
+		);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn ($id) => match ($id) {
+				'OCA\OpenRegister\Service\ObjectService' => $objectService,
+				'OCA\OpenRegister\Service\FileService' => $fileService,
+				'OCA\OpenRegister\Db\OrganisationMapper' => $organisations,
+				default => null,
+			}
+		);
+
+		return $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1)->render();
+	}
+
+	/**
+	 * The full documents XML of a page matches the recording: the root attributes,
+	 * one document per downloadable file, and the publisher looked up by
+	 * organisation uuid through OpenRegister's OrganisationMapper.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testBuildSitemapDocumentsMatchTheRecording(): void {
+		$calls = [];
+		$xml = $this->documentsPage(calls: $calls);
+		$actual = json_decode((string)json_encode(['data' => $xml, 'lookups' => $calls]), true);
+		$fixture = __DIR__ . '/fixtures/sitemap-documents-golden.json';
+		if (getenv('GOLDEN_RECORD') === '1') {
+			file_put_contents($fixture, json_encode($actual, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($fixture), true), $actual);
+	}
+
+	/**
+	 * The XSD errors of every diwoo:Document in a sitemap, one list per document,
+	 * validated against the vendored official DiWoo 0.9.8 XSD (fixtures/diwoo-0.9.8/SOURCE.md).
+	 *
+	 * @param string $xml The sitemap XML.
+	 *
+	 * @return array<int, array<int, string>>
+	 */
+	private static function diwooXsdErrors(string $xml): array {
+		$dir = __DIR__ . '/fixtures/diwoo-0.9.8';
+		$dom = new \DOMDocument();
+		$dom->loadXML($xml);
+		libxml_set_external_entity_loader(
+			static fn (?string $public, string $system): ?string => match ($system) {
+				'https://www.nationaalarchief.nl/mdto/MDTO-XML1.0.1.xsd' => $dir . '/MDTO-XML1.0.1.xsd',
+				default => $system,
+			}
+		);
+		$previous = libxml_use_internal_errors(true);
+		$errors = [];
+		try {
+			foreach ($dom->getElementsByTagNameNS(StandardsVersionService::DIWOO_NAMESPACE, 'Document') as $index => $document) {
+				$one = new \DOMDocument();
+				$one->appendChild($one->importNode($document, true));
+				$one->loadXML((string)$one->saveXML());
+				$one->schemaValidate($dir . '/diwoo-metadata.xsd');
+				$errors[$index] = array_map(static fn (\LibXMLError $error): string => trim($error->message), libxml_get_errors());
+				libxml_clear_errors();
+			}
+		} finally {
+			libxml_use_internal_errors($previous);
+			libxml_set_external_entity_loader(null);
+		}
+
+		return $errors;
+	}
+
+	/**
+	 * Fail unless every file in the fixture directory has its published sha256.
+	 *
+	 * @param array<string, string> $hashes The file names and their sha256.
+	 *
+	 * @return void
+	 */
+	private function assertVerbatimCopies(array $hashes): void {
+		foreach ($hashes as $file => $hash) {
+			$this->assertSame($hash, hash_file('sha256', __DIR__ . '/fixtures/diwoo-0.9.8/' . $file), $file . ' is not the published file');
+		}
+	}
+
+	/**
+	 * Every DiWoo document of a rendered page validates against the official DiWoo 0.9.8 XSD.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testEveryDocumentOfAPageValidatesAgainstTheDiwooXsd(): void {
+		$this->assertVerbatimCopies([
+			'diwoo-metadata.xsd' => '0a332f65c98f5bb2b4fb64c52c2f72867966a6e5bf1a5a5ea3870716fc6ea212',
+			'diwoo-metadata-lijsten.xsd' => 'c17fd0daa9eb37c44c774ac73271679a8fc2189805823dcfba6a86c2fd42b308',
+			'MDTO-XML1.0.1.xsd' => 'edad88821a1023a9eafca0fa399ee7735ef03481aa186e07bbdaabdc123def34',
+		]);
+
+		$calls = [];
+		$this->assertSame([[], []], self::diwooXsdErrors($this->documentsPage(calls: $calls)));
+	}
+
+	/**
+	 * The harness accepts what the standard accepts: the documents of the standard's
+	 * own example sitemaps validate, apart from the fictitious municipalities gm9999
+	 * and gm9998 they publish under, which the organisation list does not hold.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testTheOfficialExampleSitemapsValidate(): void {
+		$examples = [
+			'sitemap-alleenverplicht.xml' => 'a7a0354d60667de9fc85567d379b67d407ce04a78e44d4107530828e33928b32',
+			'sitemap-uitgebreid.xml' => '2224a9d841e54dff52447d9ac9c65c893f70bdb0d5c665dfb675d4c4881c0b61',
+		];
+		$this->assertVerbatimCopies($examples);
+		foreach (array_keys($examples) as $file) {
+			$errors = self::diwooXsdErrors((string)file_get_contents(__DIR__ . '/fixtures/diwoo-0.9.8/' . $file));
+			$this->assertNotSame([], $errors, $file . ' holds no document');
+			$this->assertNotSame([], array_merge(...$errors), $file . ': the fictitious publisher must be refused, or nothing was validated');
+			foreach (array_merge(...$errors) as $error) {
+				$this->assertMatchesRegularExpression("~attribute 'resource': 'https://identifier\\.overheid\\.nl/tooi/id/gemeente/gm999[89]' is not a valid value~", $error, $file);
+			}
+		}
+	}
+
+	/**
+	 * A page is a sitemaps.org urlset; each url holds loc, lastmod and the document, in that order.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testEachUrlHoldsLocLastmodAndTheDocumentInThatOrder(): void {
+		$calls = [];
+		$dom = new \DOMDocument();
+		$dom->loadXML($this->documentsPage(calls: $calls));
+		$root = $dom->documentElement;
+		$this->assertSame(['urlset', StandardsVersionService::SITEMAP_NAMESPACE], [$root->localName, $root->namespaceURI]);
+
+		$urls = [];
+		foreach ($root->childNodes as $url) {
+			if ($url instanceof \DOMElement === false) {
+				continue;
+			}
+
+			$children = [];
+			foreach ($url->childNodes as $child) {
+				if ($child instanceof \DOMElement === true) {
+					$children[] = [$child->namespaceURI, $child->localName, $child->localName === 'Document' ? '' : $child->textContent];
+				}
+			}
+
+			$urls[] = [$url->namespaceURI, $url->localName, $children];
+		}
+
+		$sitemap = StandardsVersionService::SITEMAP_NAMESPACE;
+		$diwoo = StandardsVersionService::DIWOO_NAMESPACE;
+		$this->assertSame([
+			[$sitemap, 'url', [[$sitemap, 'loc', 'https://example.com/a.pdf'], [$sitemap, 'lastmod', '2024-03-01T00:00:00+00:00'], [$diwoo, 'Document', '']]],
+			[$sitemap, 'url', [[$sitemap, 'loc', 'https://example.com/b.odt'], [$sitemap, 'lastmod', '2024-06-01T00:00:00+00:00'], [$diwoo, 'Document', '']]],
+		], $urls);
+		$this->assertSame(0, $dom->getElementsByTagNameNS($diwoo, 'DiWoo')->item(0)->getElementsByTagNameNS($sitemap, '*')->length, 'diwoo:DiWoo holds no sitemap element');
+	}
+
+	/**
+	 * lastmod and atTime are xs:dateTime values in UTC, the same in every server time zone.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testDatesAreWrittenAsUtcDateTimes(): void {
+		$method = $this->getPrivateMethod('mapDiwooDocument');
+		$zone = date_default_timezone_get();
+		$cases = [
+			'date only' => ['2024-03-01', '2024-03-01T00:00:00+00:00'],
+			'local time' => ['2024-02-02 08:00:00', '2024-02-02T08:00:00+00:00'],
+			'with offset' => ['2024-03-01T10:00:00+02:00', '2024-03-01T08:00:00+00:00'],
+			'unparseable' => ['not a date', '1970-01-01T00:00:00+00:00'],
+			'not a string' => [20240301, '1970-01-01T00:00:00+00:00'],
+		];
+		try {
+			foreach (['UTC', 'Europe/Amsterdam', 'Pacific/Kiritimati'] as $serverZone) {
+				date_default_timezone_set($serverZone);
+				foreach ($cases as $name => [$stored, $expected]) {
+					$entry = $method->invoke($this->service, ['id' => 'p', 'soortHandeling' => 'vaststelling'], ['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf', 'published' => $stored]);
+					$this->assertSame($expected, $entry['lastmod'], $serverZone . ' ' . $name);
+					$this->assertSame($expected, $entry['diwoo:Document']['diwoo:DiWoo']['diwoo:documenthandelingen']['diwoo:documenthandeling']['diwoo:atTime'], $serverZone . ' ' . $name);
+				}
+			}
+		} finally {
+			date_default_timezone_set($zone);
+		}
+	}
+
+	/**
+	 * A publication without a title is reported as officieleTitel, and its document stays on the page.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testAPublicationWithoutATitleIsReported(): void {
+		$file = ['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf'];
+		foreach (['missing' => null, 'blank' => '   ', 'not text' => ['nl' => 'Besluit']] as $name => $title) {
+			$publication = ['id' => 'p', 'category' => 'infocat014', '@self' => ['files' => [$file]]];
+			if ($title !== null) {
+				$publication['title'] = $title;
+			}
+
+			$violations = $this->service->collectDiwooViolations([$publication]);
+			$this->assertContains(['documentLoc' => 'https://example.com/a.pdf', 'axis' => 'officieleTitel', 'reason' => 'publication has no title'], $violations, $name);
+		}
+
+		$titled = ['id' => 'p', 'title' => 'Besluit', 'category' => 'infocat014', '@self' => ['files' => [$file]]];
+		$this->assertNotContains('officieleTitel', array_column($this->service->collectDiwooViolations([$titled]), 'axis'));
+	}
+
+	/**
+	 * The requested page reaches the publication search, and of two catalogs found the first is used.
+	 *
+	 * @spec openspec/specs/woo-compliance/spec.md
+	 */
+	public function testThePageReachesTheSearchAndTheFirstCatalogIsUsed(): void {
+		$this->setupValidSitemapContext('reg-woo', 'sch-1');
+		$first = $this->createCatalogObj(['sch-1']);
+		$second = $this->createCatalogObj(['sch-other']);
+		$queries = [];
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturnCallback(
+			static function (array $query = []) use (&$queries, $first, $second): array {
+				$queries[] = $query;
+				if (isset($query['slug']) === true) {
+					return ['results' => [$first, $second]];
+				}
+
+				return ['results' => []];
+			}
+		);
+		$fileService = $this->createMock(\OCA\OpenRegister\Service\FileService::class);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturnCallback(
+			static fn ($id) => match ($id) {
+				'OCA\OpenRegister\Service\ObjectService' => $objectService,
+				'OCA\OpenRegister\Service\FileService' => $fileService,
+				default => null,
+			}
+		);
+
+		$this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 2);
+
+		$searches = array_values(array_filter($queries, static fn (array $query): bool => isset($query['slug']) === false));
+		$this->assertNotSame([], $searches, 'The publications were never searched.');
+		foreach ($searches as $query) {
+			$this->assertSame(2, $query['_page']);
+			$this->assertSame(['register' => 'reg-woo', 'schema' => 'sch-1'], $query['@self'], 'The first catalog scopes the search.');
+		}
+	}
+
+	/**
+	 * A page without downloadable files is a urlset without url entries.
+	 *
+	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 */
+	public function testAPageWithoutFilesIsAnEmptyUrlset(): void {
 		$this->setupValidSitemapContext('reg-woo', 'sch-1');
 
 		$catalogObj = $this->createCatalogObj(['sch-1']);
@@ -793,6 +1162,10 @@ class SitemapServiceTest extends TestCase {
 		$result = $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1);
 
 		$this->assertInstanceOf(XMLResponse::class, $result);
+		$dom = new \DOMDocument();
+		$dom->loadXML($result->render());
+		$this->assertSame(['urlset', StandardsVersionService::SITEMAP_NAMESPACE], [$dom->documentElement->localName, $dom->documentElement->namespaceURI]);
+		$this->assertSame(0, $dom->documentElement->getElementsByTagName('*')->length);
 	}
 
 	public function testBuildSitemapWithFileMissingDownloadUrl(): void {
@@ -983,7 +1356,9 @@ class SitemapServiceTest extends TestCase {
 			'configuration' => ['catalog_register' => 'cat-reg', 'catalog_schema' => 'cat-sch'],
 		]);
 		$catalogObj = new class($catalogSchemas) {
-			public function __construct(private array $schemas) {
+			public function __construct(
+				private array $schemas,
+			) {
 			}
 
 			public function getObject(): array {
@@ -1248,11 +1623,9 @@ class SitemapServiceTest extends TestCase {
 		$tooi = new \OCA\OpenCatalogi\Service\TooiVocabularyService();
 
 		return new SitemapService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
-			$this->urlGenerator,
-			$this->config,
+			new InstanceSettings($this->urlGenerator, $this->config),
 			$tooi,
 			$this->queryService,
 			new \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry(
@@ -1260,7 +1633,7 @@ class SitemapServiceTest extends TestCase {
 				$registrySettings,
 				$this->createMock(\Psr\Log\LoggerInterface::class),
 				new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission($tooi),
-			),
+			)
 		);
 	}
 
@@ -1301,14 +1674,12 @@ class SitemapServiceTest extends TestCase {
 			->willReturnMap([['opencatalogi', 'sitemap_max_per_page', 1000, 250]]);
 
 		$service = new SitemapService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
-			$this->urlGenerator,
-			$config,
+			new InstanceSettings($this->urlGenerator, $config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories,
+			$this->wooCategories
 		);
 
 		$reflection = new \ReflectionClass($service);
@@ -1322,14 +1693,12 @@ class SitemapServiceTest extends TestCase {
 		$config->method('getValueInt')->willReturn(0);
 
 		$service = new SitemapService(
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->settingsService,
-			$this->urlGenerator,
-			$config,
+			new InstanceSettings($this->urlGenerator, $config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories,
+			$this->wooCategories
 		);
 
 		$reflection = new \ReflectionClass($service);

@@ -16,6 +16,14 @@
 import { generateOcsUrl } from '@nextcloud/router'
 import { defineStore } from 'pinia'
 
+const JSON_GET = {
+	method: 'GET',
+	headers: {
+		'Content-Type': 'application/json',
+		Accept: 'application/json',
+	},
+}
+
 /**
  * GET a JSON body, throwing when the response is not ok.
  *
@@ -25,13 +33,7 @@ import { defineStore } from 'pinia'
  * @spec openspec/specs/search/spec.md
  */
 async function getJson(url, label) {
-	const response = await fetch(url, {
-		method: 'GET',
-		headers: {
-			'Content-Type': 'application/json',
-			Accept: 'application/json',
-		},
-	})
+	const response = await fetch(url, JSON_GET)
 	if (!response.ok) {
 		throw new Error(
 			`Failed to fetch ${label}: ${response.status} ${response.statusText}`,
@@ -53,18 +55,126 @@ async function getFederationPublication(id, part = '') {
 		throw new Error('Publication ID is required')
 	}
 	const label = part ? `publication ${part}` : 'publication'
-	const suffix = part ? `/${part}` : ''
 	try {
-		return await getJson(
-			generateOcsUrl(
-				`/apps/opencatalogi/api/federation/publications/${id}${suffix}`,
-			),
-			label,
-		)
+		return await getJson(federationPublicationUrl(id, part), label)
 	} catch (error) {
 		console.error(`Error fetching ${label}:`, error)
 		throw error
 	}
+}
+
+/**
+ * The OCS url of a federation publication, or of one of its sub-resources.
+ *
+ * @param {string} id The publication ID.
+ * @param {string} part The sub-resource, or '' for the publication itself.
+ * @return {string} The url.
+ */
+function federationPublicationUrl(id, part) {
+	const suffix = part ? `/${part}` : ''
+	return generateOcsUrl(
+		`/apps/opencatalogi/api/federation/publications/${id}${suffix}`,
+	)
+}
+
+const PAGINATION_DEFAULTS = { page: 1, limit: 20, total: 0, pages: 1, offset: 0 }
+
+/**
+ * Run one search: take the page overrides, fetch the page and store the answer.
+ *
+ * @param {object} store The search store.
+ * @param {object} additionalParams The extra search parameters.
+ * @return {Promise<void>}
+ */
+async function runSearch(store, additionalParams) {
+	applyPageParams(store.pagination, additionalParams)
+	const params = store.buildQueryParams(additionalParams)
+	const url = store.buildApiUrl(store.searchEndpoint, params)
+	const data = await fetchSearchPage(url)
+	applySearchAnswer(store, data)
+}
+
+/**
+ * Take a search's page and limit overrides into the pagination.
+ *
+ * @param {object} pagination The store's pagination.
+ * @param {object} params The search parameters.
+ * @return {void}
+ * @spec openspec/specs/search/spec.md
+ */
+function applyPageParams(pagination, params) {
+	if (params._page) {
+		pagination.page = params._page
+	}
+	if (params._limit) {
+		pagination.limit = params._limit
+	}
+}
+
+/**
+ * GET a search page, throwing when the response is not ok. Logs the URL.
+ *
+ * @param {string} url The search URL.
+ * @return {Promise<object>} The parsed body.
+ * @spec openspec/specs/search/spec.md
+ */
+async function fetchSearchPage(url) {
+	console.info('Searching publications with URL:', url)
+	const response = await fetch(url, JSON_GET)
+	if (!response.ok) {
+		throw new Error(
+			`Search failed with status ${response.status}: ${response.statusText}`,
+		)
+	}
+	return await response.json()
+}
+
+/**
+ * The pagination of a search answer, each missing or empty field at its default.
+ *
+ * @param {object} data The search answer.
+ * @return {object} The pagination.
+ * @spec openspec/specs/search/spec.md
+ */
+function paginationOf(data) {
+	return Object.fromEntries(
+		Object.entries(PAGINATION_DEFAULTS).map(([key, fallback]) => [
+			key,
+			data[key] || fallback,
+		]),
+	)
+}
+
+/**
+ * Put a search answer in the store: results, pagination, and the facets and
+ * facetable metadata when the answer has them. Logs a summary.
+ *
+ * @param {object} store The search store.
+ * @param {object} data The search answer.
+ * @return {void}
+ * @spec openspec/specs/search/spec.md
+ */
+function applySearchAnswer(store, data) {
+	store.setSearchResults(data.results || [])
+	store.setPagination(paginationOf(data))
+	if (data.facets) {
+		store.setFacets(data.facets)
+	}
+	if (data.facetable) {
+		store.setFacetable(data.facetable)
+	}
+	console.info('Search completed:', searchSummary(data))
+}
+
+/**
+ * What the console reports about a finished search.
+ *
+ * @param {object} data The search answer.
+ * @return {object} The total, the number of results and the page.
+ * @spec openspec/specs/search/spec.md
+ */
+function searchSummary(data) {
+	return { total: data.total, results: data.results?.length || 0, page: data.page }
 }
 
 /**
@@ -492,58 +602,7 @@ export const useSearchStore = defineStore('search', {
 			this.setError(null)
 
 			try {
-				// Merge additional params with current state
-				if (additionalParams._page) {
-					this.pagination.page = additionalParams._page
-				}
-				if (additionalParams._limit) {
-					this.pagination.limit = additionalParams._limit
-				}
-
-				const params = this.buildQueryParams(additionalParams)
-				const url = this.buildApiUrl(this.searchEndpoint, params)
-
-				console.info('Searching publications with URL:', url)
-
-				const response = await fetch(url, {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-						Accept: 'application/json',
-					},
-				})
-
-				if (!response.ok) {
-					throw new Error(
-						`Search failed with status ${response.status}: ${response.statusText}`,
-					)
-				}
-
-				const data = await response.json()
-
-				// Update state with response data
-				this.setSearchResults(data.results || [])
-				this.setPagination({
-					page: data.page || 1,
-					limit: data.limit || 20,
-					total: data.total || 0,
-					pages: data.pages || 1,
-					offset: data.offset || 0,
-				})
-
-				// Update facets and facetable if present
-				if (data.facets) {
-					this.setFacets(data.facets)
-				}
-				if (data.facetable) {
-					this.setFacetable(data.facetable)
-				}
-
-				console.info('Search completed:', {
-					total: data.total,
-					results: data.results?.length || 0,
-					page: data.page,
-				})
+				await runSearch(this, additionalParams)
 			} catch (error) {
 				console.error('Search error:', error)
 				this.setError(error.message || 'Failed to search publications')

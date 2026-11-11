@@ -29,6 +29,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Withheld;
 
+use OCA\OpenCatalogi\Service\JsonList;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenCatalogi\Service\WooService;
@@ -57,7 +58,7 @@ class WithheldFromPublicationStore {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig         $config     Holds the register and schema ids.
+	 * @param IAppConfig $config Holds the register and schema ids.
 	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 */
 	public function __construct(
@@ -116,13 +117,26 @@ class WithheldFromPublicationStore {
 			return [];
 		}
 
+		return $this->assessmentsOf(batch: $batch);
+	}//end batchAssessments()
+
+	/**
+	 * The assessment of every document a batch lists, in the batch's order.
+	 *
+	 * @param array<string, mixed> $batch The batch.
+	 *
+	 * @return list<array<string, mixed>>
+	 *
+	 * @throws RuntimeException When an assessment cannot be read.
+	 */
+	private function assessmentsOf(array $batch): array {
 		$assessments = [];
 		foreach (array_values((array)($batch['documents'] ?? [])) as $ref) {
 			$assessments[] = $this->assessment(id: (string)$ref);
 		}
 
 		return $assessments;
-	}//end batchAssessments()
+	}//end assessmentsOf()
 
 	/**
 	 * The batch a publication was made from, scanning the batch register page by page.
@@ -133,8 +147,8 @@ class WithheldFromPublicationStore {
 	 * first, so a batch created while the scan runs lands after the pages already read and
 	 * cannot shift a batch past the scan.
 	 *
-	 * @param string $register      The batch register.
-	 * @param string $schema        The batch schema.
+	 * @param string $register The batch register.
+	 * @param string $schema The batch schema.
 	 * @param string $publicationId The publication.
 	 *
 	 * @return array<string, mixed>|null The batch, or null when none names the publication.
@@ -148,10 +162,9 @@ class WithheldFromPublicationStore {
 				schema: $schema,
 				filters: ['_page' => $page, '_order' => ['@self.created' => 'asc', '_uuid' => 'asc']]
 			);
-			foreach ($batches as $batch) {
-				if ((string)($batch['wooPublication']['publication'] ?? '') === $publicationId) {
-					return $batch;
-				}
+			$batch = $this->batchIn(batches: $batches, publicationId: $publicationId);
+			if ($batch !== null) {
+				return $batch;
 			}
 
 			if (count($batches) < self::SEARCH_LIMIT) {
@@ -163,10 +176,28 @@ class WithheldFromPublicationStore {
 	}//end findBatch()
 
 	/**
+	 * The first batch of a page that names the publication, or null.
+	 *
+	 * @param list<array<string, mixed>> $batches One page of batches.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<string, mixed>|null
+	 */
+	private function batchIn(array $batches, string $publicationId): ?array {
+		foreach ($batches as $batch) {
+			if ((string)($batch['wooPublication']['publication'] ?? '') === $publicationId) {
+				return $batch;
+			}
+		}
+
+		return null;
+	}//end batchIn()
+
+	/**
 	 * The catalogues whose registers and schemas hold the given register and schema.
 	 *
 	 * @param string $register The publication's register.
-	 * @param string $schema   The publication's schema.
+	 * @param string $schema The publication's schema.
 	 *
 	 * @return list<array<string, mixed>>
 	 *
@@ -193,9 +224,9 @@ class WithheldFromPublicationStore {
 	/**
 	 * Search one register and schema on the server's behalf.
 	 *
-	 * @param string               $register The register.
-	 * @param string               $schema   The schema.
-	 * @param array<string, mixed> $filters  Property filters.
+	 * @param string $register The register.
+	 * @param string $schema The schema.
+	 * @param array<string, mixed> $filters Property filters.
 	 *
 	 * @return list<array<string, mixed>>
 	 *
@@ -290,16 +321,10 @@ class WithheldFromPublicationStore {
 	 * @param mixed $raw The field: a list, or a JSON string of one.
 	 *
 	 * @return list<string>
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) JsonList::fromField() is a pure static function.
 	 */
 	private function ids(mixed $raw): array {
-		if (is_string($raw) === true) {
-			$raw = json_decode($raw, true);
-		}
-
-		if (is_array($raw) === false) {
-			return [];
-		}
-
-		return array_values(array_map(static fn (mixed $id): string => (string)$id, $raw));
+		return array_values(array_map(static fn (mixed $id): string => (string)$id, JsonList::fromField(raw: $raw)));
 	}//end ids()
 }//end class

@@ -71,6 +71,20 @@
                 <referencedClass name="OCP\Notification\IManager"/>
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
+                <referencedClass name="OCA\OpenRegister\Service\File\FileTransfer"/>
+                <referencedClass name="OCA\OpenRegister\Service\ConfigLookup"/>
+                <referencedClass name="OCA\OpenRegister\Service\RegisterResolverService"/>
+                <referencedClass name="OCA\OpenRegister\Service\Flow\Timer\RollRule"/>
+                <referencedClass name="OCA\OpenRegister\Service\Flow\Timer\SlaCalculatorInterface"/>
+                <referencedClass name="OCA\OpenRegister\Db\FlowRunMapper"/>
+                <referencedClass name="OCA\OpenRegister\Db\FlowRunListing"/>
+                <referencedClass name="OCA\OpenRegister\Db\FlowRunFilter"/>
+                <referencedClass name="OCA\OpenRegister\Db\FlowRunViewer"/>
+                <referencedClass name="OCA\OpenRegister\Service\Flow\Timer\FlowTimerService"/>
+                <referencedClass name="OCA\OpenRegister\Service\Flow\Timer\FlowTimerAct"/>
+                <referencedClass name="OCA\OpenRegister\Service\Flow\Timer\TimerExtensionRequest"/>
+                <referencedClass name="OCA\OpenRegister\Service\Flow\Timer\TimerSuspension"/>
+                <referencedClass name="OCA\OpenRegister\Service\Flow\Timer\TimerDecision"/>
                 <referencedClass name="OCA\OpenRegister\Db\ObjectEntity"/>
                 <referencedClass name="OCA\OpenRegister\Db\Register"/>
                 <referencedClass name="OCA\OpenRegister\Db\RegisterMapper"/>
@@ -86,9 +100,9 @@
                 <referencedClass name="OCA\OpenRegister\Event\RegisterUpdatedEvent"/>
                 <referencedClass name="OCA\OpenRegister\Service\ObjectService"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigurationService"/>
-                <referencedClass name="OCA\OpenRegister\Db\FileMapper"/>
-                <referencedClass name="OCA\OpenRegister\Db\Agent"/>
-                <referencedClass name="OCA\OpenRegister\Tool\ToolInterface"/>
+                <referencedClass name="OCA\OpenRegister\Files\Db\FileMapper"/>
+                <referencedClass name="OCA\OpenRegister\Mcp\Db\Agent"/>
+                <referencedClass name="OCA\OpenRegister\Mcp\Tool\ToolInterface"/>
                 <referencedClass name="OCA\OpenRegister\Mcp\IMcpToolProvider"/>
                 <referencedClass name="OCA\OpenRegister\Service\RegisterService"/>
                 <referencedClass name="OCA\OpenRegister\Service\FileService"/>

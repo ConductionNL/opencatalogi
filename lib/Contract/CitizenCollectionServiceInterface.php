@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Contract;
 
-
 /**
  * Contract of CitizenCollectionService, for callers in other components.
  *
@@ -35,7 +34,7 @@ interface CitizenCollectionServiceInterface {
 	 * Without `collection` a new dossier with `title` is made. The same
 	 * publication and document twice is kept once.
 	 *
-	 * @param string               $owner The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param array<string, mixed> $input collection, title, publication, attachment, note.
 	 *
 	 * @return array<string, mixed> The owner's view of the dossier.
@@ -50,9 +49,9 @@ interface CitizenCollectionServiceInterface {
 	/**
 	 * Remove one item from a dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
-	 * @param string $itemId       The item.
+	 * @param string $itemId The item.
 	 *
 	 * @return array<string, mixed> The owner's view.
 	 *
@@ -65,10 +64,10 @@ interface CitizenCollectionServiceInterface {
 	/**
 	 * Write the note of one item, or of the dossier when no item is named.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
-	 * @param string $itemId       The item, or '' for the dossier.
-	 * @param string $note         The note.
+	 * @param string $itemId The item, or '' for the dossier.
+	 * @param string $note The note.
 	 *
 	 * @return array<string, mixed> The owner's view.
 	 *
@@ -82,7 +81,7 @@ interface CitizenCollectionServiceInterface {
 	/**
 	 * Delete a dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array{deleted: bool}
@@ -96,7 +95,7 @@ interface CitizenCollectionServiceInterface {
 	/**
 	 * The owner's view of one dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array<string, mixed>

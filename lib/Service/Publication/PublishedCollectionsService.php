@@ -88,7 +88,6 @@ class PublishedCollectionsService implements PublishedCollectionsServiceInterfac
 		}
 
 		return array_values(array_filter($decoded, 'is_array'));
-
 	}//end collections()
 
 	/**
@@ -129,7 +128,6 @@ class PublishedCollectionsService implements PublishedCollectionsServiceInterfac
 		$this->config->setValueString($this->appName, self::CONFIG_KEY, (string)json_encode(array_values($collections)));
 
 		return ['saved' => true, 'errors' => []];
-
 	}//end save()
 
 	/**
@@ -152,6 +150,5 @@ class PublishedCollectionsService implements PublishedCollectionsServiceInterfac
 		}
 
 		return false;
-
 	}//end publishes()
 }//end class
