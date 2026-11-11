@@ -1,105 +1,68 @@
 /** * @file MassLockObjects.vue * @module Modals/Object * @author Your Name *
 @copyright 2024 Your Organization * @license EUPL-1.2 * @version 1.0.0 */
 
-<script setup>
-import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
-</script>
-
 <template>
-	<NcDialog
-		:name="dialogTitle"
-		:canClose="true"
-		size="normal"
-		class="mass-action-dialog"
-		@update:open="handleDialogClose">
-		<!-- Object Selection Review -->
-		<div v-if="success === null" class="lock-step">
-			<NcNoteCard type="info">
-				{{
-					t(
-						'opencatalogi',
-						"Locking objects prevents other users from modifying them until they are unlocked. You can specify an optional process name to indicate why they're locked and a duration after which they will automatically unlock. Only the user who locked the objects or an administrator can unlock them before the duration expires.",
-					)
-				}}
-			</NcNoteCard>
+	<MassObjectActionDialog
+		:title="dialogTitle"
+		:confirmLabel="t('opencatalogi', 'Lock')"
+		confirmVariant="primary"
+		:confirmDisabled="loading || objectsToLock.length === 0"
+		:loading="loading"
+		:success="success"
+		:error="error"
+		:successMessage="
+			originalSelectedCount > 1
+				? t('opencatalogi', '{type}s successfully locked', {
+						type: t('opencatalogi', 'Publication'),
+					})
+				: t('opencatalogi', '{type} successfully locked', {
+						type: t('opencatalogi', 'Publication'),
+					})
+		"
+		@close="closeDialog"
+		@confirm="lockObjects()">
+		<NcNoteCard type="info">
+			{{
+				t(
+					'opencatalogi',
+					"Locking objects prevents other users from modifying them until they are unlocked. You can specify an optional process name to indicate why they're locked and a duration after which they will automatically unlock. Only the user who locked the objects or an administrator can unlock them before the duration expires.",
+				)
+			}}
+		</NcNoteCard>
 
-			<SelectedObjectsList
-				:title="
-					(objectStore.selectedObjects?.length || 0) === 1
-						? t('opencatalogi', 'Publication to Lock')
-						: t('opencatalogi', 'Selected Publications')
-				"
-				:showRemove="true" />
+		<SelectedObjectsList
+			:title="
+				objectsToLock.length === 1
+					? t('opencatalogi', 'Publication to Lock')
+					: t('opencatalogi', 'Selected Publications')
+			"
+			:showRemove="true" />
 
-			<div v-if="!success" class="formContainer">
-				<NcTextField
-					v-model="process"
-					:label="t('opencatalogi', 'Process Name (optional)')"
-					:disabled="loading" />
-				<NcTextField
-					v-model="duration"
-					type="number"
-					:label="t('opencatalogi', 'Duration in seconds (optional)')"
-					:disabled="loading" />
-			</div>
+		<div class="formContainer">
+			<NcTextField
+				v-model="process"
+				:label="t('opencatalogi', 'Process Name (optional)')"
+				:disabled="loading" />
+			<NcTextField
+				v-model="duration"
+				type="number"
+				:label="t('opencatalogi', 'Duration in seconds (optional)')"
+				:disabled="loading" />
 		</div>
 
-		<NcNoteCard v-if="success" type="success">
-			<p>
-				{{
-					originalSelectedCount > 1
-						? t('opencatalogi', '{type}s successfully locked', {
-								type: t('opencatalogi', 'Publication'),
-							})
-						: t('opencatalogi', '{type} successfully locked', {
-								type: t('opencatalogi', 'Publication'),
-							})
-				}}
-			</p>
-		</NcNoteCard>
-		<NcNoteCard v-if="error" type="error">
-			<p>{{ error }}</p>
-		</NcNoteCard>
-
-		<template #actions>
-			<NcButton @click="closeDialog">
-				<template #icon>
-					<Cancel :size="20" />
-				</template>
-				{{
-					success === null
-						? t('opencatalogi', 'Cancel')
-						: t('opencatalogi', 'Close')
-				}}
-			</NcButton>
-			<NcButton
-				v-if="success === null"
-				:disabled="
-					loading || (objectStore.selectedObjects?.length || 0) === 0
-				"
-				variant="primary"
-				@click="lockObjects()">
-				<template #icon>
-					<NcLoadingIcon v-if="loading" :size="20" />
-					<LockOutline v-if="!loading" :size="20" />
-				</template>
-				{{ t('opencatalogi', 'Lock') }}
-			</NcButton>
+		<template #icon>
+			<LockOutline :size="20" />
 		</template>
-	</NcDialog>
+	</MassObjectActionDialog>
 </template>
 
 <script>
-import {
-	NcButton,
-	NcDialog,
-	NcLoadingIcon,
-	NcNoteCard,
-	NcTextField,
-} from '@nextcloud/vue'
-import Cancel from 'vue-material-design-icons/Cancel.vue'
+import { NcNoteCard, NcTextField } from '@nextcloud/vue'
 import LockOutline from 'vue-material-design-icons/LockOutline.vue'
 import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
+import MassObjectActionDialog from './MassObjectActionDialog.vue'
+import { objectStore } from '../../store/store.js'
+import massObjectAction from './massObjectAction.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -107,29 +70,17 @@ import SelectedObjectsList from '../../components/SelectedObjectsList.vue'
 export default {
 	name: 'MassLockObjects',
 	components: {
-		NcDialog,
-		NcButton,
-		NcLoadingIcon,
+		MassObjectActionDialog,
 		NcNoteCard,
 		NcTextField,
 		SelectedObjectsList,
-		// Icons
 		LockOutline,
-		Cancel,
 	},
 
-	props: {
-		// No props needed - always uses selected objects from store
-	},
+	mixins: [massObjectAction],
 
 	data() {
 		return {
-			success: null,
-			loading: false,
-			error: false,
-			result: null,
-			closeModalTimeout: null,
-			originalSelectedCount: 0,
 			process: '',
 			duration: 3600,
 		}
@@ -161,68 +112,22 @@ export default {
 		},
 	},
 
-	mounted() {
-		this.initializeSelection()
-	},
-
 	methods: {
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
-		initializeSelection() {
-			// Store the original count for success message
-			this.originalSelectedCount = objectStore.selectedObjects?.length || 0
-		},
-
-		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
-		closeDialog() {
-			// Clear any pending timeout that might reopen the dialog
-			if (this.closeModalTimeout) {
-				clearTimeout(this.closeModalTimeout)
-				this.closeModalTimeout = null
-			}
-			navigationStore.setDialog(false)
-		},
-
-		/**
-		 * @param isOpen
-		 * @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4
-		 */
-		handleDialogClose(isOpen) {
-			if (!isOpen) {
-				this.closeDialog()
-			}
-		},
-
 		/** @spec openspec/changes/retrofit-2026-05-26-mass-object-actions/tasks.md#task-4 */
 		async lockObjects() {
 			this.loading = true
 
 			try {
-				// Get the objects to lock
-				const objectsToProcess = [...this.objectsToLock]
-
-				// Use the store's mass lock method
-				const { successful, failed } = await objectStore.massLockObjects(
-					objectsToProcess,
+				const result = await objectStore.massLockObjects(
+					[...this.objectsToLock],
 					this.process || null,
 					this.duration || null,
 				)
-
-				if (successful.length > 0) {
-					this.success = true
-					// Refresh publications using catalogStore
-					catalogStore.fetchPublications()
-
-					// Only auto-close if there are no failures
-					if (failed.length === 0) {
-						this.closeModalTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-					}
-				}
-
-				if (failed.length > 0) {
-					this.error = `Failed to lock ${failed.length} object${failed.length > 1 ? 's' : ''}`
-				}
+				this.finishMassAction(
+					result,
+					(count) =>
+						`Failed to lock ${count} object${count > 1 ? 's' : ''}`,
+				)
 			} catch (error) {
 				this.success = false
 				this.error =
@@ -236,16 +141,6 @@ export default {
 </script>
 
 <style scoped>
-.lock-step {
-	padding: 0;
-}
-
-.step-title {
-	margin-top: 0 !important;
-	margin-bottom: 16px;
-	color: var(--color-main-text);
-}
-
 .formContainer {
 	margin-top: 1rem;
 	display: flex;
