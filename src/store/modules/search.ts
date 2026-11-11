@@ -96,24 +96,139 @@ function appendFacetCategory(
 		return
 	}
 	if (category === '@self') {
-		Object.entries(facets as Record<string, ActiveFacetConfig>).forEach(
-			([field, config]) => {
-				console.log(`🎛️ Processing @self field: "${field}", config:`, config)
-				appendFacetParams(searchParams, {
-					prefix: `_facets[@self][${field}]`,
-					config: config as unknown as Record<string, unknown>,
-					kind: 'metadata',
-				})
-			},
-		)
+		appendSelfFacets(searchParams, facets as Record<string, ActiveFacetConfig>)
 		return
 	}
+	appendObjectFieldFacet(searchParams, [category, facets])
+}
+
+/**
+ * Append the facet query of one object field.
+ *
+ * @param searchParams The params to extend
+ * @param entry The field name and its facet config
+ * @spec openspec/specs/search/spec.md
+ */
+function appendObjectFieldFacet(
+	searchParams: URLSearchParams,
+	[category, facets]: [string, object],
+): void {
 	console.log(`🎛️ Processing object field: "${category}", config:`, facets)
 	appendFacetParams(searchParams, {
 		prefix: `_facets[${category}]`,
 		config: facets as Record<string, unknown>,
 		kind: 'object field',
 	})
+}
+
+/**
+ * Append the facet queries of the `@self` metadata fields.
+ *
+ * @param searchParams The params to extend
+ * @param facets The metadata fields and their facet configs
+ * @spec openspec/specs/search/spec.md
+ */
+function appendSelfFacets(
+	searchParams: URLSearchParams,
+	facets: Record<string, ActiveFacetConfig>,
+): void {
+	Object.entries(facets).forEach(([field, config]) => {
+		console.log(`🎛️ Processing @self field: "${field}", config:`, config)
+		appendFacetParams(searchParams, {
+			prefix: `_facets[@self][${field}]`,
+			config: config as unknown as Record<string, unknown>,
+			kind: 'metadata',
+		})
+	})
+}
+
+/**
+ * What a search response's pagination falls back to, field by field, when
+ * the response leaves a value out (or sends a falsy one).
+ */
+const PAGINATION_FALLBACK = { page: 1, pages: 1, total: 0, limit: 20, offset: 0 }
+
+/**
+ * The pagination of a search response, with the fallbacks filled in.
+ *
+ * @param data The response body
+ * @return The pagination
+ */
+function paginationFrom(data: SearchResponse): typeof PAGINATION_FALLBACK {
+	const values = data as unknown as Record<string, number | undefined>
+	return Object.fromEntries(
+		Object.entries(PAGINATION_FALLBACK).map(([key, fallback]) => [
+			key,
+			values[key] || fallback,
+		]),
+	) as typeof PAGINATION_FALLBACK
+}
+
+/**
+ * The message shown for a failed search: the error's own message, or a fixed text.
+ *
+ * @param error What the search threw
+ * @return The message
+ */
+function searchFailureMessage(error: unknown): string {
+	return (
+		(error instanceof Error && error.message)
+		|| 'An error occurred while searching'
+	)
+}
+
+/** Which related publications to fetch, and with which query parameters. */
+interface RelationQuery {
+	relation: 'uses' | 'used'
+	params: Record<string, string | number | boolean>
+}
+
+/**
+ * The federation path of a publication's related publications, with the query.
+ *
+ * @param publicationId The ID of the publication
+ * @param query Which relation, and the query parameters
+ * @return The path and query string
+ */
+function relationPath(publicationId: string, query: RelationQuery): string {
+	const searchParams = new URLSearchParams(
+		query.params as Record<string, string>,
+	)
+	return `/${publicationId}/${query.relation}?${searchParams.toString()}`
+}
+
+/** What is logged after fetching each kind of related publications. */
+const RELATION_LOG = {
+	uses: {
+		fetched: 'Publication uses fetched:',
+		failed: 'Failed to fetch publication uses:',
+	},
+	used: {
+		fetched: 'Publication used by fetched:',
+		failed: 'Failed to fetch publication used by:',
+	},
+}
+
+/**
+ * Fetch the publications a publication uses, or the ones that use it.
+ *
+ * @param publicationId The ID of the publication
+ * @param query Which relation, and the query parameters
+ * @return The parsed body
+ */
+async function fetchPublicationRelation(
+	publicationId: string,
+	query: RelationQuery,
+) {
+	const log = RELATION_LOG[query.relation]
+	try {
+		const data = await getFederationJson(relationPath(publicationId, query))
+		console.log(log.fetched, data)
+		return data
+	} catch (error) {
+		console.error(log.failed, error)
+		throw error
+	}
 }
 
 /**
@@ -742,20 +857,28 @@ export const useSearchStore = defineStore('search', {
 			this.error = null
 
 			try {
-				const searchParams = this.buildSearchParams(params)
-				this.logSearchDebug(searchParams)
-				const data = await fetchFederationSearch(searchParams)
-				this.applySearchResults(data)
-				this.logSearchResults(data)
+				await this.runSearch(params)
 			} catch (error) {
 				console.error('Search failed:', error)
-				this.error =
-					(error instanceof Error && error.message)
-					|| 'An error occurred while searching'
+				this.error = searchFailureMessage(error)
 				this.resetSearchResults()
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * One search round trip: build the query, fetch it and store the answer.
+		 *
+		 * @param params Optional search parameters
+		 * @spec openspec/specs/search/spec.md
+		 */
+		async runSearch(params: Record<string, string | number | boolean>) {
+			const searchParams = this.buildSearchParams(params)
+			this.logSearchDebug(searchParams)
+			const data = await fetchFederationSearch(searchParams)
+			this.applySearchResults(data)
+			this.logSearchResults(data)
 		},
 
 		/**
@@ -860,13 +983,7 @@ export const useSearchStore = defineStore('search', {
 		 */
 		applySearchResults(data: SearchResponse) {
 			this.searchResults = data.results || []
-			this.pagination = {
-				page: data.page || 1,
-				pages: data.pages || 1,
-				total: data.total || 0,
-				limit: data.limit || 20,
-				offset: data.offset || 0,
-			}
+			this.pagination = paginationFrom(data)
 			this.facets = data.facets || {}
 			this.facetable = data.facetable || {}
 		},
@@ -945,19 +1062,7 @@ export const useSearchStore = defineStore('search', {
 			publicationId: string,
 			params: Record<string, string | number | boolean> = {},
 		) {
-			try {
-				const searchParams = new URLSearchParams(
-					params as Record<string, string>,
-				)
-				const data = await getFederationJson(
-					`/${publicationId}/uses?${searchParams.toString()}`,
-				)
-				console.log('Publication uses fetched:', data)
-				return data
-			} catch (error) {
-				console.error('Failed to fetch publication uses:', error)
-				throw error
-			}
+			return fetchPublicationRelation(publicationId, { relation: 'uses', params })
 		},
 
 		/**
@@ -975,19 +1080,7 @@ export const useSearchStore = defineStore('search', {
 			publicationId: string,
 			params: Record<string, string | number | boolean> = {},
 		) {
-			try {
-				const searchParams = new URLSearchParams(
-					params as Record<string, string>,
-				)
-				const data = await getFederationJson(
-					`/${publicationId}/used?${searchParams.toString()}`,
-				)
-				console.log('Publication used by fetched:', data)
-				return data
-			} catch (error) {
-				console.error('Failed to fetch publication used by:', error)
-				throw error
-			}
+			return fetchPublicationRelation(publicationId, { relation: 'used', params })
 		},
 
 		/**
