@@ -155,6 +155,86 @@ async function fetchFederationSearch(
 	return getFederationJson(`?${searchParams.toString()}`)
 }
 
+/** What a facet toggle asks for. */
+interface FacetToggle {
+	facetType: string
+	enabled: boolean
+	config: Record<string, string | number | boolean>
+}
+
+/** The part of the search store the facet toggle steps use. */
+interface FacetStore {
+	activeFacets: Record<string, ActiveFacetConfig>
+	searchPublications: () => unknown
+}
+
+/**
+ * Log a facet toggle call, quoting string names so empty ones show.
+ *
+ * @param fieldName - The field name
+ * @param toggle - The facet type, whether it is enabled and its config
+ */
+function logFacetToggle(fieldName: string, toggle: FacetToggle): void {
+	console.log('🔧 toggleActiveFacet called with:', {
+		fieldName: typeof fieldName === 'string' ? `"${fieldName}"` : fieldName,
+		facetType:
+			typeof toggle.facetType === 'string'
+				? `"${toggle.facetType}"`
+				: toggle.facetType,
+		enabled: toggle.enabled,
+		config: toggle.config,
+		fieldNameType: typeof fieldName,
+		facetTypeType: typeof toggle.facetType,
+	})
+}
+
+/**
+ * Enable a facet and log it.
+ *
+ * @param store - The search store
+ * @param added - The field name and its facet
+ */
+function addActiveFacet(
+	store: FacetStore,
+	added: { fieldName: string, facet: ActiveFacetConfig },
+): void {
+	store.activeFacets[added.fieldName] = added.facet
+	console.log(
+		'✅ Added active facet:',
+		added.fieldName,
+		'=',
+		store.activeFacets[added.fieldName],
+	)
+}
+
+/**
+ * Disable a facet, replacing the facets object, and log it.
+ *
+ * @param store - The search store
+ * @param fieldName - The field name
+ */
+function removeActiveFacet(store: FacetStore, fieldName: string): void {
+	const remainingFacets = { ...store.activeFacets }
+	delete remainingFacets[fieldName]
+	store.activeFacets = remainingFacets
+	console.log('❌ Removed active facet:', fieldName)
+}
+
+/**
+ * Search to get the facet buckets while any facet is active.
+ *
+ * @param store - The search store
+ */
+function searchForFacetBuckets(store: FacetStore): void {
+	if (Object.keys(store.activeFacets).length > 0) {
+		console.log(
+			'🔍 Triggering search to get facet buckets for:',
+			Object.keys(store.activeFacets),
+		)
+		store.searchPublications()
+	}
+}
+
 interface SearchState {
 	// Search parameters
 	searchTerm: string
@@ -557,45 +637,20 @@ export const useSearchStore = defineStore('search', {
 			enabled: boolean,
 			config: Record<string, string | number | boolean> = {},
 		) {
-			console.log('🔧 toggleActiveFacet called with:', {
-				fieldName:
-					typeof fieldName === 'string' ? `"${fieldName}"` : fieldName,
-				facetType:
-					typeof facetType === 'string' ? `"${facetType}"` : facetType,
-				enabled,
-				config,
-				fieldNameType: typeof fieldName,
-				facetTypeType: typeof facetType,
-			})
+			const toggle = { facetType, enabled, config }
+			logFacetToggle(fieldName, toggle)
 
 			if (enabled) {
-				this.activeFacets[fieldName] = {
-					type: facetType,
-					config,
-				}
-				console.log(
-					'✅ Added active facet:',
+				addActiveFacet(this, {
 					fieldName,
-					'=',
-					this.activeFacets[fieldName],
-				)
+					facet: { type: facetType, config },
+				})
 			} else {
-				const remainingFacets = { ...this.activeFacets }
-				delete remainingFacets[fieldName]
-				this.activeFacets = remainingFacets
-				console.log('❌ Removed active facet:', fieldName)
+				removeActiveFacet(this, fieldName)
 			}
 
 			console.log('📋 All active facets after update:', this.activeFacets)
-
-			// Automatically trigger search when facets change to get facet buckets
-			if (Object.keys(this.activeFacets).length > 0) {
-				console.log(
-					'🔍 Triggering search to get facet buckets for:',
-					Object.keys(this.activeFacets),
-				)
-				this.searchPublications()
-			}
+			searchForFacetBuckets(this)
 		},
 
 		/**
