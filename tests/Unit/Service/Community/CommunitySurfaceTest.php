@@ -7,6 +7,7 @@ namespace Unit\Service\Community;
 use DateTimeImmutable;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\StatusChange;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
@@ -49,14 +50,30 @@ class CommunitySurfaceTest extends TestCase {
 		return new DateTimeImmutable($when, new DateTimeZone('UTC'));
 	}//end at()
 
+	/**
+	 * A state change set by the administrator.
+	 *
+	 * @param string $component The component.
+	 * @param string $state The state.
+	 * @param string $message The message.
+	 *
+	 * @return StatusChange
+	 */
+	private function change(string $component, string $state, string $message): StatusChange {
+		$change = new StatusChange();
+		$change->component = $component;
+		$change->state = $state;
+		$change->message = $message;
+		$change->setBy = 'beheerder';
+
+		return $change;
+	}//end change()
+
 	public function testAReaderSeesWhatIsDownWithItsMessage(): void {
 		$page = $this->status->render(
 			components: [
 				$this->status->setState(
-					component: 'DigiD',
-					state: 'unavailable',
-					message: 'Inloggen met DigiD werkt tijdelijk niet.',
-					setBy: 'beheerder',
+					change: $this->change(component: 'DigiD', state: 'unavailable', message: 'Inloggen met DigiD werkt tijdelijk niet.'),
 					now: $this->at('2026-09-18T09:00:00+00:00')
 				),
 			],
@@ -116,7 +133,7 @@ class CommunitySurfaceTest extends TestCase {
 	public function testAStateOutsideTheKnownSetIsRefused(): void {
 		$this->expectException(DomainException::class);
 
-		$this->status->setState(component: 'DigiD', state: 'probably-fine', message: '', setBy: 'a');
+		$this->status->setState(change: $this->change(component: 'DigiD', state: 'probably-fine', message: ''));
 
 	}//end testAStateOutsideTheKnownSetIsRefused()
 
@@ -184,6 +201,68 @@ class CommunitySurfaceTest extends TestCase {
 		$this->banners->validate(banner: ['body' => 'Iets', 'startDate' => '2026-09-18', 'endDate' => 'ooit']);
 
 	}//end testABannerWithNoReadableEndDateIsRefused()
+
+	/**
+	 * Every refusal validate() can give, with its exact message, and the
+	 * defaults it stores on an accepted banner.
+	 */
+	public function testValidateRefusesEachFaultByNameAndDefaultsTheRest(): void {
+		$period = ['startDate' => '2026-09-18T00:00:00+00:00', 'endDate' => '2026-09-20T00:00:00+00:00'];
+		$refusals = [
+			'A banner needs something to say.' => ['body' => '  '] + $period,
+			'A banner needs a period this app can read. A banner with no readable end date never stops showing.' => [
+				'body' => 'Iets',
+				'startDate' => 'gisteren',
+				'endDate' => '2026-09-20',
+			],
+			'A banner cannot end before it starts.' => [
+				'body' => 'Iets',
+				'startDate' => '2026-09-20T00:00:00+00:00',
+				'endDate' => '2026-09-18T00:00:00+00:00',
+			],
+			'A banner cannot have severity "loud".' => ['body' => 'Iets', 'severity' => 'loud'] + $period,
+		];
+		foreach ($refusals as $message => $banner) {
+			try {
+				$this->banners->validate(banner: $banner);
+				$this->fail('No refusal for: ' . $message);
+			} catch (DomainException $e) {
+				$this->assertSame($message, $e->getMessage());
+			}
+		}
+
+		$this->assertSame(
+			['body' => 'Iets'] + $period + ['severity' => 'info', 'dismissable' => true],
+			$this->banners->validate(banner: ['body' => 'Iets'] + $period)
+		);
+		$this->assertSame(
+			['body' => 'Iets', 'severity' => 'warning', 'dismissable' => false] + $period,
+			$this->banners->validate(banner: ['body' => 'Iets', 'severity' => 'warning', 'dismissable' => 0] + $period)
+		);
+
+	}//end testValidateRefusesEachFaultByNameAndDefaultsTheRest()
+
+	/**
+	 * forUser keeps the given order, skips entries that are not banners and
+	 * banners outside their period, and matches dismissals by string id.
+	 */
+	public function testForUserKeepsOrderAndSkipsWhatIsNotShown(): void {
+		$period = ['startDate' => '2026-09-18T00:00:00+00:00', 'endDate' => '2026-09-20T00:00:00+00:00'];
+		$first = ['id' => 7, 'body' => 'Een'] + $period;
+		$second = ['id' => 'b2', 'body' => 'Twee'] + $period;
+		$third = ['body' => 'Zonder id'] + $period;
+		$expired = ['id' => 'b4', 'body' => 'Oud', 'startDate' => '2026-01-01T00:00:00+00:00', 'endDate' => '2026-01-02T00:00:00+00:00'];
+
+		$this->assertSame(
+			[$second, $third],
+			$this->banners->forUser(
+				banners: ['geen banner', $first, $expired, $second, $third],
+				dismissedIds: [7],
+				now: $this->at('2026-09-19T00:00:00+00:00')
+			)
+		);
+
+	}//end testForUserKeepsOrderAndSkipsWhatIsNotShown()
 
 	/**
 	 * Reusing `publication` for a storingsmelding would put it in the sitemap

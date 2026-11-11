@@ -39,8 +39,10 @@ use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
+use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -441,15 +443,20 @@ class ServiceCatalogueController extends Controller {
 			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 			$objectService = $this->catalogueService->getObjectService();
 			$local = $this->asArray(
-				object: $objectService->find(
-					id: $id,
-					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema'],
-					_rbac: false
+				object: ObjectInPair::require(
+					found: $objectService->find(
+						id: $id,
+						register: $caseTypeConfig['register'],
+						schema: $caseTypeConfig['schema'],
+						_rbac: false
+					),
+					config: $caseTypeConfig
 				)
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
+		} catch (DoesNotExistException $e) {
+			return new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}

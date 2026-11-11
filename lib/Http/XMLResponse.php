@@ -170,6 +170,18 @@ class XMLResponse extends Response {
 		// Build XML structure.
 		$this->buildXmlElement(element: $root, data: $data);
 
+		return $this->serialise(dom: $dom);
+	}//end arrayToXml()
+
+	/**
+	 * The document as text, with CR entities in hexadecimal and a space before
+	 * the slash of every empty tag.
+	 *
+	 * @param DOMDocument $dom The built document.
+	 *
+	 * @return string The XML.
+	 */
+	private function serialise(DOMDocument $dom): string {
 		// Get XML output.
 		$xmlOutput = $dom->saveXML();
 		if ($xmlOutput === false) {
@@ -180,10 +192,8 @@ class XMLResponse extends Response {
 		$xmlOutput = str_replace('&#13;', '&#xD;', $xmlOutput);
 
 		// Format empty tags to have a space before the closing bracket.
-		$xmlOutput = preg_replace('/<([^>]*)\/>/', '<$1 />', $xmlOutput);
-
-		return $xmlOutput;
-	}//end arrayToXml()
+		return preg_replace('/<([^>]*)\/>/', '<$1 />', $xmlOutput);
+	}//end serialise()
 
 	/**
 	 * Build an XML element with attributes and children in order.
