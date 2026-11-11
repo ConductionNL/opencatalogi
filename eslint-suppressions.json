@@ -93,18 +93,12 @@
     "@nextcloud/l10n-enforce-ellipsis": {
       "count": 1
     },
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
-    },
     "vue/prefer-define-options": {
       "count": 1
     }
   },
   "src/dialogs/category/DeleteMultipleCategoriesDialog.vue": {
     "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
-    "@nextcloud/no-deprecated-library-props": {
       "count": 1
     },
     "vue/prefer-define-options": {
@@ -114,9 +108,6 @@
   "src/dialogs/generic/CopyObjectDialog.vue": {
     "@nextcloud/l10n-enforce-ellipsis": {
       "count": 2
-    },
-    "@nextcloud/no-deprecated-library-props": {
-      "count": 1
     },
     "vue/prefer-define-options": {
       "count": 1
@@ -187,9 +178,6 @@
   },
   "src/dialogs/theme/DeleteMultipleThemesDialog.vue": {
     "@nextcloud/l10n-enforce-ellipsis": {
-      "count": 1
-    },
-    "@nextcloud/no-deprecated-library-props": {
       "count": 1
     },
     "vue/prefer-define-options": {
