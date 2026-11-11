@@ -644,6 +644,130 @@ function isBareFetch(params) {
 }
 
 /**
+ * Object types that are not indexed in Solr and are read from the database.
+ */
+const NON_INDEXED_TYPES = [
+	'menu',
+	'page',
+	'glossary',
+	'theme',
+	'organization',
+	'listing',
+	'catalog',
+	'audit-trails',
+	'uses',
+	'used',
+	'files',
+]
+
+/**
+ * Query params for a collection fetch: the caller's params plus the default
+ * `_extend`, and `_source=database` for non-indexed types without a source.
+ *
+ * @param {string} type The object type.
+ * @param {object} params The caller's params.
+ * @return {object} The query params.
+ */
+function collectionQueryParams(type, params) {
+	const queryParams = {
+		...params,
+		_extend: params?._extend || params?.extend || '@self.schema',
+	}
+	if (
+		NON_INDEXED_TYPES.includes(type)
+		&& !params?._source
+		&& !params?.source
+	) {
+		queryParams._source = 'database'
+	}
+	return queryParams
+}
+
+/**
+ * Pagination of a collection response, in the legacy 7-field shape.
+ *
+ * @param {object} data The collection response.
+ * @return {{total: number, page: number, pages: number, limit: number, next: string|null, prev: string|null}} The pagination.
+ */
+function collectionPagination(data) {
+	return {
+		total: data.total || 0,
+		page: data.page || 1,
+		pages:
+			data.pages
+			|| (data.next
+				? Math.ceil((data.total || 0) / (data.limit || 20))
+				: 1),
+		limit: data.limit || 20,
+		next: data.next || null,
+		prev: data.prev || null,
+	}
+}
+
+/**
+ * Facets of a collection response as `{ key: { values: [{value, count}] } }`.
+ * Facets without buckets are dropped.
+ *
+ * @param {object} facets The response facets.
+ * @return {object} The transformed facets.
+ */
+function transformFacets(facets) {
+	const transformed = {}
+	for (const [key, facet] of Object.entries(facets)) {
+		const buckets = facet.buckets || facet.data?.buckets
+		if (buckets) {
+			transformed[key] = {
+				values: buckets.map((b) => ({
+					value: b.key ?? b.value,
+					count: b.count || 0,
+				})),
+			}
+		}
+	}
+	return transformed
+}
+
+/**
+ * Mirror a fetched collection into the inner store so any lib-aware
+ * component that reads inner.collections sees the latest set. Mirror errors
+ * are non-blocking: the outer store is the source of truth for
+ * opencatalogi's Vue files.
+ *
+ * @param {object} store The object store.
+ * @param {{type: string, data: object, pagination: object}} fetched The type, response and pagination.
+ * @return {void}
+ */
+function mirrorCollectionIntoInner(store, { type, data, pagination }) {
+	try {
+		store._ensureInnerType(type)
+		const inner = store._inner()
+		inner.collections = {
+			...inner.collections,
+			[type]: data.results || [],
+		}
+		inner.pagination = {
+			...inner.pagination,
+			[type]: {
+				total: pagination.total,
+				page: pagination.page,
+				pages: pagination.pages,
+				limit: pagination.limit,
+			},
+		}
+		if (data.facets) {
+			const transformed = transformFacets(data.facets)
+			inner.facets = { ...inner.facets, [type]: transformed }
+			store.facets = { ...store.facets, [type]: transformed }
+		}
+	} catch (mirrorErr) {
+		console.warn(
+			`Inner-store mirror skipped for ${type}:`,
+			mirrorErr.message,
+		)
+	}
+}
+
+/**
  * Whether a type config names both a schema and a register.
  *
  * @param {object|null|undefined} config - The type config
@@ -1759,101 +1883,25 @@ export const useObjectStore = defineStore('object', {
 					await this.fetchSettings()
 				}
 
-				const queryParams = {
-					...params,
-					_extend: params?._extend || params?.extend || '@self.schema',
-				}
-
-				// Add _source=database for types that aren't indexed in Solr
-				const nonIndexedTypes = [
-					'menu',
-					'page',
-					'glossary',
-					'theme',
-					'organization',
-					'listing',
-					'catalog',
-					'audit-trails',
-					'uses',
-					'used',
-					'files',
-				]
-				if (
-					nonIndexedTypes.includes(type)
-					&& !params?._source
-					&& !params?.source
-				) {
-					queryParams._source = 'database'
-				}
-
 				const response = await fetch(
-					this._constructApiUrl(type, null, null, queryParams),
+					this._constructApiUrl(
+						type,
+						null,
+						null,
+						collectionQueryParams(type, params),
+					),
 				)
 				if (!response.ok)
 					throw new Error(`Failed to fetch ${type} collection`)
 
 				const data = await response.json()
 
-				// Update pagination info — keep the legacy 7-field shape
-				const paginationInfo = {
-					total: data.total || 0,
-					page: data.page || 1,
-					pages:
-						data.pages
-						|| (data.next
-							? Math.ceil((data.total || 0) / (data.limit || 20))
-							: 1),
-					limit: data.limit || 20,
-					next: data.next || null,
-					prev: data.prev || null,
-				}
-				this.setPagination(type, paginationInfo)
+				const pagination = collectionPagination(data)
+				this.setPagination(type, pagination)
 
 				// Set the collection using the existing mutator (preserves shape)
 				this.setCollection(type, data.results, append)
-
-				// Mirror the same data into the inner store so any lib-aware
-				// component that reads inner.collections sees the latest set.
-				try {
-					this._ensureInnerType(type)
-					const inner = this._inner()
-					inner.collections = {
-						...inner.collections,
-						[type]: data.results || [],
-					}
-					inner.pagination = {
-						...inner.pagination,
-						[type]: {
-							total: paginationInfo.total,
-							page: paginationInfo.page,
-							pages: paginationInfo.pages,
-							limit: paginationInfo.limit,
-						},
-					}
-					if (data.facets) {
-						const transformed = {}
-						for (const [key, facet] of Object.entries(data.facets)) {
-							if (facet.buckets || facet.data?.buckets) {
-								const buckets = facet.buckets || facet.data.buckets
-								transformed[key] = {
-									values: buckets.map((b) => ({
-										value: b.key ?? b.value,
-										count: b.count || 0,
-									})),
-								}
-							}
-						}
-						inner.facets = { ...inner.facets, [type]: transformed }
-						this.facets = { ...this.facets, [type]: transformed }
-					}
-				} catch (mirrorErr) {
-					// Mirror errors are non-blocking — the outer store is the
-					// source of truth for opencatalogi's Vue files.
-					console.warn(
-						`Inner-store mirror skipped for ${type}:`,
-						mirrorErr.message,
-					)
-				}
+				mirrorCollectionIntoInner(this, { type, data, pagination })
 
 				// Update outer per-id objects cache with extended data
 				if (!this.objects[type]) {
