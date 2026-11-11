@@ -32,7 +32,7 @@ import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
 import { listedCatalogSlug } from '../../services/publicationCatalogSlug.js'
-import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
+import { LIST_WIDGET_OPTIONS, navigateTo } from './widgetTable.js'
 
 // The row's leading icon renders through CnDataTable's shared CnIcon
 // registry; MDI icons use currentColor, so light/dark theming is automatic
@@ -56,19 +56,7 @@ export default {
 		NcEmptyContent,
 	},
 
-	props: {
-		title: {
-			type: String,
-			required: true,
-		},
-	},
-
-	data() {
-		return {
-			loading: false,
-			columns: LIST_COLUMNS,
-		}
-	},
+	...LIST_WIDGET_OPTIONS,
 
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
@@ -85,10 +73,6 @@ export default {
 					publication,
 				}))
 		},
-	},
-
-	mounted() {
-		this.fetchData()
 	},
 
 	methods: {

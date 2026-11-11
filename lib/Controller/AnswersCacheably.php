@@ -78,19 +78,8 @@ trait AnswersCacheably {
 			return $response;
 		}
 
-		try {
-			$signedIn = $this->container->get(IUserSession::class)->isLoggedIn();
-			$seconds = (int)$this->container->get(IAppConfig::class)->getValueString(
-				$this->appName,
-				'public_api_cache_seconds',
-				'60'
-			);
-		} catch (\Throwable $e) {
-			$signedIn = true;
-			$seconds = 0;
-		}
-
-		if ($signedIn === true) {
+		$seconds = $this->anonymousCacheSeconds();
+		if ($seconds === null) {
 			$response->addHeader('Cache-Control', 'private, no-store');
 			return $response;
 		}
@@ -106,8 +95,44 @@ trait AnswersCacheably {
 			return $response;
 		}
 
-		$seconds = min($seconds, $this->publicCacheCeiling());
+		return $this->cachedPublicly(response: $response, seconds: min($seconds, $this->publicCacheCeiling()));
+	}//end cacheableForCaller()
 
+	/**
+	 * The configured cache time for an anonymous caller, or null for a caller
+	 * who is signed in or whose session or configuration cannot be read.
+	 *
+	 * @return integer|null The cache time in seconds, uncapped.
+	 */
+	private function anonymousCacheSeconds(): ?int {
+		try {
+			$signedIn = $this->container->get(IUserSession::class)->isLoggedIn();
+			$seconds = (int)$this->container->get(IAppConfig::class)->getValueString(
+				$this->appName,
+				'public_api_cache_seconds',
+				'60'
+			);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if ($signedIn === true) {
+			return null;
+		}
+
+		return $seconds;
+	}//end anonymousCacheSeconds()
+
+	/**
+	 * Mark an anonymous 200 answer publicly cacheable with a weak tag over its
+	 * body, and turn it into a 304 when the caller already holds that tag.
+	 *
+	 * @param JSONResponse $response The answer.
+	 * @param integer $seconds The capped cache time.
+	 *
+	 * @return JSONResponse The answer with its cache headers, or a 304.
+	 */
+	private function cachedPublicly(JSONResponse $response, int $seconds): JSONResponse {
 		$etag = 'W/"' . sha1((string)json_encode($response->getData())) . '"';
 		$cacheControl = 'public, max-age=' . $seconds . ', must-revalidate';
 
@@ -121,7 +146,7 @@ trait AnswersCacheably {
 		}
 
 		return $response;
-	}//end cacheableForCaller()
+	}//end cachedPublicly()
 
 	/**
 	 * The longest time, in seconds, a public answer may be kept.

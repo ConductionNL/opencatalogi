@@ -79,6 +79,20 @@ import {
  *
  * @spec openspec/specs/publication-usage-analytics/spec.md
  */
+/**
+ * The stats shown when they could not be loaded: nothing counted yet.
+ *
+ * @return {object} Fresh empty stats.
+ */
+function emptyStats() {
+	return {
+		views: 0,
+		downloads: 0,
+		series: [],
+		countingStart: null,
+	}
+}
+
 export default {
 	name: 'PublicationStatsPanel',
 	components: {
@@ -147,12 +161,7 @@ export default {
 			try {
 				this.stats = await fetchPublicationStats(this.publicationId)
 			} catch (e) {
-				this.stats = {
-					views: 0,
-					downloads: 0,
-					series: [],
-					countingStart: null,
-				}
+				this.stats = emptyStats()
 			} finally {
 				this.loading = false
 			}

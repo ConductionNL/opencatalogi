@@ -41,6 +41,13 @@ namespace OCA\OpenCatalogi\Service;
  * @spec openspec/changes/ooapi-catalog-publication/tasks.md#task-2-course-program-offering-schemas-x-ooapi-mapping-layer
  */
 class OoapiMappingService {
+
+	/**
+	 * Own properties the identity mapping never copies: the OR object envelope
+	 * and OpenCatalogi's catalog scoping metadata.
+	 */
+	private const ENVELOPE_FIELDS = ['@self', 'id', 'catalog'];
+
 	/**
 	 * Determine whether a schema declares an `x-ooapi` annotation at all.
 	 *
@@ -130,24 +137,7 @@ class OoapiMappingService {
 		$resource = [$idField => $this->resolveId(object: $object)];
 
 		if ($mapping === null) {
-			foreach ($object as $key => $value) {
-				// '@self'/'id' are the OR object envelope (the id is already set via
-				// $idField above); 'catalog' is OpenCatalogi-internal scoping metadata
-				// (the materialized object's owning catalog, design.md D6 addendum) —
-				// not part of the OOAPI 5.0 wire shape, so never leaked into the
-				// identity-mapped resource.
-				if ($key === '@self' || $key === 'id' || $key === 'catalog') {
-					continue;
-				}
-
-				if ($this->isEmpty(value: $value) === true) {
-					continue;
-				}
-
-				$resource[$key] = $value;
-			}
-
-			return $resource;
+			return array_replace($resource, $this->identityFields(object: $object));
 		}
 
 		foreach ($mapping as $outputPath => $sourcePath) {
@@ -161,6 +151,43 @@ class OoapiMappingService {
 
 		return $resource;
 	}//end buildResource()
+
+	/**
+	 * The object's own properties as the identity mapping copies them: every
+	 * non-empty value, in order, except the envelope and the catalog.
+	 *
+	 * @param array<string, mixed> $object The source object.
+	 *
+	 * @return array<string, mixed> The properties to copy.
+	 */
+	private function identityFields(array $object): array {
+		$fields = [];
+		foreach ($object as $key => $value) {
+			if ($this->isWireField(key: $key, value: $value) === true) {
+				$fields[$key] = $value;
+			}
+		}
+
+		return $fields;
+	}//end identityFields()
+
+	/**
+	 * Whether an own property belongs in the identity-mapped resource.
+	 *
+	 * '@self'/'id' are the OR object envelope (the id is already set via the
+	 * id field); 'catalog' is OpenCatalogi-internal scoping metadata (the
+	 * materialized object's owning catalog, design.md D6 addendum) — not part
+	 * of the OOAPI 5.0 wire shape, so never leaked into the resource. Empty
+	 * values are omitted, never emitted (OOAPI-005).
+	 *
+	 * @param int|string $key The property name.
+	 * @param mixed $value The property value.
+	 *
+	 * @return bool True when the property is copied.
+	 */
+	private function isWireField(int|string $key, mixed $value): bool {
+		return in_array($key, self::ENVELOPE_FIELDS, true) === false && $this->isEmpty(value: $value) === false;
+	}//end isWireField()
 
 	/**
 	 * Resolve an object's stable identity for the OOAPI resource id field.

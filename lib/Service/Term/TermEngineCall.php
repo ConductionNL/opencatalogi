@@ -1,10 +1,10 @@
 <?php
 
 /**
- * The operation objects OpenRegister's term engine takes for a Woo term.
+ * The operation objects OpenRegister's term engine takes for a statutory term.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\Term
  *
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
@@ -22,7 +22,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\Term;
 
 use DateTimeImmutable;
 use OCA\OpenRegister\Service\Flow\Timer\FlowTimerAct;
