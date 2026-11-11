@@ -1,0 +1,238 @@
+{
+    "works": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "in_progress",
+                "termTimer": "timer-1",
+                "dueAt": "2026-04-15T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1",
+                "extensionReason": "The request covers many documents."
+            },
+            "term": {
+                "timer": "timer-1",
+                "state": "running",
+                "dueAt": "2026-04-15T09:00:00+00:00",
+                "extended": true
+            }
+        },
+        "calls": [
+            [
+                "extendOnce",
+                "timer-1",
+                "The request covers many documents.",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1",
+            "dueAt": "2026-04-15T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionReason": "The request covers many documents."
+        }
+    },
+    "no rationale": {
+        "status": 400,
+        "data": {
+            "error": "rationale-required",
+            "message": "An extension records why it was granted."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "blank rationale": {
+        "status": 400,
+        "data": {
+            "error": "rationale-required",
+            "message": "An extension records why it was granted."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "unknown request": {
+        "status": 404,
+        "data": {
+            "error": "unknown-request"
+        },
+        "calls": [],
+        "stored": null
+    },
+    "no term": {
+        "status": 409,
+        "data": {
+            "error": "no-term",
+            "message": "This request has no statutory term, so there is nothing to extend."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "  "
+        }
+    },
+    "term missing": {
+        "status": 409,
+        "data": {
+            "error": "no-term",
+            "message": "This request has no statutory term, so there is nothing to extend."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress"
+        }
+    },
+    "padded term": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "decided",
+                "termTimer": " timer-9 ",
+                "dueAt": "2026-04-15T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1",
+                "extensionReason": "x"
+            },
+            "term": {
+                "timer": " timer-9 ",
+                "state": "running",
+                "dueAt": "2026-04-15T09:00:00+00:00",
+                "extended": true
+            }
+        },
+        "calls": [
+            [
+                "extendOnce",
+                " timer-9 ",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "decided",
+            "termTimer": " timer-9 ",
+            "dueAt": "2026-04-15T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionReason": "x"
+        }
+    },
+    "engine refuses": {
+        "status": 409,
+        "data": {
+            "error": "extension-refused",
+            "message": "already extended once"
+        },
+        "calls": [
+            [
+                "extendOnce",
+                "timer-1",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "engine unavailable": {
+        "status": 503,
+        "data": {
+            "error": "term-engine-unavailable",
+            "message": "no engine"
+        },
+        "calls": [
+            [
+                "extendOnce",
+                "timer-1",
+                "x",
+                "alice"
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    },
+    "no user": {
+        "status": 200,
+        "data": {
+            "request": {
+                "id": "req-1",
+                "reference": "WOO-2026-ABCDEF",
+                "status": "in_progress",
+                "termTimer": "timer-1",
+                "dueAt": "2026-04-15T09:00:00+00:00",
+                "extensionCount": 0,
+                "termBasis": "Woo art. 4.4 lid 1",
+                "extensionReason": "x"
+            },
+            "term": {
+                "timer": "timer-1",
+                "state": "running",
+                "dueAt": "2026-04-15T09:00:00+00:00",
+                "extended": true
+            }
+        },
+        "calls": [
+            [
+                "extendOnce",
+                "timer-1",
+                "x",
+                ""
+            ]
+        ],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1",
+            "dueAt": "2026-04-15T09:00:00+00:00",
+            "extensionCount": 0,
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionReason": "x"
+        }
+    },
+    "register unresolved": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Register configuration is not set for publication_register / woo_request_schema. Run the OpenCatalogi setup wizard or POST to /api/settings/load to initialise registers and schemas."
+        },
+        "calls": [],
+        "stored": {
+            "id": "req-1",
+            "reference": "WOO-2026-ABCDEF",
+            "status": "in_progress",
+            "termTimer": "timer-1"
+        }
+    }
+}
