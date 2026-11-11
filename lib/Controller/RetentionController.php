@@ -198,24 +198,9 @@ class RetentionController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function exportReport(): DataDownloadResponse|JSONResponse {
 		try {
-			$catalog = $this->request->getParam('catalog', null);
-			$from = $this->request->getParam('from', null);
-			$to = $this->request->getParam('to', null);
-
-			$catalogSlug = null;
-			if ($catalog !== null) {
-				$catalogSlug = (string)$catalog;
-			}
-
-			$fromValue = null;
-			if ($from !== null) {
-				$fromValue = (string)$from;
-			}
-
-			$toValue = null;
-			if ($to !== null) {
-				$toValue = (string)$to;
-			}
+			$catalogSlug = $this->textParam(name: 'catalog');
+			$fromValue = $this->textParam(name: 'from');
+			$toValue = $this->textParam(name: 'to');
 
 			$rows = $this->retentionService->buildReport(
 				catalogSlug: $catalogSlug,
@@ -230,4 +215,20 @@ class RetentionController extends Controller {
 		}//end try
 
 	}//end exportReport()
+
+	/**
+	 * A request parameter as text, or null when it is not given.
+	 *
+	 * @param string $name The parameter.
+	 *
+	 * @return string|null
+	 */
+	private function textParam(string $name): ?string {
+		$value = $this->request->getParam($name, null);
+		if ($value === null) {
+			return null;
+		}
+
+		return (string)$value;
+	}//end textParam()
 }//end class
