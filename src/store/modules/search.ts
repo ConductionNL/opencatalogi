@@ -121,6 +121,96 @@ function appendObjectFieldFacet(
 	})
 }
 
+/** The search context the facetable discovery runs in. */
+interface DiscoveryContext {
+	searchTerm: string
+	filters: Record<string, string | number | boolean>
+}
+
+/**
+ * The query of a facetable field discovery: the current term and filters, the
+ * discovery flags, no results, and `params` last so they win.
+ *
+ * @param context The current search term and filters
+ * @param params Extra parameters
+ * @return The query
+ * @spec openspec/specs/search/spec.md
+ */
+function facetableDiscoveryParams(
+	context: DiscoveryContext,
+	params: Record<string, string | number | boolean>,
+): URLSearchParams {
+	// Build search parameters for facetable discovery
+	return new URLSearchParams({
+		// Include current search context
+		...(context.searchTerm && { _search: context.searchTerm }),
+
+		// Request facetable field discovery
+		_facetable: 'true',
+		_aggregate: 'true',
+
+		// Limit to 0 for discovery only (no actual results needed)
+		_limit: '0',
+
+		// Add current filters to get contextual facetable fields
+		...context.filters,
+
+		// Add any additional parameters
+		...params,
+	} as Record<string, string>)
+}
+
+/**
+ * Ask the federation endpoint which fields can be faceted in this context.
+ *
+ * @param context The current search term and filters
+ * @param params Extra parameters
+ * @return The facetable fields, empty when the answer has none
+ * @spec openspec/specs/search/spec.md
+ */
+async function discoverFacetable(
+	context: DiscoveryContext,
+	params: Record<string, string | number | boolean>,
+): Promise<FacetableFields> {
+	const searchParams = facetableDiscoveryParams(context, params)
+
+	console.log(
+		'Discovering facetable fields with params:',
+		searchParams.toString(),
+	)
+
+	// Make API call to Federation endpoint for facetable discovery
+	const data = await fetchFederationSearch(searchParams)
+	return data.facetable || {}
+}
+
+/**
+ * Add one active facet to a facet query: a metadata facet under `@self`,
+ * an object field facet under its own name.
+ *
+ * @param facetQuery The facet query being built
+ * @param entry The field name and its active facet
+ * @spec openspec/specs/search/spec.md
+ */
+function addFacetToQuery(
+	facetQuery: Record<string, Record<string, ActiveFacetConfig> | ActiveFacetConfig>,
+	entry: [string, ActiveFacetConfig],
+): void {
+	const [fieldName, facetConfig] = entry
+	console.log(`🔨 Processing field: "${fieldName}", config:`, facetConfig)
+	const facet = { type: facetConfig.type, config: facetConfig.config }
+	if (fieldName.startsWith('@self.')) {
+		// Metadata facet
+		const metaField = fieldName.replace('@self.', '')
+		console.log(`📊 Adding metadata facet: "${metaField}" from field "${fieldName}"`)
+		;(facetQuery['@self'] as Record<string, ActiveFacetConfig>)[metaField] = facet
+		return
+	}
+	// Object field facet
+	console.log(`📦 Adding object field facet: "${fieldName}"`)
+	facetQuery[fieldName] = facet
+}
+
 /**
  * Append the facet queries of the `@self` metadata fields.
  *
@@ -692,35 +782,8 @@ export const useSearchStore = defineStore('search', {
 			this.facetsLoading = true
 
 			try {
-				// Build search parameters for facetable discovery
-				const searchParams = new URLSearchParams({
-					// Include current search context
-					...(this.searchTerm && { _search: this.searchTerm }),
-
-					// Request facetable field discovery
-					_facetable: 'true',
-					_aggregate: 'true',
-
-					// Limit to 0 for discovery only (no actual results needed)
-					_limit: '0',
-
-					// Add current filters to get contextual facetable fields
-					...this.filters,
-
-					// Add any additional parameters
-					...params,
-				})
-
-				console.log(
-					'Discovering facetable fields with params:',
-					searchParams.toString(),
-				)
-
-				// Make API call to Federation endpoint for facetable discovery
-				const data = await fetchFederationSearch(searchParams)
-
 				// Update facetable fields
-				this.facetable = data.facetable || {}
+				this.facetable = await discoverFacetable(this, params)
 
 				console.log('Facetable fields discovered:', this.facetable)
 			} catch (error) {
@@ -796,34 +859,8 @@ export const useSearchStore = defineStore('search', {
 				'@self': {},
 			}
 
-			Object.entries(this.activeFacets).forEach(
-				([fieldName, facetConfig]: [string, ActiveFacetConfig]) => {
-					console.log(
-						`🔨 Processing field: "${fieldName}", config:`,
-						facetConfig,
-					)
-
-					if (fieldName.startsWith('@self.')) {
-						// Metadata facet
-						const metaField = fieldName.replace('@self.', '')
-						console.log(
-							`📊 Adding metadata facet: "${metaField}" from field "${fieldName}"`,
-						)
-						;(facetQuery['@self'] as Record<string, ActiveFacetConfig>)[
-							metaField
-						] = {
-							type: facetConfig.type,
-							config: facetConfig.config,
-						}
-					} else {
-						// Object field facet
-						console.log(`📦 Adding object field facet: "${fieldName}"`)
-						facetQuery[fieldName] = {
-							type: facetConfig.type,
-							config: facetConfig.config,
-						}
-					}
-				},
+			Object.entries(this.activeFacets).forEach((entry) =>
+				addFacetToQuery(facetQuery, entry as [string, ActiveFacetConfig]),
 			)
 
 			console.log('🎯 Final facet query built:', facetQuery)
