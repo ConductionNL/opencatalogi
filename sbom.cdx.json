@@ -2,10 +2,8 @@
   "$schema": "http://cyclonedx.org/schema/bom-1.5.schema.json",
   "bomFormat": "CycloneDX",
   "specVersion": "1.5",
-  "serialNumber": "urn:uuid:b7c3b784-2a8c-4a1b-a2a0-0e4572750b03",
   "version": 1,
   "metadata": {
-    "timestamp": "2026-11-11T17:27:46Z",
     "tools": [
       {
         "name": "composer",
@@ -82,10 +80,10 @@
       }
     ],
     "component": {
-      "bom-ref": "conductionnl/opencatalogi-dev-development",
+      "bom-ref": "conductionnl/opencatalogi-1.0.0.0",
       "type": "application",
       "name": "opencatalogi",
-      "version": "dev-development",
+      "version": "1.0.0",
       "group": "conductionnl",
       "description": "This is a DSO Nextcloud project for the municipality Buren and is done by ConductionNL",
       "author": "Conduction b.v., Remko Huisman (Conduction), Ruben van der Linde (Conduction)",
@@ -96,16 +94,8 @@
           }
         }
       ],
-      "purl": "pkg:composer/conductionnl/opencatalogi@dev-development",
+      "purl": "pkg:composer/conductionnl/opencatalogi@1.0.0",
       "properties": [
-        {
-          "name": "cdx:composer:package:distReference",
-          "value": "ed604e8473b83206d16afae3c8d3235d8cde9d45"
-        },
-        {
-          "name": "cdx:composer:package:sourceReference",
-          "value": "ed604e8473b83206d16afae3c8d3235d8cde9d45"
-        },
         {
           "name": "cdx:composer:package:type",
           "value": "library"
@@ -33480,7 +33470,7 @@
       ]
     },
     {
-      "ref": "conductionnl/opencatalogi-dev-development",
+      "ref": "conductionnl/opencatalogi-1.0.0.0",
       "dependsOn": [
         "adbario/php-dot-notation-3.3.0.0",
         "guzzlehttp/guzzle-7.15.2.0",
