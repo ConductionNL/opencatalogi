@@ -36,6 +36,7 @@ use OCA\OpenCatalogi\Service\Broadcast\BroadcastAttempt;
 use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\Federation\FederationHostPolicy;
+use OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -75,6 +76,13 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @var Client The HTTP client for making requests
 	 */
 	private Client $client;
+
+	/**
+	 * Parses, resolves and classifies outbound URLs.
+	 *
+	 * @var OutboundUrlGuard|null
+	 */
+	private ?OutboundUrlGuard $urlGuard = null;
 
 	/**
 	 * Default maximum number of broadcast retries on failure.
@@ -145,6 +153,7 @@ class BroadcastService implements BroadcastServiceInterface {
 		// and last, so every existing construction site keeps working.
 		private readonly ?ConnectionReporter $connectionReporter = null,
 	) {
+
 		// Initialize HTTP client; the per-request timeout is operator-tunable.
 		$this->client = new Client(
 			config: [
@@ -677,8 +686,8 @@ class BroadcastService implements BroadcastServiceInterface {
 	/**
 	 * Assert that a URL is safe for outbound HTTP requests.
 	 *
-	 * Performs DNS resolution and rejects URLs that resolve to private/loopback
-	 * address ranges to prevent SSRF attacks.
+	 * Performs DNS resolution and rejects URLs that resolve to an internal address,
+	 * in any IPv4 or IPv6 notation.
 	 *
 	 * @param string $url The URL to validate.
 	 *
@@ -687,7 +696,7 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
 	 */
 	private function assertSafeOutboundUrl(string $url): void {
-		$host = $this->outboundHost(url: $url);
+		$host = $this->urlGuard()->hostOf(url: $url, label: 'Broadcast');
 
 		// Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
 		// two local instances on a private network can federate. Empty by default, so a
@@ -696,15 +705,8 @@ class BroadcastService implements BroadcastServiceInterface {
 			return;
 		}
 
-		$this->assertNotLocalName(host: $host);
-
-		$ipsToCheck = $this->addressesOf(host: $host);
-		if (empty($ipsToCheck) === true) {
-			throw new InvalidArgumentException('Broadcast URL host could not be resolved');
-		}
-
-		foreach ($ipsToCheck as $ipAddress) {
-			if ($this->isBlockedIp(ipAddress: $ipAddress) === true) {
+		foreach ($this->urlGuard()->addressesOf(host: $host, label: 'Broadcast') as $ipAddress) {
+			if ($this->urlGuard()->isInternal(ipAddress: $ipAddress) === true) {
 				throw new InvalidArgumentException('Broadcast URL resolves to a disallowed (internal) address');
 			}
 		}
@@ -712,219 +714,12 @@ class BroadcastService implements BroadcastServiceInterface {
 	}//end assertSafeOutboundUrl()
 
 	/**
-	 * The lower-cased host of an http or https URL.
+	 * The outbound URL guard, created on first use.
 	 *
-	 * @param string $url The URL to validate.
-	 *
-	 * @return string The host.
-	 *
-	 * @throws InvalidArgumentException When the URL has no scheme or host, or another scheme.
+	 * @return OutboundUrlGuard The guard.
 	 */
-	private function outboundHost(string $url): string {
-		$parsed = parse_url($url);
-		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
-			throw new InvalidArgumentException('Invalid broadcast URL provided');
-		}
-
-		if (in_array(strtolower($parsed['scheme']), ['http', 'https'], true) === false) {
-			throw new InvalidArgumentException('Broadcast URL scheme must be http or https');
-		}
-
-		return strtolower($parsed['host']);
-	}//end outboundHost()
-
-	/**
-	 * Reject obvious local hostnames outright.
-	 *
-	 * @param string $host The lower-cased host.
-	 *
-	 * @return void
-	 *
-	 * @throws InvalidArgumentException When the host is localhost or under .local or .localhost.
-	 */
-	private function assertNotLocalName(string $host): void {
-		if ($host === 'localhost' || str_ends_with($host, '.local') === true
-			|| str_ends_with($host, '.localhost') === true
-		) {
-			throw new InvalidArgumentException('Broadcast URL host is not allowed');
-		}
-	}//end assertNotLocalName()
-
-	/**
-	 * The IPs to check for a host: the literal IP (bracketed or not), else its
-	 * DNS A/AAAA records, else what gethostbyname() resolves it to.
-	 *
-	 * @param string $host The lower-cased host.
-	 *
-	 * @return array<int, string> The addresses; none when the host does not resolve.
-	 */
-	private function addressesOf(string $host): array {
-		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-			return [$host];
-		}
-
-		$lookupHost = trim($host, '[]');
-		if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
-			return [$lookupHost];
-		}
-
-		$ipsToCheck = $this->dnsAddresses(lookupHost: $lookupHost);
-		if (empty($ipsToCheck) === false) {
-			return $ipsToCheck;
-		}
-
-		return $this->resolvedAddress(lookupHost: $lookupHost);
-	}//end addressesOf()
-
-	/**
-	 * The IPv4 and IPv6 addresses of a host's DNS A/AAAA records, in record order.
-	 *
-	 * @param string $lookupHost The host to look up.
-	 *
-	 * @return array<int, string> The addresses.
-	 */
-	private function dnsAddresses(string $lookupHost): array {
-		$ipsToCheck = [];
-		$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
-		if ($records === false) {
-			return $ipsToCheck;
-		}
-
-		foreach ($records as $record) {
-			if (isset($record['ip']) === true) {
-				$ipsToCheck[] = $record['ip'];
-			}
-
-			if (isset($record['ipv6']) === true) {
-				$ipsToCheck[] = $record['ipv6'];
-			}
-		}
-
-		return $ipsToCheck;
-	}//end dnsAddresses()
-
-	/**
-	 * The address gethostbyname() resolves a host to, or none when it does not resolve to an IP.
-	 *
-	 * @param string $lookupHost The host to look up.
-	 *
-	 * @return array<int, string> The address, or none.
-	 */
-	private function resolvedAddress(string $lookupHost): array {
-		$resolved = gethostbyname($lookupHost);
-		if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
-			return [$resolved];
-		}
-
-		return [];
-	}//end resolvedAddress()
-
-	/**
-	 * Determine whether an IP address falls in a blocked range.
-	 *
-	 * Checks private, loopback, link-local, and reserved ranges.
-	 *
-	 * @param string $ipAddress The IP address to check.
-	 *
-	 * @return boolean True if the IP is blocked, false if it is safe.
-	 */
-	private function isBlockedIp(string $ipAddress): bool {
-		$blockedRanges = [
-			'10.0.0.0/8',
-			'172.16.0.0/12',
-			'192.168.0.0/16',
-			'127.0.0.0/8',
-			'169.254.0.0/16',
-			'::1/128',
-			'fc00::/7',
-			'fe80::/10',
-		];
-
-		foreach ($blockedRanges as $range) {
-			if ($this->ipInRange(ipAddress: $ipAddress, range: $range) === true) {
-				return true;
-			}
-		}
-
-		return false;
-	}//end isBlockedIp()
-
-	/**
-	 * Check if an IP address falls within a CIDR range.
-	 *
-	 * @param string $ipAddress The IP address to check.
-	 * @param string $range The CIDR range (e.g. 10.0.0.0/8).
-	 *
-	 * @return boolean True if the IP is in the range, false otherwise.
-	 */
-	private function ipInRange(string $ipAddress, string $range): bool {
-		[$subnet] = explode('/', $range);
-
-		if ($this->isIpOfKind(ipAddress: $ipAddress, flag: FILTER_FLAG_IPV6) === true
-			&& $this->isIpOfKind(ipAddress: $subnet, flag: FILTER_FLAG_IPV6) === true
-		) {
-			return $this->ipv6InRange(ipAddress: $ipAddress, range: $range);
-		}
-
-		if ($this->isIpOfKind(ipAddress: $ipAddress, flag: FILTER_FLAG_IPV4) === true
-			&& $this->isIpOfKind(ipAddress: $subnet, flag: FILTER_FLAG_IPV4) === true
-		) {
-			return $this->ipv4InRange(ipAddress: $ipAddress, range: $range);
-		}
-
-		return false;
-	}//end ipInRange()
-
-	/**
-	 * Whether a value is an IP address of one family.
-	 *
-	 * @param string $ipAddress The value.
-	 * @param int $flag FILTER_FLAG_IPV4 or FILTER_FLAG_IPV6.
-	 *
-	 * @return bool
-	 */
-	private function isIpOfKind(string $ipAddress, int $flag): bool {
-		return filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: $flag) !== false;
-	}//end isIpOfKind()
-
-	/**
-	 * Whether an IPv6 address falls within an IPv6 CIDR range.
-	 *
-	 * @param string $ipAddress The IPv6 address.
-	 * @param string $range The IPv6 CIDR range.
-	 *
-	 * @return bool
-	 */
-	private function ipv6InRange(string $ipAddress, string $range): bool {
-		[$subnet, $bits] = explode('/', $range);
-		$ipBin = inet_pton($ipAddress);
-		$subnetBin = inet_pton($subnet);
-		if ($ipBin === false || $subnetBin === false) {
-			return false;
-		}
-
-		$mask = str_repeat("\xff", intdiv((int)$bits, 8));
-		if (((int)$bits % 8) !== 0) {
-			$mask .= chr(0xff & (0xff << (8 - ((int)$bits % 8))));
-		}
-
-		$mask = str_pad($mask, 16, "\x00");
-		return (($ipBin & $mask) === ($subnetBin & $mask));
-	}//end ipv6InRange()
-
-	/**
-	 * Whether an IPv4 address falls within an IPv4 CIDR range.
-	 *
-	 * @param string $ipAddress The IPv4 address.
-	 * @param string $range The IPv4 CIDR range.
-	 *
-	 * @return bool
-	 */
-	private function ipv4InRange(string $ipAddress, string $range): bool {
-		[$subnet, $bits] = explode('/', $range);
-		$ipLong = ip2long($ipAddress);
-		$subnetLong = ip2long($subnet);
-		$maskLong = (~0 << (32 - (int)$bits));
-		return (($ipLong & $maskLong) === ($subnetLong & $maskLong));
-	}//end ipv4InRange()
+	private function urlGuard(): OutboundUrlGuard {
+		$this->urlGuard ??= new OutboundUrlGuard();
+		return $this->urlGuard;
+	}//end urlGuard()
 }//end class
