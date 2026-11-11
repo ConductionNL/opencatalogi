@@ -523,21 +523,12 @@ export default {
 				.getCollection('catalog')
 				.results.find((catalog) => catalog.id === this.selectedCatalogus.id)
 
-			const registerSchemaIds = register.schemas.map((schema) => schema.id)
-			const catalogSchemaIds = catalog.schemas
-
-			// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
-			const validSchemaIds = registerSchemaIds.filter((id) =>
-				catalogSchemaIds.includes(id),
-			)
+			const validSchemaIds = sharedSchemaIds(register, catalog)
 
 			return sortOptionsByLabel(
 				objectStore.availableSchemas
 					.filter((schema) => validSchemaIds.includes(schema.id))
-					.map((schema) => ({
-						id: schema.id,
-						label: schema.title,
-					})),
+					.map(toSchemaOption),
 			)
 		},
 
@@ -948,6 +939,34 @@ export default {
 			navigationStore.setModal('uploadFiles')
 		},
 	},
+}
+
+/**
+ * The ids of the schemas a register and a catalog both have.
+ *
+ * @param {{schemas: Array<object>}} register The register, with schema objects.
+ * @param {{schemas: Array<number|string>}} catalog The catalog, with schema ids.
+ * @return {Array<number|string>} The shared schema ids, in register order.
+ */
+function sharedSchemaIds(register, catalog) {
+	const registerSchemaIds = register.schemas.map((schema) => schema.id)
+	const catalogSchemaIds = catalog.schemas
+
+	// only get schema ids where the id is in both registerSchemaIds and catalogSchemaIds
+	return registerSchemaIds.filter((id) => catalogSchemaIds.includes(id))
+}
+
+/**
+ * A schema as an option of the schema dropdown.
+ *
+ * @param {object} schema The schema.
+ * @return {{id: (number|string), label: string}} The option.
+ */
+function toSchemaOption(schema) {
+	return {
+		id: schema.id,
+		label: schema.title,
+	}
 }
 </script>
 

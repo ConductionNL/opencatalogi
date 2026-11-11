@@ -312,6 +312,16 @@ function closeModal() {
 	directoryUrl.value = DEFAULT_DIRECTORY_URL
 }
 
+/** How a sync time is shown: Dutch date and time, down to the second. */
+const DATE_TIME_FORMAT = {
+	year: 'numeric',
+	month: '2-digit',
+	day: '2-digit',
+	hour: '2-digit',
+	minute: '2-digit',
+	second: '2-digit',
+}
+
 /**
  * AddDirectoryModal — register an external directory by POSTing its URL.
  *
@@ -361,14 +371,7 @@ export default {
 				const date = new Date(dateTime)
 				if (isNaN(date.getTime())) return 'Unknown'
 
-				return date.toLocaleString('nl-NL', {
-					year: 'numeric',
-					month: '2-digit',
-					day: '2-digit',
-					hour: '2-digit',
-					minute: '2-digit',
-					second: '2-digit',
-				})
+				return date.toLocaleString('nl-NL', DATE_TIME_FORMAT)
 			} catch (e) {
 				return 'Unknown'
 			}
