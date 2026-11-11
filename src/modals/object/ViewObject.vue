@@ -1192,32 +1192,18 @@ export default {
 				return []
 			}
 
-			const fullCatalog = objectStore
-				.getCollection('catalog')
-				.results.find(
-					(catalog) =>
-						String(catalog.id) === String(this.selectedCatalog.id),
-				)
+			const fullCatalog = findCatalog(this.selectedCatalog.id)
 			if (!fullCatalog) {
 				return []
 			}
 
-			// Catalog.registers arrives as a string array (`["1"]`) while
-			// `register.id` from OpenRegister is numeric — `.includes` uses
-			// strict equality so the raw check would drop every match and
-			// leave the modal stalled on the empty-state (WOO-527 followup).
-			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(
-				String,
-			)
+			const selectedCatalogRegisterIds = registerIdsOf(fullCatalog)
 
 			return objectStore.availableRegisters
 				.filter((register) =>
 					selectedCatalogRegisterIds.includes(String(register.id)),
 				)
-				.map((register) => ({
-					id: register.id,
-					label: register.title,
-				}))
+				.map(toRegisterOption)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -1785,12 +1771,7 @@ export default {
 			}
 			const auth = schema.authorization
 			// No authorization rules means everyone has access
-			if (
-				!auth
-				|| !auth.read
-				|| !Array.isArray(auth.read)
-				|| auth.read.length === 0
-			) {
+			if (!hasReadRules(auth)) {
 				return true
 			}
 			// Admin group always has full access
@@ -1798,16 +1779,9 @@ export default {
 				return true
 			}
 			// Check if user belongs to any group that has read permission
-			return auth.read.some((entry) => {
-				if (typeof entry === 'string') {
-					return this.currentUserGroups.includes(entry)
-				}
-				// Complex entry with match conditions — check group membership only
-				if (entry && typeof entry === 'object' && entry.group) {
-					return this.currentUserGroups.includes(entry.group)
-				}
-				return true
-			})
+			return auth.read.some((entry) =>
+				readEntryAllows(entry, this.currentUserGroups),
+			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -2085,22 +2059,10 @@ export default {
 				if (editorEl) {
 					// Remove borders from all nested elements
 					const allElements = editorEl.querySelectorAll('*')
-					allElements.forEach((el) => {
-						el.style.border = 'none'
-						el.style.borderWidth = '0'
-						el.style.borderStyle = 'none'
-						el.style.borderColor = 'transparent'
-						el.style.outline = 'none'
-						el.style.boxShadow = 'none'
-					})
+					allElements.forEach(clearBorders)
 
 					// Also remove from the container itself
-					editorEl.style.border = 'none'
-					editorEl.style.borderWidth = '0'
-					editorEl.style.borderStyle = 'none'
-					editorEl.style.borderColor = 'transparent'
-					editorEl.style.outline = 'none'
-					editorEl.style.boxShadow = 'none'
+					clearBorders(editorEl)
 				}
 			} catch (error) {
 				console.warn('Could not remove borders from editor:', error)
@@ -2850,6 +2812,93 @@ export default {
 			}
 		},
 	},
+}
+
+/**
+ * Whether a schema's authorization has read rules: a non-empty `read` list.
+ *
+ * @param {object|undefined} auth The schema's authorization.
+ * @return {boolean} True when there are read rules.
+ */
+function hasReadRules(auth) {
+	return Boolean(
+		auth && auth.read && Array.isArray(auth.read) && auth.read.length !== 0,
+	)
+}
+
+/**
+ * Whether one read rule lets a user in `groups` read: a group name the user
+ * is in, an entry with match conditions whose group the user is in (only the
+ * group membership is checked), and any other entry.
+ *
+ * @param {string|object|null} entry The read rule.
+ * @param {Array<string>} groups The user's groups.
+ * @return {boolean} True when the rule allows reading.
+ */
+function readEntryAllows(entry, groups) {
+	if (typeof entry === 'string') {
+		return groups.includes(entry)
+	}
+	// Complex entry with match conditions — check group membership only
+	if (entry && typeof entry === 'object' && entry.group) {
+		return groups.includes(entry.group)
+	}
+	return true
+}
+
+/**
+ * Take every border, outline and shadow off an element.
+ *
+ * @param {HTMLElement} el The element.
+ * @return {void}
+ */
+function clearBorders(el) {
+	el.style.border = 'none'
+	el.style.borderWidth = '0'
+	el.style.borderStyle = 'none'
+	el.style.borderColor = 'transparent'
+	el.style.outline = 'none'
+	el.style.boxShadow = 'none'
+}
+
+/**
+ * A catalog's register ids as text.
+ *
+ * Catalog.registers arrives as a string array (`["1"]`) while `register.id`
+ * from OpenRegister is numeric — `.includes` uses strict equality so the raw
+ * check would drop every match and leave the modal stalled on the
+ * empty-state (WOO-527 followup).
+ *
+ * @param {object} catalog The catalog.
+ * @return {Array<string>} The register ids.
+ */
+function registerIdsOf(catalog) {
+	return (catalog.registers || []).map(String)
+}
+
+/**
+ * A register as an option of the register dropdown.
+ *
+ * @param {object} register The register.
+ * @return {{id: (string|number), label: string}} The option.
+ */
+function toRegisterOption(register) {
+	return {
+		id: register.id,
+		label: register.title,
+	}
+}
+
+/**
+ * The catalog with `catalogId` from the store's catalogs, matched as text.
+ *
+ * @param {string|number} catalogId The catalog id.
+ * @return {object|undefined} The catalog.
+ */
+function findCatalog(catalogId) {
+	return objectStore
+		.getCollection('catalog')
+		.results.find((catalog) => String(catalog.id) === String(catalogId))
 }
 </script>
 
