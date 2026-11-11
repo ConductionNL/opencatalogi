@@ -37,14 +37,68 @@ function publicationSearchParams(params, pagination) {
  * @return {{results: Array, total: number, page: number, pages: number, limit: number, offset: number}} The page
  */
 function publicationsPage(data) {
-	return {
-		results: data.results || [],
-		total: data.total || 0,
-		page: data.page || 1,
-		pages: data.pages || 0,
-		limit: data.limit || 20,
-		offset: data.offset || 0,
+	return { results: data.results || [], ...withPageFallbacks(data) }
+}
+
+/**
+ * The slug-based publications endpoint (GET /api/{catalogSlug}) with the
+ * page's query.
+ *
+ * @param {{catalogId: string, params: object}} request - The catalog and the page parameters
+ * @param {object} pagination - The store's pagination
+ * @return {string} The url
+ */
+function publicationsUrl(request, pagination) {
+	const queryParams = new URLSearchParams(
+		publicationSearchParams(request.params, pagination),
+	)
+	return `/index.php/apps/opencatalogi/api/${request.catalogId}?${queryParams}`
+}
+
+/**
+ * Load a catalog's publications page into the store, with both loading flags
+ * on while it runs; a failure leaves an empty page.
+ *
+ * @param {object} store - The catalog store
+ * @param {{catalogId: string, params: object}} request - The catalog and the page parameters
+ * @return {Promise<void>}
+ */
+async function loadPublications(store, request) {
+	store.loading = true
+	objectStore.setLoading('publication', true)
+
+	const url = publicationsUrl(request, store.pagination)
+
+	try {
+		await store.loadPublicationsPage(url)
+	} catch (error) {
+		console.error('Error fetching publications:', error)
+		store.publications = publicationsPage({})
+	} finally {
+		store.loading = false
+		objectStore.setLoading('publication', false)
 	}
+}
+
+/**
+ * What a publications page falls back to, field by field, when a value is
+ * missing or falsy.
+ */
+const PAGE_FALLBACK = { total: 0, page: 1, pages: 0, limit: 20, offset: 0 }
+
+/**
+ * The paging fields of `values`, each falling back to PAGE_FALLBACK.
+ *
+ * @param {object} values - The page or API answer
+ * @return {{total: number, page: number, pages: number, limit: number, offset: number}} The fields
+ */
+function withPageFallbacks(values) {
+	return Object.fromEntries(
+		Object.entries(PAGE_FALLBACK).map(([key, fallback]) => [
+			key,
+			values[key] || fallback,
+		]),
+	)
 }
 
 /**
@@ -268,24 +322,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 			this.lastCatalogId = resolvedCatalogId
 
-			this.loading = true
-			objectStore.setLoading('publication', true)
-
-			const queryParams = new URLSearchParams(
-				publicationSearchParams(params, this.pagination),
-			)
-			// Use the slug-based publications endpoint (GET /api/{catalogSlug})
-			const url = `/index.php/apps/opencatalogi/api/${resolvedCatalogId}?${queryParams}`
-
-			try {
-				await this.loadPublicationsPage(url)
-			} catch (error) {
-				console.error('Error fetching publications:', error)
-				this.publications = publicationsPage({})
-			} finally {
-				this.loading = false
-				objectStore.setLoading('publication', false)
-			}
+			await loadPublications(this, { catalogId: resolvedCatalogId, params })
 		},
 
 		/**
@@ -385,14 +422,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 			this.activeCatalog = null
 			this.activePublication = null
-			this.publications = {
-				results: [],
-				total: 0,
-				page: 1,
-				pages: 0,
-				limit: 20,
-				offset: 0,
-			}
+			this.publications = publicationsPage({})
 		},
 	},
 
@@ -468,13 +498,10 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @return {object} The pagination info
 		 */
 		publicationPagination: (state) => {
-			return {
-				page: state.publications.page || 1,
-				pages: state.publications.pages || 0,
-				total: state.publications.total || 0,
-				limit: state.publications.limit || 20,
-				offset: state.publications.offset || 0,
-			}
+			const { page, pages, total, limit, offset } = withPageFallbacks(
+				state.publications,
+			)
+			return { page, pages, total, limit, offset }
 		},
 	},
 })
