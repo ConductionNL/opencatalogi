@@ -69,9 +69,26 @@ class BannerService implements BannerServiceInterface {
 			throw new DomainException(message: 'A banner needs something to say.');
 		}
 
+		$this->assertReadablePeriod(banner: $banner);
+
+		$banner['severity'] = $this->knownSeverityOf(banner: $banner);
+		$banner['dismissable'] = (bool)($banner['dismissable'] ?? true);
+
+		return $banner;
+	}//end validate()
+
+	/**
+	 * Refuse a banner whose period cannot be read or ends before it starts.
+	 *
+	 * @param array<string, mixed> $banner The banner.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the period is unreadable or reversed.
+	 */
+	private function assertReadablePeriod(array $banner): void {
 		try {
-			$start = new DateTimeImmutable((string)($banner['startDate'] ?? ''));
-			$end = new DateTimeImmutable((string)($banner['endDate'] ?? ''));
+			$period = $this->periodOf(banner: $banner);
 		} catch (\Throwable $e) {
 			throw new DomainException(
 				message: 'A banner needs a period this app can read. A banner with no readable end date never stops showing.',
@@ -80,20 +97,47 @@ class BannerService implements BannerServiceInterface {
 			);
 		}
 
-		if ($end < $start) {
+		if ($period['end'] < $period['start']) {
 			throw new DomainException(message: 'A banner cannot end before it starts.');
 		}
 
+	}//end assertReadablePeriod()
+
+	/**
+	 * A banner's severity, `info` when it names none.
+	 *
+	 * @param array<string, mixed> $banner The banner.
+	 *
+	 * @return string The severity.
+	 *
+	 * @throws DomainException When the severity is not one of SEVERITIES.
+	 */
+	private function knownSeverityOf(array $banner): string {
 		$severity = (string)($banner['severity'] ?? 'info');
 		if (in_array($severity, self::SEVERITIES, true) === false) {
 			throw new DomainException(message: 'A banner cannot have severity "' . $severity . '".');
 		}
 
-		$banner['severity'] = $severity;
-		$banner['dismissable'] = (bool)($banner['dismissable'] ?? true);
+		return $severity;
 
-		return $banner;
-	}//end validate()
+	}//end knownSeverityOf()
+
+	/**
+	 * A banner's start and end date.
+	 *
+	 * @param array<string, mixed> $banner The banner.
+	 *
+	 * @return array{start: DateTimeImmutable, end: DateTimeImmutable} The period.
+	 *
+	 * @throws \Exception When either date cannot be read.
+	 */
+	private function periodOf(array $banner): array {
+		return [
+			'start' => new DateTimeImmutable((string)($banner['startDate'] ?? '')),
+			'end' => new DateTimeImmutable((string)($banner['endDate'] ?? '')),
+		];
+
+	}//end periodOf()
 
 	/**
 	 * Whether a banner is inside its period.
@@ -115,13 +159,12 @@ class BannerService implements BannerServiceInterface {
 		}
 
 		try {
-			$start = new DateTimeImmutable((string)($banner['startDate'] ?? ''));
-			$end = new DateTimeImmutable((string)($banner['endDate'] ?? ''));
+			$period = $this->periodOf(banner: $banner);
 		} catch (\Throwable $e) {
 			return false;
 		}
 
-		return ($moment >= $start && $moment <= $end);
+		return ($moment >= $period['start'] && $moment <= $period['end']);
 	}//end isCurrent()
 
 	/**
@@ -139,28 +182,52 @@ class BannerService implements BannerServiceInterface {
 		$dismissed = array_flip(array_map('strval', $dismissedIds));
 
 		$shown = [];
-		foreach ($banners as $banner) {
-			if (is_array($banner) === false) {
-				continue;
+		foreach ($this->currentBanners(banners: $banners, now: $now) as $banner) {
+			if ($this->staysDismissed(banner: $banner, dismissed: $dismissed) === false) {
+				$shown[] = $banner;
 			}
-
-			if ($this->isCurrent(banner: $banner, now: $now) === false) {
-				continue;
-			}
-
-			$id = (string)($banner['id'] ?? '');
-			$dismissable = (bool)($banner['dismissable'] ?? true);
-
-			// A banner that is not dismissable keeps showing even to a user who
-			// once dismissed one: a critical maintenance notice is not
-			// something a click makes go away.
-			if ($dismissable === true && isset($dismissed[$id]) === true) {
-				continue;
-			}
-
-			$shown[] = $banner;
 		}
 
 		return $shown;
 	}//end forUser()
+
+	/**
+	 * The entries that are banners inside their period, in the given order.
+	 *
+	 * @param array<int, mixed> $banners Every banner.
+	 * @param DateTimeInterface|null $now The moment; defaults to now.
+	 *
+	 * @return array<int, array<string, mixed>> The current banners.
+	 */
+	private function currentBanners(array $banners, ?DateTimeInterface $now): array {
+		$current = [];
+		foreach ($banners as $banner) {
+			if (is_array($banner) === true && $this->isCurrent(banner: $banner, now: $now) === true) {
+				$current[] = $banner;
+			}
+		}
+
+		return $current;
+
+	}//end currentBanners()
+
+	/**
+	 * Whether a user's dismissal hides a banner.
+	 *
+	 * A banner that is not dismissable keeps showing even to a user who once
+	 * dismissed one: a critical maintenance notice is not something a click
+	 * makes go away.
+	 *
+	 * @param array<string, mixed> $banner The banner.
+	 * @param array<string, int> $dismissed The dismissed ids, as keys.
+	 *
+	 * @return boolean True when the banner stays hidden for this user.
+	 */
+	private function staysDismissed(array $banner, array $dismissed): bool {
+		$id = (string)($banner['id'] ?? '');
+		$dismissable = (bool)($banner['dismissable'] ?? true);
+
+		return ($dismissable === true && isset($dismissed[$id]) === true);
+
+	}//end staysDismissed()
 }//end class
