@@ -826,13 +826,24 @@ export default {
 			}
 			this.loadSourceData()
 			if (transfer.mergeTarget) {
-				this.selectedTargetObject = transfer.mergeTarget
-				if (transfer.startStep === 2) {
-					this.step = 2
-					this.initializeMergeData()
-				}
+				this.takeHandedOverTarget(transfer)
 			}
 			this.searchObjects()
+		},
+
+		/**
+		 * Select the handed-over target, and go straight to "Configure merge"
+		 * when the list asked for step 2.
+		 *
+		 * @param {{mergeTarget: object, startStep?: number}} transfer What the list handed over.
+		 * @return {void}
+		 */
+		takeHandedOverTarget(transfer) {
+			this.selectedTargetObject = transfer.mergeTarget
+			if (transfer.startStep === 2) {
+				this.step = 2
+				this.initializeMergeData()
+			}
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
@@ -844,27 +855,32 @@ export default {
 
 			this.loading = true
 			try {
-				const { data } = await axios.get(
-					generateUrl(
-						'/apps/openregister/api/objects/{register}/{schema}',
-						{
-							register,
-							schema,
-						},
-					),
-					{ params: { _search: this.searchTerm } },
-				)
-
-				// Filter out the source object
-				this.availableObjects = data.results.filter(
-					(obj) => obj['@self'].id !== this.sourceObject['@self'].id,
-				)
+				this.availableObjects = await this.fetchMergeCandidates({ register, schema })
 			} catch (error) {
 				console.error('Error searching objects:', error)
 				this.availableObjects = []
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The objects of the source's register and schema that match the search
+		 * term, the source itself left out.
+		 *
+		 * @param {{register: string|number, schema: string|number}} pair The register and schema.
+		 * @return {Promise<Array<object>>} The candidate targets.
+		 */
+		async fetchMergeCandidates(pair) {
+			const { data } = await axios.get(
+				generateUrl('/apps/openregister/api/objects/{register}/{schema}', pair),
+				{ params: { _search: this.searchTerm } },
+			)
+
+			// Filter out the source object
+			return data.results.filter(
+				(obj) => obj['@self'].id !== this.sourceObject['@self'].id,
+			)
 		},
 
 		/**
@@ -1166,23 +1182,7 @@ export default {
 		getFileType(filename) {
 			if (!filename) return 'Unknown'
 			const ext = filename.split('.').pop()?.toLowerCase()
-			const types = {
-				pdf: 'PDF',
-				doc: 'Word',
-				docx: 'Word',
-				xls: 'Excel',
-				xlsx: 'Excel',
-				ppt: 'PowerPoint',
-				pptx: 'PowerPoint',
-				txt: 'Text',
-				jpg: 'Image',
-				jpeg: 'Image',
-				png: 'Image',
-				gif: 'Image',
-				zip: 'Archive',
-				rar: 'Archive',
-			}
-			return types[ext] || ext?.toUpperCase() || 'Unknown'
+			return knownFileType(ext) || ext?.toUpperCase() || 'Unknown'
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
@@ -1192,14 +1192,7 @@ export default {
 
 			try {
 				// Load files - check if sourceObject has attachments property
-				if (
-					this.sourceObject.attachments
-					&& Array.isArray(this.sourceObject.attachments)
-				) {
-					this.sourceFiles = this.sourceObject.attachments
-				} else {
-					this.sourceFiles = []
-				}
+				this.sourceFiles = attachmentsOf(this.sourceObject)
 
 				// Load relations - this would need to be implemented based on your API
 				// For now, we'll use a placeholder
@@ -1216,6 +1209,43 @@ export default {
 			navigationStore.setModal(false)
 		},
 	},
+}
+
+/**
+ * The label of a known file extension.
+ *
+ * @param {string|undefined} ext The lower-case extension.
+ * @return {string|undefined} The label, when the extension is known.
+ */
+function knownFileType(ext) {
+	return {
+		pdf: 'PDF',
+		doc: 'Word',
+		docx: 'Word',
+		xls: 'Excel',
+		xlsx: 'Excel',
+		ppt: 'PowerPoint',
+		pptx: 'PowerPoint',
+		txt: 'Text',
+		jpg: 'Image',
+		jpeg: 'Image',
+		png: 'Image',
+		gif: 'Image',
+		zip: 'Archive',
+		rar: 'Archive',
+	}[ext]
+}
+
+/**
+ * An object's attachments when it has a list of them, else none.
+ *
+ * @param {object} object The object.
+ * @return {Array<object>} The attachments.
+ */
+function attachmentsOf(object) {
+	return object.attachments && Array.isArray(object.attachments)
+		? object.attachments
+		: []
 }
 </script>
 
