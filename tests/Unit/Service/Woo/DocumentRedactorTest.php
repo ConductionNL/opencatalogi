@@ -280,4 +280,58 @@ class DocumentRedactorTest extends TestCase {
 		$file->method('hash')->willThrowException(new \RuntimeException('storage gone'));
 		$this->assertFailedClosed($this->redactor()->verify($this->original, $file, []), 'cannot be verified');
 	}//end testAnUnhashableRedactedFileFailsClosed()
+	/**
+	 * A redacted file whose hash reads as empty cannot be verified.
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyHashFailsClosed(): void {
+		$file = $this->createMock(File::class);
+		$file->method('getId')->willReturn(15);
+		$file->method('hash')->willReturn('');
+		$this->assertFailedClosed($this->redactor()->verify($this->original, $file, []), 'cannot be verified');
+	}//end testAnEmptyHashFailsClosed()
+
+	/**
+	 * Each OpenRegister failure is logged with the file and the exception
+	 * class only, never the message, which may quote the text to redact.
+	 *
+	 * @return void
+	 */
+	public function testFailuresAreLoggedWithoutTheirMessage(): void {
+		$logged = [];
+		$logger = $this->createMock(LoggerInterface::class);
+		$logger->method('warning')->willReturnCallback(
+			static function (string $message) use (&$logged): void {
+				$logged[] = $message;
+			}
+		);
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isInstalled')->willReturn(true);
+		$redactor = new DocumentRedactor($this->writer, $this->container, $this->l10n, $logger, $apps);
+
+		$this->files->throw = new \RuntimeException('Jan Jansen could not be removed');
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->files->throw = null;
+		$broken = new class extends RedactorFakeEntityRelationMapper {
+			public function findEntitiesForAnonymization(int $fileId): array {
+				throw new \LogicException('Jan Jansen');
+			}
+		};
+		$this->relations = $broken;
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->containerBroken = true;
+		$redactor->redact(['documentReference' => 'doc-c'], 'alice');
+
+		$this->assertSame(
+			[
+				'[DocumentRedactor] redaction failed for file 11: RuntimeException',
+				'[DocumentRedactor] findings unreadable for file 11: LogicException',
+				'[DocumentRedactor] OpenRegister redaction unavailable: RuntimeException',
+			],
+			$logged
+		);
+	}//end testFailuresAreLoggedWithoutTheirMessage()
 }//end class
