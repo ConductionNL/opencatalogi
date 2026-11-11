@@ -954,6 +954,7 @@ import { fileSizeLabel } from '../../services/fileSizeLabel.js'
 import { formValue } from '../../services/formValue.js'
 import { registerSchemaIdsOf } from '../../services/registerSchemaIds.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
+import { editableFormData, initialCatalog } from './objectFormCopy.js'
 import {
 	findSchemaByAnyId,
 	metadataRows,
@@ -1890,83 +1891,49 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		async initializeData() {
 			if (!this.currentObject) {
-				// For new objects, initialize with empty form data and auto-select if possible
-				this.formData = {}
-
-				const catalogs = objectStore.getCollection('catalog').results
-
-				// Check if we have a catalogSlug route param
-				const catalogSlug = this.$route.params.catalogSlug
-				if (catalogSlug) {
-					// Find catalog by slug
-					const matchingCatalog = catalogs.find(
-						(catalog) => catalog.slug === catalogSlug,
-					)
-					if (matchingCatalog) {
-						this.selectedCatalog = {
-							id: matchingCatalog.id,
-							label: matchingCatalog.title,
-						}
-					}
-				} else if (catalogs.length === 1) {
-					// If no catalog found by slug and only one catalog exists, auto-select it
-					this.selectedCatalog = {
-						id: catalogs[0].id,
-						label: catalogs[0].title,
-					}
-				}
-
-				// Auto-select register and schema if only one option exists.
-				// Existing watchers on selectedCatalog/selectedRegister handle
-				// the cascading updates, so a single tick is sufficient.
-				await this.$nextTick()
-				if (this.registerOptions.length === 1) {
-					this.selectedRegister = this.registerOptions[0]
-					await this.$nextTick()
-					if (this.schemaOptions.length === 1) {
-						this.selectedSchema = this.schemaOptions[0]
-					}
-				}
-
+				await this.initializeNewObject()
 				return
-			}
-
-			const initial = this.currentObject
-			const filtered = {}
-			for (const key in initial) {
-				if (key !== '@self' && key !== 'id') {
-					// Ensure we have a safe copy of the value
-					try {
-						filtered[key] = JSON.parse(JSON.stringify(initial[key]))
-					} catch (e) {
-						// If JSON serialization fails, use the original value
-						filtered[key] = initial[key]
-					}
-				}
 			}
 
 			// Ensure formData is always an object, never an array
 			this.formData = {}
-			// Create a safe copy for formData
-			try {
-				const parsedData = JSON.parse(JSON.stringify(filtered))
-				// Explicitly ensure it's an object
-				if (typeof parsedData === 'object' && !Array.isArray(parsedData)) {
-					this.formData = parsedData
-				} else {
-					this.formData = { ...filtered }
-				}
-			} catch (e) {
-				// Fallback if JSON serialization fails
-				this.formData = { ...filtered }
+			this.formData = editableFormData(this.currentObject)
+		},
+
+		/**
+		 * Start a new object with an empty form, in the catalog of the route
+		 * (or the only catalog), with the register and schema picked when
+		 * there is only one of each.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async initializeNewObject() {
+			this.formData = {}
+
+			const catalogs = objectStore.getCollection('catalog').results
+			const catalog = initialCatalog(catalogs, this.$route.params.catalogSlug)
+			if (catalog) {
+				this.selectedCatalog = { id: catalog.id, label: catalog.title }
 			}
 
-			// Ensure themes are properly initialized as an array of IDs
-			if (this.formData.themes && Array.isArray(this.formData.themes)) {
-				// Convert any theme objects back to IDs if needed
-				this.formData.themes = this.formData.themes.map((theme) =>
-					typeof theme === 'object' ? theme.id : theme,
-				)
+			await this.autoSelectSingleOptions()
+		},
+
+		/**
+		 * Pick the register and then the schema when only one option exists.
+		 * Existing watchers on selectedCatalog/selectedRegister handle the
+		 * cascading updates, so a single tick is sufficient.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async autoSelectSingleOptions() {
+			await this.$nextTick()
+			if (this.registerOptions.length !== 1) return
+
+			this.selectedRegister = this.registerOptions[0]
+			await this.$nextTick()
+			if (this.schemaOptions.length === 1) {
+				this.selectedSchema = this.schemaOptions[0]
 			}
 		},
 
@@ -1982,89 +1949,127 @@ export default {
 			this.isSaving = true
 
 			try {
-				const isCreating = this.isNewObject
-
-				// For new objects, validate we have the required selections
-				if (
-					isCreating
-					&& (!this.selectedSchema
-						|| !this.selectedRegister
-						|| !this.selectedCatalog)
-				) {
-					return
-				}
-
-				let objectData
-				let endpoint
-				let method
-
-				if (isCreating) {
-					// Create a new object using openregister API
-					// For new objects, build complete object with all schema properties
-					objectData = this.buildCompleteObjectData()
-					endpoint = `/index.php/apps/openregister/api/objects/${this.selectedRegister.id}/${this.selectedSchema.id}`
-					method = 'POST'
-				} else {
-					// Update existing object using openregister API
-					// For existing objects, merge current object with all schema properties
-					objectData = this.buildCompleteObjectData()
-					// Get register and schema info from the current object
-					const { registerId, schemaId } = this.getRegisterSchemaIds(
-						this.currentObject,
-					)
-					const objectId =
-						this.currentObject['@self']?.id || this.currentObject.id
-					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
-					method = 'PUT'
-				}
-
-				const response = await fetch(endpoint, {
-					method,
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(objectData),
-				})
-
-				if (!response.ok) {
-					const errorText = await response.text()
-					throw new Error(
-						`Failed to ${isCreating ? 'create' : 'update'} publication: ${response.status} ${response.statusText} - ${errorText}`,
-					)
-				}
-
-				const result = await response.json()
-				const schema = objectStore.availableSchemas.find(
-					(schema) => schema.id === Number(result['@self'].schema),
-				)
-				// Set the newly created/updated object as active in the object store
-				objectStore.setActiveObject('publication', {
-					...result,
-					'@self': { ...result['@self'], schema },
-				})
-
-				// Clear form data since we now have the saved object
-				this.formData = {}
-
-				// Refresh the publications list
-				catalogStore.fetchPublications()
-				dispatchObjectsChanged({
-					register: result['@self'].register,
-					schema: result['@self'].schema,
-					id: result['@self'].id,
-				})
-
-				// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
-				if (!isCreating) {
-					setTimeout(() => {
-						this.closeModal()
-					}, 1000)
-				}
+				await this.saveCurrentForm()
 			} catch (e) {
 				console.error('Save error:', e)
 			} finally {
 				this.isSaving = false
 			}
+		},
+
+		/**
+		 * Save the form: create the new object once its selections are made,
+		 * or update the current one and close the modal a second later.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async saveCurrentForm() {
+			const isCreating = this.isNewObject
+
+			// For new objects, validate we have the required selections
+			if (isCreating && !this.hasCreateSelections()) {
+				return
+			}
+
+			const result = await this.sendSave(this.saveRequest(isCreating))
+			this.applySavedObject(result)
+
+			// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
+			if (!isCreating) {
+				setTimeout(() => {
+					this.closeModal()
+				}, 1000)
+			}
+		},
+
+		/**
+		 * Whether a new object has its schema, register and catalog chosen.
+		 *
+		 * @return {boolean} True when all three are chosen
+		 */
+		hasCreateSelections() {
+			return Boolean(
+				this.selectedSchema && this.selectedRegister && this.selectedCatalog,
+			)
+		},
+
+		/**
+		 * The save request: the complete object data with the endpoint and
+		 * method that create a new object or update the current one.
+		 *
+		 * @param {boolean} isCreating - Whether a new object is created
+		 * @return {{isCreating: boolean, objectData: object, endpoint: string, method: string}} The request
+		 */
+		saveRequest(isCreating) {
+			// Build the complete object with all schema properties
+			const objectData = this.buildCompleteObjectData()
+			if (isCreating) {
+				const endpoint = `/index.php/apps/openregister/api/objects/${this.selectedRegister.id}/${this.selectedSchema.id}`
+				return { isCreating, objectData, endpoint, method: 'POST' }
+			}
+
+			// Get register and schema info from the current object
+			const { registerId, schemaId } = this.getRegisterSchemaIds(
+				this.currentObject,
+			)
+			const objectId = this.currentObject['@self']?.id || this.currentObject.id
+			const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
+			return { isCreating, objectData, endpoint, method: 'PUT' }
+		},
+
+		/**
+		 * Send a save request to the openregister API.
+		 *
+		 * @param {{isCreating: boolean, objectData: object, endpoint: string, method: string}} request - The request
+		 * @return {Promise<object>} The saved object
+		 * @throws {Error} When the answer is not ok
+		 */
+		async sendSave({ isCreating, objectData, endpoint, method }) {
+			const response = await fetch(endpoint, {
+				method,
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(objectData),
+			})
+
+			if (!response.ok) {
+				const errorText = await response.text()
+				throw new Error(
+					`Failed to ${isCreating ? 'create' : 'update'} publication: ${response.status} ${response.statusText} - ${errorText}`,
+				)
+			}
+
+			return response.json()
+		},
+
+		/**
+		 * Make a saved object the active publication with its full schema,
+		 * clear the form, and tell the lists that it changed.
+		 *
+		 * @param {object} result - The saved object
+		 * @return {void}
+		 */
+		applySavedObject(result) {
+			const schema = objectStore.availableSchemas.find(
+				(schema) => schema.id === Number(result['@self'].schema),
+			)
+			// Set the newly created/updated object as active in the object store
+			objectStore.setActiveObject('publication', {
+				...result,
+				'@self': { ...result['@self'], schema },
+			})
+
+			// Clear form data since we now have the saved object
+			this.formData = {}
+
+			// Refresh the publications list
+			catalogStore.fetchPublications()
+			dispatchObjectsChanged({
+				register: result['@self'].register,
+				schema: result['@self'].schema,
+				id: result['@self'].id,
+			})
 		},
 
 		// Property validation and editing methods
@@ -2294,39 +2299,10 @@ export default {
 		async deleteSelectedFiles() {
 			if (objectStore.selectedAttachments.length === 0) return
 
-			let changed = null
+			const run = { changed: null }
 			try {
 				this.fileIdsLoading = [...objectStore.selectedAttachments]
-
-				const selectedFiles = this.paginatedFiles.filter((item) =>
-					objectStore.selectedAttachments.includes(item.id),
-				)
-				const { registerId, schemaId } = this.getRegisterSchemaIds(
-					this.currentObject,
-				)
-
-				for (const file of selectedFiles) {
-					const endpoint = generateUrl(
-						'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files/{fileId}',
-						{
-							registerId,
-							schemaId,
-							objectId: this.currentObject.id,
-							fileId: file.id,
-						},
-					)
-					const response = await fetch(endpoint, { method: 'DELETE' })
-					if (!response.ok) {
-						throw new Error(
-							`Failed to delete file ${file.title || file.name}: ${response.statusText}`,
-						)
-					}
-					changed = {
-						register: registerId,
-						schema: schemaId,
-						id: this.currentObject.id,
-					}
-				}
+				await this.deleteFilesInTurn(run)
 
 				await this.refreshFiles()
 				catalogStore.fetchPublications()
@@ -2336,10 +2312,73 @@ export default {
 			} finally {
 				this.fileIdsLoading = []
 				// A partial delete still changes the file count.
-				if (changed) {
-					dispatchObjectsChanged(changed)
+				if (run.changed) {
+					dispatchObjectsChanged(run.changed)
 				}
 			}
+		},
+
+		/**
+		 * Delete the selected files one after another, noting the object
+		 * change after each delete; stops at the first failure.
+		 *
+		 * @param {{changed: object|null}} run - The delete run, its change set after each delete
+		 * @return {Promise<void>}
+		 * @throws {Error} When a delete fails
+		 */
+		async deleteFilesInTurn(run) {
+			const selectedFiles = this.paginatedFiles.filter((item) =>
+				objectStore.selectedAttachments.includes(item.id),
+			)
+			const ids = this.getRegisterSchemaIds(this.currentObject)
+
+			for (const file of selectedFiles) {
+				const response = await this.sendFileAction(file, { ids, action: 'delete' })
+				if (!response.ok) {
+					throw new Error(
+						`Failed to delete file ${file.title || file.name}: ${response.statusText}`,
+					)
+				}
+				run.changed = this.currentObjectChange(ids)
+			}
+		},
+
+		/**
+		 * The change notice for the current object.
+		 *
+		 * @param {{registerId: string, schemaId: string}} ids - The register and schema ids
+		 * @return {{register: string, schema: string, id: string}} The change
+		 */
+		currentObjectChange({ registerId, schemaId }) {
+			return {
+				register: registerId,
+				schema: schemaId,
+				id: this.currentObject.id,
+			}
+		},
+
+		/**
+		 * Send one file action of the current object: DELETE for a delete,
+		 * POST to the action's path otherwise.
+		 *
+		 * @param {object} file - The file
+		 * @param {{ids: object, action: string}} request - The register and schema ids and the action
+		 * @return {Promise<Response>} The response
+		 */
+		sendFileAction(file, { ids, action }) {
+			const base = generateUrl(
+				'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files/{fileId}',
+				{
+					registerId: ids.registerId,
+					schemaId: ids.schemaId,
+					objectId: this.currentObject.id,
+					fileId: file.id,
+				},
+			)
+			const endpoint = action === 'delete' ? base : `${base}/${action}`
+			return fetch(endpoint, {
+				method: action === 'delete' ? 'DELETE' : 'POST',
+			})
 		},
 
 		// action: 'publish' | 'depublish' | 'delete'
@@ -2353,41 +2392,35 @@ export default {
 				action === 'delete' ? 'fileIdsLoading' : `${action}Loading`
 			try {
 				this[loadingList].push(file.id)
-				const { registerId, schemaId } = this.getRegisterSchemaIds(
-					this.currentObject,
-				)
-				const base = generateUrl(
-					'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files/{fileId}',
-					{
-						registerId,
-						schemaId,
-						objectId: this.currentObject.id,
-						fileId: file.id,
-					},
-				)
-				const endpoint = action === 'delete' ? base : `${base}/${action}`
-				const response = await fetch(endpoint, {
-					method: action === 'delete' ? 'DELETE' : 'POST',
-				})
+				const ids = this.getRegisterSchemaIds(this.currentObject)
+				const response = await this.sendFileAction(file, { ids, action })
 				if (!response.ok) {
 					throw new Error(
 						`Failed to ${action} file: ${response.statusText}`,
 					)
 				}
-				if (action === 'delete') {
-					dispatchObjectsChanged({
-						register: registerId,
-						schema: schemaId,
-						id: this.currentObject.id,
-					})
-				}
-				await this.refreshFiles()
-				catalogStore.fetchPublications()
+				await this.afterFileAction(ids, action)
 			} catch (error) {
 				console.error(`Failed to ${action} file:`, error)
 			} finally {
 				this[loadingList] = this[loadingList].filter((id) => id !== file.id)
 			}
+		},
+
+		/**
+		 * After a file action: report a delete, then refresh the files and
+		 * the publications list.
+		 *
+		 * @param {{registerId: string, schemaId: string}} ids - The register and schema ids
+		 * @param {string} action - The action that ran
+		 * @return {Promise<void>}
+		 */
+		async afterFileAction(ids, action) {
+			if (action === 'delete') {
+				dispatchObjectsChanged(this.currentObjectChange(ids))
+			}
+			await this.refreshFiles()
+			catalogStore.fetchPublications()
 		},
 
 		/**
