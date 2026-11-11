@@ -235,6 +235,47 @@ async function loadRelatedData(store, request) {
 }
 
 /**
+ * The error for an object the inner store did not return: the inner store's
+ * own error message, else a generic one.
+ *
+ * @param {object} store - The object store
+ * @param {string} type - The object type
+ * @return {Error} The error
+ */
+function missingObjectError(store, type) {
+	// fetchObject returns null on error and stores error on inner
+	const innerErr = store._inner().getError(type)
+	return new Error(innerErr?.message || `Failed to fetch ${type} object`)
+}
+
+/**
+ * Fetch one object through the inner store, loading the settings first when
+ * they are not there yet; cache it and refresh the active object when it is
+ * the same one.
+ *
+ * @param {object} store - The object store
+ * @param {{type: string, id: string}} ref - The object type and id
+ * @return {Promise<void>}
+ * @throws {Error} When the inner store returns no object
+ */
+async function loadObjectThroughInner(store, { type, id }) {
+	await ensureSettings(store)
+
+	store._ensureInnerType(type)
+	const data = await store._inner().fetchObject(type, id)
+	if (!data) {
+		throw missingObjectError(store, type)
+	}
+
+	if (!store.objects[type]) store.objects[type] = {}
+	store.objects[type][id] = data
+
+	if (store.activeObjects[type]?.id === id) {
+		await store.setActiveObject(type, data)
+	}
+}
+
+/**
  * Load the settings when they are not there yet.
  *
  * @param {object} store - The object store
@@ -811,6 +852,162 @@ async function applyToEach(
 }
 
 /**
+ * The metadata columns an object list offers by default, keyed by column,
+ * with whether each is shown.
+ *
+ * @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}}
+ */
+const DEFAULT_METADATA_COLUMNS = {
+	name: {
+		label: 'Name',
+		key: 'name',
+		description: 'Display name of the object',
+		enabled: true,
+	},
+	description: {
+		label: 'Description',
+		key: 'description',
+		description: 'Description of the object',
+		enabled: false,
+	},
+	objectId: {
+		label: 'ID',
+		key: 'id',
+		description: 'Unique identifier of the object',
+		enabled: false,
+	},
+	uri: {
+		label: 'URI',
+		key: 'uri',
+		description: 'URI of the object',
+		enabled: false,
+	},
+	version: {
+		label: 'Version',
+		key: 'version',
+		description: 'Version of the object',
+		enabled: false,
+	},
+	register: {
+		label: 'Register',
+		key: 'register',
+		description: 'Register of the object',
+		enabled: false,
+	},
+	schema: {
+		label: 'Schema',
+		key: 'schema',
+		description: 'Schema of the object',
+		enabled: false,
+	},
+	files: {
+		label: 'Files',
+		key: 'files',
+		description: 'Attached files count',
+		enabled: true,
+	},
+	locked: {
+		label: 'Locked',
+		key: 'locked',
+		description: 'Whether the object is locked',
+		enabled: false,
+	},
+	organization: {
+		label: 'Organization',
+		key: 'organization',
+		description: 'Organization owning the object',
+		enabled: false,
+	},
+	validation: {
+		label: 'Validation',
+		key: 'validation',
+		description: 'Validation status of the object',
+		enabled: false,
+	},
+	owner: {
+		label: 'Owner',
+		key: 'owner',
+		description: 'Owner of the object',
+		enabled: false,
+	},
+	application: {
+		label: 'Application',
+		key: 'application',
+		description: 'Application of the object',
+		enabled: false,
+	},
+	folder: {
+		label: 'Folder',
+		key: 'folder',
+		description: 'Folder of the object',
+		enabled: false,
+	},
+	geo: {
+		label: 'Geo',
+		key: 'geo',
+		description: 'Geographic information',
+		enabled: false,
+	},
+	retention: {
+		label: 'Retention',
+		key: 'retention',
+		description: 'Retention policy',
+		enabled: false,
+	},
+	size: {
+		label: 'Size',
+		key: 'size',
+		description: 'Size of the object',
+		enabled: false,
+	},
+	published: {
+		label: 'Published',
+		key: 'published',
+		description: 'Publication date',
+		enabled: false,
+	},
+	depublished: {
+		label: 'Depublished',
+		key: 'depublished',
+		description: 'Depublication date',
+		enabled: false,
+	},
+	deleted: {
+		label: 'Deleted',
+		key: 'deleted',
+		description: 'Deletion date',
+		enabled: false,
+	},
+	created: {
+		label: 'Created',
+		key: 'created',
+		description: 'Creation date and time',
+		enabled: false,
+	},
+	updated: {
+		label: 'Updated',
+		key: 'updated',
+		description: 'Last update date and time',
+		enabled: false,
+	},
+}
+
+/**
+ * A fresh copy of the default metadata columns, so each store can toggle
+ * its own.
+ *
+ * @return {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} The columns
+ */
+function defaultMetadataColumns() {
+	return Object.fromEntries(
+		Object.entries(DEFAULT_METADATA_COLUMNS).map(([column, definition]) => [
+			column,
+			{ ...definition },
+		]),
+	)
+}
+
+/**
  * Store for managing objects in OpenCatalogi.
  *
  * This store is a thin wrapper around `@conduction/nextcloud-vue`'s
@@ -866,140 +1063,7 @@ export const useObjectStore = defineStore('object', {
 		/** @type {{[key: string]: string}} */
 		objectErrors: {},
 		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
-		metadata: {
-			name: {
-				label: 'Name',
-				key: 'name',
-				description: 'Display name of the object',
-				enabled: true,
-			},
-			description: {
-				label: 'Description',
-				key: 'description',
-				description: 'Description of the object',
-				enabled: false,
-			},
-			objectId: {
-				label: 'ID',
-				key: 'id',
-				description: 'Unique identifier of the object',
-				enabled: false,
-			},
-			uri: {
-				label: 'URI',
-				key: 'uri',
-				description: 'URI of the object',
-				enabled: false,
-			},
-			version: {
-				label: 'Version',
-				key: 'version',
-				description: 'Version of the object',
-				enabled: false,
-			},
-			register: {
-				label: 'Register',
-				key: 'register',
-				description: 'Register of the object',
-				enabled: false,
-			},
-			schema: {
-				label: 'Schema',
-				key: 'schema',
-				description: 'Schema of the object',
-				enabled: false,
-			},
-			files: {
-				label: 'Files',
-				key: 'files',
-				description: 'Attached files count',
-				enabled: true,
-			},
-			locked: {
-				label: 'Locked',
-				key: 'locked',
-				description: 'Whether the object is locked',
-				enabled: false,
-			},
-			organization: {
-				label: 'Organization',
-				key: 'organization',
-				description: 'Organization owning the object',
-				enabled: false,
-			},
-			validation: {
-				label: 'Validation',
-				key: 'validation',
-				description: 'Validation status of the object',
-				enabled: false,
-			},
-			owner: {
-				label: 'Owner',
-				key: 'owner',
-				description: 'Owner of the object',
-				enabled: false,
-			},
-			application: {
-				label: 'Application',
-				key: 'application',
-				description: 'Application of the object',
-				enabled: false,
-			},
-			folder: {
-				label: 'Folder',
-				key: 'folder',
-				description: 'Folder of the object',
-				enabled: false,
-			},
-			geo: {
-				label: 'Geo',
-				key: 'geo',
-				description: 'Geographic information',
-				enabled: false,
-			},
-			retention: {
-				label: 'Retention',
-				key: 'retention',
-				description: 'Retention policy',
-				enabled: false,
-			},
-			size: {
-				label: 'Size',
-				key: 'size',
-				description: 'Size of the object',
-				enabled: false,
-			},
-			published: {
-				label: 'Published',
-				key: 'published',
-				description: 'Publication date',
-				enabled: false,
-			},
-			depublished: {
-				label: 'Depublished',
-				key: 'depublished',
-				description: 'Depublication date',
-				enabled: false,
-			},
-			deleted: {
-				label: 'Deleted',
-				key: 'deleted',
-				description: 'Deletion date',
-				enabled: false,
-			},
-			created: {
-				label: 'Created',
-				key: 'created',
-				description: 'Creation date and time',
-				enabled: false,
-			},
-			updated: {
-				label: 'Updated',
-				key: 'updated',
-				description: 'Last update date and time',
-				enabled: false,
-			},
-		},
+		metadata: defaultMetadataColumns(),
 		/** @type {{[key: string]: {label: string, key: string, description: string, enabled: boolean}}} */
 		properties: {},
 		/** @type {{[key: string]: boolean}} */
@@ -1956,27 +2020,7 @@ export const useObjectStore = defineStore('object', {
 			this.setState(type, { success: null, error: null })
 
 			try {
-				if (!this.settings) {
-					await this.fetchSettings()
-				}
-
-				this._ensureInnerType(type)
-				const data = await this._inner().fetchObject(type, id)
-
-				if (data) {
-					if (!this.objects[type]) this.objects[type] = {}
-					this.objects[type][id] = data
-
-					if (this.activeObjects[type]?.id === id) {
-						await this.setActiveObject(type, data)
-					}
-				} else {
-					// fetchObject returns null on error and stores error on inner
-					const innerErr = this._inner().getError(type)
-					throw new Error(
-						innerErr?.message || `Failed to fetch ${type} object`,
-					)
-				}
+				await loadObjectThroughInner(this, { type, id })
 			} catch (error) {
 				console.error(`Error fetching ${type} object:`, error)
 				this.setState(type, { success: false, error: error.message })
