@@ -94,6 +94,30 @@ import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { resolveObjectId } from '../../services/resolveObjectId.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
+/** The list view bindings the page uses, in the order it exposes them. */
+const LIST_VIEW_BINDINGS = [
+	'schema',
+	'sortKey',
+	'sortOrder',
+	'visibleColumns',
+	'onSort',
+	'onPageChange',
+	'onPageSizeChange',
+	'refresh',
+]
+
+/**
+ * The list view bindings the page uses, picked from `listView`.
+ *
+ * @param {object} listView What useListView returned.
+ * @return {object} The picked bindings.
+ */
+function listViewBindings(listView) {
+	return Object.fromEntries(
+		LIST_VIEW_BINDINGS.map((key) => [key, listView[key]]),
+	)
+}
+
 export default {
 	name: 'CatalogiIndex',
 	components: {
@@ -104,29 +128,13 @@ export default {
 
 	setup() {
 		const sidebarState = inject('sidebarState', null)
-		const {
-			schema,
-			sortKey,
-			sortOrder,
-			visibleColumns,
-			onSort,
-			onPageChange,
-			onPageSizeChange,
-			refresh,
-		} = useListView('catalog', {
+		const listView = useListView('catalog', {
 			sidebarState,
 			objectStore,
 		})
 		const { isAdmin, loaded } = useIsAdmin()
 		return {
-			schema,
-			sortKey,
-			sortOrder,
-			visibleColumns,
-			onSort,
-			onPageChange,
-			onPageSizeChange,
-			refresh,
+			...listViewBindings(listView),
 			objectStore,
 			isAdmin,
 			loaded,
