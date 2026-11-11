@@ -277,6 +277,29 @@ class InspectionControllerTest extends TestCase {
 	}//end testTheLinkIsReadWithoutRbac()
 
 	/**
+	 * An object found in another schema is not an inspection, even with the right token.
+	 */
+	public function testAnObjectOfAnotherSchemaIsNotAnInspection(): void {
+		$this->storedInspection(
+			[
+				'@self' => ['register' => '42', 'schema' => '7'],
+				'record' => 'besluit-1',
+				'documents' => ['doc-1'],
+				'startDate' => '2026-09-01T00:00:00+00:00',
+				'endDate' => '2099-01-01T00:00:00+00:00',
+				'token' => 'the-token',
+			]
+		);
+		$this->withToken('the-token');
+
+		$response = $this->controller->follow('inspection-1');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertArrayNotHasKey('documents', $response->getData());
+
+	}//end testAnObjectOfAnotherSchemaIsNotAnInspection()
+
+	/**
 	 * A request without a token reads nothing, even when the register is down.
 	 */
 	public function testARequestWithoutATokenReadsNothing(): void {

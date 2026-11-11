@@ -163,15 +163,7 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md (Requirement: Adopt RegisterResolverService)
 	 */
 	private function configuredRegister(string $registerKey, string $schemaKey): array {
-		try {
-			$appConfig = $this->container->get(IAppConfig::class);
-		} catch (\Throwable $e) {
-			throw new RuntimeException(
-				message: 'Cannot resolve register configuration for ' . $registerKey . ': IAppConfig unavailable',
-				code: 0,
-				previous: $e
-			);
-		}
+		$appConfig = $this->appConfigFor(registerKey: $registerKey);
 
 		$register = $appConfig->getValueString(AppIdentity::APP_ID, $registerKey, '');
 		$schema = $appConfig->getValueString(AppIdentity::APP_ID, $schemaKey, '');
@@ -190,6 +182,28 @@ class OpenRegisterLookup implements OpenRegisterLookupInterface {
 		];
 
 	}//end configuredRegister()
+
+	/**
+	 * The app config, from the container.
+	 *
+	 * @param string $registerKey The register key being resolved, named in the refusal.
+	 *
+	 * @return IAppConfig The app config.
+	 *
+	 * @throws RuntimeException When the container cannot give it.
+	 */
+	private function appConfigFor(string $registerKey): IAppConfig {
+		try {
+			return $this->container->get(IAppConfig::class);
+		} catch (\Throwable $e) {
+			throw new RuntimeException(
+				message: 'Cannot resolve register configuration for ' . $registerKey . ': IAppConfig unavailable',
+				code: 0,
+				previous: $e
+			);
+		}
+
+	}//end appConfigFor()
 
 	/**
 	 * An OpenRegister service from the container when OpenRegister is among the installed apps.
