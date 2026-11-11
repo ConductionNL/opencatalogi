@@ -3,7 +3,7 @@
 /**
  * OpenCatalogi API documentation controller.
  *
- * Serves the static `openapi.json` OpenAPI 3.1 document describing this
+ * Serves the static `openapi.json` OpenAPI 3.0 document describing this
  * app's public (`@PublicPage`) API surface, with `info.version` substituted
  * at serve time from the installed app version so an installed-but-not-
  * rebuilt instance never reports a stale version (design decision D2).
@@ -69,7 +69,7 @@ class ApiDocumentationController extends Controller {
 	}//end __construct()
 
 	/**
-	 * Serve the OpenAPI 3.1 document describing the public API surface.
+	 * Serve the OpenAPI 3.0 document describing the public API surface.
 	 *
 	 * Reads the shipped `openapi.json` from the app root and overwrites
 	 * `info.version` with the installed app version (design decision D2) so
@@ -93,9 +93,10 @@ class ApiDocumentationController extends Controller {
 				throw new RuntimeException('openapi.json could not be read.');
 			}
 
-			$document = json_decode($raw, true, 512, JSON_THROW_ON_ERROR);
+			// Decoded as objects, so an empty schema `{}` is served as `{}` and not as `[]`.
+			$document = json_decode($raw, false, 512, JSON_THROW_ON_ERROR);
 
-			$document['info']['version'] = $this->appManager->getAppVersion($this->appName);
+			$document->info->version = $this->appManager->getAppVersion($this->appName);
 
 			return $this->withCorsHeaders(response: new JSONResponse($document, Http::STATUS_OK));
 		} catch (\Throwable $e) {

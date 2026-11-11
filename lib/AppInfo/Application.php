@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Dashboard\DashboardRegistrar;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
+use OCA\OpenCatalogi\Middleware\ApiContractMiddleware;
 use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
 use OCA\OpenCatalogi\Portal\PortalRegistrar;
 use OCA\OpenCatalogi\Service\ServiceRegistrar;
@@ -90,6 +91,9 @@ class Application extends App implements IBootstrap {
 		(new PortalRegistrar())->register($context);
 		(new ServiceRegistrar(appName: self::APP_ID))->register($context);
 		(new ToolRegistrar())->register($context);
+
+		// API-Version header and problem details on the JSON API (spec api-documentation).
+		$context->registerMiddleware(ApiContractMiddleware::class);
 
 		// AppHost observability adoption (ADR-040). The /api/health and
 		// /api/metrics routes resolve to leaf-namespaced controller class names
