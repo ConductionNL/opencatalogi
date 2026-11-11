@@ -100,26 +100,7 @@ class ObjectCreatedEventListener implements IEventListener {
 		$this->stampRetentionDefaults(event: $event);
 
 		try {
-			// Check if any auto-publishing features are enabled before processing.
-			$publishingOptions = $this->settingsService->getPublishingOptions();
-
-			// Skip processing if no auto-publishing features are enabled.
-			if ($publishingOptions['auto_publish_objects'] === false
-				&& $publishingOptions['auto_publish_attachments'] === false
-			) {
-				return;
-			}
-
-			// Get the created object from the event.
-			$objectEntity = $event->getObject();
-
-			// Convert ObjectEntity to array format expected by EventService.
-			$objectData = $this->convertObjectEntityToArray(objectEntity: $objectEntity);
-
-			// Process the object creation event through EventService.
-			$result = $this->eventService->handleObjectCreateEvents([$objectData]);
-
-			$this->logAutoPublishOutcome(result: $result, about: ['event' => 'creation', 'objectId' => ($objectData['@self']['id'] ?? 'unknown')]);
+			$this->autoPublish(event: $event);
 		} catch (\Throwable $e) {
 			// Log unexpected errors and continue gracefully. \Throwable, not
 			// \Exception: a missing class or type error is a PHP Error, and an
@@ -131,6 +112,35 @@ class ObjectCreatedEventListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Hand the created object to the EventService when an auto-publishing option is on.
+	 *
+	 * @param ObjectCreatedEvent $event The OR object creation event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function autoPublish(ObjectCreatedEvent $event): void {
+		// Check if any auto-publishing features are enabled before processing.
+		$publishingOptions = $this->settingsService->getPublishingOptions();
+
+		// Skip processing if no auto-publishing features are enabled.
+		if ($publishingOptions['auto_publish_objects'] === false
+			&& $publishingOptions['auto_publish_attachments'] === false
+		) {
+			return;
+		}
+
+		// Convert ObjectEntity to array format expected by EventService.
+		$objectData = $this->convertObjectEntityToArray(objectEntity: $event->getObject());
+
+		// Process the object creation event through EventService.
+		$result = $this->eventService->handleObjectCreateEvents([$objectData]);
+
+		$this->logAutoPublishOutcome(result: $result, about: ['event' => 'creation', 'objectId' => ($objectData['@self']['id'] ?? 'unknown')]);
+	}//end autoPublish()
 
 	/**
 	 * Stamp retention defaults when an object is created already published (RET-004).

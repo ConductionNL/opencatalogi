@@ -25,6 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
+use OCA\OpenCatalogi\Service\ObjectInPair;
 
 /**
  * Opens an inspection window and resolves its link, and stores and reads the
@@ -136,11 +137,14 @@ class InspectionRecords {
 	public function find(string $id): array {
 		$config = $this->inspectionConfiguration();
 		return $this->toArray(
-			object: $this->registers->getObjectService()->find(
-				id: $id,
-				register: $config['register'],
-				schema: $config['schema'],
-				_rbac: false
+			object: ObjectInPair::require(
+				found: $this->registers->getObjectService()->find(
+					id: $id,
+					register: $config['register'],
+					schema: $config['schema'],
+					_rbac: false
+				),
+				config: $config
 			)
 		);
 

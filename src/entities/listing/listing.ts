@@ -16,9 +16,33 @@ import type { TOrganization } from '../organization'
 import type { TListing } from './listing.types'
 
 import { z } from 'zod'
+import { fillDefaults } from '../fillDefaults.js'
 
 /** @typedef {import('./listing.types').TListing} TListing */
 /** @typedef {import('zod').ZodSafeParseResult<unknown>} ZodSafeParseResult */
+
+/**
+ * Every listing field but the id, with the value it takes when the data
+ * leaves it out or sends a falsy one.
+ */
+const LISTING_DEFAULTS = {
+	catalogusId: '',
+	title: '',
+	summary: '',
+	description: '',
+	search: '',
+	publications: '',
+	directory: '',
+	metadata: [] as string[],
+	status: '',
+	statusCode: 0,
+	lastSync: '' as string | Date,
+	// a falsy value still counts as available
+	available: true,
+	default: false,
+	organization: '' as string | TOrganization,
+	publicationTypes: [] as any[],
+}
 
 /**
  * Listing class representing a catalog listing in the system
@@ -64,21 +88,7 @@ export class Listing implements TListing {
 	 */
 	private hydrate(data: TListing) {
 		this.id = data?.id?.toString() || ''
-		this.catalogusId = data?.catalogusId || ''
-		this.title = data?.title || ''
-		this.summary = data?.summary || ''
-		this.description = data?.description || ''
-		this.search = data?.search || ''
-		this.publications = data?.publications || ''
-		this.directory = data?.directory || ''
-		this.metadata = data?.metadata || []
-		this.status = data?.status || ''
-		this.statusCode = data?.statusCode || 0
-		this.lastSync = data?.lastSync || ''
-		this.available = data?.available || true
-		this.default = data?.default || false
-		this.organization = data?.organization || ''
-		this.publicationTypes = data?.publicationTypes || []
+		Object.assign(this, fillDefaults(data, LISTING_DEFAULTS))
 	}
 
 	/**

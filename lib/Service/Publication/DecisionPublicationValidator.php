@@ -64,41 +64,61 @@ class DecisionPublicationValidator implements DecisionPublicationValidatorInterf
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-type-declares-publication-and-the-decision-types-rules-are-validated-req-pin-102
 	 */
 	public function validate(array $decision, array $decisionType): array {
-		$obliged = (bool)($decisionType['publicationObligation'] ?? false);
-		$reasons = [];
-		$responseDate = null;
-
-		if ($obliged === false) {
-			return [
-				'publishable' => true,
-				'reasons' => [],
-				'responseDate' => null,
-				'publicationText' => $this->publicationText(decisionType: $decisionType),
-			];
+		$verdict = ['publishable' => true, 'reasons' => [], 'responseDate' => null];
+		if ((bool)($decisionType['publicationObligation'] ?? false) === true) {
+			$verdict = $this->judgeObligedDecision(decision: $decision, decisionType: $decisionType);
 		}
 
+		$verdict['publicationText'] = $this->publicationText(decisionType: $decisionType);
+
+		return $verdict;
+
+	}//end validate()
+
+	/**
+	 * Judge a decision whose type obliges publication: it needs a readable
+	 * publication date and its type a positive statutory response term.
+	 *
+	 * @param array<string, mixed> $decision The decision to publish.
+	 * @param array<string, mixed> $decisionType The decision type's declaration.
+	 *
+	 * @return array{publishable: boolean, reasons: array<int, string>, responseDate: string|null}
+	 */
+	private function judgeObligedDecision(array $decision, array $decisionType): array {
 		$read = $this->readPublicationDate(decision: $decision);
-		$publicationDate = $read['date'];
-		$reasons = array_merge($reasons, $read['reasons']);
+		$reasons = $read['reasons'];
 
 		$termDays = (int)($decisionType['responseTermDays'] ?? 0);
 		if ($termDays <= 0) {
 			$reasons[] = 'This decision type obliges publication but declares no statutory response term.';
 		}
 
-		if ($publicationDate !== null && $termDays > 0) {
-			$responseDate = $publicationDate->add(new DateInterval('P' . $termDays . 'D'))
-				->format(DateTimeInterface::ATOM);
-		}
-
 		return [
 			'publishable' => ($reasons === []),
 			'reasons' => $reasons,
-			'responseDate' => $responseDate,
-			'publicationText' => $this->publicationText(decisionType: $decisionType),
+			'responseDate' => $this->responseDateOf(publicationDate: $read['date'], termDays: $termDays),
 		];
 
-	}//end validate()
+	}//end judgeObligedDecision()
+
+	/**
+	 * The statutory response date: the publication date plus the term, or null
+	 * when either is missing.
+	 *
+	 * @param DateTimeImmutable|null $publicationDate The publication date, when readable.
+	 * @param integer $termDays The statutory response term in days.
+	 *
+	 * @return string|null The response date as ATOM, or null.
+	 */
+	private function responseDateOf(?DateTimeImmutable $publicationDate, int $termDays): ?string {
+		if ($publicationDate === null || $termDays <= 0) {
+			return null;
+		}
+
+		return $publicationDate->add(new DateInterval('P' . $termDays . 'D'))
+			->format(DateTimeInterface::ATOM);
+
+	}//end responseDateOf()
 
 	/**
 	 * Read the publication date off a decision, saying why it could not be read.
@@ -116,22 +136,28 @@ class DecisionPublicationValidator implements DecisionPublicationValidatorInterf
 	private function readPublicationDate(array $decision): array {
 		$raw = trim((string)($decision['publicationDate'] ?? ''));
 		if ($raw === '') {
-			return [
-				'date' => null,
-				'reasons' => ['This decision type obliges publication, and the decision carries no publication date.'],
-			];
+			return $this->unreadDate(reason: 'This decision type obliges publication, and the decision carries no publication date.');
 		}
 
 		try {
 			return ['date' => new DateTimeImmutable($raw), 'reasons' => []];
 		} catch (\Throwable $e) {
-			return [
-				'date' => null,
-				'reasons' => ['The publication date on this decision cannot be read as a date: "' . $raw . '".'],
-			];
+			return $this->unreadDate(reason: 'The publication date on this decision cannot be read as a date: "' . $raw . '".');
 		}
 
 	}//end readPublicationDate()
+
+	/**
+	 * A publication date that could not be read, with the reason why.
+	 *
+	 * @param string $reason Why the date could not be read.
+	 *
+	 * @return array{date: null, reasons: array<int, string>}
+	 */
+	private function unreadDate(string $reason): array {
+		return ['date' => null, 'reasons' => [$reason]];
+
+	}//end unreadDate()
 
 	/**
 	 * The text the type publishes with every one of its records.
