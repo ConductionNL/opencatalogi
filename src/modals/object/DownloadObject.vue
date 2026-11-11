@@ -10,10 +10,7 @@ import '../../css/json-highlight.css'
 		:name="
 			t('opencatalogi', 'Download {name}', {
 				name:
-					objectStore.objectItem?.['@self']?.name
-					|| objectStore.objectItem?.name
-					|| objectStore.objectItem?.['@self']?.title
-					|| objectStore.objectItem?.id
+					objectDisplayName(objectStore.objectItem)
 					|| t('opencatalogi', 'Publication'),
 			})
 		"
@@ -63,6 +60,7 @@ import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
 import CodeMirror from 'vue-codemirror6'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import { getTheme } from '../../services/getTheme.js'
+import { objectDisplayName } from '../../services/objectDisplayName.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -100,6 +98,7 @@ export default {
 	},
 
 	methods: {
+		objectDisplayName,
 		json,
 		jsonParseLinter,
 		getTheme,
