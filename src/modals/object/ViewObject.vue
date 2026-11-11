@@ -999,7 +999,7 @@ function isReadOnlyProperty(schemaProperty) {
  * Whether a schema title can be shown: a non-blank string that is not the
  * "new" placeholder.
  *
- * @param {*} title - The title
+ * @param {unknown} title - The title
  * @return {boolean} True when usable
  */
 function isUsableTitle(title) {
@@ -1014,7 +1014,7 @@ function isUsableTitle(title) {
 /**
  * Whether an editor instance offers a method.
  *
- * @param {*} editorInstance - The editor
+ * @param {object|null|undefined} editorInstance - The editor
  * @param {string} name - The method name
  * @return {boolean} True when it does
  */
@@ -1026,7 +1026,7 @@ function hasEditorMethod(editorInstance, name) {
  * The content of a markdown editor: its markdown, else its HTML, else the
  * value itself when it is text.
  *
- * @param {*} editorInstance - The editor or a text value
+ * @param {object|string|null|undefined} editorInstance - The editor or a text value
  * @return {string} The content
  */
 function editorContent(editorInstance) {
