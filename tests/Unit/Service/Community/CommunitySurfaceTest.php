@@ -7,6 +7,7 @@ namespace Unit\Service\Community;
 use DateTimeImmutable;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\StatusChange;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
@@ -49,14 +50,30 @@ class CommunitySurfaceTest extends TestCase {
 		return new DateTimeImmutable($when, new DateTimeZone('UTC'));
 	}//end at()
 
+	/**
+	 * A state change set by the administrator.
+	 *
+	 * @param string $component The component.
+	 * @param string $state The state.
+	 * @param string $message The message.
+	 *
+	 * @return StatusChange
+	 */
+	private function change(string $component, string $state, string $message): StatusChange {
+		$change = new StatusChange();
+		$change->component = $component;
+		$change->state = $state;
+		$change->message = $message;
+		$change->setBy = 'beheerder';
+
+		return $change;
+	}//end change()
+
 	public function testAReaderSeesWhatIsDownWithItsMessage(): void {
 		$page = $this->status->render(
 			components: [
 				$this->status->setState(
-					component: 'DigiD',
-					state: 'unavailable',
-					message: 'Inloggen met DigiD werkt tijdelijk niet.',
-					setBy: 'beheerder',
+					change: $this->change(component: 'DigiD', state: 'unavailable', message: 'Inloggen met DigiD werkt tijdelijk niet.'),
 					now: $this->at('2026-09-18T09:00:00+00:00')
 				),
 			],
@@ -116,7 +133,7 @@ class CommunitySurfaceTest extends TestCase {
 	public function testAStateOutsideTheKnownSetIsRefused(): void {
 		$this->expectException(DomainException::class);
 
-		$this->status->setState(component: 'DigiD', state: 'probably-fine', message: '', setBy: 'a');
+		$this->status->setState(change: $this->change(component: 'DigiD', state: 'probably-fine', message: ''));
 
 	}//end testAStateOutsideTheKnownSetIsRefused()
 
