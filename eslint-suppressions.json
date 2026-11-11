@@ -656,9 +656,6 @@
     "@typescript-eslint/no-unused-vars": {
       "count": 4
     },
-    "eqeqeq": {
-      "count": 1
-    },
     "jsdoc/require-param-type": {
       "count": 55
     },
@@ -666,7 +663,7 @@
       "count": 12
     },
     "no-useless-assignment": {
-      "count": 3
+      "count": 1
     },
     "vue/prefer-define-options": {
       "count": 1
