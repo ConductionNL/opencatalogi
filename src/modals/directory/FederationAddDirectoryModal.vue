@@ -17,9 +17,9 @@
 //   - WOO-510 — parent fix.
 
 import { translate as t } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcModal, NcNoteCard, NcTextField } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
+import { addDirectory } from './listingRequests.js'
 
 export default {
 	name: 'FederationAddDirectoryModal',
@@ -104,21 +104,7 @@ export default {
 			this.submitting = true
 			this.error = null
 			try {
-				const endpoint = generateUrl('/apps/opencatalogi/api/listings/add')
-				const res = await fetch(endpoint, {
-					method: 'POST',
-					headers: {
-						'OCS-APIRequest': 'true',
-						'Content-Type': 'application/json',
-						Accept: 'application/json',
-					},
-					body: JSON.stringify({ url: trimmed }),
-				})
-				const body = await res.json().catch(() => ({}))
-				if (!res.ok) {
-					throw new Error(body.message || `HTTP ${res.status}`)
-				}
-				this.result = body
+				this.result = await addDirectory(trimmed)
 			} catch (e) {
 				this.error = e.message || String(e)
 			} finally {

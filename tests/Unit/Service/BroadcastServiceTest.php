@@ -365,6 +365,33 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testGetDirectoryUrlsFiltersInvalid()
 
+	/**
+	 * Test getDirectoryUrls reads a listing's nested `object` before its own
+	 * fields, and answers the unique valid URLs under their first position.
+	 */
+	public function testGetDirectoryUrlsReadsTheNestedObjectAndKeepsPositions(): void {
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+
+		$listings = [
+			['object' => ['directory' => 'https://nested.example/api/directory'], 'directory' => 'https://outer.example/api/directory'],
+			['directory' => 'not-a-url'],
+			['object' => ['title' => 'no directory'], 'directory' => 'https://ignored.example/api/directory'],
+			['directory' => 'https://flat.example/api/directory'],
+			['object' => ['directory' => 'https://nested.example/api/directory']],
+		];
+
+		$mockObjectService = $this->createMockObjectService($listings);
+
+		$this->containerMock->method('get')
+			->willReturn($mockObjectService);
+
+		$result = $this->invokePrivateMethod($this->broadcastService, 'getDirectoryUrls');
+
+		$this->assertSame([0 => 'https://nested.example/api/directory', 2 => 'https://flat.example/api/directory'], $result);
+
+	}//end testGetDirectoryUrlsReadsTheNestedObjectAndKeepsPositions()
+
 	// ===== sendBroadcastRequest tests =====
 
 	/**
@@ -492,6 +519,27 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 	/**
 	 * Test broadcast with a specific valid URL.
 	 */
+	/**
+	 * Test broadcast counts an unsafe target as not reached, without calling it.
+	 */
+	public function testBroadcastToAnUnsafeTargetIsNotASuccess(): void {
+		$this->urlGeneratorMock->method('linkToRoute')
+			->willReturn('/apps/opencatalogi/api/directory');
+		$this->urlGeneratorMock->method('getAbsoluteURL')
+			->willReturn('https://self.example.com/apps/opencatalogi/api/directory');
+		$this->appManagerMock->method('getInstalledApps')
+			->willReturn(['openregister']);
+		$this->containerMock->method('get')
+			->willReturn($this->createMockObjectService([]));
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$result = $this->broadcastService->broadcast('http://169.254.169.254/latest/meta-data');
+
+		$this->assertSame(['http://169.254.169.254/latest/meta-data' => false], $result);
+
+	}//end testBroadcastToAnUnsafeTargetIsNotASuccess()
+
 	/**
 	 * @group network
 	 */
@@ -874,6 +922,48 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->broadcastService->enqueueBroadcast('http://169.254.169.254/latest/meta-data', 'https://self.example.com/api/directory');
 
 	}//end testEnqueueBroadcastRejectsUnsafeUrlBeforeDelivery()
+
+	/**
+	 * Internal targets written in another notation are refused before delivery.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function internalTargetsInOtherNotations(): array {
+		return [
+			'ipv4-mapped loopback'        => ['http://[::ffff:127.0.0.1]/directory'],
+			'ipv4-mapped loopback in hex' => ['http://[::ffff:7f00:1]/directory'],
+			'ipv4-mapped private'         => ['http://[::ffff:10.0.0.1]/directory'],
+			'ipv4-mapped metadata'        => ['http://[::ffff:169.254.169.254]/latest/meta-data'],
+			'ipv4-compatible loopback'    => ['http://[::127.0.0.1]/directory'],
+			'unspecified ipv4'            => ['http://0.0.0.0/directory'],
+			'this-network ipv4'           => ['http://0.1.2.3/directory'],
+			'shared address space'        => ['http://100.64.0.1/directory'],
+			'limited broadcast'           => ['http://255.255.255.255/directory'],
+		];
+
+	}//end internalTargetsInOtherNotations()
+
+
+	/**
+	 * Test enqueueBroadcast refuses an internal target in any notation.
+	 *
+	 * @dataProvider internalTargetsInOtherNotations
+	 *
+	 * @param string $url The broadcast target.
+	 *
+	 * @return void
+	 */
+	public function testEnqueueBroadcastRejectsInternalTargetInOtherNotation(string $url): void {
+		$this->clientMock->expects($this->never())
+			->method('post');
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->broadcastService->enqueueBroadcast($url, 'https://self.example.com/api/directory');
+
+	}//end testEnqueueBroadcastRejectsInternalTargetInOtherNotation()
+
 
 	/**
 	 * A localhost instance must not advertise itself to a real directory.

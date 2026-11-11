@@ -184,20 +184,46 @@ class TooiVocabularyService {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function resolveSoortHandeling(?string $value): ?array {
-		$needle = strtolower(trim((string)($value ?? self::DEFAULT_SOORTHANDELING)));
-		if ($needle === '') {
-			$needle = self::DEFAULT_SOORTHANDELING;
-		}
-
-		// Accept a bare c_… id or a full kern URI too.
+		$needle = $this->soortHandelingNeedle(value: $value);
 		foreach (self::SOORTHANDELINGEN as $label => $id) {
-			if ($needle === $label || $needle === $id || $needle === strtolower(self::KERN_BASE . $id)) {
+			if ($this->namesSoortHandeling(needle: $needle, member: [$label, $id]) === true) {
 				return ['uri' => self::KERN_BASE . $id, 'label' => $label];
 			}
 		}
 
 		return null;
 	}//end resolveSoortHandeling()
+
+	/**
+	 * The declared handling type as it is looked up: trimmed, lower case, and
+	 * the default when none is declared.
+	 *
+	 * @param string|null $value The declared handling type, or null for the default.
+	 *
+	 * @return string The needle.
+	 */
+	private function soortHandelingNeedle(?string $value): string {
+		$needle = strtolower(trim((string)($value ?? self::DEFAULT_SOORTHANDELING)));
+		if ($needle === '') {
+			return self::DEFAULT_SOORTHANDELING;
+		}
+
+		return $needle;
+	}//end soortHandelingNeedle()
+
+	/**
+	 * Whether a needle names a handling type: by its label, its bare c_… id or
+	 * its full kern URI.
+	 *
+	 * @param string $needle The lower-cased declared handling type.
+	 * @param array{0: string, 1: string} $member The member's label and id.
+	 *
+	 * @return bool True when the needle names the member.
+	 */
+	private function namesSoortHandeling(string $needle, array $member): bool {
+		[$label, $id] = $member;
+		return $needle === $label || $needle === $id || $needle === strtolower(self::KERN_BASE . $id);
+	}//end namesSoortHandeling()
 
 	/**
 	 * Validate a candidate TOOI organisatie identifier.

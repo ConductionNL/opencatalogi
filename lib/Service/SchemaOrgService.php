@@ -29,6 +29,7 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCP\IURLGenerator;
 use Psr\Container\ContainerInterface;
@@ -582,8 +583,9 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	/**
 	 * List the catalog's publicly visible publications as `{@id}` dataset refs.
 	 *
-	 * Selection goes through the OR object-search path with `_rbac: true`, so only
-	 * publicly visible (published, not depublished) publications appear.
+	 * Selection goes through the OR object-search path with `_rbac: true`. A signed-in
+	 * caller may read drafts that way, so the refs keep only publications inside their
+	 * publication window ({@see PublicationQueryServiceInterface::isObjectPublic()}).
 	 *
 	 * @param array<string, mixed> $catalog The catalog object.
 	 * @param string $catalogSlug The catalog slug.
@@ -634,9 +636,11 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 	}//end catalogScopeQuery()
 
 	/**
-	 * The `{@id}` dataset refs of the publications found, skipping any without a uuid or id.
+	 * The `{@id}` dataset refs of the public publications found, skipping any without a
+	 * uuid or id.
 	 *
-	 * Results that are not a list are refused with a warning: no refs.
+	 * Results that are not a list are refused with a warning: no refs. Without the
+	 * publication query service no publication counts as public: no refs.
 	 *
 	 * @param mixed $publications The search results.
 	 * @param string $catalogSlug The catalog slug.
@@ -651,17 +655,44 @@ class SchemaOrgService implements SchemaOrgServiceInterface {
 			return [];
 		}
 
+		$visibility = $this->publicationVisibility();
+		if ($visibility === null) {
+			return [];
+		}
+
 		$refs = [];
 		foreach ($publications as $publication) {
 			$publication = $this->toArray(item: $publication);
 			$uuid = (string)($publication['@self']['uuid'] ?? $publication['id'] ?? '');
-			if ($uuid !== '') {
+			if ($uuid !== '' && $visibility->isObjectPublic(objectData: $publication) === true) {
 				$refs[] = ['@id' => $this->dcatService->datasetIri($catalogSlug, $uuid)];
 			}
 		}
 
 		return $refs;
 	}//end datasetRefs()
+
+	/**
+	 * The publication query service that decides the publication window, or null when unavailable.
+	 *
+	 * @return PublicationQueryServiceInterface|null The service, or null.
+	 *
+	 * @spec exclude Lazy DI accessor for the publication window rule; pure plumbing.
+	 */
+	private function publicationVisibility(): ?PublicationQueryServiceInterface {
+		try {
+			$service = $this->container->get(PublicationQueryServiceInterface::class);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[SchemaOrgService] Publication query service unavailable', ['error' => $e->getMessage()]);
+			return null;
+		}
+
+		if ($service instanceof PublicationQueryServiceInterface === false) {
+			return null;
+		}
+
+		return $service;
+	}//end publicationVisibility()
 
 	/**
 	 * Normalise a catalog register/schema list (array or JSON string) to integer IDs.

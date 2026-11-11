@@ -143,30 +143,7 @@
 					:series="activityChartData.series"
 					:categories="activityChartData.labels"
 					:height="280"
-					:options="{
-						stroke: { curve: 'smooth', width: 2 },
-						fill: {
-							type: 'gradient',
-							gradient: {
-								shadeIntensity: 1,
-								opacityFrom: 0.4,
-								opacityTo: 0.05,
-								stops: [0, 90, 100],
-							},
-						},
-						xaxis: {
-							labels: { rotate: -30, style: { fontSize: '11px' } },
-							axisBorder: { show: false },
-							axisTicks: { show: false },
-						},
-						yaxis: { labels: { style: { fontSize: '11px' } } },
-						grid: {
-							borderColor: 'var(--color-border, #e0e0e0)',
-							strokeDashArray: 4,
-						},
-						dataLabels: { enabled: false },
-						tooltip: { shared: true, intersect: false },
-					}" />
+					:options="areaChartOptions()" />
 				<div v-else class="widget-empty">
 					<ChartAreaspline :size="40" class="widget-empty-icon" />
 					<p>{{ t('opencatalogi', 'No activity recorded yet') }}</p>
@@ -188,31 +165,7 @@
 					:series="usageChartData.series"
 					:categories="usageChartData.labels"
 					:height="240"
-					:options="{
-						stroke: { curve: 'smooth', width: 2 },
-						colors: usageChartColors,
-						fill: {
-							type: 'gradient',
-							gradient: {
-								shadeIntensity: 1,
-								opacityFrom: 0.4,
-								opacityTo: 0.05,
-								stops: [0, 90, 100],
-							},
-						},
-						xaxis: {
-							labels: { rotate: -30, style: { fontSize: '11px' } },
-							axisBorder: { show: false },
-							axisTicks: { show: false },
-						},
-						yaxis: { labels: { style: { fontSize: '11px' } } },
-						grid: {
-							borderColor: 'var(--color-border, #e0e0e0)',
-							strokeDashArray: 4,
-						},
-						dataLabels: { enabled: false },
-						tooltip: { shared: true, intersect: false },
-					}" />
+					:options="areaChartOptions(usageChartColors)" />
 				<div v-else class="widget-empty">
 					<ChartAreaspline :size="40" class="widget-empty-icon" />
 					<p>{{ t('opencatalogi', 'No usage data yet') }}</p>
@@ -251,16 +204,19 @@
 			<template #widget-concept-publications-title-icon>
 				<FileDocumentEditOutline :size="20" />
 			</template>
-			<template #widget-concept-publications>
+			<template
+				v-for="list in statusPublicationLists"
+				:key="list.id"
+				#[`widget-${list.id}`]>
 				<div class="concept-widget-content" tabindex="0">
 					<div
-						v-if="conceptPublications.length === 0"
+						v-if="list.publications.length === 0"
 						class="widget-empty">
-						{{ t('opencatalogi', 'No concept publications') }}
+						{{ list.emptyText }}
 					</div>
 					<div v-else class="concept-list">
 						<div
-							v-for="publication in conceptPublications"
+							v-for="publication in list.publications"
 							:key="publication.id"
 							class="concept-item concept-item-clickable"
 							role="button"
@@ -280,9 +236,7 @@
 									resolveSchemaName(publication)
 								}}</span>
 							</div>
-							<span class="concept-item-status">{{
-								t('opencatalogi', 'Concept')
-							}}</span>
+							<span :class="list.statusClass">{{ list.statusLabel }}</span>
 						</div>
 					</div>
 				</div>
@@ -318,82 +272,10 @@
 			<template #widget-published-publications-title-icon>
 				<FileDocumentCheckOutline :size="20" />
 			</template>
-			<template #widget-published-publications>
-				<div class="concept-widget-content" tabindex="0">
-					<div
-						v-if="publishedPublications.length === 0"
-						class="widget-empty">
-						{{ t('opencatalogi', 'No published publications') }}
-					</div>
-					<div v-else class="concept-list">
-						<div
-							v-for="publication in publishedPublications"
-							:key="publication.id"
-							class="concept-item concept-item-clickable"
-							role="button"
-							tabindex="0"
-							@click="openPublication(publication)"
-							@keydown.enter="openPublication(publication)"
-							@keydown.space.prevent="openPublication(publication)">
-							<div class="concept-item-content">
-								<span class="concept-item-title">{{
-									publication.title
-									|| publication.name
-									|| publication.titel
-									|| publication.naam
-									|| publication.id
-								}}</span>
-								<span class="concept-item-schema">{{
-									resolveSchemaName(publication)
-								}}</span>
-							</div>
-							<span class="published-item-status">{{
-								t('opencatalogi', 'Published')
-							}}</span>
-						</div>
-					</div>
-				</div>
-			</template>
 
 			<!-- Depublished Publications widget -->
 			<template #widget-depublished-publications-title-icon>
 				<AlertOutline :size="20" />
-			</template>
-			<template #widget-depublished-publications>
-				<div class="concept-widget-content" tabindex="0">
-					<div
-						v-if="depublishedPublications.length === 0"
-						class="widget-empty">
-						{{ t('opencatalogi', 'No depublished publications') }}
-					</div>
-					<div v-else class="concept-list">
-						<div
-							v-for="publication in depublishedPublications"
-							:key="publication.id"
-							class="concept-item concept-item-clickable"
-							role="button"
-							tabindex="0"
-							@click="openPublication(publication)"
-							@keydown.enter="openPublication(publication)"
-							@keydown.space.prevent="openPublication(publication)">
-							<div class="concept-item-content">
-								<span class="concept-item-title">{{
-									publication.title
-									|| publication.name
-									|| publication.titel
-									|| publication.naam
-									|| publication.id
-								}}</span>
-								<span class="concept-item-schema">{{
-									resolveSchemaName(publication)
-								}}</span>
-							</div>
-							<span class="depublished-item-status">{{
-								t('opencatalogi', 'Depublished')
-							}}</span>
-						</div>
-					</div>
-				</div>
 			</template>
 
 			<!-- Empty state -->
@@ -569,6 +451,142 @@ const DEFAULT_LAYOUT = [
 ]
 
 /**
+ * The category name of an embedded schema: its title or name.
+ *
+ * @param {object} schema - The embedded schema
+ * @return {string} The name
+ */
+function embeddedSchemaName(schema) {
+	return schema.title || schema.name || t('opencatalogi', 'Unknown')
+}
+
+/**
+ * The category name of a schema id: the listed schema's title or name, else
+ * the id as text.
+ *
+ * @param {string|number} schemaRef - The schema id
+ * @return {string} The name
+ */
+function listedSchemaName(schemaRef) {
+	const match = objectStore.availableSchemas.find(
+		(s) => Number(s.id) === Number(schemaRef),
+	)
+	return match?.title || match?.name || String(schemaRef)
+}
+
+/**
+ * The category a publication is counted under: the name of its schema.
+ *
+ * @param {object} pub - The publication
+ * @return {string} The category name
+ */
+function publicationCategory(pub) {
+	const schemaRef = pub['@self']?.schema
+	if (typeof schemaRef === 'object' && schemaRef) {
+		return embeddedSchemaName(schemaRef)
+	}
+	if (schemaRef) {
+		return listedSchemaName(schemaRef)
+	}
+	return t('opencatalogi', 'Unknown')
+}
+
+/**
+ * One custom dashboard widget.
+ *
+ * @param {string} id - The widget id
+ * @param {string} title - The translated title
+ * @return {{id: string, title: string, type: string}} The definition
+ */
+function customWidget(id, title) {
+	return { id, title, type: 'custom' }
+}
+
+/**
+ * A publication list widget whose title icon shows the status colour.
+ *
+ * @param {string} id - The widget id
+ * @param {{title: string, color: string}} look - The translated title and the icon colour
+ * @return {object} The definition
+ */
+function statusListWidget(id, { title, color }) {
+	return {
+		...customWidget(id, title),
+		titleIconPosition: 'left',
+		titleIconColor: color,
+	}
+}
+
+/**
+ * The publication count widgets.
+ *
+ * @return {Array<object>} The definitions
+ */
+function countWidgetDefs() {
+	return [
+		customWidget('count-publications', t('opencatalogi', 'Publications')),
+		customWidget(
+			'count-concept-publications',
+			t('opencatalogi', 'Concept Publications'),
+		),
+		customWidget(
+			'count-published-publications',
+			t('opencatalogi', 'Published Publications'),
+		),
+		customWidget(
+			'count-depublished-publications',
+			t('opencatalogi', 'Depublished Publications'),
+		),
+		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+		// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+	]
+}
+
+/**
+ * The chart and statistics widgets.
+ *
+ * @return {Array<object>} The definitions
+ */
+function chartWidgetDefs() {
+	return [
+		customWidget(
+			'publications-by-category',
+			t('opencatalogi', 'Publications by Category'),
+		),
+		customWidget('activity', t('opencatalogi', 'Activity')),
+		customWidget('usage', t('opencatalogi', 'Publication views')),
+		customWidget(
+			'popular-searches',
+			t('opencatalogi', 'Popular Search Terms'),
+		),
+	]
+}
+
+/**
+ * The publication list widgets per status.
+ *
+ * @return {Array<object>} The definitions
+ */
+function statusListWidgetDefs() {
+	return [
+		statusListWidget('concept-publications', {
+			title: t('opencatalogi', 'Concept Publications'),
+			color: 'var(--color-warning)',
+		}),
+		statusListWidget('published-publications', {
+			title: t('opencatalogi', 'Published Publications'),
+			color: 'var(--color-success)',
+		}),
+		statusListWidget('depublished-publications', {
+			title: t('opencatalogi', 'Depublished Publications'),
+			color: 'var(--color-error)',
+		}),
+		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
+		// { id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+	]
+}
+
+/**
  * Dashboard — overview view: catalogs, publication totals, activity chart.
  *
  * @spec openspec/specs/dashboard/spec.md
@@ -701,21 +719,7 @@ export default {
 		publicationsByCategoryData() {
 			const counts = {}
 			for (const pub of this.allPublications) {
-				const schemaRef = pub['@self']?.schema
-				let name
-				if (typeof schemaRef === 'object' && schemaRef) {
-					name =
-						schemaRef.title
-						|| schemaRef.name
-						|| t('opencatalogi', 'Unknown')
-				} else if (schemaRef) {
-					const match = objectStore.availableSchemas.find(
-						(s) => Number(s.id) === Number(schemaRef),
-					)
-					name = match?.title || match?.name || String(schemaRef)
-				} else {
-					name = t('opencatalogi', 'Unknown')
-				}
+				const name = publicationCategory(pub)
 				counts[name] = (counts[name] || 0) + 1
 			}
 			return {
@@ -738,74 +742,44 @@ export default {
 			return this.catalogs[0]?.slug || null
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
-		widgetDefs() {
+		/**
+		 * The publication list widgets per status: the publications, the text
+		 * without any, and the class and label of their status badge.
+		 *
+		 * @return {Array<object>} The lists
+		 */
+		statusPublicationLists() {
 			return [
 				{
-					id: 'count-publications',
-					title: t('opencatalogi', 'Publications'),
-					type: 'custom',
-				},
-				{
-					id: 'count-concept-publications',
-					title: t('opencatalogi', 'Concept Publications'),
-					type: 'custom',
-				},
-				{
-					id: 'count-published-publications',
-					title: t('opencatalogi', 'Published Publications'),
-					type: 'custom',
-				},
-				{
-					id: 'count-depublished-publications',
-					title: t('opencatalogi', 'Depublished Publications'),
-					type: 'custom',
-				},
-				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
-				// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
-				{
-					id: 'publications-by-category',
-					title: t('opencatalogi', 'Publications by Category'),
-					type: 'custom',
-				},
-				{
-					id: 'activity',
-					title: t('opencatalogi', 'Activity'),
-					type: 'custom',
-				},
-				{
-					id: 'usage',
-					title: t('opencatalogi', 'Publication views'),
-					type: 'custom',
-				},
-				{
-					id: 'popular-searches',
-					title: t('opencatalogi', 'Popular Search Terms'),
-					type: 'custom',
-				},
-				{
 					id: 'concept-publications',
-					title: t('opencatalogi', 'Concept Publications'),
-					type: 'custom',
-					titleIconPosition: 'left',
-					titleIconColor: 'var(--color-warning)',
+					publications: this.conceptPublications,
+					emptyText: t('opencatalogi', 'No concept publications'),
+					statusClass: 'concept-item-status',
+					statusLabel: t('opencatalogi', 'Concept'),
 				},
 				{
 					id: 'published-publications',
-					title: t('opencatalogi', 'Published Publications'),
-					type: 'custom',
-					titleIconPosition: 'left',
-					titleIconColor: 'var(--color-success)',
+					publications: this.publishedPublications,
+					emptyText: t('opencatalogi', 'No published publications'),
+					statusClass: 'published-item-status',
+					statusLabel: t('opencatalogi', 'Published'),
 				},
 				{
 					id: 'depublished-publications',
-					title: t('opencatalogi', 'Depublished Publications'),
-					type: 'custom',
-					titleIconPosition: 'left',
-					titleIconColor: 'var(--color-error)',
+					publications: this.depublishedPublications,
+					emptyText: t('opencatalogi', 'No depublished publications'),
+					statusClass: 'depublished-item-status',
+					statusLabel: t('opencatalogi', 'Depublished'),
 				},
-				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
-				// { id: 'concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
+			]
+		},
+
+		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
+		widgetDefs() {
+			return [
+				...countWidgetDefs(),
+				...chartWidgetDefs(),
+				...statusListWidgetDefs(),
 			]
 		},
 	},
@@ -830,6 +804,8 @@ export default {
 	},
 
 	methods: {
+		areaChartOptions,
+
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1 */
 		async loadDashboardData() {
 			this.globalLoading = true
@@ -1132,6 +1108,41 @@ export default {
 			this.dashboardLayout = newLayout
 		},
 	},
+}
+
+/**
+ * The options of the dashboard's smooth gradient area charts, built fresh for
+ * each chart; `colors` (when given) sets the series colours.
+ *
+ * @param {Array<string>} [colors] The series colours.
+ * @return {object} The chart options.
+ */
+function areaChartOptions(colors) {
+	return {
+		stroke: { curve: 'smooth', width: 2 },
+		...(colors && { colors }),
+		fill: {
+			type: 'gradient',
+			gradient: {
+				shadeIntensity: 1,
+				opacityFrom: 0.4,
+				opacityTo: 0.05,
+				stops: [0, 90, 100],
+			},
+		},
+		xaxis: {
+			labels: { rotate: -30, style: { fontSize: '11px' } },
+			axisBorder: { show: false },
+			axisTicks: { show: false },
+		},
+		yaxis: { labels: { style: { fontSize: '11px' } } },
+		grid: {
+			borderColor: 'var(--color-border, #e0e0e0)',
+			strokeDashArray: 4,
+		},
+		dataLabels: { enabled: false },
+		tooltip: { shared: true, intersect: false },
+	}
 }
 </script>
 

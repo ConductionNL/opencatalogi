@@ -86,6 +86,17 @@ final class CallerScope {
 			unset($query[$key]);
 		}
 
+		return self::withoutSelfScope(query: $query);
+	}//end strip()
+
+	/**
+	 * Remove the scope sub-keys of `@self`, and an `@self` that is not an array.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array The query without caller-supplied `@self` scope.
+	 */
+	private static function withoutSelfScope(array $query): array {
 		if (array_key_exists('@self', $query) === true && is_array($query['@self']) === false) {
 			unset($query['@self']);
 		}
@@ -97,7 +108,7 @@ final class CallerScope {
 		}
 
 		return $query;
-	}//end strip()
+	}//end withoutSelfScope()
 
 	/**
 	 * Write the server's register/schema scope into a search query.
@@ -162,18 +173,8 @@ final class CallerScope {
 			throw new InvalidArgumentException('Refusing to write an empty register or schema scope; the caller must fail closed first.');
 		}
 
-		if (isset($query['@self']) === false || is_array($query['@self']) === false) {
-			$query['@self'] = [];
-		}
-
-		$query['@self']['register'] = $registers;
-		if (count($registers) === 1) {
-			$query['@self']['register'] = $registers[0];
-		}
-
-		if (count($registers) > 1) {
-			$query['_registers'] = $registers;
-		}
+		$query['@self'] = self::selfBlock(query: $query);
+		$query = self::withRegisters(query: $query, registers: $registers);
 
 		$query['@self']['schema'] = $schemas;
 		$query['_schemas'] = $schemas;
@@ -184,5 +185,42 @@ final class CallerScope {
 
 		return $query;
 	}//end writeScope()
+
+	/**
+	 * The query's `@self` block, or an empty one when it has none or it is not an array.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array The `@self` block.
+	 */
+	private static function selfBlock(array $query): array {
+		if (isset($query['@self']) === true && is_array($query['@self']) === true) {
+			return $query['@self'];
+		}
+
+		return [];
+	}//end selfBlock()
+
+	/**
+	 * Write the register scope: a scalar `@self.register` for one register, else
+	 * the list there and in the top-level `_registers` both routers read.
+	 *
+	 * @param array $query The search query with its `@self` block.
+	 * @param array<int, int|string> $registers The register ids of the scope (non-empty).
+	 *
+	 * @return array The query with the register scope written.
+	 */
+	private static function withRegisters(array $query, array $registers): array {
+		$query['@self']['register'] = $registers;
+		if (count($registers) === 1) {
+			$query['@self']['register'] = $registers[0];
+		}
+
+		if (count($registers) > 1) {
+			$query['_registers'] = $registers;
+		}
+
+		return $query;
+	}//end withRegisters()
 
 }//end class

@@ -1,0 +1,334 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CaseTypeResyncDialog.load reads a diff without changes, and fails with the server message 1`] = `
+{
+  "changes": [],
+  "choices": {},
+  "definition": {
+    "id": "def-1",
+    "identifier": "ct-1",
+  },
+  "error": "",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+    [
+      "/apps/opencatalogi/api/case-types/def-1/resync",
+    ],
+  ],
+  "state": "ready",
+  "summary": "The case type ct-1 matches its source.",
+}
+`;
+
+exports[`CaseTypeResyncDialog.load reads a diff without changes, and fails with the server message 2`] = `
+{
+  "changes": [],
+  "choices": {},
+  "definition": null,
+  "error": "register down",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+    [
+      "/apps/opencatalogi/api/case-types/def-1/resync",
+    ],
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+  ],
+  "state": "error",
+  "summary": "The case type ct-1 matches its source.",
+}
+`;
+
+exports[`CaseTypeResyncDialog.load reads a diff without changes, and fails with the server message 3`] = `
+{
+  "changes": [],
+  "choices": {},
+  "definition": {
+    "id": "def-1",
+  },
+  "error": "The case type could not be resynced.",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+    [
+      "/apps/opencatalogi/api/case-types/def-1/resync",
+    ],
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+    [
+      "/apps/opencatalogi/api/case-types/def-1/resync",
+    ],
+  ],
+  "state": "error",
+  "summary": "The case type ct-1 matches its source.",
+}
+`;
+
+exports[`CaseTypeResyncDialog.load reads the diff and keeps locally changed properties 1`] = `
+{
+  "changes": [
+    {
+      "locallyChanged": true,
+      "property": "a",
+    },
+    {
+      "property": "b",
+    },
+  ],
+  "choices": {
+    "a": "keep",
+    "b": "take",
+  },
+  "definition": {
+    "id": "def-1",
+    "title": "Vergunning",
+  },
+  "error": "",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+    [
+      "/apps/opencatalogi/api/case-types/def-1/resync",
+    ],
+  ],
+  "state": "ready",
+  "summary": "The case type Vergunning differs from its source in 2 properties.",
+}
+`;
+
+exports[`CaseTypeResyncDialog.load stops when no definition is found 1`] = `
+{
+  "changes": [],
+  "choices": {},
+  "definition": null,
+  "error": "",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+  ],
+  "state": "no-case-type",
+  "summary": "The case type  ct-1  matches its source.",
+}
+`;
+
+exports[`CaseTypeResyncDialog.load stops when no definition is found 2`] = `
+{
+  "changes": [],
+  "choices": {},
+  "definition": {
+    "title": "no id",
+  },
+  "error": "",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+    [
+      "/apps/openregister/api/objects/sc-reg/ctd",
+      {
+        "params": {
+          "_limit": 1,
+          "identifier": "ct-1",
+        },
+      },
+    ],
+  ],
+  "state": "no-case-type",
+  "summary": "The case type no id matches its source.",
+}
+`;
+
+exports[`CaseTypeResyncDialog.load stops without a case type 1`] = `
+{
+  "changes": [],
+  "choices": {},
+  "definition": null,
+  "error": "",
+  "gets": [],
+  "state": "no-case-type",
+  "summary": "The case type     matches its source.",
+}
+`;
+
+exports[`CaseTypeResyncDialog.load stops without a case type 2`] = `
+{
+  "changes": [],
+  "choices": {},
+  "definition": null,
+  "error": "",
+  "gets": [],
+  "state": "no-case-type",
+  "summary": "The case type  matches its source.",
+}
+`;
+
+exports[`RetentionDecisionDialog reads nothing without ids, and ignores handed publications that are not a list 1`] = `
+{
+  "decision": "extend",
+  "gets": [],
+  "loading": false,
+  "publications": [],
+}
+`;
+
+exports[`RetentionDecisionDialog reads only the publications it was not handed, dropping unreadable ones 1`] = `
+{
+  "gets": [
+    [
+      "/apps/openregister/api/objects/pub-reg//2",
+    ],
+    [
+      "/apps/openregister/api/objects/pub-reg//p3",
+    ],
+    [
+      "/apps/openregister/api/objects/pub-reg//p4",
+    ],
+  ],
+  "loading": false,
+  "publications": [
+    {
+      "id": "p1",
+      "title": "given",
+    },
+    {
+      "id": "2",
+      "read": true,
+    },
+    {
+      "id": "p4",
+      "read": true,
+    },
+  ],
+}
+`;
+
+exports[`RetentionDecisionDialog words every decision for one and for several publications 1`] = `
+{
+  "archive 0": [
+    "Archive",
+    "Archive 0 publications. They leave the public catalogue today.",
+    "Archived.",
+  ],
+  "archive 1": [
+    "Archive",
+    "Archive 1 publication. It leaves the public catalogue today.",
+    "Archived.",
+  ],
+  "archive 3": [
+    "Archive",
+    "Archive 3 publications. They leave the public catalogue today.",
+    "Archived.",
+  ],
+  "depublish 0": [
+    "Depublish now",
+    "Take 0 publications off the public catalogue today.",
+    "Depublished.",
+  ],
+  "depublish 1": [
+    "Depublish now",
+    "Take 1 publication off the public catalogue today.",
+    "Depublished.",
+  ],
+  "depublish 3": [
+    "Depublish now",
+    "Take 3 publications off the public catalogue today.",
+    "Depublished.",
+  ],
+  "extend 0": [
+    "Extend term",
+    "Extend the retention term of 0 publications. The new end date counts from the current one.",
+    "The retention term was extended.",
+  ],
+  "extend 1": [
+    "Extend term",
+    "Extend the retention term of 1 publication. The new end date counts from the current one.",
+    "The retention term was extended.",
+  ],
+  "extend 3": [
+    "Extend term",
+    "Extend the retention term of 3 publications. The new end date counts from the current one.",
+    "The retention term was extended.",
+  ],
+  "unknown 0": [
+    "Extend term",
+    "Extend the retention term of 0 publications. The new end date counts from the current one.",
+    "The retention term was extended.",
+  ],
+  "unknown 1": [
+    "Extend term",
+    "Extend the retention term of 1 publication. The new end date counts from the current one.",
+    "The retention term was extended.",
+  ],
+  "unknown 3": [
+    "Extend term",
+    "Extend the retention term of 3 publications. The new end date counts from the current one.",
+    "The retention term was extended.",
+  ],
+}
+`;

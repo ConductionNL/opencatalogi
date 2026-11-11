@@ -86,3 +86,51 @@ export function catalogMetadataItems(catalog) {
 	if (!catalog) return []
 	return [...descriptionRows(catalog), ...recordRows(catalog)]
 }
+
+/**
+ * "Yes" or "No" for a catalog feature flag.
+ *
+ * @param {unknown} flag The flag.
+ * @return {string} The translated answer.
+ */
+function yesNo(flag) {
+	return flag ? t('opencatalogi', 'Yes') : t('opencatalogi', 'No')
+}
+
+/**
+ * The configuration rows counting a catalog's registers and schemas.
+ *
+ * @param {object} catalog The catalog.
+ * @return {Array<{label: string, value: number}>} The rows.
+ */
+export function catalogCountRows(catalog) {
+	return [
+		{
+			label: t('opencatalogi', 'Registers'),
+			value: (catalog.registers || []).length,
+		},
+		{
+			label: t('opencatalogi', 'Schemas'),
+			value: (catalog.schemas || []).length,
+		},
+	]
+}
+
+/**
+ * The configuration rows saying which publication features a catalog has.
+ *
+ * @param {object} catalog The catalog.
+ * @return {Array<{label: string, value: string}>} The rows.
+ */
+export function catalogFeatureRows(catalog) {
+	return [
+		{
+			label: t('opencatalogi', 'WOO Sitemap'),
+			value: yesNo(catalog.hasWooSitemap),
+		},
+		{
+			label: t('opencatalogi', 'OOAPI 5.0 Publication'),
+			value: yesNo(catalog.hasOoapi),
+		},
+	]
+}

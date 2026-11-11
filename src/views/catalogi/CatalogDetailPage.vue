@@ -98,7 +98,11 @@ import { NcButton } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
-import { catalogMetadataItems } from '../../services/catalogMetadata.js'
+import {
+	catalogCountRows,
+	catalogFeatureRows,
+	catalogMetadataItems,
+} from '../../services/catalogMetadata.js'
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
@@ -184,49 +188,19 @@ export default {
 		configItems() {
 			if (!this.catalog) return []
 			return [
-				{
-					label: t('opencatalogi', 'Registers'),
-					value: (this.catalog.registers || []).length,
-				},
-				{
-					label: t('opencatalogi', 'Schemas'),
-					value: (this.catalog.schemas || []).length,
-				},
-				{
-					label: t('opencatalogi', 'WOO Sitemap'),
-					value: this.catalog.hasWooSitemap
-						? t('opencatalogi', 'Yes')
-						: t('opencatalogi', 'No'),
-				},
-				{
-					label: t('opencatalogi', 'OOAPI 5.0 Publication'),
-					value: this.catalog.hasOoapi
-						? t('opencatalogi', 'Yes')
-						: t('opencatalogi', 'No'),
-				},
+				...catalogCountRows(this.catalog),
+				...catalogFeatureRows(this.catalog),
 			]
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		widgetDefs() {
 			return [
-				{
-					id: 'metadata',
-					title: t('opencatalogi', 'Metadata'),
-					type: 'custom',
-				},
-				{
-					id: 'configuration',
-					title: t('opencatalogi', 'Configuration'),
-					type: 'custom',
-				},
-				{
-					id: 'description',
-					title: t('opencatalogi', 'Description'),
-					type: 'custom',
-				},
-				{ id: 'raw-data', title: t('opencatalogi', 'Data'), type: 'custom' },
-			]
+				['metadata', t('opencatalogi', 'Metadata')],
+				['configuration', t('opencatalogi', 'Configuration')],
+				['description', t('opencatalogi', 'Description')],
+				['raw-data', t('opencatalogi', 'Data')],
+			].map(([id, title]) => ({ id, title, type: 'custom' }))
 		},
 	},
 

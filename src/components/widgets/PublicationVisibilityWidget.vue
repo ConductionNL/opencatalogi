@@ -62,6 +62,19 @@ import {
 	documentOptions,
 	filesRouteParams,
 } from '../../services/publicationVisibility.js'
+import { injectedObjectContext } from './objectContext.js'
+
+/**
+ * The withdraw endpoint's path: one document's, or the whole publication's.
+ *
+ * @param {{fileId: string}} answer What the dialog collected.
+ * @return {string} The path after the publication id.
+ */
+function withdrawPath(answer) {
+	return answer.fileId
+		? 'files/' + encodeURIComponent(answer.fileId) + '/withdraw'
+		: 'withdraw'
+}
 
 /**
  * Publish now, withdraw with a reason, and publish again (REQ-PPW-002/003/004).
@@ -99,12 +112,7 @@ export default {
 	computed: {
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
 		ctx() {
-			const inj =
-				this.cnObjectContext
-				&& (this.cnObjectContext.value || this.cnObjectContext)
-			const holder =
-				this.cnDetailObjectContext && this.cnDetailObjectContext.value
-			return inj || holder || {}
+			return injectedObjectContext(this)
 		},
 
 		/** @spec exclude presentational widget adapter; derives the object id. */
@@ -236,41 +244,54 @@ export default {
 		async withdraw(answer) {
 			this.busy = true
 			try {
-				const path = answer.fileId
-					? 'files/' + encodeURIComponent(answer.fileId) + '/withdraw'
-					: 'withdraw'
-				const { data } = await axios.post(this.url(path), {
+				const { data } = await axios.post(this.url(withdrawPath(answer)), {
 					reason: answer.reason,
 				})
 				this.dialogOpen = false
 				if (answer.fileId) {
-					this.messageType = 'success'
-					this.message = this.t(
-						'opencatalogi',
-						'The document was withdrawn. The rest of the publication stays public.',
-					)
+					this.showDocumentWithdrawn()
 					return
 				}
 				this.state = 'withdrawn'
-				const outstanding = data.outstandingChannels || []
-				this.messageType = outstanding.length > 0 ? 'warning' : 'success'
-				this.message =
-					outstanding.length > 0
-						? this.t(
-								'opencatalogi',
-								'Withdrawn. These channels have not confirmed yet: {channels}',
-								{ channels: outstanding.join(', ') },
-							)
-						: this.t(
-								'opencatalogi',
-								'Withdrawn, and every channel confirmed.',
-							)
+				this.showWithdrawn(data.outstandingChannels || [])
 			} catch (error) {
 				this.dialogOpen = false
 				this.showError(error)
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/** @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002 */
+		showDocumentWithdrawn() {
+			this.messageType = 'success'
+			this.message = this.t(
+				'opencatalogi',
+				'The document was withdrawn. The rest of the publication stays public.',
+			)
+		},
+
+		/**
+		 * Say the publication was withdrawn, and which channels have not confirmed.
+		 *
+		 * @param {Array<string>} outstanding The channels still to confirm.
+		 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
+		 */
+		showWithdrawn(outstanding) {
+			if (outstanding.length > 0) {
+				this.messageType = 'warning'
+				this.message = this.t(
+					'opencatalogi',
+					'Withdrawn. These channels have not confirmed yet: {channels}',
+					{ channels: outstanding.join(', ') },
+				)
+				return
+			}
+			this.messageType = 'success'
+			this.message = this.t(
+				'opencatalogi',
+				'Withdrawn, and every channel confirmed.',
+			)
 		},
 
 		/**
