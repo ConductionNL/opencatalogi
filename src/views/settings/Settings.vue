@@ -539,6 +539,23 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
+import { remediationHintFor } from './remediationHints.js'
+import {
+	directorySyncCounts,
+	directorySyncFailed,
+	directorySyncFailure,
+	postSyncInterval,
+	publishingOptionsFrom,
+	publishingOptionsPayload,
+	requestDirectorySync,
+	syncIntervalSeconds,
+} from './settingsRequests.js'
+import {
+	configuredSchema,
+	hasSchemaObjects,
+	schemaNamedLike,
+	schemaOptionsOf,
+} from './settingsSchemas.js'
 
 import '@nextcloud/dialogs/style.css'
 
@@ -753,22 +770,7 @@ export default defineComponent({
 				const data = await response.json()
 				this.settings = data
 
-				// Load publishing options
-				const publishingResponse = await fetch(
-					'/index.php/apps/opencatalogi/api/settings/publishing',
-				)
-				const publishingData = await publishingResponse.json()
-
-				if (!publishingData.error) {
-					this.publishingOptions = {
-						autoPublishAttachments:
-							publishingData.auto_publish_attachments,
-
-						autoPublishObjects: publishingData.auto_publish_objects,
-						useOldStylePublishingView:
-							publishingData.use_old_style_publishing_view,
-					}
-				}
+				await this.loadPublishingOptions()
 
 				// Initialize configuration object
 				this.initializeConfiguration()
@@ -776,21 +778,7 @@ export default defineComponent({
 				// Find and select the Publication register if it exists
 				this.autoSelectOpenCatalogiRegister()
 
-				this.channelSources = {
-					...this.channelSources,
-					...this.parseChannelSources(
-						data.configuration && data.configuration.channel_sources,
-					),
-				}
-
-				if (
-					data.configuration
-					&& data.configuration.public_api_cache_seconds !== undefined
-				) {
-					this.publicCacheSeconds = String(
-						data.configuration.public_api_cache_seconds,
-					)
-				}
+				this.applyStoredConfiguration(data.configuration)
 
 				this.loading = false
 			} catch (error) {
@@ -801,90 +789,164 @@ export default defineComponent({
 		},
 
 		/**
+		 * Load the publishing options; an error answer keeps the current ones.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async loadPublishingOptions() {
+			const publishingResponse = await fetch(
+				'/index.php/apps/opencatalogi/api/settings/publishing',
+			)
+			const publishingData = await publishingResponse.json()
+
+			if (!publishingData.error) {
+				this.publishingOptions = publishingOptionsFrom(publishingData)
+			}
+		},
+
+		/**
+		 * Take the channel sources and the public cache time from the stored
+		 * configuration.
+		 *
+		 * @param {object|undefined} configuration - The stored configuration
+		 * @return {void}
+		 */
+		applyStoredConfiguration(configuration) {
+			this.channelSources = {
+				...this.channelSources,
+				...this.parseChannelSources(
+					configuration && configuration.channel_sources,
+				),
+			}
+
+			if (
+				configuration
+				&& configuration.public_api_cache_seconds !== undefined
+			) {
+				this.publicCacheSeconds = String(
+					configuration.public_api_cache_seconds,
+				)
+			}
+		},
+
+		/**
 		 * Initializes the configuration object based on existing settings
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		initializeConfiguration() {
 			// Create empty configuration for each object type
 			this.settings.objectTypes.forEach((type) => {
-				const registerId =
-					this.settings.configuration[`${type}_register`] || ''
-				const schemaId = this.settings.configuration[`${type}_schema`] || ''
-
-				this.configuration = {
-					...this.configuration,
-					[type]: {
-						schema: null,
-					},
-				}
-
-				// If we have existing configuration, use it to set the selected register
-				if (registerId && !this.selectedRegister) {
-					const register = this.settings.availableRegisters.find(
-						(r) => r.id.toString() === registerId,
-					)
-					if (register) {
-						this.selectedRegister = {
-							label: register.title,
-							value: register.id.toString(),
-						}
-						this.updateSchemaOptions(register.id.toString())
-					}
-				}
-
-				// If we have a schema configured, set it.
-				if (schemaId && this.selectedRegister) {
-					const register = this.settings.availableRegisters.find(
-						(r) => r.id.toString() === this.selectedRegister.value,
-					)
-					if (register && Array.isArray(register.schemas)) {
-						// Handle both schema IDs (numbers) and schema objects.
-						let schema = null
-						if (register.schemas.some((s) => typeof s === 'number')) {
-							// Schemas are just IDs, check if our schemaId is in the array.
-							if (register.schemas.includes(parseInt(schemaId))) {
-								schema = {
-									id: schemaId,
-									title: `Schema ${schemaId}`, // Fallback title.
-								}
-							}
-						} else {
-							// Schemas are objects, find the matching one.
-							schema = register.schemas
-								.filter(
-									(s) =>
-										s
-										&& typeof s === 'object'
-										&& s.id
-										&& s.title,
-								)
-								.find((s) => s.id.toString() === schemaId)
-						}
-
-						// The stored schema is configured but the register does not list it
-						// (an orphaned schema, see SettingsService::reconcileRegisterSchemaLinks).
-						// Surface it anyway: leaving the select empty makes saveAll() write an
-						// empty string back and silently destroy a working configuration.
-						if (!schema) {
-							schema = {
-								id: schemaId,
-								title: `Schema ${schemaId}`, // Fallback title, as in the ID branch above.
-							}
-						}
-
-						this.configuration = {
-							...this.configuration,
-							[type]: {
-								...this.configuration[type],
-								schema: {
-									label: schema.title,
-									value: schema.id.toString(),
-								},
-							},
-						}
-					}
-				}
+				this.initializeTypeConfiguration(type)
 			})
+		},
+
+		/**
+		 * Initialise one object type's configuration: empty, then the
+		 * configured register selected when none is, then the configured
+		 * schema.
+		 *
+		 * @param {string} type - The object type
+		 * @return {void}
+		 */
+		initializeTypeConfiguration(type) {
+			const { registerId, schemaId } = this.configuredTypeIds(type)
+
+			this.configuration = {
+				...this.configuration,
+				[type]: {
+					schema: null,
+				},
+			}
+
+			// If we have existing configuration, use it to set the selected register
+			if (registerId && !this.selectedRegister) {
+				this.selectConfiguredRegister(registerId)
+			}
+
+			// If we have a schema configured, set it.
+			if (schemaId && this.selectedRegister) {
+				this.applyConfiguredSchema(type, schemaId)
+			}
+		},
+
+		/**
+		 * The register and schema ids stored for an object type, empty when
+		 * none is stored.
+		 *
+		 * @param {string} type - The object type
+		 * @return {{registerId: string, schemaId: string}} The ids
+		 */
+		configuredTypeIds(type) {
+			return {
+				registerId: this.settings.configuration[`${type}_register`] || '',
+				schemaId: this.settings.configuration[`${type}_schema`] || '',
+			}
+		},
+
+		/**
+		 * Select the available register with the configured id.
+		 *
+		 * @param {string} registerId - The configured register id
+		 * @return {void}
+		 */
+		selectConfiguredRegister(registerId) {
+			const register = this.settings.availableRegisters.find(
+				(r) => r.id.toString() === registerId,
+			)
+			if (register) {
+				this.selectRegister(register)
+			}
+		},
+
+		/**
+		 * Make a register the selected one and load its schema options.
+		 *
+		 * @param {object} register - The register
+		 * @return {void}
+		 */
+		selectRegister(register) {
+			this.selectedRegister = {
+				label: register.title,
+				value: register.id.toString(),
+			}
+			this.updateSchemaOptions(register.id.toString())
+		},
+
+		/**
+		 * Set an object type's configured schema, as the selected register
+		 * lists it.
+		 *
+		 * @param {string} type - The object type
+		 * @param {string} schemaId - The configured schema id
+		 * @return {void}
+		 */
+		applyConfiguredSchema(type, schemaId) {
+			const register = this.settings.availableRegisters.find(
+				(r) => r.id.toString() === this.selectedRegister.value,
+			)
+			if (register && Array.isArray(register.schemas)) {
+				this.setTypeSchema(type, configuredSchema(register.schemas, schemaId))
+			}
+		},
+
+		/**
+		 * Set the schema of an object type's configuration.
+		 *
+		 * @param {string} type - The object type
+		 * @param {{id: string|number, title: string}} schema - The schema
+		 * @return {void}
+		 */
+		setTypeSchema(type, schema) {
+			this.configuration = {
+				...this.configuration,
+				[type]: {
+					...this.configuration[type],
+					schema: {
+						label: schema.title,
+						value: schema.id.toString(),
+					},
+				},
+			}
 		},
 
 		/**
@@ -898,58 +960,29 @@ export default defineComponent({
 			)
 
 			if (opencatalogiRegister) {
-				this.selectedRegister = {
-					label: opencatalogiRegister.title,
-					value: opencatalogiRegister.id.toString(),
-				}
-				this.updateSchemaOptions(opencatalogiRegister.id.toString())
-
-				// Only try to auto-select schemas if the register has valid schemas.
-				if (
-					Array.isArray(opencatalogiRegister.schemas)
-					&& opencatalogiRegister.schemas.length > 0
-				) {
-					// Check if schemas are objects or just IDs.
-					const hasSchemaObjects = opencatalogiRegister.schemas.some(
-						(schema) =>
-							schema
-							&& typeof schema === 'object'
-							&& schema.id
-							&& schema.title,
-					)
-					if (hasSchemaObjects) {
-						this.autoSelectMatchingSchemas(opencatalogiRegister)
-					}
-				}
+				this.selectRegisterWithSchemas(opencatalogiRegister)
 			} else if (
 				this.settings.availableRegisters.length > 0
 				&& !this.selectedRegister
 			) {
 				// If no Open Catalogi register but we have registers, select the first one.
-				const firstRegister = this.settings.availableRegisters[0]
-				this.selectedRegister = {
-					label: firstRegister.title,
-					value: firstRegister.id.toString(),
-				}
-				this.updateSchemaOptions(firstRegister.id.toString())
+				this.selectRegisterWithSchemas(this.settings.availableRegisters[0])
+			}
+		},
 
-				// Only try to auto-select schemas if the register has valid schemas.
-				if (
-					Array.isArray(firstRegister.schemas)
-					&& firstRegister.schemas.length > 0
-				) {
-					// Check if schemas are objects or just IDs.
-					const hasSchemaObjects = firstRegister.schemas.some(
-						(schema) =>
-							schema
-							&& typeof schema === 'object'
-							&& schema.id
-							&& schema.title,
-					)
-					if (hasSchemaObjects) {
-						this.autoSelectMatchingSchemas(firstRegister)
-					}
-				}
+		/**
+		 * Select a register and, when it lists schema objects, the schemas
+		 * named like the object types.
+		 *
+		 * @param {object} register - The register
+		 * @return {void}
+		 */
+		selectRegisterWithSchemas(register) {
+			this.selectRegister(register)
+
+			// Only try to auto-select schemas if the register has schema objects.
+			if (hasSchemaObjects(register.schemas)) {
+				this.autoSelectMatchingSchemas(register)
 			}
 		},
 
@@ -970,31 +1003,9 @@ export default defineComponent({
 
 			this.settings.objectTypes.forEach((type) => {
 				// Look for a schema with the same name as the object type
-				// Filter out non-object schemas first
-				const matchingSchema = register.schemas
-					.filter(
-						(schema) =>
-							schema
-							&& typeof schema === 'object'
-							&& schema.id
-							&& schema.title,
-					)
-					.find(
-						(schema) =>
-							schema.title.toLowerCase() === type.toLowerCase(),
-					)
-
+				const matchingSchema = schemaNamedLike(register.schemas, type)
 				if (matchingSchema) {
-					this.configuration = {
-						...this.configuration,
-						[type]: {
-							...this.configuration[type],
-							schema: {
-								label: matchingSchema.title,
-								value: matchingSchema.id.toString(),
-							},
-						},
-					}
+					this.setTypeSchema(type, matchingSchema)
 				}
 			})
 		},
@@ -1012,33 +1023,10 @@ export default defineComponent({
 			const register = this.settings.availableRegisters.find(
 				(r) => r.id.toString() === registerId,
 			)
-			if (register && Array.isArray(register.schemas)) {
-				// Handle both schema IDs (numbers) and schema objects.
-				if (register.schemas.some((s) => typeof s === 'number')) {
-					// Schemas are just IDs, create options with ID as both label and value.
-					this.schemaOptions = register.schemas
-						.filter((schemaId) => typeof schemaId === 'number')
-						.map((schemaId) => ({
-							label: `Schema ${schemaId}`,
-							value: schemaId.toString(),
-						}))
-				} else {
-					// Schemas are objects, filter out non-object schemas and only include valid schema objects.
-					const validSchemas = register.schemas.filter(
-						(schema) =>
-							schema
-							&& typeof schema === 'object'
-							&& schema.id
-							&& schema.title,
-					)
-					this.schemaOptions = validSchemas.map((schema) => ({
-						label: schema.title,
-						value: schema.id.toString(),
-					}))
-				}
-			} else {
-				this.schemaOptions = []
-			}
+			this.schemaOptions =
+				register && Array.isArray(register.schemas)
+					? schemaOptionsOf(register.schemas)
+					: []
 		},
 
 		/**
@@ -1060,42 +1048,40 @@ export default defineComponent({
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-app-shell-settings/tasks.md#task-1 */
 		handleRegisterChange() {
-			if (this.selectedRegister) {
-				// Update schema options for the new register
-				this.updateSchemaOptions(this.selectedRegister.value)
+			if (!this.selectedRegister) {
+				return
+			}
 
-				// Reset all schema selections
-				this.settings.objectTypes.forEach((type) => {
-					this.configuration = {
-						...this.configuration,
-						[type]: {
-							...this.configuration[type],
-							schema: null,
-						},
-					}
-				})
+			// Update schema options for the new register
+			this.updateSchemaOptions(this.selectedRegister.value)
 
-				// Auto-select matching schemas.
-				const register = this.settings.availableRegisters.find(
-					(r) => r.id.toString() === this.selectedRegister.value,
-				)
-				if (
-					register
-					&& Array.isArray(register.schemas)
-					&& register.schemas.length > 0
-				) {
-					// Check if schemas are objects or just IDs.
-					const hasSchemaObjects = register.schemas.some(
-						(schema) =>
-							schema
-							&& typeof schema === 'object'
-							&& schema.id
-							&& schema.title,
-					)
-					if (hasSchemaObjects) {
-						this.autoSelectMatchingSchemas(register)
-					}
-				}
+			// Reset all schema selections
+			this.settings.objectTypes.forEach((type) => {
+				this.clearTypeSchema(type)
+			})
+
+			// Auto-select matching schemas when the register lists schema objects.
+			const register = this.settings.availableRegisters.find(
+				(r) => r.id.toString() === this.selectedRegister.value,
+			)
+			if (register && hasSchemaObjects(register.schemas)) {
+				this.autoSelectMatchingSchemas(register)
+			}
+		},
+
+		/**
+		 * Clear the schema of an object type's configuration.
+		 *
+		 * @param {string} type - The object type
+		 * @return {void}
+		 */
+		clearTypeSchema(type) {
+			this.configuration = {
+				...this.configuration,
+				[type]: {
+					...this.configuration[type],
+					schema: null,
+				},
 			}
 		},
 
@@ -1186,19 +1172,10 @@ export default defineComponent({
 		async savePublishingOptions() {
 			this.saving = true
 			try {
-				const configToSave = {
-					auto_publish_attachments:
-						this.publishingOptions.autoPublishAttachments,
-
-					auto_publish_objects: this.publishingOptions.autoPublishObjects,
-					use_old_style_publishing_view:
-						this.publishingOptions.useOldStylePublishingView,
-				}
-
 				// Send configuration to backend using the dedicated publishing options endpoint
 				const response = await axios.post(
 					generateUrl('/apps/opencatalogi/api/settings/publishing'),
-					configToSave,
+					publishingOptionsPayload(this.publishingOptions),
 				)
 
 				const result = response.data
@@ -1208,12 +1185,7 @@ export default defineComponent({
 					console.error('Failed to save publishing options:', result.error)
 				} else {
 					// Update local state with the response from the backend
-					this.publishingOptions = {
-						autoPublishAttachments: result.auto_publish_attachments,
-						autoPublishObjects: result.auto_publish_objects,
-						useOldStylePublishingView:
-							result.use_old_style_publishing_view,
-					}
+					this.publishingOptions = publishingOptionsFrom(result)
 				}
 			} catch (error) {
 				// eslint-disable-next-line no-console
@@ -1466,89 +1438,7 @@ export default defineComponent({
 		 * @spec exclude Display-copy lookup; no independent domain behavior.
 		 */
 		remediationHint(reason) {
-			const hints = {
-				'http-404': this.t(
-					'opencatalogi',
-					'Not found (404) — check webserver routing/rewrites for this URL.',
-				),
-
-				'ssrf-blocked': this.t(
-					'opencatalogi',
-					'Blocked as an unsafe outbound target — check the configured public base URL.',
-				),
-
-				'network-error': this.t(
-					'opencatalogi',
-					'Could not connect — check that this instance is reachable from the public internet.',
-				),
-
-				'invalid-xml': this.t(
-					'opencatalogi',
-					'Response was not well-formed XML.',
-				),
-
-				'no-diwoo-elements': this.t(
-					'opencatalogi',
-					'No DIWOO metadata elements found — the category sitemap may be empty.',
-				),
-
-				'diwoo-xsd-invalid': this.t(
-					'opencatalogi',
-					'DIWOO metadata failed validation — see the DIWOO validation report for this catalog.',
-				),
-
-				'diwoo-validation-error': this.t(
-					'opencatalogi',
-					'Could not run DIWOO validation for this catalog/category.',
-				),
-
-				'missing-sitemap-reference': this.t(
-					'opencatalogi',
-					'The root robots.txt does not reach the app: it names no Woo sitemap.',
-				),
-
-				'sitemapindex-unreachable': this.t(
-					'opencatalogi',
-					'Skipped — the sitemapindex for this catalog was not reachable.',
-				),
-
-				'sitemapindex-invalid': this.t(
-					'opencatalogi',
-					'Skipped — the sitemapindex for this catalog was not well-formed.',
-				),
-
-				'no-sitemap-pages': this.t(
-					'opencatalogi',
-					'Skipped — the sitemapindex has no sitemap pages to sample.',
-				),
-
-				'no-publications-found': this.t(
-					'opencatalogi',
-					'Skipped — no publication URL was found to sample.',
-				),
-
-				'request-cap-reached': this.t(
-					'opencatalogi',
-					'Skipped — the per-run outbound request cap was reached.',
-				),
-
-				'not-registered': this.t(
-					'opencatalogi',
-					'Not yet registered with the Woo-index.',
-				),
-
-				'registration-pending': this.t(
-					'opencatalogi',
-					'Registration requested but not yet confirmed.',
-				),
-
-				'url-mismatch': this.t(
-					'opencatalogi',
-					"The registered URL does not match this instance's public base URL.",
-				),
-			}
-
-			return hints[reason] || reason
+			return remediationHintFor(reason, this.t)
 		},
 
 		/**
@@ -1599,38 +1489,10 @@ export default defineComponent({
 		async saveSyncOptions() {
 			this.savingSyncOptions = true
 			try {
-				const minutes = Number.parseInt(this.syncOptions.intervalMinutes, 10)
-				const seconds = Number.isFinite(minutes)
-					? minutes * 60
-					: this.syncOptions.defaultMinutes * 60
-
-				const response = await fetch(
-					'/index.php/apps/opencatalogi/api/settings/sync',
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							'OCS-APIRequest': 'true',
-						},
-						body: JSON.stringify({ sync_interval_seconds: seconds }),
-					},
+				const data = await postSyncInterval(
+					syncIntervalSeconds(this.syncOptions),
 				)
-				const data = await response.json()
-
-				if (data.error) {
-					showError(
-						this.t('opencatalogi', 'Failed to save sync options')
-							+ ': '
-							+ data.error,
-					)
-					return
-				}
-
-				// Reflect the post-clamp value the backend actually persisted.
-				this.syncOptions.intervalMinutes = Math.round(
-					data.sync_interval_seconds / 60,
-				)
-				showSuccess(this.t('opencatalogi', 'Sync options saved'))
+				this.reportSavedSyncOptions(data)
 			} catch (error) {
 				// eslint-disable-next-line no-console
 				console.error('Failed to save sync options:', error)
@@ -1638,6 +1500,30 @@ export default defineComponent({
 			} finally {
 				this.savingSyncOptions = false
 			}
+		},
+
+		/**
+		 * Show the outcome of a sync options save, taking over the interval
+		 * the backend persisted.
+		 *
+		 * @param {object} data - The parsed answer
+		 * @return {void}
+		 */
+		reportSavedSyncOptions(data) {
+			if (data.error) {
+				showError(
+					this.t('opencatalogi', 'Failed to save sync options')
+						+ ': '
+						+ data.error,
+				)
+				return
+			}
+
+			// Reflect the post-clamp value the backend actually persisted.
+			this.syncOptions.intervalMinutes = Math.round(
+				data.sync_interval_seconds / 60,
+			)
+			showSuccess(this.t('opencatalogi', 'Sync options saved'))
 		},
 
 		/**
@@ -1653,42 +1539,8 @@ export default defineComponent({
 		async syncDirectoriesNow() {
 			this.syncingDirectories = true
 			try {
-				const response = await fetch(
-					'/index.php/apps/opencatalogi/api/listings/sync',
-					{
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-							'OCS-APIRequest': 'true',
-						},
-					},
-				)
-				const data = await response.json()
-
-				if (!response.ok || data.error) {
-					showError(
-						this.t('opencatalogi', 'Failed to synchronize directories')
-							+ ': '
-							+ (data.message || data.error || response.statusText),
-					)
-					return
-				}
-
-				const synced = data.synced_directories ?? 0
-				const failed = data.failed_directories ?? 0
-				const total = data.total_directories ?? synced + failed
-
-				showSuccess(
-					this.t(
-						'opencatalogi',
-						'Directories synchronized: {synced} of {total} succeeded, {failed} failed',
-						{
-							synced,
-							total,
-							failed,
-						},
-					),
-				)
+				const { response, data } = await requestDirectorySync()
+				this.reportDirectorySync(response, data)
 			} catch (error) {
 				// eslint-disable-next-line no-console
 				console.error('Failed to synchronize directories:', error)
@@ -1700,6 +1552,33 @@ export default defineComponent({
 			} finally {
 				this.syncingDirectories = false
 			}
+		},
+
+		/**
+		 * Show the outcome of a directory sync: the failure detail, or how
+		 * many directories synchronized.
+		 *
+		 * @param {Response} response - The response
+		 * @param {object} data - The parsed answer
+		 * @return {void}
+		 */
+		reportDirectorySync(response, data) {
+			if (directorySyncFailed(response, data)) {
+				showError(
+					this.t('opencatalogi', 'Failed to synchronize directories')
+						+ ': '
+						+ directorySyncFailure(response, data),
+				)
+				return
+			}
+
+			showSuccess(
+				this.t(
+					'opencatalogi',
+					'Directories synchronized: {synced} of {total} succeeded, {failed} failed',
+					directorySyncCounts(data),
+				),
+			)
 		},
 	},
 })
