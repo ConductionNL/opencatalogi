@@ -468,8 +468,6 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
-import { dispatchObjectsChanged } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -493,12 +491,22 @@ import TagEdit from 'vue-material-design-icons/TagEdit.vue'
 import TrayArrowDown from 'vue-material-design-icons/TrayArrowDown.vue'
 import { Attachment } from '../../entities/index.js'
 import { EventBus } from '../../eventBus.js'
+import { fileSizeLabel } from '../../services/fileSizeLabel.js'
+import { registerSchemaIdsOf } from '../../services/registerSchemaIds.js'
 import {
 	closingTags,
 	knownTags,
 	labelOptionLists,
 } from '../../services/uploadTags.js'
 import { useFileSelection } from './../../composables/UseFileSelection.js'
+import {
+	countSettled,
+	embeddedSchemaConfiguration,
+	fetchSchemaConfiguration,
+	notifyPublicationChanged,
+	publicationFilesUrl,
+	recordCreatedId,
+} from './uploadSteps.js'
 
 const dropZoneRef = ref()
 
@@ -515,6 +523,58 @@ const { openFileUpload, files, reset, setTags, rejectedDuplicates } =
  * @return {string}
  */
 const noLabelOption = () => t('opencatalogi', 'No label')
+
+/**
+ * Keep a publication's attachments in the object store.
+ *
+ * @param {object|null} attachments - The files answer
+ * @return {void}
+ */
+function storeAttachments(attachments) {
+	objectStore.setCollection(
+		'publicationAttachments',
+		attachments?.results || [],
+	)
+}
+
+/**
+ * Set a file's status from its upload answer, noting the created id when
+ * an id map is given.
+ *
+ * @param {object} file - The file
+ * @param {{response: object, idMap: object|null}} upload - The answer and the id map
+ * @return {void}
+ */
+function markUploadAnswer(file, { response, idMap }) {
+	if (response.status !== 200) {
+		file.status = 'failed'
+		return
+	}
+	file.status = 'uploaded'
+	if (idMap) {
+		recordCreatedId(file, { response, idMap })
+	}
+}
+
+/**
+ * PUT the labels of an uploaded file.
+ *
+ * @param {string} endpoint - The file's URL
+ * @param {Array<string>} editedTags - The labels
+ * @return {Promise<void>}
+ * @throws {Error} When the labels are refused
+ */
+async function putFileTags(endpoint, editedTags) {
+	const response = await fetch(endpoint, {
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		body: JSON.stringify({ tags: editedTags }),
+	})
+
+	if (!response.ok) {
+		throw new Error(`Failed to update file tags: ${response.statusText}`)
+	}
+}
 
 /**
  * UploadFiles — upload files to a publication's OpenRegister files endpoint.
@@ -743,12 +803,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
 		 */
 		bytesToSize(bytes) {
-			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-			if (bytes === 0) return 'n/a'
-			const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
-			if (i === 0 && sizes[i] === 'Bytes') return '< 1 KB'
-			if (i === 0) return bytes + ' ' + sizes[i]
-			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
+			return fileSizeLabel(bytes)
 		},
 
 		/**
@@ -883,24 +938,9 @@ export default {
 				const schemaRef = publication?.['@self']?.schema
 				if (!schemaRef) return
 
-				let configuration =
-					typeof schemaRef === 'object' && schemaRef !== null
-						? schemaRef.configuration
-						: null
-
-				if (!configuration) {
-					const schemaId =
-						typeof schemaRef === 'object'
-							? schemaRef.id || schemaRef.uuid || schemaRef.slug
-							: schemaRef
-					if (!schemaId) return
-					const response = await fetch(
-						`/index.php/apps/openregister/api/schemas/${schemaId}`,
-					)
-					if (!response.ok) return
-					const schema = await response.json().catch(() => null)
-					configuration = schema?.configuration || null
-				}
+				const configuration =
+					embeddedSchemaConfiguration(schemaRef)
+					|| (await fetchSchemaConfiguration(schemaRef))
 
 				if (configuration?.defaultAutoShare === true) {
 					this.share = true
@@ -990,52 +1030,9 @@ export default {
 		async saveTags(file, editedTags) {
 			try {
 				if (file && file.id) {
-					const publication = objectStore.getActiveObject('publication')
-					const { registerId, schemaId } =
-						this.getRegisterSchemaIds(publication)
-					const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files/${file.id}`
-
-					const response = await fetch(endpoint, {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ tags: editedTags }),
-					})
-
-					if (!response.ok) {
-						throw new Error(
-							`Failed to update file tags: ${response.statusText}`,
-						)
-					}
-
-					try {
-						file.tags = Array.isArray(editedTags) ? [...editedTags] : []
-					} catch (_) {}
-
-					const getAttachments = await fetch(
-						`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`,
-					)
-					const attachments = await getAttachments.json().catch(() => null)
-					try {
-						objectStore.setCollection(
-							'publicationAttachments',
-							attachments?.results || [],
-						)
-					} catch (_) {}
-					catalogStore.fetchPublications()
-
-					this.success = 'File labels updated successfully'
-					setTimeout(() => {
-						this.success = null
-					}, 3000)
+					await this.saveFileTags(file, editedTags)
 				} else {
-					file.tags = editedTags
-					file.status = 'pending'
-					const idMap = await this.addAttachments(file)
-					const newId =
-						idMap && (idMap[file.name] || idMap[file.title] || null)
-					try {
-						if (newId) file.id = newId
-					} catch (_) {}
+					await this.uploadWithTags(file, editedTags)
 				}
 			} catch (error) {
 				console.error('Error saving tags:', error)
@@ -1048,6 +1045,56 @@ export default {
 				this.editingTags = null
 				this.editedTags = []
 			}
+		},
+
+		/**
+		 * Store the labels of an uploaded file, then refresh the attachments
+		 * and the publications list.
+		 *
+		 * @param {object} file - The uploaded file
+		 * @param {Array<string>} editedTags - The labels
+		 * @return {Promise<void>}
+		 * @throws {Error} When the labels are refused
+		 */
+		async saveFileTags(file, editedTags) {
+			const publication = objectStore.getActiveObject('publication')
+			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
+			const filesUrl = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/files`
+
+			await putFileTags(`${filesUrl}/${file.id}`, editedTags)
+
+			try {
+				file.tags = Array.isArray(editedTags) ? [...editedTags] : []
+			} catch (_) {}
+
+			const getAttachments = await fetch(filesUrl)
+			const attachments = await getAttachments.json().catch(() => null)
+			try {
+				storeAttachments(attachments)
+			} catch (_) {}
+			catalogStore.fetchPublications()
+
+			this.success = 'File labels updated successfully'
+			setTimeout(() => {
+				this.success = null
+			}, 3000)
+		},
+
+		/**
+		 * Upload a pending file with its labels and take over the id it gets.
+		 *
+		 * @param {object} file - The pending file
+		 * @param {Array<string>} editedTags - The labels
+		 * @return {Promise<void>}
+		 */
+		async uploadWithTags(file, editedTags) {
+			file.tags = editedTags
+			file.status = 'pending'
+			const idMap = await this.addAttachments(file)
+			const newId = idMap && (idMap[file.name] || idMap[file.title] || null)
+			try {
+				if (newId) file.id = newId
+			} catch (_) {}
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */
@@ -1086,110 +1133,16 @@ export default {
 			this.error = null
 
 			try {
-				let filesToUpload = []
 				const idMap = {}
-
-				if (specificFile) {
-					filesToUpload = [specificFile]
-				} else {
-					filesToUpload = this.files.value.filter(
-						(file) =>
-							file.status !== 'uploaded'
-							&& file.status !== 'uploading'
-							&& file.status !== 'failed',
-					)
-
-					filesToUpload = filesToUpload.filter(
-						(file) => !this.getTooBigFiles(file.size),
-					)
-				}
+				const filesToUpload = this.filesToUpload(specificFile)
 
 				if (filesToUpload.length === 0) {
 					this.loading = false
 					return
 				}
 
-				filesToUpload.forEach((file) => {
-					file.status = 'uploading'
-				})
-
-				const uploadPromises = filesToUpload.map((file) => {
-					return this.createPublicationAttachment(
-						[file],
-						reset,
-						this.share,
-					)
-						.then((response) => {
-							if (response.status === 200) {
-								file.status = 'uploaded'
-								try {
-									const payload = Array.isArray(response?.data)
-										? response.data
-										: []
-									const created = payload && payload[0]
-									if (created && created.id) {
-										file.id = created.id
-										idMap[file.name] = created.id
-									}
-								} catch (_) {}
-							} else {
-								file.status = 'failed'
-							}
-							this.updateUploadCounts()
-							return response
-						})
-						.catch((error) => {
-							file.status = 'failed'
-							this.updateUploadCounts()
-							throw error
-						})
-				})
-
-				const results = await Promise.allSettled(uploadPromises)
-
-				const publication = objectStore.getActiveObject('publication')
-				const { registerId, schemaId } =
-					this.getRegisterSchemaIds(publication)
-				// Refresh the list before the follow-up fetches below can fail.
-				if (results.some((r) => r.status === 'fulfilled')) {
-					dispatchObjectsChanged({
-						register: registerId,
-						schema: schemaId,
-						id: publication.id,
-					})
-				}
-
-				await this.getAllTags()
-
-				const getAttachments = await fetch(
-					generateUrl(
-						'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files',
-						{ registerId, schemaId, objectId: publication.id },
-					),
-				)
-				const attachments = await getAttachments.json()
-				objectStore.setCollection(
-					'publicationAttachments',
-					attachments?.results || [],
-				)
-
-				catalogStore.fetchPublications()
-
-				const rejected = results.filter((r) => r.status === 'rejected')
-				if (rejected.length > 0) {
-					const firstError = rejected[0].reason
-					this.error =
-						firstError?.response?.data?.error ?? String(firstError)
-				} else {
-					this.success = true
-				}
-
-				EventBus.$emit('upload-files:uploaded', {
-					publicationId: publication.id,
-					uploadedCount: results.filter((r) => r.status === 'fulfilled')
-						.length,
-					failedCount: rejected.length,
-				})
+				const results = await this.uploadAll(filesToUpload, idMap)
+				await this.afterUpload(results)
 
 				this.updateUploadCounts()
 				if (specificFile) return idMap
@@ -1201,23 +1154,122 @@ export default {
 			}
 		},
 
+		/**
+		 * The files an upload sends: the one given, else the pending files
+		 * that are not too big.
+		 *
+		 * @param {object|null} specificFile - One file to upload
+		 * @return {Array<object>} The files
+		 */
+		filesToUpload(specificFile) {
+			if (specificFile) {
+				return [specificFile]
+			}
+
+			const pending = this.files.value.filter(
+				(file) =>
+					file.status !== 'uploaded'
+					&& file.status !== 'uploading'
+					&& file.status !== 'failed',
+			)
+			return pending.filter((file) => !this.getTooBigFiles(file.size))
+		},
+
+		/**
+		 * Mark every file as uploading, then upload them all at once.
+		 *
+		 * @param {Array<object>} filesToUpload - The files
+		 * @param {object} idMap - Collects the created ids by file name
+		 * @return {Promise<Array>} The settled uploads
+		 */
+		uploadAll(filesToUpload, idMap) {
+			filesToUpload.forEach((file) => {
+				file.status = 'uploading'
+			})
+
+			return Promise.allSettled(
+				filesToUpload.map((file) => this.uploadFile(file, idMap)),
+			)
+		},
+
+		/**
+		 * Upload one file and set its status from the answer, updating the
+		 * counts either way.
+		 *
+		 * @param {object} file - The file
+		 * @param {object|null} idMap - Collects the created id, when given
+		 * @return {Promise<object>} The answer
+		 */
+		uploadFile(file, idMap) {
+			return this.createPublicationAttachment([file], reset, this.share)
+				.then((response) => {
+					markUploadAnswer(file, { response, idMap })
+					this.updateUploadCounts()
+					return response
+				})
+				.catch((error) => {
+					file.status = 'failed'
+					this.updateUploadCounts()
+					throw error
+				})
+		},
+
+		/**
+		 * After an upload: report the change, refresh the tags, attachments
+		 * and publications list, and show the outcome.
+		 *
+		 * @param {Array} results - The settled uploads
+		 * @return {Promise<void>}
+		 */
+		async afterUpload(results) {
+			const publication = objectStore.getActiveObject('publication')
+			const ids = this.getRegisterSchemaIds(publication)
+			// Refresh the list before the follow-up fetches below can fail.
+			if (results.some((r) => r.status === 'fulfilled')) {
+				notifyPublicationChanged(ids, publication)
+			}
+
+			await this.getAllTags()
+
+			const getAttachments = await fetch(publicationFilesUrl(ids, publication))
+			storeAttachments(await getAttachments.json())
+
+			catalogStore.fetchPublications()
+
+			this.reportUploadResults(results, publication)
+		},
+
+		/**
+		 * Show the first rejected upload's error, or success, and announce
+		 * the counts.
+		 *
+		 * @param {Array} results - The settled uploads
+		 * @param {object} publication - The publication
+		 * @return {void}
+		 */
+		reportUploadResults(results, publication) {
+			const rejected = results.filter((r) => r.status === 'rejected')
+			if (rejected.length > 0) {
+				const firstError = rejected[0].reason
+				this.error = firstError?.response?.data?.error ?? String(firstError)
+			} else {
+				this.success = true
+			}
+
+			EventBus.$emit('upload-files:uploaded', {
+				publicationId: publication.id,
+				uploadedCount: countSettled(results, 'fulfilled'),
+				failedCount: rejected.length,
+			})
+		},
+
 		// Utility method to get register and schema IDs from publication object
 		/**
 		 * @param publication
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4
 		 */
 		getRegisterSchemaIds(publication) {
-			const registerId =
-				typeof publication['@self'].register === 'object'
-					? publication['@self'].register?.id
-						|| publication['@self'].register?.uuid
-					: publication['@self'].register
-			const schemaId =
-				typeof publication['@self'].schema === 'object'
-					? publication['@self'].schema?.id
-						|| publication['@self'].schema?.uuid
-					: publication['@self'].schema
-			return { registerId, schemaId }
+			return registerSchemaIdsOf(publication)
 		},
 
 		/**
@@ -1283,72 +1335,60 @@ export default {
 				.filter((file) => file.status === 'failed')
 				.map((file) => {
 					file.status = 'uploading'
-					return this.createPublicationAttachment(
-						[file],
-						reset,
-						this.share,
-					)
-						.then((response) => {
-							if (response.status === 200) {
-								file.status = 'uploaded'
-							} else {
-								file.status = 'failed'
-							}
-							this.updateUploadCounts()
-							return response
-						})
-						.catch((error) => {
-							file.status = 'failed'
-							this.updateUploadCounts()
-							throw error
-						})
+					return this.uploadFile(file, null)
 				})
 
 			const results = await Promise.allSettled(uploadPromises)
 
 			const publication = objectStore.getActiveObject('publication')
 			if (publication?.id) {
-				const fulfilledCount = results.filter(
-					(r) => r.status === 'fulfilled',
-				).length
-				const rejectedCount = results.filter(
-					(r) => r.status === 'rejected',
-				).length
-				if (fulfilledCount > 0) {
-					try {
-						const { registerId, schemaId } =
-							this.getRegisterSchemaIds(publication)
-						dispatchObjectsChanged({
-							register: registerId,
-							schema: schemaId,
-							id: publication.id,
-						})
-						const getAttachments = await fetch(
-							generateUrl(
-								'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files',
-								{ registerId, schemaId, objectId: publication.id },
-							),
-						)
-						const attachments = await getAttachments
-							.json()
-							.catch(() => null)
-						objectStore.setCollection(
-							'publicationAttachments',
-							attachments?.results || [],
-						)
-					} catch (_) {
-						/* ignore */
-					}
-				}
-				EventBus.$emit('upload-files:uploaded', {
-					publicationId: publication.id,
-					uploadedCount: fulfilledCount,
-					failedCount: rejectedCount,
-				})
+				await this.afterRetry(results, publication)
 			}
 
 			this.updateUploadCounts()
 			this.retryLoading = false
+		},
+
+		/**
+		 * After a retry: refresh when an upload succeeded, then announce the
+		 * counts.
+		 *
+		 * @param {Array} results - The settled uploads
+		 * @param {object} publication - The publication
+		 * @return {Promise<void>}
+		 */
+		async afterRetry(results, publication) {
+			const fulfilledCount = countSettled(results, 'fulfilled')
+			const rejectedCount = countSettled(results, 'rejected')
+			if (fulfilledCount > 0) {
+				await this.refreshAfterRetry(publication)
+			}
+			EventBus.$emit('upload-files:uploaded', {
+				publicationId: publication.id,
+				uploadedCount: fulfilledCount,
+				failedCount: rejectedCount,
+			})
+		},
+
+		/**
+		 * Report the change and refresh the attachments after a retry; a
+		 * failure here is ignored.
+		 *
+		 * @param {object} publication - The publication
+		 * @return {Promise<void>}
+		 */
+		async refreshAfterRetry(publication) {
+			try {
+				const ids = this.getRegisterSchemaIds(publication)
+				notifyPublicationChanged(ids, publication)
+				const getAttachments = await fetch(
+					publicationFilesUrl(ids, publication),
+				)
+				const attachments = await getAttachments.json().catch(() => null)
+				storeAttachments(attachments)
+			} catch (_) {
+				/* ignore */
+			}
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-4 */

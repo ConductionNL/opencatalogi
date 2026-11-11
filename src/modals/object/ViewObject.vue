@@ -950,7 +950,9 @@ import PropertiesPanel from '../../components/PropertiesPanel.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
+import { fileSizeLabel } from '../../services/fileSizeLabel.js'
 import { formValue } from '../../services/formValue.js'
+import { registerSchemaIdsOf } from '../../services/registerSchemaIds.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 import {
 	findSchemaByAnyId,
@@ -2133,12 +2135,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		formatFileSize(bytes) {
-			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-			if (bytes === 0) return 'n/a'
-			const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
-			if (i === 0 && sizes[i] === 'Bytes') return '< 1 KB'
-			if (i === 0) return bytes + ' ' + sizes[i]
-			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
+			return fileSizeLabel(bytes)
 		},
 
 		/**
@@ -2493,17 +2490,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		getRegisterSchemaIds(publication) {
-			const registerId =
-				typeof publication['@self'].register === 'object'
-					? publication['@self'].register?.id
-						|| publication['@self'].register?.uuid
-					: publication['@self'].register
-			const schemaId =
-				typeof publication['@self'].schema === 'object'
-					? publication['@self'].schema?.id
-						|| publication['@self'].schema?.uuid
-					: publication['@self'].schema
-			return { registerId, schemaId }
+			return registerSchemaIdsOf(publication)
 		},
 
 		// Action button methods
