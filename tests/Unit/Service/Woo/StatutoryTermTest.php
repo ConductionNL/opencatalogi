@@ -37,6 +37,10 @@ use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
+use OCA\OpenRegister\Service\Flow\Timer\FlowTimerAct;
+use OCA\OpenRegister\Service\Flow\Timer\TimerDecision;
+use OCA\OpenRegister\Service\Flow\Timer\TimerExtensionRequest;
+use OCA\OpenRegister\Service\Flow\Timer\TimerSuspension;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -120,8 +124,9 @@ class FakeTermEngine {
 		return $timer;
 	}//end arm()
 
-	public function extend(string $uuid, int $amount, string $unit, string $rationale, ?string $actor): FakeFlowTimer {
-		$this->calls[] = ['op' => 'extend', 'amount' => $amount, 'unit' => $unit, 'rationale' => $rationale];
+	public function extend(TimerExtensionRequest $request, FlowTimerAct $act): FakeFlowTimer {
+		$uuid = $request->uuid;
+		$this->calls[] = ['op' => 'extend', 'amount' => $request->amount, 'unit' => $request->unit, 'rationale' => $request->rationale, 'actor' => $act->actor];
 		$timer = $this->terms[$uuid];
 
 		// The real refusal, from FlowTimerService::extend().
@@ -140,9 +145,10 @@ class FakeTermEngine {
 		return $this->terms[$uuid];
 	}//end extend()
 
-	public function suspend(string $uuid, string $reason, mixed $until, ?string $actor, ?string $basis = null): FakeFlowTimer {
-		$this->calls[] = ['op' => 'suspend', 'reason' => $reason, 'basis' => $basis];
-		if (trim($reason) === '') {
+	public function suspend(TimerSuspension $suspension, FlowTimerAct $act): FakeFlowTimer {
+		$uuid = $suspension->uuid;
+		$this->calls[] = ['op' => 'suspend', 'reason' => $suspension->reason, 'basis' => $suspension->basis, 'actor' => $act->actor];
+		if (trim($suspension->reason) === '') {
 			throw new \RuntimeException('Suspending a term requires a non-empty reason.');
 		}
 
@@ -151,8 +157,9 @@ class FakeTermEngine {
 		return $this->terms[$uuid];
 	}//end suspend()
 
-	public function resume(string $uuid, ?string $reason, ?string $actor): FakeFlowTimer {
-		$this->calls[] = ['op' => 'resume', 'reason' => $reason];
+	public function resume(TimerDecision $decision, FlowTimerAct $act): FakeFlowTimer {
+		$uuid = $decision->uuid;
+		$this->calls[] = ['op' => 'resume', 'reason' => $decision->reason, 'actor' => $act->actor];
 		if ($this->terms[$uuid]->getState() !== 'suspended') {
 			throw new \RuntimeException('Timer cannot be resumed: its state is not suspended.');
 		}
@@ -181,7 +188,9 @@ class FakeTermEngine {
  */
 class FakeTermStore {
 
-	public function __construct(private FakeTermEngine $engine) {
+	public function __construct(
+		private FakeTermEngine $engine,
+	) {
 	}//end __construct()
 
 	public function findByUuid(string $uuid): FakeFlowTimer {
@@ -250,7 +259,6 @@ class StatutoryTermTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return $appManager;
-
 	}//end appManager()
 
 	/**
@@ -342,6 +350,7 @@ class StatutoryTermTest extends TestCase {
 
 		$this->assertSame(14, $this->engine->calls[0]['amount'], 'The Woo extension is two weeks.');
 		$this->assertSame('calendarDays', $this->engine->calls[0]['unit']);
+		$this->assertSame('alice', $this->engine->calls[0]['actor'], 'The acting user reaches the engine on its act.');
 		$this->assertSame(1, $term['extensionCount']);
 		$this->assertFalse($term['extendable'], 'After the one extension the term must report no headroom left.');
 
@@ -474,15 +483,15 @@ class StatutoryTermTest extends TestCase {
 	 * it to.
 	 *
 	 * @param bool $engineBound Whether the FlowTimerService resolves.
-	 * @param bool $storeBound  Whether the FlowTimerMapper resolves.
-	 * @param bool $installed   Whether OpenRegister is installed.
+	 * @param bool $storeBound Whether the FlowTimerMapper resolves.
+	 * @param bool $installed Whether OpenRegister is installed.
 	 *
 	 * @return StatutoryTerm The service.
 	 */
 	private function buildTerms(
 		bool $engineBound = true,
 		bool $storeBound = true,
-		bool $installed = true
+		bool $installed = true,
 	): StatutoryTerm {
 		$store = new FakeTermStore($this->engine);
 

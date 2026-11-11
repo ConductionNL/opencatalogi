@@ -32,6 +32,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\RequestOptions;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Service\Broadcast\BroadcastAttempt;
 use OCA\OpenCatalogi\Service\Broadcast\BroadcastResult;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\Federation\FederationHostPolicy;
@@ -43,6 +44,7 @@ use OCP\IURLGenerator;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
+use Psr\Http\Message\ResponseInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -280,35 +282,13 @@ class BroadcastService implements BroadcastServiceInterface {
 				return [];
 			}//end if
 
-			// Retrieve all listing objects from OpenRegister via the canonical search API.
-			$query = [
-				'@self' => [
-					'register' => $listingRegister,
-					'schema' => $listingSchema,
-				],
-			];
-
 			// Directory data is public by design; RBAC is disabled for discovery (see ADR-002).
-			$listings = $this->getObjectService()->searchObjects($query, _rbac: false);
-
-			// Extract directory URLs from each listing's object data.
-			$directoryUrls = [];
-			foreach ($listings as $listing) {
-				$listingData = $listing->jsonSerialize();
-				$objectData = ($listingData['object'] ?? $listingData);
-				$url = ($objectData['directory'] ?? null);
-				if (empty($url) === false) {
-					$directoryUrls[] = $url;
-				}//end if
-			}//end foreach
-
-			// Filter to unique, valid URLs.
-			return array_filter(
-				array_unique($directoryUrls),
-				function ($url) {
-					return empty($url) === false && filter_var($url, FILTER_VALIDATE_URL) !== false;
-				}
+			$listings = $this->getObjectService()->searchObjects(
+				['@self' => ['register' => $listingRegister, 'schema' => $listingSchema]],
+				_rbac: false
 			);
+
+			return $this->uniqueDirectoryUrls(listings: $listings);
 		} catch (\Exception $e) {
 			// Log the error and re-throw for caller handling.
 			$this->logger->error('Failed to retrieve directory URLs: ' . $e->getMessage());
@@ -316,6 +296,34 @@ class BroadcastService implements BroadcastServiceInterface {
 		}//end try
 
 	}//end getDirectoryUrls()
+
+	/**
+	 * The unique, valid directory URLs the listings name, each under the
+	 * position of its first listing.
+	 *
+	 * @param iterable<object> $listings The listing objects.
+	 *
+	 * @return array<int, string> The directory URLs.
+	 */
+	private function uniqueDirectoryUrls(iterable $listings): array {
+		$directoryUrls = [];
+		foreach ($listings as $listing) {
+			$listingData = $listing->jsonSerialize();
+			$objectData = ($listingData['object'] ?? $listingData);
+			$url = ($objectData['directory'] ?? null);
+			if (empty($url) === false) {
+				$directoryUrls[] = $url;
+			}
+		}
+
+		// Filter to unique, valid URLs.
+		return array_filter(
+			array_unique($directoryUrls),
+			function ($url) {
+				return empty($url) === false && filter_var($url, FILTER_VALIDATE_URL) !== false;
+			}
+		);
+	}//end uniqueDirectoryUrls()
 
 	/**
 	 * Send broadcast request to a specific URL with retry logic.
@@ -332,73 +340,127 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function sendBroadcastRequest(string $url, string $directoryUrl): bool {
-		$attempt = 0;
+		$run = new BroadcastAttempt();
+		$run->url = $url;
 		$startTime = time();
-		$maxRetries = $this->getMaxRetries();
+		$run->maxRetries = $this->getMaxRetries();
 
 		// Retry loop with wall-clock cap to prevent indefinite blocking.
-		while ($attempt < $maxRetries) {
-			// Abort if we have exceeded the per-target wall-time budget.
-			if ((time() - $startTime) >= self::MAX_RETRY_WALL_SECONDS) {
-				$this->logger->warning(
-					"[BroadcastService] Wall-time cap reached for {$url}; aborting retries after {$attempt} attempt(s)"
-				);
+		while ($run->attempt < $run->maxRetries) {
+			if ($this->wallTimeSpent(run: $run, startTime: $startTime) === true) {
 				return false;
 			}
 
-			$attempt++;
+			$run->attempt++;
 
 			try {
-				// Send POST request with directory URL payload.
 				// SSRF hardening (WF4 / wave-12): disable automatic redirect following so that a
 				// broadcast target cannot redirect to cloud-metadata. The pre-flight
 				// assertSafeOutboundUrl() validates the initial URL; disabling redirects ensures
 				// Guzzle never silently follows a 302 to an unvalidated host.
-				$response = $this->client->post(
-					uri: $url,
-					options: [
-						'json' => [
-							'directory' => $directoryUrl,
-							'timestamp' => (new DateTime())->format('c'),
-							'source' => $this->appName,
-						],
-						'headers' => [
-							'User-Agent' => 'OpenCatalogi-Broadcast/' . $this->getAppVersion(),
-							'Content-Type' => 'application/json',
-						],
-						RequestOptions::ALLOW_REDIRECTS => false,
-					]
-				);
-
-				// Check if the response indicates success.
-				if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-					$this->logger->info("Successfully broadcasted to {$url} on attempt {$attempt}");
+				$response = $this->postDirectory(url: $url, directoryUrl: $directoryUrl);
+				if ($this->accepted(run: $run, response: $response) === true) {
 					return true;
 				}
-
-				// Log non-success status code.
-				$this->logger->warning(
-					"Broadcast to {$url} returned status {$response->getStatusCode()} on attempt {$attempt}"
-				);
 			} catch (GuzzleException $e) {
-				// Log the attempt failure.
-				$this->logger->warning("Broadcast attempt {$attempt} to {$url} failed: " . $e->getMessage());
-
-				// If this was the last attempt, log as error and stop.
-				if ($attempt === $maxRetries) {
-					$this->logger->error(
-						"All {$attempt} broadcast attempts to {$url} failed. Final error: " . $e->getMessage()
-					);
+				if ($this->mayRetry(run: $run, exception: $e) === false) {
 					return false;
 				}
-
-				// Wait before retrying (exponential backoff).
-				sleep($attempt * 2);
-			}//end try
+			}
 		}//end while
 
 		return false;
 	}//end sendBroadcastRequest()
+
+	/**
+	 * Whether the per-target wall-time budget is spent; logged when it is.
+	 *
+	 * @param BroadcastAttempt $run The target and its attempts.
+	 * @param int $startTime When the first attempt started.
+	 *
+	 * @return bool
+	 */
+	private function wallTimeSpent(BroadcastAttempt $run, int $startTime): bool {
+		if ((time() - $startTime) < self::MAX_RETRY_WALL_SECONDS) {
+			return false;
+		}
+
+		$this->logger->warning(
+			"[BroadcastService] Wall-time cap reached for {$run->url}; aborting retries after {$run->attempt} attempt(s)"
+		);
+		return true;
+	}//end wallTimeSpent()
+
+	/**
+	 * Whether the target accepted the broadcast with a 2xx; either way logged.
+	 *
+	 * @param BroadcastAttempt $run The target and its attempts.
+	 * @param ResponseInterface $response The target's answer.
+	 *
+	 * @return bool
+	 */
+	private function accepted(BroadcastAttempt $run, ResponseInterface $response): bool {
+		if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+			$this->logger->info("Successfully broadcasted to {$run->url} on attempt {$run->attempt}");
+			return true;
+		}
+
+		$this->logger->warning(
+			"Broadcast to {$run->url} returned status {$response->getStatusCode()} on attempt {$run->attempt}"
+		);
+		return false;
+	}//end accepted()
+
+	/**
+	 * Log a failed attempt; after the last one log the final error and stop,
+	 * otherwise wait (exponential backoff) and try again.
+	 *
+	 * @param BroadcastAttempt $run The target and its attempts.
+	 * @param GuzzleException $exception Why the attempt failed.
+	 *
+	 * @return bool True when another attempt follows.
+	 */
+	private function mayRetry(BroadcastAttempt $run, GuzzleException $exception): bool {
+		$this->logger->warning("Broadcast attempt {$run->attempt} to {$run->url} failed: " . $exception->getMessage());
+
+		if ($run->attempt === $run->maxRetries) {
+			$this->logger->error(
+				"All {$run->attempt} broadcast attempts to {$run->url} failed. Final error: " . $exception->getMessage()
+			);
+			return false;
+		}
+
+		sleep($run->attempt * 2);
+		return true;
+	}//end mayRetry()
+
+	/**
+	 * POST this directory's URL to one broadcast target, without following redirects.
+	 *
+	 * @param string $url The target URL to broadcast to.
+	 * @param string $directoryUrl The URL of this directory to include in the broadcast.
+	 *
+	 * @return ResponseInterface The target's answer.
+	 *
+	 * @throws GuzzleException When the request fails.
+	 */
+	private function postDirectory(string $url, string $directoryUrl): ResponseInterface {
+		return $this->client->post(
+			uri: $url,
+			options: [
+				'json' => [
+					'directory' => $directoryUrl,
+					'timestamp' => (new DateTime())->format('c'),
+					'source' => $this->appName,
+				],
+				'headers' => [
+					'User-Agent' => 'OpenCatalogi-Broadcast/' . $this->getAppVersion(),
+					'Content-Type' => 'application/json',
+				],
+				RequestOptions::ALLOW_REDIRECTS => false,
+			]
+		);
+	}//end postDirectory()
 
 	/**
 	 * Broadcast this OpenCatalogi directory to one or more instances.
@@ -447,16 +509,50 @@ class BroadcastService implements BroadcastServiceInterface {
 		// validates the TARGET, and the target (the national directory) is
 		// perfectly safe. It is the payload that is unroutable.
 		if ($this->hostPolicy->isLocalUrl(url: $directoryUrl) === true) {
-			$this->logger->warning(
-				'Refusing to broadcast: this instance advertises a local address (' . $directoryUrl
-				. '). Set overwrite.cli.url to a URL peers can resolve, or add the host to '
-				. 'the opencatalogi `local_federation_hosts` allowlist for a local rig.'
-			);
-			$this->connectionReporter?->reportBroadcastFromLocalAddress();
+			$this->refuseLocalBroadcast(directoryUrl: $directoryUrl);
 			return $results;
 		}
 
-		// Determine target URLs for broadcasting.
+		$targetUrls = $this->broadcastTargets(url: $url);
+
+		// If no target URLs found, log warning and return empty results.
+		if (empty($targetUrls) === true) {
+			$this->logger->warning('No target URLs found for broadcasting');
+			$this->connectionReporter?->reportBroadcast(results: $results);
+			return $results;
+		}
+
+		return $this->broadcastTo(targetUrls: $targetUrls, directoryUrl: $directoryUrl);
+	}//end broadcast()
+
+	/**
+	 * Log and report a broadcast refused because this instance advertises a
+	 * local address.
+	 *
+	 * @param string $directoryUrl The address this instance would advertise.
+	 *
+	 * @return void
+	 */
+	private function refuseLocalBroadcast(string $directoryUrl): void {
+		$this->logger->warning(
+			'Refusing to broadcast: this instance advertises a local address (' . $directoryUrl
+			. '). Set overwrite.cli.url to a URL peers can resolve, or add the host to '
+			. 'the opencatalogi `local_federation_hosts` allowlist for a local rig.'
+		);
+		$this->connectionReporter?->reportBroadcastFromLocalAddress();
+	}//end refuseLocalBroadcast()
+
+	/**
+	 * The URLs to broadcast to: the given one, or else every known directory.
+	 * The known directories are read either way.
+	 *
+	 * @param string|null $url The one instance to broadcast to, or null for all.
+	 *
+	 * @return array<string> The target URLs.
+	 *
+	 * @throws InvalidArgumentException When the given URL is not a URL.
+	 */
+	private function broadcastTargets(?string $url): array {
 		$targetUrls = $this->getDirectoryUrls();
 		if ($url !== null) {
 			// Validate the provided URL.
@@ -467,17 +563,22 @@ class BroadcastService implements BroadcastServiceInterface {
 			$targetUrls = [$url];
 		}
 
-		// If no target URLs found, log warning and return empty results.
-		if (empty($targetUrls) === true) {
-			$this->logger->warning('No target URLs found for broadcasting');
-			$this->connectionReporter?->reportBroadcast(results: $results);
-			return $results;
-		}
+		return $targetUrls;
+	}//end broadcastTargets()
 
-		// Log the start of broadcast operation.
+	/**
+	 * Broadcast this directory to every target but itself, then log and
+	 * report the outcome.
+	 *
+	 * @param array<string> $targetUrls The target URLs.
+	 * @param string $directoryUrl The URL of this directory.
+	 *
+	 * @return array<string, bool> Each target URL and whether it accepted the broadcast.
+	 */
+	private function broadcastTo(array $targetUrls, string $directoryUrl): array {
 		$this->logger->info('Starting broadcast to ' . count($targetUrls) . ' target(s)');
 
-		// Broadcast to each target URL.
+		$results = [];
 		foreach ($targetUrls as $targetUrl) {
 			// Skip broadcasting to self to avoid loops.
 			if ($targetUrl === $directoryUrl) {
@@ -485,14 +586,7 @@ class BroadcastService implements BroadcastServiceInterface {
 				continue;
 			}
 
-			// Validate the outbound URL and deliver via the enqueueBroadcast adapter
-			// (SSRF pre-flight guard, then the synchronous retry loop).
-			try {
-				$results[$targetUrl] = $this->enqueueBroadcast(url: $targetUrl, directoryUrl: $directoryUrl)->isSuccessful();
-			} catch (InvalidArgumentException $e) {
-				$this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
-				$results[$targetUrl] = false;
-			}
+			$results[$targetUrl] = $this->deliverTo(targetUrl: $targetUrl, directoryUrl: $directoryUrl);
 		}
 
 		// Log summary of broadcast operation.
@@ -502,7 +596,25 @@ class BroadcastService implements BroadcastServiceInterface {
 		$this->connectionReporter?->reportBroadcast(results: $results);
 
 		return $results;
-	}//end broadcast()
+	}//end broadcastTo()
+
+	/**
+	 * Validate one outbound URL and deliver via the enqueueBroadcast adapter
+	 * (SSRF pre-flight guard, then the synchronous retry loop).
+	 *
+	 * @param string $targetUrl The target URL.
+	 * @param string $directoryUrl The URL of this directory.
+	 *
+	 * @return bool Whether the target accepted the broadcast; false for an unsafe target.
+	 */
+	private function deliverTo(string $targetUrl, string $directoryUrl): bool {
+		try {
+			return $this->enqueueBroadcast(url: $targetUrl, directoryUrl: $directoryUrl)->isSuccessful();
+		} catch (InvalidArgumentException $e) {
+			$this->logger->warning("Skipping unsafe broadcast target: {$targetUrl}");
+			return false;
+		}
+	}//end deliverTo()
 
 	/**
 	 * Send a broadcast to a single target and report the outcome as a
@@ -573,22 +685,9 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
-	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
 	private function assertSafeOutboundUrl(string $url): void {
-		$parsed = parse_url($url);
-		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
-			throw new InvalidArgumentException('Invalid broadcast URL provided');
-		}
-
-		$scheme = strtolower($parsed['scheme']);
-		if (in_array($scheme, ['http', 'https'], true) === false) {
-			throw new InvalidArgumentException('Broadcast URL scheme must be http or https');
-		}
-
-		$host = strtolower($parsed['host']);
+		$host = $this->outboundHost(url: $url);
 
 		// Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
 		// two local instances on a private network can federate. Empty by default, so a
@@ -597,48 +696,9 @@ class BroadcastService implements BroadcastServiceInterface {
 			return;
 		}
 
-		// Reject obvious local hostnames outright.
-		if ($host === 'localhost' || str_ends_with($host, '.local') === true
-			|| str_ends_with($host, '.localhost') === true
-		) {
-			throw new InvalidArgumentException('Broadcast URL host is not allowed');
-		}
+		$this->assertNotLocalName(host: $host);
 
-		// Collect IPs to check: literal IP or DNS-resolved addresses.
-		$ipsToCheck = [];
-		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-			$ipsToCheck[] = $host;
-		}
-
-		if (empty($ipsToCheck) === true) {
-			$lookupHost = trim($host, '[]');
-			if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
-				$ipsToCheck[] = $lookupHost;
-			}
-
-			if (empty($ipsToCheck) === true) {
-				$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
-				if ($records !== false) {
-					foreach ($records as $record) {
-						if (isset($record['ip']) === true) {
-							$ipsToCheck[] = $record['ip'];
-						}
-
-						if (isset($record['ipv6']) === true) {
-							$ipsToCheck[] = $record['ipv6'];
-						}
-					}
-				}
-
-				if (empty($ipsToCheck) === true) {
-					$resolved = gethostbyname($lookupHost);
-					if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
-						$ipsToCheck[] = $resolved;
-					}
-				}
-			}//end if
-		}//end if
-
+		$ipsToCheck = $this->addressesOf(host: $host);
 		if (empty($ipsToCheck) === true) {
 			throw new InvalidArgumentException('Broadcast URL host could not be resolved');
 		}
@@ -650,6 +710,114 @@ class BroadcastService implements BroadcastServiceInterface {
 		}
 
 	}//end assertSafeOutboundUrl()
+
+	/**
+	 * The lower-cased host of an http or https URL.
+	 *
+	 * @param string $url The URL to validate.
+	 *
+	 * @return string The host.
+	 *
+	 * @throws InvalidArgumentException When the URL has no scheme or host, or another scheme.
+	 */
+	private function outboundHost(string $url): string {
+		$parsed = parse_url($url);
+		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
+			throw new InvalidArgumentException('Invalid broadcast URL provided');
+		}
+
+		if (in_array(strtolower($parsed['scheme']), ['http', 'https'], true) === false) {
+			throw new InvalidArgumentException('Broadcast URL scheme must be http or https');
+		}
+
+		return strtolower($parsed['host']);
+	}//end outboundHost()
+
+	/**
+	 * Reject obvious local hostnames outright.
+	 *
+	 * @param string $host The lower-cased host.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the host is localhost or under .local or .localhost.
+	 */
+	private function assertNotLocalName(string $host): void {
+		if ($host === 'localhost' || str_ends_with($host, '.local') === true
+			|| str_ends_with($host, '.localhost') === true
+		) {
+			throw new InvalidArgumentException('Broadcast URL host is not allowed');
+		}
+	}//end assertNotLocalName()
+
+	/**
+	 * The IPs to check for a host: the literal IP (bracketed or not), else its
+	 * DNS A/AAAA records, else what gethostbyname() resolves it to.
+	 *
+	 * @param string $host The lower-cased host.
+	 *
+	 * @return array<int, string> The addresses; none when the host does not resolve.
+	 */
+	private function addressesOf(string $host): array {
+		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
+			return [$host];
+		}
+
+		$lookupHost = trim($host, '[]');
+		if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
+			return [$lookupHost];
+		}
+
+		$ipsToCheck = $this->dnsAddresses(lookupHost: $lookupHost);
+		if (empty($ipsToCheck) === false) {
+			return $ipsToCheck;
+		}
+
+		return $this->resolvedAddress(lookupHost: $lookupHost);
+	}//end addressesOf()
+
+	/**
+	 * The IPv4 and IPv6 addresses of a host's DNS A/AAAA records, in record order.
+	 *
+	 * @param string $lookupHost The host to look up.
+	 *
+	 * @return array<int, string> The addresses.
+	 */
+	private function dnsAddresses(string $lookupHost): array {
+		$ipsToCheck = [];
+		$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
+		if ($records === false) {
+			return $ipsToCheck;
+		}
+
+		foreach ($records as $record) {
+			if (isset($record['ip']) === true) {
+				$ipsToCheck[] = $record['ip'];
+			}
+
+			if (isset($record['ipv6']) === true) {
+				$ipsToCheck[] = $record['ipv6'];
+			}
+		}
+
+		return $ipsToCheck;
+	}//end dnsAddresses()
+
+	/**
+	 * The address gethostbyname() resolves a host to, or none when it does not resolve to an IP.
+	 *
+	 * @param string $lookupHost The host to look up.
+	 *
+	 * @return array<int, string> The address, or none.
+	 */
+	private function resolvedAddress(string $lookupHost): array {
+		$resolved = gethostbyname($lookupHost);
+		if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
+			return [$resolved];
+		}
+
+		return [];
+	}//end resolvedAddress()
 
 	/**
 	 * Determine whether an IP address falls in a blocked range.
@@ -690,35 +858,73 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @return boolean True if the IP is in the range, false otherwise.
 	 */
 	private function ipInRange(string $ipAddress, string $range): bool {
-		[$subnet, $bits] = explode('/', $range);
+		[$subnet] = explode('/', $range);
 
-		if (filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
-			&& filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV6) !== false
+		if ($this->isIpOfKind(ipAddress: $ipAddress, flag: FILTER_FLAG_IPV6) === true
+			&& $this->isIpOfKind(ipAddress: $subnet, flag: FILTER_FLAG_IPV6) === true
 		) {
-			$ipBin = inet_pton($ipAddress);
-			$subnetBin = inet_pton($subnet);
-			if ($ipBin === false || $subnetBin === false) {
-				return false;
-			}
+			return $this->ipv6InRange(ipAddress: $ipAddress, range: $range);
+		}
 
-			$mask = str_repeat("\xff", intdiv((int)$bits, 8));
-			if (((int)$bits % 8) !== 0) {
-				$mask .= chr(0xff & (0xff << (8 - ((int)$bits % 8))));
-			}
-
-			$mask = str_pad($mask, 16, "\x00");
-			return (($ipBin & $mask) === ($subnetBin & $mask));
-		}//end if
-
-		if (filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
-			&& filter_var(value: $subnet, filter: FILTER_VALIDATE_IP, options: FILTER_FLAG_IPV4) !== false
+		if ($this->isIpOfKind(ipAddress: $ipAddress, flag: FILTER_FLAG_IPV4) === true
+			&& $this->isIpOfKind(ipAddress: $subnet, flag: FILTER_FLAG_IPV4) === true
 		) {
-			$ipLong = ip2long($ipAddress);
-			$subnetLong = ip2long($subnet);
-			$maskLong = (~0 << (32 - (int)$bits));
-			return (($ipLong & $maskLong) === ($subnetLong & $maskLong));
+			return $this->ipv4InRange(ipAddress: $ipAddress, range: $range);
 		}
 
 		return false;
 	}//end ipInRange()
+
+	/**
+	 * Whether a value is an IP address of one family.
+	 *
+	 * @param string $ipAddress The value.
+	 * @param int $flag FILTER_FLAG_IPV4 or FILTER_FLAG_IPV6.
+	 *
+	 * @return bool
+	 */
+	private function isIpOfKind(string $ipAddress, int $flag): bool {
+		return filter_var(value: $ipAddress, filter: FILTER_VALIDATE_IP, options: $flag) !== false;
+	}//end isIpOfKind()
+
+	/**
+	 * Whether an IPv6 address falls within an IPv6 CIDR range.
+	 *
+	 * @param string $ipAddress The IPv6 address.
+	 * @param string $range The IPv6 CIDR range.
+	 *
+	 * @return bool
+	 */
+	private function ipv6InRange(string $ipAddress, string $range): bool {
+		[$subnet, $bits] = explode('/', $range);
+		$ipBin = inet_pton($ipAddress);
+		$subnetBin = inet_pton($subnet);
+		if ($ipBin === false || $subnetBin === false) {
+			return false;
+		}
+
+		$mask = str_repeat("\xff", intdiv((int)$bits, 8));
+		if (((int)$bits % 8) !== 0) {
+			$mask .= chr(0xff & (0xff << (8 - ((int)$bits % 8))));
+		}
+
+		$mask = str_pad($mask, 16, "\x00");
+		return (($ipBin & $mask) === ($subnetBin & $mask));
+	}//end ipv6InRange()
+
+	/**
+	 * Whether an IPv4 address falls within an IPv4 CIDR range.
+	 *
+	 * @param string $ipAddress The IPv4 address.
+	 * @param string $range The IPv4 CIDR range.
+	 *
+	 * @return bool
+	 */
+	private function ipv4InRange(string $ipAddress, string $range): bool {
+		[$subnet, $bits] = explode('/', $range);
+		$ipLong = ip2long($ipAddress);
+		$subnetLong = ip2long($subnet);
+		$maskLong = (~0 << (32 - (int)$bits));
+		return (($ipLong & $maskLong) === ($subnetLong & $maskLong));
+	}//end ipv4InRange()
 }//end class

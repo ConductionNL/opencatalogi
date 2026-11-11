@@ -33,7 +33,6 @@ class InspectionServiceTest extends TestCase {
 	 */
 	private function at(string $when): DateTimeImmutable {
 		return new DateTimeImmutable($when, new DateTimeZone('UTC'));
-
 	}//end at()
 
 	public function testTheEndDateIsComputedFromTheTypesTerm(): void {
@@ -50,6 +49,60 @@ class InspectionServiceTest extends TestCase {
 		$this->assertSame(['d1', 'd2'], $inspection['documents']);
 
 	}//end testTheEndDateIsComputedFromTheTypesTerm()
+
+	public function testTheInspectionIsShapedWholeWithUniqueDocuments(): void {
+		$inspection = $this->service->open(
+			record: ['title' => 'no id'],
+			recordType: ['recordType' => 'aanwijzing', 'inspectionTermDays' => '3'],
+			documents: [7, 'd1', '7', 'd1', 'd2'],
+			openedBy: 'admin',
+			start: new DateTimeImmutable('2026-09-01T12:00:00+02:00')
+		);
+
+		$this->assertMatchesRegularExpression('/^[0-9a-f]{32}$/', $inspection['token']);
+		unset($inspection['token']);
+		$this->assertSame(
+			[
+				'record' => '',
+				'recordType' => 'aanwijzing',
+				'documents' => ['7', 'd1', 'd2'],
+				'startDate' => '2026-09-01T12:00:00+02:00',
+				'endDate' => '2026-09-04T12:00:00+02:00',
+				'termDays' => 3,
+				'openedBy' => 'admin',
+			],
+			$inspection
+		);
+
+	}//end testTheInspectionIsShapedWholeWithUniqueDocuments()
+
+	public function testAnInspectionWithoutATokenOpensForNobody(): void {
+		$inspection = ['documents' => ['d1'], 'startDate' => '2026-01-01T00:00:00+00:00', 'endDate' => '2099-01-01T00:00:00+00:00'];
+
+		$this->assertSame(
+			['readable' => false, 'documents' => [], 'reason' => 'unknown-inspection', 'endDate' => null],
+			$this->service->resolveLink($inspection, '')
+		);
+		$this->assertSame(
+			['readable' => false, 'documents' => [], 'reason' => 'unknown-inspection', 'endDate' => null],
+			$this->service->resolveLink($inspection + ['token' => ''], '')
+		);
+
+	}//end testAnInspectionWithoutATokenOpensForNobody()
+
+	public function testAnOpenLinkAnswersTheDocumentsAsAList(): void {
+		$inspection = ['token' => 'abc', 'documents' => ['x' => 3, 'y' => 'd2'], 'startDate' => '2026-01-01T00:00:00+00:00', 'endDate' => '2099-01-01T00:00:00+00:00'];
+
+		$this->assertSame(
+			['readable' => true, 'documents' => ['3', 'd2'], 'reason' => null, 'endDate' => '2099-01-01T00:00:00+00:00'],
+			$this->service->resolveLink($inspection, 'abc', $this->at('2026-06-01T00:00:00+00:00'))
+		);
+		$this->assertSame(
+			['readable' => true, 'documents' => [], 'reason' => null, 'endDate' => '2099-01-01T00:00:00+00:00'],
+			$this->service->resolveLink(['documents' => 'd1'] + $inspection, 'abc', $this->at('2026-06-01T00:00:00+00:00'))
+		);
+
+	}//end testAnOpenLinkAnswersTheDocumentsAsAList()
 
 	public function testASecondTypeUsesTheSameMechanismWithItsOwnTerm(): void {
 		$inspection = $this->service->open(

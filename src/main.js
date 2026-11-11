@@ -16,7 +16,6 @@ import {
 import VueMarkdownEditor from '@kangc/v-md-editor'
 import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
 import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
-import { loadState } from '@nextcloud/initial-state'
 import {
 	loadTranslations,
 	translatePlural as n,
@@ -37,6 +36,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import customComponents from './registry.js'
+import { resolveManifestSentinelsSync } from './services/manifestSentinels.js'
 import { translateActionLabels } from './services/translateActionLabels.js'
 
 // gridstack v12 sizes dashboard items with `width: var(--gs-column-width)`.
@@ -212,73 +212,6 @@ const fragments = fragmentCtx
 	.sort()
 	.map((key) => fragmentCtx(key))
 const mergedManifest = buildManifest(bundledManifest, fragments, menuLayout)
-
-/**
- * Synchronously substitute every `@resolve:<key>` sentinel under
- * `pages[].config` with the matching IAppConfig value surfaced as
- * initial-state by UiController. This MUST run before the router and the
- * CnAppRoot `manifest` prop are built: the library's async `useAppManifest`
- * resolver only updates the manifest AFTER first paint, by which time
- * CnIndexPage has already registered its object-type from the (then still
- * unresolved) config and self-fetched the 404 `@resolve:...` URL. Resolving
- * up-front guarantees every page renders with real register/schema ids from
- * the very first mount. Unknown / unset keys are left untouched.
- *
- * @param {object} manifest The merged manifest.
- * @return {object} A new manifest with sentinels substituted in pages[].config.
- */
-function resolveManifestSentinelsSync(manifest) {
-	const SENTINEL = /^@resolve:([a-z][a-z0-9_-]*)$/
-	const cache = new Map()
-	const lookup = (key) => {
-		if (cache.has(key)) {
-			return cache.get(key)
-		}
-		let value = null
-		try {
-			const v = loadState('opencatalogi', key, null)
-			if (v !== undefined && v !== null && v !== '') {
-				value = v
-			}
-		} catch (e) {
-			value = null
-		}
-		cache.set(key, value)
-		return value
-	}
-	const substitute = (node) => {
-		if (Array.isArray(node)) {
-			return node.map(substitute)
-		}
-		if (node !== null && typeof node === 'object') {
-			const out = {}
-			for (const [k, v] of Object.entries(node)) {
-				out[k] = substitute(v)
-			}
-			return out
-		}
-		if (typeof node === 'string') {
-			const m = node.match(SENTINEL)
-			if (m) {
-				const resolved = lookup(m[1])
-				return resolved !== null ? resolved : node
-			}
-		}
-		return node
-	}
-	const pages = Array.isArray(manifest.pages) ? manifest.pages : []
-	return {
-		...manifest,
-		pages: pages.map((page) =>
-			page
-			&& typeof page === 'object'
-			&& page.config
-			&& typeof page.config === 'object'
-				? { ...page, config: substitute(page.config) }
-				: page,
-		),
-	}
-}
 
 /**
  * Translate each page's `config.notFoundRouteLabel`. CnPageRenderer spreads

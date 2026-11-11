@@ -96,18 +96,23 @@ function appendFacetCategory(
 		return
 	}
 	if (category === '@self') {
-		Object.entries(facets as Record<string, ActiveFacetConfig>).forEach(
-			([field, config]) => {
-				console.log(`🎛️ Processing @self field: "${field}", config:`, config)
-				appendFacetParams(searchParams, {
-					prefix: `_facets[@self][${field}]`,
-					config: config as unknown as Record<string, unknown>,
-					kind: 'metadata',
-				})
-			},
-		)
+		appendSelfFacets(searchParams, facets as Record<string, ActiveFacetConfig>)
 		return
 	}
+	appendObjectFieldFacet(searchParams, [category, facets])
+}
+
+/**
+ * Append the facet query of one object field.
+ *
+ * @param searchParams The params to extend
+ * @param entry The field name and its facet config
+ * @spec openspec/specs/search/spec.md
+ */
+function appendObjectFieldFacet(
+	searchParams: URLSearchParams,
+	[category, facets]: [string, object],
+): void {
 	console.log(`🎛️ Processing object field: "${category}", config:`, facets)
 	appendFacetParams(searchParams, {
 		prefix: `_facets[${category}]`,
@@ -116,18 +121,217 @@ function appendFacetCategory(
 	})
 }
 
+/** The search context the facetable discovery runs in. */
+interface DiscoveryContext {
+	searchTerm: string
+	filters: Record<string, string | number | boolean>
+}
+
 /**
- * GET the federation publications search for the given params.
+ * The query of a facetable field discovery: the current term and filters, the
+ * discovery flags, no results, and `params` last so they win.
  *
- * @param searchParams The query
- * @return The parsed body
+ * @param context The current search term and filters
+ * @param params Extra parameters
+ * @return The query
  * @spec openspec/specs/search/spec.md
  */
-async function fetchFederationSearch(
+function facetableDiscoveryParams(
+	context: DiscoveryContext,
+	params: Record<string, string | number | boolean>,
+): URLSearchParams {
+	// Build search parameters for facetable discovery
+	return new URLSearchParams({
+		// Include current search context
+		...(context.searchTerm && { _search: context.searchTerm }),
+
+		// Request facetable field discovery
+		_facetable: 'true',
+		_aggregate: 'true',
+
+		// Limit to 0 for discovery only (no actual results needed)
+		_limit: '0',
+
+		// Add current filters to get contextual facetable fields
+		...context.filters,
+
+		// Add any additional parameters
+		...params,
+	} as Record<string, string>)
+}
+
+/**
+ * Ask the federation endpoint which fields can be faceted in this context.
+ *
+ * @param context The current search term and filters
+ * @param params Extra parameters
+ * @return The facetable fields, empty when the answer has none
+ * @spec openspec/specs/search/spec.md
+ */
+async function discoverFacetable(
+	context: DiscoveryContext,
+	params: Record<string, string | number | boolean>,
+): Promise<FacetableFields> {
+	const searchParams = facetableDiscoveryParams(context, params)
+
+	console.log(
+		'Discovering facetable fields with params:',
+		searchParams.toString(),
+	)
+
+	// Make API call to Federation endpoint for facetable discovery
+	const data = await fetchFederationSearch(searchParams)
+	return data.facetable || {}
+}
+
+/**
+ * Add one active facet to a facet query: a metadata facet under `@self`,
+ * an object field facet under its own name.
+ *
+ * @param facetQuery The facet query being built
+ * @param entry The field name and its active facet
+ * @spec openspec/specs/search/spec.md
+ */
+function addFacetToQuery(
+	facetQuery: Record<string, Record<string, ActiveFacetConfig> | ActiveFacetConfig>,
+	entry: [string, ActiveFacetConfig],
+): void {
+	const [fieldName, facetConfig] = entry
+	console.log(`🔨 Processing field: "${fieldName}", config:`, facetConfig)
+	const facet = { type: facetConfig.type, config: facetConfig.config }
+	if (fieldName.startsWith('@self.')) {
+		// Metadata facet
+		const metaField = fieldName.replace('@self.', '')
+		console.log(`📊 Adding metadata facet: "${metaField}" from field "${fieldName}"`)
+		;(facetQuery['@self'] as Record<string, ActiveFacetConfig>)[metaField] = facet
+		return
+	}
+	// Object field facet
+	console.log(`📦 Adding object field facet: "${fieldName}"`)
+	facetQuery[fieldName] = facet
+}
+
+/**
+ * Append the facet queries of the `@self` metadata fields.
+ *
+ * @param searchParams The params to extend
+ * @param facets The metadata fields and their facet configs
+ * @spec openspec/specs/search/spec.md
+ */
+function appendSelfFacets(
 	searchParams: URLSearchParams,
-): Promise<SearchResponse> {
+	facets: Record<string, ActiveFacetConfig>,
+): void {
+	Object.entries(facets).forEach(([field, config]) => {
+		console.log(`🎛️ Processing @self field: "${field}", config:`, config)
+		appendFacetParams(searchParams, {
+			prefix: `_facets[@self][${field}]`,
+			config: config as unknown as Record<string, unknown>,
+			kind: 'metadata',
+		})
+	})
+}
+
+/**
+ * What a search response's pagination falls back to, field by field, when
+ * the response leaves a value out (or sends a falsy one).
+ */
+const PAGINATION_FALLBACK = { page: 1, pages: 1, total: 0, limit: 20, offset: 0 }
+
+/**
+ * The pagination of a search response, with the fallbacks filled in.
+ *
+ * @param data The response body
+ * @return The pagination
+ */
+function paginationFrom(data: SearchResponse): typeof PAGINATION_FALLBACK {
+	const values = data as unknown as Record<string, number | undefined>
+	return Object.fromEntries(
+		Object.entries(PAGINATION_FALLBACK).map(([key, fallback]) => [
+			key,
+			values[key] || fallback,
+		]),
+	) as typeof PAGINATION_FALLBACK
+}
+
+/**
+ * The message shown for a failed search: the error's own message, or a fixed text.
+ *
+ * @param error What the search threw
+ * @return The message
+ */
+function searchFailureMessage(error: unknown): string {
+	return (
+		(error instanceof Error && error.message)
+		|| 'An error occurred while searching'
+	)
+}
+
+/** Which related publications to fetch, and with which query parameters. */
+interface RelationQuery {
+	relation: 'uses' | 'used'
+	params: Record<string, string | number | boolean>
+}
+
+/**
+ * The federation path of a publication's related publications, with the query.
+ *
+ * @param publicationId The ID of the publication
+ * @param query Which relation, and the query parameters
+ * @return The path and query string
+ */
+function relationPath(publicationId: string, query: RelationQuery): string {
+	const searchParams = new URLSearchParams(
+		query.params as Record<string, string>,
+	)
+	return `/${publicationId}/${query.relation}?${searchParams.toString()}`
+}
+
+/** What is logged after fetching each kind of related publications. */
+const RELATION_LOG = {
+	uses: {
+		fetched: 'Publication uses fetched:',
+		failed: 'Failed to fetch publication uses:',
+	},
+	used: {
+		fetched: 'Publication used by fetched:',
+		failed: 'Failed to fetch publication used by:',
+	},
+}
+
+/**
+ * Fetch the publications a publication uses, or the ones that use it.
+ *
+ * @param publicationId The ID of the publication
+ * @param query Which relation, and the query parameters
+ * @return The parsed body
+ */
+async function fetchPublicationRelation(
+	publicationId: string,
+	query: RelationQuery,
+) {
+	const log = RELATION_LOG[query.relation]
+	try {
+		const data = await getFederationJson(relationPath(publicationId, query))
+		console.log(log.fetched, data)
+		return data
+	} catch (error) {
+		console.error(log.failed, error)
+		throw error
+	}
+}
+
+/**
+ * GET a federation publications endpoint and parse its JSON body.
+ *
+ * @param suffix The path and query after `/api/federation/publications`
+ * @return The parsed body
+ * @throws {Error} When the response is not ok
+ * @spec openspec/specs/search/spec.md
+ */
+async function getFederationJson(suffix: string) {
 	const response = await fetch(
-		`/index.php/apps/opencatalogi/api/federation/publications?${searchParams.toString()}`,
+		`/index.php/apps/opencatalogi/api/federation/publications${suffix}`,
 		{
 			method: 'GET',
 			headers: {
@@ -141,6 +345,99 @@ async function fetchFederationSearch(
 	}
 
 	return response.json()
+}
+
+/**
+ * GET the federation publications search for the given params.
+ *
+ * @param searchParams The query
+ * @return The parsed body
+ * @spec openspec/specs/search/spec.md
+ */
+async function fetchFederationSearch(
+	searchParams: URLSearchParams,
+): Promise<SearchResponse> {
+	return getFederationJson(`?${searchParams.toString()}`)
+}
+
+/** What a facet toggle asks for. */
+interface FacetToggle {
+	facetType: string
+	enabled: boolean
+	config: Record<string, string | number | boolean>
+}
+
+/** The part of the search store the facet toggle steps use. */
+interface FacetStore {
+	activeFacets: Record<string, ActiveFacetConfig>
+	searchPublications: () => unknown
+}
+
+/**
+ * Log a facet toggle call, quoting string names so empty ones show.
+ *
+ * @param fieldName - The field name
+ * @param toggle - The facet type, whether it is enabled and its config
+ */
+function logFacetToggle(fieldName: string, toggle: FacetToggle): void {
+	console.log('🔧 toggleActiveFacet called with:', {
+		fieldName: typeof fieldName === 'string' ? `"${fieldName}"` : fieldName,
+		facetType:
+			typeof toggle.facetType === 'string'
+				? `"${toggle.facetType}"`
+				: toggle.facetType,
+		enabled: toggle.enabled,
+		config: toggle.config,
+		fieldNameType: typeof fieldName,
+		facetTypeType: typeof toggle.facetType,
+	})
+}
+
+/**
+ * Enable a facet and log it.
+ *
+ * @param store - The search store
+ * @param added - The field name and its facet
+ */
+function addActiveFacet(
+	store: FacetStore,
+	added: { fieldName: string, facet: ActiveFacetConfig },
+): void {
+	store.activeFacets[added.fieldName] = added.facet
+	console.log(
+		'✅ Added active facet:',
+		added.fieldName,
+		'=',
+		store.activeFacets[added.fieldName],
+	)
+}
+
+/**
+ * Disable a facet, replacing the facets object, and log it.
+ *
+ * @param store - The search store
+ * @param fieldName - The field name
+ */
+function removeActiveFacet(store: FacetStore, fieldName: string): void {
+	const remainingFacets = { ...store.activeFacets }
+	delete remainingFacets[fieldName]
+	store.activeFacets = remainingFacets
+	console.log('❌ Removed active facet:', fieldName)
+}
+
+/**
+ * Search to get the facet buckets while any facet is active.
+ *
+ * @param store - The search store
+ */
+function searchForFacetBuckets(store: FacetStore): void {
+	if (Object.keys(store.activeFacets).length > 0) {
+		console.log(
+			'🔍 Triggering search to get facet buckets for:',
+			Object.keys(store.activeFacets),
+		)
+		store.searchPublications()
+	}
 }
 
 interface SearchState {
@@ -485,49 +782,8 @@ export const useSearchStore = defineStore('search', {
 			this.facetsLoading = true
 
 			try {
-				// Build search parameters for facetable discovery
-				const searchParams = new URLSearchParams({
-					// Include current search context
-					...(this.searchTerm && { _search: this.searchTerm }),
-
-					// Request facetable field discovery
-					_facetable: 'true',
-					_aggregate: 'true',
-
-					// Limit to 0 for discovery only (no actual results needed)
-					_limit: '0',
-
-					// Add current filters to get contextual facetable fields
-					...this.filters,
-
-					// Add any additional parameters
-					...params,
-				})
-
-				console.log(
-					'Discovering facetable fields with params:',
-					searchParams.toString(),
-				)
-
-				// Make API call to Federation endpoint for facetable discovery
-				const response = await fetch(
-					`/index.php/apps/opencatalogi/api/federation/publications?${searchParams.toString()}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					},
-				)
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				const data = await response.json()
-
 				// Update facetable fields
-				this.facetable = data.facetable || {}
+				this.facetable = await discoverFacetable(this, params)
 
 				console.log('Facetable fields discovered:', this.facetable)
 			} catch (error) {
@@ -559,45 +815,20 @@ export const useSearchStore = defineStore('search', {
 			enabled: boolean,
 			config: Record<string, string | number | boolean> = {},
 		) {
-			console.log('🔧 toggleActiveFacet called with:', {
-				fieldName:
-					typeof fieldName === 'string' ? `"${fieldName}"` : fieldName,
-				facetType:
-					typeof facetType === 'string' ? `"${facetType}"` : facetType,
-				enabled,
-				config,
-				fieldNameType: typeof fieldName,
-				facetTypeType: typeof facetType,
-			})
+			const toggle = { facetType, enabled, config }
+			logFacetToggle(fieldName, toggle)
 
 			if (enabled) {
-				this.activeFacets[fieldName] = {
-					type: facetType,
-					config,
-				}
-				console.log(
-					'✅ Added active facet:',
+				addActiveFacet(this, {
 					fieldName,
-					'=',
-					this.activeFacets[fieldName],
-				)
+					facet: { type: facetType, config },
+				})
 			} else {
-				const remainingFacets = { ...this.activeFacets }
-				delete remainingFacets[fieldName]
-				this.activeFacets = remainingFacets
-				console.log('❌ Removed active facet:', fieldName)
+				removeActiveFacet(this, fieldName)
 			}
 
 			console.log('📋 All active facets after update:', this.activeFacets)
-
-			// Automatically trigger search when facets change to get facet buckets
-			if (Object.keys(this.activeFacets).length > 0) {
-				console.log(
-					'🔍 Triggering search to get facet buckets for:',
-					Object.keys(this.activeFacets),
-				)
-				this.searchPublications()
-			}
+			searchForFacetBuckets(this)
 		},
 
 		/**
@@ -628,34 +859,8 @@ export const useSearchStore = defineStore('search', {
 				'@self': {},
 			}
 
-			Object.entries(this.activeFacets).forEach(
-				([fieldName, facetConfig]: [string, ActiveFacetConfig]) => {
-					console.log(
-						`🔨 Processing field: "${fieldName}", config:`,
-						facetConfig,
-					)
-
-					if (fieldName.startsWith('@self.')) {
-						// Metadata facet
-						const metaField = fieldName.replace('@self.', '')
-						console.log(
-							`📊 Adding metadata facet: "${metaField}" from field "${fieldName}"`,
-						)
-						;(facetQuery['@self'] as Record<string, ActiveFacetConfig>)[
-							metaField
-						] = {
-							type: facetConfig.type,
-							config: facetConfig.config,
-						}
-					} else {
-						// Object field facet
-						console.log(`📦 Adding object field facet: "${fieldName}"`)
-						facetQuery[fieldName] = {
-							type: facetConfig.type,
-							config: facetConfig.config,
-						}
-					}
-				},
+			Object.entries(this.activeFacets).forEach((entry) =>
+				addFacetToQuery(facetQuery, entry as [string, ActiveFacetConfig]),
 			)
 
 			console.log('🎯 Final facet query built:', facetQuery)
@@ -689,20 +894,28 @@ export const useSearchStore = defineStore('search', {
 			this.error = null
 
 			try {
-				const searchParams = this.buildSearchParams(params)
-				this.logSearchDebug(searchParams)
-				const data = await fetchFederationSearch(searchParams)
-				this.applySearchResults(data)
-				this.logSearchResults(data)
+				await this.runSearch(params)
 			} catch (error) {
 				console.error('Search failed:', error)
-				this.error =
-					(error instanceof Error && error.message)
-					|| 'An error occurred while searching'
+				this.error = searchFailureMessage(error)
 				this.resetSearchResults()
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * One search round trip: build the query, fetch it and store the answer.
+		 *
+		 * @param params Optional search parameters
+		 * @spec openspec/specs/search/spec.md
+		 */
+		async runSearch(params: Record<string, string | number | boolean>) {
+			const searchParams = this.buildSearchParams(params)
+			this.logSearchDebug(searchParams)
+			const data = await fetchFederationSearch(searchParams)
+			this.applySearchResults(data)
+			this.logSearchResults(data)
 		},
 
 		/**
@@ -807,13 +1020,7 @@ export const useSearchStore = defineStore('search', {
 		 */
 		applySearchResults(data: SearchResponse) {
 			this.searchResults = data.results || []
-			this.pagination = {
-				page: data.page || 1,
-				pages: data.pages || 1,
-				total: data.total || 0,
-				limit: data.limit || 20,
-				offset: data.offset || 0,
-			}
+			this.pagination = paginationFrom(data)
 			this.facets = data.facets || {}
 			this.facetable = data.facetable || {}
 		},
@@ -868,21 +1075,7 @@ export const useSearchStore = defineStore('search', {
 		 */
 		async getPublication(publicationId: string) {
 			try {
-				const response = await fetch(
-					`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					},
-				)
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				const data = await response.json()
+				const data = await getFederationJson(`/${publicationId}`)
 				console.log('Publication fetched:', data)
 				return data
 			} catch (error) {
@@ -906,31 +1099,7 @@ export const useSearchStore = defineStore('search', {
 			publicationId: string,
 			params: Record<string, string | number | boolean> = {},
 		) {
-			try {
-				const searchParams = new URLSearchParams(
-					params as Record<string, string>,
-				)
-				const response = await fetch(
-					`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}/uses?${searchParams.toString()}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					},
-				)
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				const data = await response.json()
-				console.log('Publication uses fetched:', data)
-				return data
-			} catch (error) {
-				console.error('Failed to fetch publication uses:', error)
-				throw error
-			}
+			return fetchPublicationRelation(publicationId, { relation: 'uses', params })
 		},
 
 		/**
@@ -948,31 +1117,7 @@ export const useSearchStore = defineStore('search', {
 			publicationId: string,
 			params: Record<string, string | number | boolean> = {},
 		) {
-			try {
-				const searchParams = new URLSearchParams(
-					params as Record<string, string>,
-				)
-				const response = await fetch(
-					`/index.php/apps/opencatalogi/api/federation/publications/${publicationId}/used?${searchParams.toString()}`,
-					{
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json',
-						},
-					},
-				)
-
-				if (!response.ok) {
-					throw new Error(`HTTP error! status: ${response.status}`)
-				}
-
-				const data = await response.json()
-				console.log('Publication used by fetched:', data)
-				return data
-			} catch (error) {
-				console.error('Failed to fetch publication used by:', error)
-				throw error
-			}
+			return fetchPublicationRelation(publicationId, { relation: 'used', params })
 		},
 
 		/**
@@ -983,16 +1128,7 @@ export const useSearchStore = defineStore('search', {
 			this.searchTerm = ''
 			this.filters = {}
 			this.ordering = {}
-			this.searchResults = []
-			this.pagination = {
-				page: 1,
-				pages: 1,
-				total: 0,
-				limit: 20,
-				offset: 0,
-			}
-			this.facets = {}
-			this.facetable = {}
+			this.resetSearchResults()
 			this.activeFacets = {}
 			this.error = null
 			this.selectedPublications = []

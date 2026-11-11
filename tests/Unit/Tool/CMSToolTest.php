@@ -6,7 +6,7 @@ namespace Unit\Tool;
 
 use BadMethodCallException;
 use OCA\OpenCatalogi\Tool\CMSTool;
-use OCA\OpenRegister\Db\Agent;
+use OCA\OpenRegister\Mcp\Db\Agent;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\IUser;
@@ -121,7 +121,7 @@ class CMSToolTest extends TestCase {
 	}
 
 	public function testGetFunctionsMatchesThePublishedDefinitions(): void {
-		$expected = json_decode((string)file_get_contents(__DIR__.'/fixtures/cms-tool-functions.json'), true);
+		$expected = json_decode((string)file_get_contents(__DIR__ . '/fixtures/cms-tool-functions.json'), true);
 
 		$this->assertSame($expected, $this->tool->getFunctions());
 	}

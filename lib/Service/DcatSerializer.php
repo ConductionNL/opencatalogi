@@ -40,6 +40,31 @@ use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
  */
 class DcatSerializer implements DcatSerializerInterface {
 
+	/**
+	 * The `?format=` values understood, each with its canonical format name.
+	 */
+	private const FORMAT_ALIASES = [
+		'jsonld' => 'jsonld',
+		'json-ld' => 'jsonld',
+		'json' => 'jsonld',
+		'turtle' => 'turtle',
+		'ttl' => 'turtle',
+		'rdfxml' => 'rdfxml',
+		'rdf+xml' => 'rdfxml',
+		'rdf' => 'rdfxml',
+		'xml' => 'rdfxml',
+	];
+
+	/**
+	 * The Accept media types understood, in the order they are tried, each with
+	 * its canonical format name.
+	 */
+	private const ACCEPT_FORMATS = [
+		'text/turtle' => 'turtle',
+		'application/rdf+xml' => 'rdfxml',
+		'application/ld+json' => 'jsonld',
+		'application/json' => 'jsonld',
+	];
 
 	/**
 	 * Resolve the requested serialization format from the `?format=` query
@@ -51,51 +76,84 @@ class DcatSerializer implements DcatSerializerInterface {
 	 * @return string|null The canonical format name, or null when an explicit
 	 *                     unsupported format was requested (caller emits 406).
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-content-negotiation-across-rdf-serializations-dcat-007
 	 */
 	public function negotiate(?string $formatParam, ?string $acceptHeader): ?string {
 		// Explicit query parameter wins.
-		if ($formatParam !== null && $formatParam !== '') {
-			$normalised = strtolower(trim($formatParam));
-			$aliases = [
-				'jsonld' => 'jsonld',
-				'json-ld' => 'jsonld',
-				'json' => 'jsonld',
-				'turtle' => 'turtle',
-				'ttl' => 'turtle',
-				'rdfxml' => 'rdfxml',
-				'rdf+xml' => 'rdfxml',
-				'rdf' => 'rdfxml',
-				'xml' => 'rdfxml',
-			];
+		if ($this->namesExplicitFormat(formatParam: $formatParam) === true) {
 			// Unknown explicit format → signal 406.
-			return ($aliases[$normalised] ?? null);
+			return $this->formatFromAlias(formatParam: (string) $formatParam);
 		}
 
-		if ($acceptHeader === null || $acceptHeader === '' || str_contains($acceptHeader, '*/*') === true) {
+		return $this->formatFromAcceptHeader(acceptHeader: $acceptHeader);
+	}//end negotiate()
+
+	/**
+	 * Whether the `?format=` query parameter was given a value.
+	 *
+	 * @param string|null $formatParam The `?format=` query value.
+	 *
+	 * @return bool True when the parameter decides the format.
+	 */
+	private function namesExplicitFormat(?string $formatParam): bool {
+		return $formatParam !== null && $formatParam !== '';
+	}//end namesExplicitFormat()
+
+	/**
+	 * The canonical format a `?format=` value names, case and whitespace
+	 * insensitive.
+	 *
+	 * @param string $formatParam The `?format=` query value.
+	 *
+	 * @return string|null The canonical format name, or null for an unknown one.
+	 */
+	private function formatFromAlias(string $formatParam): ?string {
+		return (self::FORMAT_ALIASES[strtolower(trim($formatParam))] ?? null);
+	}//end formatFromAlias()
+
+	/**
+	 * The format the Accept header asks for, JSON-LD when it leaves it open.
+	 *
+	 * @param string|null $acceptHeader The HTTP Accept header value.
+	 *
+	 * @return string|null The canonical format name, or null when none matched.
+	 */
+	private function formatFromAcceptHeader(?string $acceptHeader): ?string {
+		if ($acceptHeader === null || $this->acceptsAnyFormat(acceptHeader: $acceptHeader) === true) {
 			return 'jsonld';
 		}
 
-		$accept = strtolower($acceptHeader);
-		if (str_contains($accept, 'text/turtle') === true) {
-			return 'turtle';
-		}
+		return $this->formatFromAccept(accept: strtolower($acceptHeader));
+	}//end formatFromAcceptHeader()
 
-		if (str_contains($accept, 'application/rdf+xml') === true) {
-			return 'rdfxml';
-		}
+	/**
+	 * Whether an Accept header leaves the format open: empty, or a wildcard.
+	 *
+	 * @param string $acceptHeader The HTTP Accept header value.
+	 *
+	 * @return bool True when any format will do.
+	 */
+	private function acceptsAnyFormat(string $acceptHeader): bool {
+		return $acceptHeader === '' || str_contains($acceptHeader, '*/*') === true;
+	}//end acceptsAnyFormat()
 
-		if (str_contains($accept, 'application/ld+json') === true
-			|| str_contains($accept, 'application/json') === true
-		) {
-			return 'jsonld';
+	/**
+	 * The format of the first supported media type the Accept header names.
+	 *
+	 * @param string $accept The lower-cased Accept header value.
+	 *
+	 * @return string|null The canonical format name, or null when none matched.
+	 */
+	private function formatFromAccept(string $accept): ?string {
+		foreach (self::ACCEPT_FORMATS as $mediaType => $format) {
+			if (str_contains($accept, $mediaType) === true) {
+				return $format;
+			}
 		}
 
 		// Accept header present but none of the supported types matched.
 		return null;
-	}//end negotiate()
+	}//end formatFromAccept()
 
 	/**
 	 * Serialize the document to the requested format.

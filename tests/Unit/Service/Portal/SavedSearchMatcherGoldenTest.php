@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Unit\Service\Portal;
 
-require_once __DIR__.'/FakePortalObjectStore.php';
+require_once __DIR__ . '/FakePortalObjectStore.php';
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
@@ -45,7 +45,7 @@ use RuntimeException;
  */
 class SavedSearchMatcherGoldenTest extends TestCase {
 
-	private const FIXTURE = __DIR__.'/fixtures/saved-search-matcher-golden.json';
+	private const FIXTURE = __DIR__ . '/fixtures/saved-search-matcher-golden.json';
 
 	/**
 	 * What the doubles saw during one run.
@@ -57,17 +57,17 @@ class SavedSearchMatcherGoldenTest extends TestCase {
 	/**
 	 * A saved search.
 	 *
-	 * @param string               $id        The id.
-	 * @param string|null          $frequency The frequency, or null for none.
-	 * @param string|null          $lastRunAt The last run, or null for none.
-	 * @param array<string, mixed> $filters   The query filters.
+	 * @param string $id The id.
+	 * @param string|null $frequency The frequency, or null for none.
+	 * @param string|null $lastRunAt The last run, or null for none.
+	 * @param array<string, mixed> $filters The query filters.
 	 *
 	 * @return array<string, mixed>
 	 */
-	private static function saved(string $id, ?string $frequency, ?string $lastRunAt, array $filters=[]): array {
+	private static function saved(string $id, ?string $frequency, ?string $lastRunAt, array $filters = []): array {
 		return array_filter([
 			'id' => $id,
-			'title' => 'Zoekopdracht '.$id,
+			'title' => 'Zoekopdracht ' . $id,
 			'owner' => 'subject-1',
 			'query' => ['text' => 'windpark', 'filters' => $filters, 'catalog' => ''],
 			'frequency' => $frequency,
@@ -78,14 +78,14 @@ class SavedSearchMatcherGoldenTest extends TestCase {
 	/**
 	 * A publication row as the search returns it.
 	 *
-	 * @param string               $id    The id.
-	 * @param string|null          $date  The publication date.
+	 * @param string $id The id.
+	 * @param string|null $date The publication date.
 	 * @param array<string, mixed> $extra Extra fields.
 	 *
 	 * @return array<string, mixed>
 	 */
-	private static function row(string $id, ?string $date, array $extra=[]): array {
-		return array_merge(['title' => 'Publicatie '.$id, 'publicationDate' => $date, '@self' => ['id' => $id, 'schema' => 'publication']], $extra);
+	private static function row(string $id, ?string $date, array $extra = []): array {
+		return array_merge(['title' => 'Publicatie ' . $id, 'publicationDate' => $date, '@self' => ['id' => $id, 'schema' => 'publication']], $extra);
 	}
 
 	/**
@@ -180,7 +180,7 @@ class SavedSearchMatcherGoldenTest extends TestCase {
 		$this->log = ['searches' => [], 'notices' => []];
 		$store = new FakePortalObjectStore();
 		foreach ($world['saved'] as $index => $saved) {
-			$store->objects['savedSearch']['k'.$index] = $saved;
+			$store->objects['savedSearch']['k' . $index] = $saved;
 		}
 
 		$matcher = new SavedSearchMatcher(
@@ -217,12 +217,44 @@ class SavedSearchMatcherGoldenTest extends TestCase {
 				mkdir(dirname(self::FIXTURE));
 			}
 
-			file_put_contents(self::FIXTURE, json_encode($recorded, (JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))."\n");
+			file_put_contents(self::FIXTURE, json_encode($recorded, (JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)) . "\n");
 		}
 
-		$this->assertArrayHasKey($name, $recorded, 'No recording for '.$name);
+		$this->assertArrayHasKey($name, $recorded, 'No recording for ' . $name);
 		$this->assertSame($recorded[$name], json_decode((string)json_encode($actual), true));
 	}
+
+	/**
+	 * One run handles at most 200 due saved searches; the rest wait for the
+	 * next run, untouched. Baselined and skipped ones do not count.
+	 *
+	 * @return void
+	 */
+	public function testAtMostTheDueLimitIsHandledPerRun(): void {
+		$this->log = ['searches' => [], 'notices' => []];
+		$store = new FakePortalObjectStore();
+		$store->objects['savedSearch']['new'] = self::saved('new', 'daily', null);
+		$store->objects['savedSearch']['off'] = array_merge(self::saved('off', 'immediate', '2026-09-29T07:05:00+02:00'), ['active' => false]);
+		for ($i = 1; $i <= 202; $i++) {
+			$store->objects['savedSearch']['k' . $i] = self::saved('s' . $i, 'immediate', '2026-09-29T07:05:00+02:00');
+		}
+
+		$matcher = new SavedSearchMatcher(
+			store: $store,
+			search: $this->search([]),
+			linker: $this->linker(),
+			publications: new PublicationQueryService(container: $this->createMock(ContainerInterface::class)),
+			notices: $this->notices(false),
+			logger: new NullLogger()
+		);
+
+		$stats = $matcher->run(new DateTimeImmutable('2026-09-30T07:30:00+02:00'));
+
+		$this->assertSame(['handled' => 200, 'notices' => 0, 'baselined' => 1, 'failed' => 0], $stats);
+		$this->assertCount(201, $store->saves);
+		$this->assertSame('2026-09-29T07:05:00+02:00', $store->objects['savedSearch']['k201']['lastRunAt']);
+
+	}//end testAtMostTheDueLimitIsHandledPerRun()
 
 	/**
 	 * Two notices of one run never share a stamp, and stamps only grow.
@@ -273,7 +305,7 @@ class SavedSearchMatcherGoldenTest extends TestCase {
 	 */
 	private function linker(): PublicationLinker {
 		$linker = $this->createMock(PublicationLinker::class);
-		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/'.$id);
+		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/' . $id);
 		return $linker;
 	}
 

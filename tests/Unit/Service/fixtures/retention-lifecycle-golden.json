@@ -1,0 +1,530 @@
+{
+    "publication: stamped": {
+        "outcome": {
+            "returned": {
+                "title": "Kapvergunning",
+                "publicationDate": "2026-06-11T00:00:00+00:00",
+                "retentionCategory": "besluit",
+                "retentionTermMonths": 12,
+                "retentionAction": "depublish",
+                "retentionExpiresAt": "2027-06-11T00:00:00+00:00",
+                "id": "pub-1",
+                "saved": true
+            }
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "title": "Kapvergunning",
+                        "publicationDate": "2026-06-11T00:00:00+00:00",
+                        "retentionCategory": "besluit",
+                        "retentionTermMonths": 12,
+                        "retentionAction": "depublish",
+                        "retentionExpiresAt": "2027-06-11T00:00:00+00:00",
+                        "id": "pub-1"
+                    },
+                    "register": "11",
+                    "schema": "12",
+                    "uuid": "pub-1",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "publication: officer values kept": {
+        "outcome": {
+            "returned": {
+                "title": "Kapvergunning",
+                "publicationDate": "2026-06-11T00:00:00+00:00",
+                "retentionCategory": "besluit",
+                "retentionTermMonths": 60,
+                "retentionAction": "review",
+                "retentionExpiresAt": "2031-06-11T00:00:00+00:00",
+                "id": "pub-1",
+                "saved": true
+            }
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "title": "Kapvergunning",
+                        "publicationDate": "2026-06-11T00:00:00+00:00",
+                        "retentionCategory": "besluit",
+                        "retentionTermMonths": 60,
+                        "retentionAction": "review",
+                        "retentionExpiresAt": "2031-06-11T00:00:00+00:00",
+                        "id": "pub-1"
+                    },
+                    "register": "11",
+                    "schema": "12",
+                    "uuid": "pub-1",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "publication: fully stamped already": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "publication: other register": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "publication: other schema": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "publication: envelope not an array": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "publication: no envelope": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "publication: not published yet": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "publication: no OpenRegister": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": [
+            [
+                "warning",
+                "[RetentionService] OpenRegister ObjectService unavailable: no OpenRegister"
+            ]
+        ]
+    },
+    "publication: register unconfigured": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "publication: catalog register unconfigured": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "publication: no catalog lists it": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "publication: catalog search fails": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "warning",
+                "[RetentionService] catalog lookup for retention defaults failed: search down"
+            ]
+        ]
+    },
+    "publication: save fails": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "title": "Kapvergunning",
+                        "publicationDate": "2026-06-11T00:00:00+00:00",
+                        "retentionCategory": "besluit",
+                        "retentionTermMonths": 12,
+                        "retentionAction": "depublish",
+                        "retentionExpiresAt": "2027-06-11T00:00:00+00:00",
+                        "id": "pub-1"
+                    },
+                    "register": "11",
+                    "schema": "12",
+                    "uuid": "pub-1",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "error",
+                "[RetentionService] failed to stamp retention defaults at publication: save failed"
+            ]
+        ]
+    },
+    "publication: id from the envelope id": {
+        "outcome": {
+            "returned": {
+                "title": "Kapvergunning",
+                "publicationDate": "2026-06-11T00:00:00+00:00",
+                "retentionCategory": "besluit",
+                "retentionTermMonths": 12,
+                "retentionAction": "depublish",
+                "retentionExpiresAt": "2027-06-11T00:00:00+00:00",
+                "id": "id-2",
+                "saved": true
+            }
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "title": "Kapvergunning",
+                        "publicationDate": "2026-06-11T00:00:00+00:00",
+                        "retentionCategory": "besluit",
+                        "retentionTermMonths": 12,
+                        "retentionAction": "depublish",
+                        "retentionExpiresAt": "2027-06-11T00:00:00+00:00",
+                        "id": "id-2"
+                    },
+                    "register": "11",
+                    "schema": "12",
+                    "uuid": "id-2",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "publication: payload id kept": {
+        "outcome": {
+            "returned": {
+                "id": "own",
+                "title": "Kapvergunning",
+                "publicationDate": "2026-06-11T00:00:00+00:00",
+                "retentionCategory": "besluit",
+                "retentionTermMonths": 12,
+                "retentionAction": "depublish",
+                "retentionExpiresAt": "2027-06-11T00:00:00+00:00",
+                "saved": true
+            }
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "id": "own",
+                        "title": "Kapvergunning",
+                        "publicationDate": "2026-06-11T00:00:00+00:00",
+                        "retentionCategory": "besluit",
+                        "retentionTermMonths": 12,
+                        "retentionAction": "depublish",
+                        "retentionExpiresAt": "2027-06-11T00:00:00+00:00"
+                    },
+                    "register": "11",
+                    "schema": "12",
+                    "uuid": "own",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "publication: no id anywhere": {
+        "outcome": {
+            "returned": {
+                "title": "Kapvergunning",
+                "publicationDate": "2026-06-11T00:00:00+00:00",
+                "retentionCategory": "besluit",
+                "retentionTermMonths": 12,
+                "retentionAction": "depublish",
+                "retentionExpiresAt": "2027-06-11T00:00:00+00:00",
+                "saved": true
+            }
+        },
+        "calls": [
+            [
+                "searchObjectsPaginated",
+                {
+                    "query": {
+                        "@self": {
+                            "register": "1",
+                            "schema": "2"
+                        },
+                        "_limit": 1000
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "saveObject",
+                {
+                    "object": {
+                        "title": "Kapvergunning",
+                        "publicationDate": "2026-06-11T00:00:00+00:00",
+                        "retentionCategory": "besluit",
+                        "retentionTermMonths": 12,
+                        "retentionAction": "depublish",
+                        "retentionExpiresAt": "2027-06-11T00:00:00+00:00"
+                    },
+                    "register": "11",
+                    "schema": "12",
+                    "uuid": "",
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "defaults: valid": {
+        "outcome": {
+            "returned": {
+                "vergunningen": {
+                    "besluit": {
+                        "termMonths": 12,
+                        "action": "depublish"
+                    }
+                }
+            }
+        },
+        "calls": [
+            [
+                "setValueString",
+                "opencatalogi",
+                "retention_defaults",
+                "{\"vergunningen\":{\"besluit\":{\"termMonths\":24,\"action\":\"archive\"},\"x\":\"not a rule\",\"y\":{\"termMonths\":3}}}"
+            ]
+        ]
+    },
+    "defaults: catalog not a map": {
+        "outcome": {
+            "threw": "RuntimeException",
+            "message": "Invalid retention defaults shape for catalog vergunningen"
+        },
+        "calls": []
+    },
+    "defaults: unknown action": {
+        "outcome": {
+            "threw": "RuntimeException",
+            "message": "Invalid retention action \"shred\" for a/b"
+        },
+        "calls": []
+    },
+    "defaults: numeric keys": {
+        "outcome": {
+            "threw": "RuntimeException",
+            "message": "Invalid retention action \"Archive\" for 0/1"
+        },
+        "calls": []
+    },
+    "defaults: empty": {
+        "outcome": {
+            "returned": {
+                "vergunningen": {
+                    "besluit": {
+                        "termMonths": 12,
+                        "action": "depublish"
+                    }
+                }
+            }
+        },
+        "calls": [
+            [
+                "setValueString",
+                "opencatalogi",
+                "retention_defaults",
+                "[]"
+            ]
+        ]
+    },
+    "expiry: twelve months": {
+        "outcome": {
+            "returned": "2027-06-11T00:00:00+00:00"
+        },
+        "calls": []
+    },
+    "expiry: month end": {
+        "outcome": {
+            "returned": "2026-03-03T10:00:00+02:00"
+        },
+        "calls": []
+    },
+    "expiry: no date": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "expiry: empty date": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "expiry: no term": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "expiry: zero term": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "expiry: negative term": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "expiry: unreadable date": {
+        "outcome": {
+            "returned": null
+        },
+        "calls": []
+    },
+    "csv: rows": {
+        "outcome": {
+            "returned": "﻿id,title,publicationDate,retentionCategory,retentionTermMonths,retentionExpiresAt,status,actionTaken,decisionBy,decisionAt,decisionNote\np1,\"A;\"\"b\"\"\",,,,,archived,,,,\n,,,,,,,,,,n\n"
+        },
+        "calls": []
+    },
+    "csv: no rows": {
+        "outcome": {
+            "returned": "﻿id,title,publicationDate,retentionCategory,retentionTermMonths,retentionExpiresAt,status,actionTaken,decisionBy,decisionAt,decisionNote\n"
+        },
+        "calls": []
+    }
+}

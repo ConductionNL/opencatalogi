@@ -38,6 +38,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\StatusChange;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 
 /**
@@ -54,7 +55,6 @@ class StatusPageService implements StatusPageServiceInterface {
 	 */
 	public const STATES = ['available', 'degraded', 'unavailable', 'maintenance'];
 
-
 	/**
 	 * Set a component's state.
 	 *
@@ -62,10 +62,7 @@ class StatusPageService implements StatusPageServiceInterface {
 	 * path in this class that derives a state from anything, which is what
 	 * makes "the page probes nothing" true rather than merely intended.
 	 *
-	 * @param string $component The component a reader recognises.
-	 * @param string $state The state.
-	 * @param string $message What a reader should do about it.
-	 * @param string $setBy Who set it.
+	 * @param StatusChange $change The component, its state, the message and who set it.
 	 * @param DateTimeInterface|null $now The moment; defaults to now.
 	 *
 	 * @return array<string, mixed> The status to save.
@@ -74,38 +71,54 @@ class StatusPageService implements StatusPageServiceInterface {
 	 *
 	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
 	 */
-	public function setState(
-		string $component,
-		string $state,
-		string $message,
-		string $setBy,
-		?DateTimeInterface $now = null,
-	): array {
+	public function setState(StatusChange $change, ?DateTimeInterface $now = null): array {
+		self::assertKnownState(state: $change->state);
+		if (trim($change->component) === '') {
+			throw new DomainException(message: 'A status needs the component it is about.');
+		}
+
+		return [
+			'component' => trim($change->component),
+			'state' => $change->state,
+			'message' => $change->message,
+			'stateSetAt' => self::momentOf(now: $now)->format(DateTimeInterface::ATOM),
+			'stateSetBy' => $change->setBy,
+		];
+
+	}//end setState()
+
+	/**
+	 * Refuse a state this page does not know.
+	 *
+	 * @param string $state The state.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When the state is not one of STATES.
+	 */
+	private static function assertKnownState(string $state): void {
 		if (in_array($state, self::STATES, true) === false) {
 			throw new DomainException(
 				message: 'A component cannot be set to "' . $state . '": the status page knows only '
 					. implode(', ', self::STATES) . '.'
 			);
 		}
+	}//end assertKnownState()
 
-		if (trim($component) === '') {
-			throw new DomainException(message: 'A status needs the component it is about.');
+	/**
+	 * The given moment, else now in UTC.
+	 *
+	 * @param DateTimeInterface|null $now The moment.
+	 *
+	 * @return DateTimeImmutable
+	 */
+	private static function momentOf(?DateTimeInterface $now): DateTimeImmutable {
+		if ($now === null) {
+			return new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		}
 
-		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		if ($now !== null) {
-			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
-		}
-
-		return [
-			'component' => trim($component),
-			'state' => $state,
-			'message' => $message,
-			'stateSetAt' => $moment->format(DateTimeInterface::ATOM),
-			'stateSetBy' => $setBy,
-		];
-
-	}//end setState()
+		return new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
+	}//end momentOf()
 
 	/**
 	 * The page as an anonymous reader sees it.
@@ -123,51 +136,10 @@ class StatusPageService implements StatusPageServiceInterface {
 		int $stalenessHours = self::DEFAULT_STALENESS_HOURS,
 		?DateTimeInterface $now = null,
 	): array {
-		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		if ($now !== null) {
-			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
-		}
-
-		$rendered = [];
-		$stale = 0;
-
-		foreach ($components as $component) {
-			if (is_array($component) === false) {
-				continue;
-			}
-
-			$setAt = trim((string)($component['stateSetAt'] ?? ''));
-			$isStale = true;
-
-			if ($setAt !== '') {
-				try {
-					$setAtMoment = new DateTimeImmutable($setAt);
-					$ageHours = (($moment->getTimestamp() - $setAtMoment->getTimestamp()) / 3600);
-					$isStale = ($ageHours > $stalenessHours);
-				} catch (\Throwable $e) {
-					// A date nobody can read is not evidence of freshness.
-					$isStale = true;
-				}
-			}
-
-			if ($isStale === true) {
-				$stale++;
-			}
-
-			$stateSetAt = null;
-			if ($setAt !== '') {
-				$stateSetAt = $setAt;
-			}
-
-			$rendered[] = [
-				'component' => (string)($component['component'] ?? ''),
-				'state' => (string)($component['state'] ?? ''),
-				'message' => (string)($component['message'] ?? ''),
-				'stateSetAt' => $stateSetAt,
-				'stale' => $isStale,
-				'order' => (int)($component['order'] ?? 0),
-			];
-		}
+		$rendered = self::renderedComponents(
+			components: $components,
+			clock: ['now' => self::momentOf(now: $now), 'hours' => $stalenessHours]
+		);
 
 		usort(
 			$rendered,
@@ -176,7 +148,7 @@ class StatusPageService implements StatusPageServiceInterface {
 
 		return [
 			'components' => $rendered,
-			'stale' => $stale,
+			'stale' => count(array_filter(array_column($rendered, 'stale'))),
 
 			// Stated in the response rather than only in a comment, so a caller
 			// can see that these states were set and not measured.
@@ -184,5 +156,76 @@ class StatusPageService implements StatusPageServiceInterface {
 		];
 
 	}//end render()
+
+	/**
+	 * Every stored component that is an array, as the page shows it.
+	 *
+	 * @param array<int, mixed> $components The stored statuses.
+	 * @param array{now: DateTimeImmutable, hours: int} $clock The moment of rendering and the staleness window.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private static function renderedComponents(array $components, array $clock): array {
+		$rendered = [];
+		foreach ($components as $component) {
+			if (is_array($component) === true) {
+				$rendered[] = self::renderComponent(component: $component, clock: $clock);
+			}
+		}
+
+		return $rendered;
+	}//end renderedComponents()
+
+	/**
+	 * One component as the page shows it, with whether its state is stale.
+	 *
+	 * @param array $component The stored component.
+	 * @param array{now: DateTimeImmutable, hours: int} $clock The moment of rendering and the staleness window.
+	 *
+	 * @return array{component: string, state: string, message: string, stateSetAt: string|null, stale: bool, order: int}
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 */
+	private static function renderComponent(array $component, array $clock): array {
+		$setAt = trim((string)($component['stateSetAt'] ?? ''));
+		$stateSetAt = null;
+		if ($setAt !== '') {
+			$stateSetAt = $setAt;
+		}
+
+		return [
+			'component' => (string)($component['component'] ?? ''),
+			'state' => (string)($component['state'] ?? ''),
+			'message' => (string)($component['message'] ?? ''),
+			'stateSetAt' => $stateSetAt,
+			'stale' => self::isStale(setAt: $setAt, clock: $clock),
+			'order' => (int)($component['order'] ?? 0),
+		];
+	}//end renderComponent()
+
+	/**
+	 * Whether a state set at this moment is older than the window; no date, or a date
+	 * nobody can read, is not evidence of freshness.
+	 *
+	 * @param string $setAt The moment the state was set, or empty.
+	 * @param array{now: DateTimeImmutable, hours: int} $clock The moment of rendering and the staleness window.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-public-status-page-says-what-is-running-req-pcs-101
+	 */
+	private static function isStale(string $setAt, array $clock): bool {
+		if ($setAt === '') {
+			return true;
+		}
+
+		try {
+			$setAtMoment = new DateTimeImmutable($setAt);
+		} catch (\Throwable $e) {
+			return true;
+		}
+
+		return (($clock['now']->getTimestamp() - $setAtMoment->getTimestamp()) / 3600) > $clock['hours'];
+	}//end isStale()
 
 }//end class

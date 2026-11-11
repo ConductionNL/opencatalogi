@@ -73,6 +73,33 @@ class InspectionService implements InspectionServiceInterface {
 		string $openedBy,
 		?DateTimeInterface $start = null,
 	): array {
+		$termDays = $this->termDays(recordType: $recordType);
+		$chosen = $this->chosenDocuments(documents: $documents);
+		$startsAt = $this->windowStart(start: $start);
+
+		return [
+			'record' => (string)($record['id'] ?? ''),
+			'recordType' => (string)($recordType['slug'] ?? ($recordType['recordType'] ?? '')),
+			'documents' => $chosen,
+			'startDate' => $startsAt->format(DateTimeInterface::ATOM),
+			'endDate' => $startsAt->add(new DateInterval('P' . $termDays . 'D'))->format(DateTimeInterface::ATOM),
+			'termDays' => $termDays,
+			'token' => bin2hex(random_bytes(16)),
+			'openedBy' => $openedBy,
+		];
+
+	}//end open()
+
+	/**
+	 * The inspection term the record type declares.
+	 *
+	 * @param array<string, mixed> $recordType The type, declaring `inspectionTermDays`.
+	 *
+	 * @return int The term in days.
+	 *
+	 * @throws DomainException When the type declares no term.
+	 */
+	private function termDays(array $recordType): int {
 		$termDays = (int)($recordType['inspectionTermDays'] ?? 0);
 		if ($termDays <= 0) {
 			throw new DomainException(
@@ -80,6 +107,19 @@ class InspectionService implements InspectionServiceInterface {
 			);
 		}
 
+		return $termDays;
+	}//end termDays()
+
+	/**
+	 * The chosen documents, each once, as strings.
+	 *
+	 * @param array<int, mixed> $documents The documents chosen for the inspection.
+	 *
+	 * @return array<int, string> The documents.
+	 *
+	 * @throws DomainException When no document was chosen.
+	 */
+	private function chosenDocuments(array $documents): array {
 		$chosen = array_values(array_unique(array_map('strval', $documents)));
 		if ($chosen === []) {
 			throw new DomainException(
@@ -87,24 +127,23 @@ class InspectionService implements InspectionServiceInterface {
 			);
 		}
 
-		$startsAt = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		if ($start !== null) {
-			$startsAt = new DateTimeImmutable($start->format('Y-m-d\\TH:i:s.uP'));
+		return $chosen;
+	}//end chosenDocuments()
+
+	/**
+	 * When the window opens: the given moment, or now in UTC.
+	 *
+	 * @param DateTimeInterface|null $start When the window opens.
+	 *
+	 * @return DateTimeImmutable The start.
+	 */
+	private function windowStart(?DateTimeInterface $start): DateTimeImmutable {
+		if ($start === null) {
+			return new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		}
-		$endsAt = $startsAt->add(new DateInterval('P' . $termDays . 'D'));
 
-		return [
-			'record' => (string)($record['id'] ?? ''),
-			'recordType' => (string)($recordType['slug'] ?? ($recordType['recordType'] ?? '')),
-			'documents' => $chosen,
-			'startDate' => $startsAt->format(DateTimeInterface::ATOM),
-			'endDate' => $endsAt->format(DateTimeInterface::ATOM),
-			'termDays' => $termDays,
-			'token' => bin2hex(random_bytes(16)),
-			'openedBy' => $openedBy,
-		];
-
-	}//end open()
+		return new DateTimeImmutable($start->format('Y-m-d\\TH:i:s.uP'));
+	}//end windowStart()
 
 	/**
 	 * Whether the window is open at a moment.
@@ -140,7 +179,6 @@ class InspectionService implements InspectionServiceInterface {
 		}
 
 		return ($moment >= $start && $moment <= $end);
-
 	}//end isOpen()
 
 	/**
@@ -160,38 +198,69 @@ class InspectionService implements InspectionServiceInterface {
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function resolveLink(array $inspection, string $token, ?DateTimeInterface $now = null): array {
-		$expected = (string)($inspection['token'] ?? '');
-		if ($expected === '' || hash_equals($expected, $token) === false) {
-			return [
-				'readable' => false,
-				'documents' => [],
-				'reason' => 'unknown-inspection',
-				'endDate' => null,
-			];
+		if ($this->tokenMatches(inspection: $inspection, token: $token) === false) {
+			return $this->unreadable(reason: 'unknown-inspection', endDate: null);
 		}
 
 		$endDate = (string)($inspection['endDate'] ?? '');
 
 		if ($this->isOpen(inspection: $inspection, now: $now) === false) {
-			return [
-				'readable' => false,
-				'documents' => [],
-				'reason' => 'window-closed',
-				'endDate' => $endDate,
-			];
-		}
-
-		$documents = ($inspection['documents'] ?? []);
-		if (is_array($documents) === false) {
-			$documents = [];
+			return $this->unreadable(reason: 'window-closed', endDate: $endDate);
 		}
 
 		return [
 			'readable' => true,
-			'documents' => array_values(array_map('strval', $documents)),
+			'documents' => $this->inspectionDocuments(inspection: $inspection),
 			'reason' => null,
 			'endDate' => $endDate,
 		];
 
 	}//end resolveLink()
+
+	/**
+	 * Whether a presented token is the inspection's own. An inspection without
+	 * a token opens for nobody.
+	 *
+	 * @param array<string, mixed> $inspection The inspection.
+	 * @param string $token The token from the link.
+	 *
+	 * @return bool
+	 */
+	private function tokenMatches(array $inspection, string $token): bool {
+		$expected = (string)($inspection['token'] ?? '');
+		return $expected !== '' && hash_equals($expected, $token) === true;
+	}//end tokenMatches()
+
+	/**
+	 * A link answer that reads nothing.
+	 *
+	 * @param string $reason Why: unknown-inspection or window-closed.
+	 * @param string|null $endDate The window's end, when the link was genuine.
+	 *
+	 * @return array{readable: boolean, documents: array<int, string>, reason: string|null, endDate: string|null}
+	 */
+	private function unreadable(string $reason, ?string $endDate): array {
+		return [
+			'readable' => false,
+			'documents' => [],
+			'reason' => $reason,
+			'endDate' => $endDate,
+		];
+	}//end unreadable()
+
+	/**
+	 * The inspection's chosen documents, as a list of strings.
+	 *
+	 * @param array<string, mixed> $inspection The inspection.
+	 *
+	 * @return array<int, string> The documents.
+	 */
+	private function inspectionDocuments(array $inspection): array {
+		$documents = ($inspection['documents'] ?? []);
+		if (is_array($documents) === false) {
+			return [];
+		}
+
+		return array_values(array_map('strval', $documents));
+	}//end inspectionDocuments()
 }//end class

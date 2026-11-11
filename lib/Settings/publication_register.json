@@ -372,7 +372,8 @@
                 "depublicationDate": {
                   "$gte": "$now"
                 }
-              }
+              },
+              "crossOrganisation": true
             },
             {
               "group": "public",
@@ -383,7 +384,8 @@
                 "depublicationDate": {
                   "$exists": false
                 }
-              }
+              },
+              "crossOrganisation": true
             },
             "authenticated"
           ]
@@ -615,7 +617,8 @@
                 "published": {
                   "$lte": "$now"
                 }
-              }
+              },
+              "crossOrganisation": true
             },
             "authenticated"
           ]
@@ -851,7 +854,8 @@
                 "published": {
                   "$lte": "$now"
                 }
-              }
+              },
+              "crossOrganisation": true
             },
             "authenticated"
           ]
@@ -941,7 +945,7 @@
         "searchable": true,
         "authorization": {
           "read": [
-            "public"
+            {"group": "public", "crossOrganisation": true}
           ]
         }
       },
@@ -1005,7 +1009,7 @@
         "searchable": true,
         "authorization": {
           "read": [
-            "public"
+            {"group": "public", "crossOrganisation": true}
           ]
         }
       },

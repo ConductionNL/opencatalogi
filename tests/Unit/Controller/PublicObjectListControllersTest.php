@@ -21,13 +21,14 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\ThemesController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\IAppConfig;
 use OCP\IL10N;
-use OCP\IRequest;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Unit\Support\ServerAwareRequest;
 
 class PublicObjectListControllersTest extends TestCase {
 
@@ -49,16 +50,16 @@ class PublicObjectListControllersTest extends TestCase {
 	/**
 	 * Build a controller whose OpenRegister answers with the given search result.
 	 *
-	 * @param string               $class   The controller class.
-	 * @param string               $prefix  The configuration key prefix.
-	 * @param array<string, mixed> $result  The paginated search result.
-	 * @param string               $origins The `cors_allowed_origins` value.
-	 * @param string               $origin  The caller's Origin, sent only as HTTP_ORIGIN.
+	 * @param string $class The controller class.
+	 * @param string $prefix The configuration key prefix.
+	 * @param array<string, mixed> $result The paginated search result.
+	 * @param string $origins The `cors_allowed_origins` value.
+	 * @param string $origin The caller's Origin, sent only as HTTP_ORIGIN.
 	 *
 	 * @return Controller The controller.
 	 */
 	private function controller(string $class, string $prefix, array $result, string $origins, string $origin): Controller {
-		$request = $this->createMock(IRequest::class);
+		$request = $this->createMock(ServerAwareRequest::class);
 		$request->method('getParams')->willReturn(['q' => 'x', 'id' => 'drop', '_route' => 'drop', '_schemas' => ['9'], '@self' => ['schema' => '9', 'owner' => 'me']]);
 		$request->method('getHeader')->willReturn('');
 		$request->server = ['HTTP_ORIGIN' => $origin];
@@ -66,8 +67,8 @@ class PublicObjectListControllersTest extends TestCase {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key, string $default = ''): string => match ($key) {
-				$prefix.'_register' => '2',
-				$prefix.'_schema' => '10',
+				$prefix . '_register' => '2',
+				$prefix . '_schema' => '10',
 				'cors_allowed_origins' => $origins,
 				default => $default,
 			}
@@ -87,15 +88,13 @@ class PublicObjectListControllersTest extends TestCase {
 		$entity->method('jsonSerialize')->willReturn(['id' => 'one']);
 		$objects->method('find')->willReturn($entity);
 		$resolver = new class($config) {
-			public function __construct(private IAppConfig $config) {
+			public function __construct(
+				private IAppConfig $config,
+			) {
 			}
 
-			public function resolveRegisterId(string $appId, string $key, ?string $default = null): string {
-				return $this->config->getValueString($appId, $key, '');
-			}
-
-			public function resolveSchemaId(string $appId, string $key, ?string $default = null): string {
-				return $this->config->getValueString($appId, $key, '');
+			public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+				return $this->config->getValueString($lookup->appId, $lookup->configKey, '');
 			}
 		};
 		$container = $this->createMock(ContainerInterface::class);
@@ -106,10 +105,10 @@ class PublicObjectListControllersTest extends TestCase {
 		if ($class === GlossaryController::class) {
 			$l10n = $this->createMock(IL10N::class);
 			$l10n->method('t')->willReturnArgument(0);
-			return new GlossaryController('opencatalogi', $request, $config, $container, $appManager, $l10n);
+			return new GlossaryController('opencatalogi', $request, $config, new OpenRegisterLookup($container, $appManager), $l10n);
 		}
 
-		return new ThemesController('opencatalogi', $request, $config, $container, $appManager);
+		return new ThemesController('opencatalogi', $request, $config, new OpenRegisterLookup($container, $appManager));
 	}
 
 	/**

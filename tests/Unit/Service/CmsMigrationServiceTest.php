@@ -294,4 +294,35 @@ class CmsMigrationServiceTest extends TestCase {
 		$this->assertSame('grid', $built['page']['body']['type']);
 
 	}//end testMalformedContentsYieldAnEmptyGrid()
+
+	/**
+	 * Every block shape gives the recorded body, unmapped types and dropped fields.
+	 *
+	 * @return void
+	 */
+	public function testTheBodyOfEveryBlockShapeMatchesTheRecording(): void {
+		$blocks = [
+			'not a block',
+			['type' => 'text', 'data' => ['content' => 'Hallo']],
+			['type' => 'text', 'data' => ['title' => 'no content']],
+			['type' => 'text', 'data' => 'not data'],
+			['type' => 'text'],
+			['type' => 'hero', 'data' => ['title' => 'Welkom', 'subtitle' => 'Ondertitel']],
+			['type' => 'hero', 'data' => ['title' => 'Welkom', 'subtitle' => '']],
+			['type' => 'hero', 'data' => ['title' => 'Again', 'subtitle' => 'Twice']],
+			['type' => 'carousel', 'data' => []],
+			['data' => ['content' => 'no type']],
+			['type' => 'carousel'],
+			20 => ['type' => 'text', 'data' => ['content' => 5]],
+			'key' => ['type' => 'hero', 'data' => ['subtitle' => null]],
+		];
+		$quiet = [['type' => 'hero', 'data' => ['subtitle' => '']], ['type' => 'hero', 'data' => 'scalar data']];
+		$actual = json_decode((string)json_encode(['page' => $this->service->bodyFor($blocks, 'page-1'), 'quiet' => $this->service->bodyFor($quiet, 'page-2')]), true);
+		$fixture = __DIR__ . '/fixtures/cms-migration-body-golden.json';
+		if (getenv('GOLDEN_RECORD') === '1') {
+			file_put_contents($fixture, json_encode($actual, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($fixture), true), $actual);
+	}//end testTheBodyOfEveryBlockShapeMatchesTheRecording()
 }//end class

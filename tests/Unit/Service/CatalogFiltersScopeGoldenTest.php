@@ -48,6 +48,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for CatalogiService::getCatalogFilters().
  *
  * @covers \OCA\OpenCatalogi\Service\CatalogiService
+ * @covers \OCA\OpenCatalogi\Service\CatalogScopeResolver
  */
 class CatalogFiltersScopeGoldenTest extends TestCase {
 
@@ -140,8 +141,8 @@ class CatalogFiltersScopeGoldenTest extends TestCase {
 	/**
 	 * Record one ObjectService call by parameter name, without arguments left at their default.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return void
 	 */
@@ -184,7 +185,9 @@ class CatalogFiltersScopeGoldenTest extends TestCase {
 						/**
 						 * @param array<string, mixed> $data The catalog data.
 						 */
-						public function __construct(private array $data) {
+						public function __construct(
+							private array $data,
+						) {
 						}
 
 						/**

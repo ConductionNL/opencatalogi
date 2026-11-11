@@ -1,0 +1,272 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`depublish acts on the attachments the operation applies to, with its title 1`] = `
+[
+  [
+    "b",
+    "c",
+  ],
+  2,
+  "Depublish 2 attachments",
+  2,
+]
+`;
+
+exports[`depublish closes itself two seconds after everything succeeded 1`] = `
+[
+  {
+    "closed": [
+      [
+        false,
+      ],
+    ],
+    "depublish": [
+      [
+        [
+          "b",
+          "c",
+        ],
+      ],
+    ],
+    "error": false,
+    "loading": false,
+    "publish": [],
+    "refreshed": 1,
+    "success": true,
+    "timeout": true,
+  },
+  {
+    "closed": [
+      [
+        false,
+      ],
+    ],
+    "depublish": [
+      [
+        [
+          "b",
+          "c",
+        ],
+      ],
+    ],
+    "error": false,
+    "loading": false,
+    "publish": [],
+    "refreshed": 1,
+    "success": true,
+    "timeout": false,
+  },
+]
+`;
+
+exports[`depublish names the failures when all failed 1`] = `
+{
+  "closed": [],
+  "depublish": [
+    [
+      [
+        "b",
+        "c",
+      ],
+    ],
+  ],
+  "error": "Failed to depublish 2 attachments",
+  "loading": false,
+  "publish": [],
+  "refreshed": 0,
+  "success": null,
+  "timeout": false,
+}
+`;
+
+exports[`depublish shows what the store threw 1`] = `
+{
+  "closed": [],
+  "depublish": [
+    [
+      [
+        "b",
+        "c",
+      ],
+    ],
+  ],
+  "error": "Server says no",
+  "loading": false,
+  "publish": [],
+  "refreshed": 0,
+  "success": false,
+  "timeout": false,
+}
+`;
+
+exports[`depublish stays open and names the failures when some failed 1`] = `
+{
+  "closed": [],
+  "depublish": [
+    [
+      [
+        "b",
+        "c",
+      ],
+    ],
+  ],
+  "error": "Failed to depublish 1 attachment",
+  "loading": false,
+  "publish": [],
+  "refreshed": 1,
+  "success": true,
+  "timeout": false,
+}
+`;
+
+exports[`depublish words an error without a message 1`] = `
+{
+  "closed": [],
+  "depublish": [
+    [
+      [
+        "b",
+        "c",
+      ],
+    ],
+  ],
+  "error": "An error occurred while depublishing attachments",
+  "loading": false,
+  "publish": [],
+  "refreshed": 0,
+  "success": false,
+  "timeout": false,
+}
+`;
+
+exports[`publish acts on the attachments the operation applies to, with its title 1`] = `
+[
+  [
+    "a",
+  ],
+  1,
+  "Publish attachment",
+  1,
+]
+`;
+
+exports[`publish closes itself two seconds after everything succeeded 1`] = `
+[
+  {
+    "closed": [
+      [
+        false,
+      ],
+    ],
+    "depublish": [],
+    "error": false,
+    "loading": false,
+    "publish": [
+      [
+        [
+          "a",
+        ],
+      ],
+    ],
+    "refreshed": 1,
+    "success": true,
+    "timeout": true,
+  },
+  {
+    "closed": [
+      [
+        false,
+      ],
+    ],
+    "depublish": [],
+    "error": false,
+    "loading": false,
+    "publish": [
+      [
+        [
+          "a",
+        ],
+      ],
+    ],
+    "refreshed": 1,
+    "success": true,
+    "timeout": false,
+  },
+]
+`;
+
+exports[`publish names the failures when all failed 1`] = `
+{
+  "closed": [],
+  "depublish": [],
+  "error": "Failed to publish 2 attachments",
+  "loading": false,
+  "publish": [
+    [
+      [
+        "a",
+      ],
+    ],
+  ],
+  "refreshed": 0,
+  "success": null,
+  "timeout": false,
+}
+`;
+
+exports[`publish shows what the store threw 1`] = `
+{
+  "closed": [],
+  "depublish": [],
+  "error": "Server says no",
+  "loading": false,
+  "publish": [
+    [
+      [
+        "a",
+      ],
+    ],
+  ],
+  "refreshed": 0,
+  "success": false,
+  "timeout": false,
+}
+`;
+
+exports[`publish stays open and names the failures when some failed 1`] = `
+{
+  "closed": [],
+  "depublish": [],
+  "error": "Failed to publish 1 attachment",
+  "loading": false,
+  "publish": [
+    [
+      [
+        "a",
+      ],
+    ],
+  ],
+  "refreshed": 1,
+  "success": true,
+  "timeout": false,
+}
+`;
+
+exports[`publish words an error without a message 1`] = `
+{
+  "closed": [],
+  "depublish": [],
+  "error": "An error occurred while publishing attachments",
+  "loading": false,
+  "publish": [
+    [
+      [
+        "a",
+      ],
+    ],
+  ],
+  "refreshed": 0,
+  "success": false,
+  "timeout": false,
+}
+`;

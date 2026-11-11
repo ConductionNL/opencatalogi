@@ -60,7 +60,6 @@ class WooRequestIntake implements InformationRequestIntakeInterface {
 	 */
 	public const OUTCOME_REFUSED = 'refused';
 
-
 	/**
 	 * Who the stored request says registered it.
 	 */
@@ -97,52 +96,85 @@ class WooRequestIntake implements InformationRequestIntakeInterface {
 	 * @spec openspec/changes/portal-woo-request-intake/specs/woo-request-intake/spec.md#requirement-a-woo-request-delivered-by-the-portal-arms-its-term-req-wri-008
 	 */
 	public function receive(array $answers, string $receivedAt = ''): array {
-		$input = ['channel' => 'web'];
-		foreach (self::FIELDS as $field) {
-			$input[$field] = (string)($answers[$field] ?? '');
-		}
-
 		try {
-			$record = $this->requests->receive(input: $input, receivedBy: self::RECEIVED_BY, now: $this->moment(value: $receivedAt));
+			$record = $this->requests->receive(
+				input: $this->intakeInput(answers: $answers),
+				receivedBy: self::RECEIVED_BY,
+				now: $this->moment(value: $receivedAt)
+			);
 		} catch (DomainException $e) {
-			return $this->outcome(outcome: self::OUTCOME_REFUSED, message: $e->getMessage());
+			return $this->withMessage(outcome: $this->outcome(outcome: self::OUTCOME_REFUSED, saved: []), message: $e->getMessage());
 		}
 
 		try {
 			$saved = $this->store->save(record: $record);
 		} catch (Throwable $e) {
-			return $this->outcome(outcome: self::OUTCOME_UNAVAILABLE, message: $e->getMessage());
+			return $this->withMessage(outcome: $this->outcome(outcome: self::OUTCOME_UNAVAILABLE, saved: []), message: $e->getMessage());
 		}
 
-		$requestId = (string)($saved['id'] ?? '');
-		$reference = (string)($saved['reference'] ?? '');
+		return $this->armTerm(saved: $saved);
+	}//end receive()
 
+	/**
+	 * The request record's input: the web channel and every intake field, as text.
+	 *
+	 * @param array<string, mixed> $answers What the citizen filled in.
+	 *
+	 * @return array<string, string> The input.
+	 */
+	private function intakeInput(array $answers): array {
+		$input = ['channel' => 'web'];
+		foreach (self::FIELDS as $field) {
+			$input[$field] = (string)($answers[$field] ?? '');
+		}
+
+		return $input;
+	}//end intakeInput()
+
+	/**
+	 * Arm the term of a stored request and answer with its due date.
+	 *
+	 * @param array<string, mixed> $saved The stored request.
+	 *
+	 * @return array{outcome: string, requestId: string, reference: string, dueAt: string, message: string}
+	 */
+	private function armTerm(array $saved): array {
 		try {
-			$term = $this->terms->arm(
-				requestUuid: $requestId,
-				reference: $reference,
-				receivedAt: new DateTimeImmutable((string)($saved['receivedAt'] ?? 'now')),
-				actor: null
-			);
-			$stored = $this->store->save(record: $this->requests->withTerm(request: $saved, term: $term), uuid: $requestId);
+			$stored = $this->storeWithTerm(saved: $saved);
 		} catch (Throwable $e) {
 			// Stored, so it has arrived; what is refused is the claim that a
 			// term runs. The caller must not quote a date nobody computed.
-			return $this->outcome(outcome: self::OUTCOME_NOT_ARMED, requestId: $requestId, reference: $reference, message: $e->getMessage());
+			return $this->withMessage(outcome: $this->outcome(outcome: self::OUTCOME_NOT_ARMED, saved: $saved), message: $e->getMessage());
 		}
 
 		$dueAt = (string)($this->requests->receipt(request: $stored)['dueAt'] ?? '');
 		if ($dueAt === '') {
-			return $this->outcome(
-				outcome: self::OUTCOME_NOT_ARMED,
-				requestId: $requestId,
-				reference: $reference,
-				message: 'The term engine armed no due date.'
-			);
+			return $this->withMessage(outcome: $this->outcome(outcome: self::OUTCOME_NOT_ARMED, saved: $saved), message: 'The term engine armed no due date.');
 		}
 
-		return $this->outcome(outcome: self::OUTCOME_ARMED, requestId: $requestId, reference: $reference, dueAt: $dueAt);
+		$armed = $this->outcome(outcome: self::OUTCOME_ARMED, saved: $saved);
+		$armed['dueAt'] = $dueAt;
 
+		return $armed;
+	}//end armTerm()
+
+	/**
+	 * Arm the term of a stored request and store the request with it.
+	 *
+	 * @param array<string, mixed> $saved The stored request.
+	 *
+	 * @return array<string, mixed> The request as stored with its term.
+	 */
+	private function storeWithTerm(array $saved): array {
+		$requestId = (string)($saved['id'] ?? '');
+		$term = $this->terms->arm(
+			requestUuid: $requestId,
+			reference: (string)($saved['reference'] ?? ''),
+			receivedAt: new DateTimeImmutable((string)($saved['receivedAt'] ?? 'now')),
+			actor: null
+		);
+
+		return $this->store->save(record: $this->requests->withTerm(request: $saved, term: $term), uuid: $requestId);
 	}//end receive()
 
 	/**
@@ -168,26 +200,40 @@ class WooRequestIntake implements InformationRequestIntakeInterface {
 	}//end moment()
 
 	/**
-	 * One outcome, every key present.
+	 * One outcome, every key present: the stored request's id and reference,
+	 * or '' for a request that was not stored.
 	 *
 	 * @param string $outcome The outcome.
-	 * @param string $requestId The stored request, or ''.
-	 * @param string $reference The minted reference, or ''.
-	 * @param string $dueAt The due date, or ''.
-	 * @param string $message Why, when it is not armed.
+	 * @param array<string, mixed> $saved The stored request, or [].
 	 *
 	 * @return array{outcome: string, requestId: string, reference: string, dueAt: string, message: string}
 	 *
 	 * @spec exclude internal helper, shapes the answer.
 	 */
-	private function outcome(string $outcome, string $requestId='', string $reference='', string $dueAt='', string $message=''): array {
+	private function outcome(string $outcome, array $saved): array {
 		return [
 			'outcome' => $outcome,
-			'requestId' => $requestId,
-			'reference' => $reference,
-			'dueAt' => $dueAt,
-			'message' => $message,
+			'requestId' => (string)($saved['id'] ?? ''),
+			'reference' => (string)($saved['reference'] ?? ''),
+			'dueAt' => '',
+			'message' => '',
 		];
 
 	}//end outcome()
+
+	/**
+	 * An outcome with the reason it is not armed.
+	 *
+	 * @param array{outcome: string, requestId: string, reference: string, dueAt: string, message: string} $outcome The outcome.
+	 * @param string $message Why.
+	 *
+	 * @return array{outcome: string, requestId: string, reference: string, dueAt: string, message: string}
+	 *
+	 * @spec exclude internal helper, shapes the answer.
+	 */
+	private function withMessage(array $outcome, string $message): array {
+		$outcome['message'] = $message;
+		return $outcome;
+
+	}//end withMessage()
 }//end class

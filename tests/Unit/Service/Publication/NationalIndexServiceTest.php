@@ -182,6 +182,7 @@ class NationalIndexServiceTest extends TestCase {
 		$this->dispatcher->method('dispatchTyped');
 
 		$this->expectException(IndexUnreachableException::class);
+		$this->expectExceptionMessage('No integriq gateway took the notice, so the channel "' . NationalIndexService::CHANNEL_NATIONAL . '" could not be reached.');
 		$this->service([NationalIndexService::CHANNEL_NATIONAL => 'officielebekendmakingen'])
 			->deliver(notice: ['channel' => NationalIndexService::CHANNEL_NATIONAL, 'reference' => 'dec-1']);
 	}

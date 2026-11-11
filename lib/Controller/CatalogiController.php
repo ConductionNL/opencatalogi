@@ -26,8 +26,8 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\CallerScope;
-use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
@@ -35,9 +35,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use RuntimeException;
 
 /**
  * Controller for handling catalog-related operations.
@@ -56,8 +54,7 @@ class CatalogiController extends Controller {
 	 * @param IRequest $request The request object.
 	 * @param CatalogiServiceInterface $catalogiService The catalogi service.
 	 * @param IAppConfig $config App configuration interface.
-	 * @param ContainerInterface $container Server container for DI.
-	 * @param IAppManager $appManager App manager.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -67,8 +64,7 @@ class CatalogiController extends Controller {
 		IRequest $request,
 		private readonly CatalogiServiceInterface $catalogiService,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
@@ -83,11 +79,7 @@ class CatalogiController extends Controller {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 */
 	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		}
-
-		throw new RuntimeException('OpenRegister service is not available.');
+		return $this->registers->installedObjectService();
 	}//end getObjectService()
 
 	/**

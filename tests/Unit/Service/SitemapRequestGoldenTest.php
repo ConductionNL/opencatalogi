@@ -26,6 +26,9 @@
  * @spec openspec/specs/woo-compliance/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\SitemapService
+ * @uses \OCA\OpenCatalogi\Service\SitemapDocumentMapper
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\SitemapIndexBuilder
  * @uses \OCA\OpenCatalogi\Http\XMLResponse
  * @uses \OCA\OpenCatalogi\Service\SitemapRequest
@@ -36,6 +39,8 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Http\XMLResponse;
+use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapRequest;
@@ -221,11 +226,9 @@ class SitemapRequestGoldenTest extends TestCase {
 		);
 
 		$service = new SitemapService(
-			$this->createMock(ContainerInterface::class),
-			$this->createMock(IAppManager::class),
+			new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)),
 			$settingsService,
-			$this->createMock(IURLGenerator::class),
-			$this->createMock(IAppConfig::class),
+			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
 			new TooiVocabularyService(),
 			$this->createMock(PublicationQueryService::class),
 			$categories

@@ -160,7 +160,6 @@ class CatalogSchemaEventListenerGoldenTest extends TestCase {
 		}
 
 		return $event;
-
 	}//end event()
 
 	/**
@@ -211,6 +210,5 @@ class CatalogSchemaEventListenerGoldenTest extends TestCase {
 		);
 
 		return new CatalogSchemaEventListener($catalogi, $logger, $config);
-
 	}//end listener()
 }//end class

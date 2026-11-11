@@ -42,7 +42,6 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -52,10 +51,13 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * Depublication and its acknowledgements. Every write here is admin-gated.
+ *
+ * The depublication schema names group admin, which leaves out the delegated
+ * administrators the routes' admin-setting check lets in. That check is the
+ * gate, so these reads and saves skip RBAC.
  *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
@@ -71,8 +73,7 @@ class DepublicationController extends Controller {
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param DepublicationServiceInterface $depublicationService Taking a publication back.
-	 * @param ContainerInterface $container Server container, for the register resolver.
-	 * @param ServiceCatalogueServiceInterface $objects The OpenRegister reader that refuses rather than defaulting.
+	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
 	 */
 	public function __construct(
 		$appName,
@@ -80,8 +81,7 @@ class DepublicationController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly DepublicationServiceInterface $depublicationService,
-		private readonly ContainerInterface $container,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly RegisterAccess $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -99,7 +99,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $user->getUID();
-
 	}//end actor()
 
 	/**
@@ -144,7 +143,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->storeDepublication(depublication: $depublication);
-
 	}//end depublish()
 
 	/**
@@ -159,7 +157,6 @@ class DepublicationController extends Controller {
 		}
 
 		return array_map('strval', $channels);
-
 	}//end requestedChannels()
 
 	/**
@@ -170,17 +167,21 @@ class DepublicationController extends Controller {
 	 * shown as outstanding; neither is possible against a value that only ever
 	 * existed inside one response.
 	 *
+	 * The system owns the record, so whoever wrote it cannot rewrite or delete it.
+	 *
 	 * @param array<string, mixed> $depublication The depublication.
 	 *
 	 * @return JSONResponse The stored depublication, or why it could not be stored.
 	 */
 	private function storeDepublication(array $depublication): JSONResponse {
 		try {
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $depublication,
 				extend: [],
 				register: $this->depublicationConfiguration()['register'],
-				schema: $this->depublicationConfiguration()['schema']
+				schema: $this->depublicationConfiguration()['schema'],
+				_rbac: false,
+				_unowned: true
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -195,7 +196,6 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->withOutstanding(saved: $saved);
-
 	}//end storeDepublication()
 
 	/**
@@ -267,7 +267,6 @@ class DepublicationController extends Controller {
 		);
 
 		return $this->storeAcknowledgement(found: $found);
-
 	}//end acknowledgeWithdrawal()
 
 	/**
@@ -296,9 +295,9 @@ class DepublicationController extends Controller {
 	private function findDepublication(string $id): array|JSONResponse {
 		try {
 			$config = $this->depublicationConfiguration();
-			$objectService = $this->objects->getObjectService();
+			$objectService = $this->registers->getObjectService();
 			$depublication = $this->asArray(
-				object: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'])
+				object: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'], _rbac: false)
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -310,7 +309,6 @@ class DepublicationController extends Controller {
 		}
 
 		return ['id' => $id, 'config' => $config, 'depublication' => $depublication];
-
 	}//end findDepublication()
 
 	/**
@@ -332,7 +330,6 @@ class DepublicationController extends Controller {
 		);
 
 		return in_array($channel, $channels, true);
-
 	}//end withdrawalWasSent()
 
 	/**
@@ -344,12 +341,13 @@ class DepublicationController extends Controller {
 	 */
 	private function storeAcknowledgement(array $found): JSONResponse {
 		try {
-			$saved = $this->objects->getObjectService()->saveObject(
+			$saved = $this->registers->getObjectService()->saveObject(
 				object: $found['depublication'],
 				extend: [],
 				register: $found['config']['register'],
 				schema: $found['config']['schema'],
-				uuid: $found['id']
+				uuid: $found['id'],
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -359,6 +357,5 @@ class DepublicationController extends Controller {
 		}
 
 		return $this->withOutstanding(saved: $saved);
-
 	}//end storeAcknowledgement()
 }//end class

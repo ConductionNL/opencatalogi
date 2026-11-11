@@ -66,65 +66,121 @@ class LocalCategoryAdmission {
 	 * @param array<string, array<string, mixed>> $bundled The waardelijst records, to catch shadowing.
 	 *
 	 * @return array{code: string, record: array<string, mixed>|null, reason: string|null}
-	 *   The code, the record when admitted, and the reason when refused.
 	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) WooCategoryRegistry::sitemapFileFor() and
-	 *   ::codeOf() are pure string functions over the file-name convention. The point
-	 *   of calling them here is that the admission and the route cannot disagree
-	 *   about that convention, which a second copy of it would allow.
+	 * Returns: The code, the record when admitted, and the reason when refused.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-locally-added-category-publishes-under-a-waardelijst-member-req-wic-002
 	 */
 	public function admit(array $stored, array $bundled): array {
 		$code = strtolower(trim((string)($stored['code'] ?? '')));
 		if ($code === '') {
-			return ['code' => self::CODE_MISSING, 'record' => null, 'reason' => 'the category stores no code'];
+			return $this->refused(code: self::CODE_MISSING, reason: 'the category stores no code');
 		}
 
-		if (WooCategoryRegistry::codeOf(sitemapFile: WooCategoryRegistry::sitemapFileFor(code: $code)) !== $code) {
-			return [
-				'code' => $code,
-				'record' => null,
-				'reason' => 'the code cannot be part of a sitemap file name',
-			];
+		$sitemapFile = $this->sitemapFile(code: $code);
+		if ($sitemapFile === null) {
+			return $this->refused(code: $code, reason: 'the code cannot be part of a sitemap file name');
 		}
 
 		if (isset($bundled[$code]) === true) {
-			return [
-				'code' => $code,
-				'record' => null,
-				'reason' => 'the code is already a waardelijst member',
-			];
+			return $this->refused(code: $code, reason: 'the code is already a waardelijst member');
 		}
 
 		$member = $this->tooiVocabulary->resolveInformatiecategorie($this->text(value: ($stored['mapsTo'] ?? null)));
 		if ($member === null) {
-			return [
-				'code' => $code,
-				'record' => null,
-				'reason' => 'mapsTo names no member of the informatiecategorieen waardelijst',
-			];
+			return $this->refused(code: $code, reason: 'mapsTo names no member of the informatiecategorieen waardelijst');
 		}
 
+		$record = ['code' => $code] + $this->labels(stored: $stored, member: $member) + $this->memberFields(member: $member, bundled: $bundled);
+
+		return ['code' => $code, 'reason' => null, 'record' => $record + $this->localFields(stored: $stored, sitemapFile: $sitemapFile)];
+
+	}//end admit()
+
+	/**
+	 * The sitemap file a category code publishes under, when the code survives
+	 * the file-name convention unchanged.
+	 *
+	 * @param string $code The normalised code.
+	 *
+	 * @return string|null The file name, or null when the code cannot be part of one.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) WooCategoryRegistry::sitemapFileFor() and
+	 *   ::codeOf() are pure string functions over the file-name convention. The point
+	 *   of calling them here is that the admission and the route cannot disagree
+	 *   about that convention, which a second copy of it would allow.
+	 */
+	private function sitemapFile(string $code): ?string {
+		$sitemapFile = WooCategoryRegistry::sitemapFileFor(code: $code);
+		if (WooCategoryRegistry::codeOf(sitemapFile: $sitemapFile) !== $code) {
+			return null;
+		}
+
+		return $sitemapFile;
+	}//end sitemapFile()
+
+	/**
+	 * A refused category.
+	 *
+	 * @param string $code The code, or CODE_MISSING.
+	 * @param string $reason Why it is refused.
+	 *
+	 * @return array{code: string, record: null, reason: string}
+	 */
+	private function refused(string $code, string $reason): array {
+		return ['code' => $code, 'record' => null, 'reason' => $reason];
+	}//end refused()
+
+	/**
+	 * The admitted record's labels: the stored title, else the member's label,
+	 * and the stored English title, else that label.
+	 *
+	 * @param array<string, mixed> $stored The stored object.
+	 * @param array{uri: string, label: string} $member The waardelijst member it maps to.
+	 *
+	 * @return array{label: string, labelEn: string}
+	 */
+	private function labels(array $stored, array $member): array {
 		$title = ($this->text(value: ($stored['title'] ?? null)) ?? $member['label']);
 
 		return [
-			'code' => $code,
-			'reason' => null,
-			'record' => [
-				'code' => $code,
-				'label' => $title,
-				'labelEn' => ($this->text(value: ($stored['titleEn'] ?? null)) ?? $title),
-				'tooiUri' => $member['uri'],
-				'tooiLabel' => $member['label'],
-				'mapsTo' => $this->codeOfMember(uri: $member['uri'], bundled: $bundled),
-				'origin' => WooCategoryRegistry::ORIGIN_LOCAL,
-				'sitemapFile' => WooCategoryRegistry::sitemapFileFor(code: $code),
-				'schemas' => $this->schemaSlugs(value: ($stored['schemas'] ?? [])),
-			],
+			'label' => $title,
+			'labelEn' => ($this->text(value: ($stored['titleEn'] ?? null)) ?? $title),
 		];
+	}//end labels()
 
-	}//end admit()
+	/**
+	 * The admitted record's waardelijst fields: the member's URI and label, and
+	 * the code of the bundled record that carries it.
+	 *
+	 * @param array{uri: string, label: string} $member The waardelijst member.
+	 * @param array<string, array<string, mixed>> $bundled The waardelijst records.
+	 *
+	 * @return array{tooiUri: string, tooiLabel: string, mapsTo: string}
+	 */
+	private function memberFields(array $member, array $bundled): array {
+		return [
+			'tooiUri' => $member['uri'],
+			'tooiLabel' => $member['label'],
+			'mapsTo' => $this->codeOfMember(uri: $member['uri'], bundled: $bundled),
+		];
+	}//end memberFields()
+
+	/**
+	 * The admitted record's local fields: its origin, sitemap file and schemas.
+	 *
+	 * @param array<string, mixed> $stored The stored object.
+	 * @param string $sitemapFile The sitemap file the code publishes under.
+	 *
+	 * @return array{origin: string, sitemapFile: string, schemas: array<int, string>}
+	 */
+	private function localFields(array $stored, string $sitemapFile): array {
+		return [
+			'origin' => WooCategoryRegistry::ORIGIN_LOCAL,
+			'sitemapFile' => $sitemapFile,
+			'schemas' => $this->schemaSlugs(value: ($stored['schemas'] ?? [])),
+		];
+	}//end localFields()
 
 	/**
 	 * The waardelijst code behind a resolved member URI.
@@ -144,7 +200,6 @@ class LocalCategoryAdmission {
 		}
 
 		return '';
-
 	}//end codeOfMember()
 
 	/**
@@ -168,7 +223,6 @@ class LocalCategoryAdmission {
 		}
 
 		return array_values(array_unique($slugs));
-
 	}//end schemaSlugs()
 
 	/**
@@ -186,6 +240,5 @@ class LocalCategoryAdmission {
 		}
 
 		return trim($value);
-
 	}//end text()
 }//end class

@@ -75,16 +75,16 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param PortalObjectStore $store  Reads and writes as the system.
+	 * @param PortalObjectStore $store Reads and writes as the system.
 	 * @param PublicationLinker $linker The public link to a publication.
-	 * @param LoggerInterface   $logger The logger.
-	 * @param PortalInput       $input  Checks the resident's input.
+	 * @param LoggerInterface $logger The logger.
+	 * @param PortalInput $input Checks the resident's input.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
 		private readonly PublicationLinker $linker,
 		private readonly LoggerInterface $logger,
-		private readonly PortalInput $input=new PortalInput(),
+		private readonly PortalInput $input = new PortalInput(),
 	) {
 
 	}//end __construct()
@@ -95,13 +95,13 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	 * Without `collection` a new dossier with `title` is made. The same
 	 * publication and document twice is kept once.
 	 *
-	 * @param string               $owner The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param array<string, mixed> $input collection, title, publication, attachment, note.
 	 *
 	 * @return array<string, mixed> The owner's view of the dossier.
 	 *
 	 * @throws PortalNotFoundException When the dossier or publication is not the owner's or not public.
-	 * @throws PortalInputException    When the input is refused.
+	 * @throws PortalInputException When the input is refused.
 	 *
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-resident-adds-a-public-publication-or-one-of-its-documents-to-a-dossier-req-ccol-002
 	 */
@@ -112,7 +112,36 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		$note = $this->input->text(value: ($input['note'] ?? ''), max: self::MAX_NOTE, field: 'note');
 
 		$dossier = $this->targetDossier(owner: $owner, collectionId: $collectionId, title: ($input['title'] ?? ''));
+		$publication = $this->publicPublication(publicationId: $publicationId);
 
+		$items = (array)($dossier['items'] ?? []);
+		$entry = ['publication' => $publicationId, 'attachment' => $attachment];
+		if ($this->holdsItem(items: $items, entry: $entry) === true) {
+			return $this->ownerView(dossier: $dossier);
+		}
+
+		if (count($items) >= self::MAX_ITEMS) {
+			throw new PortalInputException(message: 'This dossier is full');
+		}
+
+		$entry['note'] = $note;
+		$items[] = $this->newItem(entry: $entry, publication: $publication);
+		$dossier['items'] = $items;
+
+		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: ($dossier['id'] ?? null)));
+	}//end addItem()
+
+	/**
+	 * The public publication an item points at.
+	 *
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @throws PortalInputException When no publication is given.
+	 * @throws PortalNotFoundException When it is not public.
+	 */
+	private function publicPublication(string $publicationId): array {
 		if ($publicationId === '') {
 			throw new PortalInputException(message: 'A publication is needed');
 		}
@@ -122,48 +151,64 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 			throw new PortalNotFoundException(message: 'Not found');
 		}
 
-		$items = (array)($dossier['items'] ?? []);
+		return $publication;
+	}//end publicPublication()
+
+	/**
+	 * Whether a dossier already holds this publication and document.
+	 *
+	 * @param array<int, array<string, mixed>> $items The dossier's items.
+	 * @param array{publication: string, attachment: string|null} $entry The publication and document.
+	 *
+	 * @return bool
+	 */
+	private function holdsItem(array $items, array $entry): bool {
 		foreach ($items as $item) {
-			if (($item['publication'] ?? '') === $publicationId && ($item['attachment'] ?? null) === $attachment) {
-				return $this->ownerView(dossier: $dossier);
+			if (($item['publication'] ?? '') === $entry['publication'] && ($item['attachment'] ?? null) === $entry['attachment']) {
+				return true;
 			}
 		}
 
-		if (count($items) >= self::MAX_ITEMS) {
-			throw new PortalInputException(message: 'This dossier is full');
-		}
+		return false;
+	}//end holdsItem()
 
-		// A missing attachment or note is left out rather than written as null:
-		// the schema types them as plain strings.
-		$items[] = array_filter(
+	/**
+	 * A new dossier item for a publication, or one of its documents.
+	 *
+	 * A missing attachment or note is left out rather than written as null:
+	 * the schema types them as plain strings.
+	 *
+	 * @param array{publication: string, attachment: string|null, note: string|null} $entry The publication, document and note.
+	 * @param array<string, mixed> $publication The public publication.
+	 *
+	 * @return array<string, mixed> The item.
+	 */
+	private function newItem(array $entry, array $publication): array {
+		return array_filter(
 			[
 				'id' => $this->uuid(),
-				'publication' => $publicationId,
-				'attachment' => $attachment,
-				'note' => $note,
+				'publication' => $entry['publication'],
+				'attachment' => $entry['attachment'],
+				'note' => $entry['note'],
 				'addedAt' => $this->now(),
 				'addedBy' => 'resident',
 				'title' => mb_substr((string)($publication['title'] ?? ''), 0, 500),
 			],
 			static fn (mixed $value): bool => $value !== null
 		);
-		$dossier['items'] = $items;
-
-		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: ($dossier['id'] ?? null)));
-
-	}//end addItem()
+	}//end newItem()
 
 	/**
 	 * The dossier to add to: the owner's own, or a new one with a title.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier, or '' for a new one.
-	 * @param mixed  $title        The title of a new dossier.
+	 * @param mixed $title The title of a new dossier.
 	 *
 	 * @return array<string, mixed>
 	 *
 	 * @throws PortalNotFoundException When the dossier is not the owner's.
-	 * @throws PortalInputException    When a new dossier has no title or the owner has too many.
+	 * @throws PortalInputException When a new dossier has no title or the owner has too many.
 	 */
 	private function targetDossier(string $owner, string $collectionId, mixed $title): array {
 		if ($collectionId !== '') {
@@ -180,15 +225,14 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		}
 
 		return ['title' => $title, 'description' => '', 'owner' => $owner, 'items' => [], 'share' => null, 'sourceOf' => []];
-
 	}//end targetDossier()
 
 	/**
 	 * Remove one item from a dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
-	 * @param string $itemId       The item.
+	 * @param string $itemId The item.
 	 *
 	 * @return array<string, mixed> The owner's view.
 	 *
@@ -206,21 +250,20 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 		$dossier['items'] = $kept;
 		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: $collectionId));
-
 	}//end removeItem()
 
 	/**
 	 * Write the note of one item, or of the dossier when no item is named.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
-	 * @param string $itemId       The item, or '' for the dossier.
-	 * @param string $note         The note.
+	 * @param string $itemId The item, or '' for the dossier.
+	 * @param string $note The note.
 	 *
 	 * @return array<string, mixed> The owner's view.
 	 *
 	 * @throws PortalNotFoundException When the dossier or item is not found.
-	 * @throws PortalInputException    When the note is too long.
+	 * @throws PortalInputException When the note is too long.
 	 *
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-resident-removes-items-and-writes-notes-req-ccol-003
 	 */
@@ -248,13 +291,12 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 		$dossier['items'] = $items;
 		return $this->ownerView(dossier: $this->store->save(schema: self::SCHEMA, data: $dossier, id: $collectionId));
-
 	}//end note()
 
 	/**
 	 * Delete a dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array{deleted: bool}
@@ -266,13 +308,12 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	public function delete(string $owner, string $collectionId): array {
 		$this->owned(owner: $owner, collectionId: $collectionId);
 		return ['deleted' => $this->store->delete(schema: self::SCHEMA, id: $collectionId)];
-
 	}//end delete()
 
 	/**
 	 * The owner's view of one dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array<string, mixed>
@@ -283,7 +324,6 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	 */
 	public function view(string $owner, string $collectionId): array {
 		return $this->ownerView(dossier: $this->owned(owner: $owner, collectionId: $collectionId));
-
 	}//end view()
 
 	/**
@@ -315,7 +355,6 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		}
 
 		return $items;
-
 	}//end itemList()
 
 	/**
@@ -334,30 +373,64 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 		$deleted = 0;
 		foreach ([self::SCHEMA, self::SAVED_SEARCH_SCHEMA] as $schema) {
-			foreach ($this->store->findByOwner(schema: $schema, owner: $owner) as $row) {
-				$id = (string)($row['id'] ?? '');
-				if ($id === '' || ($row['owner'] ?? null) !== $owner) {
-					continue;
-				}
+			$deleted += $this->removeOwnedIn(schema: $schema, owner: $owner);
+		}
 
-				try {
-					if ($this->store->delete(schema: $schema, id: $id) === true) {
-						$deleted++;
-					}
-				} catch (Throwable $e) {
-					$this->logger->warning('OpenCatalogi: could not delete a removed resident\'s object', ['schema' => $schema, 'reason' => $e->getMessage()]);
-				}
+		return $deleted;
+	}//end removeEverythingOf()
+
+	/**
+	 * Delete a removed resident's own objects of one schema.
+	 *
+	 * @param string $schema The schema.
+	 * @param string $owner The subject reference of the removed account.
+	 *
+	 * @return int How many objects were deleted.
+	 */
+	private function removeOwnedIn(string $schema, string $owner): int {
+		$deleted = 0;
+		foreach ($this->store->findByOwner(schema: $schema, owner: $owner) as $row) {
+			if ($this->isOwnedRow(row: $row, owner: $owner) === true && $this->deleteRow(schema: $schema, id: (string)$row['id']) === true) {
+				$deleted++;
 			}
 		}
 
 		return $deleted;
+	}//end removeOwnedIn()
 
-	}//end removeEverythingOf()
+	/**
+	 * Whether a row the owner lookup returned has an id and is this owner's.
+	 *
+	 * @param array<string, mixed> $row The row.
+	 * @param string $owner The subject reference.
+	 *
+	 * @return bool
+	 */
+	private function isOwnedRow(array $row, string $owner): bool {
+		return (string)($row['id'] ?? '') !== '' && ($row['owner'] ?? null) === $owner;
+	}//end isOwnedRow()
+
+	/**
+	 * Delete one object of a removed resident; a failure is logged, not thrown.
+	 *
+	 * @param string $schema The schema.
+	 * @param string $id The object.
+	 *
+	 * @return bool True when the object was deleted.
+	 */
+	private function deleteRow(string $schema, string $id): bool {
+		try {
+			return $this->store->delete(schema: $schema, id: $id);
+		} catch (Throwable $e) {
+			$this->logger->warning('OpenCatalogi: could not delete a removed resident\'s object', ['schema' => $schema, 'reason' => $e->getMessage()]);
+			return false;
+		}
+	}//end deleteRow()
 
 	/**
 	 * The dossier when this owner owns it.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array<string, mixed>
@@ -372,7 +445,6 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 
 		$dossier['id'] = $collectionId;
 		return $dossier;
-
 	}//end owned()
 
 	/**
@@ -418,7 +490,6 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 	 */
 	private function now(): string {
 		return (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-
 	}//end now()
 
 	/**
@@ -431,6 +502,5 @@ class CitizenCollectionService implements CitizenCollectionServiceInterface {
 		$bytes[6] = chr((ord($bytes[6]) & 0x0f) | 0x40);
 		$bytes[8] = chr((ord($bytes[8]) & 0x3f) | 0x80);
 		return vsprintf('%s%s-%s-%s-%s-%s%s%s', str_split(bin2hex($bytes), 4));
-
 	}//end uuid()
 }//end class

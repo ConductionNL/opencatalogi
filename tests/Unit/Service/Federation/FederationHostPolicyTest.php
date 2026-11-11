@@ -55,7 +55,6 @@ class FederationHostPolicyTest extends TestCase {
 		return new FederationHostPolicy($config);
 	}//end policy()
 
-
 	/**
 	 * Addresses no peer could resolve.
 	 *
@@ -63,22 +62,23 @@ class FederationHostPolicyTest extends TestCase {
 	 */
 	public static function localUrlProvider(): array {
 		return [
-			'localhost'            => ['http://localhost/apps/opencatalogi/api/directory'],
-			'localhost with port'  => ['http://localhost:8080/apps/opencatalogi/api/directory'],
-			'loopback v4'          => ['http://127.0.0.1/apps/opencatalogi/api/directory'],
-			'all-zeroes'           => ['http://0.0.0.0/apps/opencatalogi/api/directory'],
-			'private 10/8'         => ['http://10.0.0.5/api/directory'],
-			'private 192.168/16'   => ['http://192.168.1.10/api/directory'],
-			'private 172.16/12'    => ['http://172.16.4.4/api/directory'],
-			'mdns .local'          => ['http://my-laptop.local/api/directory'],
+			'localhost' => ['http://localhost/apps/opencatalogi/api/directory'],
+			'localhost with port' => ['http://localhost:8080/apps/opencatalogi/api/directory'],
+			'loopback v4' => ['http://127.0.0.1/apps/opencatalogi/api/directory'],
+			'all-zeroes' => ['http://0.0.0.0/apps/opencatalogi/api/directory'],
+			'private 10/8' => ['http://10.0.0.5/api/directory'],
+			'private 192.168/16' => ['http://192.168.1.10/api/directory'],
+			'private 172.16/12' => ['http://172.16.4.4/api/directory'],
+			'mdns .local' => ['http://my-laptop.local/api/directory'],
+			'upper-case localhost' => ['http://LOCALHOST/apps/opencatalogi/api/directory'],
+			'upper-case .local' => ['http://My-Laptop.LOCAL/api/directory'],
 			// An address we cannot parse is one we cannot reason about, and a
 			// value we cannot reason about must never be handed to a peer as
 			// our own address.
-			'unparseable'          => ['not-a-url'],
-			'empty'                => [''],
+			'unparseable' => ['not-a-url'],
+			'empty' => [''],
 		];
 	}//end localUrlProvider()
-
 
 	/**
 	 * @dataProvider localUrlProvider
@@ -90,7 +90,6 @@ class FederationHostPolicyTest extends TestCase {
 		);
 	}//end testLocalAddressesAreRefused()
 
-
 	/**
 	 * Addresses a peer can actually reach.
 	 *
@@ -99,16 +98,15 @@ class FederationHostPolicyTest extends TestCase {
 	public static function remoteUrlProvider(): array {
 		return [
 			'national directory' => ['https://directory.opencatalogi.nl/apps/opencatalogi/api/directory'],
-			'public host'        => ['https://opencatalogi.example.org/apps/opencatalogi/api/directory'],
+			'public host' => ['https://opencatalogi.example.org/apps/opencatalogi/api/directory'],
 			// Public IP: routable, so not local. Guards against a range check
 			// that is too eager and quietly stops real federation.
-			'public ipv4'        => ['https://203.0.113.10/api/directory'],
+			'public ipv4' => ['https://203.0.113.10/api/directory'],
 			// `.localdomain` is not `.local`; a suffix check that matched it
 			// would refuse a legitimate host.
-			'not dot-local'      => ['https://host.localdomain.example.org/api/directory'],
+			'not dot-local' => ['https://host.localdomain.example.org/api/directory'],
 		];
 	}//end remoteUrlProvider()
-
 
 	/**
 	 * @dataProvider remoteUrlProvider
@@ -119,7 +117,6 @@ class FederationHostPolicyTest extends TestCase {
 			$url . ' is routable and must not be refused — over-refusing silently stops federation.'
 		);
 	}//end testRoutableAddressesAreAllowed()
-
 
 	/**
 	 * The dev-only allowlist re-enables a docker rig, and nothing more.
@@ -157,7 +154,6 @@ class FederationHostPolicyTest extends TestCase {
 		);
 	}//end testAllowlistIsExactAndNotABlanketPermit()
 
-
 	/**
 	 * The allowlist is matched case-insensitively, because hostnames are.
 	 */
@@ -167,7 +163,6 @@ class FederationHostPolicyTest extends TestCase {
 		$this->assertFalse($policy->isLocalUrl('http://nc-fed-1/api/directory'));
 		$this->assertFalse($policy->isLocalUrl('http://NC-FED-1/api/directory'));
 	}//end testAllowlistIgnoresCaseAndSurroundingWhitespace()
-
 
 	/**
 	 * An empty allowlist is the production default and must permit nothing.

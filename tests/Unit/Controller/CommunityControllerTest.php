@@ -25,13 +25,17 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\CommunityController;
+use OCA\OpenCatalogi\Controller\CommunityPages;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
@@ -86,13 +90,9 @@ class CommunityControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
 			$l10n,
 			$this->userSession,
-			new StatusPageService(),
-			new AtomFeedService(new PublicationRuleService(), new NoticeBoardService()),
-			new MarkupRenderService(),
-			$this->objects
+			new CommunityPages(new StatusPageService(), new AtomFeedService(new PublicationRuleService(), new NoticeBoardService()), new MarkupRenderService(), new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects))
 		);
 
 	}//end setUp()
@@ -182,7 +182,9 @@ class CommunityControllerTest extends TestCase {
 			/**
 			 * @param array<int, mixed> $rows The search rows.
 			 */
-			public function __construct(private array $rows) {
+			public function __construct(
+				private array $rows,
+			) {
 			}
 
 			/**
@@ -200,7 +202,7 @@ class CommunityControllerTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $object The object to store.
-			 * @param array<int, string>   $extend Unused here.
+			 * @param array<int, string> $extend Unused here.
 			 *
 			 * @return array<string, mixed> The stored object.
 			 */
@@ -210,6 +212,8 @@ class CommunityControllerTest extends TestCase {
 				string $register = '',
 				string $schema = '',
 				string $uuid = '',
+				bool $_rbac = true,
+				bool $_unowned = false,
 			): array {
 				$this->saved[] = $object;
 
@@ -256,8 +260,62 @@ class CommunityControllerTest extends TestCase {
 	}//end testAnUnknownStateIsRefusedAndStoresNothing()
 
 	/**
+	 * A status is attributed to the session user, never to a setBy the request carries.
+	 */
+	public function testAStatusIsAttributedToTheSessionUserNotToARequestParameter(): void {
+		$user = $this->createMock(\OCP\IUser::class);
+		$user->method('getUID')->willReturn('beheerder');
+		$this->userSession->method('getUser')->willReturn($user);
+		$store = $this->readWriteStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(['component' => 'zoeken', 'state' => 'degraded', 'message' => '', 'setBy' => 'iemand-anders']);
+
+		$response = $this->controller->setStatus();
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$this->assertSame('beheerder', $store->saved[0]['stateSetBy']);
+
+	}//end testAStatusIsAttributedToTheSessionUserNotToARequestParameter()
+
+	/**
+	 * A state set an hour ago is current and one set two days ago is stale, under the default staleness period.
+	 */
+	public function testTheStatusPageMarksStalenessByTheConfiguredPeriod(): void {
+		$now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+		$this->objects->method('getObjectService')->willReturn(
+			$this->readWriteStore(
+				[
+					['component' => 'zoeken', 'state' => 'operational', 'stateSetAt' => $now->modify('-1 hour')->format(DATE_ATOM), 'order' => 1],
+					['component' => 'kaart', 'state' => 'operational', 'stateSetAt' => $now->modify('-48 hours')->format(DATE_ATOM), 'order' => 2],
+				]
+			)
+		);
+
+		$data = $this->controller->statusPage()->getData();
+
+		$this->assertSame([false, true], array_column($data['components'], 'stale'));
+		$this->assertSame(1, $data['stale']);
+
+	}//end testTheStatusPageMarksStalenessByTheConfiguredPeriod()
+
+	/**
 	 * The preflight answers the browser without reading anything.
 	 */
+	/**
+	 * The feed names its own URL as its id, and carries the catalogue as its title.
+	 */
+	public function testTheFeedNamesItsOwnUrlAndCatalogue(): void {
+		$this->objects->method('getObjectService')->willReturn($this->readWriteStore());
+		$this->request->method('getRequestUri')->willReturn('/apps/opencatalogi/api/feed/woo');
+
+		$response = $this->controller->feed('woo');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertStringContainsString('<id>/apps/opencatalogi/api/feed/woo</id>', $response->render());
+		$this->assertStringContainsString('woo', $response->render());
+
+	}//end testTheFeedNamesItsOwnUrlAndCatalogue()
+
 	public function testThePreflightAnswersWithoutReadingAnything(): void {
 		$response = $this->controller->preflightedCors();
 

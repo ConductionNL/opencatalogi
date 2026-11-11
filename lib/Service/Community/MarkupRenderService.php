@@ -138,7 +138,6 @@ class MarkupRenderService implements MarkupRenderServiceInterface {
 		}
 
 		return '<p>' . $this->inline(text: implode(' ', array_map('trim', $lines))) . '</p>';
-
 	}//end renderBlock()
 
 	/**
@@ -157,7 +156,6 @@ class MarkupRenderService implements MarkupRenderServiceInterface {
 		}
 
 		return ($lines !== []);
-
 	}//end everyLineStartsWith()
 
 	/**
@@ -181,7 +179,6 @@ class MarkupRenderService implements MarkupRenderServiceInterface {
 		}
 
 		return ($lines !== []);
-
 	}//end isList()
 
 	/**
@@ -200,7 +197,6 @@ class MarkupRenderService implements MarkupRenderServiceInterface {
 		}
 
 		return '<' . $tag . '>' . implode('', $items) . '</' . $tag . '>';
-
 	}//end renderList()
 
 	/**
@@ -212,7 +208,6 @@ class MarkupRenderService implements MarkupRenderServiceInterface {
 	 */
 	private function escape(string $text): string {
 		return htmlspecialchars($text, (ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5), 'UTF-8');
-
 	}//end escape()
 
 	/**

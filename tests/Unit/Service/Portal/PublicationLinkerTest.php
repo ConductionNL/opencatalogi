@@ -32,8 +32,8 @@ class PublicationLinkerTest extends TestCase {
 	/**
 	 * A linker over a config holding `$values`, a site on a port, and portaliq installed or not.
 	 *
-	 * @param array<string, string> $values    The opencatalogi app config.
-	 * @param bool                  $portaliq  Whether portaliq is installed.
+	 * @param array<string, string> $values The opencatalogi app config.
+	 * @param bool $portaliq Whether portaliq is installed.
 	 *
 	 * @return PublicationLinker
 	 */
@@ -43,7 +43,7 @@ class PublicationLinkerTest extends TestCase {
 			fn (string $app, string $key, string $default = ''): string => $values[$key] ?? $default
 		);
 		$urls = $this->createMock(IURLGenerator::class);
-		$urls->method('getAbsoluteURL')->willReturnCallback(fn (string $path): string => 'http://localhost:8080'.$path);
+		$urls->method('getAbsoluteURL')->willReturnCallback(fn (string $path): string => 'http://localhost:8080' . $path);
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isInstalled')->willReturnCallback(fn (string $app): bool => $app === 'portaliq' && $portaliq);
 

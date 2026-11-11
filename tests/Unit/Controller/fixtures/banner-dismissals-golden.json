@@ -1,0 +1,959 @@
+{
+    "banners anonymous": {
+        "status": 401,
+        "data": {
+            "error": "not-logged-in"
+        },
+        "log": []
+    },
+    "banners for bob": {
+        "status": 200,
+        "data": {
+            "banners": [
+                {
+                    "id": "shown",
+                    "from": 2
+                }
+            ]
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_bob",
+                    "[]"
+                ]
+            },
+            {
+                "forUser": [
+                    [
+                        {
+                            "id": "b-1",
+                            "query": {
+                                "@self": {
+                                    "register": "cfg-publication_register",
+                                    "schema": "cfg-instance_banner_schema"
+                                },
+                                "_limit": 500
+                            }
+                        },
+                        {
+                            "id": "b-2"
+                        }
+                    ],
+                    [
+                        "b-9"
+                    ]
+                ]
+            }
+        ]
+    },
+    "banners unconfigured": {
+        "status": 503,
+        "data": {
+            "error": "register_not_configured",
+            "detail": "Resolver config key \"publication_register\" is not set for app \"opencatalogi\" and no default was provided."
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            }
+        ]
+    },
+    "banners unreadable": {
+        "status": 503,
+        "data": {
+            "error": "banners-unreadable"
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            }
+        ]
+    },
+    "banners, stored a string": {
+        "status": 200,
+        "data": {
+            "banners": [
+                {
+                    "id": "shown",
+                    "from": 2
+                }
+            ]
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "forUser": [
+                    [
+                        {
+                            "id": "b-1",
+                            "query": {
+                                "@self": {
+                                    "register": "cfg-publication_register",
+                                    "schema": "cfg-instance_banner_schema"
+                                },
+                                "_limit": 500
+                            }
+                        },
+                        {
+                            "id": "b-2"
+                        }
+                    ],
+                    []
+                ]
+            }
+        ]
+    },
+    "banners, stored an object": {
+        "status": 200,
+        "data": {
+            "banners": [
+                {
+                    "id": "shown",
+                    "from": 2
+                }
+            ]
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "forUser": [
+                    [
+                        {
+                            "id": "b-1",
+                            "query": {
+                                "@self": {
+                                    "register": "cfg-publication_register",
+                                    "schema": "cfg-instance_banner_schema"
+                                },
+                                "_limit": 500
+                            }
+                        },
+                        {
+                            "id": "b-2"
+                        }
+                    ],
+                    {
+                        "a": "b-1"
+                    }
+                ]
+            }
+        ]
+    },
+    "banners, stored empty list": {
+        "status": 200,
+        "data": {
+            "banners": [
+                {
+                    "id": "shown",
+                    "from": 2
+                }
+            ]
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "forUser": [
+                    [
+                        {
+                            "id": "b-1",
+                            "query": {
+                                "@self": {
+                                    "register": "cfg-publication_register",
+                                    "schema": "cfg-instance_banner_schema"
+                                },
+                                "_limit": 500
+                            }
+                        },
+                        {
+                            "id": "b-2"
+                        }
+                    ],
+                    []
+                ]
+            }
+        ]
+    },
+    "banners, stored none": {
+        "status": 200,
+        "data": {
+            "banners": [
+                {
+                    "id": "shown",
+                    "from": 2
+                }
+            ]
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "forUser": [
+                    [
+                        {
+                            "id": "b-1",
+                            "query": {
+                                "@self": {
+                                    "register": "cfg-publication_register",
+                                    "schema": "cfg-instance_banner_schema"
+                                },
+                                "_limit": 500
+                            }
+                        },
+                        {
+                            "id": "b-2"
+                        }
+                    ],
+                    []
+                ]
+            }
+        ]
+    },
+    "banners, stored not json": {
+        "status": 200,
+        "data": {
+            "banners": [
+                {
+                    "id": "shown",
+                    "from": 2
+                }
+            ]
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "forUser": [
+                    [
+                        {
+                            "id": "b-1",
+                            "query": {
+                                "@self": {
+                                    "register": "cfg-publication_register",
+                                    "schema": "cfg-instance_banner_schema"
+                                },
+                                "_limit": 500
+                            }
+                        },
+                        {
+                            "id": "b-2"
+                        }
+                    ],
+                    []
+                ]
+            }
+        ]
+    },
+    "banners, stored numbers": {
+        "status": 200,
+        "data": {
+            "banners": [
+                {
+                    "id": "shown",
+                    "from": 2
+                }
+            ]
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "forUser": [
+                    [
+                        {
+                            "id": "b-1",
+                            "query": {
+                                "@self": {
+                                    "register": "cfg-publication_register",
+                                    "schema": "cfg-instance_banner_schema"
+                                },
+                                "_limit": 500
+                            }
+                        },
+                        {
+                            "id": "b-2"
+                        }
+                    ],
+                    [
+                        "1",
+                        "2"
+                    ]
+                ]
+            }
+        ]
+    },
+    "banners, stored one id": {
+        "status": 200,
+        "data": {
+            "banners": [
+                {
+                    "id": "shown",
+                    "from": 2
+                }
+            ]
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "publication_register",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "instance_banner_schema",
+                    ""
+                ]
+            },
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "forUser": [
+                    [
+                        {
+                            "id": "b-1",
+                            "query": {
+                                "@self": {
+                                    "register": "cfg-publication_register",
+                                    "schema": "cfg-instance_banner_schema"
+                                },
+                                "_limit": 500
+                            }
+                        },
+                        {
+                            "id": "b-2"
+                        }
+                    ],
+                    [
+                        "b-1"
+                    ]
+                ]
+            }
+        ]
+    },
+    "dismiss a number": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"7\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss anonymous": {
+        "status": 401,
+        "data": {
+            "error": "not-logged-in"
+        },
+        "log": []
+    },
+    "dismiss b-2, stored a string": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-2\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss b-2, stored an object": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-1\",\"b-2\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss b-2, stored empty list": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-2\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss b-2, stored none": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-2\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss b-2, stored not json": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-2\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss b-2, stored numbers": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"1\",\"2\",\"b-2\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss b-2, stored one id": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-1\",\"b-2\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss blank, stored a string": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss blank, stored an object": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss blank, stored empty list": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss blank, stored none": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss blank, stored not json": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss blank, stored numbers": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss blank, stored one id": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss empty, stored a string": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss empty, stored an object": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss empty, stored empty list": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss empty, stored none": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss empty, stored not json": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss empty, stored numbers": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss empty, stored one id": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    },
+    "dismiss for bob": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_bob",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_bob",
+                    "[\"b-9\",\"b-1\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss padded, stored a string": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-1\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss padded, stored an object": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-1\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss padded, stored empty list": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-1\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss padded, stored none": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-1\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss padded, stored not json": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-1\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss padded, stored numbers": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"1\",\"2\",\"b-1\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss padded, stored one id": {
+        "status": 200,
+        "data": {
+            "dismissed": true
+        },
+        "log": [
+            {
+                "read": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[]"
+                ]
+            },
+            {
+                "write": [
+                    "opencatalogi",
+                    "banner_dismissals_alice",
+                    "[\"b-1\"]"
+                ]
+            }
+        ]
+    },
+    "dismiss without a banner parameter": {
+        "status": 400,
+        "data": {
+            "error": "missing-banner"
+        },
+        "log": []
+    }
+}

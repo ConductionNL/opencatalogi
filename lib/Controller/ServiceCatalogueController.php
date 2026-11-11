@@ -35,6 +35,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
@@ -48,10 +49,13 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use Psr\Container\ContainerInterface;
 
 /**
  * Serves the published service catalogue and the case type catalogue.
+ *
+ * The case type schema's writes and its stored snapshot name group admin, which
+ * leaves out the delegated administrators the admin-setting check lets in. That
+ * check is the gate, so the import and the resynchronisation skip RBAC.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
@@ -69,7 +73,7 @@ class ServiceCatalogueController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localisation.
 	 * @param ServiceCatalogueServiceInterface $catalogueService The catalogue reader.
 	 * @param CaseTypeCatalogueServiceInterface $caseTypeService The case type importer.
@@ -81,7 +85,7 @@ class ServiceCatalogueController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly IL10N $l10n,
 		private readonly ServiceCatalogueServiceInterface $catalogueService,
 		private readonly CaseTypeCatalogueServiceInterface $caseTypeService,
@@ -100,7 +104,6 @@ class ServiceCatalogueController extends Controller {
 	 */
 	private function withCors(JSONResponse $response): JSONResponse {
 		return $this->withListPreflightHeaders(response: $response);
-
 	}//end withCors()
 
 	/**
@@ -116,7 +119,6 @@ class ServiceCatalogueController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->withListPreflightHeaders(response: new Response());
-
 	}//end preflightedCors()
 
 	/**
@@ -331,7 +333,8 @@ class ServiceCatalogueController extends Controller {
 				object: $definition,
 				extend: [],
 				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				schema: $caseTypeConfig['schema'],
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -341,7 +344,6 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end importCaseType()
 
 	/**
@@ -373,7 +375,6 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		return new JSONResponse($diff);
-
 	}//end previewResync()
 
 	/**
@@ -417,11 +418,11 @@ class ServiceCatalogueController extends Controller {
 			extend: [],
 			register: $target['config']['register'],
 			schema: $target['config']['schema'],
-			uuid: $id
+			uuid: $id,
+			_rbac: false
 		);
 
 		return new JSONResponse($this->asArray(object: $saved));
-
 	}//end applyResync()
 
 	/**
@@ -443,7 +444,8 @@ class ServiceCatalogueController extends Controller {
 				object: $objectService->find(
 					id: $id,
 					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema']
+					schema: $caseTypeConfig['schema'],
+					_rbac: false
 				)
 			);
 		} catch (CatalogueUnreadableException $e) {

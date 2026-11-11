@@ -51,6 +51,13 @@ class Register extends \OCP\AppFramework\Db\Entity implements \JsonSerializable 
 	protected ?array $schemas = [];
 
 	/**
+	 * The register configuration (per-schema magic mapping and table options).
+	 *
+	 * @var array|null
+	 */
+	protected ?array $configuration = [];
+
+	/**
 	 * The ids of the schemas this register lists.
 	 *
 	 * @return array<int, int|string>
@@ -58,6 +65,31 @@ class Register extends \OCP\AppFramework\Db\Entity implements \JsonSerializable 
 	public function getSchemas(): array {
 		return ($this->schemas ?? []);
 	}//end getSchemas()
+
+	/**
+	 * The register configuration.
+	 *
+	 * @return array<string, mixed>
+	 */
+	public function getConfiguration(): array {
+		return ($this->configuration ?? []);
+	}//end getConfiguration()
+
+	/**
+	 * Set the register configuration, as an array or JSON text.
+	 *
+	 * @param array|string|null $configuration The configuration.
+	 *
+	 * @return void
+	 */
+	public function setConfiguration(array|string|null $configuration): void {
+		if (is_string($configuration) === true) {
+			$configuration = (json_decode(json: $configuration, associative: true) ?? []);
+		}
+
+		$this->configuration = $configuration;
+		$this->markFieldUpdated(attribute: 'configuration');
+	}//end setConfiguration()
 
 	/**
 	 * Set the schema ids, from an array or a JSON string.

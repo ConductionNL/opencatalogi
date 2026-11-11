@@ -61,22 +61,7 @@ class RetentionPolicyTable {
 	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/specs/publication-retention-lifecycle/spec.md#requirement-per-catalog-retention-defaults-per-woo-information-category-ret-004
 	 */
 	public function fromDefaults(array $catalogDefaults): ?array {
-		$rules = [];
-		$fallbackRules = [];
-		foreach ($catalogDefaults as $category => $rule) {
-			if (is_array($rule) === false) {
-				continue;
-			}
-
-			if ((string)$category === '_fallback') {
-				$fallbackRules = [['id' => '_fallback', 'inputEntries' => ['-'], 'outputEntries' => $this->outputEntries(rule: $rule)]];
-				continue;
-			}
-
-			$rules[] = $this->categoryRule(category: (string)$category, rule: $rule);
-		}
-
-		$rules = array_merge($rules, $fallbackRules);
+		$rules = array_merge($this->categoryRules(catalogDefaults: $catalogDefaults), $this->fallbackRules(catalogDefaults: $catalogDefaults));
 		if (count($rules) === 0) {
 			return null;
 		}
@@ -85,10 +70,46 @@ class RetentionPolicyTable {
 	}//end fromDefaults()
 
 	/**
+	 * One rule per category default, in the order of the defaults; the fallback and non-rules are left out.
+	 *
+	 * @param array<string, mixed> $catalogDefaults The catalogue's retention defaults.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function categoryRules(array $catalogDefaults): array {
+		$rules = [];
+		foreach ($catalogDefaults as $category => $rule) {
+			if (is_array($rule) === false || (string)$category === '_fallback') {
+				continue;
+			}
+
+			$rules[] = $this->categoryRule(category: (string)$category, rule: $rule);
+		}
+
+		return $rules;
+	}//end categoryRules()
+
+	/**
+	 * The catch-all rule of the `_fallback` default, or none.
+	 *
+	 * @param array<string, mixed> $catalogDefaults The catalogue's retention defaults.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function fallbackRules(array $catalogDefaults): array {
+		$rule = ($catalogDefaults['_fallback'] ?? null);
+		if (is_array($rule) === false) {
+			return [];
+		}
+
+		return [['id' => '_fallback', 'inputEntries' => ['-'], 'outputEntries' => $this->outputEntries(rule: $rule)]];
+	}//end fallbackRules()
+
+	/**
 	 * The rule that matches one category exactly.
 	 *
-	 * @param string               $category The category, quoted into a literal input cell.
-	 * @param array<string, mixed> $rule     The stored rule.
+	 * @param string $category The category, quoted into a literal input cell.
+	 * @param array<string, mixed> $rule The stored rule.
 	 *
 	 * @return array<string, mixed> The decision-table rule.
 	 */

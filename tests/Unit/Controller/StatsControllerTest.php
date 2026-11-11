@@ -39,6 +39,7 @@ use Psr\Log\LoggerInterface;
 
 /**
  * @covers \OCA\OpenCatalogi\Controller\StatsController
+ * @uses \OCA\OpenCatalogi\Service\UsageCsvRollUp
  * @uses \OCA\OpenCatalogi\Service\QualityService
  */
 class StatsControllerTest extends TestCase {
@@ -139,8 +140,8 @@ class StatsControllerTest extends TestCase {
 	 * The configured catalogs span registers 30 and 31 and schemas 6 and 7, so
 	 * `pub-1` (31/7) is in scope and `pub-elsewhere` (99/99) is not.
 	 *
-	 * @param array<int, string>   $readable The uuids the caller may read.
-	 * @param array<string, mixed> $extra    Further container entries.
+	 * @param array<int, string> $readable The uuids the caller may read.
+	 * @param array<string, mixed> $extra Further container entries.
 	 */
 	private function wire(array $readable, array $extra = []): void {
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
@@ -582,4 +583,31 @@ class StatsControllerTest extends TestCase {
 		$this->assertSame('woo', $data['catalog']);
 	}//end testQualityReturnsRollup()
 
+	/**
+	 * Counter rows of every shape give the recorded CSV.
+	 *
+	 * @return void
+	 */
+	public function testTheCsvOfEveryRowShapeMatchesTheRecording(): void {
+		$rows = [
+			['publication' => 'p1', 'category' => 'besluit', 'published' => '2026-01-01', 'kind' => 'view', 'count' => 3],
+			['publication' => 'p1', 'category' => 'later', 'kind' => 'download', 'count' => '2'],
+			['publication' => 'p1', 'kind' => 'view', 'count' => -5],
+			['publication' => 'p2', 'kind' => 'share', 'count' => 9],
+			['publication' => '', 'kind' => 'view', 'count' => 1],
+			['kind' => 'view', 'count' => 1],
+			['publication' => 'p3, "quoted"', 'category' => "line\nbreak", 'kind' => 'download'],
+			['publication' => 7, 'kind' => 'view', 'count' => 1.9],
+			['publication' => 'p2', 'kind' => ['view'], 'count' => 4],
+			['publication' => 'p2', 'kind' => 1, 'count' => 4],
+			['publication' => 'p2', 'kind' => true, 'count' => 4],
+		];
+		$actual = ['full' => $this->controller->buildCsv($rows), 'empty' => $this->controller->buildCsv([])];
+		$fixture = __DIR__ . '/fixtures/stats-csv-golden.json';
+		if (getenv('GOLDEN_RECORD') === '1') {
+			file_put_contents($fixture, json_encode($actual, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($fixture), true), $actual);
+	}//end testTheCsvOfEveryRowShapeMatchesTheRecording()
 }//end class
