@@ -326,43 +326,18 @@ class WooRequestController extends Controller {
 	public function extend(string $requestId): JSONResponse {
 		$rationale = trim((string)$this->request->getParam('rationale', ''));
 		if ($rationale === '') {
-			return new JSONResponse(
-				data: [
-					'error' => 'rationale-required',
-					'message' => $this->l10n->t('An extension records why it was granted.'),
-				],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->reasonRequired(error: 'rationale-required', message: $this->l10n->t('An extension records why it was granted.'));
 		}
 
-		$loaded = $this->load(requestId: $requestId);
+		$loaded = $this->loadWithTerm(requestId: $requestId, operation: 'extend');
 		if (($loaded instanceof JSONResponse) === true) {
 			return $loaded;
 		}
 
-		$timer = (string)($loaded['termTimer'] ?? '');
-		if (trim($timer) === '') {
-			return new JSONResponse(
-				data: [
-					'error' => 'no-term',
-					'message' => $this->l10n->t('This request has no statutory term, so there is nothing to extend.'),
-				],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		}
-
 		try {
-			$term = $this->terms->extendOnce(timerUuid: $timer, rationale: $rationale, actor: $this->actor());
-		} catch (TermRefusedException $e) {
-			return new JSONResponse(
-				data: ['error' => 'extension-refused', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		} catch (TermEngineUnavailableException $e) {
-			return new JSONResponse(
-				data: ['error' => 'term-engine-unavailable', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			$term = $this->terms->extendOnce(timerUuid: (string)($loaded['termTimer'] ?? ''), rationale: $rationale, actor: $this->actor());
+		} catch (TermRefusedException | TermEngineUnavailableException $e) {
+			return $this->termFailure(refusedError: 'extension-refused', exception: $e);
 		}
 
 		$updated = $this->records->withTerm(request: $loaded, term: $term);
@@ -447,43 +422,18 @@ class WooRequestController extends Controller {
 	private function move(string $requestId, string $operation): JSONResponse {
 		$reason = trim((string)$this->request->getParam('reason', ''));
 		if ($reason === '') {
-			return new JSONResponse(
-				data: [
-					'error' => 'reason-required',
-					'message' => $this->l10n->t('Suspending or resuming a term records why.'),
-				],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->reasonRequired(error: 'reason-required', message: $this->l10n->t('Suspending or resuming a term records why.'));
 		}
 
-		$loaded = $this->load(requestId: $requestId);
+		$loaded = $this->loadWithTerm(requestId: $requestId, operation: $operation);
 		if (($loaded instanceof JSONResponse) === true) {
 			return $loaded;
 		}
 
-		$timer = trim((string)($loaded['termTimer'] ?? ''));
-		if ($timer === '') {
-			return new JSONResponse(
-				data: [
-					'error' => 'no-term',
-					'message' => $this->l10n->t('This request has no statutory term, so there is nothing to pause.'),
-				],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		}
-
 		try {
-			$term = $this->workTerm(operation: $operation, timer: $timer, reason: $reason);
-		} catch (TermRefusedException $e) {
-			return new JSONResponse(
-				data: ['error' => $operation . '-refused', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_CONFLICT
-			);
-		} catch (TermEngineUnavailableException $e) {
-			return new JSONResponse(
-				data: ['error' => 'term-engine-unavailable', 'message' => $e->getMessage()],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			$term = $this->workTerm(operation: $operation, timer: trim((string)($loaded['termTimer'] ?? '')), reason: $reason);
+		} catch (TermRefusedException | TermEngineUnavailableException $e) {
+			return $this->termFailure(refusedError: $operation . '-refused', exception: $e);
 		}
 
 		$updated = $this->records->withTerm(request: $loaded, term: $term);
@@ -491,6 +441,101 @@ class WooRequestController extends Controller {
 
 		return $this->persist(request: $updated, requestId: $requestId, term: $term);
 	}//end move()
+
+	/**
+	 * The 400 answer to a term change that does not say why.
+	 *
+	 * @param string $error The error code.
+	 * @param string $message The translated explanation.
+	 *
+	 * @return JSONResponse The refusal.
+	 */
+	private function reasonRequired(string $error, string $message): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'error' => $error,
+				'message' => $message,
+			],
+			statusCode: Http::STATUS_BAD_REQUEST
+		);
+	}//end reasonRequired()
+
+	/**
+	 * Load a request whose term is to change, refusing one without a term.
+	 *
+	 * @param string $requestId The request.
+	 * @param string $operation extend, pause or resume; it decides the refusal's wording.
+	 *
+	 * @return array<string, mixed>|JSONResponse The request, or the refusal.
+	 */
+	private function loadWithTerm(string $requestId, string $operation): array|JSONResponse {
+		$loaded = $this->load(requestId: $requestId);
+		if (($loaded instanceof JSONResponse) === true) {
+			return $loaded;
+		}
+
+		if (trim((string)($loaded['termTimer'] ?? '')) === '') {
+			return $this->noTerm(operation: $operation);
+		}
+
+		return $loaded;
+	}//end loadWithTerm()
+
+	/**
+	 * The 409 answer to a term change on a request without a statutory term.
+	 *
+	 * @param string $operation extend, pause or resume.
+	 *
+	 * @return JSONResponse The refusal.
+	 */
+	private function noTerm(string $operation): JSONResponse {
+		if ($operation === 'extend') {
+			return $this->noTermConflict(message: $this->l10n->t('This request has no statutory term, so there is nothing to extend.'));
+		}
+
+		return $this->noTermConflict(message: $this->l10n->t('This request has no statutory term, so there is nothing to pause.'));
+	}//end noTerm()
+
+	/**
+	 * The 409 answer for a request without a statutory term.
+	 *
+	 * @param string $message The translated explanation.
+	 *
+	 * @return JSONResponse The refusal.
+	 */
+	private function noTermConflict(string $message): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'error' => 'no-term',
+				'message' => $message,
+			],
+			statusCode: Http::STATUS_CONFLICT
+		);
+	}//end noTermConflict()
+
+	/**
+	 * The answer to a term change the engine refused (409, with the engine's
+	 * own message) or could not make (503).
+	 *
+	 * @param string $refusedError The error code of a refusal.
+	 * @param TermRefusedException|TermEngineUnavailableException $exception What the engine threw.
+	 *
+	 * @return JSONResponse The refusal.
+	 */
+	private function termFailure(string $refusedError, TermRefusedException|TermEngineUnavailableException $exception): JSONResponse {
+		if ($exception instanceof TermRefusedException) {
+			return new JSONResponse(
+				data: ['error' => $refusedError, 'message' => $exception->getMessage()],
+				statusCode: Http::STATUS_CONFLICT
+			);
+		}
+
+		return new JSONResponse(
+			data: ['error' => 'term-engine-unavailable', 'message' => $exception->getMessage()],
+			statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+		);
+	}//end termFailure()
+
 
 	/**
 	 * Suspend or resume the term, whichever was asked for.

@@ -269,30 +269,57 @@ class OoapiController extends Controller {
 
 		return $this->guard(
 			action: function () use ($lookup, $render): JSONResponse {
-				$resolved = $this->resolveEnabledCatalog(catalogSlug: $lookup['catalogSlug']);
-				if ($resolved['error'] !== null) {
-					return $resolved['error'];
+				$scope = $this->catalogContextScope(lookup: $lookup);
+				if ($scope instanceof JSONResponse) {
+					return $scope;
 				}
 
-				$context = $this->resolveContext(
-					registerKey: $lookup['context'] . '_register',
-					schemaKey: $lookup['context'] . '_schema'
-				);
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				return $render(
-					new OoapiScope(
-						catalog: $resolved['catalog'],
-						register: $context['pair']['register'],
-						schema: $context['pair']['schema']
-					)
-				);
+				return $render($scope);
 			}
 		);
 
 	}//end inCatalogContext()
+
+	/**
+	 * The scope of an enabled catalog and its configured context, or the refusal
+	 * of an unknown or disabled catalog or an unconfigured context, in that order.
+	 *
+	 * @param array{catalogSlug: string, context: string} $lookup The catalog slug and the context.
+	 *
+	 * @return OoapiScope|JSONResponse The scope, or the refusal.
+	 */
+	private function catalogContextScope(array $lookup): OoapiScope|JSONResponse {
+		$resolved = $this->resolveEnabledCatalog(catalogSlug: $lookup['catalogSlug']);
+		if ($resolved['error'] !== null) {
+			return $resolved['error'];
+		}
+
+		$context = $this->resolveContext(
+			registerKey: $lookup['context'] . '_register',
+			schemaKey: $lookup['context'] . '_schema'
+		);
+		if ($context['error'] !== null) {
+			return $context['error'];
+		}
+
+		return $this->scopeOf(catalog: $resolved['catalog'], pair: $context['pair']);
+	}//end catalogContextScope()
+
+	/**
+	 * A catalog with its register/schema pair as an OOAPI scope.
+	 *
+	 * @param array<string, mixed> $catalog The catalog.
+	 * @param array{register: mixed, schema: mixed} $pair The register and schema.
+	 *
+	 * @return OoapiScope
+	 */
+	private function scopeOf(array $catalog, array $pair): OoapiScope {
+		return new OoapiScope(
+			catalog: $catalog,
+			register: $pair['register'],
+			schema: $pair['schema']
+		);
+	}//end scopeOf()
 
 	/**
 	 * A single resource, or a 404 with the given message when there is none.
@@ -551,34 +578,39 @@ class OoapiController extends Controller {
 	public function validate(string $catalogSlug): JSONResponse {
 		return $this->guard(
 			action: function () use ($catalogSlug): JSONResponse {
-				$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-				if ($catalog === null) {
-					return $this->json(data: ['error' => $this->l10n->t('Catalog not found')], status: Http::STATUS_NOT_FOUND);
-				}
-
-				$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
-				if ($context['error'] !== null) {
-					return $context['error'];
-				}
-
-				$violations = $this->ooapiService->validateCatalog(
-					scope: new OoapiScope(
-						catalog: $catalog,
-						register: $context['pair']['register'],
-						schema: $context['pair']['schema']
-					)
-				);
-
-				return $this->json(
-					data: [
-						'catalogSlug' => $catalogSlug,
-						'valid' => empty($violations),
-						'violations' => $violations,
-					],
-					status: Http::STATUS_OK
-				);
+				return $this->validation(catalogSlug: $catalogSlug);
 			}
 		);
 
 	}//end validate()
+
+	/**
+	 * Validate one catalog's courses, or refuse an unknown catalog or an unconfigured context.
+	 *
+	 * @param string $catalogSlug The catalog slug.
+	 *
+	 * @return JSONResponse The violations, or the refusal.
+	 */
+	private function validation(string $catalogSlug): JSONResponse {
+		$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
+		if ($catalog === null) {
+			return $this->json(data: ['error' => $this->l10n->t('Catalog not found')], status: Http::STATUS_NOT_FOUND);
+		}
+
+		$context = $this->resolveContext(registerKey: 'ooapi_courses_register', schemaKey: 'ooapi_courses_schema');
+		if ($context['error'] !== null) {
+			return $context['error'];
+		}
+
+		$violations = $this->ooapiService->validateCatalog(scope: $this->scopeOf(catalog: $catalog, pair: $context['pair']));
+
+		return $this->json(
+			data: [
+				'catalogSlug' => $catalogSlug,
+				'valid' => empty($violations),
+				'violations' => $violations,
+			],
+			status: Http::STATUS_OK
+		);
+	}//end validation()
 }//end class

@@ -94,6 +94,30 @@ import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { resolveObjectId } from '../../services/resolveObjectId.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
+/** The list view bindings the page uses, in the order it exposes them. */
+const LIST_VIEW_BINDINGS = [
+	'schema',
+	'sortKey',
+	'sortOrder',
+	'visibleColumns',
+	'onSort',
+	'onPageChange',
+	'onPageSizeChange',
+	'refresh',
+]
+
+/**
+ * The list view bindings the page uses, picked from `listView`.
+ *
+ * @param {object} listView What useListView returned.
+ * @return {object} The picked bindings.
+ */
+function listViewBindings(listView) {
+	return Object.fromEntries(
+		LIST_VIEW_BINDINGS.map((key) => [key, listView[key]]),
+	)
+}
+
 export default {
 	name: 'CatalogiIndex',
 	components: {
@@ -104,29 +128,13 @@ export default {
 
 	setup() {
 		const sidebarState = inject('sidebarState', null)
-		const {
-			schema,
-			sortKey,
-			sortOrder,
-			visibleColumns,
-			onSort,
-			onPageChange,
-			onPageSizeChange,
-			refresh,
-		} = useListView('catalog', {
+		const listView = useListView('catalog', {
 			sidebarState,
 			objectStore,
 		})
 		const { isAdmin, loaded } = useIsAdmin()
 		return {
-			schema,
-			sortKey,
-			sortOrder,
-			visibleColumns,
-			onSort,
-			onPageChange,
-			onPageSizeChange,
-			refresh,
+			...listViewBindings(listView),
 			objectStore,
 			isAdmin,
 			loaded,
@@ -250,6 +258,22 @@ export default {
 		},
 
 		/**
+		 * Open the detail page of the catalog `row` names, when it has an id.
+		 *
+		 * @param {object} row The catalog row.
+		 * @return {boolean} Whether the page opened.
+		 */
+		openCatalogDetail(row) {
+			const id = resolveObjectId(row)
+			if (!id) return false
+			this.$router.push({
+				name: 'CatalogDetail',
+				params: { id: String(id) },
+			})
+			return true
+		},
+
+		/**
 		 * Open the clicked row's catalog detail page by route id.
 		 *
 		 * @param {object} row The clicked table row.
@@ -257,14 +281,7 @@ export default {
 		 * @spec openspec/specs/catalogs/spec.md#requirement-view-catalog-details-and-detail-page-cat-015
 		 */
 		onRowClick(row) {
-			const id = resolveObjectId(row)
-			if (id) {
-				this.$router.push({
-					name: 'CatalogDetail',
-					params: { id: String(id) },
-				})
-				return
-			}
+			if (this.openCatalogDetail(row)) return
 			// No id resolvable — log the row so misshapen payloads surface
 			// in the browser console instead of silently doing nothing.
 			// eslint-disable-next-line no-console
@@ -279,14 +296,7 @@ export default {
 		 * @spec openspec/specs/catalogs/spec.md#requirement-view-catalog-details-and-detail-page-cat-015
 		 */
 		viewCatalog(catalog) {
-			const id = resolveObjectId(catalog)
-			if (id) {
-				this.$router.push({
-					name: 'CatalogDetail',
-					params: { id: String(id) },
-				})
-				return
-			}
+			if (this.openCatalogDetail(catalog)) return
 			// eslint-disable-next-line no-console
 			console.warn(
 				'[opencatalogi] viewCatalog: no id resolvable from row',
