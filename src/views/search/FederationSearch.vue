@@ -19,6 +19,12 @@ import { resultClickTarget } from '../../services/federationResultTarget.js'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { objectStore } from '../../store/store.js'
 
+/**
+ * What CnPagination gets for a pagination value the search store has not
+ * set (or set to a falsy value), in the order it is passed.
+ */
+const PAGINATION_FALLBACK = { page: 1, pages: 1, total: 0, limit: 20 }
+
 export default {
 	name: 'FederationSearch',
 	components: { CnSearchPage, CnPagination },
@@ -70,12 +76,12 @@ export default {
 		 */
 		paginationState() {
 			const p = this.searchStore.pagination || {}
-			return {
-				page: p.page || 1,
-				pages: p.pages || 1,
-				total: p.total || 0,
-				limit: p.limit || 20,
-			}
+			return Object.fromEntries(
+				Object.entries(PAGINATION_FALLBACK).map(([key, fallback]) => [
+					key,
+					p[key] || fallback,
+				]),
+			)
 		},
 	},
 
