@@ -152,15 +152,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 					<template #actions>
 						<NcActionButton
 							closeAfterClick
-							@click="
-								() => {
-									objectStore.setActiveObject(
-										'publication',
-										publication,
-									)
-									navigationStore.setModal('objectModal')
-								}
-							">
+							@click="openForObject(publication, { type: 'publication', modal: 'objectModal' })">
 							<template #icon>
 								<Pencil :size="20" />
 							</template>
@@ -169,16 +161,14 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<NcActionButton
 							closeAfterClick
 							@click="
-								() => {
-									objectStore.setActiveObject(
-										'publication',
-										publication,
-									)
-									navigationStore.setDialog('copyObject', {
+								openForObject(publication, {
+									type: 'publication',
+									dialog: 'copyObject',
+									properties: {
 										objectType: 'publication',
 										dialogTitle: 'Publication',
-									})
-								}
+									},
+								})
 							">
 							<template #icon>
 								<ContentCopy :size="20" />
@@ -188,15 +178,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<NcActionButton
 							v-if="publication['@self'].published === null"
 							closeAfterClick
-							@click="
-								() => {
-									objectStore.setActiveObject(
-										'publication',
-										publication,
-									)
-									publishPublication('publish')
-								}
-							">
+							@click="activateAndPublish(publication, 'publish')">
 							<template #icon>
 								<Publish :size="20" />
 							</template>
@@ -205,15 +187,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						<NcActionButton
 							v-if="publication['@self'].published"
 							closeAfterClick
-							@click="
-								() => {
-									objectStore.setActiveObject(
-										'publication',
-										publication,
-									)
-									publishPublication('depublish')
-								}
-							">
+							@click="activateAndPublish(publication, 'depublish')">
 							<template #icon>
 								<PublishOff :size="20" />
 							</template>
@@ -221,18 +195,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 						</NcActionButton>
 						<NcActionButton
 							closeAfterClick
-							@click="
-								() => {
-									objectStore.setActiveObject(
-										'publication',
-										publication,
-									)
-									navigationStore.setTransferData({
-										initialTab: 'files',
-									})
-									navigationStore.setModal('viewObject')
-								}
-							">
+							@click="openFileList(publication)">
 							<template #icon>
 								<FormatListBulleted :size="20" />
 							</template>
@@ -242,16 +205,14 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 							closeAfterClick
 							class="publicationsList-actionsDelete"
 							@click="
-								() => {
-									objectStore.setActiveObject(
-										'publication',
-										publication,
-									)
-									navigationStore.setDialog('deleteObject', {
+								openForObject(publication, {
+									type: 'publication',
+									dialog: 'deleteObject',
+									properties: {
 										objectType: 'publication',
 										dialogTitle: 'Publicatie',
-									})
-								}
+									},
+								})
 							">
 							<template #icon>
 								<Delete :size="20" />
@@ -302,6 +263,7 @@ import Publish from 'vue-material-design-icons/Publish.vue'
 import PublishOff from 'vue-material-design-icons/PublishOff.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
+import { openForObject } from '../../services/openForObject.js'
 
 export default {
 	name: 'PublicationList',
@@ -346,6 +308,34 @@ export default {
 	},
 
 	methods: {
+		openForObject,
+
+		/**
+		 * Make `publication` the active publication, then publish or depublish it.
+		 *
+		 * @param {object} publication The clicked row.
+		 * @param {'publish'|'depublish'} mode What to do with it.
+		 * @return {void}
+		 */
+		activateAndPublish(publication, mode) {
+			objectStore.setActiveObject('publication', publication)
+			this.publishPublication(mode)
+		},
+
+		/**
+		 * Open `publication` in the view modal on its Files tab.
+		 *
+		 * @param {object} publication The clicked row.
+		 * @return {void}
+		 */
+		openFileList(publication) {
+			objectStore.setActiveObject('publication', publication)
+			navigationStore.setTransferData({
+				initialTab: 'files',
+			})
+			navigationStore.setModal('viewObject')
+		},
+
 		updateSortOrder(value) {
 			this.sortDirection = value
 		},

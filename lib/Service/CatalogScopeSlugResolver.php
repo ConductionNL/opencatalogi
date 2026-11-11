@@ -25,6 +25,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use Closure;
 use Throwable;
 
 /**
@@ -50,28 +51,67 @@ class CatalogScopeSlugResolver {
 		$changed = false;
 		$resolved = [];
 		foreach ($entries as $entry) {
-			if (is_string($entry) === false || $entry === '' || is_numeric($entry) === true) {
+			$id = $this->slugId(resolve: $resolve, entry: $entry);
+			if ($id === null) {
 				$resolved[] = $entry;
 				continue;
 			}
 
-			try {
-				$id = $resolve($entry);
-			} catch (Throwable) {
-				$id = null;
-			}
-
-			if ($id === null || (string)$id === '') {
-				$resolved[] = $entry;
-				continue;
-			}
-
-			$resolved[] = (string)$id;
+			$resolved[] = $id;
 			$changed = true;
-		}//end foreach
+		}
 
 		return [$resolved, $changed];
 	}//end resolve()
+
+	/**
+	 * The id a slug entry names, or null for an entry that is no slug or names nothing.
+	 *
+	 * @param callable(string): (int|string|null) $resolve Looks one slug up.
+	 * @param mixed $entry The scope entry.
+	 *
+	 * @return string|null
+	 */
+	private function slugId(callable $resolve, mixed $entry): ?string {
+		if ($this->isSlug(entry: $entry) === false) {
+			return null;
+		}
+
+		return $this->resolvedId(resolve: $resolve, slug: $entry);
+	}//end slugId()
+
+	/**
+	 * Whether a scope entry is a slug: a non-empty, non-numeric string.
+	 *
+	 * @param mixed $entry The scope entry.
+	 *
+	 * @return bool
+	 */
+	private function isSlug(mixed $entry): bool {
+		return is_string($entry) === true && $entry !== '' && is_numeric($entry) === false;
+	}//end isSlug()
+
+	/**
+	 * The id a slug names as text, or null when the lookup throws or names nothing.
+	 *
+	 * @param callable(string): (int|string|null) $resolve Looks one slug up.
+	 * @param string $slug The slug.
+	 *
+	 * @return string|null
+	 */
+	private function resolvedId(callable $resolve, string $slug): ?string {
+		try {
+			$id = $resolve($slug);
+		} catch (Throwable) {
+			return null;
+		}
+
+		if ($id === null || (string)$id === '') {
+			return null;
+		}
+
+		return (string)$id;
+	}//end resolvedId()
 
 	/**
 	 * Resolve a whole catalogue scope: registers by slug, then schemas by slug INSIDE those registers.
@@ -98,10 +138,41 @@ class CatalogScopeSlugResolver {
 	public function resolveScope(array $registers, array $schemas, CatalogScopeLookups $lookups): array {
 		[$registers, $registersChanged] = $this->resolve(entries: $registers, resolve: $lookups->findRegisterId);
 
-		$registerIds = array_values(array_map('intval', array_filter($registers, 'is_numeric')));
+		$lookup = $this->schemaLookup(registerIds: $this->registerIds(registers: $registers), lookups: $lookups);
+		[$schemas, $schemasChanged] = $this->resolve(entries: $schemas, resolve: $lookup);
 
+		return [
+			'registers' => $registers,
+			'schemas' => $schemas,
+			'changed' => ($registersChanged || $schemasChanged),
+			'pending' => $this->pending(registers: $registers, schemas: $schemas),
+		];
+	}//end resolveScope()
+
+	/**
+	 * The ids of the registers that resolved.
+	 *
+	 * @param array<int, mixed> $registers The scope's registers after resolution.
+	 *
+	 * @return array<int, int>
+	 */
+	private function registerIds(array $registers): array {
+		return array_values(array_map('intval', array_filter($registers, 'is_numeric')));
+	}//end registerIds()
+
+	/**
+	 * Looks a schema slug up inside the given registers; their schema slugs are
+	 * read on the first lookup only.
+	 *
+	 * @param array<int, int> $registerIds The resolved register ids.
+	 * @param CatalogScopeLookups $lookups The register and schema lookups.
+	 *
+	 * @return Closure(string): (int|null)
+	 */
+	private function schemaLookup(array $registerIds, CatalogScopeLookups $lookups): Closure {
 		$slugToId = null;
-		$lookup = function (string $slug) use (&$slugToId, $registerIds, $lookups): ?int {
+
+		return function (string $slug) use (&$slugToId, $registerIds, $lookups): ?int {
 			if ($slugToId === null) {
 				$slugToId = $this->schemaSlugMap(
 					registerIds: $registerIds,
@@ -112,44 +183,46 @@ class CatalogScopeSlugResolver {
 
 			return ($slugToId[strtolower($slug)] ?? null);
 		};
-
-		[$schemas, $schemasChanged] = $this->resolve(entries: $schemas, resolve: $lookup);
-
-		return [
-			'registers' => $registers,
-			'schemas' => $schemas,
-			'changed' => ($registersChanged || $schemasChanged),
-			'pending' => $this->pending(registers: $registers, schemas: $schemas, registerIds: $registerIds),
-		];
-	}//end resolveScope()
+	}//end schemaLookup()
 
 	/**
 	 * What a later register event can still complete in a resolved scope.
 	 *
 	 * @param array<int, mixed> $registers The scope's registers after resolution.
 	 * @param array<int, mixed> $schemas The scope's schemas after resolution.
-	 * @param array<int, int> $registerIds The registers that did resolve.
 	 *
 	 * @return list<string> Lowercased register slugs, plus register ids while a schema slug remains.
 	 *
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
 	 */
-	private function pending(array $registers, array $schemas, array $registerIds): array {
-		$pending = [];
-		foreach ($registers as $register) {
-			if (is_string($register) === true && $register !== '' && is_numeric($register) === false) {
-				$pending[] = strtolower($register);
-			}
-		}
-
+	private function pending(array $registers, array $schemas): array {
+		$pending = $this->lowercasedSlugs(entries: $registers);
 		if ($this->hasSlug(entries: $schemas) === true) {
-			foreach ($registerIds as $registerId) {
+			foreach ($this->registerIds(registers: $registers) as $registerId) {
 				$pending[] = (string)$registerId;
 			}
 		}
 
 		return array_values(array_unique($pending));
 	}//end pending()
+
+	/**
+	 * The slugs of a scope list, lowercased, in order.
+	 *
+	 * @param array<int, mixed> $entries The scope list.
+	 *
+	 * @return list<string>
+	 */
+	private function lowercasedSlugs(array $entries): array {
+		$slugs = [];
+		foreach ($entries as $entry) {
+			if ($this->isSlug(entry: $entry) === true) {
+				$slugs[] = strtolower($entry);
+			}
+		}
+
+		return $slugs;
+	}//end lowercasedSlugs()
 
 	/**
 	 * Map the slug of every schema the given registers list to its id.
@@ -166,32 +239,15 @@ class CatalogScopeSlugResolver {
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-002-a-schema-slug-resolves-only-inside-the-catalogues-own-registers
 	 */
 	public function schemaSlugMap(array $registerIds, callable $schemaIdsOfRegister, callable $schemaSlugOf): array {
-		$map = [];
+		$index = new SchemaSlugIndex(
+			schemaIdsOfRegister: Closure::fromCallable($schemaIdsOfRegister),
+			schemaSlugOf: Closure::fromCallable($schemaSlugOf)
+		);
 		foreach ($registerIds as $registerId) {
-			try {
-				$schemaIds = $schemaIdsOfRegister($registerId);
-			} catch (Throwable) {
-				continue;
-			}
+			$index->addRegister(registerId: $registerId);
+		}
 
-			foreach ($schemaIds as $schemaId) {
-				if (is_numeric($schemaId) === false) {
-					continue;
-				}
-
-				try {
-					$slug = $schemaSlugOf((int)$schemaId);
-				} catch (Throwable) {
-					continue;
-				}
-
-				if (is_string($slug) === true && $slug !== '' && isset($map[strtolower($slug)]) === false) {
-					$map[strtolower($slug)] = (int)$schemaId;
-				}
-			}
-		}//end foreach
-
-		return $map;
+		return $index->map();
 	}//end schemaSlugMap()
 
 	/**
@@ -205,7 +261,7 @@ class CatalogScopeSlugResolver {
 	 */
 	public function hasSlug(array $entries): bool {
 		foreach ($entries as $entry) {
-			if (is_string($entry) === true && $entry !== '' && is_numeric($entry) === false) {
+			if ($this->isSlug(entry: $entry) === true) {
 				return true;
 			}
 		}

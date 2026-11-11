@@ -950,11 +950,120 @@ import PropertiesPanel from '../../components/PropertiesPanel.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
+import { fileSizeLabel } from '../../services/fileSizeLabel.js'
 import { formValue } from '../../services/formValue.js'
+import { registerSchemaIdsOf } from '../../services/registerSchemaIds.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 import { editableFormData, initialCatalog } from './objectFormCopy.js'
+import {
+	findSchemaByAnyId,
+	metadataRows,
+	objectDisplayName,
+	objectSchemaName,
+	referencedSchema,
+	referencedSchemaProperties,
+} from './objectMetadata.js'
+import {
+	buildObjectPayload,
+	cleanFormValues,
+	isEmptyValue,
+	offersPublishAction,
+	propertyErrors,
+	withSchemaFillValues,
+} from './objectPayload.js'
 
 import '@toast-ui/editor/dist/toastui-editor.css'
+
+/**
+ * Whether a property name marks it as immutable, readonly or constant
+ * (case insensitive).
+ *
+ * @param {string} key - The property key
+ * @return {boolean} True when the name says so
+ */
+function hasImmutableName(key) {
+	const immutablePatterns = ['immutable', 'readonly', 'constant']
+	return immutablePatterns.some((pattern) => key.toLowerCase().includes(pattern))
+}
+
+/**
+ * Whether a schema property is flagged read-only or immutable.
+ *
+ * @param {object} schemaProperty - The schema property
+ * @return {boolean} True when flagged
+ */
+function isReadOnlyProperty(schemaProperty) {
+	return schemaProperty.readOnly === true || schemaProperty.immutable === true
+}
+
+/**
+ * Whether a schema title can be shown: a non-blank string that is not the
+ * "new" placeholder.
+ *
+ * @param {unknown} title - The title
+ * @return {boolean} True when usable
+ */
+function isUsableTitle(title) {
+	return Boolean(
+		title
+		&& typeof title === 'string'
+		&& title.trim() !== ''
+		&& title.trim().toLowerCase() !== 'new',
+	)
+}
+
+/**
+ * Whether an editor instance offers a method.
+ *
+ * @param {object|null|undefined} editorInstance - The editor
+ * @param {string} name - The method name
+ * @return {boolean} True when it does
+ */
+function hasEditorMethod(editorInstance, name) {
+	return Boolean(editorInstance) && typeof editorInstance[name] === 'function'
+}
+
+/**
+ * The content of a markdown editor: its markdown, else its HTML, else the
+ * value itself when it is text.
+ *
+ * @param {object|string|null|undefined} editorInstance - The editor or a text value
+ * @return {string} The content
+ */
+function editorContent(editorInstance) {
+	if (hasEditorMethod(editorInstance, 'getMarkdown')) {
+		return editorInstance.getMarkdown()
+	}
+	if (hasEditorMethod(editorInstance, 'getHTML')) {
+		return editorInstance.getHTML()
+	}
+	return typeof editorInstance === 'string' ? editorInstance : ''
+}
+
+/**
+ * A date value as a Date, or null when there is none.
+ *
+ * @param {string|null|undefined} value - The date
+ * @return {Date|null} The date
+ */
+function optionalDate(value) {
+	return value ? new Date(value) : null
+}
+
+/**
+ * Whether an object is live: published by now and not depublished yet.
+ *
+ * @param {object} object - The object
+ * @param {Date} now - The current time
+ * @return {boolean} True when live
+ */
+function isLiveNow(object, now) {
+	const published = optionalDate(object.publicationDate)
+	const depublished = optionalDate(object.depublicationDate)
+
+	// Currently live: published in the past and not yet depublished
+	return !!(published && published <= now && (!depublished || depublished > now))
+}
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -1073,33 +1182,7 @@ export default {
 				)
 			}
 			const schemaRef = this.currentObject?.['@self']?.schema
-			if (!schemaRef) return null
-
-			// `@self.schema` is the full embedded schema object when the API
-			// extends it; prefer it directly so we keep `properties`.
-			if (typeof schemaRef === 'object' && schemaRef.properties) {
-				return schemaRef
-			}
-
-			// Fall back to looking up by id/uuid in availableSchemas. The id
-			// in @self.schema arrives as a string (e.g. "1") while
-			// availableSchemas[i].id is a number — match on both id and uuid
-			// using loose comparison, plus slug as a last resort.
-			const schemaId =
-				typeof schemaRef === 'object'
-					? (schemaRef.id ?? schemaRef.uuid ?? schemaRef.slug)
-					: schemaRef
-			if (schemaId === null || schemaId === undefined || schemaId === '')
-				return null
-			const idStr = String(schemaId)
-			return (
-				objectStore.availableSchemas.find(
-					(schema) =>
-						String(schema.id) === idStr
-						|| String(schema.uuid) === idStr
-						|| String(schema.slug) === idStr,
-				) || null
-			)
+			return referencedSchema(schemaRef, objectStore.availableSchemas)
 		},
 
 		/**
@@ -1124,68 +1207,10 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		metadataExtraRows() {
 			if (!this.currentObject) return []
-			const obj = this.currentObject
-
-			const register = obj['@self']?.register
-			let registerDisplay = 'Not set'
-			if (register) {
-				if (typeof register === 'object') {
-					registerDisplay =
-						register.title || register.name || register.id || register
-				} else {
-					const availableRegister = objectStore.availableRegisters.find(
-						(r) => r.id === register,
-					)
-					registerDisplay = availableRegister?.title || register
-				}
-			}
-
-			const schema = obj['@self']?.schema
-			let schemaDisplay = 'Not set'
-			if (schema) {
-				if (typeof schema === 'object') {
-					schemaDisplay =
-						schema.title || schema.name || schema.id || schema
-				} else {
-					const availableSchema = objectStore.availableSchemas.find(
-						(s) => s.id === schema,
-					)
-					schemaDisplay = availableSchema?.title || schema
-				}
-			}
-
-			const locked = obj['@self']?.locked
-			let lockedDisplay = 'Not locked'
-			if (locked) {
-				if (typeof locked === 'object') {
-					const lockedBy = locked.lockedBy || 'Unknown user'
-					const lockedAt = locked.lockedAt
-						? new Date(locked.lockedAt).toLocaleString()
-						: 'Unknown time'
-					const proc = locked.process ? ` (${locked.process})` : ''
-					lockedDisplay = `Locked by ${lockedBy} at ${lockedAt}${proc}`
-				} else {
-					lockedDisplay = 'Locked'
-				}
-			}
-
-			const fmtDate = (v, fallback) =>
-				v ? new Date(v).toLocaleString() : fallback
-
-			return [
-				['ID', obj.id || 'Not set'],
-				['Version', obj['@self']?.version || 'Not set'],
-				['Register', registerDisplay],
-				['Schema', schemaDisplay],
-				['Locked', lockedDisplay],
-				['Created', fmtDate(obj['@self']?.created, 'Not set')],
-				['Updated', fmtDate(obj['@self']?.updated, 'Not set')],
-				['Published', fmtDate(obj['@self']?.published, 'Not published')],
-				[
-					'Depublished',
-					fmtDate(obj['@self']?.depublished, 'Not depublished'),
-				],
-			]
+			return metadataRows(this.currentObject, {
+				registers: objectStore.availableRegisters,
+				schemas: objectStore.availableSchemas,
+			})
 		},
 
 		// Files tab computed properties
@@ -1259,32 +1284,18 @@ export default {
 				return []
 			}
 
-			const fullCatalog = objectStore
-				.getCollection('catalog')
-				.results.find(
-					(catalog) =>
-						String(catalog.id) === String(this.selectedCatalog.id),
-				)
+			const fullCatalog = findCatalog(this.selectedCatalog.id)
 			if (!fullCatalog) {
 				return []
 			}
 
-			// Catalog.registers arrives as a string array (`["1"]`) while
-			// `register.id` from OpenRegister is numeric — `.includes` uses
-			// strict equality so the raw check would drop every match and
-			// leave the modal stalled on the empty-state (WOO-527 followup).
-			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(
-				String,
-			)
+			const selectedCatalogRegisterIds = registerIdsOf(fullCatalog)
 
 			return objectStore.availableRegisters
 				.filter((register) =>
 					selectedCatalogRegisterIds.includes(String(register.id)),
 				)
-				.map((register) => ({
-					id: register.id,
-					label: register.title,
-				}))
+				.map(toRegisterOption)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -1509,23 +1520,10 @@ export default {
 		fieldErrors() {
 			const schema = this.resolvedSchema
 			if (!schema) return []
-			const props = schema.properties || {}
-			const errors = []
-			for (const [key, prop] of Object.entries(props)) {
-				if (!prop || prop.hideOnForm === true) continue
-				if (key === '@self' || key === 'id') continue
-				const value = formValue(this.formData, this.currentObject, key)
-				if (value === null || value === undefined || value === '') continue
-				const err = validateValue(value, prop)
-				if (err) {
-					errors.push({
-						key,
-						label: prop.title || key,
-						error: err,
-					})
-				}
-			}
-			return errors
+			return propertyErrors(schema.properties || {}, {
+				valueOf: (key) => formValue(this.formData, this.currentObject, key),
+				validate: validateValue,
+			})
 		},
 
 		hasFieldErrors() {
@@ -1804,31 +1802,11 @@ export default {
 
 			if (!this.currentObject) return t('opencatalogi', 'View Object')
 
-			const name =
-				this.currentObject['@self']?.name
-				|| this.currentObject.name
-				|| this.currentObject.title
-				|| this.currentObject.id
-				|| 'Untitled'
-
-			// Try to get schema name from the object itself
-			let schemaName = 'Publication'
-			const rawSchema =
-				this.currentObject.schema ?? this.currentObject['@self']?.schema
-
-			if (rawSchema && typeof rawSchema === 'object') {
-				schemaName =
-					rawSchema.title
-					|| rawSchema.name
-					|| rawSchema.id
-					|| 'Publication'
-			} else if (rawSchema != null && rawSchema !== '') {
-				const match = objectStore.availableSchemas.find(
-					(s) => Number(s.id) === Number(rawSchema),
-				)
-				schemaName = match?.title || match?.name || String(rawSchema)
-			}
-
+			const name = objectDisplayName(this.currentObject)
+			const schemaName = objectSchemaName(
+				this.currentObject,
+				objectStore.availableSchemas,
+			)
 			return `${name} (${schemaName})`
 		},
 
@@ -1885,12 +1863,7 @@ export default {
 			}
 			const auth = schema.authorization
 			// No authorization rules means everyone has access
-			if (
-				!auth
-				|| !auth.read
-				|| !Array.isArray(auth.read)
-				|| auth.read.length === 0
-			) {
+			if (!hasReadRules(auth)) {
 				return true
 			}
 			// Admin group always has full access
@@ -1898,16 +1871,9 @@ export default {
 				return true
 			}
 			// Check if user belongs to any group that has read permission
-			return auth.read.some((entry) => {
-				if (typeof entry === 'string') {
-					return this.currentUserGroups.includes(entry)
-				}
-				// Complex entry with match conditions — check group membership only
-				if (entry && typeof entry === 'object' && entry.group) {
-					return this.currentUserGroups.includes(entry.group)
-				}
-				return true
-			})
+			return auth.read.some((entry) =>
+				readEntryAllows(entry, this.currentUserGroups),
+			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -2123,16 +2089,7 @@ export default {
 
 			// Return the title if it exists and is not empty or just "new" (placeholder)
 			const title = schemaProperty?.title
-			if (
-				title
-				&& typeof title === 'string'
-				&& title.trim() !== ''
-				&& title.trim().toLowerCase() !== 'new'
-			) {
-				return title
-			}
-
-			return key
+			return isUsableTitle(title) ? title : key
 		},
 
 		/**
@@ -2189,22 +2146,10 @@ export default {
 				if (editorEl) {
 					// Remove borders from all nested elements
 					const allElements = editorEl.querySelectorAll('*')
-					allElements.forEach((el) => {
-						el.style.border = 'none'
-						el.style.borderWidth = '0'
-						el.style.borderStyle = 'none'
-						el.style.borderColor = 'transparent'
-						el.style.outline = 'none'
-						el.style.boxShadow = 'none'
-					})
+					allElements.forEach(clearBorders)
 
 					// Also remove from the container itself
-					editorEl.style.border = 'none'
-					editorEl.style.borderWidth = '0'
-					editorEl.style.borderStyle = 'none'
-					editorEl.style.borderColor = 'transparent'
-					editorEl.style.outline = 'none'
-					editorEl.style.boxShadow = 'none'
+					clearBorders(editorEl)
 				}
 			} catch (error) {
 				console.warn('Could not remove borders from editor:', error)
@@ -2239,12 +2184,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		formatFileSize(bytes) {
-			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-			if (bytes === 0) return 'n/a'
-			const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
-			if (i === 0 && sizes[i] === 'Bytes') return '< 1 KB'
-			if (i === 0) return bytes + ' ' + sizes[i]
-			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
+			return fileSizeLabel(bytes)
 		},
 
 		/**
@@ -2314,17 +2254,17 @@ export default {
 			const { registerId, schemaId } = this.getRegisterSchemaIds(
 				this.currentObject,
 			)
-			await objectStore.fetchRelatedData(
-				'publication',
-				this.currentObject.id,
-				'files',
+			await objectStore.fetchRelatedData({
+				type: 'publication',
+				id: this.currentObject.id,
+				dataType: 'files',
 				params,
-				{
+				publicationData: {
 					source: 'openregister',
 					schema: schemaId,
 					register: registerId,
 				},
-			)
+			})
 		},
 
 		/**
@@ -2606,13 +2546,13 @@ export default {
 					schema: schemaId,
 					register: registerId,
 				}
-				await objectStore.fetchRelatedData(
-					'publication',
-					this.currentObject.id,
-					'files',
-					{},
+				await objectStore.fetchRelatedData({
+					type: 'publication',
+					id: this.currentObject.id,
+					dataType: 'files',
+					params: {},
 					publicationData,
-				)
+				})
 
 				this.editingTags = null
 				this.editedTags = []
@@ -2627,17 +2567,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		getRegisterSchemaIds(publication) {
-			const registerId =
-				typeof publication['@self'].register === 'object'
-					? publication['@self'].register?.id
-						|| publication['@self'].register?.uuid
-					: publication['@self'].register
-			const schemaId =
-				typeof publication['@self'].schema === 'object'
-					? publication['@self'].schema?.id
-						|| publication['@self'].schema?.uuid
-					: publication['@self'].schema
-			return { registerId, schemaId }
+			return registerSchemaIdsOf(publication)
 		},
 
 		// Action button methods
@@ -2652,19 +2582,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		shouldShowPublishAction(object) {
-			if (!object) return false
-			const now = new Date()
-			const published = object.publicationDate
-				? new Date(object.publicationDate)
-				: null
-			const depublished = object.depublicationDate
-				? new Date(object.depublicationDate)
-				: null
-
-			if (depublished && depublished < now) return true // currently depublished
-			if (!published && !depublished) return true // never published
-			if (!depublished && published && published > now) return true // scheduled but not yet live
-			return false
+			return offersPublishAction(object, new Date())
 		},
 
 		/**
@@ -2673,20 +2591,7 @@ export default {
 		 */
 		shouldShowDepublishAction(object) {
 			if (!object) return false
-			const now = new Date()
-			const published = object.publicationDate
-				? new Date(object.publicationDate)
-				: null
-			const depublished = object.depublicationDate
-				? new Date(object.depublicationDate)
-				: null
-
-			// Currently live: published in the past and not yet depublished
-			return !!(
-				published
-				&& published <= now
-				&& (!depublished || depublished > now)
-			)
+			return isLiveNow(object, new Date())
 		},
 
 		/**
@@ -2722,49 +2627,16 @@ export default {
 		// Schema handling methods
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		getSchemaProperties() {
-			let properties = {}
-
-			const findSchema = (schemaId) =>
-				objectStore.availableSchemas.find(
-					(schema) =>
-						String(schema.id) === String(schemaId)
-						|| schema.uuid === schemaId
-						|| schema.slug === schemaId,
-				)
-
 			// For new objects, use the selected schema
 			if (this.isNewObject && this.selectedSchema) {
-				const fullSchema = findSchema(this.selectedSchema.id)
-				properties = fullSchema?.properties || {}
-			} else if (this.currentObject && this.currentObject['@self']?.schema) {
-				// For existing objects, try to get schema from the object's schema reference
-				const schemaRef = this.currentObject['@self'].schema
-
-				// If schema is already an extended object, use its properties directly
-				if (
-					typeof schemaRef === 'object'
-					&& schemaRef !== null
-					&& schemaRef.properties
-				) {
-					return schemaRef.properties
-				}
-
-				// Handle both object and string schema references
-				// @self.schema can be a UUID string, numeric ID, or slug — match against all
-				const schemaId =
-					typeof schemaRef === 'object' && schemaRef !== null
-						? schemaRef.id || schemaRef.uuid
-						: schemaRef
-
-				if (schemaId) {
-					const fullSchema = findSchema(schemaId)
-					if (fullSchema?.properties) {
-						properties = fullSchema.properties
-					}
-				}
+				const fullSchema = findSchemaByAnyId(
+					objectStore.availableSchemas,
+					this.selectedSchema.id,
+				)
+				return fullSchema?.properties || {}
 			}
-
-			return properties
+			const schemaRef = this.currentObject?.['@self']?.schema
+			return referencedSchemaProperties(schemaRef, objectStore.availableSchemas)
 		},
 
 		// Helper method to rebuild object with schema properties after API operations
@@ -2783,39 +2655,8 @@ export default {
 				},
 			}
 
-			// Get schema properties to ensure we don't lose any
-			const schemaProperties = this.getSchemaProperties()
-
-			// Add missing schema properties with default values
-			for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
-				if (!Object.hasOwn(mergedObject, key)) {
-					// Add with appropriate default value based on type
-					let defaultValue = ''
-					switch (schemaProperty.type) {
-						case 'string':
-							defaultValue = schemaProperty.const || ''
-							break
-						case 'number':
-						case 'integer':
-							defaultValue = 0
-							break
-						case 'boolean':
-							defaultValue = false
-							break
-						case 'array':
-							defaultValue = []
-							break
-						case 'object':
-							defaultValue = {}
-							break
-						default:
-							defaultValue = ''
-					}
-					mergedObject[key] = defaultValue
-				}
-			}
-
-			return mergedObject
+			// Add the schema properties the result lacks, so none get lost
+			return withSchemaFillValues(mergedObject, this.getSchemaProperties())
 		},
 
 		/**
@@ -2825,33 +2666,7 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		cleanFormData() {
-			const cleaned = {}
-
-			// If formData is somehow an array, convert it properly
-			if (Array.isArray(this.formData)) {
-				// This should never happen, but just in case
-				return {}
-			}
-
-			// Copy all valid properties from formData
-			for (const [key, value] of Object.entries(this.formData || {})) {
-				// Only include valid property names:
-				// - Must be a string
-				// - Must not be empty
-				// - Must not be purely numeric (array indices)
-				// - Must not be special Vue/internal keys
-				if (
-					typeof key === 'string'
-					&& key.length > 0
-					&& !/^\d+$/.test(key)
-					&& !key.startsWith('_')
-					&& !key.startsWith('$')
-				) {
-					cleaned[key] = value
-				}
-			}
-
-			return cleaned
+			return cleanFormValues(this.formData)
 		},
 
 		/**
@@ -2862,100 +2677,8 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		buildCompleteObjectData() {
 			const schemaProperties = this.getSchemaProperties()
-			const cleanedFormData = this.cleanFormData()
-			const currentObjectData = this.currentObject || {}
-
-			// Start with current object data (excluding id but keeping @self for updates)
-			const objectData = {}
-			for (const [key, value] of Object.entries(currentObjectData)) {
-				if (key !== 'id') {
-					objectData[key] = value
-				}
-			}
-
-			// Add all schema properties with appropriate values
-			for (const [propertyKey, schemaProperty] of Object.entries(
-				schemaProperties,
-			)) {
-				if (Object.hasOwn(cleanedFormData, propertyKey)) {
-					// Check if property was marked for deletion (undefined)
-					if (cleanedFormData[propertyKey] === undefined) {
-						// For schema properties, don't include undefined values - let backend handle defaults
-						// This effectively removes the property from the payload
-						delete objectData[propertyKey]
-					} else {
-						// Use edited value from formData; normalize arrays if schema type is array
-						const formValue = cleanedFormData[propertyKey]
-						if (schemaProperty.type === 'array') {
-							let normalized
-							if (Array.isArray(formValue)) {
-								normalized = formValue
-							} else if (typeof formValue === 'string') {
-								normalized = formValue
-									.split(/ *, */g)
-									.filter(Boolean)
-							} else if (formValue === null) {
-								normalized = null
-							} else if (formValue === false) {
-								// Edge case: some inputs may pass boolean false; treat as empty array
-								normalized = []
-							} else {
-								normalized = [String(formValue)].filter(Boolean)
-							}
-							objectData[propertyKey] = normalized
-						} else {
-							objectData[propertyKey] = formValue
-						}
-					}
-				} else if (Object.hasOwn(currentObjectData, propertyKey)) {
-					// Keep existing value from current object
-					objectData[propertyKey] = currentObjectData[propertyKey]
-				} else {
-					// Property doesn't exist, set appropriate default or null
-					let defaultValue = null
-
-					// Only set non-null defaults for specific cases
-					switch (schemaProperty.type) {
-						case 'string':
-							defaultValue = schemaProperty.const || null
-							break
-						case 'number':
-						case 'integer':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'boolean':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'array':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'object':
-							defaultValue = null // Let backend handle defaults
-							break
-						default:
-							defaultValue = null
-					}
-
-					objectData[propertyKey] = defaultValue
-				}
-			}
-
-			// Also include any edited properties that might not be in the schema
-			// But only include valid property names (not numeric indices) and not undefined values
-			for (const [key, value] of Object.entries(cleanedFormData)) {
-				if (
-					!Object.hasOwn(schemaProperties, key)
-					&& typeof key === 'string'
-					&& key.length > 0
-					&& !/^\d+$/.test(key)
-					&& value !== undefined
-				) {
-					// Don't include properties marked for deletion
-					objectData[key] = value
-				}
-			}
-
-			return objectData
+			const form = this.cleanFormData()
+			return buildObjectPayload(this.currentObject, { schemaProperties, form })
 		},
 
 		// Property dropping methods
@@ -2978,13 +2701,7 @@ export default {
 			// Hide the X when there's effectively nothing to clear. Use the
 			// resolved value (formData override falls back to the persisted
 			// object value) so a property cleared in the form drops the X.
-			const resolved = formValue(this.formData, this.currentObject, key)
-			if (resolved === null || resolved === undefined || resolved === '')
-				return false
-			if (Array.isArray(resolved) && resolved.length === 0) return false
-			if (typeof resolved === 'object' && Object.keys(resolved).length === 0)
-				return false
-			return true
+			return !isEmptyValue(formValue(this.formData, this.currentObject, key))
 		},
 
 		/**
@@ -3002,32 +2719,37 @@ export default {
 			const schemaProperty = schemaProperties[key]
 
 			// Check by property name patterns (case insensitive)
-			const immutablePatterns = ['immutable', 'readonly', 'constant']
-			const isImmutableByName = immutablePatterns.some((pattern) =>
-				key.toLowerCase().includes(pattern),
-			)
+			const isImmutableByName = hasImmutableName(key)
 
-			if (schemaProperty) {
-				const isConstant = schemaProperty.const !== undefined
-				const isImmutable =
-					schemaProperty.readOnly === true
-					|| schemaProperty.immutable === true
-
-				// Debug: Log all detection methods
-				if (process.env.NODE_ENV === 'development') {
-					// eslint-disable-next-line no-console
-					console.log(`Property ${key} detection:`, {
-						isConstant,
-						isImmutable,
-						isImmutableByName,
-						schemaProperty,
-					})
-				}
-
-				return isConstant || isImmutable || isImmutableByName
+			if (!schemaProperty) {
+				return isImmutableByName
 			}
 
-			return isImmutableByName
+			const isConstant = schemaProperty.const !== undefined
+			const isImmutable = isReadOnlyProperty(schemaProperty)
+			this.logImmutability(key, {
+				isConstant,
+				isImmutable,
+				isImmutableByName,
+				schemaProperty,
+			})
+
+			return isConstant || isImmutable || isImmutableByName
+		},
+
+		/**
+		 * Debug: log how a property's immutability was detected, in
+		 * development only.
+		 *
+		 * @param {string} key - The property key
+		 * @param {object} detection - The detection results
+		 * @return {void}
+		 */
+		logImmutability(key, detection) {
+			if (process.env.NODE_ENV === 'development') {
+				// eslint-disable-next-line no-console
+				console.log(`Property ${key} detection:`, detection)
+			}
 		},
 
 		/**
@@ -3181,22 +2903,100 @@ export default {
 		 */
 		getMarkdownContent(editorInstance) {
 			try {
-				if (
-					editorInstance
-					&& typeof editorInstance.getMarkdown === 'function'
-				) {
-					return editorInstance.getMarkdown()
-				}
-				if (editorInstance && typeof editorInstance.getHTML === 'function') {
-					return editorInstance.getHTML()
-				}
-				return typeof editorInstance === 'string' ? editorInstance : ''
+				return editorContent(editorInstance)
 			} catch (error) {
 				console.warn('Error getting content from markdown editor:', error)
 				return ''
 			}
 		},
 	},
+}
+
+/**
+ * Whether a schema's authorization has read rules: a non-empty `read` list.
+ *
+ * @param {object|undefined} auth The schema's authorization.
+ * @return {boolean} True when there are read rules.
+ */
+function hasReadRules(auth) {
+	return Boolean(
+		auth && auth.read && Array.isArray(auth.read) && auth.read.length !== 0,
+	)
+}
+
+/**
+ * Whether one read rule lets a user in `groups` read: a group name the user
+ * is in, an entry with match conditions whose group the user is in (only the
+ * group membership is checked), and any other entry.
+ *
+ * @param {string|object|null} entry The read rule.
+ * @param {Array<string>} groups The user's groups.
+ * @return {boolean} True when the rule allows reading.
+ */
+function readEntryAllows(entry, groups) {
+	if (typeof entry === 'string') {
+		return groups.includes(entry)
+	}
+	// Complex entry with match conditions — check group membership only
+	if (entry && typeof entry === 'object' && entry.group) {
+		return groups.includes(entry.group)
+	}
+	return true
+}
+
+/**
+ * Take every border, outline and shadow off an element.
+ *
+ * @param {HTMLElement} el The element.
+ * @return {void}
+ */
+function clearBorders(el) {
+	el.style.border = 'none'
+	el.style.borderWidth = '0'
+	el.style.borderStyle = 'none'
+	el.style.borderColor = 'transparent'
+	el.style.outline = 'none'
+	el.style.boxShadow = 'none'
+}
+
+/**
+ * A catalog's register ids as text.
+ *
+ * Catalog.registers arrives as a string array (`["1"]`) while `register.id`
+ * from OpenRegister is numeric — `.includes` uses strict equality so the raw
+ * check would drop every match and leave the modal stalled on the
+ * empty-state (WOO-527 followup).
+ *
+ * @param {object} catalog The catalog.
+ * @return {Array<string>} The register ids.
+ */
+function registerIdsOf(catalog) {
+	return (catalog.registers || []).map(String)
+}
+
+/**
+ * A register as an option of the register dropdown.
+ *
+ * @param {object} register The register.
+ * @return {{id: (string|number), label: string}} The option.
+ */
+function toRegisterOption(register) {
+	return {
+		id: register.id,
+		label: register.title,
+	}
+}
+
+/**
+ * The catalog with `catalogId` from the store's catalogs, matched as text.
+ *
+ * @param {string|number} catalogId The catalog id.
+ * @return {object|undefined} The catalog.
+ */
+function findCatalog(catalogId) {
+	return objectStore
+		.getCollection('catalog')
+		.results.find((catalog) => String(catalog.id) === String(catalogId))
 }
 </script>
 

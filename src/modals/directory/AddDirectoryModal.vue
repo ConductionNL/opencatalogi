@@ -246,36 +246,59 @@ const directoryUrl = ref(DEFAULT_DIRECTORY_URL)
 const syncResults = ref(null)
 
 /**
+ * Ask the server to sync the directory at `directoryUrl` and show the result.
  *
+ * @return {Promise<void>}
  */
 async function handleSync() {
 	loading.value = true
 	error.value = null
 	try {
-		// Admin-only `/api/listings/add` (WOO-513) — same syncDirectory() as the
-		// public `/api/directory` gossip endpoint, but requires an authed user.
-		const response = await axios.post(
-			generateUrl('/apps/opencatalogi/api/listings/add'),
-			{
-				url: directoryUrl.value,
-			},
-		)
-
+		const report = await requestDirectorySync()
 		success.value = true
-		// `/api/listings/add` returns the sync report bare; the `?? response.data`
-		// fallback is defensive dead-code kept for future shape regressions.
-		syncResults.value = response.data.data ?? response.data
+		syncResults.value = report
 	} catch (err) {
 		console.error('Error synchronizing directory:', err)
 		success.value = false
-		error.value =
-			err.response?.data?.error
-			|| err.response?.data?.message
-			|| err.message
-			|| 'Er is een fout opgetreden bij het synchroniseren'
+		error.value = syncErrorMessage(err)
 	} finally {
 		loading.value = false
 	}
+}
+
+/**
+ * Post the directory url to the sync endpoint.
+ *
+ * @return {Promise<object>} The sync report.
+ */
+async function requestDirectorySync() {
+	// Admin-only `/api/listings/add` (WOO-513) — same syncDirectory() as the
+	// public `/api/directory` gossip endpoint, but requires an authed user.
+	const response = await axios.post(
+		generateUrl('/apps/opencatalogi/api/listings/add'),
+		{
+			url: directoryUrl.value,
+		},
+	)
+	// `/api/listings/add` returns the sync report bare; the `?? response.data`
+	// fallback is defensive dead-code kept for future shape regressions.
+	return response.data.data ?? response.data
+}
+
+/**
+ * The message to show for a failed sync: the server's error, else its
+ * message, else the request error's message, else a fixed text.
+ *
+ * @param {object} err The request error.
+ * @return {string} The message.
+ */
+function syncErrorMessage(err) {
+	return (
+		err.response?.data?.error
+		|| err.response?.data?.message
+		|| err.message
+		|| 'Er is een fout opgetreden bij het synchroniseren'
+	)
 }
 
 /**
@@ -287,6 +310,16 @@ function closeModal() {
 	error.value = null
 	syncResults.value = null
 	directoryUrl.value = DEFAULT_DIRECTORY_URL
+}
+
+/** How a sync time is shown: Dutch date and time, down to the second. */
+const DATE_TIME_FORMAT = {
+	year: 'numeric',
+	month: '2-digit',
+	day: '2-digit',
+	hour: '2-digit',
+	minute: '2-digit',
+	second: '2-digit',
 }
 
 /**
@@ -338,14 +371,7 @@ export default {
 				const date = new Date(dateTime)
 				if (isNaN(date.getTime())) return 'Unknown'
 
-				return date.toLocaleString('nl-NL', {
-					year: 'numeric',
-					month: '2-digit',
-					day: '2-digit',
-					hour: '2-digit',
-					minute: '2-digit',
-					second: '2-digit',
-				})
+				return date.toLocaleString('nl-NL', DATE_TIME_FORMAT)
 			} catch (e) {
 				return 'Unknown'
 			}

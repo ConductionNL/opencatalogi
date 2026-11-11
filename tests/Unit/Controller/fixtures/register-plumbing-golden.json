@@ -2492,10 +2492,12 @@
         "log": [
             {
                 "StatusPageServiceInterface.setState": {
-                    "component": "",
-                    "state": "",
-                    "message": "m",
-                    "setBy": "alice"
+                    "change": {
+                        "component": "",
+                        "state": "",
+                        "message": "m",
+                        "setBy": "alice"
+                    }
                 }
             },
             {
@@ -2534,10 +2536,12 @@
         "log": [
             {
                 "StatusPageServiceInterface.setState": {
-                    "component": "",
-                    "state": "",
-                    "message": "m",
-                    "setBy": ""
+                    "change": {
+                        "component": "",
+                        "state": "",
+                        "message": "m",
+                        "setBy": ""
+                    }
                 }
             },
             {
@@ -2588,10 +2592,12 @@
         "log": [
             {
                 "StatusPageServiceInterface.setState": {
-                    "component": "",
-                    "state": "",
-                    "message": "m",
-                    "setBy": "alice"
+                    "change": {
+                        "component": "",
+                        "state": "",
+                        "message": "m",
+                        "setBy": "alice"
+                    }
                 }
             },
             {
@@ -2650,10 +2656,12 @@
         "log": [
             {
                 "StatusPageServiceInterface.setState": {
-                    "component": "",
-                    "state": "",
-                    "message": "m",
-                    "setBy": "alice"
+                    "change": {
+                        "component": "",
+                        "state": "",
+                        "message": "m",
+                        "setBy": "alice"
+                    }
                 }
             },
             {
@@ -2697,10 +2705,12 @@
         "log": [
             {
                 "StatusPageServiceInterface.setState": {
-                    "component": "",
-                    "state": "",
-                    "message": "m",
-                    "setBy": "alice"
+                    "change": {
+                        "component": "",
+                        "state": "",
+                        "message": "m",
+                        "setBy": "alice"
+                    }
                 }
             },
             {
@@ -2727,10 +2737,12 @@
         "log": [
             {
                 "StatusPageServiceInterface.setState": {
-                    "component": "",
-                    "state": "",
-                    "message": "m",
-                    "setBy": "alice"
+                    "change": {
+                        "component": "",
+                        "state": "",
+                        "message": "m",
+                        "setBy": "alice"
+                    }
                 }
             },
             {
@@ -2784,10 +2796,12 @@
         "log": [
             {
                 "StatusPageServiceInterface.setState": {
-                    "component": "",
-                    "state": "",
-                    "message": "m",
-                    "setBy": "alice"
+                    "change": {
+                        "component": "",
+                        "state": "",
+                        "message": "m",
+                        "setBy": "alice"
+                    }
                 }
             },
             {

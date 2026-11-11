@@ -24,6 +24,7 @@ import { CnThemePreview } from '@conduction/nextcloud-vue'
 import { translate as t } from '@nextcloud/l10n'
 import { NcEmptyContent } from '@nextcloud/vue'
 import Web from 'vue-material-design-icons/Web.vue'
+import { injectedObjectContext } from './objectContext.js'
 
 /**
  * ThemePreviewWidget — thin adapter that renders the library's CnThemePreview
@@ -85,12 +86,7 @@ export default {
 		 * @spec openspec/specs/content-management/spec.md#requirement-theme-management-ui-cms-038
 		 */
 		ctx() {
-			const inj =
-				this.cnObjectContext
-				&& (this.cnObjectContext.value || this.cnObjectContext)
-			const holder =
-				this.cnDetailObjectContext && this.cnDetailObjectContext.value
-			return inj || holder || {}
+			return injectedObjectContext(this)
 		},
 
 		/**

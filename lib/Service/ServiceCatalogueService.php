@@ -188,27 +188,9 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
 	 */
 	public function decideAvailability(array $entry, array $caseTypesById): array {
-		$binding = ($entry['formBinding'] ?? null);
-
-		if (is_array($binding) === false || $binding === []) {
-			return $this->markUnavailable(entry: $entry, reason: self::REASON_NO_BINDING);
-		}
-
-		$caseType = trim((string)($binding['caseType'] ?? ''));
-		$audience = trim((string)($binding['audience'] ?? ''));
-		$formName = trim((string)($binding['formName'] ?? ''));
-
-		if ($caseType === '' || $audience === '' || $formName === '') {
-			return $this->markUnavailable(entry: $entry, reason: self::REASON_INCOMPLETE_BINDING);
-		}
-
-		if (array_key_exists($caseType, $caseTypesById) === false) {
-			return $this->markUnavailable(entry: $entry, reason: self::REASON_UNKNOWN_CASE_TYPE);
-		}
-
-		$definition = $caseTypesById[$caseType];
-		if (($definition['published'] ?? null) === false) {
-			return $this->markUnavailable(entry: $entry, reason: self::REASON_UNPUBLISHED_CASE_TYPE);
+		$reason = $this->unavailableReason(binding: ($entry['formBinding'] ?? null), caseTypesById: $caseTypesById);
+		if ($reason !== null) {
+			return $this->markUnavailable(entry: $entry, reason: $reason);
 		}
 
 		$entry['available'] = true;
@@ -216,6 +198,63 @@ class ServiceCatalogueService implements ServiceCatalogueServiceInterface {
 
 		return $entry;
 	}//end decideAvailability()
+
+	/**
+	 * Why an entry with this form binding cannot be requested, if it cannot.
+	 *
+	 * @param mixed $binding The entry's form binding.
+	 * @param array<string, array<string, mixed>> $caseTypesById Published case types keyed by identifier.
+	 *
+	 * @return string|null The reason constant, or null when it is available.
+	 */
+	private function unavailableReason(mixed $binding, array $caseTypesById): ?string {
+		if (is_array($binding) === false || $binding === []) {
+			return self::REASON_NO_BINDING;
+		}
+
+		if ($this->isIncompleteBinding(binding: $binding) === true) {
+			return self::REASON_INCOMPLETE_BINDING;
+		}
+
+		return $this->caseTypeReason(caseType: trim((string)($binding['caseType'] ?? '')), caseTypesById: $caseTypesById);
+	}//end unavailableReason()
+
+	/**
+	 * Whether a form binding lacks its case type, audience or form name.
+	 *
+	 * @param array<string, mixed> $binding The form binding.
+	 *
+	 * @return bool
+	 */
+	private function isIncompleteBinding(array $binding): bool {
+		foreach (['caseType', 'audience', 'formName'] as $field) {
+			if (trim((string)($binding[$field] ?? '')) === '') {
+				return true;
+			}
+		}
+
+		return false;
+	}//end isIncompleteBinding()
+
+	/**
+	 * Why a bound case type cannot be requested: unknown, or not published.
+	 *
+	 * @param string $caseType The bound case type.
+	 * @param array<string, array<string, mixed>> $caseTypesById Published case types keyed by identifier.
+	 *
+	 * @return string|null The reason constant, or null when it can be requested.
+	 */
+	private function caseTypeReason(string $caseType, array $caseTypesById): ?string {
+		if (array_key_exists($caseType, $caseTypesById) === false) {
+			return self::REASON_UNKNOWN_CASE_TYPE;
+		}
+
+		if (($caseTypesById[$caseType]['published'] ?? null) === false) {
+			return self::REASON_UNPUBLISHED_CASE_TYPE;
+		}
+
+		return null;
+	}//end caseTypeReason()
 
 	/**
 	 * Mark an entry unavailable with its reason.

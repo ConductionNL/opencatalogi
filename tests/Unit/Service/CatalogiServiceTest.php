@@ -349,7 +349,7 @@ class CatalogiServiceTest extends TestCase {
 		$cachedData = ['id' => '1', 'slug' => 'test-catalog', 'title' => 'Test'];
 
 		$this->cache->method('get')
-			->with('catalog_slug_test-catalog')
+			->with('catalog_public_slug_test-catalog')
 			->willReturn($cachedData);
 
 		$result = $this->service->getCatalogBySlug('test-catalog');
@@ -361,7 +361,7 @@ class CatalogiServiceTest extends TestCase {
 		$catalogData = ['id' => '2', 'slug' => 'my-catalog', 'title' => 'My Catalog'];
 
 		$this->cache->method('get')
-			->with('catalog_slug_my-catalog')
+			->with('catalog_public_slug_my-catalog')
 			->willReturn(null);
 
 		$this->config->method('getValueString')
@@ -380,7 +380,7 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->cache->expects($this->once())
 			->method('set')
-			->with('catalog_slug_my-catalog', $catalogData, 3600);
+			->with('catalog_public_slug_my-catalog', $catalogData, 3600);
 
 		$this->injectObjectService($objectService);
 
@@ -458,13 +458,103 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertNull($result);
 	}//end testGetCatalogBySlugExceptionReturnsNull()
 
+	public function testGetCatalogBySlugDoesNotServeAnAnonymousCallerWhatASignedInCallerLoaded(): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		// RBAC admits the signed-in caller (first search) and refuses the anonymous one.
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->willReturnOnConsecutiveCalls([$this->createMockCatalogObject(['slug' => 'draft'])], []);
+		$this->injectObjectService($objectService);
+
+		$cacheFactory = $this->arrayBackedCacheFactory();
+		$signedIn = $this->createMock(IUserSession::class);
+		$signedIn->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$this->assertSame(['slug' => 'draft'], $this->catalogiServiceFor($cacheFactory, $signedIn)->getCatalogBySlug('draft'));
+		$this->assertNull($this->catalogiServiceFor($cacheFactory, $this->userSession)->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugDoesNotServeAnAnonymousCallerWhatASignedInCallerLoaded()
+
+	public function testGetCatalogBySlugDoesNotServeASignedInCallerWhatAnotherSignedInCallerLoaded(): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->willReturnOnConsecutiveCalls([$this->createMockCatalogObject(['slug' => 'draft'])], []);
+		$this->injectObjectService($objectService);
+
+		$cacheFactory = $this->arrayBackedCacheFactory();
+		$admin = $this->createMock(IUserSession::class);
+		$admin->method('getUser')->willReturn($this->createMock(IUser::class));
+		$reader = $this->createMock(IUserSession::class);
+		$reader->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$this->assertSame(['slug' => 'draft'], $this->catalogiServiceFor($cacheFactory, $admin)->getCatalogBySlug('draft'));
+		$this->assertNull($this->catalogiServiceFor($cacheFactory, $reader)->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugDoesNotServeASignedInCallerWhatAnotherSignedInCallerLoaded()
+
+	/**
+	 * A cache factory whose distributed cache keeps values in memory, shared by every
+	 * service built from it.
+	 *
+	 * @return ICacheFactory&MockObject
+	 */
+	private function arrayBackedCacheFactory(): ICacheFactory {
+		$store = new \ArrayObject();
+		$cache = $this->createMock(ICache::class);
+		$cache->method('get')->willReturnCallback(static fn (string $key) => $store[$key] ?? null);
+		$cache->method('set')->willReturnCallback(
+			static function (string $key, $value) use ($store): bool {
+				$store[$key] = $value;
+				return true;
+			}
+		);
+
+		$factory = $this->createMock(ICacheFactory::class);
+		$factory->method('createDistributed')->willReturn($cache);
+
+		return $factory;
+	}//end arrayBackedCacheFactory()
+
+	/**
+	 * Build a CatalogiService on the shared mocks with its own cache factory and session.
+	 *
+	 * @param ICacheFactory $cacheFactory The cache factory to use.
+	 * @param IUserSession  $userSession  The caller's session.
+	 *
+	 * @return CatalogiService
+	 */
+	private function catalogiServiceFor(ICacheFactory $cacheFactory, IUserSession $userSession): CatalogiService {
+		return new CatalogiService(
+			$this->config,
+			$this->request,
+			$this->container,
+			$this->appManager,
+			$cacheFactory,
+			$this->logger,
+			$userSession,
+		);
+	}//end catalogiServiceFor()
+
 	// ──────────────────────────────────────────────────────────
 	// invalidateCatalogCache
 	// ──────────────────────────────────────────────────────────
 	public function testInvalidateCatalogCache(): void {
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_test-slug');
+			->with('catalog_public_slug_test-slug');
 
 		$this->service->invalidateCatalogCache('test-slug');
 	}//end testInvalidateCatalogCache()
@@ -575,7 +665,7 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_found-slug');
+			->with('catalog_public_slug_found-slug');
 
 		$this->service->invalidateCatalogCacheById(42);
 	}//end testInvalidateCatalogCacheByIdSuccess()
@@ -633,7 +723,7 @@ class CatalogiServiceTest extends TestCase {
 		// warmupCatalogCache invalidates, then calls getCatalogBySlug.
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_warm-slug');
+			->with('catalog_public_slug_warm-slug');
 
 		// getCatalogBySlug will try cache first (returns null after invalidation),
 		// then query the DB.
@@ -689,7 +779,7 @@ class CatalogiServiceTest extends TestCase {
 		// Should call invalidateCatalogCache (remove) then getCatalogBySlug.
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_warmup-by-id');
+			->with('catalog_public_slug_warmup-by-id');
 
 		$this->cache->method('get')
 			->willReturn(null);

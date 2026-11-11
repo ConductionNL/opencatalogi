@@ -60,6 +60,37 @@ export function createZodErrorHandler(result) {
 		// properties
 		success: result.success,
 
+		...errorViews(result),
+	}
+}
+
+/**
+ * Fresh, empty error views, for a result without an error.
+ *
+ * @return {object} The empty views.
+ */
+function emptyErrorViews() {
+	return {
+		flatErrorMessages: [],
+		groupedErrorsByPath: {},
+		nestedFieldErrors: {},
+		fieldSpecificErrors: [],
+		errorSummary: {},
+	}
+}
+
+/**
+ * The error views of a parse result; all empty when it has no error.
+ *
+ * @param {object} result The safeParse result.
+ * @return {object} The flat, grouped, nested, field-specific and summary views.
+ */
+function errorViews(result) {
+	if (!result?.error) {
+		return emptyErrorViews()
+	}
+	const issues = result.error.issues
+	return {
 		/**
 		 * A simple list of flattened errors.
 		 *
@@ -74,9 +105,7 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {string[]}
 		 */
-		flatErrorMessages: result?.error
-			? getFlatErrorMessages(result.error.issues)
-			: [],
+		flatErrorMessages: getFlatErrorMessages(issues),
 
 		/**
 		 * A grouped list of errors by path.
@@ -92,9 +121,7 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		groupedErrorsByPath: result?.error
-			? getGroupedErrorsByPath(result.error.issues)
-			: {},
+		groupedErrorsByPath: getGroupedErrorsByPath(issues),
 
 		/**
 		 * A nested list of errors by path.
@@ -114,9 +141,7 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		nestedFieldErrors: result?.error
-			? getNestedFieldErrors(result.error.issues)
-			: {},
+		nestedFieldErrors: getNestedFieldErrors(issues),
 
 		/**
 		 * A list of errors with path, message, code and type.
@@ -141,9 +166,7 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		fieldSpecificErrors: result?.error
-			? getFieldSpecificErrors(result.error.issues)
-			: [],
+		fieldSpecificErrors: getFieldSpecificErrors(issues),
 
 		/**
 		 * A summary of the errors.
@@ -165,7 +188,7 @@ export function createZodErrorHandler(result) {
 		 *
 		 * @type {object}
 		 */
-		errorSummary: result?.error ? getErrorSummary(result.error.issues) : {},
+		errorSummary: getErrorSummary(issues),
 	}
 }
 
