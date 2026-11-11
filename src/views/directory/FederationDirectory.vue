@@ -25,6 +25,25 @@ import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { listingSyncStatus } from '../../services/listingSyncStatus.js'
 import { navigationStore } from '../../store/store.js'
 
+/**
+ * Fetch one page of peer listings.
+ *
+ * @param {{page: number, limit: number}} pageRef - The page and its size
+ * @return {Promise<object>} The answer
+ * @throws {Error} With the HTTP status when the answer is not ok
+ */
+async function fetchListingsPage({ page, limit }) {
+	const base = generateUrl('/apps/opencatalogi/api/listings')
+	const url = `${base}?_page=${page}&_limit=${limit}`
+	const res = await fetch(url, {
+		headers: { Accept: 'application/json' },
+	})
+	if (!res.ok) {
+		throw new Error(`HTTP ${res.status}`)
+	}
+	return res.json()
+}
+
 export default {
 	name: 'FederationDirectory',
 	components: {
@@ -120,29 +139,34 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const base = generateUrl('/apps/opencatalogi/api/listings')
-				const url = `${base}?_page=${this.page}&_limit=${this.limit}`
-				const res = await fetch(url, {
-					headers: { Accept: 'application/json' },
+				const data = await fetchListingsPage({
+					page: this.page,
+					limit: this.limit,
 				})
-				if (!res.ok) {
-					throw new Error(`HTTP ${res.status}`)
-				}
-				const data = await res.json()
-				this.listings = data.results || []
-				// The API already returns page/pages/total/limit; keep them
-				// in sync so CnPagination reflects the server-side reality
-				// (and so a stale page number after a delete doesn't linger).
-				this.page = data.page || 1
-				this.pages = data.pages || 1
-				this.total = data.total || 0
-				this.limit = data.limit || 20
+				this.applyListingsPage(data)
 			} catch (e) {
 				this.error = e.message || String(e)
 				this.listings = []
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Take a listings page answer: its listings and its pagination. The
+		 * API already returns page/pages/total/limit; keep them in sync so
+		 * CnPagination reflects the server-side reality (and so a stale page
+		 * number after a delete doesn't linger).
+		 *
+		 * @param {object} data - The answer
+		 * @return {void}
+		 */
+		applyListingsPage(data) {
+			this.listings = data.results || []
+			this.page = data.page || 1
+			this.pages = data.pages || 1
+			this.total = data.total || 0
+			this.limit = data.limit || 20
 		},
 
 		/**
