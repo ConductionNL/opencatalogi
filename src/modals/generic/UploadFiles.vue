@@ -1305,8 +1305,6 @@ export default {
 				throw Error('No reset function to call')
 			}
 
-			const formData = new FormData()
-
 			// Flatten and format the files and tags
 			if (isRef(files)) files = files.value
 
@@ -1315,19 +1313,40 @@ export default {
 				throw new Error('Files is not an array')
 			}
 
+			return await this.postAttachments(this.attachmentFormData(files, share))
+		},
+
+		/**
+		 * The multipart form of an upload: every file with its labels, and
+		 * the share flag.
+		 *
+		 * @param {Array<File>} files - The files
+		 * @param {boolean} share - Whether to publish them right away
+		 * @return {FormData} The form
+		 */
+		attachmentFormData(files, share) {
+			const formData = new FormData()
 			files.forEach((file) => {
 				formData.append('files[]', file)
 				if (file.tags?.length > 0) {
 					formData.append('tags[]', file.tags.join(','))
 				}
 			})
-
 			formData.append('share', share.toString())
+			return formData
+		},
 
+		/**
+		 * POST a multipart attachment form to the active publication.
+		 *
+		 * @param {FormData} formData - The form
+		 * @return {Promise<object>} The response
+		 */
+		postAttachments(formData) {
 			const publication = objectStore.getActiveObject('publication')
 			const { registerId, schemaId } = this.getRegisterSchemaIds(publication)
 
-			return await axios
+			return axios
 				.post(
 					`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${publication.id}/filesMultipart`,
 					formData,
