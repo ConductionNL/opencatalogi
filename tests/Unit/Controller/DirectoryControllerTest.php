@@ -273,4 +273,28 @@ class DirectoryControllerTest extends TestCase {
 		);
 		$this->assertSame('*', $response->getHeaders()['Access-Control-Allow-Origin']);
 	}
+	/**
+	 * A failed sync is logged server-side: an unreachable peer as a warning
+	 * with the upstream error, anything else as an error with its trace.
+	 */
+	public function testUpdateLogsWhyASyncFailed(): void {
+		$this->request->method('getParam')->with('directory')->willReturn('https://example.com/dir');
+		$this->request->method('getHeader')->with('Origin')->willReturn('');
+		$failure = new \RuntimeException('Unexpected error');
+		$this->directoryService->method('syncDirectory')->willReturnOnConsecutiveCalls(
+			$this->throwException(new \GuzzleHttp\Exception\TransferException('internal body from 10.0.0.5')),
+			$this->throwException($failure)
+		);
+		$this->logger->expects($this->once())->method('warning')->with(
+			'[DirectoryController::update] Upstream fetch failed',
+			['error' => 'internal body from 10.0.0.5']
+		);
+		$this->logger->expects($this->once())->method('error')->with(
+			'[DirectoryController::update] Directory synchronization failed',
+			['error' => 'Unexpected error', 'trace' => $failure->getTraceAsString()]
+		);
+
+		$this->assertSame(502, $this->controller->update()->getStatus());
+		$this->assertSame(500, $this->controller->update()->getStatus());
+	}
 }

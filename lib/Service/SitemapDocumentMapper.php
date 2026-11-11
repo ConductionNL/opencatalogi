@@ -93,23 +93,13 @@ class SitemapDocumentMapper {
 	public function map(array $publication, array $file, array &$violations = []): array {
 		$loc = ($file['downloadUrl'] ?? '');
 		$diwoo = $this->diwooCore(publication: $publication, file: $file);
-		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
-			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
-		}
-
-		if ($diwoo['diwoo:publisher']['#text'] === '') {
-			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no name');
-		}
-
 		// Each optional axis is its element, or null with the violation that omits it.
-		foreach ($this->optionalAxes(publication: $publication, file: $file) as $key => $element) {
-			if ($element !== null) {
-				$diwoo[$key] = $element;
-				continue;
-			}
-
-			$this->addViolation(violations: $violations, loc: $loc, axis: self::OPTIONAL_AXES[$key][0], reason: self::OPTIONAL_AXES[$key][1]);
+		$elements = $this->optionalAxes(publication: $publication, file: $file);
+		foreach ($this->axisGaps(diwoo: $diwoo, elements: $elements) as $gap) {
+			$this->addViolation(violations: $violations, loc: $loc, axis: $gap[0], reason: $gap[1]);
 		}
+
+		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null));
 
 		return [
 			'loc' => $loc,
@@ -117,6 +107,33 @@ class SitemapDocumentMapper {
 			'diwoo:Document' => ['diwoo:DiWoo' => $diwoo],
 		];
 	}//end map()
+
+	/**
+	 * What the document is missing, as axis and reason pairs: the publisher's
+	 * gaps first, then each optional axis that resolved to nothing, in order.
+	 *
+	 * @param array<string, mixed> $diwoo The core DiWoo element.
+	 * @param array<string, array|null> $elements The optional axes' elements, null when omitted.
+	 *
+	 * @return array<int, array{0: string, 1: string}> The gaps.
+	 */
+	private function axisGaps(array $diwoo, array $elements): array {
+		$gaps = [];
+		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
+			$gaps[] = ['publisher', 'organisation has no TOOI identifier'];
+		}
+
+		if ($diwoo['diwoo:publisher']['#text'] === '') {
+			$gaps[] = ['publisher', 'organisation has no name'];
+		}
+
+		foreach (array_keys(array_filter($elements, static fn (?array $element): bool => $element === null)) as $key) {
+			$gaps[] = self::OPTIONAL_AXES[$key];
+		}
+
+		return $gaps;
+
+	}//end axisGaps()
 
 	/**
 	 * The DiWoo creation date, publisher and format of one file's document.

@@ -428,7 +428,7 @@ describe('ObjectStore', () => {
 			fetch.mockRejectedValueOnce(new Error('Network error'))
 
 			await expect(
-				store.fetchRelatedData('character', '1', 'logs'),
+				store.fetchRelatedData({ type: 'character', id: '1', dataType: 'logs' }),
 			).rejects.toThrow()
 			// The failure is recorded against the TYPE, not a per-request composite
 			// key: the catch does `setState(type, { error })`. Asserting on

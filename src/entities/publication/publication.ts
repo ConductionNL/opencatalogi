@@ -4,21 +4,12 @@ import type { TCatalogi } from '../'
 import type { TPublication } from './publication.types'
 
 import { z } from 'zod'
+import { fillDefaults, objectOr } from '../fillDefaults.js'
 import { languageSchema } from '../languageSchema.js'
+import { publicationStatusSchema } from '../publicationStatus.js'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
-
-/**
- * The value when it is a truthy non-array, otherwise the fallback.
- *
- * @param value - The value from the publication data
- * @param fallback - What to use instead
- * @return The value or the fallback
- */
-function objectOr<T>(value: unknown, fallback: T): T {
-	return ((!Array.isArray(value) && value) || fallback) as T
-}
 
 /**
  * Read the featured flag. The backend can send true and false as "1" and ""
@@ -33,6 +24,25 @@ function featuredFlag(value: unknown): boolean {
 		|| (typeof value === 'string' && !!parseInt(value))
 		|| false
 	)
+}
+
+/**
+ * The publication's text and status fields, with the value each takes when
+ * the data leaves it out or sends a falsy one. The featured flag holds its
+ * place in the field order here and is read by featuredFlag().
+ */
+const PUBLICATION_TEXT_DEFAULTS = {
+	title: '',
+	summary: '',
+	description: '',
+	reference: '',
+	image: '',
+	organization: '',
+	category: '',
+	portal: '',
+	featured: false,
+	source: '',
+	status: 'Concept' as TStatus,
 }
 
 /**
@@ -111,17 +121,8 @@ export class Publication implements TPublication {
 	 */
 	private hydrateText(data: TPublication) {
 		this.id = data.id?.toString()
-		this.title = data.title || ''
-		this.summary = data.summary || ''
-		this.description = data.description || ''
-		this.reference = data.reference || ''
-		this.image = data.image || ''
-		this.organization = data.organization || ''
-		this.category = data.category || ''
-		this.portal = data.portal || ''
+		Object.assign(this, fillDefaults(data, PUBLICATION_TEXT_DEFAULTS))
 		this.featured = featuredFlag(data.featured)
-		this.source = data.source || ''
-		this.status = (data.status as TStatus) || 'Concept'
 	}
 
 	/**
@@ -177,14 +178,7 @@ export class Publication implements TPublication {
 			featured: z.boolean(),
 			source: z.string(),
 			organization: z.string(),
-			status: z.enum([
-				'Concept',
-				'Published',
-				'Withdrawn',
-				'Archived',
-				'Revised',
-				'Rejected',
-			]),
+			status: publicationStatusSchema(),
 			themes: z.array(z.union([z.string(), z.number()])),
 			data: z.record(z.string(), z.any()),
 			anonymization: z.object({

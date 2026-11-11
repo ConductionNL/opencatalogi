@@ -273,11 +273,11 @@ class QualityService implements QualityServiceInterface {
 	 */
 	private function distributionScore(array $distribution): int {
 		$score = 0;
-		if (($distribution['dct:format'] ?? null) !== null && $distribution['dct:format'] !== []) {
+		if ($this->hasFormat(distribution: $distribution) === true) {
 			$score += 40;
 		}
 
-		if (($distribution['dcat:mediaType'] ?? null) !== null && $distribution['dcat:mediaType'] !== '') {
+		if ($this->hasMediaType(distribution: $distribution) === true) {
 			$score += 30;
 		}
 
@@ -287,6 +287,28 @@ class QualityService implements QualityServiceInterface {
 
 		return $score;
 	}//end distributionScore()
+
+	/**
+	 * Whether a distribution names a format: set and not an empty list.
+	 *
+	 * @param array<string, mixed> $distribution The distribution.
+	 *
+	 * @return bool
+	 */
+	private function hasFormat(array $distribution): bool {
+		return ($distribution['dct:format'] ?? null) !== null && $distribution['dct:format'] !== [];
+	}//end hasFormat()
+
+	/**
+	 * Whether a distribution names a media type: set and not empty text.
+	 *
+	 * @param array<string, mixed> $distribution The distribution.
+	 *
+	 * @return bool
+	 */
+	private function hasMediaType(array $distribution): bool {
+		return ($distribution['dcat:mediaType'] ?? null) !== null && $distribution['dcat:mediaType'] !== '';
+	}//end hasMediaType()
 
 	/**
 	 * The weighted mean of the dimension scores under the configured weights; 0 when every weight is 0.

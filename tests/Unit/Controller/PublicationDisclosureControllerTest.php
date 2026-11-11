@@ -115,4 +115,57 @@ class PublicationDisclosureControllerTest extends TestCase {
 
 	}//end testAnUndeliveredAnnouncementAnswers502AndNamesTheChannels()
 
+	/**
+	 * The whole answer: every notice, each delivery, each unreached channel by
+	 * name and why, and 200 only when every channel was reached.
+	 */
+	public function testTheAnnouncementAnswersWhole(): void {
+		$this->indexService->method('composeNotices')->willReturn(
+			[['channel' => 'national-publication-platform', 'n' => 1], ['n' => 2], ['channel' => 'local-channel', 'n' => 3]]
+		);
+		$this->indexService->method('deliver')->willReturnCallback(
+			static function (array $notice): array {
+				if ($notice['n'] === 2) {
+					throw new IndexUnreachableException('no gateway');
+				}
+
+				return ['delivered' => $notice['n']];
+			}
+		);
+		$this->withParams(['decision' => ['id' => 'b1']]);
+
+		$response = $this->controller->announce();
+
+		$this->assertSame(Http::STATUS_BAD_GATEWAY, $response->getStatus());
+		$this->assertSame(
+			[
+				'notices' => [['channel' => 'national-publication-platform', 'n' => 1], ['n' => 2], ['channel' => 'local-channel', 'n' => 3]],
+				'delivered' => [['delivered' => 1], ['delivered' => 3]],
+				'unreachable' => [['channel' => '', 'reason' => 'no gateway']],
+				'complete' => false,
+			],
+			$response->getData()
+		);
+
+	}//end testTheAnnouncementAnswersWhole()
+
+	/**
+	 * Every channel reached answers 200, complete; no decision answers 400.
+	 */
+	public function testACompleteAnnouncementAnswers200AndAnEmptyDecision400(): void {
+		$this->indexService->method('composeNotices')->willReturn([['channel' => 'local-channel']]);
+		$this->indexService->method('deliver')->willReturn(['ok' => true]);
+		$this->withParams(['decision' => ['id' => 'b1']]);
+
+		$response = $this->controller->announce();
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['notices' => [['channel' => 'local-channel']], 'delivered' => [['ok' => true]], 'unreachable' => [], 'complete' => true], $response->getData());
+
+		$this->setUp();
+		$this->withParams(['decision' => []]);
+		$empty = $this->controller->announce();
+		$this->assertSame([Http::STATUS_BAD_REQUEST, ['error' => 'missing-decision']], [$empty->getStatus(), $empty->getData()]);
+
+	}//end testACompleteAnnouncementAnswers200AndAnEmptyDecision400()
+
 }//end class

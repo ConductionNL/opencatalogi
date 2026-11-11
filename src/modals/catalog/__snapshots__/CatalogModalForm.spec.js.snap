@@ -1,0 +1,353 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`CatalogModal form adds the catalog without an id, then resets and closes after two seconds 1`] = `
+[
+  [
+    "catalog",
+    Catalogi {
+      "description": "",
+      "filters": {},
+      "hasOoapi": false,
+      "hasWooSitemap": false,
+      "image": "",
+      "listed": true,
+      "organization": "org-1",
+      "registers": [
+        1,
+      ],
+      "schemas": [
+        10,
+      ],
+      "showWithheld": false,
+      "slug": "woo",
+      "status": "beta",
+      "summary": "Woo documents",
+      "title": "Woo",
+    },
+  ],
+]
+`;
+
+exports[`CatalogModal form adds the catalog without an id, then resets and closes after two seconds 2`] = `
+[
+  [
+    [
+      false,
+    ],
+  ],
+  [
+    [
+      "catalog",
+      {
+        "error": null,
+        "success": null,
+      },
+    ],
+  ],
+  {
+    "catalogi": {
+      "description": "",
+      "filters": {},
+      "hasOoapi": false,
+      "hasWooSitemap": false,
+      "listed": false,
+      "registers": [],
+      "schemas": [],
+      "showWithheld": false,
+      "slug": "",
+      "staffAccess": null,
+      "status": {
+        "id": "development",
+        "label": "Development",
+      },
+      "summary": "",
+      "title": "",
+    },
+    "hasUpdated": false,
+    "selectedOrganization": null,
+    "selectedRegisters": [],
+    "selectedSchemas": [],
+  },
+]
+`;
+
+exports[`CatalogModal form does not fill itself while another modal is open or when adding 1`] = `
+[
+  {
+    "catalogi": {
+      "description": "",
+      "filters": {},
+      "hasOoapi": false,
+      "hasWooSitemap": false,
+      "listed": false,
+      "registers": [],
+      "schemas": [],
+      "showWithheld": false,
+      "slug": "",
+      "staffAccess": null,
+      "status": {
+        "id": "development",
+        "label": "Development",
+      },
+      "summary": "",
+      "title": "",
+    },
+    "hasUpdated": false,
+    "selectedOrganization": null,
+    "selectedRegisters": [],
+    "selectedSchemas": [],
+  },
+  {
+    "catalogi": {
+      "description": "",
+      "filters": {},
+      "hasOoapi": false,
+      "hasWooSitemap": false,
+      "listed": false,
+      "registers": [],
+      "schemas": [],
+      "showWithheld": false,
+      "slug": "",
+      "staffAccess": null,
+      "status": {
+        "id": "development",
+        "label": "Development",
+      },
+      "summary": "",
+      "title": "",
+    },
+    "hasUpdated": true,
+    "selectedOrganization": null,
+    "selectedRegisters": [],
+    "selectedSchemas": [],
+  },
+]
+`;
+
+exports[`CatalogModal form fills itself once from the active catalog and saves it as an edit 1`] = `
+[
+  {
+    "catalogi": {
+      "filters": {},
+      "id": "cat-1",
+      "listed": true,
+      "organization": "org-1",
+      "registers": [
+        2,
+        9,
+      ],
+      "schemas": [
+        12,
+      ],
+      "slug": "bestaand",
+      "status": {
+        "id": "stable",
+        "label": "Stable",
+      },
+      "title": "Bestaand",
+    },
+    "hasUpdated": true,
+    "selectedOrganization": {
+      "id": "org-1",
+      "label": undefined,
+    },
+    "selectedRegisters": [
+      {
+        "id": 2,
+        "label": "Register B",
+      },
+      {
+        "id": 9,
+        "label": 9,
+      },
+    ],
+    "selectedSchemas": [
+      {
+        "id": 12,
+        "label": "Twelve",
+      },
+    ],
+  },
+  {
+    "catalogi": {
+      "filters": {},
+      "id": "cat-1",
+      "listed": true,
+      "organization": "org-1",
+      "registers": [
+        2,
+        9,
+      ],
+      "schemas": [
+        12,
+      ],
+      "slug": "bestaand",
+      "status": {
+        "id": "stable",
+        "label": "Stable",
+      },
+      "title": "Changed",
+    },
+    "hasUpdated": true,
+    "selectedOrganization": {
+      "id": "org-1",
+      "label": undefined,
+    },
+    "selectedRegisters": [
+      {
+        "id": 2,
+        "label": "Register B",
+      },
+      {
+        "id": 9,
+        "label": 9,
+      },
+    ],
+    "selectedSchemas": [
+      {
+        "id": 12,
+        "label": "Twelve",
+      },
+    ],
+  },
+]
+`;
+
+exports[`CatalogModal form fills itself once from the active catalog and saves it as an edit 2`] = `
+[
+  [
+    "catalog",
+    "cat-1",
+    Catalogi {
+      "description": "",
+      "filters": {},
+      "hasOoapi": false,
+      "hasWooSitemap": false,
+      "id": "cat-1",
+      "image": "",
+      "listed": true,
+      "organization": "org-1",
+      "registers": [
+        2,
+        9,
+      ],
+      "schemas": [
+        12,
+      ],
+      "showWithheld": false,
+      "slug": "bestaand",
+      "status": "stable",
+      "summary": "",
+      "title": "Changed",
+    },
+  ],
+]
+`;
+
+exports[`CatalogModal form fills itself once from the active catalog and saves it as an edit 3`] = `
+[
+  [
+    false,
+  ],
+]
+`;
+
+exports[`CatalogModal form lists a schema two selected registers share once 1`] = `
+[
+  [
+    {
+      "id": 11,
+      "label": "Eleven (Register A)",
+    },
+    {
+      "id": 10,
+      "label": "Ten (Register A)",
+    },
+    {
+      "id": 12,
+      "label": "Twelve (Register B)",
+    },
+  ],
+  [
+    {
+      "id": 10,
+      "label": "Ten (Register A)",
+    },
+    {
+      "id": 12,
+      "label": "Twelve (Register B)",
+    },
+  ],
+  [
+    {
+      "id": "org-1",
+      "label": "Gemeente",
+    },
+  ],
+  [
+    {
+      "id": 1,
+      "label": "Register A",
+    },
+    {
+      "id": 2,
+      "label": "Register B",
+    },
+  ],
+]
+`;
+
+exports[`CatalogModal form starts empty and invalid 1`] = `
+[
+  {
+    "catalogi": {
+      "description": "",
+      "filters": {},
+      "hasOoapi": false,
+      "hasWooSitemap": false,
+      "listed": false,
+      "registers": [],
+      "schemas": [],
+      "showWithheld": false,
+      "slug": "",
+      "staffAccess": null,
+      "status": {
+        "id": "development",
+        "label": "Development",
+      },
+      "summary": "",
+      "title": "",
+    },
+    "hasUpdated": false,
+    "selectedOrganization": null,
+    "selectedRegisters": [],
+    "selectedSchemas": [],
+  },
+  {
+    "errorMessages": [
+      "title: is verplicht",
+      "registers: is verplicht",
+      "schemas: is verplicht",
+      "slug: is verplicht",
+      "slug: moet alleen kleine letters, cijfers en koppeltekens bevatten",
+    ],
+    "fieldErrors": {},
+    "success": false,
+  },
+]
+`;
+
+exports[`CatalogModal form validates a filled form, with the status as an option or as text 1`] = `
+[
+  {
+    "errorMessages": [],
+    "fieldErrors": {},
+    "success": true,
+  },
+  {
+    "errorMessages": [],
+    "fieldErrors": {},
+    "success": true,
+  },
+]
+`;

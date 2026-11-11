@@ -104,7 +104,6 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -115,6 +114,24 @@ import {
 	NcNoteCard,
 } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
+import { configuredObjectsUrl } from '../configuredObjects.js'
+
+/**
+ * The case type definition with an identifier, or null.
+ *
+ * @param {string} identifier The case type identifier.
+ * @return {Promise<object|null>} The definition.
+ */
+async function findCaseTypeDefinition(identifier) {
+	const { data: found } = await axios.get(
+		configuredObjectsUrl({
+			register: 'service_catalogue_register',
+			schema: 'case_type_definition_schema',
+		}),
+		{ params: { identifier, _limit: 1 } },
+	)
+	return found?.results?.[0] ?? null
+}
 
 /**
  * CaseTypeResyncDialog: resynchronise the case type a catalogue entry starts
@@ -223,41 +240,35 @@ export default {
 				return
 			}
 			try {
-				const { data: found } = await axios.get(
-					generateUrl(
-						'/apps/openregister/api/objects/{register}/{schema}',
-						{
-							register: loadState(
-								'opencatalogi',
-								'service_catalogue_register',
-								'',
-							),
-							schema: loadState(
-								'opencatalogi',
-								'case_type_definition_schema',
-								'',
-							),
-						},
-					),
-					{ params: { identifier, _limit: 1 } },
-				)
-				this.definition = found?.results?.[0] ?? null
+				this.definition = await findCaseTypeDefinition(identifier)
 				if (!this.definition?.id) {
 					this.state = 'no-case-type'
 					return
 				}
 				const { data: diff } = await axios.get(this.resyncUrl())
-				this.changes = Array.isArray(diff?.changes) ? diff.changes : []
-				this.choices = Object.fromEntries(
-					this.changes.map((change) => [
-						change.property,
-						change.locallyChanged ? 'keep' : 'take',
-					]),
-				)
+				this.takeChanges(diff)
 				this.state = 'ready'
 			} catch (error) {
 				this.fail(error)
 			}
+		},
+
+		/**
+		 * Show the properties a resync would change, each set to take the
+		 * source's value unless it was changed here.
+		 *
+		 * @param {object} diff The resync endpoint's answer.
+		 * @return {void}
+		 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-a-case-type-is-resynchronised-property-by-property-sca-002
+		 */
+		takeChanges(diff) {
+			this.changes = Array.isArray(diff?.changes) ? diff.changes : []
+			this.choices = Object.fromEntries(
+				this.changes.map((change) => [
+					change.property,
+					change.locallyChanged ? 'keep' : 'take',
+				]),
+			)
 		},
 
 		/**

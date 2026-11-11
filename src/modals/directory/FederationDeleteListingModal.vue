@@ -7,11 +7,11 @@
 // src/modals/menuItem/DeleteMenuItemModal.vue.
 
 import { translate as t } from '@nextcloud/l10n'
-import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcLoadingIcon, NcModal, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import { navigationStore } from '../../store/store.js'
+import { deleteListing } from './listingRequests.js'
 
 export default {
 	name: 'FederationDeleteListingModal',
@@ -102,39 +102,29 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const endpoint = generateUrl(
-					`/apps/opencatalogi/api/listings/${this.listing.id}`,
-				)
-				const res = await fetch(endpoint, {
-					method: 'DELETE',
-					headers: {
-						'OCS-APIRequest': 'true',
-						Accept: 'application/json',
-					},
-				})
-				if (!res.ok) {
-					const body = await res.json().catch(() => ({}))
-					throw new Error(
-						body?.data?.error
-							|| body?.error
-							|| body?.message
-							|| `HTTP ${res.status}`,
-					)
-				}
+				await deleteListing(this.listing.id)
 				this.success = true
 				this.$emit('deleted', this.listing)
-				// Delay close so the success note is visible; timer handle is
-				// tracked so beforeUnmount() can cancel it (PR #79 review).
-				this.closeTimer = setTimeout(() => {
-					this.closeTimer = null
-					this.close()
-				}, 800)
+				this.scheduleClose()
 			} catch (e) {
 				this.success = false
 				this.error = e.message || String(e)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Close a moment later so the success note is visible; the timer
+		 * handle is tracked so beforeUnmount() can cancel it (PR #79 review).
+		 *
+		 * @return {void}
+		 */
+		scheduleClose() {
+			this.closeTimer = setTimeout(() => {
+				this.closeTimer = null
+				this.close()
+			}, 800)
 		},
 	},
 }

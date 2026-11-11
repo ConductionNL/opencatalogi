@@ -1,0 +1,842 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`NationalAnnounceWidget.announce lists every channel after a full announcement 1`] = `
+{
+  "announcing": false,
+  "during": {
+    "announcing": true,
+    "error": "",
+    "results": [],
+  },
+  "error": "",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
+  ],
+  "posts": [
+    [
+      "/apps/opencatalogi/api/publications/announce",
+      {
+        "decision": {
+          "effectiveDate": "2026-12-01",
+          "id": "ctx-id",
+          "publicationType": "gemeenteblad",
+          "title": "Besluit",
+          "url": "http://localhost/",
+        },
+      },
+    ],
+  ],
+  "results": [
+    {
+      "channel": "national-publication-platform",
+      "delivered": true,
+      "identifier": "gmb-1",
+      "reason": "",
+    },
+    {
+      "channel": "local-channel",
+      "delivered": true,
+      "identifier": "",
+      "reason": "",
+    },
+    {
+      "channel": "x",
+      "delivered": false,
+      "identifier": "",
+      "reason": "down",
+    },
+  ],
+}
+`;
+
+exports[`NationalAnnounceWidget.announce lists every channel after a partial announcement answered with 502 1`] = `
+{
+  "announcing": false,
+  "during": {
+    "announcing": true,
+    "error": "",
+    "results": [],
+  },
+  "error": "",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
+  ],
+  "posts": [
+    [
+      "/apps/opencatalogi/api/publications/announce",
+      {
+        "decision": {
+          "effectiveDate": "2026-12-01",
+          "id": "ctx-id",
+          "publicationType": "gemeenteblad",
+          "title": "Besluit",
+          "url": "http://localhost/",
+        },
+      },
+    ],
+  ],
+  "results": [
+    {
+      "channel": "x",
+      "delivered": false,
+      "identifier": "",
+      "reason": "down",
+    },
+  ],
+}
+`;
+
+exports[`NationalAnnounceWidget.announce shows the error when the announcement failed otherwise 1`] = `
+{
+  "announcing": false,
+  "during": {
+    "announcing": true,
+    "error": "",
+    "results": [],
+  },
+  "error": "The decision could not be announced. Try again.",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
+  ],
+  "posts": [
+    [
+      "/apps/opencatalogi/api/publications/announce",
+      {
+        "decision": {
+          "effectiveDate": "2026-12-01",
+          "id": "ctx-id",
+          "publicationType": "gemeenteblad",
+          "title": "Besluit",
+          "url": "http://localhost/",
+        },
+      },
+    ],
+  ],
+  "results": [],
+}
+`;
+
+exports[`NationalAnnounceWidget.announce shows the error when the announcement failed otherwise 2`] = `
+{
+  "announcing": false,
+  "during": {
+    "announcing": true,
+    "error": "",
+    "results": [],
+  },
+  "error": "The decision could not be announced. Try again.",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
+  ],
+  "posts": [
+    [
+      "/apps/opencatalogi/api/publications/announce",
+      {
+        "decision": {
+          "effectiveDate": "2026-12-01",
+          "id": "ctx-id",
+          "publicationType": "gemeenteblad",
+          "title": "Besluit",
+          "url": "http://localhost/",
+        },
+      },
+    ],
+    [
+      "/apps/opencatalogi/api/publications/announce",
+      {
+        "decision": {
+          "effectiveDate": "2026-12-01",
+          "id": "ctx-id",
+          "publicationType": "gemeenteblad",
+          "title": "Besluit",
+          "url": "http://localhost/",
+        },
+      },
+    ],
+  ],
+  "results": [],
+}
+`;
+
+exports[`NationalAnnounceWidget.announce shows the error when the publication cannot be read, and without a type sends none 1`] = `
+{
+  "announcing": false,
+  "during": {
+    "announcing": true,
+    "error": "",
+    "results": [],
+  },
+  "error": "The decision could not be announced. Try again.",
+  "gets": [
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
+  ],
+  "posts": [],
+  "results": [],
+}
+`;
+
+exports[`NationalAnnounceWidget.announce shows the error when the publication cannot be read, and without a type sends none 2`] = `
+[
+  [
+    [
+      "/apps/openregister/api/objects/ctx-reg/ctx-slug/ctx-id",
+    ],
+    [
+      "/apps/openregister/api/objects/publication/publication/",
+    ],
+  ],
+  [
+    [
+      "/apps/opencatalogi/api/publications/announce",
+      {
+        "decision": {
+          "effectiveDate": "",
+          "id": "",
+          "publicationType": "",
+          "title": "Besluit",
+          "url": "http://localhost/",
+        },
+      },
+    ],
+  ],
+  [],
+  "",
+]
+`;
+
+exports[`PublicationVisibilityWidget.withdraw shows the error when the withdrawal fails 1`] = `
+{
+  "busy": false,
+  "dialogOpen": false,
+  "message": "That did not work. Try again.",
+  "messageType": "error",
+  "posts": [
+    [
+      "/apps/opencatalogi/api/publications/ctx-id/withdraw",
+      {
+        "reason": "r",
+      },
+    ],
+  ],
+  "state": "public",
+}
+`;
+
+exports[`PublicationVisibilityWidget.withdraw withdraws one document 1`] = `
+{
+  "busy": false,
+  "dialogOpen": false,
+  "message": "The document was withdrawn. The rest of the publication stays public.",
+  "messageType": "success",
+  "posts": [
+    [
+      "/apps/opencatalogi/api/publications/ctx-id/files/f%201/withdraw",
+      {
+        "reason": "privacy",
+      },
+    ],
+  ],
+  "state": "public",
+}
+`;
+
+exports[`PublicationVisibilityWidget.withdraw withdraws the publication with and without outstanding channels 1`] = `
+{
+  "busy": false,
+  "dialogOpen": false,
+  "message": "Withdrawn. These channels have not confirmed yet: a, b",
+  "messageType": "warning",
+  "posts": [
+    [
+      "/apps/opencatalogi/api/publications/ctx-id/withdraw",
+      {
+        "reason": "r",
+      },
+    ],
+  ],
+  "state": "withdrawn",
+}
+`;
+
+exports[`PublicationVisibilityWidget.withdraw withdraws the publication with and without outstanding channels 2`] = `
+{
+  "busy": false,
+  "dialogOpen": false,
+  "message": "Withdrawn, and every channel confirmed.",
+  "messageType": "success",
+  "posts": [
+    [
+      "/apps/opencatalogi/api/publications/ctx-id/withdraw",
+      {
+        "reason": "r",
+      },
+    ],
+    [
+      "/apps/opencatalogi/api/publications/ctx-id/withdraw",
+      {
+        "reason": "r",
+      },
+    ],
+  ],
+  "state": "withdrawn",
+}
+`;
+
+exports[`widget object context AuditTrailWidget resolves the current object in every world 1`] = `
+{
+  "both": {
+    "ctx": {
+      "register": "inj-reg",
+    },
+    "resolvedObjectId": "",
+    "resolvedRegister": "inj-reg",
+    "resolvedSchema": "",
+    "resolvedTitle": "",
+  },
+  "content blob": {
+    "ctx": {},
+    "resolvedObjectId": "c-id",
+    "resolvedRegister": "c-reg",
+    "resolvedSchema": "c-schema",
+    "resolvedTitle": "C title",
+  },
+  "detail holder": {
+    "ctx": {
+      "objectId": "holder-id",
+      "register": "holder-reg",
+      "schema": {
+        "name": "holder-name",
+      },
+    },
+    "resolvedObjectId": "holder-id",
+    "resolvedRegister": "holder-reg",
+    "resolvedSchema": "holder-name",
+    "resolvedTitle": "",
+  },
+  "empty ref context": {
+    "ctx": {
+      "value": null,
+    },
+    "resolvedObjectId": "",
+    "resolvedRegister": "",
+    "resolvedSchema": "",
+    "resolvedTitle": "",
+  },
+  "nothing": {
+    "ctx": {},
+    "resolvedObjectId": "",
+    "resolvedRegister": "",
+    "resolvedSchema": "",
+    "resolvedTitle": "",
+  },
+  "plain context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "ctx-id",
+    "resolvedRegister": "ctx-reg",
+    "resolvedSchema": "ctx-slug",
+    "resolvedTitle": "",
+  },
+  "props win": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "prop-id",
+    "resolvedRegister": "prop-reg",
+    "resolvedSchema": "prop-schema",
+    "resolvedTitle": "",
+  },
+  "ref context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "ctx-id",
+    "resolvedRegister": "ctx-reg",
+    "resolvedSchema": "ctx-slug",
+    "resolvedTitle": "",
+  },
+  "schema object prop": {
+    "ctx": {},
+    "resolvedObjectId": "",
+    "resolvedRegister": "",
+    "resolvedSchema": 7,
+    "resolvedTitle": "",
+  },
+}
+`;
+
+exports[`widget object context NationalAnnounceWidget resolves the current object in every world 1`] = `
+{
+  "both": {
+    "ctx": {
+      "register": "inj-reg",
+    },
+    "resolvedObjectId": "",
+    "resolvedRegister": "inj-reg",
+    "resolvedSchema": "publication",
+  },
+  "content blob": {
+    "ctx": {},
+    "resolvedObjectId": "c-id",
+    "resolvedRegister": "c-reg",
+    "resolvedSchema": "c-schema",
+  },
+  "detail holder": {
+    "ctx": {
+      "objectId": "holder-id",
+      "register": "holder-reg",
+      "schema": {
+        "name": "holder-name",
+      },
+    },
+    "resolvedObjectId": "holder-id",
+    "resolvedRegister": "holder-reg",
+    "resolvedSchema": "holder-name",
+  },
+  "empty ref context": {
+    "ctx": {
+      "value": null,
+    },
+    "resolvedObjectId": "",
+    "resolvedRegister": "publication",
+    "resolvedSchema": "publication",
+  },
+  "nothing": {
+    "ctx": {},
+    "resolvedObjectId": "",
+    "resolvedRegister": "publication",
+    "resolvedSchema": "publication",
+  },
+  "plain context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "ctx-id",
+    "resolvedRegister": "ctx-reg",
+    "resolvedSchema": "ctx-slug",
+  },
+  "props win": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "prop-id",
+    "resolvedRegister": "prop-reg",
+    "resolvedSchema": "prop-schema",
+  },
+  "ref context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "ctx-id",
+    "resolvedRegister": "ctx-reg",
+    "resolvedSchema": "ctx-slug",
+  },
+  "schema object prop": {
+    "ctx": {},
+    "resolvedObjectId": "",
+    "resolvedRegister": "publication",
+    "resolvedSchema": 7,
+  },
+}
+`;
+
+exports[`widget object context PublicationAttachmentsWidget resolves the current object in every world 1`] = `
+{
+  "both": {
+    "ctx": {
+      "register": "inj-reg",
+    },
+    "resolvedObjectId": "",
+    "resolvedRegister": "inj-reg",
+    "resolvedSchema": "",
+  },
+  "content blob": {
+    "ctx": {},
+    "resolvedObjectId": "",
+    "resolvedRegister": "",
+    "resolvedSchema": "",
+  },
+  "detail holder": {
+    "ctx": {
+      "objectId": "holder-id",
+      "register": "holder-reg",
+      "schema": {
+        "name": "holder-name",
+      },
+    },
+    "resolvedObjectId": "holder-id",
+    "resolvedRegister": "holder-reg",
+    "resolvedSchema": "undefined",
+  },
+  "empty ref context": {
+    "ctx": {
+      "value": null,
+    },
+    "resolvedObjectId": "",
+    "resolvedRegister": "",
+    "resolvedSchema": "",
+  },
+  "nothing": {
+    "ctx": {},
+    "resolvedObjectId": "",
+    "resolvedRegister": "",
+    "resolvedSchema": "",
+  },
+  "plain context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "ctx-id",
+    "resolvedRegister": "ctx-reg",
+    "resolvedSchema": "ctx-schema-id",
+  },
+  "props win": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "prop-id",
+    "resolvedRegister": "prop-reg",
+    "resolvedSchema": "prop-schema",
+  },
+  "ref context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "ctx-id",
+    "resolvedRegister": "ctx-reg",
+    "resolvedSchema": "ctx-schema-id",
+  },
+  "schema object prop": {
+    "ctx": {},
+    "resolvedObjectId": "",
+    "resolvedRegister": "",
+    "resolvedSchema": "7",
+  },
+}
+`;
+
+exports[`widget object context PublicationVisibilityWidget resolves the current object in every world 1`] = `
+{
+  "both": {
+    "ctx": {
+      "register": "inj-reg",
+    },
+    "resolvedObjectId": "",
+  },
+  "content blob": {
+    "ctx": {},
+    "resolvedObjectId": "c-id",
+  },
+  "detail holder": {
+    "ctx": {
+      "objectId": "holder-id",
+      "register": "holder-reg",
+      "schema": {
+        "name": "holder-name",
+      },
+    },
+    "resolvedObjectId": "holder-id",
+  },
+  "empty ref context": {
+    "ctx": {
+      "value": null,
+    },
+    "resolvedObjectId": "",
+  },
+  "nothing": {
+    "ctx": {},
+    "resolvedObjectId": "",
+  },
+  "plain context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "ctx-id",
+  },
+  "props win": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "prop-id",
+  },
+  "ref context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "resolvedObjectId": "ctx-id",
+  },
+  "schema object prop": {
+    "ctx": {},
+    "resolvedObjectId": "",
+  },
+}
+`;
+
+exports[`widget object context ThemePreviewWidget resolves the current object in every world 1`] = `
+{
+  "both": {
+    "ctx": {
+      "register": "inj-reg",
+    },
+    "theme": {},
+  },
+  "content blob": {
+    "ctx": {},
+    "theme": {},
+  },
+  "detail holder": {
+    "ctx": {
+      "objectId": "holder-id",
+      "register": "holder-reg",
+      "schema": {
+        "name": "holder-name",
+      },
+    },
+    "theme": {},
+  },
+  "empty ref context": {
+    "ctx": {
+      "value": null,
+    },
+    "theme": {},
+  },
+  "nothing": {
+    "ctx": {},
+    "theme": {},
+  },
+  "plain context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "theme": {
+      "@self": {
+        "register": "obj-reg",
+        "schema": "obj-schema",
+      },
+      "id": "obj-id",
+    },
+  },
+  "props win": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "theme": {
+      "@self": {
+        "register": "obj-reg",
+        "schema": "obj-schema",
+      },
+      "id": "obj-id",
+    },
+  },
+  "ref context": {
+    "ctx": {
+      "object": {
+        "@self": {
+          "register": "obj-reg",
+          "schema": "obj-schema",
+        },
+        "id": "obj-id",
+      },
+      "objectId": "ctx-id",
+      "register": "ctx-reg",
+      "schema": {
+        "id": "ctx-schema-id",
+        "slug": "ctx-slug",
+      },
+    },
+    "theme": {
+      "@self": {
+        "register": "obj-reg",
+        "schema": "obj-schema",
+      },
+      "id": "obj-id",
+    },
+  },
+  "schema object prop": {
+    "ctx": {},
+    "theme": {},
+  },
+}
+`;
