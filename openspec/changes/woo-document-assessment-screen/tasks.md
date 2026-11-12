@@ -5,6 +5,7 @@ Read `design.md` first (D1 lists what each board shows) and `openspec/woo-build-
 ## 1. Navigation
 
 - [ ] 1.1 Add `rowRoute: "WooBatchDetail"` to the `WooBatches` page in `src/manifest.json` (REQ-WDA-001). Verify: `npm run check:manifest`; e2e step in 5.1.
+- [ ] 1.2 Make the inventarislijst downloads on the batch page work: `appinfo/routes.php` registers `woo#inventarislijst` as POST while `WooBatchDetail.vue` links to it with a GET, so both buttons answer 405. Serve the route on GET, and make the PDF/A button return a PDF, not HTML (woo-transparency "Inventarislijst generation"). Verify: a PHPUnit test on the route verb and the PDF content type; e2e step in 5.1 downloads both files. Row `wr-inventory` goes back to `built` when this is done.
 
 ## 2. Queue
 
