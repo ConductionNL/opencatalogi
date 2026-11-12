@@ -1103,8 +1103,8 @@
 				"evidence": "Searched for per-catalog access: publication_register.json:291 authorization is schema-wide (public on publicationDate, else 'authenticated'), with no create/update rules; SetupController.php:460-469 the 'private (granted groups only)' scope choice only sets listed=false; no catalog-level group field in the catalog schema (publication_register.json:380-530)",
 				"change": "catalogue-staff-access",
 				"requirement": [
-					"openspec/changes/catalogue-staff-access :: Staff access becomes OpenRegister rules on the covered schemas (REQ-CSA-002)",
-					"openspec/changes/catalogue-staff-access :: The administrator sets staff access on the catalogue edit page (REQ-CSA-003)"
+					"openspec/changes/catalogue-staff-access/specs/catalogs :: Staff access becomes OpenRegister rules on the covered schemas (REQ-CSA-002)",
+					"openspec/changes/catalogue-staff-access/specs/catalogs :: The administrator sets staff access on the catalogue edit page (REQ-CSA-003)"
 				]
 			},
 			"reachedOn": "nothing: no per-catalogue staff permission exists",
@@ -1250,7 +1250,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:523-536 Publications index page, showAdd true, schema 'publication'; publication_register.json:100-217 title, summary, description, themes[], organization; nextcloud-vue CnIndexPage selfModeActions.js:185 handleFormSave -> OR saveObject",
 				"spec": "openspec/specs/publications",
-				"requirement": "openspec/changes/capability-rows-get-requirements :: An editor creates a publication with a title, summary, description and themes (REQ-CRR-001)"
+				"requirement": "openspec/changes/capability-rows-get-requirements/specs/publications :: An editor creates a publication with a title, summary, description and themes (REQ-CRR-001)"
 			},
 			"reachedOn": "/publications/:catalogSlug Add (CnIndexPage self-fetch form)",
 			"note": "There is no 'category' property. themes[] is the only categorisation (publication_register.json:136).",
@@ -2185,8 +2185,8 @@
 				"evidence": "appinfo/routes.php:77 publicationRules#previewRule (admin) -> PublicationRuleService.php:262 preview; rules stored as publicationRule objects (register.d/publication-inspection-and-the-national-indexes.json); CommunityController.php:392 applies them in the Atom feed; no src caller of /api/publication-rules (grep) Missing (spec-coverage pass 2026-11-12, development bba37fc7): no screen sets or previews a rule (no src caller of /api/publication-rules) and rules apply only in the Atom feed; open task 1.2 of publication-inspection-and-the-national-indexes.",
 				"change": "publication-inspection-and-the-national-indexes",
 				"requirement": [
-					"openspec/changes/publication-inspection-and-the-national-indexes :: A record type is readable without an account, with the visible parts chosen (REQ-PIN-101)",
-					"openspec/changes/publication-inspection-and-the-national-indexes :: Which collections are published, and on what conditions, is configured (REQ-PIN-108)"
+					"openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: A record type is readable without an account, with the visible parts chosen (REQ-PIN-101)",
+					"openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Which collections are published, and on what conditions, is configured (REQ-PIN-108)"
 				]
 			},
 			"reachedOn": "nothing for staff: no page authors a rule or calls the preview; rules take effect only in GET /api/feeds/{catalogSlug} (public)",
@@ -2222,7 +2222,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Service/Publication/ObligationOverviewService.php:71 assemble has no caller; PublicationRulesController.php:17-22 docblock says there is no obligation overview until harvest-feed-intake lands (REQ-PIN-110 unmet)",
 				"change": "woo-obligation-overview",
-				"requirement": "openspec/changes/woo-obligation-overview :: The overview reads every registered source and shows the ones it could not read (REQ-WOO-001)"
+				"requirement": "openspec/changes/woo-obligation-overview/specs/woo-compliance :: The overview reads every registered source and shows the ones it could not read (REQ-WOO-001)"
 			},
 			"reachedOn": "nothing: no route, no page",
 			"provider": "opencatalogi",
@@ -2257,7 +2257,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:85-86 GET/POST /api/published-collections (admin) -> PublishedCollectionsService.php:102 save to IAppConfig after rule validation; :145 publishes() has no caller (grep '->publishes(' lib); no src caller of /api/published-collections Missing (spec-coverage pass 2026-11-12, development bba37fc7): no screen configures the published collections (no src caller of /api/published-collections); open task 6.3 of publication-inspection-and-the-national-indexes.",
 				"change": "publication-inspection-and-the-national-indexes",
-				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes :: Which collections are published, and on what conditions, is configured (REQ-PIN-108)"
+				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Which collections are published, and on what conditions, is configured (REQ-PIN-108)"
 			},
 			"reachedOn": "nothing: no page reads or writes the collections, and the saved conditions are never consulted at publish or read time",
 			"provider": "opencatalogi",
@@ -2392,7 +2392,7 @@
 				"readOn": "2026-10-07",
 				"requirement": [
 					"openspec/specs/woo-transparency :: A partly public document is published only as a verified redacted version (REQ-WRP-001)",
-					"openspec/changes/woo-document-assessment-screen :: A partly public document has a redaction page (REQ-WDA-003)"
+					"openspec/changes/woo-document-assessment-screen/specs/woo-transparency :: A partly public document has a redaction page (REQ-WDA-003)"
 				]
 			},
 			"reachedOn": "nothing: the redaction runs only from PUT /api/woo/batches/{batchId}/documents/{docId}, which no page calls",
@@ -2866,7 +2866,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:78 validateDecision -> PublicationRulesController.php:203 -> DecisionPublicationValidator.php:65 validate against decisionType rules; stateless, caller supplies decision+type; not invoked by any publish path; no src caller Missing (spec-coverage pass 2026-11-12, development bba37fc7): DecisionPublicationValidator runs only when a caller posts to the validate endpoint; no publish path and no screen calls it, so a decision is not checked before it is published.",
 				"change": "publication-inspection-and-the-national-indexes",
-				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes :: The type declares publication, and the decision type's rules are validated (REQ-PIN-102)"
+				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: The type declares publication, and the decision type's rules are validated (REQ-PIN-102)"
 			},
 			"reachedOn": "nothing: POST /api/publication-rules/validate-decision, no page calls it",
 			"provider": "opencatalogi",
@@ -2901,7 +2901,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:87 POST /api/inspections (admin) -> InspectionService.php:68 open computes start/end from recordType.inspectionTermDays + token, InspectionController.php:188 saves it; no src caller of /api/inspections Missing (spec-coverage pass 2026-11-12, development bba37fc7): no screen opens an inspection (no src caller of /api/inspections), only the admin API does.",
 				"change": "publication-inspection-and-the-national-indexes",
-				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes :: Documents go on public inspection for exactly the statutory period (REQ-PIN-103)"
+				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Documents go on public inspection for exactly the statutory period (REQ-PIN-103)"
 			},
 			"reachedOn": "nothing for staff: no page opens an inspection",
 			"provider": "opencatalogi",
@@ -2936,7 +2936,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:225 GET /api/inspections/{id} public -> InspectionController.php:220 follow; InspectionService.php:161 resolveLink hash_equals token, :120 isOpen window -> 410 window-closed after the end date",
 				"change": "publication-inspection-and-the-national-indexes",
-				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes :: Documents go on public inspection for exactly the statutory period (REQ-PIN-103)"
+				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Documents go on public inspection for exactly the statutory period (REQ-PIN-103)"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/inspections/{id}?token= (public JSON); no portaliq page renders it and no page creates the link",
 			"provider": "opencatalogi",
@@ -2971,7 +2971,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/components/widgets/NationalAnnounceWidget.vue (publication page) -> POST /api/publications/announce -> NationalIndexService::deliver: publicatie gateway via GatewayDeliveryRequestedEvent (national) and handOver with the ConnectionStore source object (other channels)",
 				"change": "woo-national-delivery-repair",
-				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes :: Official notices reach the national platform and the local channel (REQ-PIN-107)"
+				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Official notices reach the national platform and the local channel (REQ-PIN-107)"
 			},
 			"reachedOn": "nothing: no page, and every delivery reports the channel unreachable",
 			"provider": "opencatalogi",
@@ -3071,7 +3071,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "PublicationRuleService.php:218 projectForAnonymous, :326 projectList; applied at read in CommunityController.php:392-410 (public Atom feed) and PublicationRulesController.php:363 publicSearch (records supplied by the caller); previewRule admin route has no src caller Missing (spec-coverage pass 2026-11-12, development bba37fc7): the anonymous field set is not enforced on stored records at read, publicSearch only filters records the caller posts; open task 1.2 of publication-inspection-and-the-national-indexes.",
 				"change": "publication-inspection-and-the-national-indexes",
-				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes :: A record type is readable without an account, with the visible parts chosen (REQ-PIN-101)"
+				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: A record type is readable without an account, with the visible parts chosen (REQ-PIN-101)"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public); no opencatalogi page to author a publicationRule",
 			"note": "publicSearch filters records the caller posts, it does not read stored records.",
@@ -3107,7 +3107,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:83 POST /api/publications/depublish/acknowledge; lib/Controller/DepublicationController.php:207 acknowledgeWithdrawal checks the channel was sent a withdrawal, then saves acknowledgedAt per channel; lib/Service/Publication/DepublicationService.php outstandingChannels lists unacknowledged ones",
 				"change": "publication-inspection-and-the-national-indexes",
-				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes :: Something published in error is depublished with one action (REQ-PIN-106)"
+				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Something published in error is depublished with one action (REQ-PIN-106)"
 			},
 			"reachedOn": "nothing: admin-only API, no page or store in src/ calls /api/publications/depublish (grep src finds no caller)",
 			"note": "Recording works per channel over the API. No staff screen shows the outstanding channels or records an acknowledgement.",
@@ -3441,7 +3441,7 @@
 					"openregister/app-harvest-fetchers-and-flow-node"
 				],
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/harvest-feed-intake :: A harvest feed is an OpenRegister source owned by OpenCatalogi (REQ-HFI-002)"
+				"requirement": "openspec/changes/harvest-feed-intake/specs/harvest-feed-intake :: A harvest feed is an OpenRegister source owned by OpenCatalogi (REQ-HFI-002)"
 			},
 			"reachedOn": "nothing: not built",
 			"note": "Sibling building blocks exist (integriq SynchronizationService.php:225 pages CKAN; openregister Sync/HarvestPipelineService.php), but nothing connects them to harvesting a catalogue. corrections round 9 (2026-09-28): carried by openspec/changes/harvest-feed-intake (open, 0 of 9 tasks), the scheduled DCAT JSON-LD feed intake that replaces the superseded dcat-oai-pmh-harvesting umbrella; the CKAN walk follows in openspec/changes/harvest-protocol-plugins (open, 0 of 9 tasks, depends on harvest-feed-intake). The archived 2026-06-14-dcat-ap-harvest is the outbound DCAT feed, not a harvester. Spec round part 2 (2026-10-07, decision 80): depends on openregister/app-harvest-fetchers-and-flow-node (open change on openregister development, row x-harvest-apps there). harvest-feed-intake was revised to build on it: opencatalogi registers the DCAT JSON-LD fetcher opencatalogi.dcat-jsonld through RegisterSourceFetchersEvent, stores each feed as an OpenRegister Source (application opencatalogi), runs it through the openregister.harvest-source node on the source's flow, and keeps only the feed cards on OcInstellingen; its own harvest-feed, harvested-item and harvest-run schemas are dropped. Harvested datasets stay drafts through protectedFields publicationDate, depublicationDate and status. Neither change has code yet.",
@@ -3481,7 +3481,7 @@
 					"openregister/app-harvest-fetchers-and-flow-node"
 				],
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/harvest-conflict-policies :: Each feed has a conflict policy (REQ-HCP-001)"
+				"requirement": "openspec/changes/harvest-conflict-policies/specs/harvest-conflict-policies :: Each feed has a conflict policy (REQ-HCP-001)"
 			},
 			"reachedOn": "nothing: no harvest exists to conflict",
 			"provider": "opencatalogi",
@@ -3517,7 +3517,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "grep -i 'oai' lib src: only openspec; no route in appinfo/routes.php; openspec/changes/oai-pmh-endpoint/tasks.md 0/20 open",
 				"change": "oai-pmh-endpoint",
-				"requirement": "openspec/changes/oai-pmh-endpoint :: OAI-PMH 2.0 repository per DCAT-enabled catalog (OAI-001)"
+				"requirement": "openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint :: OAI-PMH 2.0 repository per DCAT-enabled catalog (OAI-001)"
 			},
 			"reachedOn": "nothing: no route",
 			"provider": "opencatalogi",
@@ -3553,7 +3553,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "grep -i datastore in opencatalogi lib/src and portaliq src/lib: 0 hits; no row-query route in appinfo/routes.php",
 				"change": "open-data-table-query-and-dictionary",
-				"requirement": "openspec/changes/open-data-table-query-and-dictionary :: Anyone queries the rows of a public table (REQ-ODT-002)"
+				"requirement": "openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables :: Anyone queries the rows of a public table (REQ-ODT-002)"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -3589,7 +3589,7 @@
 				"owner": "ConductionNL/portaliq",
 				"evidence": "grep chart/visuali/leaflet/maplibre: opencatalogi hits only dashboard widgets (src/composables/useChartColors.js); portaliq hits only traffic widgets (src/widgets/Traffic*.vue); PublicationDetailBlock.vue has no dataset preview",
 				"change": "dataset-views-on-the-public-page",
-				"requirement": "openspec/changes/dataset-views-on-the-public-page :: The public page draws each view and offers its data as a table (REQ-DSV-003)"
+				"requirement": "openspec/changes/dataset-views-on-the-public-page/specs/open-data-tables :: The public page draws each view and offers its data as a table (REQ-DSV-003)"
 			},
 			"reachedOn": "nothing",
 			"provider": "portaliq",
@@ -3654,7 +3654,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "grep 'dictionary|dataDictionary' in opencatalogi lib/src and portaliq: 0 relevant hits; no column-description property on the publication schema (publication_register.json:93)",
 				"change": "open-data-table-query-and-dictionary",
-				"requirement": "openspec/changes/open-data-table-query-and-dictionary :: Readers see what each column means (REQ-ODT-003)"
+				"requirement": "openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables :: Readers see what each column means (REQ-ODT-003)"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -3944,7 +3944,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "FederationSearch.vue:224-268 opens federated results with window.open in a new tab on the peer; PublicationService.php:2683 getFederatedPublication falls back to DirectoryService getPublication for metadata; PublicationService.php:917 attachments() is local-only (catalog-scope gate returns 404 for remote ids); Corrections round 8 (2026-09-28), opencatalogi#1648: the remote metadata fetch builds the peer URL as /api/publications/{id} (lib/Service/DirectoryService.php:2343-2344), which the peer routes to its catalogue with slug publications (appinfo/routes.php:252) and answers 404 once that seed catalogue is renamed or removed (lib/Controller/PublicationsController.php:605-615), instead of calling the peer /api/federation/publications/{id} (appinfo/routes.php:239), at 1a1ca02.",
 				"change": "federation-open-remote-publication",
-				"requirement": "openspec/changes/federation-open-remote-publication :: A federated result opens inside the app (REQ-FOR-001)"
+				"requirement": "openspec/changes/federation-open-remote-publication/specs/federation :: A federated result opens inside the app (REQ-FOR-001)"
 			},
 			"reachedOn": "/search result click opens the peer instance in a new tab; portaliq PublicationDetailBlock.vue:140 reads /api/federation/publications/{id} metadata",
 			"note": "Remote attachments cannot be opened through this app. The peer deep link uses '#/publications/...' (FederationSearch.vue:266) while the app routes are history mode (routes.php:262), so it probably lands on the peer's dashboard. Specified in openspec/changes/federation-open-remote-publication (OpenSpec pass 2026-09-27). Corrections round 8 (2026-09-28): opening a remote publication returns 404 whenever the peer renamed or removed its seed catalogue with slug publications, opencatalogi#1648; rating kept because partial already reflects that attachments and opening inside the app are missing, and metadata still loads from a peer that keeps the seed catalogue.",
@@ -4016,7 +4016,7 @@
 				"evidence": "source read at opencatalogi development 7a5a8a492: tasks 1.1 and 1.2 of federation-connection-last-success are done: the listing schema has lastSuccessAt and lastError (lib/Settings/publication_register.json:778) and lib/Service/DirectoryService.php:862-866 moves lastSuccessAt only on success, :999 and :1542 leave it on failure (#1662). Not shown: the only component that renders them, src/sidebars/directory/DirectorySideBar.vue:91-110, is imported nowhere; FederationDirectory.vue (src/manifest.json:1371) shows the status dot per listing. Tasks 2.1, 2.2 and 3.1 are open.",
 				"change": "federation-connection-last-success",
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/federation-connection-last-success :: The directory page shows when each connection last worked (REQ-FLS-002)"
+				"requirement": "openspec/changes/federation-connection-last-success/specs/federation :: The directory page shows when each connection last worked (REQ-FLS-002)"
 			},
 			"reachedOn": "/directory (status dot per listing); integriq Integrations page for last sync/broadcast result",
 			"note": "Whether each connection works is visible per listing, but when it last succeeded is stored (lastSync) and not shown on the directory page. Specified in openspec/changes/federation-connection-last-success (OpenSpec pass 2026-09-27). Corrections round 8 (2026-09-28): lastSync records the last attempt, failed or not, so when a connection last succeeded is not stored at all, not only left unshown as said above, opencatalogi#1647; rating kept because whether each connection works is still visible per listing (status dot and HTTP status). Re-rated 2026-10-07: the last success is stored now, but no page shows it and Sync now per row is not built.",
@@ -4198,7 +4198,7 @@
 				"owner": "ConductionNL/openregister",
 				"evidence": "openregister DocumentProcessingHandler.php:1328 defers text-layer-less PDFs to OCR, and there is no OCR engine in OR lib; filinq OcrService.php (Tesseract) is called only by FinancialExtractionService.php:1001, not the chunk index opencatalogi searches",
 				"change": "scanned-attachments-become-searchable",
-				"requirement": "openspec/changes/scanned-attachments-become-searchable :: A published scan is read by OCR so search finds its words (REQ-SOCR-001)"
+				"requirement": "openspec/changes/scanned-attachments-become-searchable/specs/search :: A published scan is read by OCR so search finds its words (REQ-SOCR-001)"
 			},
 			"reachedOn": "nothing",
 			"provider": "openregister",
@@ -4269,7 +4269,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "cors_allowed_origins CSV allowlist (DcatController.php:91, PublicationsController.php:281, PublicationRulesController.php:391 on POST /api/publications/search, OPTIONS routes.php:99-149); SearchController.php and FederationController.php add no CORS header and have no OPTIONS route",
 				"change": "search-cors-on-every-public-endpoint",
-				"requirement": "openspec/changes/search-cors-on-every-public-endpoint :: The administrator edits the list of allowed websites (REQ-SCO-003)"
+				"requirement": "openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access :: The administrator edits the list of allowed websites (REQ-SCO-003)"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/publications/search and GET /api/{catalogSlug} from a named origin; set by occ config only",
 			"note": "The main search endpoints, /api/search and /api/federation/publications, send no CORS headers, so a browser on another site cannot call them. The allowlist has no settings UI (not in SettingsService allowedKeys). Specified in openspec/changes/search-cors-on-every-public-endpoint (OpenSpec pass 2026-09-27).",
@@ -4438,7 +4438,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "routes.php:218 GET /api/feeds/{catalogSlug} -> CommunityController.php:390 feed() Atom; it filters publications on 'catalog'=>slug (:394), a property the publication schema (publication_register.json:93) does not declare; no page or portaliq links the feed; statusSubscription covers service status only Missing (spec-coverage pass 2026-11-12, development bba37fc7): CommunityController::feed() filters publications on 'catalog', which the publication schema does not declare, so no record reaches the feed, and there is no notification; open task 3.3 of the-public-and-community-surface.",
 				"change": "the-public-and-community-surface",
-				"requirement": "openspec/changes/the-public-and-community-surface :: A catalogue's activity is published as a feed (REQ-PCS-105)"
+				"requirement": "openspec/changes/the-public-and-community-surface/specs/public-and-community-surface :: A catalogue's activity is published as a feed (REQ-PCS-105)"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public Atom, feed reader); no subscribe or notify UI",
 			"note": "There is no push notification or e-mail. The feed may come back empty, because OR says a filter on an undeclared property matches nothing (AggregationMetricsAnnotationValidator.php:304). Not verified live.",
@@ -4625,8 +4625,8 @@
 				"evidence": "l10n/nl.json has 1110 UI strings (74 l10n files); openspec/changes/archive/2026-10-09-register-i18n/tasks.md has only Task 1 'todo'; lib/Settings/publication_register.json publication schema has no language or translation property; portaliq lib/Controller/ContentController.php:212 negotiates a locale for portal pages only",
 				"change": "publication-translations",
 				"requirement": [
-					"openspec/changes/publication-translations :: Publication and catalogue text is translatable (REQ-PTR-001)",
-					"openspec/changes/publication-translations :: The public API answers in the visitor's language (REQ-PTR-002)"
+					"openspec/changes/publication-translations/specs/publications :: Publication and catalogue text is translatable (REQ-PTR-001)",
+					"openspec/changes/publication-translations/specs/publications :: The public API answers in the visitor's language (REQ-PTR-002)"
 				]
 			},
 			"reachedOn": "staff UI labels via Nextcloud l10n; publication content: nothing",
@@ -4666,7 +4666,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:216 GET /api/status (community#statusPage); lib/Controller/CommunityController.php:205 @PublicPage reads serviceStatus and renders it; :244 setStatus is admin-only; lib/Service/SettingsService.php:1243 maps service_status_schema Missing (spec-coverage pass 2026-11-12, development bba37fc7): no page renders GET /api/status; open task of service-status-on-the-portal (the portaliq /status page).",
 				"change": "the-public-and-community-surface",
-				"requirement": "openspec/changes/the-public-and-community-surface :: A public status page says what is running (REQ-PCS-101)"
+				"requirement": "openspec/changes/the-public-and-community-surface/specs/public-and-community-surface :: A public status page says what is running (REQ-PCS-101)"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/status (public, JSON). No opencatalogi page and no portaliq block calls it (grep of both src trees)",
 			"note": "The data endpoint works. No page renders it, and no staff screen sets a component's state. Only the admin API POST /api/status does.",
@@ -4732,7 +4732,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:72-73 GET /api/banners, POST /api/banners/dismiss; lib/Controller/NoticeBoardController.php:142 returns banners current for the user minus that user's dismissals (BannerService::forUser)",
 				"change": "the-public-and-community-surface",
-				"requirement": "openspec/changes/the-public-and-community-surface :: An administrator shows a dated banner to every user (REQ-PCS-103)"
+				"requirement": "openspec/changes/the-public-and-community-surface/specs/public-and-community-surface :: An administrator shows a dated banner to every user (REQ-PCS-103)"
 			},
 			"reachedOn": "nothing: no component in src/ fetches /api/banners (grep), so no user ever sees a banner",
 			"note": "Storage, the date window and per-user dismissal work on the server. The part that shows the banner to a user is missing. Banners can only be created through OpenRegister's generic object API.",
@@ -4771,7 +4771,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:74-75 POST /api/notice-boards and /api/notices (admin); lib/Controller/NoticeBoardController.php:220 saveNoticeBoard, :274 saveNotice validate and store; notices surface only inside the Atom feed (lib/Service/Community/AtomFeedService.php) Missing (spec-coverage pass 2026-11-12, development bba37fc7): notices surface only in the Atom feed, which lists the notices of every catalogue, not the requested one; open task 3.3 of the-public-and-community-surface.",
 				"change": "the-public-and-community-surface",
-				"requirement": "openspec/changes/the-public-and-community-surface :: A catalogue carries a notice board (REQ-PCS-104)"
+				"requirement": "openspec/changes/the-public-and-community-surface/specs/public-and-community-surface :: A catalogue carries a notice board (REQ-PCS-104)"
 			},
 			"reachedOn": "nothing: admin-only API, no manifest page or component calls it",
 			"note": "Comment bodies are explicitly not built (the-public-and-community-surface/tasks.md:50). The feed includes every current notice, not only those of the requested catalogue.",
@@ -4807,7 +4807,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:218 GET /api/feeds/{catalogSlug} @PublicPage; lib/Controller/CommunityController.php:394 filters publications by 'catalog', a property the publication schema does not declare (lib/Settings/publication_register.json); lib/Service/Publication/PublicationRuleService.php:331 keeps only records whose @type/recordType has a publicationRule Missing (spec-coverage pass 2026-11-12, development bba37fc7): CommunityController::feed() filters publications on 'catalog', which the publication schema does not declare, so no record reaches the feed; open task 3.3 of the-public-and-community-surface.",
 				"change": "the-public-and-community-surface",
-				"requirement": "openspec/changes/the-public-and-community-surface :: A catalogue's activity is published as a feed (REQ-PCS-105)"
+				"requirement": "openspec/changes/the-public-and-community-surface/specs/public-and-community-surface :: A catalogue's activity is published as a feed (REQ-PCS-105)"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/feeds/{catalogSlug} (public, Atom). Nothing links to it",
 			"note": "Returns valid Atom. On shipped schemas an ordinary publication has no catalog or recordType field, so the feed likely holds notices only. Nobody has shown a record entry in a live feed.",
@@ -4873,7 +4873,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:220 POST /api/markup/render; lib/Controller/CommunityController.php:533 renderMarkup returns MarkupRenderService output; openspec/changes/the-public-and-community-surface/tasks.md:44 says ViewObject.vue and WooRedactionView.vue still render with marked, so byte-parity is not claimed",
 				"change": "the-public-and-community-surface",
-				"requirement": "openspec/changes/the-public-and-community-surface :: A client renders our markup the way we render it (REQ-PCS-107)"
+				"requirement": "openspec/changes/the-public-and-community-surface/specs/public-and-community-surface :: A client renders our markup the way we render it (REQ-PCS-107)"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/markup/render (public). No caller in opencatalogi src/ or portaliq",
 			"note": "Renders a documented subset. The app's own views do not use it, so 'exactly as the app renders' is not true today.",
@@ -4940,7 +4940,7 @@
 				"evidence": "portaliq lib/Controller/ContentController.php:105-125 gates page content by portal.authentication.modes (for example digid, minTrust substantial); portaliq lib/Controller/SessionController.php:284 oidcStart() and :370 oidcCallback() (appinfo/routes.php:153-154, GET /portal/api/session/oidc/start and /oidc/callback) are a working generic OIDC relying party, and lib/Service/OidcClaimMapperService.php:74-91 ships digid, eherkenning and eidas presets (portaliq commit eb85956). The class docblock at SessionController.php:6-11 still calls the DigiD/eHerkenning broker dormant; that docblock is stale; opencatalogi publications reach portaliq only through @PublicPage federation endpoints (FederationController.php:74)",
 				"readOn": "2026-09-26",
 				"change": "publications-for-signed-in-readers",
-				"requirement": "openspec/changes/publications-for-signed-in-readers :: A trusted portal reads it for a reader at the required level (REQ-PSR-003)"
+				"requirement": "openspec/changes/publications-for-signed-in-readers/specs/publications :: A trusted portal reads it for a reader at the required level (REQ-PSR-003)"
 			},
 			"reachedOn": "portaliq portal-level gate. No per-document restriction on opencatalogi publications",
 			"note": "The gate is per portal, not per document. DigiD and eHerkenning login works through portaliq's generic OIDC broker when the organisation fronts it with its own OIDC identity provider (corrected 2026-09-26: the earlier 'broker not wired' rested on a stale SessionController docblock). opencatalogi has no notion of a publication visible only to authenticated citizens.",
@@ -5508,7 +5508,7 @@
 				"owner": "ConductionNL/integriq",
 				"evidence": "integriq lib/BackgroundJob/RISPollJob.php polls iBabs/NotuBiz for updates on ris_sync_record objects this side already synced (outbound besluit sync); grep of opencatalogi lib/ for notubiz|ibabs finds nothing",
 				"change": "council-documents-from-notubiz-and-ibabs",
-				"requirement": "openspec/changes/council-documents-from-notubiz-and-ibabs :: Each public council document becomes a publication with its file (REQ-CDH-002)"
+				"requirement": "openspec/changes/council-documents-from-notubiz-and-ibabs/specs/council-documents-harvest :: Each public council document becomes a publication with its file (REQ-CDH-002)"
 			},
 			"reachedOn": "nothing: no intake from a council information system into a publication",
 			"provider": "integriq",
@@ -5648,7 +5648,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Controller/OoapiController.php:195 requireAuthenticatedConsumer on every OOAPI action; lib/Service/OoapiService.php:168 isConsumerAllowed reads an instance-wide ooapi_consumers allowlist (empty means every Nextcloud user); lib/Service/SettingsService.php:514 says per-catalog credential scoping is NOT implemented",
 				"change": "integration-feed-consumer-credentials",
-				"requirement": "openspec/changes/integration-feed-consumer-credentials :: An administrator issues a key to a consumer for one catalogue (REQ-FCC-001)"
+				"requirement": "openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication :: An administrator issues a key to a consumer for one catalogue (REQ-FCC-001)"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/ooapi/v5/* with a Nextcloud user plus app password. No settings page exposes ooapi_consumers (grep src/)",
 			"note": "Credentials are Nextcloud accounts and app passwords, gated by one instance-wide list. No per-feed key exists, and nothing covers DCAT or other feeds. Specified in openspec/changes/integration-feed-consumer-credentials (OpenSpec pass 2026-09-27).",
@@ -5684,7 +5684,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/info.xml:256-257 registers lib/Command/AttachDocumentsToPublicationsCommand.php:71 (opencatalogi:documents:attach-to-publications) and MigrateCmsToPortaliqCommand.php:68 (opencatalogi:cms:migrate-to-portaliq)",
 				"change": "integration-maintenance-commands",
-				"requirement": "openspec/changes/integration-maintenance-commands :: Routine maintenance runs from the command line (REQ-IMC-001)"
+				"requirement": "openspec/changes/integration-maintenance-commands/specs/maintenance-commands :: Routine maintenance runs from the command line (REQ-IMC-001)"
 			},
 			"reachedOn": "occ opencatalogi:documents:attach-to-publications, occ opencatalogi:cms:migrate-to-portaliq",
 			"note": "Two single-purpose bulk commands. There is no general maintenance CLI such as republish, reindex or retention run. Specified in openspec/changes/integration-maintenance-commands (OpenSpec pass 2026-09-27).",
@@ -5945,7 +5945,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:82 POST /api/publications/depublish; lib/Controller/DepublicationController.php:126 requires a reason, records depublishedBy, and sends withdrawals per channel through lib/Service/Publication/NationalIndexService.php withdraw() (integriq/openconnector gateway); it saves a depublication record but never updates the publication itself",
 				"change": "publication-inspection-and-the-national-indexes",
-				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes :: Something published in error is depublished with one action (REQ-PIN-106)"
+				"requirement": "openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Something published in error is depublished with one action (REQ-PIN-106)"
 			},
 			"reachedOn": "nothing: admin API only, no page calls it",
 			"note": "The who, why and channel notices are built. The publication's own depublicationDate or status is not changed by this action, and channel delivery needs integriq.",
@@ -5981,7 +5981,7 @@
 				"owner": "ConductionNL/openregister",
 				"evidence": "openregister lib/Controller/TransferController.php handles e-Depot transfer lists and dispatches TransferExecutionJob, routes.php:2041; opencatalogi lib/Service/RetentionService.php:763-765 'archive' only sets status=archived Missing (spec-coverage pass 2026-11-12, development bba37fc7): the archive decision only sets status archived (RetentionService), nothing hands the publication to OpenRegister's e-Depot transfer; task 2.1 of capability-rows-get-requirements.",
 				"change": "publication-retention-lifecycle",
-				"requirement": "openspec/changes/capability-rows-get-requirements :: An archive decision hands the publication to the e-depot (REQ-CRR-003)",
+				"requirement": "openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle :: An archive decision hands the publication to the e-depot (REQ-CRR-003)",
 				"plan": "openspec/changes/capability-rows-get-requirements"
 			},
 			"reachedOn": "openregister e-Depot transfer API (/apps/openregister/api/transfers). opencatalogi never triggers it",
@@ -6093,7 +6093,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/info.xml:152-153 post-migration InitializeSettings -> loadSettings(force: false) (InitializeSettings.php:112); Settings.vue:12-35 Reimport and Force import buttons -> Settings.vue:1206 POST /api/settings/import -> SettingsController.php:367 manualImport",
 				"change": "retrofit-2026-05-26-app-shell-settings",
-				"requirement": "openspec/changes/capability-rows-get-requirements :: An administrator re-imports the shipped configuration after an update (REQ-CRR-004)"
+				"requirement": "openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-app-shell-settings :: An administrator re-imports the shipped configuration after an update (REQ-CRR-004)"
 			},
 			"reachedOn": "automatic on update; admin settings Reimport configuration button",
 			"provider": "opencatalogi",
@@ -6245,7 +6245,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:482 Dashboard -> Dashboard.vue:72-115 publication, concept, published, depublished counts; Dashboard.vue:688 catalogCount computed but never rendered; Dashboard.vue:124 attachments count widget commented out (TODO) Missing (spec-coverage pass 2026-11-12, development bba37fc7): Dashboard.vue shows publication counts only, no catalogue count, and the attachment count is commented out (TODO); task 2.2 of capability-rows-get-requirements.",
 				"change": "retrofit-2026-05-26-dashboard-widgets",
-				"requirement": "openspec/changes/capability-rows-get-requirements :: The dashboard counts catalogues, publications and attachments (REQ-CRR-005)",
+				"requirement": "openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-dashboard-widgets :: The dashboard counts catalogues, publications and attachments (REQ-CRR-005)",
 				"plan": "openspec/changes/capability-rows-get-requirements"
 			},
 			"reachedOn": "/ (DashboardView)",
@@ -6393,7 +6393,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "Searched publication_register.json authorization blocks: publication (:291) has read rules only, no create/update/publish split; no role or group concept in lib/; publishing is a plain publicationDate write (EventService.php:381), so no separate publish right can exist",
 				"change": "operations-publish-rights",
-				"requirement": "openspec/changes/operations-publish-rights :: Only publishers change whether a publication is public (REQ-OPR-001)"
+				"requirement": "openspec/changes/operations-publish-rights/specs/publications :: Only publishers change whether a publication is public (REQ-OPR-001)"
 			},
 			"reachedOn": "nothing: no editor/publisher split",
 			"note": "An admin could set CRUD rights per group in OR's schema editor, but that cannot tell editing from publishing. Open Register's half shipped in ConductionNL/openregister openspec/changes/archive/2026-06-15-rbac-and-lifecycle-enforcement (per-transition authorization on x-openregister-lifecycle); opencatalogi's half is not done, since lib/Settings/publication_register.json declares only an archive transition and no publish transition limited to publishers, so the owner moved to ConductionNL/opencatalogi (openregister lane, OpenSpec pass 2026-09-27; owner was ConductionNL/openregister).",
@@ -6584,7 +6584,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): attachments are always uploaded into OpenRegister file storage: the frontend posts files to /api/objects/{register}/{schema}/{id}/files and filesMultipart (src/modals/generic/UploadFiles.vue:1031,1265), and the legacy lib/Service/FileService.php:183-215 writes the upload into Publicaties/<pub>/Bijlagen; the DIWOO sitemap loc is the stored file's downloadUrl (lib/Service/SitemapService.php:512). Searched lib and src for accessURL, downloadURL, externalUrl, sourceUrl and remoteUrl: the only hits are the DCAT distribution mapping (lib/Service/DcatMappingService.php:369-370), which serialises a stored file's URL. Integriq synchronisations copy files too (synchronization_run filesPending, workspace checkout openconnector (integriq, development a9366588): src/manifest.json:4176-4181).",
 				"change": "integration-publish-by-reference",
-				"requirement": "openspec/changes/integration-publish-by-reference :: An editor adds a document by its public URL (REQ-PBR-001)"
+				"requirement": "openspec/changes/integration-publish-by-reference/specs/publication-document-references :: An editor adds a document by its public URL (REQ-PBR-001)"
 			},
 			"reachedOn": "nothing",
 			"provider": "opencatalogi",
@@ -6624,7 +6624,7 @@
 				"evidence": "source read at integriq development 5e903e546: integriq's half is archived (2026-09-29-mapping-woo-index-field-mapping, 8 of 8 tasks): MappingExecutionRequestedEvent (lib/Event/MappingExecutionRequestedEvent.php:40) runs a mapping by slug for an app named in callableBy, and lib/Settings/register.d/mapping-woo-index-field-mapping.json:23-26 seeds woo-index-publication, editable on integriq's /mappings pages. Source read at opencatalogi development 7a5a8a492: opencatalogi does not use it: git grep MappingExecutionRequested, woo-index-publication and officieleTitel in lib and src finds nothing; the sitemap still maps in code (lib/Service/SitemapService.php mapDiwooDocument).",
 				"change": "woo-index-fields-from-the-mapping",
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/woo-index-fields-from-the-mapping :: Woo-index fields come from the editable mapping when integriq answers (REQ-WIM-001)"
+				"requirement": "openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance :: Woo-index fields come from the editable mapping when integriq answers (REQ-WIM-001)"
 			},
 			"reachedOn": "integriq /mappings editor; the fixed DIWOO mapping is reached on /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "integriq",
@@ -6664,8 +6664,8 @@
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): some Woo metadata is derived automatically without a person: publisher @resource from the organisation's TOOI identifier (lib/Service/SitemapService.php:531-538, resolveOrganisationTooiIdentifier :639) and soortHandeling defaulting to ontvangst (lib/Service/TooiVocabularyService.php:168-172); integriq mappings can compute fields from other source data with Twig (workspace checkout openconnector (integriq, development a9366588): lib/Service/MappingService.php:24-64). Missing half: no suggestions a person confirms; grep for suggest, classif, TaskProcessing and llm in lib and src finds only the MCP/CMS tool plumbing (lib/Tool/CMSTool.php:163), nothing that proposes metadata.",
 				"change": "woo-metadata-suggestions",
 				"requirement": [
-					"openspec/changes/woo-metadata-suggestions :: Missing Woo metadata is proposed from data the instance holds (REQ-WMS-001)",
-					"openspec/changes/woo-metadata-suggestions :: Nothing is written until a person accepts (REQ-WMS-003)"
+					"openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions :: Missing Woo metadata is proposed from data the instance holds (REQ-WMS-001)",
+					"openspec/changes/woo-metadata-suggestions/specs/woo-metadata-suggestions :: Nothing is written until a person accepts (REQ-WMS-003)"
 				]
 			},
 			"reachedOn": "/api/{catalogSlug}/sitemaps/{categoryCode}/publications (derived values); integriq /mappings",
@@ -6705,7 +6705,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the sitemap index sorts by @self.updated and sets each page's lastmod to the newest updated time on it (lib/Service/SitemapService.php:202,230-239,280-286), so a metadata change does move the page entry. But each document's own <lastmod> is the file's published time, falling back to the publication's updated time only when the file has none (lib/Service/SitemapService.php:510-512,526), so a metadata-only change leaves the document's lastmod unchanged and the Woo-index has no per-document signal.",
 				"change": "woo-sitemap-document-signals",
-				"requirement": "openspec/changes/woo-sitemap-document-signals :: A document's lastmod follows its metadata as well as its file (REQ-WSD-001)"
+				"requirement": "openspec/changes/woo-sitemap-document-signals/specs/woo-compliance :: A document's lastmod follows its metadata as well as its file (REQ-WSD-001)"
 			},
 			"reachedOn": "/api/{catalogSlug}/sitemaps/{categoryCode} and /api/{catalogSlug}/sitemaps/{categoryCode}/publications",
 			"provider": "opencatalogi",
@@ -6745,8 +6745,8 @@
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): buildSitemap maps every attached file to a separate diwoo:Document (lib/Service/SitemapService.php:343-349, 'Map each file to a separate DIWOO Document'), and mapDiwooDocument emits loc, lastmod, creatiedatum, publisher, format, informatiecategorie and documenthandeling only (:508-590). grep hasPart, isPartOf (any case) in lib, src and in the portaliq and openregister workspace checkouts finds nothing, so a decision and its annexes are not linked in the sitemap.",
 				"change": "woo-sitemap-document-signals",
 				"requirement": [
-					"openspec/changes/woo-sitemap-document-signals :: Documents of one publication say they belong together (REQ-WSD-002)",
-					"openspec/changes/woo-sitemap-document-signals :: A main document lists its parts (REQ-WSD-003)"
+					"openspec/changes/woo-sitemap-document-signals/specs/woo-compliance :: Documents of one publication say they belong together (REQ-WSD-002)",
+					"openspec/changes/woo-sitemap-document-signals/specs/woo-compliance :: A main document lists its parts (REQ-WSD-003)"
 				]
 			},
 			"reachedOn": "nothing",
@@ -6864,7 +6864,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): a catalogue selects its publications by register and schema plus optional filters rather than holding copies (lib/Settings/publication_register.json catalog.registers, schemas, filters; scope built in lib/Service/CatalogiService.php:796-833), and each catalogue carries its own owning organisation (catalog.organization). Two organisations' catalogues that name the same register and schema therefore both list the same publication object. Across installations, federation shows another organisation's publications live without copying (/api/federation/publications, lib/Controller/FederationController.php:81, called by src/store/modules/search.js:59).",
 				"spec": "openspec/specs/catalogs",
-				"requirement": "openspec/changes/capability-rows-get-requirements :: Catalogues of several organisations show one publication without copying it (REQ-CRR-002)"
+				"requirement": "openspec/changes/capability-rows-get-requirements/specs/catalogs :: Catalogues of several organisations show one publication without copying it (REQ-CRR-002)"
 			},
 			"reachedOn": "/api/{catalogSlug} (publications#index) per catalogue, rendered in the portaliq reading room; /api/federation/publications in the search view",
 			"provider": "opencatalogi",
@@ -6940,8 +6940,8 @@
 				"change": "publication-required-at-publish",
 				"readOn": "2026-10-07",
 				"requirement": [
-					"openspec/changes/publication-required-at-publish :: A draft needs only a title (REQ-PRP-001)",
-					"openspec/changes/publication-required-at-publish :: Publishing refuses a publication missing a required field (REQ-PRP-002)"
+					"openspec/changes/publication-required-at-publish/specs/publications :: A draft needs only a title (REQ-PRP-001)",
+					"openspec/changes/publication-required-at-publish/specs/publications :: Publishing refuses a publication missing a required field (REQ-PRP-002)"
 				]
 			},
 			"reachedOn": "nothing",
@@ -7137,7 +7137,7 @@
 				"evidence": "source read at integriq development 5e903e546: integriq-notifications is archived (2026-09-30, 9 of 9 tasks): job-error is enabled and notifies the job's user and the connection alert recipients (lib/Settings/integriq_register.json:2349-2375, lib/Notification/ConnectionAlertRecipientResolver.php:48), dispatched by OpenRegister's AnnotationNotificationListener; the synchronisation rule sync-failed is still enabled: false (:2584-2590). Source read at opencatalogi development 7a5a8a492: opencatalogi imports no data file yet; the open change open-data-table-query-and-dictionary stores failed with the first refused row (tasks.md 1.3) and sends no alert.",
 				"change": "data-file-import-failure-alert",
 				"readOn": "2026-10-07",
-				"requirement": "openspec/changes/data-file-import-failure-alert :: A failed table import notifies the importer and the publication's managers (REQ-DFA-001)"
+				"requirement": "openspec/changes/data-file-import-failure-alert/specs/open-data-tables :: A failed table import notifies the importer and the publication's managers (REQ-DFA-001)"
 			},
 			"reachedOn": "Nextcloud notifications (declared); integriq /synchronization-runs shows failed runs",
 			"provider": "integriq",
@@ -7175,7 +7175,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): the DCAT harvest feeds send ETag and Last-Modified and answer a matching If-None-Match with 304 (lib/Controller/DcatController.php:224-233,343-360), which lets a CDN revalidate cheaply. Missing half: grep cacheFor, Cache-Control, max-age and ETag in lib finds no other caching header, so the public publications API /api/{catalogSlug} and /api/search go out with Nextcloud's default no-cache headers and a CDN cannot hold them. workspace checkout portaliq (development 91fa24d): only the reading room's static assets are cacheable (lib/Controller/WooController.php:131-135 cacheFor 86400, TrafficController.php:443 max-age 3600).",
 				"change": "operations-public-api-cache-headers",
-				"requirement": "openspec/changes/operations-public-api-cache-headers :: Anonymous answers of the public API may be cached (REQ-PAC-001)"
+				"requirement": "openspec/changes/operations-public-api-cache-headers/specs/public-api-caching :: Anonymous answers of the public API may be cached (REQ-PAC-001)"
 			},
 			"reachedOn": "/api/catalogs/{catalogSlug}/dcat and /api/dcat (conditional GET)",
 			"provider": "opencatalogi",
@@ -7321,7 +7321,7 @@
 				"change": "publications-merge-and-migrate",
 				"note": "Added by decision 99 (8 Oct): board without a row. OpenRegister owns the endpoints (objects#merge POST /api/objects/{register}/{schema}/{id}/merge, objects#migrate POST /api/migrate) and ships the same dialogs; its specs do not cover offering them from an app list: openregister/mdm-merge and mdm-merge-ui are the reversible master-data merge on x-openregister-merge schemas launched from a duplicate pair (source kept as merged-into-other), openregister/entity-management-modals names MigrationObject.vue among the bulk modals, and no OR spec owns objects#merge or objects#migrate beyond api-test-coverage.",
 				"readOn": "2026-10-08",
-				"requirement": "openspec/changes/publications-merge-and-migrate :: Two selected publications can be merged from the list (REQ-PMM-001)"
+				"requirement": "openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration :: Two selected publications can be merged from the list (REQ-PMM-001)"
 			},
 			"ckan": "unknown",
 			"dkan": "unknown",
@@ -7347,7 +7347,7 @@
 				"change": "publications-merge-and-migrate",
 				"note": "Added by decision 99 (8 Oct): board without a row. OpenRegister owns the endpoints (objects#merge POST /api/objects/{register}/{schema}/{id}/merge, objects#migrate POST /api/migrate) and ships the same dialogs; its specs do not cover offering them from an app list: openregister/mdm-merge and mdm-merge-ui are the reversible master-data merge on x-openregister-merge schemas launched from a duplicate pair (source kept as merged-into-other), openregister/entity-management-modals names MigrationObject.vue among the bulk modals, and no OR spec owns objects#merge or objects#migrate beyond api-test-coverage.",
 				"readOn": "2026-10-08",
-				"requirement": "openspec/changes/publications-merge-and-migrate :: Selected publications can be migrated to another schema (REQ-PMM-002)"
+				"requirement": "openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration :: Selected publications can be migrated to another schema (REQ-PMM-002)"
 			},
 			"ckan": "unknown",
 			"dkan": "unknown",
@@ -7373,7 +7373,7 @@
 				"change": "publication-delete-says-what-it-removes",
 				"note": "Added by decision 99 (8 Oct). Board OcPublicatieVerwijderen moved here from pub-bulk: single delete is built and asks a different question than the bulk row, which stays specified for bulk publish and withdraw.",
 				"readOn": "2026-10-08",
-				"requirement": "openspec/changes/publication-delete-says-what-it-removes :: Deleting a publication says what disappears (REQ-PDEL-001)"
+				"requirement": "openspec/changes/publication-delete-says-what-it-removes/specs/publication-delete :: Deleting a publication says what disappears (REQ-PDEL-001)"
 			},
 			"ckan": "unknown",
 			"dkan": "unknown",
