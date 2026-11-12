@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Pinia store for search functionality
  *
  * This store handles search operations for publications across local and federated sources.

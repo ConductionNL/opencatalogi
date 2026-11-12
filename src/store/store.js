@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 /* eslint-disable n/no-missing-import */
 /* eslint-disable import/extensions */
 // `import/no-unresolved` is NOT disabled here: the flat config does not

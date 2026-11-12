@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * @param result
  * @spec openspec/specs/generic-object-modals/spec.md
  */

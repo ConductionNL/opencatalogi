@@ -19,8 +19,17 @@ on:
     - cron: "27 3 * * *"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   capture:
+    permissions:
+      contents: write
+      actions: write
+      issues: write
+      pull-requests: write
+      packages: read
     uses: ConductionNL/.github/.github/workflows/quality.yml@main
     with:
       app-name: opencatalogi

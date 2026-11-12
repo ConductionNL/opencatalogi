@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Check if a string is a valid ISO date string
  *
  * @param {string} dateString - The date string to validate
