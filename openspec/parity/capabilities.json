@@ -3018,9 +3018,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "decided-no",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "routes.php:223-224 public GET /api/publications/verification-key and POST /api/publications/verify -> PublicationDisclosureController.php:226/257 -> DocumentStampService.php:145 verify, :180 publishedKey (null unless publication_signing_key set) Missing (spec-coverage pass 2026-11-12, development bba37fc7): the verify and verification-key routes were removed on 2026-09-29 as decided no (publication-inspection-and-the-national-indexes tasks 7.1 and 7.2); no code verifies a document any more.",
+				"evidence": "Decided no 2026-11-12 (DECISIONS row 392): the verify and verification-key routes were removed on 2026-09-29 (publication-inspection-and-the-national-indexes tasks 7.1 and 7.2) and no code verifies a document; before removal: routes.php:223-224 public GET /api/publications/verification-key and POST /api/publications/verify -> PublicationDisclosureController.php:226/257 -> DocumentStampService.php:145 verify",
 				"change": "publication-inspection-and-the-national-indexes"
 			},
 			"reachedOn": "POST /apps/opencatalogi/api/publications/verify (public); no page or portaliq caller, and no stamps are ever issued",
