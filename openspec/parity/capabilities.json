@@ -1043,7 +1043,8 @@
 				"spec": "openspec/specs/content-management",
 				"requirement": [
 					"openspec/specs/content-management :: Theme management UI (CMS-038)",
-					"openspec/specs/content-management :: List all themes with pagination and facets via public API (CMS-020)"
+					"openspec/specs/content-management :: List all themes with pagination and facets via public API (CMS-020)",
+					"openspec/changes/subjects-as-first-class-records/specs/subjects :: A subject lists what is filed under it (REQ-SUB-003)"
 				],
 				"change": [
 					"subjects-as-first-class-records",
@@ -1200,8 +1201,14 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "Publications page is schema-driven CnIndexPage/CnDetailPage (manifest.json:523,543), so properties added to the schema in OR's schema editor render in its form; CatalogModal.vue:116 lets a catalogue hold any extra schema; SettingsService.php:901 re-imports publication_register.json on update",
-				"change": "openregister/local-changes-to-app-shipped-configuration",
-				"requirement": "openregister:openspec/changes/local-changes-to-app-shipped-configuration/specs/schema-import :: An upgrade never silently discards a local change (REQ-LCA-003)"
+				"change": [
+					"openregister/local-changes-to-app-shipped-configuration",
+					"capability-rows-verify-scenarios"
+				],
+				"requirement": [
+					"openspec/changes/capability-rows-verify-scenarios/specs/publications :: A field an administrator adds to the publication schema shows on the publication form (REQ-CVS-001)",
+					"openregister:openspec/changes/local-changes-to-app-shipped-configuration/specs/schema-import :: An upgrade never silently discards a local change (REQ-LCA-003)"
+				]
 			},
 			"reachedOn": "OpenRegister schema editor (outside this app), then /publications/:catalogSlug",
 			"note": "No field editor exists in opencatalogi. Whether an update re-import (InitializeSettings, force=false) keeps fields an admin added to the shipped publication schema is not shown. Specified in ConductionNL/openregister openspec/changes/local-changes-to-app-shipped-configuration (openregister lane, OpenSpec pass 2026-09-27).",
@@ -1363,7 +1370,10 @@
 					"publications-selection-actions"
 				],
 				"spec": "openspec/specs/retrofit-2026-05-26-mass-object-actions",
-				"requirement": "openspec/specs/retrofit-2026-05-26-mass-object-actions :: Mass attachment publish/depublish (REQ-MASS-006)"
+				"requirement": [
+					"openspec/specs/publications :: One document comes down without its publication (REQ-PPW-004)",
+					"openspec/specs/retrofit-2026-05-26-mass-object-actions :: Mass attachment publish/depublish (REQ-MASS-006)"
+				]
 			},
 			"reachedOn": "nothing on the publication detail page; only the legacy ViewObject modal",
 			"note": "The per-file publish endpoint and store actions exist, but the page staff actually use for a publication does not expose them.",
@@ -1718,7 +1728,10 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:205 GET /api/catalogs/{slug}/quality -> StatsController.php:223 + QualityService.php:106 scoreDataset; routes.php:28-29 DCAT validate endpoints; grep of src/ finds no caller of /quality; publication_register.json:289 hardValidation false, required only title Not built: the quality score is computed server side but no staff page shows it, so nobody sees the missing metadata before publishing. Task 2.5 of capability-rows-close-gaps.",
 				"change": "publication-quality-metrics",
-				"requirement": "openspec/specs/publication-quality :: Per-publication metadata-quality score over MQA dimensions (PQM-001)",
+				"requirement": [
+					"openspec/specs/publication-quality :: Per-publication metadata-quality score over MQA dimensions (PQM-001)",
+					"openspec/specs/publication-quality :: Per-catalog quality dashboard and roll-up (PQM-003)"
+				],
 				"plan": "openspec/changes/capability-rows-close-gaps"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/quality (authenticated); no page calls it",
@@ -2769,11 +2782,15 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "built",
+				"state": "planned",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "WooController.php:244-254 inventarislijst CSV/HTML via WooService.php:715/755; routes.php:64 registers it as POST, but WooBatchDetail.vue:233-238 uses NcButton :href (a GET link) -> 405",
-				"change": "woo-transparency",
-				"requirement": "openspec/specs/woo-transparency :: Inventarislijst generation"
+				"evidence": "WooController.php:244-254 inventarislijst CSV/HTML via WooService.php:715/755; routes.php:64 registers it as POST, but WooBatchDetail.vue:233-238 uses NcButton :href (a GET link) -> 405 Not built: the two inventarislijst buttons on the batch page answer 405, because routes.php registers the route as POST and the buttons are GET links; the batch page also has no row link from the Woo batches index (REQ-WDA-001). Task 1.2 of woo-document-assessment-screen.",
+				"change": [
+					"woo-transparency",
+					"woo-document-assessment-screen"
+				],
+				"requirement": "openspec/specs/woo-transparency :: Inventarislijst generation",
+				"plan": "openspec/changes/woo-document-assessment-screen"
 			},
 			"reachedOn": "nothing working: the download buttons on /woo/:id issue GET against a POST-only route",
 			"note": "Output is CSV/HTML, not a spreadsheet file; 'PDF/A' button serves HTML.",
@@ -3496,7 +3513,10 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "routes.php:205 GET /api/catalogs/{slug}/quality -> StatsController.php:223 quality() -> QualityService.php:48 five EU-MQA dimensions, :106 scoreDataset, admin weights :88; grep 'quality' in src: no caller (src/services/usageStats.js calls only /stats)",
 				"change": "publication-quality-metrics",
-				"requirement": "openspec/specs/publication-quality :: Per-publication metadata-quality score over MQA dimensions (PQM-001)"
+				"requirement": [
+					"openspec/specs/publication-quality :: Per-publication metadata-quality score over MQA dimensions (PQM-001)",
+					"openspec/specs/publication-quality :: Per-catalog quality dashboard and roll-up (PQM-003)"
+				]
 			},
 			"reachedOn": "nothing: authenticated API route, no page calls it",
 			"note": "The scoring is real, but no page shows it.",
@@ -4232,7 +4252,11 @@
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq FederatedSearchBlock.vue:538 one facet field (default 'themes'), :341 facet list; opencatalogi SearchSideBar.vue (facets + sort) mounts only from src/sidebars/SideBars.vue:10, and nothing imports SideBars.vue (grep: 0)",
 				"change": "portaliq/portal-public-search",
-				"requirement": "portaliq:openspec/changes/portal-public-search/specs/portal-public-search :: Search results MUST carry facets discovered from the result set"
+				"requirement": [
+					"portaliq:openspec/specs/portal-federated-search :: The search block MUST filter on information category and organisation (REQ-WSD-001)",
+					"portaliq:openspec/specs/portal-federated-search :: The search block MUST filter on a publication period (REQ-WSD-002)",
+					"portaliq:openspec/changes/portal-public-search/specs/portal-public-search :: Search results MUST carry facets discovered from the result set"
+				]
 			},
 			"reachedOn": "portaliq public search (one facet: themes); nothing in opencatalogi's /search page",
 			"note": "No category, organisation or date filter. The in-app facet sidebar is dead code (SideBars.vue:77 also uses this.$route inside script setup). Specified in ConductionNL/portaliq openspec/changes/portal-public-search (portaliq lane, existing change, OpenSpec pass 2026-09-27).",
@@ -4587,7 +4611,10 @@
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq@src/site/components/FederatedSearchBlock.vue:514 and PublicationDetailBlock.vue:140 default to /index.php/apps/opencatalogi/api/federation/publications; lib/Controller/FederationController.php:74 @PublicPage",
 				"spec": "openspec/specs/federation",
-				"requirement": "openspec/specs/federation :: All federation endpoints must be public (FED-007)",
+				"requirement": [
+					"portaliq:openspec/specs/portal-federated-search :: The publication page must show what a visitor needs, in words",
+					"openspec/specs/federation :: All federation endpoints must be public (FED-007)"
+				],
 				"change": "publication-detail-for-the-portal"
 			},
 			"reachedOn": "portaliq public site (FederatedSearchBlock + PublicationDetailBlock) over GET /apps/opencatalogi/api/federation/publications (public)",
@@ -5176,8 +5203,8 @@
 				"evidence": "appinfo/routes.php:90 POST /api/case-types/import (admin); lib/Controller/ServiceCatalogueController.php:324 importCaseType -> CaseTypeCatalogueService::importDefinition via lib/Service/Catalogue/GatewayCaseTypeSourceReader.php:54-55 (integriq/openconnector CallService)",
 				"change": "integriq/zgw-connectors-for-dossiq",
 				"requirement": [
-					"integriq:openspec/changes/zgw-connectors-for-dossiq/specs/zgw-consumer-connectors :: Six packaged, slug-referenced ZGW consumer sets (REQ-ZGWC-001)",
-					"integriq:openspec/changes/zgw-connectors-for-dossiq/specs/zgw-consumer-connectors :: A set binds to an operator-chosen register and schema (REQ-ZGWC-002)"
+					"openspec/specs/published-service-and-case-type-catalogue :: Case types are imported from a published external catalogue and resynchronised (REQ-PSC-103)",
+					"integriq:openspec/changes/zgw-connectors-for-dossiq/specs/zgw-consumer-connectors :: Six packaged, slug-referenced ZGW consumer sets (REQ-ZGWC-001)"
 				]
 			},
 			"reachedOn": "nothing: admin API only, no page in src/ calls it",
