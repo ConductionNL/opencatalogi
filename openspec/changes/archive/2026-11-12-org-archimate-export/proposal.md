@@ -1,3 +1,5 @@
+> Superseded by decision 399: it extends the ArchiMate export of stackiq (formerly softwarecatalog), so it belongs in stackiq, not opencatalogi.
+
 # Proposal: org-archimate-export
 
 ## Summary

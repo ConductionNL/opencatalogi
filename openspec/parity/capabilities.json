@@ -7065,7 +7065,7 @@
 				"owner": "ConductionNL/openregister",
 				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publications are OpenRegister objects and deletes are soft; the Deleted page (src/manifest.json:165-170, component openregister@src/views/deleted/DeletedIndex.vue) offers restore per item and in bulk and permanently delete per item (DeletedIndex.vue:221,633-678; store openregister@src/store/modules/deleted.js:285-298 restore, :354 permanentlyDelete), backed by /api/deleted/{id}/restore and DELETE /api/deleted/{id} (appinfo/routes.php:1429-1442). Soft delete keeps the files for restore (openregister@lib/Service/Object/DeleteObject.php:363-364). Reached in the OpenRegister app, not inside opencatalogi's own navigation.",
 				"spec": "openregister/openspec/specs/deletion-audit-trail",
-				"requirement": "openregister:openspec/specs/deletion-audit-trail :: Requirement 3: Soft-deleted objects MUST be restorable through the trash API"
+				"requirement": "openregister:openspec/specs/deletion-audit-trail :: Soft-deleted objects MUST be restorable through the trash API"
 			},
 			"reachedOn": "openregister /deleted",
 			"provider": "openregister",

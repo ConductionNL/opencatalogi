@@ -3,6 +3,8 @@ kind: umbrella
 depends_on: []
 ---
 
+> Superseded by the per-row changes the capability rows name (decision 399); the umbrella index is no longer where the work is tracked.
+
 # Proposal: competitor-parity-2026-09
 
 The opencatalogi half of the competitor parity programme. Source of
