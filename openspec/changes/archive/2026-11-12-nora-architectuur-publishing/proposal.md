@@ -1,3 +1,5 @@
+> Superseded by decision 399: a Specter proposal from the July 2026 batch, nothing built, no capability row and no requirement headings.
+
 # Proposal: nora-architectuur-publishing
 
 ## Summary

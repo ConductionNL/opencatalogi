@@ -1,3 +1,5 @@
+> Superseded by decision 399: a Specter proposal from the July 2026 batch: nothing built, no capability row, and its tasks contradict ADR-022 (own tables instead of OpenRegister schemas). GEMMA mapping is to be specified later as one small OpenRegister schema change, with its own capability row.
+
 # Proposal: gemma-gegevenscatalogus
 
 ## Summary
