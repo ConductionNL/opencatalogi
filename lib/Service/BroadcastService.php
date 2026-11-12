@@ -411,8 +411,9 @@ class BroadcastService implements BroadcastServiceInterface {
 							'Content-Type' => 'application/json',
 						],
 						RequestOptions::ALLOW_REDIRECTS => false,
-						// Only the status is read; do not buffer the body.
-						RequestOptions::STREAM => true,
+						// No `stream` option here: Guzzle hands a streamed request to its
+						// PHP stream handler, which ignores the cURL address pin and
+						// resolves the name again. The body cap bounds what is buffered.
 					] + $pinned
 				);
 

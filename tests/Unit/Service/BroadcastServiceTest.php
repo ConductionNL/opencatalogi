@@ -987,7 +987,11 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertSame(['peer.example.org:443:203.0.113.10'], $options['curl'][\CURLOPT_RESOLVE]);
 		$this->assertSame(1048576, $options['curl'][\CURLOPT_MAXFILESIZE]);
 		$this->assertFalse($options['allow_redirects']);
-		$this->assertTrue($options['stream']);
+		$this->assertArrayNotHasKey(
+			'stream',
+			$options,
+			'A streamed request goes to the PHP stream handler, which ignores CURLOPT_RESOLVE.'
+		);
 		$this->assertIsCallable($options['on_headers']);
 
 	}//end testBroadcastPostIsPinnedToTheCheckedAddress()
