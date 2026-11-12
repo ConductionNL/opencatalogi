@@ -138,6 +138,19 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end setHostResolver()
 
 	/**
+	 * Replace the cURL availability check behind the address pin.
+	 *
+	 * @param boolean $available Whether cURL counts as available.
+	 *
+	 * @return void
+	 */
+	private function setCurlAvailable(bool $available): void {
+		$property = (new \ReflectionClass($this->broadcastService))->getProperty('curlAvailable');
+		$property->setValue($this->broadcastService, static fn (): bool => $available);
+
+	}//end setCurlAvailable()
+
+	/**
 	 * Helper to invoke private methods via reflection.
 	 *
 	 * @param object $object The object instance.
@@ -1006,5 +1019,42 @@ class BroadcastServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertFalse($result);
 
 	}//end testBroadcastRetryIsNotSentWhenTheNameRebindsToAnInternalAddress()
+
+	/**
+	 * dir-f1: without cURL the address pin cannot be honoured (Guzzle's stream handler
+	 * ignores CURLOPT_RESOLVE and resolves again), so the POST is refused, not sent unpinned.
+	 */
+	public function testBroadcastIsRefusedWhenTheAddressPinCannotBeHonoured(): void {
+		$this->appManagerMock->method('getAppInfo')->willReturn(['version' => '1.0.0']);
+		$this->setCurlAvailable(false);
+
+		$this->clientMock->expects($this->never())->method('post');
+
+		$result = $this->invokePrivateMethod(
+			$this->broadcastService,
+			'sendBroadcastRequest',
+			['https://peer.example.org/api/directory', 'https://self.example.com/api/directory']
+		);
+
+		$this->assertFalse($result);
+
+	}//end testBroadcastIsRefusedWhenTheAddressPinCannotBeHonoured()
+
+	/**
+	 * dir-f1: the refusal comes from the options builder, with a message that names the cause.
+	 */
+	public function testPinnedOutboundOptionsThrowWhenCurlIsUnavailable(): void {
+		$this->setCurlAvailable(false);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('cannot be pinned to the checked address without cURL');
+
+		$this->invokePrivateMethod(
+			$this->broadcastService,
+			'pinnedOutboundOptions',
+			['https://peer.example.org/api/directory']
+		);
+
+	}//end testPinnedOutboundOptionsThrowWhenCurlIsUnavailable()
 
 }//end class

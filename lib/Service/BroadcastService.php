@@ -142,6 +142,18 @@ class BroadcastService implements BroadcastServiceInterface {
 	private ?\Closure $hostResolver = null;
 
 	/**
+	 * Test seam for the cURL availability check behind the address pin.
+	 *
+	 * When null, {@see assertPinSupported()} asks PHP. Only the unit test assigns a
+	 * closure, through reflection, to simulate a host without ext-curl.
+	 *
+	 * @var (\Closure(): bool)|null
+	 *
+	 * @phpstan-ignore property.unusedType (only the unit test assigns it, through reflection)
+	 */
+	private ?\Closure $curlAvailable = null;
+
+	/**
 	 * Constructor for BroadcastService.
 	 *
 	 * @param IURLGenerator $urlGenerator URL generator interface
@@ -724,6 +736,33 @@ class BroadcastService implements BroadcastServiceInterface {
 	}//end lookupHostAddresses()
 
 	/**
+	 * Refuse to send a request whose address pin cannot be honoured.
+	 *
+	 * CURLOPT_RESOLVE is a cURL option. Guzzle's stream handler, which it falls back
+	 * to when ext-curl is missing, ignores it silently and resolves the name again,
+	 * which would undo the DNS-rebinding protection. Nextcloud requires ext-curl and
+	 * builds its clients on CurlHandler, so this is a fail-closed backstop for an
+	 * unusual build, not a code path a normal install reaches.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When cURL is not available to pin the address.
+	 *
+	 * @spec exclude SSRF hardening of an existing outbound request; no domain behaviour.
+	 */
+	private function assertPinSupported(): void {
+		$available = (\function_exists('curl_init') === true && \extension_loaded('curl') === true);
+		if ($this->curlAvailable !== null) {
+			$available = ($this->curlAvailable)();
+		}
+
+		if ($available === false) {
+			throw new InvalidArgumentException('Broadcast target cannot be pinned to the checked address without cURL');
+		}
+
+	}//end assertPinSupported()
+
+	/**
 	 * Validate a broadcast target and build the request options that keep the POST on the checked address.
 	 *
 	 * - CURLOPT_RESOLVE pins host:port to an address the SSRF guard accepted, the
@@ -757,6 +796,8 @@ class BroadcastService implements BroadcastServiceInterface {
 			if (str_contains($address, ':') === true) {
 				$address = '['.$address.']';
 			}
+
+			$this->assertPinSupported();
 
 			$curl[\CURLOPT_RESOLVE] = [$resolved['host'].':'.$port.':'.$address];
 		}

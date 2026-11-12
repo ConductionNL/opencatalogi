@@ -374,4 +374,32 @@ class DirectoryPeerFetchTest extends TestCase {
 
 		$this->assertMatchesRegularExpression('/^example\.org:443:/', $options['curl'][\CURLOPT_RESOLVE][0]);
 	}
+
+	/**
+	 * A pin that cURL cannot honour is refused, not sent unpinned.
+	 *
+	 * Without ext-curl Guzzle falls back to the stream handler, which ignores
+	 * CURLOPT_RESOLVE and resolves the name a second time.
+	 */
+	public function testAssertPinSupportedRefusesWhenCurlIsUnavailable(): void {
+		$ref = new ReflectionClass(DirectoryService::class);
+		$ref->getProperty('curlAvailable')->setValue($this->service, static fn (): bool => false);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('cannot be pinned to the checked address without cURL');
+
+		(new \ReflectionMethod(DirectoryService::class, 'assertPinSupported'))->invoke($this->service);
+	}
+
+	/**
+	 * With cURL available the pin guard lets the request through.
+	 */
+	public function testAssertPinSupportedAcceptsWhenCurlIsAvailable(): void {
+		$ref = new ReflectionClass(DirectoryService::class);
+		$ref->getProperty('curlAvailable')->setValue($this->service, static fn (): bool => true);
+
+		(new \ReflectionMethod(DirectoryService::class, 'assertPinSupported'))->invoke($this->service);
+
+		$this->addToAssertionCount(1);
+	}
 }
