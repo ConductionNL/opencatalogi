@@ -919,6 +919,7 @@ import {
 	dispatchObjectsChanged,
 	validateValue,
 } from '@conduction/nextcloud-vue'
+import { getRequestToken } from '@nextcloud/auth'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -2033,6 +2034,7 @@ export default {
 				method,
 				headers: {
 					'Content-Type': 'application/json',
+					requesttoken: getRequestToken(),
 				},
 				body: JSON.stringify(objectData),
 			})
@@ -2382,6 +2384,7 @@ export default {
 			const endpoint = action === 'delete' ? base : `${base}/${action}`
 			return fetch(endpoint, {
 				method: action === 'delete' ? 'DELETE' : 'POST',
+				headers: { requesttoken: getRequestToken() },
 			})
 		},
 
@@ -2532,6 +2535,7 @@ export default {
 					method: 'PUT',
 					headers: {
 						'Content-Type': 'application/json',
+						requesttoken: getRequestToken(),
 					},
 					body: JSON.stringify({
 						tags: editedTags,

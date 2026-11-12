@@ -8,7 +8,7 @@ status: done
 
 @e2e exclude pure backend/static-document spec except API-DOC-003, which carries its own @e2e reference; no other browser-observable UI surface.
 
-OpenCatalogi ships an accurate, maintained OpenAPI 3.1 document (`openapi.json`)
+OpenCatalogi ships an accurate, maintained OpenAPI 3.0 document (`openapi.json`)
 describing its public, CORS-enabled API surface, served at
 `GET /api/openapi.json`. A bidirectional parity test pins the document to
 `appinfo/routes.php` so the two cannot drift. This replaced the dead
@@ -18,19 +18,24 @@ developer.overheid.nl API-register listing.
 
 ## Requirements
 
-### Requirement: Accurate OpenAPI 3.1 document describes the public API (API-DOC-001)
+### Requirement: Accurate OpenAPI 3.0 document describes the public API (API-DOC-001)
 
 **Priority:** Must **Status:** Implemented
 
-The repository MUST ship an OpenAPI 3.1 document (`openapi.json`) that
+The repository MUST ship an OpenAPI 3.0.3 document (`openapi.json`), the
+version the NL API Design Rules require (/core/doc-openapi), that
 describes OpenCatalogi's actual public API surface: every route registered in
 `appinfo/routes.php` whose controller method is annotated `@PublicPage` /
 `#[PublicPage]` MUST appear as a documented path, with request parameters
 (including pagination, `_extend`, facet and `_content` query parameters where
 supported) and response schemas that match the served envelopes. The document
 MUST carry the app's real metadata: title "OpenCatalogi", license EUPL-1.2,
-and a version equal to the `<version>` in `appinfo/info.xml`. Content stemming
-from other applications MUST NOT be present.
+and a version equal to the `<version>` in `appinfo/info.xml`. Its server URL
+ends in `/api`, so documented paths are the route URLs without that prefix.
+The document MUST pass the Spectral ruleset of the NL API Design Rules
+(`https://static.developer.overheid.nl/adr/ruleset.yaml`) apart from findings
+that need a breaking change to the public URLs. Content stemming from other
+applications MUST NOT be present.
 
 #### Scenario: stale foreign stub is gone
 
@@ -79,8 +84,47 @@ substituted at serve time from the installed app version.
 
 @e2e tests/e2e/spec-coverage/openapi-document.spec.ts
 
+### Requirement: Every API response carries the API version (API-DOC-004)
+
+**Priority:** Must **Status:** Implemented
+
+Every response of an endpoint under `/api/` MUST carry an `API-Version` header
+with the installed app version, which is also the served document's
+`info.version` (/core/version-header). Responses outside `/api/` MUST NOT
+carry it.
+
+#### Scenario: a public API call names its version
+
+- GIVEN OpenCatalogi is installed at version 1.2.3,
+- WHEN a client calls any endpoint under `/index.php/apps/opencatalogi/api/`,
+- THEN the response MUST carry `API-Version: 1.2.3`.
+
+> @e2e exclude A response header, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest.
+
+### Requirement: API errors are problem details (API-DOC-005)
+
+**Priority:** Must **Status:** Implemented
+
+A JSON error response (status 400 or higher) of an endpoint under `/api/` MUST
+be served as `application/problem+json` with the members `type`, `title` and
+`status`, plus `detail` when the body already carries a `detail`, `message` or
+`error` text (/core/error-handling/problem-details). Every member the body
+already had MUST be kept, so existing callers see no change. A body that
+already uses `type`, `title` or `status` for something else, or that is a JSON
+list, MUST be left as it is.
+
+#### Scenario: a not-found error becomes problem details
+
+- GIVEN an endpoint answers `404` with `{"error": "Thing not found"}`,
+- WHEN the response leaves the app,
+- THEN its content type MUST be `application/problem+json`,
+- AND its body MUST be `{"type": "about:blank", "title": "Not Found", "status": 404, "detail": "Thing not found", "error": "Thing not found"}`.
+
+> @e2e exclude A content type and a body shape, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest.
+
 ## Dependencies
 
 - **appinfo/routes.php** — source of truth for the public route set
 - **ApiDocumentationController** — serves the document with serve-time version substitution
 - **tests/Unit/OpenApiParityTest.php** — bidirectional anti-rot guard
+- **ApiContractMiddleware** — the `API-Version` header and problem details on every API response

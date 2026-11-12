@@ -1138,6 +1138,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 <script>
 import { CnPagination } from '@conduction/nextcloud-vue'
+import { getRequestToken } from '@nextcloud/auth'
 import {
 	NcActionButton,
 	NcActionLink,
@@ -1590,6 +1591,7 @@ export default {
 					}),
 					headers: {
 						'Content-Type': 'application/json',
+						requesttoken: getRequestToken(),
 					},
 				},
 			)
@@ -1656,6 +1658,7 @@ export default {
 				`/index.php/apps/openregister/api/objects/${objectStore.getActiveObject('publication')['@self'].register}/${objectStore.getActiveObject('publication')['@self'].schema}/${objectStore.getActiveObject('publication').id}/${mode}`,
 				{
 					method: 'POST',
+					headers: { requesttoken: getRequestToken() },
 				},
 			).then((response) => {
 				catalogStore.fetchPublications()
@@ -1693,6 +1696,7 @@ export default {
 				`/index.php/apps/openregister/api/objects/${this.registerId}/${this.schemaId}/${this.publicationId}/files/${attachment.id}/${action}`,
 				{
 					method: 'POST',
+					headers: { requesttoken: getRequestToken() },
 				},
 			)
 				.catch((error) => {

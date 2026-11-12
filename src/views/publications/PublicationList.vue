@@ -242,6 +242,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
+import { getRequestToken } from '@nextcloud/auth'
 import {
 	NcActionButton,
 	NcActionCaption,
@@ -350,6 +351,7 @@ export default {
 				`/index.php/apps/openregister/api/objects/${publication['@self'].register}/${publication['@self'].schema}/${publication.id}/${mode}`,
 				{
 					method: 'POST',
+					headers: { requesttoken: getRequestToken() },
 				},
 			).then((response) => {
 				catalogStore.fetchPublications()

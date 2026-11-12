@@ -37,6 +37,13 @@ use ReflectionMethod;
  */
 class OpenApiParityTest extends TestCase {
 	/**
+	 * The route prefix that the document's server URL carries.
+	 *
+	 * @var string
+	 */
+	private const SERVER_BASE = '/api';
+
+	/**
 	 * `appinfo/routes.php` entries whose `name` is a fully-qualified,
 	 * non-app-owned controller class (the OpenRegister AppHost engine
 	 * generics — dashboard SPA shell, per-user preferences, Prometheus
@@ -169,16 +176,18 @@ class OpenApiParityTest extends TestCase {
 	/**
 	 * Convert an NC route path template to its OpenAPI path-template
 	 * equivalent. NC's `{param}` route placeholders already use OpenAPI's
-	 * own template syntax, so this is currently an identity transform —
-	 * implemented as its own step (rather than comparing raw NC urls
-	 * directly) so a future NC syntax that diverges from `{param}` has a
-	 * single place to add the conversion, per design decision D1.
+	 * own template syntax; the conversion only drops the `/api` prefix that
+	 * the document's server URL already carries (design decision D1).
 	 *
 	 * @param string $ncUrl The NC route `url` value.
 	 *
 	 * @return string The OpenAPI path template.
 	 */
 	private function ncPathToOpenApiPath(string $ncUrl): string {
+		if (str_starts_with($ncUrl, self::SERVER_BASE.'/') === true) {
+			return substr($ncUrl, strlen(self::SERVER_BASE));
+		}
+
 		return $ncUrl;
 	}//end ncPathToOpenApiPath()
 
@@ -387,7 +396,7 @@ class OpenApiParityTest extends TestCase {
 
 		$this->assertArrayHasKey('paths', $document);
 		$this->assertNotEmpty($document['paths']);
-		$this->assertSame('3.1.0', $document['openapi']);
+		$this->assertSame(expected: '3.0.3', actual: $document['openapi']);
 
 	}//end testDocumentParsesAndHasPaths()
 }//end class
