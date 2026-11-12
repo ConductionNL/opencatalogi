@@ -75,6 +75,19 @@ final class ListCorsPolicy {
 	}//end __construct()
 
 	/**
+	 * The configured `cors_allowed_origins` setting of the app; '*' without an app config.
+	 *
+	 * @param string $appName The app whose setting is read.
+	 *
+	 * @return string The allowlist as configured.
+	 *
+	 * @spec openspec/specs/cors-allowlist/spec.md
+	 */
+	public function allowedOriginsSetting(string $appName): string {
+		return ($this->config?->getValueString($appName, 'cors_allowed_origins', '*') ?? '*');
+	}//end allowedOriginsSetting()
+
+	/**
 	 * The Access-Control-Allow-Origin value for a caller.
 	 *
 	 * The caller's origin is never echoed back unless it is on the allowlist (#735).
@@ -87,7 +100,6 @@ final class ListCorsPolicy {
 	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
 	 */
 	public function allowedOrigin(string $appName, string $callerOrigin): string {
-		$configured = ($this->config?->getValueString($appName, 'cors_allowed_origins', '*') ?? '*');
-		return (new CorsAllowlist($configured))->allowedFor($callerOrigin);
+		return (new CorsAllowlist($this->allowedOriginsSetting(appName: $appName)))->allowedFor($callerOrigin);
 	}//end allowedOrigin()
 }//end class

@@ -56,6 +56,7 @@ use OCP\IUserSession;
 class InspectionController extends Controller {
 	use AnswersCrossOriginRequests;
 	use ResolvesRegisterConfiguration;
+	use ReadsOpenRegisterResults;
 
 	/**
 	 * Constructor.
@@ -92,7 +93,7 @@ class InspectionController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
 		$response->addHeader('Access-Control-Max-Age', '1728000');
 		$response->addHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, Accept');
@@ -324,7 +325,7 @@ class InspectionController extends Controller {
 	 * @return JSONResponse The response, with its headers.
 	 */
 	private function withCors(JSONResponse $response): JSONResponse {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
+		$this->addAllowedOriginHeaders(response: $response);
 		$response->addHeader('Access-Control-Allow-Credentials', 'false');
 
 		return $response;
