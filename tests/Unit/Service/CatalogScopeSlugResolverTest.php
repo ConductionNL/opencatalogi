@@ -27,6 +27,7 @@ use RuntimeException;
 /**
  * @covers \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
  * @uses   \OCA\OpenCatalogi\Service\CatalogScopeLookups
+ * @uses   \OCA\OpenCatalogi\Service\SchemaSlugIndex
  */
 class CatalogScopeSlugResolverTest extends TestCase {
 

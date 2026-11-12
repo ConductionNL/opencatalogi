@@ -23,6 +23,11 @@ It connects to a federated directory of other OpenCatalogi instances, enabling c
 
 > **Requires:** [OpenRegister](https://github.com/ConductionNL/openregister) — all data is stored as OpenRegister objects (no own database tables).
 
+## Test coverage
+
+<!-- coverage:start -->
+<!-- coverage:end -->
+
 ## Screenshots
 
 <table>

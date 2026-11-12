@@ -92,6 +92,7 @@ use ReflectionMethod;
  * @uses \OCA\OpenCatalogi\Service\Publication\InspectionService
  * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\ObjectInPair
  */
 class DelegatedAdminSavesTest extends TestCase {
 

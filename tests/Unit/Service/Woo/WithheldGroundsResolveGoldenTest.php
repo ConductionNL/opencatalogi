@@ -36,6 +36,7 @@ use Psr\Container\ContainerInterface;
  * Golden test for WithheldDocuments::record.
  *
  * @covers \OCA\OpenCatalogi\Service\Woo\WithheldDocuments
+ * @uses   \OCA\OpenCatalogi\Service\Woo\WithheldResolution
  */
 class WithheldGroundsResolveGoldenTest extends TestCase {
 
