@@ -34,10 +34,10 @@
 	{
 		"row": "dec-verify",
 		"matrix": "opencatalogi",
-		"decision": "defer",
-		"reason": "Partial, built, no demand: no tender, featureRequest or roadmap row and no competitor rated yes on the missing half.",
+		"decision": "decided-no",
+		"reason": "Decided no by Ruben on 2026-11-12 (DECISIONS row 392). The verify and verification-key routes were removed on 2026-09-29 (publication-inspection-and-the-national-indexes tasks 7.1 and 7.2); no code verifies a document. Before: defer on 2026-09-27, partial, built, no demand.",
 		"change": null,
-		"decidedOn": "2026-09-27"
+		"decidedOn": "2026-11-12"
 	},
 	{
 		"row": "dec-withdraw-ack",
