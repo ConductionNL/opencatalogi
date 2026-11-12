@@ -1067,7 +1067,11 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "lib/Settings/publication_register.json:848 glossary schema (title, summary, description, externalLink, keywords); src/manifest.json:1144 Glossary index and :1169 GlossaryDetail with a related-terms graph; appinfo/routes.php:176-177 public GET /api/glossary (GlossaryController.php:212)",
 				"spec": "openspec/specs/content-management",
-				"requirement": "openspec/specs/content-management :: List all glossary terms with pagination and facets via public API (CMS-030)"
+				"requirement": [
+					"openspec/specs/content-management :: List all glossary terms with pagination and facets via public API (CMS-030)",
+					"openspec/changes/capability-rows-close-gaps/specs/content-management :: Staff keep the glossary on the Glossary page (REQ-CRG-002)"
+				],
+				"change": "capability-rows-close-gaps"
 			},
 			"reachedOn": "/glossary (staff, manifest.json:1144); GET /apps/opencatalogi/api/glossary (public)",
 			"provider": "opencatalogi",
@@ -1597,7 +1601,11 @@
 				"owner": "ConductionNL/openregister",
 				"evidence": "appinfo/routes.php:253-254 public GET /api/{catalogSlug}/{id}/uses and /used (PublicationsController.php:1099,1209); publication_register.json:100-217 declares no publication-to-publication property; manifest.json:644 pub-related shows only organisation and themes",
 				"change": "openregister/relation-types-with-inverses",
-				"requirement": "openregister:openspec/changes/relation-types-with-inverses/specs/referential-integrity :: Relation rows carry the property and the label for each direction"
+				"requirement": [
+					"openregister:openspec/changes/relation-types-with-inverses/specs/referential-integrity :: Relation rows carry the property and the label for each direction",
+					"openspec/changes/capability-rows-close-gaps/specs/publications :: An editor links a publication to related publications (REQ-CRG-003)"
+				],
+				"plan": "openspec/changes/capability-rows-close-gaps"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{id}/uses|used (public); no staff page",
 			"note": "Back-links are readable over the API, but staff have no field or widget to link one publication to another. Specified in ConductionNL/openregister openspec/changes/relation-types-with-inverses (openregister lane, OpenSpec pass 2026-09-27).",
@@ -2507,7 +2515,7 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:62 PUT woo#updateAssessment -> WooService.php:508 stores assessment + grounds + assessedBy; WooBatchDetail.vue:37 activeDocument is never set so WooRedactionView never mounts; WooRedactionView.vue:146 sends POST to the PUT-only route Missing (spec-coverage pass 2026-11-12, development bba37fc7): src/views/woo/WooBatchDetail.vue has no per-document assessment, only the PUT /api/woo/batches/{id}/documents/{docId} API records one; open tasks 2.1 to 2.3 of woo-document-assessment-screen.",
 				"change": "woo-transparency",
-				"requirement": "openspec/specs/woo-transparency :: WOO document queue (consumes the OpenRegister deck leaf)",
+				"requirement": "openspec/changes/woo-document-assessment-screen/specs/woo-transparency :: The batch page shows the document queue and saves an assessment (REQ-WDA-002)",
 				"plan": "openspec/changes/woo-document-assessment-screen"
 			},
 			"reachedOn": "nothing: no page can set a document's assessment",
@@ -2652,8 +2660,8 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "WooService.php:792 canMarkReadyForReview requires zero te_beoordelen and >0 docs, enforced at :813-815; WooBatchDetail.vue:66-71 canReview, :121-131 POST ready-for-review",
-				"change": "woo-transparency",
-				"requirement": "openspec/specs/woo-transparency :: WOO batch data model"
+				"change": "capability-rows-close-gaps",
+				"requirement": "openspec/changes/capability-rows-close-gaps/specs/woo-transparency :: A batch goes to review only once every document in it is assessed (REQ-CRG-001)"
 			},
 			"reachedOn": "/woo/:id 'Mark ready for review' button, only by typed URL (index rows dead)",
 			"note": "Server gate is real; but documents cannot be assessed from any page (see wr-assess), so a batch can only pass it via direct API calls.",
@@ -7397,7 +7405,10 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "GET /api/search forwards documentType, bodyName and a meetingDate range to OpenRegister and returns their facets (lib/Controller/SearchController.php, PublicationQueryService::assemblePublicSearchResults()); archived change search-council-document-filters. The row is decidiq pub-09; the public page is portaliq's.",
 				"change": "search-council-document-filters",
-				"requirement": "openspec/specs/search :: The public search filters and counts council documents by type and body (REQ-SCF-001)"
+				"requirement": [
+					"openspec/specs/search :: The public search filters and counts council documents by type and body (REQ-SCF-001)",
+					"openspec/specs/search :: The public search filters council documents by meeting date range (REQ-SCF-002)"
+				]
 			},
 			"ckan": "unknown",
 			"dkan": "unknown",
