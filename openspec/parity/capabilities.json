@@ -1176,7 +1176,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "Publications page is schema-driven CnIndexPage/CnDetailPage (manifest.json:523,543), so properties added to the schema in OR's schema editor render in its form; CatalogModal.vue:116 lets a catalogue hold any extra schema; SettingsService.php:901 re-imports publication_register.json on update",
-				"change": "openregister/local-changes-to-app-shipped-configuration"
+				"change": "openregister/local-changes-to-app-shipped-configuration",
+				"requirement": "openregister:openspec/changes/local-changes-to-app-shipped-configuration/specs/schema-import :: An upgrade never silently discards a local change (REQ-LCA-003)"
 			},
 			"reachedOn": "OpenRegister schema editor (outside this app), then /publications/:catalogSlug",
 			"note": "No field editor exists in opencatalogi. Whether an update re-import (InitializeSettings, force=false) keeps fields an admin added to the shipped publication schema is not shown. Specified in ConductionNL/openregister openspec/changes/local-changes-to-app-shipped-configuration (openregister lane, OpenSpec pass 2026-09-27).",
@@ -1444,7 +1445,11 @@
 				"state": "specified",
 				"owner": "ConductionNL/nextcloud-vue",
 				"evidence": "src/manifest.json:529-535 Publications page selectable true, showMassDelete not overridden (nextcloud-vue CnIndexPage.vue default true); modals/object/MassPublishObjects.vue and MassDepublishObjects.vue opened only via ViewObject.vue:2634-2639 openSingleObjectDialog (one object)",
-				"change": "nextcloud-vue/index-bulk-edit-and-transitions"
+				"change": "nextcloud-vue/index-bulk-edit-and-transitions",
+				"requirement": [
+					"nextcloud-vue:openspec/changes/index-bulk-edit-and-transitions/specs/index-page :: The selection strip runs one lifecycle step on every selected row",
+					"nextcloud-vue:openspec/changes/index-bulk-edit-and-transitions/specs/index-page :: A bulk act is previewed and committed as one OpenRegister job"
+				]
 			},
 			"reachedOn": "/publications/:catalogSlug mass delete (CnIndexPage)",
 			"note": "Bulk delete works. No page offers bulk publish or withdraw. Specified in ConductionNL/nextcloud-vue openspec/changes/index-bulk-edit-and-transitions (nextcloud-vue lane, OpenSpec pass 2026-09-27).",
@@ -1520,7 +1525,8 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "src/manifest.json:750 PublicationDetail sidebar History tab = audit widget; nextcloud-vue CnAuditTrailTab.vue:78-81 renders each entry's changed fields",
-				"spec": "openregister/openspec/specs/enhanced-audit-trail"
+				"spec": "openregister/openspec/specs/enhanced-audit-trail",
+				"requirement": "openregister:openspec/specs/content-versioning :: The system MUST support version comparison with visual diffs"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id sidebar History tab",
 			"note": "You see what changed per edit, but there is no list of versions to open or compare and no revert.",
@@ -1555,7 +1561,8 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "src/manifest.json:750 PublicationDetail sidebar tab 'History' with widgets [{type: audit}]; nextcloud-vue CnAuditTrailTab.vue:43-67 shows user and date per entry, with a user filter (:16)",
-				"spec": "openregister/openspec/specs/enhanced-audit-trail"
+				"spec": "openregister/openspec/specs/enhanced-audit-trail",
+				"requirement": "openregister:openspec/specs/audit-trail-immutable :: Every mutation MUST produce an immutable audit trail entry"
 			},
 			"reachedOn": "/publications/:catalogSlug/:id sidebar History tab",
 			"provider": "openregister",
@@ -1589,7 +1596,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "appinfo/routes.php:253-254 public GET /api/{catalogSlug}/{id}/uses and /used (PublicationsController.php:1099,1209); publication_register.json:100-217 declares no publication-to-publication property; manifest.json:644 pub-related shows only organisation and themes",
-				"change": "openregister/relation-types-with-inverses"
+				"change": "openregister/relation-types-with-inverses",
+				"requirement": "openregister:openspec/changes/relation-types-with-inverses/specs/referential-integrity :: Relation rows carry the property and the label for each direction"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{id}/uses|used (public); no staff page",
 			"note": "Back-links are readable over the API, but staff have no field or widget to link one publication to another. Specified in ConductionNL/openregister openspec/changes/relation-types-with-inverses (openregister lane, OpenSpec pass 2026-09-27).",
@@ -1807,7 +1815,8 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "src/manifest.json:529-535 Publications page leaves showMassImport at the CnIndexPage default true; nextcloud-vue CnMassImportDialog.vue:250 accepts .json,.xlsx,.xls,.csv; selfModeActions.js:168-181 handleMassImport -> runSelfImportRequest to OR import",
-				"spec": "nextcloud-vue/openspec/specs/index-page"
+				"spec": "nextcloud-vue/openspec/specs/index-page",
+				"requirement": "nextcloud-vue:openspec/specs/dialog-system :: REQ-DG-012 — CnMassImportDialog — File Upload with Options and Results Summary"
 			},
 			"reachedOn": "/publications/:catalogSlug mass import (CnIndexPage)",
 			"provider": "openregister",
@@ -2781,7 +2790,11 @@
 				"state": "built",
 				"owner": "ConductionNL/dossiq",
 				"evidence": "ConductionNL/dossiq development 96b8ef8: lib/Settings/templates/woo-verzoek.json (Woo case type, origin indienen); lib/Service/FormsIntakeService.php:94 caseFor() opens a case from a Nextcloud Forms submission for the case type whose intakeFormRef names the form (:186-223), called by lib/Listener/FormSubmittedListener.php:96",
-				"spec": "dossiq/openspec/specs/woo-case-type"
+				"spec": "dossiq/openspec/specs/woo-case-type",
+				"requirement": [
+					"dossiq:openspec/specs/portal-contribution :: A resident starts a Woo request from the portal (REQ-PORTAL-020)",
+					"dossiq:openspec/specs/woo-request-intake :: One service creates every Woo request (REQ-WRI-002)"
+				]
 			},
 			"reachedOn": "dossiq: an administrator binds a Nextcloud Forms form to the Woo case type (caseType.intakeFormRef); a resident submits it and a Woo case opens",
 			"provider": "dossiq",
@@ -2816,7 +2829,8 @@
 				"state": "built",
 				"owner": "ConductionNL/dossiq",
 				"evidence": "ConductionNL/dossiq development 96b8ef8: lib/Settings/templates/woo-verzoek.json:13 processingDeadline P28D and :17 extensionPeriod P14D on the Woo case type; lib/Service/WOODeadlineService.php:223 checkAndWarn(), run by lib/BackgroundJob/WOODeadlineCheckJob.php:139 for every active Woo case",
-				"spec": "dossiq/openspec/specs/woo-case-type"
+				"spec": "dossiq/openspec/specs/woo-case-type",
+				"requirement": "dossiq:openspec/specs/woo-case-type :: WOO deadline tracking and extension"
 			},
 			"reachedOn": "dossiq: a Woo request case carries its statutory term; the deadline job warns before it passes",
 			"provider": "dossiq",
@@ -4110,7 +4124,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq FederatedSearchBlock.vue:538 one facet field (default 'themes'), :341 facet list; opencatalogi SearchSideBar.vue (facets + sort) mounts only from src/sidebars/SideBars.vue:10, and nothing imports SideBars.vue (grep: 0)",
-				"change": "portaliq/portal-public-search"
+				"change": "portaliq/portal-public-search",
+				"requirement": "portaliq:openspec/changes/portal-public-search/specs/portal-public-search :: Search results MUST carry facets discovered from the result set"
 			},
 			"reachedOn": "portaliq public search (one facet: themes); nothing in opencatalogi's /search page",
 			"note": "No category, organisation or date filter. The in-app facet sidebar is dead code (SideBars.vue:77 also uses this.$route inside script setup). Specified in ConductionNL/portaliq openspec/changes/portal-public-search (portaliq lane, existing change, OpenSpec pass 2026-09-27).",
@@ -4146,7 +4161,8 @@
 				"owner": "ConductionNL/openregister",
 				"evidence": "source read at opencatalogi development 7a5a8a492: lib/Service/PublicationQueryService.php:133 forwards ?_content=true as OpenRegister's _content_search; lib/Controller/SearchController.php:127-131. The OpenRegister half is archived as openregister/2026-10-05-expose-content-search-in-object-service (7 of 7 tasks). Missing: no caller sets _content: git grep _content in opencatalogi src and portaliq src/lib at development finds no search request that sends it. portaliq's open change portal-public-search tasks.md:29 is the one that sends _content_search: true from the public search.",
 				"change": "portaliq/portal-public-search",
-				"readOn": "2026-10-07"
+				"readOn": "2026-10-07",
+				"requirement": "portaliq:openspec/changes/portal-public-search/specs/portal-public-search :: Search MUST reach text extracted from attached files"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/search?_content=true (public API only); no page or portaliq block sends it",
 			"note": "Readers cannot reach it: the opt-in flag is off by default and no search UI sets it. Specified in ConductionNL/openregister openspec/changes/expose-content-search-in-object-service (openregister lane, OpenSpec pass 2026-09-27). Re-rated 2026-10-07: the OpenRegister half shipped (change archived 2026-10-05); the user-facing half is portaliq's public search, open as portaliq/portal-public-search. Link moved there.",
@@ -4216,7 +4232,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq FederatedSearchBlock.vue:662-670 sortOptions: publicationDate ASC/DESC and title only; the comment above says relevance is absent because nothing ranks; opencatalogi SearchSideBar.vue:63-102 has Relevance/date sort but is never mounted (see srch-facets)",
-				"change": "portaliq/search-sort-by-relevance"
+				"change": "portaliq/search-sort-by-relevance",
+				"requirement": "portaliq:openspec/changes/search-sort-by-relevance/specs/portal-federated-search :: A search with a term can be sorted by relevance (REQ-SSR-001)"
 			},
 			"reachedOn": "portaliq public search sort control (date, name)",
 			"note": "Sorting by date works. Sorting by relevance does not exist anywhere reachable. Specified in ConductionNL/portaliq openspec/changes/search-sort-by-relevance (portaliq lane, OpenSpec pass 2026-09-27).",
@@ -4492,7 +4509,11 @@
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq lib/Controller/PortalPageController.php:155 and :261 serve a per-portal themeStylesheet resolved by PortalThemeResolver; portaliq src/manifest.json:247 Themes page",
-				"spec": "portaliq/openspec/specs/portaliq-cms"
+				"spec": "portaliq/openspec/specs/portaliq-cms",
+				"requirement": [
+					"portaliq:openspec/specs/portaliq-cms :: A portal's theme MUST change what a visitor sees",
+					"portaliq:openspec/changes/portal-theme-blocks-and-contributed-pages/specs/portaliq-cms :: A portal MUST be able to override its theme's tokens safely (REQ-PTB-002)"
+				]
 			},
 			"reachedOn": "portaliq /themes page plus the per-portal theme stylesheet on the public site",
 			"note": "The tokens come from the theme app (thematiq). opencatalogi has no public frontend of its own.",
@@ -4563,7 +4584,11 @@
 				"state": "built",
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq src/manifest.json:1277 Menus index and :1310 Pages index, plus PageLayout editor; opencatalogi openspec/changes/cms-moves-to-portaliq/proposal.md explains the move; opencatalogi lib/Command/MigrateCmsToPortaliqCommand.php:68 migrates old pages/menus",
-				"change": "cms-moves-to-portaliq"
+				"change": "cms-moves-to-portaliq",
+				"requirement": [
+					"portaliq:openspec/specs/portaliq-cms :: A page body MUST be either a widget grid or markdown",
+					"portaliq:openspec/specs/portaliq-cms :: A menu block must show the portal's navigation in groups"
+				]
 			},
 			"reachedOn": "portaliq /pages and /menus (staff), served publicly by portaliq /api/content/pages|menus",
 			"note": "opencatalogi still has ui#pages and ui#menus at appinfo/routes.php:267-268, but no API or manifest page backs them. cms-moves-to-portaliq tasks 4.1-4.4 (remove them) are still open.",
@@ -5025,7 +5050,11 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "appinfo/routes.php:90 POST /api/case-types/import (admin); lib/Controller/ServiceCatalogueController.php:324 importCaseType -> CaseTypeCatalogueService::importDefinition via lib/Service/Catalogue/GatewayCaseTypeSourceReader.php:54-55 (integriq/openconnector CallService)",
-				"change": "integriq/zgw-connectors-for-dossiq"
+				"change": "integriq/zgw-connectors-for-dossiq",
+				"requirement": [
+					"integriq:openspec/changes/zgw-connectors-for-dossiq/specs/zgw-consumer-connectors :: Six packaged, slug-referenced ZGW consumer sets (REQ-ZGWC-001)",
+					"integriq:openspec/changes/zgw-connectors-for-dossiq/specs/zgw-consumer-connectors :: A set binds to an operator-chosen register and schema (REQ-ZGWC-002)"
+				]
 			},
 			"reachedOn": "nothing: admin API only, no page in src/ calls it",
 			"note": "The transport to the national catalogue is integriq's. With no gateway installed the source is reported unreachable. The e2e test exercises only that unreachable path. Specified in ConductionNL/integriq openspec/changes/zgw-connectors-for-dossiq (integriq lane, existing change, OpenSpec pass 2026-09-27).",
@@ -5370,7 +5399,8 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "openregister lib/Service/WebhookService.php and lib/Listener/WebhookEventListener.php fire on object events; openregister src/manifest.json:245 Webhooks page; opencatalogi publications are OR objects (lib/Settings/publication_register.json)",
-				"spec": "openregister/openspec/specs/event-driven-architecture"
+				"spec": "openregister/openspec/specs/event-driven-architecture",
+				"requirement": "openregister:openspec/specs/event-driven-architecture :: WebhookEventListener MUST extract structured payloads from all event types"
 			},
 			"reachedOn": "openregister /apps/openregister/webhooks (staff configures a webhook on the publication schema)",
 			"note": "opencatalogi's own BroadcastService (lib/BackgroundJob/Broadcast.php) announces the directory every 4 hours, not individual publications.",
@@ -5441,7 +5471,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "integriq lib/AppInfo/Application.php:1473 registers SharePointOnlineAdapter (document-cms reference adapter), but nothing in opencatalogi lib/ or integriq routes its documents into a publication; grep of opencatalogi for sharepoint finds nothing",
-				"change": "integriq/connectors-sharepoint-publication-intake"
+				"change": "integriq/connectors-sharepoint-publication-intake",
+				"requirement": "integriq:openspec/changes/connectors-sharepoint-publication-intake/specs/document-cms-connectors :: Each dossier folder becomes a draft publication with its documents (REQ-SPPI-002)"
 			},
 			"reachedOn": "nothing: no path from SharePoint into an opencatalogi publication",
 			"provider": "integriq",
@@ -5511,7 +5542,11 @@
 				"state": "built",
 				"owner": "ConductionNL/integriq",
 				"evidence": "integriq appinfo/routes.php:204 POST /api/stuf-zkn/inbound; integriq lib/Service/StufZkn/InboundMessageTranslator.php translates zakLk01/edcLk01 into an OR/ZGW-shaped object; nothing maps it onto an opencatalogi publication",
-				"spec": "integriq/openspec/specs/stuf-zkn-bridge"
+				"spec": "integriq/openspec/specs/stuf-zkn-bridge",
+				"requirement": [
+					"integriq:openspec/specs/stuf-zkn-bridge :: Inbound zakLk01/edcLk01 translation with a literal-leak guard (REQ-002)",
+					"integriq:openspec/specs/stuf-zkn-bridge :: Inbound SOAP endpoint with Bv03/Fo03 shaping (REQ-005)"
+				]
 			},
 			"reachedOn": "integriq POST /apps/integriq/api/stuf-zkn/inbound (machine). Not connected to opencatalogi",
 			"note": "StUF-ZKN documents can be received, but they land as case-side objects, not as publications. The translator says it was never verified against a live municipal endpoint.",
@@ -6467,7 +6502,11 @@
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at integriq development 5e903e546: the source detail page (/sources/:id, src/manifest.json:1012) carries SourceRunSummaryWidget (src/manifest.json:1336-1340), which shows the source's pulls per day in one table and each run with a Run again button on a failed run (src/components/SourceRunSummaryWidget.vue:17-97), fed by GET /api/sources/{id}/run-summary (appinfo/routes.php:409, lib/Controller/RunSummaryController.php:102 via RunSummaryService); Run again posts /api/synchronizations/{id}/run (src/handlers/runAgain.js:35-37). Shipped by integriq change observability-connection-run-summary, archived 2026-09-29 (10 of 10 tasks). opencatalogi itself still only reports its own three connections (lib/Settings/connections.json, lib/Service/Connection/ConnectionReporter.php).",
 				"readOn": "2026-10-07",
-				"spec": "integriq/openspec/specs/connection-run-monitoring"
+				"spec": "integriq/openspec/specs/connection-run-monitoring",
+				"requirement": [
+					"integriq:openspec/specs/connection-run-monitoring :: A source shows its pulls per day (REQ-CRUN-002)",
+					"integriq:openspec/specs/connection-run-monitoring :: A failed pull restarts with one click (REQ-CRUN-003)"
+				]
 			},
 			"reachedOn": "integriq /sources/:id (run summary per day, Run again)",
 			"provider": "integriq",
@@ -6505,7 +6544,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): grep for IMailer, INotificationManager, notify( and createNotification in lib/ finds nothing; the connection rows (lib/Settings/connections.json) are only shown on the Integrations page. workspace checkout openconnector (integriq, development a9366588): grep for IMailer and digest in lib/ finds no report mail; its sync-failed notification rule is disabled (lib/Settings/integriq_register.json:2274-2280). Nearest thing: workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): ScheduledReportService can mail a daily export of any register/schema (lib/Service/ScheduledReportService.php:92,125,980, routes appinfo/routes.php:1939-1944), but it is a generic object export with no page in openregister src/ (grep scheduled-reports finds no caller), not a connection report.",
-				"change": "openregister/connections-daily-report-mail"
+				"change": "openregister/connections-daily-report-mail",
+				"requirement": "openregister:openspec/changes/connections-daily-report-mail/specs/scheduled-report-jobs :: A scheduled report can be a daily connection health report"
 			},
 			"reachedOn": "nothing",
 			"provider": "openregister",
@@ -6745,7 +6785,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/integriq",
 				"evidence": "workspace checkout openconnector (integriq, development a9366588): a full-mode synchronisation garbage-collects target objects whose source record is gone: SynchronizationService::deleteInvalidObjects (lib/Service/SynchronizationService.php:2793-2800 call, :3830 definition, delete via updateTarget action delete :4062-4066), guarded by a deletion-ratio threshold (:3958-3985) and never run in incremental mode (:2793). A publication stored in OpenRegister then leaves every public surface. Missing half: workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): that delete is a soft delete that intentionally leaves the object's files in place for restore (lib/Service/Object/DeleteObject.php:363-364); only a later permanent delete removes them (:272-277). Nothing listens for a destruction event from the source as such; disappearance on the next full run is the trigger.",
-				"change": "integriq/synchronisation-source-destruction-purge"
+				"change": "integriq/synchronisation-source-destruction-purge",
+				"requirement": "integriq:openspec/changes/synchronisation-source-destruction-purge/specs/synchronization-engine :: A destruction notice purges one object without a full run (REQ-SDP-002)"
 			},
 			"reachedOn": "integriq scheduled synchronisation runs (/synchronization-runs shows the deleted count)",
 			"provider": "integriq",
@@ -6783,7 +6824,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/dossiq",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): a Woo disclosure batch is created from a documents list the caller already supplies (lib/Service/WooService.php:335-355, POST /api/woo/batches appinfo/routes.php:60, a path the frontend does not call per _lane/api-paths.tsv, so the caller is a sibling such as dossiq). Nothing searches other systems: grep sharepoint, teams, imap and graph in lib finds nothing relevant. workspace checkout openconnector (integriq, development a9366588): the Microsoft 365 adapter reads calendar and mail metadata only, with no search or document gathering (lib/Service/Adapter/Saas/Microsoft365Adapter.php:23-35).",
-				"change": "dossiq/woo-requests-gather-documents-from-sources"
+				"change": "dossiq/woo-requests-gather-documents-from-sources",
+				"requirement": "dossiq:openspec/changes/woo-requests-gather-documents-from-sources/specs/woo-case-type :: A handler searches the organisation's sources from a Woo case (REQ-WOO-012)"
 			},
 			"reachedOn": "nothing",
 			"provider": "dossiq",
@@ -6941,7 +6983,8 @@
 				"state": "built",
 				"owner": "ConductionNL/openregister",
 				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): publication history is OpenRegister's audit trail; the Settings page section RetentionConfiguration (src/views/settings/Settings.vue:53, fields createLogRetention, readLogRetention, updateLogRetention at src/views/settings/sections/RetentionConfiguration.vue:230-288) sets a retention age per kind of change, stored through PUT/PATCH /api/settings/retention (appinfo/routes.php:347,361, ObjectRetentionHandler lib/Service/Settings/ObjectRetentionHandler.php:162-174), and the hourly LogCleanUpTask tombstones audit rows past that age (lib/BackgroundJob/LogCleanUpTask.php:38-40,157). The payload is destroyed while the row and hash-chain link stay.",
-				"spec": "openregister/openspec/specs/retention-management"
+				"spec": "openregister/openspec/specs/retention-management",
+				"requirement": "openregister:openspec/changes/audit-trail-purge-by-age/specs/retention-management :: The hourly log cleanup job deletes audit trail entries past the configured retention"
 			},
 			"reachedOn": "openregister admin settings, retention section",
 			"provider": "openregister",
@@ -6977,7 +7020,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "source read at a00f9f8 (lane tip 77fa61f7, no code change since): published records can be read publicly as filtered JSON from /api/{catalogSlug} (appinfo/routes.php publications#index, lib/Controller/PublicationsController.php:433), and workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): signed-in users can export a register/schema's objects with the same filters as CSV, XLSX or PDF (GET /api/objects/{register}/{schema}/export appinfo/routes.php:1172, ObjectsController::export lib/Controller/ObjectsController.php:5432-5464, @NoAdminRequired). Missing half: no public CSV, no TSV or XML, and a tabular file attached to a publication is never parsed into rows (grep text/csv and _format in the publication controllers and services finds nothing), so there is no 'published table' to filter.",
-				"change": "openregister/export-open-formats-and-public-download"
+				"change": "openregister/export-open-formats-and-public-download",
+				"requirement": "openregister:openspec/changes/export-open-formats-and-public-download/specs/data-import-export :: The public downloads what a schema grants it for export"
 			},
 			"reachedOn": "/api/{catalogSlug} (public JSON); openregister object export for signed-in users",
 			"provider": "openregister",
@@ -7014,7 +7058,8 @@
 				"state": "specified",
 				"owner": "ConductionNL/openregister",
 				"evidence": "workspace checkout openregister (feat/broker-allows-issue-comments 94e8c29e42): schema updates are diffed and classified compatible or breaking, and a breaking change is blocked until an admin acknowledges it, with a versioned changelog (lib/Service/Schema/SchemaVersioningService.php:90,112-121,138,156); OpenRegister's own API versions send Deprecation and Sunset headers (lib/Middleware/ApiVersionMiddleware.php:217-226). Missing half: nobody who builds on the data is told; opencatalogi has no consumer registry or change notice (grep breaking, deprecat and notify( in opencatalogi lib finds only code comments), and the Deprecation headers cover OpenRegister's routes, not opencatalogi's public /api/{catalogSlug}. Corrections round 8 (2026-09-28), openregister#4102: the classification, breaking gate and changelog run only on PUT /api/schemas/{id}, openregister lib/Controller/SchemasController.php:1140-1182 at 555af72 is the only caller of SchemaVersioningService, while a configuration or app import, the path that carries most schema changes in the fleet, saves the schema with no classification or gate (lib/Service/Configuration/ImportHandler.php:2210 and :2224).",
-				"change": "openregister/schema-breaking-change-notice"
+				"change": "openregister/schema-breaking-change-notice",
+				"requirement": "openregister:openspec/changes/schema-breaking-change-notice/specs/schema-migration :: An acknowledged breaking change tells the people who build on the schema"
 			},
 			"reachedOn": "openregister schema edit (acknowledge breaking change); no consumer-facing surface",
 			"provider": "openregister",
@@ -7052,7 +7097,8 @@
 				"owner": "ConductionNL/integriq",
 				"evidence": "source read at integriq development 5e903e546: each synchronisation now declares what happens to a record that disappears from its source: sourceConfig.disappearancePolicy delete, markEnded, keepAndFlag or purge (lib/Service/Ownership/DisappearancePolicy.php:35-63), applied by lib/Service/SynchronizationService.php:4354-4644 behind the existing deletion-ratio guard, chosen in the synchronisation editor (src/modals/v2/SynchronizationEditorModal.vue:191-206). Shipped by integriq change records-owned-by-an-external-source, archived 2026-09-28 (22 of 23 tasks; the open one is a nightly e2e). keepAndFlag is keep until someone acts; markEnded writes an end date instead of an opencatalogi unpublish. Source read at opencatalogi development 7a5a8a492: federated publications are still read live from peers (lib/Controller/FederationController.php), so a record gone at the peer disappears at once.",
 				"readOn": "2026-10-07",
-				"spec": "integriq/openspec/specs/source-owned-records"
+				"spec": "integriq/openspec/specs/source-owned-records",
+				"requirement": "integriq:openspec/specs/source-owned-records :: What happens when a record disappears is declared, not hardcoded (REQ-SOR-002)"
 			},
 			"reachedOn": "integriq synchronisation editor (disappearance policy)",
 			"provider": "integriq",
