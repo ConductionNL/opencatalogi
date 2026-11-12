@@ -3,6 +3,7 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <script setup>
+import { getRequestToken } from '@nextcloud/auth'
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
 
@@ -520,6 +521,7 @@ export default {
 			fetch('/index.php/apps/opencatalogi/api/publication_types/synchronise', {
 				method: 'POST',
 				headers: {
+					requesttoken: getRequestToken(),
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({
