@@ -30,6 +30,9 @@ requirement says only part of the row:
   `ops-usage-series`, `ops-most-viewed`, `pub-versions`, `pub-quality`,
   `lc-queue`, `lc-decide` and `fed-harvest-removed`.
 
+- Two not-built rows that had no open change get a task in section 3:
+  `lc-defaults` and `ops-reports`.
+
 ## Rows covered
 
 `wr-review`, `cat-glossary`, and the build plan of the eight rows above.

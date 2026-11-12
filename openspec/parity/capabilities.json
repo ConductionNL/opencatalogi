@@ -3155,7 +3155,8 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:159 GET /api/dcat -> DcatController.php:163 instance() -> DcatService.php:401 buildInstanceDocument() lists getDcatEnabledCatalogs(); DcatService.php:607 filters on 'hasDcat'=>true; hasDcat is not declared in the catalog schema (publication_register.json:319, hardValidation true :521) and no Vue sets it (grep hasDcat src: 0) Missing (spec-coverage pass 2026-11-12, development bba37fc7): the catalog schema (hardValidation true) does not declare hasDcat and CatalogModal.vue offers no toggle, so no catalogue can switch DCAT on and the feeds stay empty or answer 404.",
 				"change": "dcat-ap-harvest",
-				"requirement": "openspec/specs/dcat-ap-harvest :: Instance-level DCAT catalog document (DCAT-002)"
+				"requirement": "openspec/specs/dcat-ap-harvest :: Instance-level DCAT catalog document (DCAT-002)",
+				"plan": "openspec/changes/dcat-catalogue-completion"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/dcat (public, harvester); no page or portaliq caller",
 			"note": "The endpoint and serializer work, but the only way into the list is a hasDcat flag the catalog schema does not declare and no UI sets, so the instance document most likely lists zero catalogues. Same shape as the hasOoapi bug #847 described at publication_register.json:504.",
@@ -3191,7 +3192,8 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "routes.php:160 GET /api/catalogs/{slug}/dcat -> DcatController.php:202 catalog(): 404 unless DcatService.php:138 isDcatEnabled() (hasDcat) is true; buildCatalogDocument DcatService.php:248 with paging + ETag 304 (DcatController.php:220-232); hasDcat is not declared in the catalog schema (publication_register.json:319, hardValidation true :521) and no Vue sets it (grep hasDcat src: 0) Missing (spec-coverage pass 2026-11-12, development bba37fc7): the catalog schema (hardValidation true) does not declare hasDcat and CatalogModal.vue offers no toggle, so no catalogue can switch DCAT on and the feeds stay empty or answer 404.",
 				"change": "dcat-ap-harvest",
-				"requirement": "openspec/specs/dcat-ap-harvest :: Per-catalog DCAT-AP-NL document endpoint (DCAT-001)"
+				"requirement": "openspec/specs/dcat-ap-harvest :: Per-catalog DCAT-AP-NL document endpoint (DCAT-001)",
+				"plan": "openspec/changes/dcat-catalogue-completion"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/catalogs/{slug}/dcat (public, harvester); no page or portaliq caller",
 			"note": "Every catalogue answers 404 'DCAT harvesting is not enabled' unless hasDcat is stored, and there is no toggle for it in CatalogModal.vue (it has hasOoapi at :136, no hasDcat).",
@@ -3227,7 +3229,8 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "DcatSerializer.php:46-49 FORMATS jsonld/turtle/rdfxml; :66 negotiate() from ?format= or Accept; :118 serialize() -> toTurtle :154, toRdfXml :181; DcatController.php:165,204 call negotiate, 406 on unknown (:370) Missing (spec-coverage pass 2026-11-12, development bba37fc7): the catalog schema (hardValidation true) does not declare hasDcat and CatalogModal.vue offers no toggle, so no catalogue can switch DCAT on and the feeds stay empty or answer 404.",
 				"change": "dcat-ap-harvest",
-				"requirement": "openspec/specs/dcat-ap-harvest :: Content negotiation across RDF serializations (DCAT-007)"
+				"requirement": "openspec/specs/dcat-ap-harvest :: Content negotiation across RDF serializations (DCAT-007)",
+				"plan": "openspec/changes/dcat-catalogue-completion"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/dcat?format=turtle|rdfxml|jsonld and /api/catalogs/{slug}/dcat (public)",
 			"note": "All three serialisations are real; the rating is capped by the same hasDcat gate that keeps the feeds empty or 404 (see od-dcat).",
@@ -3263,7 +3266,8 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "routes.php:28 GET /api/catalogs/{slug}/dcat/validate -> DcatController.php:262 validate() (AuthorizedAdminSetting) -> DcatService.php:490 validateCatalog() + :579 mandatoryViolations (title, publisher, landingPage); grep 'dcat' in src/*.vue|js: no caller Missing (spec-coverage pass 2026-11-12, development bba37fc7): the catalog schema (hardValidation true) does not declare hasDcat and CatalogModal.vue offers no toggle, so no catalogue can switch DCAT on and the feeds stay empty or answer 404; the check also covers three properties only.",
 				"change": "dcat-ap-harvest",
-				"requirement": "openspec/specs/dcat-ap-harvest :: Admin configuration and feed validation (DCAT-010)"
+				"requirement": "openspec/specs/dcat-ap-harvest :: Admin configuration and feed validation (DCAT-010)",
+				"plan": "openspec/changes/dcat-catalogue-completion"
 			},
 			"reachedOn": "nothing: admin-only API route, no page calls it",
 			"note": "Page-less backend. It also only checks three properties, not the full DCAT-AP-NL mandatory set.",
@@ -3299,7 +3303,8 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "routes.php:29 GET /api/catalogs/{slug}/dcat/donl-validate -> DcatController.php:301 donlReport() -> DcatService.php:537 validateForDonl(): theme violations + mandatory gaps + harvestSourceUrl (:517); no src caller (grep donl src: 0) Missing (spec-coverage pass 2026-11-12, development bba37fc7): the catalog schema (hardValidation true) does not declare hasDcat and CatalogModal.vue offers no toggle, so no catalogue can switch DCAT on and the feeds stay empty or answer 404; no screen shows the report.",
 				"change": "dcat-national-portal-federation",
-				"requirement": "openspec/specs/dcat-ap-harvest :: National open-data portal harvest-source conformance and registration guidance (DCAT-NPF-001)"
+				"requirement": "openspec/specs/dcat-ap-harvest :: National open-data portal harvest-source conformance and registration guidance (DCAT-NPF-001)",
+				"plan": "openspec/changes/dcat-catalogue-completion"
 			},
 			"reachedOn": "nothing: admin-only API route, no page calls it",
 			"note": "An admin can see what DONL would reject only by calling the API by hand.",
@@ -5887,7 +5892,8 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:54-55 GET/POST /api/retention/defaults; lib/Service/RetentionService.php:220/243 per-catalog, per-Woo-category term and action in app config; applied at publication by lib/Listener/ObjectCreatedEventListener.php:175 and ObjectUpdatedEventListener.php:195 Missing (spec-coverage pass 2026-11-12, development bba37fc7): no screen sets the retention defaults (no src caller of /api/retention/defaults), only the API does.",
 				"change": "publication-retention-lifecycle",
-				"requirement": "openspec/specs/publication-retention-lifecycle :: Per-catalog retention defaults per WOO information category (RET-004)"
+				"requirement": "openspec/specs/publication-retention-lifecycle :: Per-catalog retention defaults per WOO information category (RET-004)",
+				"plan": "openspec/changes/capability-rows-close-gaps"
 			},
 			"reachedOn": "nothing: admin API only, no settings section in src/ edits retention defaults",
 			"note": "Defaults are applied automatically once set, but they can only be set over the API.",
@@ -6300,7 +6306,8 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:1241 Reports page with PublicationsReport :1281, UsageReport :1524, FederationReport :1711; every widget source uses register 'opencatalogi' (manifest.json:1303), but the only register the app ships has slug 'publication' (publication_register.json, components.registers.publication) Missing (spec-coverage pass 2026-11-12, development bba37fc7): every report widget in src/manifest.json reads register 'opencatalogi', but the app ships only register 'publication', so the reports have no data.",
 				"spec": "openspec/specs/reports",
-				"requirement": "openspec/specs/reports :: A reports page lists the three reports (REP-001)"
+				"requirement": "openspec/specs/reports :: A reports page lists the three reports (REP-001)",
+				"plan": "openspec/changes/capability-rows-close-gaps"
 			},
 			"reachedOn": "/reports -> /reports/publications|usage|federation",
 			"note": "The pages exist, but they query a register slug that OR's RegisterMapper (id/uuid/slug match) will not find, so they probably render empty. Not verified live.",

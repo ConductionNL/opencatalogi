@@ -19,3 +19,9 @@ is done and its test is green.
 - [ ] 2.6 `lc-queue`: add the retention review queue page that lists the publications flagged expiring or expired and opens each one, using `src/services/retentionStatus.js` or removing it (RET-007).
 - [ ] 2.7 `lc-decide`: declare `retentionDecisionLog` on the `publication` schema in `lib/Settings/publication_register.json`, and make `dispose` in `RetentionService::recordHumanDecision()` remove the publication as the disposal decision says, not archive it (RET-006, RET-007).
 - [ ] 2.8 `fed-harvest-removed`: when integriq's disappearance policy for a harvested record says unpublish, depublish the opencatalogi publication made from it; when it says keep, flag the publication for an editor (integriq `source-owned-records` REQ-SOR-002).
+
+## 3. Not-built rows that had no plan
+
+- [ ] 3.1 `lc-defaults`: add a retention defaults section to the catalogue edit page that reads and saves `GET`/`POST /api/retention/defaults` per Woo category (RET-004).
+- [ ] 3.2 `ops-reports`: point the report widgets in `src/manifest.json` (Reports, PublicationsReport, UsageReport, FederationReport) at the register the app ships (slug `publication`) instead of `opencatalogi`, and show each report with data on a default install (REP-001).
+
