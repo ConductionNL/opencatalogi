@@ -25,7 +25,7 @@ scenarios say what the row says, and now link to it. Five rows had none:
 - `pub-create`, `cat-multi-owner` and `ops-reimport` describe what the app
   already does. The tasks only sync them into the main specs.
 - `lc-archive` and `ops-dashboard` describe what the app does not do yet. Their
-  rows move from `built` to `specified`, and the tasks build them.
+  rows move from `built` to `planned`, and the tasks build them.
 
 ## Rows covered
 
