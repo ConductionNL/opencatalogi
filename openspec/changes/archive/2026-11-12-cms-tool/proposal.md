@@ -1,3 +1,5 @@
+> Superseded by cms-moves-to-portaliq (PR #1889, decision 399): pages and menus, and the LLM tools that create them, move to portaliq.
+
 # Proposal: cms-tool
 
 ## Summary
