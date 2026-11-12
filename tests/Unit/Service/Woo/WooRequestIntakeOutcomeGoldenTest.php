@@ -35,6 +35,7 @@ use RuntimeException;
  * Every outcome of an intake, whole: each key, in order, with its value.
  *
  * @covers \OCA\OpenCatalogi\Service\Woo\WooRequestIntake
+ * @uses   \OCA\OpenCatalogi\Service\Woo\WooRequestService
  */
 class WooRequestIntakeOutcomeGoldenTest extends TestCase {
 

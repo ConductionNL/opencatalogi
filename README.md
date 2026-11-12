@@ -23,6 +23,12 @@ It connects to a federated directory of other OpenCatalogi instances, enabling c
 
 > **Requires:** [OpenRegister](https://github.com/ConductionNL/openregister) — all data is stored as OpenRegister objects (no own database tables).
 
+## Test coverage
+
+<!-- coverage:start -->
+Measured test coverage: 94.1% of statements (PHP 94.1% of 17,158 statements), at commit `b2e2f42bc` on 2026-11-12. The JavaScript frontend is not in this figure, because it has no coverage measurement yet. The figures come from [`coverage-summary.json`](coverage-summary.json); refresh them with `composer coverage:publish`.
+<!-- coverage:end -->
+
 ## Screenshots
 
 <table>

@@ -49,6 +49,7 @@ use RuntimeException;
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
+ * @uses   \OCA\OpenCatalogi\Service\ObjectInPair
  */
 class DepublicationGoldenTest extends TestCase {
 
