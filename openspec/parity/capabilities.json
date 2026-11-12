@@ -912,10 +912,14 @@
 				"evidence": "src/modals/catalog/CatalogModal.vue:110-119 registers and schemas pickers, saved at :437-449; lib/Service/PublicationService.php:526 rejects schemas outside the catalog context; lib/Service/EventService.php:317 auto-publish matches catalog registers/schemas",
 				"change": [
 					"retrofit-2026-05-26-catalog-management",
-					"publish-from-stackiq"
+					"publish-from-stackiq",
+					"capability-rows-verify-scenarios"
 				],
 				"spec": "openspec/specs/retrofit-2026-05-26-catalog-management",
-				"requirement": "openspec/specs/retrofit-2026-05-26-catalog-management :: A catalogue has its own title, summary and web address (REQ-CATM-006)"
+				"requirement": [
+					"openspec/specs/retrofit-2026-05-26-catalog-management :: A catalogue has its own title, summary and web address (REQ-CATM-006)",
+					"openspec/changes/capability-rows-verify-scenarios/specs/catalogs :: An administrator chooses the kinds of publication a catalogue holds (REQ-CVS-002)"
+				]
 			},
 			"reachedOn": "/catalogi -> CatalogModal (CatalogiIndex.vue:297 editCatalog)",
 			"note": "The choice drives the public /api/{slug} scope. The staff Publications page ignores it: it is hard-wired to register/schema 'publication' (manifest.json:523-531).",
@@ -2005,7 +2009,8 @@
 				"spec": "openspec/specs/woo-compliance",
 				"requirement": [
 					"openspec/specs/woo-compliance :: `diwoo:informatiecategorie` is bound to the official TOOI value list (WOO-TOOI-001)",
-					"openspec/specs/woo-compliance :: `diwoo:publisher @resource` is a TOOI organisatie URI (WOO-TOOI-002)"
+					"openspec/specs/woo-compliance :: `diwoo:publisher @resource` is a TOOI organisatie URI (WOO-TOOI-002)",
+					"openspec/specs/woo-compliance :: `diwoo:soortHandeling` is bound to the DiWoo value list (WOO-TOOI-003)"
 				],
 				"change": "woo-value-lists-on-the-concept-register"
 			},
@@ -2271,11 +2276,16 @@
 				"state": "planned",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "appinfo/routes.php:77 publicationRules#previewRule (admin) -> PublicationRuleService.php:262 preview; rules stored as publicationRule objects (register.d/publication-inspection-and-the-national-indexes.json); CommunityController.php:392 applies them in the Atom feed; no src caller of /api/publication-rules (grep) Missing (spec-coverage pass 2026-11-12, development bba37fc7): no screen sets or previews a rule (no src caller of /api/publication-rules) and rules apply only in the Atom feed; open task 1.2 of publication-inspection-and-the-national-indexes.",
-				"change": "publication-inspection-and-the-national-indexes",
+				"change": [
+					"publication-inspection-and-the-national-indexes",
+					"capability-rows-verify-scenarios"
+				],
 				"requirement": [
 					"openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: A record type is readable without an account, with the visible parts chosen (REQ-PIN-101)",
-					"openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Which collections are published, and on what conditions, is configured (REQ-PIN-108)"
-				]
+					"openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes :: Which collections are published, and on what conditions, is configured (REQ-PIN-108)",
+					"openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance :: A publication rule names the information category its records are filed under (REQ-CVS-003)"
+				],
+				"plan": "openspec/changes/capability-rows-verify-scenarios"
 			},
 			"reachedOn": "nothing for staff: no page authors a rule or calls the preview; rules take effect only in GET /api/feeds/{catalogSlug} (public)",
 			"provider": "opencatalogi",
@@ -2560,9 +2570,15 @@
 				"state": "planned",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "src/manifest.json:454-472 WooBatches index (showAdd) creates a bare wooBatch object via the generic form; WooService.php:335 createBatch (creates assessments + deck cards) is only reached by POST /api/woo/batches (routes.php:60), which no src file calls Missing (spec-coverage pass 2026-11-12, development bba37fc7): the Woo batches page creates a bare batch through the generic form and a row opens nothing; createBatch is reached only by POST /api/woo/batches; open task 1.1 of woo-document-assessment-screen.",
-				"change": "woo-transparency",
-				"requirement": "openspec/specs/woo-transparency :: WOO document queue (consumes the OpenRegister deck leaf)",
-				"plan": "openspec/changes/woo-document-assessment-screen"
+				"change": [
+					"woo-transparency",
+					"capability-rows-verify-scenarios"
+				],
+				"requirement": [
+					"openspec/specs/woo-transparency :: WOO document queue (consumes the OpenRegister deck leaf)",
+					"openspec/changes/capability-rows-verify-scenarios/specs/woo-transparency :: Opening a batch gathers the documents of the Woo request (REQ-CVS-004)"
+				],
+				"plan": "openspec/changes/capability-rows-verify-scenarios"
 			},
 			"reachedOn": "/woo (generic index + add form); document gathering has no page",
 			"note": "The index has no rowRoute and WooBatchDetail is type custom, so a row click opens nothing (nextcloud-vue 2.56.0 CnPageRenderer.vue:1678-1680).",
@@ -3842,7 +3858,11 @@
 				"spec": "openspec/specs/federation",
 				"requirement": [
 					"openspec/specs/dashboard :: Get combined directory data from all listings (DIR-001)",
-					"openspec/specs/federation :: The installation announces itself to the directories it knows (FED-013)"
+					"openspec/specs/federation :: The installation announces itself to the directories it knows (FED-013)",
+					"openspec/changes/capability-rows-verify-scenarios/specs/federation :: The installation publishes a directory of its own catalogues (REQ-CVS-005)"
+				],
+				"change": [
+					"capability-rows-verify-scenarios"
 				]
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/directory (public, peer installations)",
@@ -4179,7 +4199,10 @@
 				"owner": "ConductionNL/portaliq",
 				"evidence": "portaliq FederatedSearchBlock.vue:514 defaults to /index.php/apps/opencatalogi/api/federation/publications, PublicationDetailBlock.vue:140; InitializeDemoPortal.php:344 wires it; opencatalogi FederationController.php:81 PublicPage aggregates local + peers",
 				"spec": "openspec/specs/federation",
-				"requirement": "openspec/specs/federation :: List all publications from local and federated sources (FED-001)"
+				"requirement": [
+					"openspec/specs/federation :: List all publications from local and federated sources (FED-001)",
+					"portaliq:openspec/specs/portal-federated-search :: The search block MUST filter on information category and organisation (REQ-WSD-001)"
+				]
 			},
 			"reachedOn": "portaliq public site search + /publicatie/<id> pages -> GET /apps/opencatalogi/api/federation/publications (public)",
 			"provider": "portaliq",
@@ -4472,7 +4495,11 @@
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "routes.php:262 ui#publicationsPage /publications/{catalogSlug}/{id} (manifest PublicationDetail); public API routes.php:252 /api/{catalogSlug}/{id}; portaliq FederatedSearchBlock.vue:960 detailHref -> /publicatie/<uuid> rendered by PublicationDetailBlock.vue",
 				"spec": "openspec/specs/spa-deep-link-routing",
-				"requirement": "openspec/specs/spa-deep-link-routing :: Serve the SPA shell for every top-level deep-link route (SPA-001)"
+				"requirement": [
+					"openspec/specs/spa-deep-link-routing :: Serve the SPA shell for every top-level deep-link route (SPA-001)",
+					"openspec/specs/publications :: Retrieve a single publication by catalog slug and object UUID or slug (PUB-002)",
+					"openspec/specs/publications :: Slug resolution MUST be backwards compatible (PUB-020)"
+				]
 			},
 			"reachedOn": "/publications/:catalogSlug/:id in the app; portaliq /publicatie/<uuid>",
 			"note": "The in-app URL carries the catalogue slug, so renaming a catalogue breaks old links; the portaliq URL uses only the UUID.",
@@ -4507,9 +4534,15 @@
 				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
 				"evidence": "DcatService.php:197 datasetIri = base/apps/opencatalogi/api/{catalogSlug}/{uuid}; DcatMappingService.php:258 dct:identifier = publication id; grep DOI/handle/ARK in lib: 0",
-				"change": "dcat-ap-harvest",
+				"change": [
+					"dcat-ap-harvest",
+					"capability-rows-verify-scenarios"
+				],
 				"spec": "openspec/specs/dcat-ap-harvest",
-				"requirement": "openspec/specs/dcat-ap-harvest :: Attachments rendered as distributions with stable IRIs (DCAT-006)"
+				"requirement": [
+					"openspec/specs/dcat-ap-harvest :: Attachments rendered as distributions with stable IRIs (DCAT-006)",
+					"openspec/changes/capability-rows-verify-scenarios/specs/publications :: A publication keeps one identifier for life (REQ-CVS-006)"
+				]
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{uuid} (public)",
 			"note": "UUID-based URLs are stable but host- and slug-bound. There is no PID scheme (DOI, Handle or ARK) and no citation output.",

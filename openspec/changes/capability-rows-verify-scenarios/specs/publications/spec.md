@@ -20,3 +20,16 @@ MUST need no change to OpenCatalogi's code or manifest.
 - **GIVEN** the same property, marked required in the schema
 - **WHEN** an editor saves a publication without it
 - **THEN** the save is refused and the form names `zaaknummer`
+
+### Requirement: A publication keeps one identifier for life (REQ-CVS-006)
+
+Every publication MUST carry one identifier, its UUID, that never changes. The
+public API MUST return it as the publication's `id`, the DCAT feed MUST emit it
+as `dct:identifier`, and `GET /api/{catalogSlug}/{uuid}` MUST keep answering for
+it after the publication's title, slug or other fields are edited.
+
+#### Scenario: A citation survives an edit
+- **GIVEN** a public publication with UUID "4f2c9a1e-7b3d-4e8a-9c51-2d6f0b8e3a17" in catalogue `woo-requests`
+- **WHEN** an editor changes its title and slug
+- **THEN** `GET /api/woo-requests/4f2c9a1e-7b3d-4e8a-9c51-2d6f0b8e3a17` still returns it with the same `id`
+- **AND** its dataset in the DCAT feed still carries that UUID as `dct:identifier`
