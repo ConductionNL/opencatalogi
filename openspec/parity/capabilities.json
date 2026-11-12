@@ -1603,9 +1603,10 @@
 				"change": "openregister/relation-types-with-inverses",
 				"requirement": [
 					"openregister:openspec/changes/relation-types-with-inverses/specs/referential-integrity :: Relation rows carry the property and the label for each direction",
-					"openspec/changes/capability-rows-close-gaps/specs/publications :: An editor links a publication to related publications (REQ-CRG-003)"
+					"openspec/changes/publication-relations-place-and-source-ids/specs/publications :: A publication names its relation to another publication (REQ-PRS-001)",
+					"openspec/changes/publication-relations-place-and-source-ids/specs/publications :: The public response carries the relations a reader may see (REQ-PRS-002)"
 				],
-				"plan": "openspec/changes/capability-rows-close-gaps"
+				"plan": "openspec/changes/publication-relations-place-and-source-ids"
 			},
 			"reachedOn": "GET /apps/opencatalogi/api/{catalogSlug}/{id}/uses|used (public); no staff page",
 			"note": "Back-links are readable over the API, but staff have no field or widget to link one publication to another. Specified in ConductionNL/openregister openspec/changes/relation-types-with-inverses (openregister lane, OpenSpec pass 2026-09-27).",
