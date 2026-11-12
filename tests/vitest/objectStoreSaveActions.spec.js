@@ -11,6 +11,7 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'test-request-token' }))
 vi.mock('@conduction/nextcloud-vue', () => {
 	const plugin = () => ({})
 	return {
@@ -121,7 +122,7 @@ describe('object store write actions (characterisation)', () => {
 		expect(calls).toEqual([
 			['fetch', '/index.php/apps/openregister/api/objects/7/9', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { requesttoken: 'test-request-token', 'Content-Type': 'application/json' },
 				body: JSON.stringify({ title: 'a', '@self': { updated: NOW } }),
 			}],
 		])
@@ -159,7 +160,7 @@ describe('object store write actions (characterisation)', () => {
 			['_constructApiUrl', 'catalog', null, null, {}, pub],
 			['fetch', '/api/catalog', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { requesttoken: 'test-request-token', 'Content-Type': 'application/json' },
 				body: JSON.stringify({ a: 1 }),
 			}],
 			['fetchCollection', 'catalog'],
@@ -209,7 +210,7 @@ describe('object store write actions (characterisation)', () => {
 			['_constructApiUrl', 'catalog', 'c1'],
 			['fetch', '/api/catalog/c1', {
 				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { requesttoken: 'test-request-token', 'Content-Type': 'application/json' },
 				body: JSON.stringify({ a: 2 }),
 			}],
 			['fetchCollection', 'catalog'],

@@ -3,6 +3,7 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <script setup>
+import { getRequestToken } from '@nextcloud/auth'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
@@ -446,7 +447,7 @@ function markUploadAnswer(file, { response, idMap }) {
 async function putFileTags(endpoint, editedTags) {
 	const response = await fetch(endpoint, {
 		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
+		headers: { requesttoken: getRequestToken(), 'Content-Type': 'application/json' },
 		body: JSON.stringify({ tags: editedTags }),
 	})
 

@@ -11,6 +11,7 @@
 import DirectorySideBar from './DirectorySideBar.vue'
 import { objectStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'test-request-token' }))
 jest.mock('@nextcloud/vue', () => ({}))
 jest.mock('../../store/store.js', () => ({
 	navigationStore: {},

@@ -3,6 +3,7 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <script setup>
+import { getRequestToken } from '@nextcloud/auth'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 
 import '../../css/json-highlight.css'
@@ -806,6 +807,7 @@ export default {
 					method,
 					body: JSON.stringify(dataToSave),
 					headers: {
+						requesttoken: getRequestToken(),
 						'Content-Type': 'application/json',
 					},
 				})
