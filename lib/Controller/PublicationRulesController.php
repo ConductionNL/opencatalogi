@@ -3,6 +3,9 @@
 /**
  * OpenCatalogi Publication Rules Controller.
  *
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The admin side of active publication: the rules that decide what publishes
  * and what an anonymous reader may read of it, the preview that shows both
  * halves before a rule is saved, the walked process around a publication, and
@@ -29,9 +32,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
  *
  * @version GIT: <git_id>
  *

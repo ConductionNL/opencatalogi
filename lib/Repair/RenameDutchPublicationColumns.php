@@ -3,6 +3,9 @@
 /**
  * OpenCatalogi RenameDutchPublicationColumns Repair Step
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V.
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Moves the stored data of the publication schemas from their Dutch column
  * names to the English ones the register now declares.
  *
@@ -37,9 +40,6 @@
  * register and schema ids that differ per install. These three logical schemas
  * are duplicated across many registers on a real install — 25 shard tables over
  * 18 schema ids were observed — so every register is migrated, not the first.
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V.
  *
  * @category Repair
  * @package  OCA\OpenCatalogi\Repair

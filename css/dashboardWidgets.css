@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 .icon-catalogi-widget {
 	background-image: url('../img/app-dark.svg');
 	filter: var(--background-invert-if-dark);
