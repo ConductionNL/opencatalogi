@@ -120,6 +120,40 @@ class BroadcastService implements BroadcastServiceInterface {
 	private const MAX_RETRY_WALL_SECONDS = 90;
 
 	/**
+	 * The largest broadcast response body accepted, in bytes.
+	 *
+	 * Only the status code of a broadcast answer is used; the cap keeps a peer
+	 * from answering with a body that fills memory or disk.
+	 *
+	 * @var int
+	 */
+	private const MAX_RESPONSE_BYTES = 1048576;
+
+	/**
+	 * Resolves a host name to its addresses; null uses DNS.
+	 *
+	 * A test seam only: production never sets it, so the SSRF guard resolves through
+	 * dns_get_record()/gethostbyname() as before.
+	 *
+	 * @var (\Closure(string): list<string>)|null
+	 *
+	 * @phpstan-ignore property.unusedType (only the unit test assigns it, through reflection)
+	 */
+	private ?\Closure $hostResolver = null;
+
+	/**
+	 * Test seam for the cURL availability check behind the address pin.
+	 *
+	 * When null, {@see assertPinSupported()} asks PHP. Only the unit test assigns a
+	 * closure, through reflection, to simulate a host without ext-curl.
+	 *
+	 * @var (\Closure(): bool)|null
+	 *
+	 * @phpstan-ignore property.unusedType (only the unit test assigns it, through reflection)
+	 */
+	private ?\Closure $curlAvailable = null;
+
+	/**
 	 * Constructor for BroadcastService.
 	 *
 	 * @param IURLGenerator $urlGenerator URL generator interface
@@ -348,6 +382,16 @@ class BroadcastService implements BroadcastServiceInterface {
 
 			$attempt++;
 
+			// Re-validate and pin on every attempt (dir-f1): the client must connect to
+			// the address the SSRF guard accepted, not resolve the name again, or a
+			// low-TTL name can answer public for the check and internal for the POST.
+			try {
+				$pinned = $this->pinnedOutboundOptions(url: $url);
+			} catch (InvalidArgumentException $e) {
+				$this->logger->warning("[BroadcastService] Broadcast target {$url} failed the SSRF guard on attempt {$attempt}");
+				return false;
+			}
+
 			try {
 				// Send POST request with directory URL payload.
 				// SSRF hardening (WF4 / wave-12): disable automatic redirect following so that a
@@ -367,7 +411,10 @@ class BroadcastService implements BroadcastServiceInterface {
 							'Content-Type' => 'application/json',
 						],
 						RequestOptions::ALLOW_REDIRECTS => false,
-					]
+						// No `stream` option here: Guzzle hands a streamed request to its
+						// PHP stream handler, which ignores the cURL address pin and
+						// resolves the name again. The body cap bounds what is buffered.
+					] + $pinned
 				);
 
 				// Check if the response indicates success.
@@ -573,11 +620,30 @@ class BroadcastService implements BroadcastServiceInterface {
 	 * @return void
 	 *
 	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+	 */
+	private function assertSafeOutboundUrl(string $url): void {
+		$this->resolveSafeOutboundUrl(url: $url);
+
+	}//end assertSafeOutboundUrl()
+
+	/**
+	 * Validate an outbound URL (SSRF guard) and return the addresses that passed.
+	 *
+	 * The result lets the caller pin the connection to a checked address, so the
+	 * HTTP client does not resolve the name a second time (DNS rebinding).
+	 *
+	 * @param string $url The URL to validate.
+	 *
+	 * @return array{host: string, ips: list<string>} The host and the checked addresses;
+	 *                                                 `ips` is empty for an allowlisted
+	 *                                                 host or a literal IP (nothing to pin).
+	 *
+	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
 	 *
 	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 * @SuppressWarnings(PHPMD.NPathComplexity)
 	 */
-	private function assertSafeOutboundUrl(string $url): void {
+	private function resolveSafeOutboundUrl(string $url): array {
 		$parsed = parse_url($url);
 		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
 			throw new InvalidArgumentException('Invalid broadcast URL provided');
@@ -594,7 +660,7 @@ class BroadcastService implements BroadcastServiceInterface {
 		// two local instances on a private network can federate. Empty by default, so a
 		// production instance keeps the full SSRF protection below.
 		if ($this->isAllowlistedFederationHost(host: $host) === true) {
-			return;
+			return ['host' => $host, 'ips' => []];
 		}
 
 		// Reject obvious local hostnames outright.
@@ -605,39 +671,12 @@ class BroadcastService implements BroadcastServiceInterface {
 		}
 
 		// Collect IPs to check: literal IP or DNS-resolved addresses.
-		$ipsToCheck = [];
-		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-			$ipsToCheck[] = $host;
+		$lookupHost = trim($host, '[]');
+		$isLiteral  = filter_var($lookupHost, FILTER_VALIDATE_IP) !== false;
+		$ipsToCheck = [$lookupHost];
+		if ($isLiteral === false) {
+			$ipsToCheck = $this->lookupHostAddresses(host: $lookupHost);
 		}
-
-		if (empty($ipsToCheck) === true) {
-			$lookupHost = trim($host, '[]');
-			if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
-				$ipsToCheck[] = $lookupHost;
-			}
-
-			if (empty($ipsToCheck) === true) {
-				$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
-				if ($records !== false) {
-					foreach ($records as $record) {
-						if (isset($record['ip']) === true) {
-							$ipsToCheck[] = $record['ip'];
-						}
-
-						if (isset($record['ipv6']) === true) {
-							$ipsToCheck[] = $record['ipv6'];
-						}
-					}
-				}
-
-				if (empty($ipsToCheck) === true) {
-					$resolved = gethostbyname($lookupHost);
-					if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
-						$ipsToCheck[] = $resolved;
-					}
-				}
-			}//end if
-		}//end if
 
 		if (empty($ipsToCheck) === true) {
 			throw new InvalidArgumentException('Broadcast URL host could not be resolved');
@@ -649,7 +688,136 @@ class BroadcastService implements BroadcastServiceInterface {
 			}
 		}
 
-	}//end assertSafeOutboundUrl()
+		if ($isLiteral === true) {
+			return ['host' => $host, 'ips' => []];
+		}
+
+		return ['host' => $host, 'ips' => array_values(array_unique($ipsToCheck))];
+
+	}//end resolveSafeOutboundUrl()
+
+	/**
+	 * The addresses a host name resolves to (A and AAAA, then gethostbyname()).
+	 *
+	 * @param string $host The host name, without brackets.
+	 *
+	 * @return list<string> The addresses; empty when the name does not resolve.
+	 *
+	 * @spec exclude DNS lookup for the broadcast SSRF guard; security plumbing.
+	 */
+	private function lookupHostAddresses(string $host): array {
+		if ($this->hostResolver !== null) {
+			return ($this->hostResolver)($host);
+		}
+
+		$addresses = [];
+		$records   = dns_get_record($host, (DNS_A | DNS_AAAA));
+		if ($records !== false) {
+			foreach ($records as $record) {
+				if (isset($record['ip']) === true) {
+					$addresses[] = $record['ip'];
+				}
+
+				if (isset($record['ipv6']) === true) {
+					$addresses[] = $record['ipv6'];
+				}
+			}
+		}
+
+		// Fallback to gethostbyname for A records when dns_get_record is empty.
+		if (empty($addresses) === true) {
+			$resolved = gethostbyname($host);
+			if ($resolved !== $host && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
+				$addresses[] = $resolved;
+			}
+		}
+
+		return $addresses;
+
+	}//end lookupHostAddresses()
+
+	/**
+	 * Refuse to send a request whose address pin cannot be honoured.
+	 *
+	 * CURLOPT_RESOLVE is a cURL option. Guzzle's stream handler, which it falls back
+	 * to when ext-curl is missing, ignores it silently and resolves the name again,
+	 * which would undo the DNS-rebinding protection. Nextcloud requires ext-curl and
+	 * builds its clients on CurlHandler, so this is a fail-closed backstop for an
+	 * unusual build, not a code path a normal install reaches.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When cURL is not available to pin the address.
+	 *
+	 * @spec exclude SSRF hardening of an existing outbound request; no domain behaviour.
+	 */
+	private function assertPinSupported(): void {
+		$available = (\function_exists('curl_init') === true && \extension_loaded('curl') === true);
+		if ($this->curlAvailable !== null) {
+			$available = ($this->curlAvailable)();
+		}
+
+		if ($available === false) {
+			throw new InvalidArgumentException('Broadcast target cannot be pinned to the checked address without cURL');
+		}
+
+	}//end assertPinSupported()
+
+	/**
+	 * Validate a broadcast target and build the request options that keep the POST on the checked address.
+	 *
+	 * - CURLOPT_RESOLVE pins host:port to an address the SSRF guard accepted, the
+	 *   same pin DirectoryService::safeGet() uses, so a DNS answer that changes
+	 *   between check and connect cannot reach an internal address.
+	 * - CURLOPT_MAXFILESIZE and an `on_headers` check refuse an announced body over
+	 *   MAX_RESPONSE_BYTES.
+	 *
+	 * @param string $url The broadcast target.
+	 *
+	 * @return array<string, mixed> Guzzle request options.
+	 *
+	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+	 *
+	 * @spec exclude SSRF hardening of the existing broadcast POST; no domain behaviour.
+	 */
+	private function pinnedOutboundOptions(string $url): array {
+		$resolved = $this->resolveSafeOutboundUrl(url: $url);
+
+		$curl = [\CURLOPT_MAXFILESIZE => self::MAX_RESPONSE_BYTES];
+		if (empty($resolved['ips']) === false) {
+			$port = parse_url($url, PHP_URL_PORT);
+			if ($port === null || $port === false) {
+				$port = 80;
+				if (strtolower((string) parse_url($url, PHP_URL_SCHEME)) === 'https') {
+					$port = 443;
+				}
+			}
+
+			$address = $resolved['ips'][0];
+			if (str_contains($address, ':') === true) {
+				$address = '['.$address.']';
+			}
+
+			$this->assertPinSupported();
+
+			$curl[\CURLOPT_RESOLVE] = [$resolved['host'].':'.$port.':'.$address];
+		}
+
+		return [
+			RequestOptions::CURL => $curl,
+			RequestOptions::ON_HEADERS => static function (mixed $response): void {
+				if ($response instanceof \Psr\Http\Message\ResponseInterface === false) {
+					return;
+				}
+
+				$length = $response->getHeaderLine('Content-Length');
+				if ($length !== '' && (int) $length > self::MAX_RESPONSE_BYTES) {
+					throw new InvalidArgumentException('Broadcast response body exceeds the size limit');
+				}
+			},
+		];
+
+	}//end pinnedOutboundOptions()
 
 	/**
 	 * Determine whether an IP address falls in a blocked range.

@@ -126,6 +126,23 @@ class CatalogiService implements CatalogiServiceInterface {
 	private ICache $cache;
 
 	/**
+	 * The PHP SAPI this request runs under.
+	 *
+	 * A property rather than a direct PHP_SAPI read so a unit test (which always
+	 * runs under the CLI) can exercise the web-request branch.
+	 *
+	 * @var string
+	 */
+	private string $sapi = PHP_SAPI;
+
+	/**
+	 * OpenRegister's system-operation scope, read by name: OpenRegister may be absent or older.
+	 *
+	 * @var string
+	 */
+	private const SYSTEM_OPERATION_CONTEXT = 'OCA\\OpenRegister\\Service\\SystemOperationContext';
+
+	/**
 	 * Constructor for CatalogiService.
 	 *
 	 * @param IAppConfig $config App configuration interface
@@ -624,9 +641,19 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogBySlug(string $slug): ?array {
+		// The read below runs with RBAC on, so what it returns depends on the caller:
+		// signed-in users may read catalogs that are not (yet) published, and so does a
+		// userless CLI or system-context read, which OpenRegister trusts as the system.
+		// The shared cache therefore only ever holds what an anonymous web request
+		// resolved, and only those read from it; everyone else always queries (oc-f3).
+		$useCache = $this->isAnonymousWebRead();
+
 		// Step 1: Try to get from cache.
 		$cacheKey = 'catalog_slug_' . $slug;
-		$cachedCatalog = $this->cache->get($cacheKey);
+		$cachedCatalog = null;
+		if ($useCache === true) {
+			$cachedCatalog = $this->cache->get($cacheKey);
+		}
 
 		if ($cachedCatalog !== null) {
 			$this->logger->debug('Catalog retrieved from cache', ['slug' => $slug]);
@@ -678,9 +705,11 @@ class CatalogiService implements CatalogiServiceInterface {
 			// (catalog schema grants public read only when published <= $now).
 			$catalog = $catalogs[0]->jsonSerialize();
 
-			// Step 3: Store in cache (TTL: 1 hour = 3600 seconds).
-			$this->cache->set($cacheKey, $catalog, 3600);
-			$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+			// Step 3: Store in cache (TTL: 1 hour = 3600 seconds), anonymous reads only.
+			if ($useCache === true) {
+				$this->cache->set($cacheKey, $catalog, 3600);
+				$this->logger->debug('Catalog stored in cache', ['slug' => $slug]);
+			}
 
 			return $catalog;
 		} catch (Exception $e) {
@@ -695,6 +724,40 @@ class CatalogiService implements CatalogiServiceInterface {
 		}//end try
 
 	}//end getCatalogBySlug()
+
+	/**
+	 * Whether this read is a real anonymous web request, the only kind the shared slug cache serves.
+	 *
+	 * Not anonymous: a signed-in user; a missing session (it cannot be told, so the
+	 * cache is skipped); the CLI (occ, cron, repair steps) and OpenRegister's
+	 * system-operation scope, where a userless read is trusted and returns drafts.
+	 * The catalog-write listener warms the cache from those contexts (dir-f3).
+	 *
+	 * @return bool True when the read may use the shared cache.
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function isAnonymousWebRead(): bool {
+		if ($this->userSession === null || $this->userSession->getUser() !== null) {
+			return false;
+		}
+
+		if ($this->sapi === 'cli' || $this->sapi === 'phpdbg') {
+			return false;
+		}
+
+		$context = self::SYSTEM_OPERATION_CONTEXT;
+		// OpenRegister is outside this app's analysis scope, so PHPStan cannot see the class exists.
+		// @phpstan-ignore function.impossibleType
+		if (class_exists($context) === true && method_exists($context, 'isActive') === true
+			&& $context::isActive() === true
+		) {
+			return false;
+		}
+
+		return true;
+
+	}//end isAnonymousWebRead()
 
 	/**
 	 * Invalidate the cache for a specific catalog.

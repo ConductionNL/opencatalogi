@@ -91,6 +91,43 @@ class MarkupRenderServiceTest extends TestCase {
 
 	}//end testADataUrlLinkIsRenderedAsTextAndNotAsALink()
 
+	/**
+	 * oc-f2: forms of a javascript URL that a naive parse_url() check let through.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function bypassHrefs(): array {
+		return [
+			'parse_url fails (port out of range)' => ['javascript://a:99999%0aalert(1)'],
+			'entity-encoded tab inside the scheme' => ['java&#9;script:alert(1)'],
+			'entity-encoded newline inside the scheme' => ['java&#10;script:alert(1)'],
+			'upper case scheme' => ['JAVASCRIPT:alert(1)'],
+			'entity-encoded first letter' => ['&#106;avascript:alert(1)'],
+			'double entity-encoded first letter' => ['&amp;#106;avascript:alert(1)'],
+			'leading control character' => ["\x01javascript:alert(1)"],
+			'leading encoded space' => ['&#32;javascript:alert(1)'],
+			'vbscript' => ['vbscript:msgbox(1)'],
+		];
+	}
+
+	/**
+	 * @dataProvider bypassHrefs
+	 */
+	public function testABypassFormOfAJavascriptLinkIsNotALink(string $href): void {
+		$html = $this->service->render(markup: '[klik]('.$href.')')['html'];
+
+		$this->assertStringNotContainsString('<a ', $html);
+		$this->assertStringNotContainsString('href=', $html);
+
+	}//end testABypassFormOfAJavascriptLinkIsNotALink()
+
+	public function testAnHttpsLinkIsAllowed(): void {
+		$html = $this->service->render(markup: '[site](https://example.org/a?b=c#d)')['html'];
+
+		$this->assertStringContainsString('<a href="https://example.org/a?b=c#d"', $html);
+
+	}//end testAnHttpsLinkIsAllowed()
+
 	public function testAMailtoLinkIsAllowed(): void {
 		$html = $this->service->render(markup: '[mail](mailto:info@example.org)')['html'];
 

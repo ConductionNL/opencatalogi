@@ -41,6 +41,13 @@ class DirectoryGetDirectoryTest extends TestCase {
 		'catalog_register' => 'cr',
 	];
 
+	/**
+	 * Whether the caller is signed in.
+	 *
+	 * @var bool
+	 */
+	private bool $signedIn = true;
+
 	protected function setUp(): void {
 		$urlGenerator = $this->createMock(IURLGenerator::class);
 		$urlGenerator->method('linkToRoute')->willReturnArgument(0);
@@ -85,9 +92,19 @@ class DirectoryGetDirectoryTest extends TestCase {
 			}
 		};
 
+		// Signed in by default; the oc-f10 test switches to an anonymous caller.
+		$userSession = $this->createMock(\OCP\IUserSession::class);
+		$userSession->method('getUser')->willReturnCallback(
+			fn () => $this->signedIn === true ? $this->createMock(\OCP\IUser::class) : null
+		);
+
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			fn (string $id): object => str_ends_with($id, 'SchemaMapper') ? $schemaMapper : $this->objects
+			fn (string $id): object => match (true) {
+				$id === \OCP\IUserSession::class => $userSession,
+				str_ends_with($id, 'SchemaMapper') => $schemaMapper,
+				default => $this->objects,
+			}
 		);
 
 		$ref = new ReflectionClass(DirectoryService::class);
@@ -117,6 +134,21 @@ class DirectoryGetDirectoryTest extends TestCase {
 				['@self' => ['schema' => 'catalog', 'register' => 'cr'], 'title' => 'x', '_limit' => 5, '_offset' => 10],
 			],
 			$this->objects->queries
+		);
+	}
+
+	/**
+	 * oc-f10: an anonymous caller (and so a syncing peer) only gets listed catalogs,
+	 * and cannot ask for unlisted ones.
+	 */
+	public function testAnAnonymousCallerOnlyGetsListedCatalogs(): void {
+		$this->signedIn = false;
+
+		$this->service->getDirectory(['filters' => ['listed' => false]]);
+
+		$this->assertSame(
+			['@self' => ['schema' => 'catalog', 'register' => 'cr'], 'listed' => true],
+			$this->objects->queries[1]
 		);
 	}
 

@@ -55,6 +55,7 @@ use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 use React\Promise\Promise;
 use RuntimeException;
+use Symfony\Component\Uid\Uuid;
 
 /**
  * DirectoryService
@@ -84,6 +85,45 @@ class DirectoryService implements DirectoryServiceInterface {
 	private readonly string $appName;
 
 	/**
+	 * The largest outbound response body (directory or peer answer) read into memory.
+	 *
+	 * A peer or a URL handed to the anonymous sync endpoint could otherwise answer
+	 * with a body larger than memory_limit. 10 MiB holds thousands of listings.
+	 */
+	private const MAX_RESPONSE_BYTES = 10485760;
+
+	/**
+	 * The most peers one federated lookup calls.
+	 *
+	 * Public endpoints (federation listing, used, publication) fan out to every
+	 * known directory; the cap keeps one anonymous request from holding a worker
+	 * for an unbounded number of outbound calls.
+	 */
+	private const MAX_PEERS_PER_LOOKUP = 25;
+
+	/**
+	 * The longest a federated lookup waits for its peers, in seconds.
+	 *
+	 * The peers are called concurrently, so this is also the bound on the whole
+	 * fan-out of one request.
+	 */
+	private const MAX_PEER_TIMEOUT = 10.0;
+
+	/**
+	 * The longest a federated lookup waits for a peer connection, in seconds.
+	 */
+	private const MAX_PEER_CONNECT_TIMEOUT = 5.0;
+
+	/**
+	 * The longest a federated lookup spends resolving and checking peer addresses, in seconds.
+	 *
+	 * The SSRF guard resolves every peer name before the concurrent phase, and PHP's
+	 * DNS functions take no timeout, so the lookup stops picking peers once this
+	 * budget is spent (worst case: the budget plus one resolver timeout).
+	 */
+	private const MAX_PEER_RESOLVE_SECONDS = 5.0;
+
+	/**
 	 * The HTTP client for making requests.
 	 *
 	 * @var Client
@@ -111,6 +151,14 @@ class DirectoryService implements DirectoryServiceInterface {
 	];
 
 	/**
+	 * How far in the future a peer timestamp may lie and still count as "newer", in seconds.
+	 *
+	 * Covers clock skew between instances; a timestamp beyond it would otherwise
+	 * win every later comparison for good.
+	 */
+	private const MAX_TIMESTAMP_SKEW_SECONDS = 300;
+
+	/**
 	 * Cached unique directories to avoid repeated database queries.
 	 *
 	 * @var array|null
@@ -123,6 +171,34 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @var integer
 	 */
 	private int $cacheTimestamp = 0;
+
+	/**
+	 * The app-config key holding the directories an administrator added (JSON list).
+	 *
+	 * @var string
+	 */
+	private const CONFIG_TRUSTED_DIRECTORIES = 'trusted_directory_urls';
+
+	/**
+	 * Runs a listing write with the rights the cron sync was given, or null for the caller's own.
+	 *
+	 * Set by doCronSync() for its own duration only.
+	 *
+	 * @var (\Closure(callable): mixed)|null
+	 */
+	private ?\Closure $listingWriteContext = null;
+
+	/**
+	 * Test seam for the cURL availability check behind the address pin.
+	 *
+	 * When null, {@see assertPinSupported()} asks PHP. Only the unit test assigns a
+	 * closure, through reflection, to simulate a host without ext-curl.
+	 *
+	 * @var (\Closure(): bool)|null
+	 *
+	 * @phpstan-ignore property.unusedType (only the unit test assigns it, through reflection)
+	 */
+	private ?\Closure $curlAvailable = null;
 
 	/**
 	 * Constructor for DirectoryService
@@ -187,8 +263,20 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Execute synchronization during cron job (asynchronous)
 	 *
-	 * Performs scheduled synchronization of all configured directories
-	 * asynchronously using React PHP promises for better performance.
+	 * Performs scheduled synchronization of the directories an administrator added
+	 * (plus the default directory) asynchronously using React PHP promises.
+	 *
+	 * Only those directories are crawled (aud-f1). A directory URL learned from peer
+	 * data (the `directory` of a synced listing) is stored and still guards the
+	 * cross-directory check, but is not crawled here: otherwise any peer could add
+	 * crawl targets, and with the cron job's system rights get their listings
+	 * written. An administrator trusts a directory by adding it
+	 * ({@see trustDirectory()}), or syncs one listing's directory by hand.
+	 *
+	 * @param (\Closure(callable): mixed)|null $listingWriteContext Runs the listing
+	 *        register reads and writes of the sync (and nothing else) with elevated
+	 *        rights, e.g. OpenRegister's runAsSystem() for the cron job; null keeps
+	 *        the caller's own rights.
 	 *
 	 * @return array<string, mixed> Array containing synchronization results
 	 * @throws DoesNotExistException|MultipleObjectsReturnedException
@@ -204,19 +292,49 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
-	public function doCronSync(): array {
-		// BFS-discovery: iterate over peer /api/directory URLs (not publications URLs).
-		// The publications-URL variant lives on getUniqueDirectories() and is used by
-		// the federation search flow.
-		$this->uniqueDirectories = $this->getKnownDirectoryUrls();
-
-		// Add default OpenCatalogi directory if not already present.
-		$defaultDirectory = $this->getDefaultDirectoryUrl();
-		if (in_array($defaultDirectory, $this->uniqueDirectories) === false) {
-			$this->uniqueDirectories[] = $defaultDirectory;
+	public function doCronSync(?\Closure $listingWriteContext = null): array {
+		$this->listingWriteContext = $listingWriteContext;
+		try {
+			return $this->syncTrustedDirectories();
+		} finally {
+			$this->listingWriteContext = null;
 		}
 
-		$uniqueDirectoryUrls = $this->uniqueDirectories;
+	}//end doCronSync()
+
+	/**
+	 * Sync every trusted directory and the default directory, and report the outcome.
+	 *
+	 * @return array<string, mixed> The synchronization results.
+	 *
+	 * @psalm-suppress InvalidArgument React Promise resolve callbacks receive arrays
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function syncTrustedDirectories(): array {
+		$this->retryPendingTrust();
+		$defaultDirectory = $this->getDefaultDirectoryUrl();
+
+		// Crawl set: admin-added directories plus the default one, never URLs from peer data.
+		$uniqueDirectoryUrls = [];
+		foreach ($this->getTrustedDirectoryUrls() as $trustedUrl) {
+			if ($this->isSelfInstance(url: $trustedUrl) === false) {
+				$uniqueDirectoryUrls[] = $trustedUrl;
+			}
+		}
+
+		if (in_array($defaultDirectory, $uniqueDirectoryUrls, true) === false) {
+			$uniqueDirectoryUrls[] = $defaultDirectory;
+		}
+
+		// Cross-directory check set: the directories crawled in this run (pp-f1). A
+		// listing that names one of them is synced from that directory itself; a
+		// listing for a directory that is not crawled is accepted from the trusted
+		// directory that relays it, or it would never be updated again. A relayed
+		// listing still cannot take over another listing's UUID (newListingUuid()).
+		// Known limitation, tracked separately: any trusted relay can update the
+		// listings of a directory this instance does not crawl.
+		$this->uniqueDirectories = $uniqueDirectoryUrls;
 
 		$results = [
 			'total_directories' => count($uniqueDirectoryUrls),
@@ -275,7 +393,141 @@ class DirectoryService implements DirectoryServiceInterface {
 		$this->connectionReporter?->reportDirectorySync(results: $results);
 
 		return $results;
-	}//end doCronSync()
+	}//end syncTrustedDirectories()
+
+	/**
+	 * Record a directory an administrator added, so the cron sync crawls it (aud-f1).
+	 *
+	 * Only admin entry points call this (adding a directory, creating a listing
+	 * with a directory). The URL must pass the SSRF guard.
+	 *
+	 * @param string $directoryUrl The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When the URL is malformed or unsafe.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function trustDirectory(string $directoryUrl): void {
+		$this->assertSyncableDirectoryUrl(directoryUrl: $directoryUrl);
+		$this->assertSafeOutboundUrl(url: $directoryUrl);
+
+		$trusted = $this->getTrustedDirectoryUrls();
+		if (in_array($directoryUrl, $trusted, true) === true) {
+			return;
+		}
+
+		$trusted[] = $directoryUrl;
+		$this->config->setValueString($this->appName, self::CONFIG_TRUSTED_DIRECTORIES, (string)json_encode(array_values($trusted)));
+
+	}//end trustDirectory()
+
+	/**
+	 * Retry, once, the seeded directories that failed their checks at upgrade time.
+	 *
+	 * The seed (SeedTrustedDirectories) parks a directory whose name did not
+	 * resolve, or that failed the SSRF check, in the pending list instead of
+	 * dropping it. The next sync gives each one more try through trustDirectory()
+	 * (same checks); the list is cleared first, so each entry is retried once.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	private function retryPendingTrust(): void {
+		$pending = json_decode($this->config->getValueString($this->appName, self::CONFIG_PENDING_TRUST, '[]'), true);
+		if (is_array($pending) === false || $pending === []) {
+			return;
+		}
+
+		$this->config->setValueString($this->appName, self::CONFIG_PENDING_TRUST, '[]');
+		foreach ($pending as $directoryUrl) {
+			if (is_string($directoryUrl) === false) {
+				continue;
+			}
+
+			try {
+				$this->trustDirectory(directoryUrl: $directoryUrl);
+				$this->logger?->info('[DirectoryService] Pending directory trusted on retry', ['directory' => $directoryUrl]);
+			} catch (\Throwable $e) {
+				$this->logger?->warning(
+					'[DirectoryService] Pending directory failed its checks again and is not crawled; an admin can add it',
+					['directory' => $directoryUrl, 'error' => $e->getMessage()]
+				);
+			}
+		}
+
+	}//end retryPendingTrust()
+
+	/**
+	 * Stop crawling a directory, on an explicit administrator decision.
+	 *
+	 * Not called when a listing is deleted: a directory has a listing per catalog,
+	 * and deleting one must not stop the crawl of the others. No UI action calls it
+	 * yet; administrators edit the `trusted_directory_urls` app setting.
+	 *
+	 * @param string $directoryUrl The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function untrustDirectory(string $directoryUrl): void {
+		$trusted = $this->getTrustedDirectoryUrls();
+		$kept    = array_values(array_filter($trusted, static fn (string $url): bool => $url !== $directoryUrl));
+		if (count($kept) === count($trusted)) {
+			return;
+		}
+
+		$this->config->setValueString($this->appName, self::CONFIG_TRUSTED_DIRECTORIES, (string)json_encode($kept));
+
+	}//end untrustDirectory()
+
+	/**
+	 * The directories an administrator added; an unreadable value counts as none.
+	 *
+	 * @return array<string> The trusted directory URLs.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	private function getTrustedDirectoryUrls(): array {
+		$decoded = json_decode($this->config->getValueString($this->appName, self::CONFIG_TRUSTED_DIRECTORIES, '[]'), true);
+		if (is_array($decoded) === false) {
+			return [];
+		}
+
+		return array_values(
+			array_filter(
+				$decoded,
+				static fn ($url): bool => is_string($url) === true && filter_var($url, FILTER_VALIDATE_URL) !== false
+			)
+		);
+
+	}//end getTrustedDirectoryUrls()
+
+	/**
+	 * Run a listing register read or write with the rights doCronSync() was given.
+	 *
+	 * Only listing register operations of a sync go through here: the lookup and
+	 * save, and recording a sync failure on the stored listings. Fetching and
+	 * parsing peer data, broadcasts and reporting keep the caller's own rights
+	 * (the workload identity is scoped to what needs it).
+	 *
+	 * @param callable $operation The listing register operation.
+	 *
+	 * @return mixed What the operation returns.
+	 *
+	 * @spec exclude Scoping helper for the cron sync's system context; no domain behaviour.
+	 */
+	private function withListingWriteRights(callable $operation): mixed {
+		if ($this->listingWriteContext === null) {
+			return $operation();
+		}
+
+		return ($this->listingWriteContext)($operation);
+
+	}//end withListingWriteRights()
 
 	/**
 	 * Get unique directory URLs from stored listings
@@ -385,8 +637,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * Distinct from getUniqueDirectories() which returns PUBLICATIONS URLs for the
 	 * federation search flow (getPublications / getUsed / getPublication) — this
-	 * method returns DIRECTORY URLs for the BFS-discovery sync flow (doCronSync,
-	 * syncDirectory).
+	 * method returns DIRECTORY URLs for the sync flow's cross-directory check
+	 * (doCronSync, syncDirectory). They are not the cron crawl set: the cron sync
+	 * only crawls admin-added directories and the default one (see trustDirectory()).
 	 *
 	 * Sources:
 	 *   - The `directory` field of every stored listing (populated by
@@ -431,6 +684,64 @@ class DirectoryService implements DirectoryServiceInterface {
 			return [];
 		}
 
+		return $this->directoryUrlsOf(listings: $listings);
+	}//end getKnownDirectoryUrls()
+
+	/**
+	 * The known directory URLs across every organisation, or an exception when they cannot be read.
+	 *
+	 * Unlike getKnownDirectoryUrls(), which answers [] on any failure, this tells a
+	 * failed lookup from an empty one, for the one-time seed of the trusted
+	 * directories (SeedTrustedDirectories). Run it inside OpenRegister's system
+	 * context so the organisation filter does not apply in a web-started upgrade.
+	 *
+	 * @return array<string> Unique peer directory URLs.
+	 *
+	 * @throws RuntimeException When OpenRegister is unavailable.
+	 * @throws \Throwable      When the listing search fails.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	public function readAllKnownDirectoryUrls(): array {
+		if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
+			throw new RuntimeException('OpenRegister service is not available.');
+		}
+
+		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		// No listing register means no stored listings, so the cron crawled nothing
+		// besides the default directory (e.g. a fresh install): nothing to grandfather.
+		if (empty($listingSchema) === true || empty($listingRegister) === true) {
+			return [];
+		}
+
+		// The ADR-055 marker must stay lower-case and on the bypass line itself.
+		// phpcs:disable Squiz.Commenting.InlineComment.NotCapital
+		$listings = $this->container->get('OCA\OpenRegister\Service\ObjectService')->searchObjects(
+			query: [
+				'@self' => [
+					'register' => $listingRegister,
+					'schema' => $listingSchema,
+				],
+			],
+			_rbac: false, // rbac-bypass: one-time upgrade seed reads only the directory URLs of every stored listing; nothing is returned to a caller.
+			_multitenancy: false // rbac-bypass: same seed, across organisations, so it sees what the cron crawled.
+		);
+		// phpcs:enable Squiz.Commenting.InlineComment.NotCapital
+
+		return $this->directoryUrlsOf(listings: $listings);
+	}//end readAllKnownDirectoryUrls()
+
+	/**
+	 * The unique `/api/directory` URLs the listings name, without this instance.
+	 *
+	 * @param iterable $listings The stored listing entities.
+	 *
+	 * @return array<string> Unique peer directory URLs.
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	private function directoryUrlsOf(iterable $listings): array {
 		$urls = [];
 		foreach ($listings as $listing) {
 			$listingData = $listing->jsonSerialize();
@@ -455,7 +766,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		}//end foreach
 
 		return array_values($urls);
-	}//end getKnownDirectoryUrls()
+	}//end directoryUrlsOf()
 
 	/**
 	 * Synchronize a specific directory (asynchronous)
@@ -582,7 +893,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 */
 	private function fetchDirectoryData(string $directoryUrl) {
 		$response = $this->safeGet(url: $directoryUrl . '?_limit=10000&include-federated=1');
-		$directoryData = json_decode($response->getBody()->getContents(), true);
+		$directoryData = json_decode($this->readCappedBody(response: $response), true);
 		if (json_last_error() !== JSON_ERROR_NONE) {
 			throw new InvalidArgumentException('Invalid JSON response from directory');
 		}
@@ -819,9 +1130,16 @@ class DirectoryService implements DirectoryServiceInterface {
 				sourceDirectoryUrl: $sourceDirectoryUrl,
 				listingDirectory: $listingDirectory
 			);
-			$existingListings = $this->findExistingListings(target: $target, listingData: $listingData);
+			// The lookup and the save run with the sync's listing rights (see doCronSync());
+			// the lookup too, so the create-or-update decision sees what the save sees.
+			$existingListings = $this->withListingWriteRights(
+				operation: fn () => $this->findExistingListings(target: $target, listingData: $listingData)
+			);
+			$stored = $this->withListingWriteRights(
+				operation: fn () => $this->storeListing(listingData: $listingData, existingListings: $existingListings, target: $target)
+			);
 
-			return array_merge($result, $this->storeListing(listingData: $listingData, existingListings: $existingListings, target: $target));
+			return array_merge($result, $stored);
 		} catch (\Exception $e) {
 			$result['error'] = $e->getMessage();
 			$this->recordListingError(target: $target, existingListings: $existingListings, exception: $e);
@@ -1097,12 +1415,22 @@ class DirectoryService implements DirectoryServiceInterface {
 	 */
 	private function storeListing(array $listingData, $existingListings, array $target): array {
 		if (empty($existingListings) === true) {
-			$this->saveListing(target: $target, listingData: $listingData, uuid: $target['uuid']);
+			// OpenRegister falls back to the object's `id` (or `@self.id`) when no uuid is
+			// passed, so a refused peer UUID must not stay in the object either: the
+			// listing gets a fresh UUID, passed explicitly and written as the object's `id`.
+			$uuid = $this->newListingUuid(target: $target);
+			if ($uuid === null) {
+				$uuid = Uuid::v4()->toRfc4122();
+				$listingData['id'] = $uuid;
+			}
+
+			$this->saveListing(target: $target, listingData: $listingData, uuid: $uuid);
 			return ['action' => 'created', 'success' => true];
 		}
 
 		$existingListingData = $existingListings[0]->jsonSerialize();
 		$existingObject = ($existingListingData['object'] ?? []);
+
 		$listingData['default'] = ($existingObject['default'] ?? $listingData['default']);
 		$listingData['status'] = ($existingObject['status'] ?? 'development');
 		$listingData['integrationLevel'] = ($existingObject['integrationLevel'] ?? 'search');
@@ -1119,6 +1447,59 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		return ['action' => 'updated', 'success' => true];
 	}//end storeListing()
+
+	/**
+	 * The UUID to create a synced listing under: the peer's, unless it is already taken.
+	 *
+	 * No stored listing matched (catalogusId, directory), so this is a create. The
+	 * UUID comes from the peer, and listing UUIDs are public (GET /api/directory):
+	 * a peer that sends the UUID of another directory's listing would otherwise turn
+	 * this create into an overwrite of that listing (oc-f5). A UUID that already
+	 * exists, or that cannot be checked, is not used; storeListing() then generates one.
+	 *
+	 * @param array $target The ObjectService, listing register/schema and the peer's uuid.
+	 *
+	 * @return string|null The peer's UUID when it is free, otherwise null (the caller then generates one).
+	 *
+	 * @spec openspec/specs/dashboard/spec.md
+	 */
+	private function newListingUuid(array $target): ?string {
+		$uuid = ($target['uuid'] ?? null);
+		if (is_string($uuid) === false || $uuid === '') {
+			return null;
+		}
+
+		try {
+			// The ADR-055 marker must stay lower-case and on the bypass line itself.
+			// phpcs:disable Squiz.Commenting.InlineComment.NotCapital
+			$existing = $target['objectService']->find(
+				id: $uuid,
+				_extend: [],
+				register: $target['register'],
+				schema: $target['schema'],
+				_rbac: false, // rbac-bypass: existence check only, nothing is returned to the caller; a listing the caller cannot read must still count as taken.
+				_multitenancy: false // rbac-bypass: same existence check, across organisations.
+			);
+			// phpcs:enable Squiz.Commenting.InlineComment.NotCapital
+		} catch (DoesNotExistException $e) {
+			return $uuid;
+		} catch (\Throwable $e) {
+			// Fail closed: when it cannot be told whether the UUID is free, do not reuse it.
+			return null;
+		}
+
+		if ($existing === null) {
+			return $uuid;
+		}
+
+		$this->logger?->warning(
+			'[DirectoryService] Synced listing names a UUID that belongs to another listing; created under a new UUID',
+			['uuid' => $uuid]
+		);
+
+		return null;
+
+	}//end newListingUuid()
 
 	/**
 	 * Save a listing object in the listing register/schema.
@@ -1167,7 +1548,10 @@ class DirectoryService implements DirectoryServiceInterface {
 			$errorData['lastSync']   = (new DateTime())->format('c');
 			$errorData['lastError']  = self::sanitizeSyncError(message: $exception->getMessage());
 
-			$this->saveListing(target: $target, listingData: $errorData, uuid: $existingListingData['id']);
+			// A listing write like the save it records, so it runs with the same rights (pp-f3).
+			$this->withListingWriteRights(
+				operation: fn () => $this->saveListing(target: $target, listingData: $errorData, uuid: $existingListingData['id'])
+			);
 		} catch (\Exception $updateException) {
 			// A failure to record the error must not mask the sync failure.
 		}
@@ -1531,8 +1915,15 @@ class DirectoryService implements DirectoryServiceInterface {
 			$incomingUpdated = $this->extractTimestamp(data: $incomingData);
 			$existingUpdated = $this->extractTimestamp(data: $existingObject);
 
+			// A peer timestamp beyond the clock-skew horizon is never "newer";
+			// a stored one beyond it does not block later updates either.
+			$horizon = (new DateTime())->modify('+'.self::MAX_TIMESTAMP_SKEW_SECONDS.' seconds');
+			if ($incomingUpdated !== null && $incomingUpdated > $horizon) {
+				return true;
+			}
+
 			// If we can't determine timestamps, allow the update to be safe.
-			if ($incomingUpdated === null || $existingUpdated === null) {
+			if ($incomingUpdated === null || $existingUpdated === null || $existingUpdated > $horizon) {
 				return false;
 			}
 
@@ -1651,15 +2042,18 @@ class DirectoryService implements DirectoryServiceInterface {
 				// Can't update without schema/register configuration.
 			}
 
-			// Find all listings from this directory.
-			$existingListings = $objectService->searchObjects(
-				query: [
-					'@self' => [
-						'register' => $listingRegister,
-						'schema' => $listingSchema,
-					],
-					'directory' => $directoryUrl,
-				]
+			// Find all listings from this directory. Lookup and save are listing register
+			// operations, so they run with the sync's listing rights (pp-f3).
+			$existingListings = $this->withListingWriteRights(
+				operation: fn () => $objectService->searchObjects(
+					query: [
+						'@self' => [
+							'register' => $listingRegister,
+							'schema' => $listingSchema,
+						],
+						'directory' => $directoryUrl,
+					]
+				)
 			);
 
 			// Update each listing with error status.
@@ -1672,13 +2066,14 @@ class DirectoryService implements DirectoryServiceInterface {
 				$errorData['lastSync']   = (new DateTime())->format('c');
 				$errorData['lastError']  = self::sanitizeSyncError(message: $errorMessage);
 
-				// Use positional parameters for compatibility with different ObjectService versions.
-				$objectService->saveObject(
-					object: $errorData,
-					extend: [],
-					register: $listingRegister,
-					schema: $listingSchema,
-					uuid: $listingData['id']
+				$this->withListingWriteRights(
+					operation: fn () => $objectService->saveObject(
+						object: $errorData,
+						extend: [],
+						register: $listingRegister,
+						schema: $listingSchema,
+						uuid: $listingData['id']
+					)
 				);
 			}
 		} catch (\Exception $e) {
@@ -1921,6 +2316,59 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *       plumbing that hardens an existing fetch, no new domain behavior.
 	 */
 	private function assertSafeOutboundUrl(string $url): void {
+		$this->resolveSafeOutboundUrl(url: $url);
+
+	}//end assertSafeOutboundUrl()
+
+	/**
+	 * Refuse to send a request whose address pin cannot be honoured.
+	 *
+	 * CURLOPT_RESOLVE is a cURL option. Guzzle's stream handler, which it falls back
+	 * to when ext-curl is missing, ignores it silently and resolves the name again,
+	 * which would undo the DNS-rebinding protection. Nextcloud requires ext-curl and
+	 * builds its clients on CurlHandler, so this is a fail-closed backstop for an
+	 * unusual build, not a code path a normal install reaches.
+	 *
+	 * @return void
+	 *
+	 * @throws InvalidArgumentException When cURL is not available to pin the address.
+	 *
+	 * @spec exclude SSRF hardening of an existing outbound request; no domain behaviour.
+	 */
+	private function assertPinSupported(): void {
+		$available = (\function_exists('curl_init') === true && \extension_loaded('curl') === true);
+		if ($this->curlAvailable !== null) {
+			$available = ($this->curlAvailable)();
+		}
+
+		if ($available === false) {
+			throw new InvalidArgumentException('Directory target cannot be pinned to the checked address without cURL');
+		}
+
+	}//end assertPinSupported()
+
+	/**
+	 * Validate an outbound URL (SSRF guard) and return the addresses that passed.
+	 *
+	 * Same checks as {@see assertSafeOutboundUrl()}; the result lets the caller pin
+	 * the connection to a checked address so the HTTP client does not resolve the
+	 * name a second time (DNS-rebinding TOCTOU).
+	 *
+	 * @param string $url The URL to validate.
+	 *
+	 * @return array{host: string, ips: list<string>} The host and the checked addresses;
+	 *                                                 `ips` is empty for an allowlisted
+	 *                                                 host or a literal IP (nothing to pin).
+	 *
+	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+	 *
+	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
+	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 *
+	 * @spec exclude SSRF input-validation guard for outbound directory fetches; security
+	 *       plumbing that hardens an existing fetch, no new domain behavior.
+	 */
+	private function resolveSafeOutboundUrl(string $url): array {
 		$parsed = parse_url($url);
 		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
 			throw new InvalidArgumentException('Invalid directory URL provided');
@@ -1937,7 +2385,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		// two local instances on a private network can federate. Empty by default, so a
 		// production instance keeps the full SSRF protection below.
 		if ($this->isAllowlistedFederationHost(host: $host) === true) {
-			return;
+			return ['host' => $host, 'ips' => []];
 		}
 
 		// Reject obvious local hostnames outright.
@@ -1995,7 +2443,101 @@ class DirectoryService implements DirectoryServiceInterface {
 			}
 		}
 
-	}//end assertSafeOutboundUrl()
+		if (filter_var(trim($host, '[]'), FILTER_VALIDATE_IP) !== false) {
+			return ['host' => $host, 'ips' => []];
+		}
+
+		return ['host' => $host, 'ips' => array_values(array_unique($ipsToCheck))];
+
+	}//end resolveSafeOutboundUrl()
+
+	/**
+	 * Validate an outbound URL and build the request options that keep the fetch on the checked address.
+	 *
+	 * - CURLOPT_RESOLVE pins host:port to an address the SSRF guard accepted, so a DNS
+	 *   answer that changes between check and connect (rebinding) cannot reach an
+	 *   internal address.
+	 * - CURLOPT_MAXFILESIZE and an `on_headers` check refuse an announced body over
+	 *   MAX_RESPONSE_BYTES before it is downloaded; {@see readCappedBody()} bounds
+	 *   the rest.
+	 *
+	 * @param string $url The URL about to be fetched.
+	 *
+	 * @return array<string, mixed> Guzzle request options.
+	 *
+	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
+	 *
+	 * @spec exclude SSRF hardening of an existing outbound fetch; no domain behavior.
+	 */
+	private function pinnedOutboundOptions(string $url): array {
+		$resolved = $this->resolveSafeOutboundUrl(url: $url);
+
+		$curl = [\CURLOPT_MAXFILESIZE => self::MAX_RESPONSE_BYTES];
+		if (empty($resolved['ips']) === false) {
+			$scheme = strtolower((string) parse_url($url, PHP_URL_SCHEME));
+			$port   = parse_url($url, PHP_URL_PORT);
+			if ($port === null || $port === false) {
+				$port = 80;
+				if ($scheme === 'https') {
+					$port = 443;
+				}
+			}
+
+			$address = $resolved['ips'][0];
+			if (str_contains($address, ':') === true) {
+				$address = '['.$address.']';
+			}
+
+			$this->assertPinSupported();
+
+			$curl[\CURLOPT_RESOLVE] = [$resolved['host'].':'.$port.':'.$address];
+		}
+
+		return [
+			RequestOptions::CURL => $curl,
+			RequestOptions::ON_HEADERS => static function (mixed $response): void {
+				if ($response instanceof \Psr\Http\Message\ResponseInterface === false) {
+					return;
+				}
+
+				$length = $response->getHeaderLine('Content-Length');
+				if ($length !== '' && (int) $length > self::MAX_RESPONSE_BYTES) {
+					throw new InvalidArgumentException('Response body exceeds the size limit');
+				}
+			},
+		];
+
+	}//end pinnedOutboundOptions()
+
+	/**
+	 * Read a response body, refusing one larger than MAX_RESPONSE_BYTES.
+	 *
+	 * @param \Psr\Http\Message\ResponseInterface $response The response.
+	 *
+	 * @return string The body.
+	 *
+	 * @throws InvalidArgumentException When the body exceeds the limit.
+	 *
+	 * @spec exclude Memory bound on an existing outbound fetch; no domain behavior.
+	 */
+	private function readCappedBody(\Psr\Http\Message\ResponseInterface $response): string {
+		$body    = $response->getBody();
+		$content = '';
+		while ($body->eof() === false) {
+			$chunk = $body->read(65536);
+			if ($chunk === '') {
+				break;
+			}
+
+			$content .= $chunk;
+			if (strlen($content) > self::MAX_RESPONSE_BYTES) {
+				throw new InvalidArgumentException('Response body exceeds the size limit');
+			}
+		}
+
+		return $content;
+
+	}//end readCappedBody()
 
 	/**
 	 * Validate that a URL is safe for outbound use (SSRF guard) without fetching it.
@@ -2166,13 +2708,15 @@ class DirectoryService implements DirectoryServiceInterface {
 		$current = $url;
 
 		for ($hop = 0; $hop <= $maxRedirects; $hop++) {
+			// Re-validate and pin every hop (the first one included) to the address the
+			// SSRF guard accepted, so the client never resolves the name on its own.
 			$response = $this->client->get(
 				$current,
 				[
 					RequestOptions::ALLOW_REDIRECTS => false,
 					RequestOptions::TIMEOUT => 10,
 					RequestOptions::CONNECT_TIMEOUT => 5,
-				]
+				] + $this->pinnedOutboundOptions(url: $current)
 			);
 
 			$status = $response->getStatusCode();
@@ -2203,7 +2747,6 @@ class DirectoryService implements DirectoryServiceInterface {
 				$location = $scheme . '://' . $hostPart . $path;
 			}
 
-			$this->assertSafeOutboundUrl(url: $location);
 			$current = $location;
 		}//end for
 
@@ -2453,10 +2996,16 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * The requests to send for a peer lookup, skipping our own directory and any unsafe URL.
 	 *
+	 * At most MAX_PEERS_PER_LOOKUP candidates are considered, whether or not they
+	 * pass the SSRF guard, and candidates stop once MAX_PEER_RESOLVE_SECONDS of
+	 * resolving is spent: a URL that resolves slowly or to a blocked address costs a
+	 * DNS lookup, so it counts too. Each peer is resolved once, and its target carries
+	 * the request options that pin it to the address the SSRF guard accepted.
+	 *
 	 * @param array $directories The directory URLs to ask
 	 * @param array $lookup      The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
 	 *
-	 * @return array<int, array{url: string, name: string}> One entry per peer to call
+	 * @return array<int, array{url: string, name: string, options: array}> One entry per peer to call
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
@@ -2465,15 +3014,27 @@ class DirectoryService implements DirectoryServiceInterface {
 			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
 		);
 
-		$targets = [];
+		$targets    = [];
+		$candidates = 0;
+		$deadline   = (microtime(true) + self::MAX_PEER_RESOLVE_SECONDS);
 		foreach ($directories as $directoryUrl) {
 			if ($directoryUrl === $ourDirectoryUrl) {
 				continue;
 			}
 
-			// Skip local/unsafe URLs — assertSafeOutboundUrl performs DNS resolution.
+			// Count the candidate before resolving it (pub-f1): an unsafe or slow name
+			// costs a lookup as much as a good one does.
+			if ($candidates >= self::MAX_PEERS_PER_LOOKUP || microtime(true) >= $deadline) {
+				break;
+			}
+
+			$candidates++;
+
+			// Skip local/unsafe URLs. pinnedOutboundOptions() runs the SSRF guard once,
+			// on the URL that is fetched, and pins the request to the address it accepted.
 			try {
-				$this->assertSafeOutboundUrl(url: $directoryUrl);
+				$endpoint = $lookup['endpointFor']($directoryUrl);
+				$options  = $this->pinnedOutboundOptions(url: $endpoint);
 			} catch (InvalidArgumentException $e) {
 				continue;
 			}
@@ -2484,8 +3045,9 @@ class DirectoryService implements DirectoryServiceInterface {
 			}
 
 			$targets[] = [
-				'url' => $lookup['endpointFor']($directoryUrl).'?'.http_build_query($lookup['query']),
+				'url' => $endpoint.'?'.http_build_query($lookup['query']),
 				'name' => $host,
+				'options' => $options,
 			];
 		}//end foreach
 
@@ -2494,7 +3056,10 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end peerTargets()
 
 	/**
-	 * Call each peer and parse its answer.
+	 * Call the peers concurrently and parse their answers.
+	 *
+	 * The requests run in parallel, so one lookup takes about one peer timeout
+	 * however many peers answer slowly, instead of the sum of all timeouts.
 	 *
 	 * @param array $targets The peer requests, as built by peerTargets()
 	 * @param array $lookup  The lookup: the caller's `guzzleConfig`, merged over the defaults, and `parse`,
@@ -2514,11 +3079,34 @@ class DirectoryService implements DirectoryServiceInterface {
 			],
 			RequestOptions::HTTP_ERRORS => false,
 		];
-		$lookup['client'] = new Client(array_merge($defaultGuzzleConfig, $lookup['guzzleConfig']));
+		$clientConfig = array_merge($defaultGuzzleConfig, $lookup['guzzleConfig']);
+		// The lookups serve public endpoints that may pass `timeout`/`connect_timeout`
+		// from the query; cap them so one request cannot hold a worker for minutes.
+		$clientConfig[RequestOptions::TIMEOUT] = min((float) $clientConfig[RequestOptions::TIMEOUT], self::MAX_PEER_TIMEOUT);
+		$clientConfig[RequestOptions::CONNECT_TIMEOUT] = min((float) $clientConfig[RequestOptions::CONNECT_TIMEOUT], self::MAX_PEER_CONNECT_TIMEOUT);
+		$client = new Client($clientConfig);
+
+		// SSRF hardening (SB1 / wave-12): disable automatic redirect following so
+		// that a federated peer cannot pivot to cloud-metadata via a 302 response.
+		$promises = [];
+		foreach ($targets as $index => $target) {
+			$promises[$index] = $client->getAsync(
+				$target['url'],
+				[RequestOptions::ALLOW_REDIRECTS => false] + ($target['options'] ?? [])
+			);
+		}
+
+		$settled = \GuzzleHttp\Promise\Utils::settle($promises)->wait();
 
 		$answers = [];
-		foreach ($targets as $target) {
-			$answers[] = $this->fetchFromPeer(url: $target['url'], lookup: $lookup);
+		foreach (array_keys($targets) as $index) {
+			$outcome = ($settled[$index] ?? []);
+			if (($outcome['state'] ?? '') !== 'fulfilled') {
+				$answers[] = null;
+				continue;
+			}
+
+			$answers[] = $this->parsePeerResponse(response: $outcome['value'], lookup: $lookup);
 		}
 
 		return $answers;
@@ -2526,28 +3114,23 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end fetchFromPeers()
 
 	/**
-	 * Call one peer and parse its answer.
+	 * Parse one peer's answer.
 	 *
-	 * @param string $url    The URL to call
-	 * @param array  $lookup The lookup: the HTTP `client` and `parse`, which turns a decoded answer into a result or null
+	 * @param \Psr\Http\Message\ResponseInterface $response The peer response
+	 * @param array                               $lookup   The lookup: `parse`, which turns a decoded answer into a result or null
 	 *
-	 * @return array|null The parsed answer, or null on a non-2xx status, invalid JSON or a failed request
+	 * @return array|null The parsed answer, or null on a non-2xx status, an oversized body or invalid JSON
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */
-	private function fetchFromPeer(string $url, array $lookup): ?array {
+	private function parsePeerResponse(\Psr\Http\Message\ResponseInterface $response, array $lookup): ?array {
 		try {
-			// SSRF hardening (SB1 / wave-12): disable automatic redirect following so
-			// that a federated peer cannot pivot to cloud-metadata via a 302 response.
-			// The URL is already validated by assertSafeOutboundUrl(); here we
-			// ensure Guzzle never silently follows a redirect to an unvalidated host.
-			$response   = $lookup['client']->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
 			$statusCode = $response->getStatusCode();
 			if ($statusCode < 200 || $statusCode >= 300) {
 				return null;
 			}
 
-			$data = json_decode($response->getBody()->getContents(), true);
+			$data = json_decode($this->readCappedBody(response: $response), true);
 			if (json_last_error() !== JSON_ERROR_NONE) {
 				return null;
 			}
@@ -2557,7 +3140,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			return null;
 		}//end try
 
-	}//end fetchFromPeer()
+	}//end parsePeerResponse()
 
 	/**
 	 * The peer's `/api/federation/publications` URL for a listing URL of any shape.
@@ -2725,9 +3308,15 @@ class DirectoryService implements DirectoryServiceInterface {
 		try {
 			// RBAC handles public visibility via conditional published date rule.
 			// ADR-002: each tenant queries only its own catalogs; multitenancy must stay enabled.
-			$catalogResult = $objectService->searchObjects(
-				$this->directoryQuery(scope: ['schema' => $catalogSchema, 'register' => $catalogRegister], requestParams: $requestParams)
-			);
+			$query = $this->directoryQuery(scope: ['schema' => $catalogSchema, 'register' => $catalogRegister], requestParams: $requestParams);
+			// An unlisted catalog (listed is not true) is reachable by link but not
+			// advertised: anonymous callers, and the peers that sync this directory into
+			// their own, do not get it. Same rule as /api/search.
+			if ($this->isAnonymousCaller() === true) {
+				$query['listed'] = true;
+			}
+
+			$catalogResult = $objectService->searchObjects($query);
 
 			return $this->convertCatalogiToListings(catalogs: $catalogResult);
 		} catch (\Exception $e) {
@@ -2735,6 +3324,22 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 	}//end directoryCatalogs()
+
+	/**
+	 * Whether the caller is anonymous. Fails closed: an unresolvable session counts as anonymous.
+	 *
+	 * @return bool True when no user is signed in.
+	 *
+	 * @spec exclude Visibility helper for the unlisted-catalog filter; no domain behaviour.
+	 */
+	private function isAnonymousCaller(): bool {
+		try {
+			return $this->container->get(\OCP\IUserSession::class)->getUser() === null;
+		} catch (\Throwable $e) {
+			return true;
+		}
+
+	}//end isAnonymousCaller()
 
 	/**
 	 * The search query for one part of the directory: its scope, the request's

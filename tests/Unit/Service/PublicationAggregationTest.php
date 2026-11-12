@@ -336,6 +336,66 @@ class PublicationAggregationTest extends TestCase {
 		$this->assertCount(2, $this->indexCalls);
 	}
 
+	/**
+	 * oc-f7: the public aggregated listing clamps `_limit` to the public search cap,
+	 * and the window it asks every source for stays at page × clamped limit.
+	 */
+	public function testAggregatedListingClampsTheLimitForLocalAndPeers(): void {
+		$this->config->method('getValueString')->willReturn('');
+		$this->directoryService->method('getUniqueDirectories')->willReturn(['https://peer.example.org']);
+
+		$fedQuery = null;
+		$this->directoryService->method('getPublications')->willReturnCallback(
+			static function (array $config) use (&$fedQuery): array {
+				$fedQuery = $config;
+				return ['results' => [], 'total' => 0];
+			}
+		);
+
+		$service = $this->serviceWithIndex(static fn (?array $params): array => ['results' => [], 'total' => 0]);
+
+		$result = $service->getAggregatedPublications(['_limit' => 100000, '_page' => 3], [], '/api');
+
+		$this->assertSame(100, $result['limit']);
+		$this->assertSame(100, $this->indexCalls[0]['_limit']);
+		$this->assertSame(300, $this->indexCalls[1]['_limit']);
+		// Peers are not sent a page size at all.
+		$this->assertArrayNotHasKey('_limit', $fedQuery['query_params']);
+	}
+
+	/**
+	 * oc-f7: a merged window beyond FEDERATED_WINDOW_MAX is answered locally,
+	 * without asking any peer.
+	 */
+	public function testDeepAggregatedPageDoesNotFanOut(): void {
+		$this->config->method('getValueString')->willReturn('');
+		$this->directoryService->method('getUniqueDirectories')->willReturn(['https://peer.example.org']);
+		$this->directoryService->expects($this->never())->method('getPublications');
+
+		$service = $this->serviceWithIndex(static fn (?array $params): array => ['results' => [], 'total' => 0]);
+
+		$result = $service->getAggregatedPublications(['_limit' => 1000, '_page' => 1000], [], '/api');
+
+		$this->assertSame(100, $result['limit']);
+		$this->assertCount(1, $this->indexCalls);
+		$this->assertSame(100, $this->indexCalls[0]['_limit']);
+		$this->assertFalse($result['_performance']['federation']);
+	}
+
+	/**
+	 * oc-f7: a local-only listing is held to the same public cap.
+	 */
+	public function testLocalOnlyListingIsClampedToo(): void {
+		$this->config->method('getValueString')->willReturn('');
+		$this->directoryService->expects($this->never())->method('getPublications');
+
+		$service = $this->serviceWithIndex(static fn (?array $params): array => ['results' => [], 'total' => 0]);
+
+		$result = $service->getAggregatedPublications(['_limit' => 100000, '_aggregate' => 'false', '_facetable' => 'true'], [], '/api');
+
+		$this->assertSame(100, $result['limit']);
+	}
+
 	public function testFederatedPathWithoutFacetsBuildsVirtualFacetsAndLimitZero(): void {
 		$this->config->method('getValueString')->willReturn('');
 		$this->directoryService->method('getUniqueDirectories')->willReturn(['peer']);

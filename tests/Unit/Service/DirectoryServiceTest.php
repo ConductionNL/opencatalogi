@@ -4631,4 +4631,227 @@ class DirectoryServiceTest extends TestCase {
 		parse_str($uri->getQuery(), $query);
 		$this->assertSame('false', $query['_aggregate'] ?? null);
 	}
+
+	// =========================================================================
+	// aud-f1: the cron sync crawls only admin-added directories
+	// =========================================================================
+
+	/**
+	 * A partial DirectoryService whose stored directories, default directory and
+	 * per-directory sync are stubbed, over the given app config.
+	 *
+	 * @param array<string, string> $configValues App-config values by key.
+	 * @param array<int, string>    $synced       Receives every directory URL synced.
+	 *
+	 * @return DirectoryService&MockObject
+	 */
+	private function crawlService(array $configValues, array &$synced): DirectoryService {
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ($configValues[$key] ?? $default)
+		);
+
+		$service = $this->getMockBuilder(DirectoryService::class)
+			->setConstructorArgs([$this->urlGenerator, $config, $this->container, $this->appManager, $this->broadcastService, $this->request])
+			->onlyMethods(['getKnownDirectoryUrls', 'getDefaultDirectoryUrl', 'syncDirectory'])
+			->getMock();
+		$service->method('getKnownDirectoryUrls')->willReturn(['https://planted.example.org/api/directory']);
+		$service->method('getDefaultDirectoryUrl')->willReturn('https://directory.example.nl/api/directory');
+		$service->method('syncDirectory')->willReturnCallback(
+			static function (string $url) use (&$synced): array {
+				$synced[] = $url;
+				return [];
+			}
+		);
+
+		return $service;
+	}
+
+	/**
+	 * aud-f1: a directory URL learned from a peer's listing is not crawled; the
+	 * admin-added ones and the default directory are. pp-f1: the cross-directory
+	 * check set is this run's crawl set, so listings of the peer-learned directory
+	 * are still accepted from the trusted directory that relays them.
+	 */
+	public function testCronSyncCrawlsOnlyAdminAddedDirectoriesAndTheDefault(): void {
+		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/api/directory');
+
+		$synced  = [];
+		$service = $this->crawlService(['trusted_directory_urls' => '["https://added.example.org/api/directory"]'], $synced);
+
+		$result = $service->doCronSync();
+
+		$this->assertSame(['https://added.example.org/api/directory', 'https://directory.example.nl/api/directory'], $synced);
+		$this->assertSame(2, $result['total_directories']);
+		$known = (new \ReflectionProperty(DirectoryService::class, 'uniqueDirectories'))->getValue($service);
+		$this->assertSame(['https://added.example.org/api/directory', 'https://directory.example.nl/api/directory'], $known);
+	}
+
+	/**
+	 * aud-f1: an unreadable trusted list counts as empty, so only the default directory is crawled.
+	 */
+	public function testCronSyncWithAnUnreadableTrustedListCrawlsOnlyTheDefault(): void {
+		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/api/directory');
+
+		$synced  = [];
+		$service = $this->crawlService(['trusted_directory_urls' => '{not json'], $synced);
+
+		$service->doCronSync();
+
+		$this->assertSame(['https://directory.example.nl/api/directory'], $synced);
+	}
+
+	/**
+	 * aud-f1: the listing write context only lives for the doCronSync() call.
+	 */
+	public function testCronSyncReleasesTheListingWriteContext(): void {
+		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/api/directory');
+
+		$synced  = [];
+		$service = $this->crawlService([], $synced);
+		$service->doCronSync(static fn (callable $operation): mixed => $operation());
+
+		$this->assertNull((new \ReflectionProperty(DirectoryService::class, 'listingWriteContext'))->getValue($service));
+	}
+
+	/**
+	 * aud-f1: trustDirectory() adds a safe directory once and refuses an internal one.
+	 */
+	public function testTrustDirectoryStoresASafeDirectoryOnceAndRefusesAnInternalOne(): void {
+		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/api/directory');
+
+		$stored = '["https://203.0.113.7/api/directory"]';
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return match ($key) {
+					'trusted_directory_urls' => $stored,
+					default => $default,
+				};
+			}
+		);
+		$this->config->expects($this->once())
+			->method('setValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $value) use (&$stored): bool {
+					$stored = $value;
+					return true;
+				}
+			);
+
+		$this->service->trustDirectory('https://203.0.113.8/api/directory');
+		$this->service->trustDirectory('https://203.0.113.8/api/directory');
+		$this->assertSame('["https:\/\/203.0.113.7\/api\/directory","https:\/\/203.0.113.8\/api\/directory"]', $stored);
+
+		$this->expectException(InvalidArgumentException::class);
+		$this->service->trustDirectory('http://10.0.0.5/api/directory');
+	}
+
+	/**
+	 * pp-f4: untrustDirectory() removes exactly that directory and writes nothing when it was not trusted.
+	 */
+	public function testUntrustDirectoryRemovesOnlyThatDirectory(): void {
+		$stored = '["https://a.example.org/api/directory","https://b.example.org/api/directory"]';
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return match ($key) {
+					'trusted_directory_urls' => $stored,
+					default => $default,
+				};
+			}
+		);
+		$this->config->expects($this->once())
+			->method('setValueString')
+			->willReturnCallback(
+				static function (string $app, string $key, string $value) use (&$stored): bool {
+					$stored = $value;
+					return true;
+				}
+			);
+
+		$this->service->untrustDirectory('https://a.example.org/api/directory');
+		$this->service->untrustDirectory('https://unknown.example.org/api/directory');
+
+		$this->assertSame('["https:\/\/b.example.org\/api\/directory"]', $stored);
+	}
+
+	/**
+	 * pp-f5: a seeded directory parked as pending is retried once by the next
+	 * sync: it is trusted when it now passes, dropped (and logged) when it fails
+	 * again, and the pending list is cleared.
+	 */
+	public function testPendingSeededDirectoriesAreRetriedOnce(): void {
+		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/api/directory');
+
+		$stored = [
+			'trusted_directory_urls' => '[]',
+			'trusted_directory_urls_pending' => '["https://203.0.113.9/api/directory","http://10.0.0.9/api/directory"]',
+		];
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = '') use (&$stored): string {
+				return ($stored[$key] ?? $default);
+			}
+		);
+		$this->config->method('setValueString')->willReturnCallback(
+			static function (string $app, string $key, string $value) use (&$stored): bool {
+				$stored[$key] = $value;
+				return true;
+			}
+		);
+
+		$method = new \ReflectionMethod(DirectoryService::class, 'retryPendingTrust');
+		$method->invoke($this->service);
+
+		$this->assertSame('["https:\/\/203.0.113.9\/api\/directory"]', $stored['trusted_directory_urls']);
+		$this->assertSame('[]', $stored['trusted_directory_urls_pending']);
+	}
+
+	/**
+	 * pp-f5: the seed lookup reads across organisations and tells a failure from an empty result.
+	 */
+	public function testReadAllKnownDirectoryUrlsIsUnscopedAndThrowsOnFailure(): void {
+		$objectService = $this->createMockObjectService();
+		$this->setupOpenRegisterAvailable($objectService);
+		$this->setupListingConfig();
+		$this->urlGenerator->method('getAbsoluteURL')->willReturn('https://myserver.example.com/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/api/directory');
+
+		$args = [];
+		$objectService->method('searchObjects')->willReturnCallback(
+			function (...$positional) use (&$args) {
+				$names = array_map(
+					static fn (\ReflectionParameter $param): string => $param->getName(),
+					(new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'searchObjects'))->getParameters()
+				);
+				$args  = array_combine(array_slice($names, 0, count($positional)), $positional);
+				throw new RuntimeException('schema not migrated');
+			}
+		);
+
+		try {
+			$this->service->readAllKnownDirectoryUrls();
+			$this->fail('A failed lookup must throw, not answer []');
+		} catch (RuntimeException $e) {
+			$this->assertSame('schema not migrated', $e->getMessage());
+		}
+
+		$this->assertFalse($args['_rbac']);
+		$this->assertFalse($args['_multitenancy']);
+	}
+
+	/**
+	 * pp-f8: without a configured listing register there are no stored listings,
+	 * so the seed lookup answers [] (nothing to grandfather) instead of failing.
+	 */
+	public function testReadAllKnownDirectoryUrlsWithoutListingConfigIsEmpty(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->expects($this->never())->method('get');
+
+		$this->assertSame([], $this->service->readAllKnownDirectoryUrls());
+	}
 }
+

@@ -271,8 +271,11 @@ parameter).
 
 ### Requirement: Synchronize a specific listing's directory (admin-only) (DIR-003)
 
-The system MUST allow synchronising a specific listing's directory (or all
-directories when no id is given) via `POST /api/listings/sync`. On-demand
+The system MUST allow synchronising a specific listing's directory (or the
+trusted directories plus the default directory when no id is given, as in
+DIR-004) via `POST /api/listings/sync`. As in DIR-004, a trusted directory
+that relays listings of a directory this instance does not crawl can still
+update those listings (known limitation, tracked separately). On-demand
 synchronisation triggers outbound HTTP fetches and MUST be admin-gated via
 `#[AuthorizedAdminSetting]`; scheduled synchronisation for all users is
 provided by the hourly cron (DIR-004), which does not pass through this
@@ -291,14 +294,47 @@ endpoint.
 - AND no outbound fetch MUST be made
 
 ### Requirement: Synchronize all directories via cron (every hour) (DIR-004)
-The system MUST synchronize all directories via cron (every hour).
+The system MUST synchronize, via cron (every hour), the trusted directories
+plus the default directory. A directory is trusted when an administrator added
+it (`POST /api/listings/add`, or a listing created with a directory URL); it
+stops being trusted only through an explicit administrator action on the
+trusted list (the `trusted_directory_urls` app setting), never as a side effect
+of deleting one of its listings. A directory URL
+learned only from peer data (the `directory` field of a synced listing) MUST be
+stored but MUST NOT be crawled by the cron; its listings are accepted from the
+trusted directory that relays them. Only the listing register reads and writes
+of the cron sync run with system rights. On the first upgrade to this
+behaviour, a one-time repair step MUST trust every directory the cron crawled
+before (each passing the syncable-URL and SSRF checks), so the crawl set is
+unchanged on day one; a fresh install trusts nothing. The seed reads every
+organisation's listings; when that read fails it MUST NOT mark itself done, so
+the next repair run retries it. A directory that fails its checks during the
+seed MUST be retried once by the next cron sync; when no listing register is
+configured there is nothing to grandfather and the seed is done. A peer
+timestamp more than five minutes in the future MUST NOT count as newer.
+
+Known limitation (tracked separately): any trusted directory that relays a
+listing of a directory this instance does not crawl can update that listing;
+relay ownership is not recorded.
 
 **Priority:** Must **Status:** Implemented
 
-#### Scenario: hourly cron synchronizes all directories
+#### Scenario: hourly cron synchronizes the trusted directories
 - GIVEN the directory sync cron job is registered
 - WHEN the hourly schedule fires
-- THEN all directories MUST be synchronized
+- THEN every trusted directory and the default directory MUST be synchronized
+
+#### Scenario: a peer-learned directory is not crawled
+- GIVEN a synced listing names a directory that no administrator added
+- WHEN the hourly schedule fires
+- THEN that directory MUST NOT be fetched
+- AND a listing for it relayed by a trusted directory MUST still be updated
+
+#### Scenario: upgrade keeps the previous crawl set
+- GIVEN an instance that crawled directories before trusted directories existed
+- WHEN the app is upgraded
+- THEN every directory it crawled before MUST be trusted, once
+- AND directories learned from peer data after the upgrade MUST NOT become trusted
 
 ### Requirement: Add a new listing from a URL (admin-only) (DIR-005)
 

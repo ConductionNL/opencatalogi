@@ -441,6 +441,106 @@ class SettingsServiceTest extends \PHPUnit\Framework\TestCase {
 
 	}//end testGetSettingsWithOpenRegisterAvailable()
 
+	/**
+	 * Wire the container for the register-inventory tests (oc-f8).
+	 *
+	 * @param RegisterMapper|MockObject $registerMapper The register mapper.
+	 * @param bool|null $admin True/false for a signed-in (admin) user, null for no session.
+	 * @param array<int, list<\OCP\Settings\ISettings>> $allowedSettings The admin settings delegated to the user.
+	 *
+	 * @return void
+	 */
+	private function wireInventoryContainer(RegisterMapper|MockObject $registerMapper, ?bool $admin, array $allowedSettings = []): void {
+		$userSession = $this->createMock(\OCP\IUserSession::class);
+		$user = null;
+		if ($admin !== null) {
+			$user = $this->createMock(\OCP\IUser::class);
+			$user->method('getUID')->willReturn('someone');
+		}
+
+		$userSession->method('getUser')->willReturn($user);
+		$groupManager = $this->createMock(\OCP\IGroupManager::class);
+		$groupManager->method('isAdmin')->willReturn($admin === true);
+		$settingsManager = $this->createMock(\OCP\Settings\IManager::class);
+		$settingsManager->method('getAllowedAdminSettings')->with('opencatalogi')->willReturn($allowedSettings);
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+		$schemaMapper = $this->createSchemaMapperMock();
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $class) => match ($class) {
+				'OCA\OpenRegister\Db\RegisterMapper' => $registerMapper,
+				'OCA\OpenRegister\Db\SchemaMapper' => $schemaMapper,
+				\OCP\IUserSession::class => $userSession,
+				\OCP\IGroupManager::class => $groupManager,
+				\OCP\Settings\IManager::class => $settingsManager,
+				default => null,
+			}
+		);
+	}//end wireInventoryContainer()
+
+	/**
+	 * oc-f8: a signed-in non-admin gets the registers OpenRegister scopes to them,
+	 * not the instance-wide inventory.
+	 */
+	public function testGetSettingsForANonAdminListsOnlyTheirScopedRegisters(): void {
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->expects($this->once())
+			->method('findAll')
+			->with(null, null, [], [], [], true, true)
+			->willReturn([]);
+		$this->wireInventoryContainer($registerMapper, false);
+
+		$this->service->getSettings();
+	}//end testGetSettingsForANonAdminListsOnlyTheirScopedRegisters()
+
+	/**
+	 * oc-f8: an administrator keeps the instance-wide inventory.
+	 */
+	public function testGetSettingsForAnAdminListsEveryRegister(): void {
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->expects($this->once())
+			->method('findAll')
+			->with(null, null, [], [], [], false, false)
+			->willReturn([]);
+		$this->wireInventoryContainer($registerMapper, true);
+
+		$this->service->getSettings();
+	}//end testGetSettingsForAnAdminListsEveryRegister()
+
+	/**
+	 * pub-f2: a user an administrator delegated the OpenCatalogi admin settings to
+	 * keeps the instance-wide inventory, as the settings page they may open needs it.
+	 */
+	public function testGetSettingsForADelegatedOpenCatalogiAdminListsEveryRegister(): void {
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->expects($this->once())
+			->method('findAll')
+			->with(null, null, [], [], [], false, false)
+			->willReturn([]);
+		$delegated = $this->createMock(\OCA\OpenCatalogi\Settings\OpenCatalogiAdmin::class);
+		$this->wireInventoryContainer($registerMapper, false, [10 => [$delegated]]);
+
+		$this->service->getSettings();
+	}//end testGetSettingsForADelegatedOpenCatalogiAdminListsEveryRegister()
+
+	/**
+	 * pub-f2: another app's delegated settings do not unlock OpenCatalogi's inventory.
+	 */
+	public function testGetSettingsForAnOtherDelegatedSettingStaysScoped(): void {
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->expects($this->once())
+			->method('findAll')
+			->with(null, null, [], [], [], true, true)
+			->willReturn([]);
+		$other = $this->createMock(\OCP\Settings\IDelegatedSettings::class);
+		$this->wireInventoryContainer($registerMapper, false, [10 => [$other]]);
+
+		$this->service->getSettings();
+	}//end testGetSettingsForAnOtherDelegatedSettingStaysScoped()
+
 	public function testGetSettingsWithoutOpenRegister(): void {
 		$this->appManager->method('getInstalledApps')
 			->willReturn([]);

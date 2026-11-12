@@ -256,4 +256,150 @@ class DirectoryPeerFetchTest extends TestCase {
 
 		$this->assertNull($result);
 	}
+
+	/**
+	 * oc-f4: a peer body above the size cap is refused before it is decoded.
+	 */
+	public function testGetPublicationsRefusesAnOversizedPeerBody(): void {
+		$huge = '{"results":[{"id":"x","pad":"'.str_repeat('a', 10485760).'"}],"total":1}';
+
+		$result = $this->service->getPublications(
+			$this->guzzle([
+				new Response(200, [], $huge),
+				new Response(500, [], '{}'),
+				new Response(500, [], '{}'),
+			])
+		);
+
+		$this->assertSame([], $result['results']);
+		$this->assertSame(0, $result['total']);
+	}
+
+	/**
+	 * oc-f4: every peer request carries the size cap; an announced oversized body is refused.
+	 */
+	public function testPeerRequestsCarryTheSizeCap(): void {
+		$this->service->getPublications(
+			$this->guzzle([
+				new Response(200, ['Content-Length' => '99999999'], '{"results":[{"id":"x"}],"total":1}'),
+				new Response(500, [], '{}'),
+				new Response(500, [], '{}'),
+			])
+		);
+
+		$options = $this->history[0]['options'];
+		$this->assertSame(10485760, $options['curl'][\CURLOPT_MAXFILESIZE]);
+		$this->assertIsCallable($options['on_headers']);
+		// Allowlisted (dev) hosts are not resolved, so nothing is pinned for them.
+		$this->assertArrayNotHasKey(\CURLOPT_RESOLVE, $options['curl']);
+	}
+
+	/**
+	 * oc-f7: a public lookup asks at most 25 peers, with capped timeouts.
+	 */
+	public function testPeerFanOutIsCappedInCountAndTime(): void {
+		$hosts = [];
+		$dirs  = [];
+		for ($i = 1; $i <= 30; $i++) {
+			$hosts[] = 'p'.$i.'.example.org';
+			$dirs[]  = 'https://p'.$i.'.example.org/api/publications';
+		}
+
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'local_federation_hosts' => implode(',', $hosts),
+				default => $default,
+			}
+		);
+		$urlGenerator = $this->createMock(IURLGenerator::class);
+		$urlGenerator->method('linkToRoute')->willReturn('/apps/opencatalogi/api/directory');
+		$urlGenerator->method('getAbsoluteURL')->willReturn(self::OWN);
+
+		$ref     = new ReflectionClass(DirectoryService::class);
+		$service = $ref->newInstanceWithoutConstructor();
+		$props   = [
+			'appName' => 'opencatalogi',
+			'urlGenerator' => $urlGenerator,
+			'config' => $config,
+			'appManager' => $this->createMock(IAppManager::class),
+			'cachedUniqueDirs' => $dirs,
+			'cacheTimestamp' => time(),
+		];
+		foreach ($props as $name => $value) {
+			$ref->getProperty($name)->setValue($service, $value);
+		}
+
+		$queue = array_fill(0, 30, new Response(200, [], '{"results":[],"total":0}'));
+		$guzzle = $this->guzzle($queue);
+		$guzzle['timeout'] = 120;
+		$guzzle['connect_timeout'] = 30;
+
+		$service->getPublications($guzzle);
+
+		$this->assertCount(25, $this->history);
+		$this->assertLessThanOrEqual(10, $this->history[0]['options']['timeout']);
+		$this->assertLessThanOrEqual(5, $this->history[0]['options']['connect_timeout']);
+	}
+
+	/**
+	 * pub-f1: refused candidates count toward the peer cap, so a list padded with
+	 * unsafe URLs cannot make one lookup resolve an unbounded number of names.
+	 */
+	public function testRefusedPeersCountTowardTheCap(): void {
+		$dirs = [];
+		for ($i = 1; $i <= 30; $i++) {
+			$dirs[] = 'http://10.0.0.'.$i.'/api/publications';
+		}
+
+		$dirs[] = self::PEER;
+
+		$ref = new ReflectionClass(DirectoryService::class);
+		$ref->getProperty('cachedUniqueDirs')->setValue($this->service, $dirs);
+
+		$result = $this->service->getPublications($this->guzzle([new Response(200, [], '{"results":[],"total":0}')]));
+
+		$this->assertSame([], $this->history);
+		$this->assertSame([], $result['results']);
+	}
+
+	/**
+	 * oc-f4: a public host is pinned to the address the SSRF guard accepted.
+	 *
+	 * @group network
+	 */
+	public function testPinnedOutboundOptionsPinAPublicHost(): void {
+		$method  = new \ReflectionMethod(DirectoryService::class, 'pinnedOutboundOptions');
+		$options = $method->invoke($this->service, 'https://example.org/api/publications');
+
+		$this->assertMatchesRegularExpression('/^example\.org:443:/', $options['curl'][\CURLOPT_RESOLVE][0]);
+	}
+
+	/**
+	 * A pin that cURL cannot honour is refused, not sent unpinned.
+	 *
+	 * Without ext-curl Guzzle falls back to the stream handler, which ignores
+	 * CURLOPT_RESOLVE and resolves the name a second time.
+	 */
+	public function testAssertPinSupportedRefusesWhenCurlIsUnavailable(): void {
+		$ref = new ReflectionClass(DirectoryService::class);
+		$ref->getProperty('curlAvailable')->setValue($this->service, static fn (): bool => false);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('cannot be pinned to the checked address without cURL');
+
+		(new \ReflectionMethod(DirectoryService::class, 'assertPinSupported'))->invoke($this->service);
+	}
+
+	/**
+	 * With cURL available the pin guard lets the request through.
+	 */
+	public function testAssertPinSupportedAcceptsWhenCurlIsAvailable(): void {
+		$ref = new ReflectionClass(DirectoryService::class);
+		$ref->getProperty('curlAvailable')->setValue($this->service, static fn (): bool => true);
+
+		(new \ReflectionMethod(DirectoryService::class, 'assertPinSupported'))->invoke($this->service);
+
+		$this->addToAssertionCount(1);
+	}
 }

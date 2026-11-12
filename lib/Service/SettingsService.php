@@ -40,6 +40,7 @@ use DateTimeZone;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
+use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -476,6 +477,71 @@ class SettingsService implements SettingsServiceInterface {
 	}//end getRegisterMapper()
 
 	/**
+	 * The registers the settings view lists for the current caller.
+	 *
+	 * GET /api/settings is open to every signed-in user (the app's editors pick
+	 * registers and schemas from this list), so only an administrator gets the
+	 * instance-wide inventory; everyone else gets the registers of their own
+	 * organisation, as OpenRegister's register API would give them.
+	 *
+	 * @param object $registerMapper The OpenRegister RegisterMapper.
+	 *
+	 * @return array The registers.
+	 *
+	 * @spec exclude Authorization scoping of the settings register inventory; no domain behaviour.
+	 */
+	private function findCallerRegisters(object $registerMapper): array {
+		if ($this->isCallerAdmin() === false) {
+			return $registerMapper->findAll();
+		}
+
+		// phpcs:disable Squiz.Commenting.InlineComment.NotCapital
+		return $registerMapper->findAll(
+			_rbac: false, // rbac-bypass: administrator, the instance-wide settings view.
+			_multitenancy: false // rbac-bypass: administrator, across organisations.
+		);
+		// phpcs:enable Squiz.Commenting.InlineComment.NotCapital
+
+	}//end findCallerRegisters()
+
+	/**
+	 * Whether the current caller administers OpenCatalogi: a Nextcloud administrator,
+	 * or a user an administrator delegated the OpenCatalogi admin settings to (the same
+	 * rule `#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]` applies).
+	 * Fails closed to false.
+	 *
+	 * @return bool True for a signed-in administrator or delegated OpenCatalogi admin.
+	 *
+	 * @spec exclude Authorization helper for the settings register inventory; no domain behaviour.
+	 */
+	private function isCallerAdmin(): bool {
+		try {
+			$user = $this->container->get(\OCP\IUserSession::class)->getUser();
+			if ($user === null) {
+				return false;
+			}
+
+			if ($this->container->get(\OCP\IGroupManager::class)->isAdmin($user->getUID()) === true) {
+				return true;
+			}
+
+			$allowed = $this->container->get(\OCP\Settings\IManager::class)->getAllowedAdminSettings('opencatalogi', $user);
+			foreach ($allowed as $settings) {
+				foreach ($settings as $setting) {
+					if ($setting instanceof OpenCatalogiAdmin) {
+						return true;
+					}
+				}
+			}
+
+			return false;
+		} catch (\Throwable $e) {
+			return false;
+		}
+
+	}//end isCallerAdmin()
+
+	/**
 	 * Attempts to retrieve the Schema mapper from the container.
 	 *
 	 * @return \OCA\OpenRegister\Db\SchemaMapper|null The Schema mapper if available, null otherwise.
@@ -542,10 +608,7 @@ class SettingsService implements SettingsServiceInterface {
 			$registerMapper = $this->getRegisterMapper();
 			if ($registerMapper !== null) {
 				$data['openRegisters'] = true;
-				$registers = $registerMapper->findAll(
-					_rbac: false,
-					_multitenancy: false
-				);
+				$registers = $this->findCallerRegisters(registerMapper: $registerMapper);
 
 				// Enrich registers with full schema objects instead of just IDs.
 				$data['availableRegisters'] = $this->enrichRegistersWithSchemas(registers: $registers);

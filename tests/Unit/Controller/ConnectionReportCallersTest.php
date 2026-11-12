@@ -353,11 +353,20 @@ class ConnectionReportCallersTest extends TestCase {
 			)
 			->willReturn(true);
 
+		// The cron sync crawls the directories an admin added (aud-f1).
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'trusted_directory_urls' => '["https://down.example.nl/api"]',
+				default => $default,
+			}
+		);
+
 		$service = $this->getMockBuilder(DirectoryService::class)
 			->setConstructorArgs(
 				[
 					$this->createMock(IURLGenerator::class),
-					$this->createMock(IAppConfig::class),
+					$config,
 					$this->createMock(ContainerInterface::class),
 					$this->createMock(IAppManager::class),
 					$this->createMock(BroadcastService::class),

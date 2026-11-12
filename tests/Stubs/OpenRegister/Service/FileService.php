@@ -69,6 +69,16 @@ class FileService {
 	}//end getFilesForEntity()
 
 	/**
+	 * Throw when the session cannot read the node.
+	 *
+	 * @param mixed $file The file node.
+	 *
+	 * @return void
+	 */
+	public function checkOwnership(mixed $file): void {
+	}//end checkOwnership()
+
+	/**
 	 * Create a ZIP archive of all files attached to an object.
 	 *
 	 * @param \OCA\OpenRegister\Db\ObjectEntity|string $object Object entity or UUID string.

@@ -353,9 +353,36 @@ class ListingsController extends Controller {
 			schema: $listingSchema
 		);
 
+		$this->trustCreatedListingDirectory(directory: (string)($allowed['directory'] ?? ''));
+
 		// Return the created object as a JSON response.
 		return new JSONResponse($object);
 	}//end create()
+
+	/**
+	 * Add the directory of an admin-registered listing to the cron sync.
+	 *
+	 * A directory that cannot be synced (this instance itself) keeps its listing but
+	 * is not crawled; that refusal is logged, not returned.
+	 *
+	 * @param string $directory The listing's directory URL, empty when it has none.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/dashboard/spec.md#requirement-synchronize-all-directories-via-cron-every-hour-dir-004
+	 */
+	private function trustCreatedListingDirectory(string $directory): void {
+		if ($directory === '') {
+			return;
+		}
+
+		try {
+			$this->directoryService->trustDirectory($directory);
+		} catch (\InvalidArgumentException $exception) {
+			$this->logger?->info('[ListingsController::create] Directory not added to the cron sync', ['error' => $exception->getMessage()]);
+		}
+
+	}//end trustCreatedListingDirectory()
 
 	/**
 	 * PUT /api/listings/{id} allow-list. Directory-identity URLs and server-managed
@@ -546,8 +573,9 @@ class ListingsController extends Controller {
 	 * through this controller.
 	 *
 	 * When an ID is provided, the corresponding listing is looked up and its
-	 * directory URL is synced. When no ID is provided, all known directories
-	 * are synced (equivalent to a cron sync).
+	 * directory URL is synced. When no ID is provided, the directories an admin
+	 * added plus the default directory are synced (equivalent to a cron sync, with
+	 * the admin's own rights).
 	 *
 	 * @param string|null $id The ID of the listing whose directory to synchronize (optional).
 	 *
@@ -596,7 +624,7 @@ class ListingsController extends Controller {
 			}//end if
 
 			if ($id === null) {
-				// Sync all known directories.
+				// Sync the admin-added directories and the default one.
 				$result = $this->directoryService->doCronSync();
 			}
 
@@ -681,6 +709,17 @@ class ListingsController extends Controller {
 				statusCode: 500
 			);
 		}//end try
+
+		// Once it synced, the cron sync keeps crawling it (only admin-added directories
+		// are crawled). A failure here does not undo the completed sync, so it is logged.
+		try {
+			$this->directoryService->trustDirectory($url);
+		} catch (\Exception $exception) {
+			$this->logger?->warning(
+				'[ListingsController::add] Directory synced but not added to the cron sync',
+				['error' => $exception->getMessage()]
+			);
+		}
 
 		// Return the result as a JSON response.
 		return new JSONResponse($result);

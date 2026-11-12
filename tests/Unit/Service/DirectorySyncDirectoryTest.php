@@ -208,6 +208,31 @@ class DirectorySyncDirectoryTest extends TestCase {
 		$this->assertSame('Sync failed: Invalid JSON response from directory', $saved[0]['lastError']);
 	}
 
+	/**
+	 * oc-f4: a directory answer above the size cap is refused before it is decoded,
+	 * and the request carries the cap so curl stops an announced oversized body.
+	 */
+	public function testAnOversizedDirectoryAnswerIsRefused(): void {
+		$options = [];
+		$this->client->method('get')->willReturnCallback(
+			static function (string $url, array $requestOptions) use (&$options): Response {
+				$options = $requestOptions;
+				return new Response(200, [], '{"results":[],"pad":"'.str_repeat('a', 10485760).'"}');
+			}
+		);
+		$this->objectService->method('searchObjects')->willReturn([]);
+
+		try {
+			$this->service->syncDirectory(self::PEER);
+			$this->fail('expected an exception');
+		} catch (InvalidArgumentException $e) {
+			$this->assertSame('Response body exceeds the size limit', $e->getMessage());
+		}
+
+		$this->assertSame(10485760, $options['curl'][\CURLOPT_MAXFILESIZE]);
+		$this->assertFalse($options['allow_redirects']);
+	}
+
 	public function testAnHttpFailureIsRethrownAsARequestExceptionWithTheStatusRecorded(): void {
 		$request = new Request('GET', self::PEER);
 		$this->client->method('get')->willThrowException(

@@ -948,7 +948,7 @@ class PublicationServiceTest extends TestCase {
 				return $fileService;
 			});
 
-		$fileService->method('createObjectFilesZip')
+		$fileService->method('getFiles')
 			->willThrowException(new DoesNotExistException('Not found'));
 
 		$response = $this->service->download('pub-1');
@@ -985,7 +985,7 @@ class PublicationServiceTest extends TestCase {
 				return $fileService;
 			});
 
-		$fileService->method('createObjectFilesZip')
+		$fileService->method('getFiles')
 			->willThrowException(new \Exception('ZIP creation failed'));
 
 		$response = $this->service->download('pub-1');
@@ -3891,19 +3891,21 @@ class PublicationServiceTest extends TestCase {
 	}
 
 	// =======================================================================
-	// download — success path
+	// download — success path (oc-f1: only published, readable attachments)
 	// =======================================================================
 
-	public function testDownloadReturnsZipOnSuccess(): void {
+	/**
+	 * Wire the container for the download tests.
+	 *
+	 * @param MockObject $objectService The OR ObjectService mock.
+	 * @param MockObject $fileService The OR FileService mock.
+	 * @param MockObject|null $guard The FileRestrictionGuard mock; null makes the container throw for it.
+	 */
+	private function wireDownloadContainer(MockObject $objectService, MockObject $fileService, ?MockObject $guard): void {
 		$this->mockConfiguredCatalogScope();
-		$objectService = $this->createObjectServiceMock();
-		$fileService = $this->createFileServiceMock();
-
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 
 		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
-		// are about: pass the schema scope through. The guard has its own tests.
 		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
 		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
 		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
@@ -3911,7 +3913,7 @@ class PublicationServiceTest extends TestCase {
 		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
 
 		$this->container->method('get')
-			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService, $guard) {
 				if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
 					return $queryService;
 				}
@@ -3920,22 +3922,64 @@ class PublicationServiceTest extends TestCase {
 					return $objectService;
 				}
 
+				if ($class === 'OCA\OpenRegister\Service\File\FileRestrictionGuard') {
+					if ($guard === null) {
+						throw new RuntimeException('guard unavailable');
+					}
+
+					return $guard;
+				}
+
 				return $fileService;
 			});
+	}
 
-		// Create a real ZIP fixture so the metadata PDF can be piped into it (DWN-OR-001).
-		$tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
-		$fixture = new \ZipArchive();
-		$fixture->open($tmpFile, \ZipArchive::OVERWRITE);
-		$fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
-		$fixture->close();
+	/**
+	 * Build a file node mock.
+	 *
+	 * @param int $id The file id.
+	 * @param string $name The file name.
+	 * @param string $content The file bytes.
+	 */
+	private function createFileNode(int $id, string $name, string $content): MockObject {
+		$node = $this->createMock(\OCP\Files\File::class);
+		$node->method('getId')->willReturn($id);
+		$node->method('getName')->willReturn($name);
+		$node->method('getContent')->willReturn($content);
+		return $node;
+	}
 
-		$fileService->method('createObjectFilesZip')
-			->willReturn([
-				'path' => $tmpFile,
-				'filename' => 'test-files.zip',
-				'mimeType' => 'application/zip',
-			]);
+	/**
+	 * Read the entry names of the ZIP carried by a download response.
+	 *
+	 * @param DataDownloadResponse $response The response.
+	 *
+	 * @return array<string, string|false> Entry name => content.
+	 */
+	private function readZipEntries(DataDownloadResponse $response): array {
+		$path = tempnam(sys_get_temp_dir(), 'returned_zip_');
+		file_put_contents($path, $response->render());
+		$zip = new \ZipArchive();
+		$this->assertTrue($zip->open($path) === true);
+		$entries = [];
+		for ($i = 0; $i < $zip->numFiles; $i++) {
+			$name = $zip->getNameIndex($i);
+			$entries[$name] = $zip->getFromName($name);
+		}
+
+		$zip->close();
+		unlink($path);
+		return $entries;
+	}
+
+	public function testDownloadReturnsZipOnSuccess(): void {
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$guard = $this->createMock(\OCA\OpenRegister\Service\File\FileRestrictionGuard::class);
+		$guard->method('readableNodes')->willReturnArgument(0);
+		$this->wireDownloadContainer($objectService, $fileService, $guard);
+
+		$fileService->method('getFiles')->willReturn([$this->createFileNode(1, 'attachment1.txt', 'attachment content')]);
 
 		$this->downloadService->expects($this->once())
 			->method('createPublicationFile')
@@ -3944,77 +3988,103 @@ class PublicationServiceTest extends TestCase {
 		$response = $this->service->download('pub-1');
 		$this->assertInstanceOf(DataDownloadResponse::class, $response);
 
-		// The archive handed to the caller must carry the metadata PDF next to the
-		// attachments streamed from OR's file service.
-		$returnedPath = tempnam(sys_get_temp_dir(), 'returned_zip_');
-		file_put_contents($returnedPath, $response->render());
+		// The archive must carry the metadata PDF next to the attachments (DWN-OR-001).
+		$entries = $this->readZipEntries($response);
+		$this->assertSame('%PDF-1.4 metadata', $entries['pub-1.pdf'] ?? null, 'The metadata PDF must be present in the download ZIP.');
+		$this->assertSame('attachment content', $entries['attachment1.txt'] ?? null);
+	}
 
-		$returned = new \ZipArchive();
-		$this->assertTrue($returned->open($returnedPath) === true);
-		$entries = [];
-		for ($i = 0; $i < $returned->numFiles; $i++) {
-			$entries[] = $returned->getNameIndex($i);
-		}
+	/**
+	 * oc-f1: the public ZIP holds exactly the published (shared) files the guard admits,
+	 * never OR's whole-folder createObjectFilesZip() set.
+	 */
+	public function testDownloadZipHoldsOnlyPublishedReadableAttachments(): void {
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$published = $this->createFileNode(1, 'besluit.pdf', 'published');
+		$restricted = $this->createFileNode(2, 'restricted.pdf', 'restricted');
 
-		$pdfBytes = $returned->getFromName('pub-1.pdf');
-		$returned->close();
-		unlink($returnedPath);
+		$guard = $this->createMock(\OCA\OpenRegister\Service\File\FileRestrictionGuard::class);
+		$guard->expects($this->once())
+			->method('readableNodes')
+			->willReturnCallback(static fn (array $nodes): array => array_values(array_filter($nodes, static fn ($node): bool => $node !== $restricted)));
+		$this->wireDownloadContainer($objectService, $fileService, $guard);
 
-		$this->assertContains('pub-1.pdf', $entries, 'The metadata PDF must be present in the download ZIP.');
-		$this->assertContains('Bijlagen/attachment1.txt', $entries);
-		$this->assertSame('%PDF-1.4 metadata', $pdfBytes);
+		// Only the shared-files listing may be asked for: unshared drafts and withdrawn
+		// files never enter the candidate set.
+		$fileService->expects($this->once())
+			->method('getFiles')
+			->with('pub-1', true)
+			->willReturn([$published, $restricted]);
+		$fileService->expects($this->never())->method('createObjectFilesZip');
+
+		$this->downloadService->method('createPublicationFile')
+			->willReturn(['filename' => 'pub-1.pdf', 'content' => '%PDF-1.4 metadata']);
+
+		$response = $this->service->download('pub-1');
+		$this->assertInstanceOf(DataDownloadResponse::class, $response);
+
+		$entries = $this->readZipEntries($response);
+		ksort($entries);
+		$this->assertSame(['besluit.pdf', 'pub-1.pdf'], array_keys($entries));
+	}
+
+	/**
+	 * oc-f1: without published attachments the archive still carries the metadata PDF.
+	 */
+	public function testDownloadWithoutPublishedAttachmentsHoldsOnlyMetadataPdf(): void {
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$guard = $this->createMock(\OCA\OpenRegister\Service\File\FileRestrictionGuard::class);
+		$guard->method('readableNodes')->willReturnArgument(0);
+		$this->wireDownloadContainer($objectService, $fileService, $guard);
+
+		$fileService->method('getFiles')->willReturn([]);
+		$this->downloadService->method('createPublicationFile')
+			->willReturn(['filename' => 'pub-1.pdf', 'content' => '%PDF-1.4 metadata']);
+
+		$response = $this->service->download('pub-1');
+		$this->assertInstanceOf(DataDownloadResponse::class, $response);
+		$this->assertSame(['pub-1.pdf'], array_keys($this->readZipEntries($response)));
+	}
+
+	/**
+	 * oc-f1: when the restriction guard cannot be resolved the download fails closed
+	 * with a generic error instead of serving an unfiltered list.
+	 */
+	public function testDownloadFailsClosedWhenRestrictionGuardUnavailable(): void {
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->wireDownloadContainer($objectService, $fileService, null);
+
+		$fileService->method('getFiles')->willReturn([$this->createFileNode(1, 'a.pdf', 'x')]);
+		$this->downloadService->expects($this->never())->method('createPublicationFile');
+
+		$response = $this->service->download('pub-1');
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame(500, $response->getStatus());
+		$this->assertSame(['error' => 'Failed to create download archive'], json_decode($response->render(), true));
 	}
 
 	public function testDownloadPropagatesMetadataPdfError(): void {
-		$this->mockConfiguredCatalogScope();
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();
+		$guard = $this->createMock(\OCA\OpenRegister\Service\File\FileRestrictionGuard::class);
+		$guard->method('readableNodes')->willReturnArgument(0);
+		$this->wireDownloadContainer($objectService, $fileService, $guard);
 
-		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
-
-		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
-		// The SCH-PFTS-CAT-002 read-rule guard (WOO-581) is not what these tests
-		// are about: pass the schema scope through. The guard has its own tests.
-		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
-		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
-		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
-		$objectService->method('searchObjects')->willReturn([$catalog]);
-		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
-
-		$this->container->method('get')
-			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
-				if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
-					return $queryService;
-				}
-
-				if ($class === 'OCA\OpenRegister\Service\ObjectService') {
-					return $objectService;
-				}
-
-				return $fileService;
-			});
-
-		$tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
-		$fixture = new \ZipArchive();
-		$fixture->open($tmpFile, \ZipArchive::OVERWRITE);
-		$fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
-		$fixture->close();
-
-		$fileService->method('createObjectFilesZip')
-			->willReturn([
-				'path' => $tmpFile,
-				'filename' => 'test-files.zip',
-				'mimeType' => 'application/zip',
-			]);
+		$fileService->method('getFiles')->willReturn([$this->createFileNode(1, 'attachment1.txt', 'attachment content')]);
 
 		$this->downloadService->method('createPublicationFile')
 			->willReturn(new \OCP\AppFramework\Http\JSONResponse(['error' => 'render failed'], 500));
+
+		$before = glob(sys_get_temp_dir().'/oc_publication_zip_*');
 
 		$response = $this->service->download('pub-1');
 
 		$this->assertInstanceOf(\OCP\AppFramework\Http\JSONResponse::class, $response);
 		$this->assertSame(500, $response->getStatus());
-		$this->assertFileDoesNotExist($tmpFile, 'The ZIP temp file must be cleaned up on the error path.');
+		$this->assertSame($before, glob(sys_get_temp_dir().'/oc_publication_zip_*'), 'No ZIP temp file may be left behind on the error path.');
 	}
 
 	// =======================================================================
@@ -4061,6 +4131,56 @@ class PublicationServiceTest extends TestCase {
 		$this->assertSame(404, $response->getStatus());
 		$data = json_decode($response->render(), true);
 		$this->assertSame('Files folder not found', $data['error']);
+	}
+
+	/**
+	 * oc-f9 (ADR-050): a file-layer failure on the public attachments path is logged,
+	 * the caller gets a generic message without paths or user ids.
+	 */
+	public function testAttachmentsReturnsGenericMessageOnUnexpectedException(): void {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$catalog = $this->createSerializableObject(['registers' => [1], 'schemas' => [1]]);
+		$objectService->method('searchObjects')->willReturn([$catalog]);
+		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+		$this->container->method('get')
+			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+				if ($class === \OCA\OpenCatalogi\Service\PublicationQueryService::class) {
+					return $queryService;
+				}
+
+				if ($class === 'OCA\OpenRegister\Service\ObjectService') {
+					return $objectService;
+				}
+
+				return $fileService;
+			});
+
+		$fileService->method('getFiles')
+			->willThrowException(new \Exception('Cannot read /admin/files/Open Registers/secret-folder for user admin'));
+
+		$response = $this->service->attachments('pub-1');
+		$this->assertSame(500, $response->getStatus());
+		$this->assertSame(['error' => 'Failed to retrieve attachments'], json_decode($response->render(), true));
+	}
+
+	/**
+	 * oc-f9 (ADR-050): an InvalidArgumentException from outside PublicationService is
+	 * masked; the class's own validation messages still reach the caller.
+	 */
+	public function testInvalidArgumentResponseMasksForeignMessages(): void {
+		$method = new \ReflectionMethod($this->service, 'invalidArgumentResponse');
+
+		$foreign = $method->invoke($this->service, new \InvalidArgumentException('Column oc_openregister_table_42.secret missing'));
+		$this->assertSame(400, $foreign->getStatus());
+		$this->assertSame(['error' => 'Invalid request parameters'], json_decode($foreign->render(), true));
 	}
 
 	// =======================================================================

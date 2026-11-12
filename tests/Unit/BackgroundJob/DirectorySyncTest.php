@@ -45,6 +45,74 @@ class DirectorySyncTest extends TestCase {
 		$method->invoke($this->job, []);
 	}
 
+	/**
+	 * oc-f6 / aud-f1: with OpenRegister present only the listing writes run in its
+	 * system context. The sync itself (peer fetches, error recording, broadcasts,
+	 * reporting) runs outside it, and receives a context that elevates what it is given.
+	 */
+	public function testRunGivesTheSyncTheSystemContextForListingWritesOnly(): void {
+		$inSystemContext = false;
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->expects($this->once())
+			->method('runAsSystem')
+			->willReturnCallback(
+				static function (callable $operation) use (&$inSystemContext) {
+					$inSystemContext = true;
+					try {
+						return $operation();
+					} finally {
+						$inSystemContext = false;
+					}
+				}
+			);
+
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->method('get')->with('OCA\OpenRegister\Service\ObjectService')->willReturn($objectService);
+		$appManager = $this->createMock(\OCP\App\IAppManager::class);
+		$appManager->method('getInstalledApps')->willReturn(['openregister', 'opencatalogi']);
+
+		$syncRanInSystemContext  = null;
+		$writeRanInSystemContext = null;
+		$this->directoryService->expects($this->once())
+			->method('doCronSync')
+			->willReturnCallback(
+				static function (?\Closure $listingWriteContext = null) use (&$inSystemContext, &$syncRanInSystemContext, &$writeRanInSystemContext): array {
+					$syncRanInSystemContext = $inSystemContext;
+					$result = $listingWriteContext(
+						static function () use (&$inSystemContext, &$writeRanInSystemContext): string {
+							$writeRanInSystemContext = $inSystemContext;
+							return 'saved';
+						}
+					);
+					\PHPUnit\Framework\Assert::assertSame('saved', $result);
+					return [];
+				}
+			);
+
+		$job = new DirectorySync($this->timeFactory, $this->directoryService, $this->config, $container, $appManager);
+		$method = new \ReflectionMethod(DirectorySync::class, 'run');
+		$method->invoke($job, []);
+
+		$this->assertFalse($syncRanInSystemContext);
+		$this->assertTrue($writeRanInSystemContext);
+	}
+
+	/**
+	 * oc-f6: without OpenRegister the job still runs the sync, unelevated.
+	 */
+	public function testRunWithoutOpenRegisterSyncsWithoutSystemContext(): void {
+		$container = $this->createMock(\Psr\Container\ContainerInterface::class);
+		$container->expects($this->never())->method('get');
+		$appManager = $this->createMock(\OCP\App\IAppManager::class);
+		$appManager->method('getInstalledApps')->willReturn(['opencatalogi']);
+
+		$this->directoryService->expects($this->once())->method('doCronSync');
+
+		$job = new DirectorySync($this->timeFactory, $this->directoryService, $this->config, $container, $appManager);
+		$method = new \ReflectionMethod(DirectorySync::class, 'run');
+		$method->invoke($job, []);
+	}
+
 	public function testIntervalIsSetTo1Hour(): void {
 		$reflection = new \ReflectionClass($this->job);
 		$prop = $reflection->getProperty('interval');

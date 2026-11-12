@@ -42,6 +42,15 @@ class DirectorySyncListingTest extends TestCase {
 	/** Whether the first saveObject() call throws. */
 	private bool $failFirstSave = false;
 
+	/** Whether the code currently runs inside the listing write context. */
+	private bool $elevated = false;
+
+	/** @var array<int, bool> per saveObject() call, whether it ran elevated */
+	private array $savedElevated = [];
+
+	/** @var array<int, bool> per searchObjects() call, whether it ran elevated */
+	private array $searchedElevated = [];
+
 	protected function setUp(): void {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
@@ -63,6 +72,7 @@ class DirectorySyncListingTest extends TestCase {
 				);
 				$named = array_combine(array_slice($names, 0, count($args)), $args);
 				$this->saved[] = array_intersect_key($named, array_flip(['object', 'extend', 'register', 'schema', 'uuid']));
+				$this->savedElevated[] = $this->elevated;
 				if ($this->failFirstSave === true && count($this->saved) === 1) {
 					throw new RuntimeException('save refused');
 				}
@@ -190,6 +200,48 @@ class DirectorySyncListingTest extends TestCase {
 		);
 	}
 
+	/**
+	 * oc-f5: a peer that sends the UUID of another directory's listing gets a new
+	 * listing under a fresh UUID; the other listing is not overwritten.
+	 */
+	public function testCreateNeverReusesTheUuidOfAnExistingListing(): void {
+		$this->objectService->method('searchObjects')->willReturn([]);
+		$this->objectService->expects($this->once())
+			->method('find')
+			->with('victim-uuid')
+			->willReturn(new \OCA\OpenRegister\Db\ObjectEntity());
+
+		$result = $this->service->syncListing(
+			['id' => 'victim-uuid', 'title' => 'Hijack', 'directory' => 'https://source.example.org/api/directory', 'catalogusId' => 'cat-x'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('created', $result['action']);
+		$this->assertCount(1, $this->saved);
+		// dir-f2: OpenRegister falls back to the object's `id` when no uuid is passed,
+		// so the taken UUID must be absent from both the uuid and the object.
+		$this->assertNotSame('victim-uuid', $this->saved[0]['uuid']);
+		$this->assertTrue(\Symfony\Component\Uid\Uuid::isValid((string)$this->saved[0]['uuid']));
+		$this->assertSame($this->saved[0]['uuid'], $this->saved[0]['object']['id']);
+		$this->assertArrayNotHasKey('@self', $this->saved[0]['object']);
+	}
+
+	/**
+	 * oc-f5: when the UUID cannot be checked, it is not reused (fail closed).
+	 */
+	public function testCreateDoesNotReuseAUuidThatCannotBeChecked(): void {
+		$this->objectService->method('searchObjects')->willReturn([]);
+		$this->objectService->method('find')->willThrowException(new \RuntimeException('db down'));
+
+		$this->service->syncListing(
+			['id' => 'some-uuid', 'title' => 'T', 'directory' => 'https://source.example.org/api/directory'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertNotSame('some-uuid', $this->saved[0]['uuid']);
+		$this->assertSame($this->saved[0]['uuid'], $this->saved[0]['object']['id']);
+	}
+
 	public function testCreateWithoutDirectoryFallsBackToTheSourceAndDetectsTheEndpoint(): void {
 		$this->objectService->method('searchObjects')->willReturn([]);
 
@@ -231,7 +283,7 @@ class DirectorySyncListingTest extends TestCase {
 
 	public function testUpdateWithOlderIncomingDataIsSkipped(): void {
 		$this->objectService->method('searchObjects')->willReturn([
-			$this->entity(['id' => 'e', 'object' => ['lastSync' => '2030-01-01T00:00:00+00:00', 'updated' => '2030-01-01T00:00:00+00:00']]),
+			$this->entity(['id' => 'e', 'object' => ['lastSync' => '2020-01-01T00:00:00+00:00', 'updated' => '2020-01-01T00:00:00+00:00']]),
 		]);
 
 		$result = $this->service->syncListing(
@@ -251,6 +303,143 @@ class DirectorySyncListingTest extends TestCase {
 			$result
 		);
 		$this->assertSame([], $this->saved);
+	}
+
+	/**
+	 * Give the service a listing write context that flags what runs inside it.
+	 *
+	 * @return void
+	 */
+	private function withWriteContext(): void {
+		(new \ReflectionProperty(DirectoryService::class, 'listingWriteContext'))->setValue(
+			$this->service,
+			function (callable $operation) {
+				$this->elevated = true;
+				try {
+					return $operation();
+				} finally {
+					$this->elevated = false;
+				}
+			}
+		);
+	}
+
+	/**
+	 * aud-f1 / pp-f3: with the cron sync's write context, the listing lookup, the
+	 * save and recording the failure on the stored listing all run elevated.
+	 */
+	public function testListingLookupSaveAndErrorRecordRunInTheWriteContext(): void {
+		$this->objectService->method('searchObjects')->willReturnCallback(
+			function () {
+				$this->searchedElevated[] = $this->elevated;
+				return [$this->entity(['id' => 'existing-uuid', 'object' => ['title' => 'Kept']])];
+			}
+		);
+		$this->failFirstSave = true;
+		$this->withWriteContext();
+
+		$this->service->syncListing(['id' => 'l-6', 'catalog' => 'c-6'], 'https://source.example.org/api/directory');
+
+		$this->assertSame([true], $this->searchedElevated);
+		$this->assertSame([true, true], $this->savedElevated);
+	}
+
+	/**
+	 * pp-f3: a failed directory fetch records statusCode and lastError on the
+	 * directory's listings inside the write context.
+	 */
+	public function testDirectoryFailureStatusIsWrittenInTheWriteContext(): void {
+		$this->objectService->method('searchObjects')->willReturnCallback(
+			function () {
+				$this->searchedElevated[] = $this->elevated;
+				return [$this->entity(['id' => 'dir-listing', 'object' => ['title' => 'Peer']])];
+			}
+		);
+		$this->withWriteContext();
+
+		$method = new \ReflectionMethod(DirectoryService::class, 'updateDirectoryStatusOnError');
+		$method->invoke($this->service, 'https://source.example.org/api/directory', 502, 'Bad gateway');
+
+		$this->assertSame([true], $this->searchedElevated);
+		$this->assertSame([true], $this->savedElevated);
+		$this->assertSame('dir-listing', $this->saved[0]['uuid']);
+		$this->assertSame(502, $this->saved[0]['object']['statusCode']);
+		$this->assertSame('Bad gateway', $this->saved[0]['object']['lastError']);
+	}
+
+	/**
+	 * pp-f1: a listing the default directory relays for a directory that is not
+	 * crawled this run is updated from the relay, not skipped as "processed separately".
+	 */
+	public function testRelayedListingOfAnUncrawledDirectoryIsUpdated(): void {
+		(new \ReflectionProperty(DirectoryService::class, 'uniqueDirectories'))->setValue(
+			$this->service,
+			['https://source.example.org/api/directory']
+		);
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'stored-uuid', 'object' => ['title' => 'Old', 'published' => '2020-01-01T00:00:00+00:00']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-7', 'catalog' => 'c-7', 'title' => 'New', 'published' => '2024-01-01T00:00:00+00:00', 'directory' => 'https://peer.example.org/api/directory'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('updated', $result['action']);
+		$this->assertSame('stored-uuid', $this->saved[0]['uuid']);
+		$this->assertSame('https://peer.example.org/api/directory', $this->saved[0]['object']['directory']);
+	}
+
+	/**
+	 * pp-f1: a relayed listing that names a directory crawled in this run is left
+	 * to that directory's own sync.
+	 */
+	public function testRelayedListingOfACrawledDirectoryIsSkipped(): void {
+		(new \ReflectionProperty(DirectoryService::class, 'uniqueDirectories'))->setValue(
+			$this->service,
+			['https://source.example.org/api/directory', 'https://peer.example.org/api/directory']
+		);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-8', 'catalog' => 'c-8', 'directory' => 'https://peer.example.org/api/directory'],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('skipped_other_directory', $result['action']);
+		$this->assertSame([], $this->saved);
+	}
+
+	/**
+	 * pp-f6/pp-f8: a peer timestamp beyond the clock-skew horizon is not "newer".
+	 */
+	public function testFutureIncomingTimestampDoesNotWin(): void {
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'e', 'object' => ['lastSync' => '2020-01-01T00:00:00+00:00', 'updated' => '2020-01-01T00:00:00+00:00']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-11', 'catalog' => 'c-11', 'updated' => (new \DateTime('+1 day'))->format('c')],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('skipped_outdated', $result['action']);
+		$this->assertSame([], $this->saved);
+	}
+
+	/**
+	 * pp-f6/pp-f8: a stored future timestamp (planted earlier) does not block a current update.
+	 */
+	public function testStoredFutureTimestampDoesNotBlockAnUpdate(): void {
+		$this->objectService->method('searchObjects')->willReturn([
+			$this->entity(['id' => 'e', 'object' => ['lastSync' => '2020-01-01T00:00:00+00:00', 'updated' => '2099-01-01T00:00:00+00:00']]),
+		]);
+
+		$result = $this->service->syncListing(
+			['id' => 'l-12', 'catalog' => 'c-12', 'updated' => (new \DateTime())->format('c')],
+			'https://source.example.org/api/directory'
+		);
+
+		$this->assertSame('updated', $result['action']);
 	}
 
 	public function testFailedSaveRecordsTheErrorOnTheExistingListing(): void {

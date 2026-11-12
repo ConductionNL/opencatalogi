@@ -642,6 +642,10 @@ class ListingsControllerTest extends TestCase {
 
 		$this->directoryService->method('validateOutboundUrl')
 			->with('https://federated-peer.example.com');
+		// aud-f1: an admin-registered directory joins the cron crawl set.
+		$this->directoryService->expects($this->once())
+			->method('trustDirectory')
+			->with('https://federated-peer.example.com');
 
 		$response = $this->controller->create();
 
@@ -714,6 +718,22 @@ class ListingsControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(200, $response->getStatus());
 	}//end testDestroyReturnsSuccessOnDeletion()
+
+	/**
+	 * pp-f7: deleting one catalog's listing does not stop the crawl of the
+	 * directory's other catalogs; untrusting is not a side effect of a delete.
+	 *
+	 * @return void
+	 */
+	public function testDestroyDoesNotUntrustTheListingsDirectory(): void {
+		$this->mockListingConfig();
+		$mockObjService = $this->mockObjectService();
+		$mockObjService->method('deleteObject')->willReturn(true);
+
+		$this->directoryService->expects($this->never())->method('untrustDirectory');
+
+		$this->assertEquals(200, $this->controller->destroy('123')->getStatus());
+	}//end testDestroyDoesNotUntrustTheListingsDirectory()
 
 	/**
 	 * Destroy() returns 404 with a message when the listing is not found.
@@ -875,12 +895,34 @@ class ListingsControllerTest extends TestCase {
 		$this->directoryService->method('syncDirectory')
 			->with('https://example.com/directory')
 			->willReturn(['synced' => 3]);
+		// aud-f1: a directory the admin added is crawled by the cron sync from now on.
+		$this->directoryService->expects($this->once())
+			->method('trustDirectory')
+			->with('https://example.com/directory');
 
 		$response = $this->controller->add();
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(200, $response->getStatus());
 	}//end testAddReturnsSuccessWithValidUrl()
+
+	/**
+	 * pp-f4: when trusting the directory fails after a completed sync, the sync
+	 * result is still returned with 200.
+	 *
+	 * @return void
+	 */
+	public function testAddKeeps200WhenTrustingTheDirectoryFails(): void {
+		$this->request->method('getParam')->with('url')->willReturn('https://example.com/directory');
+		$this->directoryService->method('syncDirectory')->willReturn(['synced' => 3]);
+		$this->directoryService->method('trustDirectory')
+			->willThrowException(new \InvalidArgumentException('Directory URL host could not be resolved'));
+
+		$response = $this->controller->add();
+
+		$this->assertEquals(200, $response->getStatus());
+		$this->assertSame(['synced' => 3], $response->getData());
+	}//end testAddKeeps200WhenTrustingTheDirectoryFails()
 
 	/**
 	 * Add() returns 400 when syncDirectory() throws InvalidArgumentException.
@@ -894,6 +936,7 @@ class ListingsControllerTest extends TestCase {
 
 		$this->directoryService->method('syncDirectory')
 			->willThrowException(new \InvalidArgumentException('Invalid URL'));
+		$this->directoryService->expects($this->never())->method('trustDirectory');
 
 		$response = $this->controller->add();
 
