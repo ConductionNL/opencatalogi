@@ -29,7 +29,7 @@ jobs:
       # OpenCatalogi reads from OpenRegister at runtime — without it,
       # the tutorial flows can't render the lists/details that the
       # capture spec navigates to.
-      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"development"}]'
+      additional-apps: '[{"repo":"ConductionNL/openregister","app":"openregister","ref":"stable2.1"}]'
 
       # Activate the journeydoc capture + point its deploy at the
       # existing documentation workflow (which deploys the docs to
