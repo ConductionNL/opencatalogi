@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenCatalogi",
     "version": "2.1.16-unstable.20261010175130",
-    "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` — admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.",
+    "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` — admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, Atom feeds, federation) keep their own URLs and formats; they name the unversioned base as their server.",
     "license": {
       "name": "EUPL-1.2",
       "url": "https://eupl.eu/1.2/en/"
@@ -16,8 +16,8 @@
   },
   "servers": [
     {
-      "url": "https://{host}/index.php/apps/opencatalogi/api",
-      "description": "OpenCatalogi app base path on a Nextcloud instance.",
+      "url": "https://{host}/index.php/apps/opencatalogi/api/v1",
+      "description": "OpenCatalogi app API, version 1, on a Nextcloud instance.",
       "variables": {
         "host": {
           "default": "your-nextcloud.example.org",
@@ -757,6 +757,18 @@
       }
     },
     "/catalogs/{catalogSlug}/dcat": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "dcat-catalog",
         "summary": "Per-catalog DCAT-AP-NL document",
@@ -837,6 +849,18 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/courses": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "options": {
         "operationId": "ooapi-preflight-4",
         "summary": "CORS preflight",
@@ -857,6 +881,18 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/courses/{courseId}/offerings": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "options": {
         "operationId": "ooapi-preflight-6",
         "summary": "CORS preflight",
@@ -880,6 +916,18 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/courses/{id}": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "options": {
         "operationId": "ooapi-preflight-5",
         "summary": "CORS preflight",
@@ -903,6 +951,18 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/offerings/{id}": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "options": {
         "operationId": "ooapi-preflight-7",
         "summary": "CORS preflight",
@@ -926,6 +986,18 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/organizations": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "options": {
         "operationId": "ooapi-preflight-0",
         "summary": "CORS preflight",
@@ -946,6 +1018,18 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/organizations/{id}": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "options": {
         "operationId": "ooapi-preflight-1",
         "summary": "CORS preflight",
@@ -969,6 +1053,18 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/programs": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "options": {
         "operationId": "ooapi-preflight-2",
         "summary": "CORS preflight",
@@ -989,6 +1085,18 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/programs/{id}": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "options": {
         "operationId": "ooapi-preflight-3",
         "summary": "CORS preflight",
@@ -1012,6 +1120,18 @@
       }
     },
     "/catalogs/{catalogSlug}/schema": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "schemaorg-catalog",
         "summary": "schema.org DataCatalog document",
@@ -1065,6 +1185,18 @@
       }
     },
     "/dcat": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "dcat-instance",
         "summary": "Instance-level DCAT-AP-NL catalog document",
@@ -1218,6 +1350,18 @@
       }
     },
     "/federation/publications": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "federation-publications",
         "summary": "List aggregated publications",
@@ -1262,6 +1406,18 @@
       }
     },
     "/federation/publications/{id}": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "federation-publication",
         "summary": "Get an aggregated publication",
@@ -1297,6 +1453,18 @@
       }
     },
     "/federation/publications/{id}/attachments": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "federation-publication-attachments",
         "summary": "Federated publication attachments",
@@ -1332,6 +1500,18 @@
       }
     },
     "/federation/publications/{id}/download": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "federation-publication-download",
         "summary": "Download a federated publication attachment",
@@ -1368,6 +1548,18 @@
       }
     },
     "/federation/publications/{id}/used": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "federation-publication-used",
         "summary": "Federated publication relations (used by)",
@@ -1403,6 +1595,18 @@
       }
     },
     "/federation/publications/{id}/uses": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "federation-publication-uses",
         "summary": "Federated publication relations (uses)",
@@ -1670,6 +1874,18 @@
       }
     },
     "/robots.txt": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "robots-index",
         "summary": "robots.txt",
@@ -1982,6 +2198,18 @@
       }
     },
     "/{catalogSlug}/sitemaps/{categoryCode}": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "sitemap-index",
         "summary": "DIWOO sitemap index",
@@ -2017,6 +2245,18 @@
       }
     },
     "/{catalogSlug}/sitemaps/{categoryCode}/publications": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "sitemap-page",
         "summary": "DIWOO sitemap page",
@@ -2398,6 +2638,18 @@
       }
     },
     "/feeds/{catalogSlug}": {
+      "servers": [
+        {
+          "url": "https://{host}/index.php/apps/opencatalogi/api",
+          "description": "The unversioned base of the paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, feeds, federation), which keep their own URLs.",
+          "variables": {
+            "host": {
+              "default": "your-nextcloud.example.org",
+              "description": "Hostname of the Nextcloud instance running OpenCatalogi."
+            }
+          }
+        }
+      ],
       "get": {
         "operationId": "community-feed",
         "summary": "Read a catalogue Atom feed",

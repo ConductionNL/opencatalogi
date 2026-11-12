@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace Unit;
 
+use OCA\OpenCatalogi\Middleware\Support\StandardProtocolPaths;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -127,7 +128,14 @@ class OpenApiParityTest extends TestCase {
 	private function loadRoutes(): array {
 		$routes = include __DIR__ . '/../../appinfo/routes.php';
 
-		return $routes['routes'];
+		// The declared routes. Each one's /api/v1/ alias is the same route under
+		// the document's versioned server, pinned by ApiPathAliasesTest.
+		return array_values(
+			array_filter(
+				$routes['routes'],
+				static fn (array $route): bool => str_ends_with((string) ($route['postfix'] ?? ''), 'v1') === false
+			)
+		);
 	}//end loadRoutes()
 
 	/**
@@ -399,4 +407,25 @@ class OpenApiParityTest extends TestCase {
 		$this->assertSame(expected: '3.0.3', actual: $document['openapi']);
 
 	}//end testDocumentParsesAndHasPaths()
+
+	/**
+	 * The server is the versioned API root; a path that implements an external
+	 * standard keeps its unversioned URL, so it names the unversioned base.
+	 *
+	 * @return void
+	 */
+	public function testTheServerIsVersionedAndProtocolPathsKeepTheirBase(): void {
+		$document = $this->loadOpenApiDocument();
+
+		$this->assertStringEndsWith(suffix: '/apps/opencatalogi/api/v1', string: $document['servers'][0]['url']);
+		foreach ($document['paths'] as $path => $item) {
+			$protocol = StandardProtocolPaths::matches(path: self::SERVER_BASE.$path);
+			$server   = ($item['servers'][0]['url'] ?? $document['servers'][0]['url']);
+			$this->assertSame(
+				expected: $protocol,
+				actual: str_ends_with($server, '/apps/opencatalogi/api'),
+				message: $path.' names the wrong server'
+			);
+		}
+	}//end testTheServerIsVersionedAndProtocolPathsKeepTheirBase()
 }//end class
