@@ -32,8 +32,9 @@ supported) and response schemas that match the served envelopes. The document
 MUST carry the app's real metadata: title "OpenCatalogi", license EUPL-1.2,
 and a version equal to the `<version>` in `appinfo/info.xml`. Its server URL
 ends in `/api/v1`, so documented paths are the route URLs without the `/api`
-prefix; a path that implements an external standard names the unversioned
-base `/api` as its own server (API-DOC-007).
+prefix. The public paths that implement an external standard are described in
+`openapi.standards.json`, whose server is the unversioned base `/api`
+(API-DOC-007); API-DOC-002 compares the public routes against both documents.
 The document MUST pass the Spectral ruleset of the NL API Design Rules
 (`https://static.developer.overheid.nl/adr/ruleset.yaml`). Content stemming from other
 applications MUST NOT be present.
@@ -150,7 +151,7 @@ Every route under `/api/` MUST also be served under `/api/v1/`, with the same co
 
 **Priority:** Must **Status:** Implemented
 
-Paths that implement a protocol defined elsewhere (Sitemaps (DiWoo), robots.txt, DCAT-AP, OOAPI, schema.org, Atom feeds, Federation between instances, Health check, Prometheus metrics) MUST NOT get a `/api/v1/` alias, a `Deprecation` header, an `API-Version` header or a problem details rewrite: their formats belong to their standard. They are listed in `lib/Middleware/Support/StandardProtocolPaths.php` and where the OpenAPI document describes one, the path names the unversioned base `/index.php/apps/opencatalogi/api` as its own server.
+Paths that implement a protocol defined elsewhere (Sitemaps (DiWoo), robots.txt, DCAT-AP, OOAPI, schema.org, Atom feeds, Federation between instances, Health check, Prometheus metrics) MUST NOT get a `/api/v1/` alias, a `Deprecation` header, an `API-Version` header or a problem details rewrite: their formats belong to their standard. They are listed in `lib/Middleware/Support/StandardProtocolPaths.php` and are described in `openapi.standards.json`, under the unversioned base `/index.php/apps/opencatalogi/api`, rather than in `openapi.json`.
 
 #### Scenario: A protocol path is left alone
 
