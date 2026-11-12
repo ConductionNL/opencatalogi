@@ -1,3 +1,5 @@
+> Superseded by decision 399: a Specter proposal from the July 2026 batch, nothing built, no capability row; SDG and Your Europe publication of service metadata belongs with the service catalogue, if anywhere.
+
 # Proposal: eidas-koppeling-publicatie
 
 ## Summary

@@ -3,6 +3,8 @@ kind: code
 depends_on: []
 ---
 
+> Superseded by cms-moves-to-portaliq (decision 399): the reorder controls are in the CMS page editor, which moves to portaliq.
+
 # Proposal: keyboard-operable-reorder-controls
 
 ## Why

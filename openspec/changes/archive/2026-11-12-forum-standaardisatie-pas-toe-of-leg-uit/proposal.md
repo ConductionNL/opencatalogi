@@ -1,3 +1,5 @@
+> Superseded by decision 399: a Specter proposal from the July 2026 batch, nothing built, no capability row; "pas toe of leg uit" registration is a stackiq (software catalogue) concern.
+
 # Forum Standaardisatie "Pas toe of leg uit"-Registratie
 
 ## Problem
