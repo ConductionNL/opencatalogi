@@ -2798,18 +2798,17 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "planned",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "WooController.php:244-254 inventarislijst CSV/HTML via WooService.php:715/755; routes.php:64 registers it as POST, but WooBatchDetail.vue:233-238 uses NcButton :href (a GET link) -> 405 Not built: the two inventarislijst buttons on the batch page answer 405, because routes.php registers the route as POST and the buttons are GET links; the batch page also has no row link from the Woo batches index (REQ-WDA-001). Task 1.2 of woo-document-assessment-screen.",
+				"evidence": "routes.php:70 serves woo#inventarislijst on GET, so the two NcButton links on the batch page (WooBatchDetail.vue:254 CSV, :257 PDF/A) reach WooController::inventarislijst (WooController.php:315), which stays admin-only (AuthorizedAdminSetting) with NoCSRFRequired for a read-only link. format=pdf returns application/pdf built by WooService::renderInventarislijstPdf (WooService.php:814, mPDF with PDFA on); CSV is UTF-8 with BOM. The Woo batches index opens a batch through rowRoute WooBatchDetail (manifest.json:452). Tests: WooControllerTest::testInventarislijstRouteIsAGet, ::testInventarislijstPdfFormatReturnsAPdf, WooServiceTest::testInventarislijstPdfIsAPdfA, WooBatchRowRouteTest::testABatchRowOpensTheBatchPage, each red before the fix.",
 				"change": [
 					"woo-transparency",
 					"woo-document-assessment-screen"
 				],
-				"requirement": "openspec/specs/woo-transparency :: Inventarislijst generation",
-				"plan": "openspec/changes/woo-document-assessment-screen"
+				"requirement": "openspec/specs/woo-transparency :: Inventarislijst generation"
 			},
-			"reachedOn": "nothing working: the download buttons on /woo/:id issue GET against a POST-only route",
-			"note": "Output is CSV/HTML, not a spreadsheet file; 'PDF/A' button serves HTML.",
+			"reachedOn": "/woo, click a batch row, then Download inventarislijst (CSV) or (PDF/A) on /woo/:id",
+			"note": "Output is CSV (opens in a spreadsheet) and PDF/A.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "woo-disclosure-workflow",

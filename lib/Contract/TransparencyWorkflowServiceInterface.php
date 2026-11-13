@@ -213,9 +213,8 @@ interface TransparencyWorkflowServiceInterface {
 	public function renderInventarislijstCsv(array $rows): string;
 
 	/**
-	 * Render the inventarislijst as a minimal, archival-oriented HTML document
-	 * (the print/PDF source). Conversion to PDF/A is delegated to Docudesk;
-	 * OpenCatalogi owns only the WOO-standard layout + header/footer.
+	 * Render the inventarislijst as a minimal, archival-oriented HTML document,
+	 * the source of the PDF/A export.
 	 *
 	 * @param string $batchId The batch uuid (for the header).
 	 * @param array<int, array<string, string>> $rows The inventory rows.
@@ -225,6 +224,20 @@ interface TransparencyWorkflowServiceInterface {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
 	 */
 	public function renderInventarislijstHtml(string $batchId, array $rows): string;
+
+	/**
+	 * Render the inventarislijst as a PDF/A document.
+	 *
+	 * @param string $batchId The batch uuid (for the header).
+	 * @param array<int, array<string, string>> $rows The inventory rows.
+	 *
+	 * @return string The PDF bytes.
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+	 *
+	 * @contract-shift internal-only — only WooService implements it; a ConductionNL code search finds no double.
+	 */
+	public function renderInventarislijstPdf(string $batchId, array $rows): string;
 
 	/**
 	 * Whether a batch is eligible to move to "ready_for_review": every document
