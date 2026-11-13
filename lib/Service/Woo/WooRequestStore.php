@@ -32,6 +32,9 @@ namespace OCA\OpenCatalogi\Service\Woo;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Service\Object\SaveActor;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -148,12 +151,13 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		return $this->asArray(
 			object: $this->objects()->saveObject(
 				object: $record,
-				register: $target['register'],
-				schema: $target['schema'],
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']),
+					uuid: $uuid,
+					actor: new SaveActor(unowned: true)
+				),
 				_rbac: false,
-				_multitenancy: false,
-				_unowned: true
+				_multitenancy: false
 			)
 		);
 

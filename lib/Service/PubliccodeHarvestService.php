@@ -52,6 +52,8 @@ use Throwable;
  */
 class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 
+	use BuildsSaveOptions;
+
 	/**
 	 * The name the shipped flow carries. The flow store identifies a declared
 	 * flow by (app, name, trigger schema), so this is its key.
@@ -201,7 +203,10 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function saveShard(array $shard, array $context): string {
 		$synchronization = self::synchronizationFor(definitions: $context['definitions'], shard: $shard);
 		$existing = $this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']);
-		$context['objects']->saveObject(object: $synchronization, register: self::INTEGRIQ_REGISTER, schema: 'synchronization', uuid: $existing);
+		$context['objects']->saveObject(
+			object: $synchronization,
+			options: $this->saveOptions(register: self::INTEGRIQ_REGISTER, schema: 'synchronization', uuid: $existing)
+		);
 
 		if ($existing === null) {
 			return 'created';

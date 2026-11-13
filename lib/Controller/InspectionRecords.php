@@ -26,6 +26,9 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 use OCA\OpenCatalogi\Service\ObjectInPair;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Service\Object\SaveActor;
 
 /**
  * Opens an inspection window and resolves its link, and stores and reads the
@@ -109,11 +112,11 @@ class InspectionRecords {
 		$config = $this->inspectionConfiguration();
 		return $this->registers->getObjectService()->saveObject(
 			object: $inspection,
-			extend: [],
-			register: $config['register'],
-			schema: $config['schema'],
-			_rbac: false,
-			_unowned: true
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $config['register'], schema: $config['schema']),
+				actor: new SaveActor(unowned: true)
+			),
+			_rbac: false
 		);
 
 	}//end store()

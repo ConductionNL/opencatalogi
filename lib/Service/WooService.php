@@ -48,6 +48,8 @@ use Mpdf\Output\Destination;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IL10N;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -1045,11 +1047,12 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	private function save(object $objectService, string $register, string $schema, array $data): mixed {
 		return $objectService->saveObject(
 			object: $data,
-			register: $register,
-			schema: $schema,
-			uuid: (string)($data['id'] ?? ($data['uuid'] ?? '')),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $register, schema: $schema),
+				uuid: (string)($data['id'] ?? ($data['uuid'] ?? ''))
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 
 	}//end save()

@@ -22,6 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+
 /**
  * OpenRegister's ObjectService bound to one register and schema, without
  * RBAC or multitenancy.
@@ -88,8 +91,7 @@ final class SchemaObjects {
 	public function save(array $object): mixed {
 		return $this->objects->saveObject(
 			object: $object,
-			register: $this->register,
-			schema: $this->schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register, schema: $this->schema)),
 			_rbac: false,
 			_multitenancy: false
 		);

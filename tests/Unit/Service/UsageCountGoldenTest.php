@@ -39,6 +39,7 @@ use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Service\UsageCounterService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -195,13 +196,15 @@ class UsageCountGoldenTest extends TestCase {
 		$objects->method('saveObject')->willReturnCallback(
 			static function (
 				array|ObjectEntity $object,
-				?array $extend = [],
-				mixed $register = null,
-				mixed $schema = null,
-				?string $uuid = null,
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
 				bool $_multitenancy = true,
 			) use (&$calls, $case, $normalise): ObjectEntity {
+				$extend   = $options->extend;
+				$register = $options->target->register;
+				$schema   = $options->target->schema;
+				$uuid     = $options->uuid;
+
 				$calls[] = ['saveObject', $normalise($object), $extend, $register, $schema, $uuid, $_rbac, $_multitenancy];
 				if (($case['saveFails'] ?? false) === true) {
 					throw new RuntimeException('save down');

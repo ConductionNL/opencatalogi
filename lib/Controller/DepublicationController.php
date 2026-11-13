@@ -42,6 +42,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
+use OCA\OpenCatalogi\Service\BuildsSaveOptions;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -63,6 +64,8 @@ use OCP\IUserSession;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
 class DepublicationController extends Controller {
+
+	use BuildsSaveOptions;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
@@ -178,11 +181,11 @@ class DepublicationController extends Controller {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $depublication,
-				extend: [],
-				register: $this->depublicationConfiguration()['register'],
-				schema: $this->depublicationConfiguration()['schema'],
-				_rbac: false,
-				_unowned: true
+				options: $this->unownedSaveOptions(
+					register: $this->depublicationConfiguration()['register'],
+					schema: $this->depublicationConfiguration()['schema']
+				),
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -347,10 +350,7 @@ class DepublicationController extends Controller {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $found['depublication'],
-				extend: [],
-				register: $found['config']['register'],
-				schema: $found['config']['schema'],
-				uuid: $found['id'],
+				options: $this->saveOptions(register: $found['config']['register'], schema: $found['config']['schema'], uuid: $found['id']),
 				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {

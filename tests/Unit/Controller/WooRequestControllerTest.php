@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
 use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -62,14 +63,11 @@ class WooRequestFakeObjectService {
 
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		$register = null,
-		$schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_unowned = false,
 	): array {
+		$uuid = $options->uuid;
 		$id = (string)($uuid ?? '');
 		if ($id === '') {
 			$id = (string)($object['id'] ?? '');

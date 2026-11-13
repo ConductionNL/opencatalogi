@@ -34,6 +34,8 @@ use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -340,9 +342,7 @@ class ListingsController extends Controller {
 		// Save the new listing object.
 		$object = $this->getObjectService()->saveObject(
 			object: $allowed,
-			extend: [],
-			register: $listingRegister,
-			schema: $listingSchema
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema))
 		);
 
 		// Return the created object as a JSON response.
@@ -440,10 +440,10 @@ class ListingsController extends Controller {
 		// Save the merged listing object with the id as UUID for update.
 		$object = $this->getObjectService()->saveObject(
 			object: $merged,
-			extend: [],
-			register: $listingRegister,
-			schema: $listingSchema,
-			uuid: (string)$id
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema),
+				uuid: (string)$id
+			)
 		);
 
 		// Return the updated object as a JSON response.

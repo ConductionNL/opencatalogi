@@ -41,6 +41,8 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
 use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -333,9 +335,9 @@ class ServiceCatalogueController extends Controller {
 			$objectService = $this->catalogueService->getObjectService();
 			$saved = $objectService->saveObject(
 				object: $definition,
-				extend: [],
-				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema'],
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $caseTypeConfig['register'], schema: $caseTypeConfig['schema'])
+				),
 				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
@@ -417,10 +419,10 @@ class ServiceCatalogueController extends Controller {
 
 		$saved = $target['objectService']->saveObject(
 			object: $updated,
-			extend: [],
-			register: $target['config']['register'],
-			schema: $target['config']['schema'],
-			uuid: $id,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $target['config']['register'], schema: $target['config']['schema']),
+				uuid: $id
+			),
 			_rbac: false
 		);
 

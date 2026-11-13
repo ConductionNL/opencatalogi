@@ -95,35 +95,18 @@ class ObjectService {
 	/**
 	 * Save an object.
 	 *
-	 * @param array<string,mixed>|ObjectEntity $object Object data or entity.
-	 * @param array<string,mixed>|null $extend Extension data.
-	 * @param Register|string|integer|null $register Register context.
-	 * @param Schema|string|integer|null $schema Schema context.
-	 * @param string|null $uuid Object UUID.
+	 * @param array<string,mixed>|ObjectEntity $object The object.
+	 * @param \OCA\OpenRegister\Service\Object\ObjectSaveOptions $options Target, uuid, extend, files, policy and actor.
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
-	 * @param boolean $silent Silent mode.
-	 * @param array<mixed>|null $uploadedFiles Uploaded files.
-	 * @param mixed $currentUser Current user.
 	 *
 	 * @return ObjectEntity
 	 */
 	public function saveObject(
 		array|ObjectEntity $object,
-		?array $extend = [],
-		Register|string|int|null $register = null,
-		Schema|string|int|null $schema = null,
-		?string $uuid = null,
+		\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = new \OCA\OpenRegister\Service\Object\ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $silent = false,
-		bool $_validation = true,
-		?array $uploadedFiles = null,
-		mixed $currentUser = null,
-		bool $failIfExists = false,
-		bool $_unowned = false,
-		bool $_dedupOverride = false,
-		?string $_owner = null,
 	): ObjectEntity {
 		return new ObjectEntity();
 	}//end saveObject()

@@ -35,6 +35,8 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -280,9 +282,10 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 
 		$run->objectService->saveObject(
 			object: $period,
-			register: $run->register,
-			schema: $run->schema,
-			uuid: (string)($period['id'] ?? ''),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $run->register, schema: $run->schema),
+				uuid: (string)($period['id'] ?? '')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -308,8 +311,7 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		$saved = $this->asArray(
 			object: $run->objectService->saveObject(
 				object: $depublication,
-				register: $run->register,
-				schema: $depublicationSchema,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $run->register, schema: $depublicationSchema)),
 				_rbac: false,
 				_multitenancy: false
 			)

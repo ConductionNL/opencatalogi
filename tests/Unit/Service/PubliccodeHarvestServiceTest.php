@@ -36,11 +36,13 @@ use OCA\OpenRegister\Db\FlowRunViewer;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\Flow\FlowService;
 use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use Unit\Support\SaveCallShape;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\PubliccodeHarvestService
@@ -110,8 +112,10 @@ class PubliccodeHarvestServiceTest extends TestCase {
 			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array|ObjectEntity $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, mixed ...$rest): ObjectEntity {
-				$arguments = self::passedArguments(method: 'saveObject', arguments: func_get_args());
+			function (array|ObjectEntity $object, ObjectSaveOptions $options = new ObjectSaveOptions(), mixed ...$rest): ObjectEntity {
+				$uuid = $options->uuid;
+				$arguments = SaveCallShape::namedInOldOrder(args: self::passedArguments(method: 'saveObject', arguments: func_get_args()));
+
 				$arguments['object'] = $object['slug'];
 				$this->calls[] = ['saveObject', $arguments];
 				$entity = ($this->store[$object['slug']] ?? new ObjectEntity());

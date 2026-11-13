@@ -42,6 +42,9 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\StatusPageServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Service\Object\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -205,11 +208,11 @@ class CommunityController extends Controller {
 			$config = $this->configurationFor(schemaKey: 'service_status_schema');
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $status,
-				extend: [],
-				register: $config['register'],
-				schema: $config['schema'],
-				_rbac: false,
-				_unowned: true
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $config['register'], schema: $config['schema']),
+					actor: new SaveActor(unowned: true)
+				),
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'status-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);

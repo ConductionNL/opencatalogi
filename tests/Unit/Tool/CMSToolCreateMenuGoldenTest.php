@@ -32,6 +32,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Unit\Support\SaveCallShape;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -155,6 +156,6 @@ class CMSToolCreateMenuGoldenTest extends TestCase {
 			$named[$parameter->getName()] = $args[$position];
 		}
 
-		return $named;
+		return ($method === 'saveObject' ? SaveCallShape::namedInOldOrder(args: $named) : $named);
 	}//end passedArguments()
 }//end class

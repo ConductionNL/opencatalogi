@@ -29,6 +29,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Command;
 
 use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -341,10 +343,11 @@ class MigrateCmsToPortaliqCommand extends Command {
 			// nothing and reports eight failures.
 			$run['objectService']->saveObject(
 				object: $target,
-				register: CmsMigrationServiceInterface::TARGET_REGISTER,
-				schema: $run['kind'],
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: CmsMigrationServiceInterface::TARGET_REGISTER, schema: $run['kind'])
+				),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 		} catch (Throwable $e) {
 			$run['output']->writeln(sprintf('  <error>FAILED: %s</error>', $e->getMessage()));

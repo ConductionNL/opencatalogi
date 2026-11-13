@@ -20,6 +20,7 @@ namespace Unit\Service\Portal;
 
 use OCA\OpenCatalogi\Service\Portal\PortalObjectStore;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
@@ -52,7 +53,9 @@ class PortalObjectStoreMessageTest extends TestCase {
 			) {
 			}
 
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac, bool $_multitenancy): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema   = $options->target->schema;
 				$this->calls[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 				return $this->result;
 			}

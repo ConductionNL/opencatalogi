@@ -32,6 +32,8 @@ use DateTimeZone;
 use Exception;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -311,10 +313,9 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		if ($existing === null) {
 			$count->objectService->saveObject(
 				object: $count->firstCounter(),
-				register: $count->register,
-				schema: $count->schema,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $count->register, schema: $count->schema)),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			return;
 		}
@@ -323,11 +324,12 @@ class UsageCounterService implements UsageCounterServiceInterface {
 		$data['count'] = ((int)($data['count'] ?? 0) + 1);
 		$count->objectService->saveObject(
 			object: $data,
-			register: $count->register,
-			schema: $count->schema,
-			uuid: (string)($data['id'] ?? $data['uuid'] ?? ''),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $count->register, schema: $count->schema),
+				uuid: (string)($data['id'] ?? $data['uuid'] ?? '')
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 	}//end saveCount()
 

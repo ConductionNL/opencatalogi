@@ -33,6 +33,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUser;
@@ -243,7 +244,12 @@ class DepublicationGoldenTest extends TestCase {
 				return ($this->case['stored'] ?? ['id' => $id, 'withdrawals' => [['channel' => 'koop2'], ['channel' => 'plooi']]]);
 			}
 
-			public function saveObject(array $object, array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_unowned = false): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$extend   = $options->extend;
+				$register = $options->target->register;
+				$schema   = $options->target->schema;
+				$uuid     = $options->uuid;
+				$_unowned = $options->actor->unowned;
 				$this->log[] = ['save' => [$object, $extend, $register, $schema, $uuid, $_rbac, $_unowned]];
 				if (($this->case['fail'] ?? null) === 'save') {
 					throw new RuntimeException('save broke');

@@ -41,6 +41,8 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -1982,11 +1984,12 @@ class SettingsService implements SettingsServiceInterface {
 		try {
 			$run->objectService->saveObject(
 				object: $patch['object'],
-				register: $run->catalogRegister,
-				schema: $run->catalogSchema,
-				uuid: $patch['uuid'],
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $run->catalogRegister, schema: $run->catalogSchema),
+					uuid: $patch['uuid']
+				),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			if ($patch['publishedSlug'] !== null) {
 				$this->markSeedPublished(slug: $patch['publishedSlug']);

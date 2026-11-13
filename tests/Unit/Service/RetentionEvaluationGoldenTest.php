@@ -41,6 +41,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Service\RetentionService;
 use OCP\IAppConfig;
 use OCP\IUser;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
@@ -72,7 +73,11 @@ class GoldenRetentionObjectService {
 		return ['results' => $this->objects];
 	}
 
-	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true) {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) {
+		$register = $options->target->register;
+		$schema   = $options->target->schema;
+		$uuid     = $options->uuid;
+
 		$this->calls[] = ['save' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 		return $object;
 	}

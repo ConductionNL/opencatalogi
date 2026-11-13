@@ -50,6 +50,8 @@ use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -506,7 +508,7 @@ class DelegatedAdminSavesTest extends TestCase {
 		$this->storeFor(['gedelegeerden']);
 
 		$this->expectException(\RuntimeException::class);
-		$this->store->saveObject(object: [], register: 'publication', schema: $schema);
+		$this->store->saveObject(object: [], options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: $schema)));
 	}//end testTheShippedBlockRefusesThatCallerWhenRbacIsAsked()
 
 	/**
@@ -593,13 +595,9 @@ final class BlockEnforcingStore {
 	 * Save, refusing a caller the schema's block does not name unless RBAC is off.
 	 *
 	 * @param array<string, mixed> $object The object.
-	 * @param array<int, string> $extend Ignored.
-	 * @param string|null $register The register.
-	 * @param string|null $schema The schema.
-	 * @param string|null $uuid The id; an update when known.
+	 * @param ObjectSaveOptions $options Target (register, schema), uuid (an update when known) and actor (unowned: stamp the system identity as owner).
 	 * @param bool $_rbac Whether to apply the block.
 	 * @param bool $_multitenancy Ignored.
-	 * @param bool $_unowned Stamp the system identity as owner.
 	 *
 	 * @return array<string, mixed> The object with its id.
 	 *
@@ -607,14 +605,13 @@ final class BlockEnforcingStore {
 	 */
 	public function saveObject(
 		array $object,
-		array $extend = [],
-		?string $register = null,
-		?string $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_unowned = false,
 	): array {
+		$schema   = $options->target->schema;
+		$uuid     = $options->uuid;
+		$_unowned = $options->actor->unowned;
 		$action = 'create';
 		if (isset($this->seed[(string)$uuid]) === true) {
 			$action = 'update';

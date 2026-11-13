@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Controller\CommentPeriodController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -60,13 +61,9 @@ class CommentPeriodFakeObjectService {
 
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		$register = null,
-		$schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $_unowned = false,
 	): array {
 		$this->counter++;
 		$object['id'] = 'period-' . $this->counter;

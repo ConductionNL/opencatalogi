@@ -26,6 +26,7 @@ namespace Unit\Command;
 
 use OCA\OpenCatalogi\Command\MigrateCmsToPortaliqCommand;
 use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -127,7 +128,9 @@ class MigrateCmsToPortaliqGoldenTest extends TestCase {
 				return ($this->case['rows'][$schema] ?? []);
 			}
 
-			public function saveObject(array $object, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema   = $options->target->schema;
 				$this->calls[] = ['save' => [$object, $register, $schema, $_rbac, $_multitenancy]];
 				if (($this->case['failSave'] ?? null) === ($object['title'] ?? null)) {
 					throw new RuntimeException('save broke');

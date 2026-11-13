@@ -34,6 +34,9 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Service\Object\SavePolicy;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -106,12 +109,13 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		unset($record['@self']);
 		$objectService->saveObject(
 			object: array_merge($record, $fields),
-			register: $register,
-			schema: $schema,
-			uuid: $uuid,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $register, schema: $schema),
+				uuid: $uuid,
+				policy: new SavePolicy(silent: true)
+			),
 			_rbac: false,
-			_multitenancy: false,
-			silent: true
+			_multitenancy: false
 		);
 
 		return $fields;

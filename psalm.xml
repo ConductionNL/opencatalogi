@@ -71,6 +71,10 @@
                 <referencedClass name="OCP\Notification\IManager"/>
                 <referencedClass name="OCP\Share\IManager"/>
                 <!-- OpenRegister cross-app classes (loaded dynamically) -->
+                <referencedClass name="OCA\OpenRegister\Service\Object\ObjectFindTarget"/>
+                <referencedClass name="OCA\OpenRegister\Service\Object\ObjectSaveOptions"/>
+                <referencedClass name="OCA\OpenRegister\Service\Object\SaveActor"/>
+                <referencedClass name="OCA\OpenRegister\Service\Object\SavePolicy"/>
                 <referencedClass name="OCA\OpenRegister\Service\File\FileTransfer"/>
                 <referencedClass name="OCA\OpenRegister\Service\ConfigLookup"/>
                 <referencedClass name="OCA\OpenRegister\Service\RegisterResolverService"/>

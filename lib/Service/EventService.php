@@ -48,6 +48,8 @@ use RuntimeException;
  */
 class EventService implements EventServiceInterface {
 
+	use BuildsSaveOptions;
+
 	/**
 	 * The tally of an event before any object is processed.
 	 *
@@ -443,7 +445,10 @@ class EventService implements EventServiceInterface {
 			$target = self::publicationTarget(objectSelf: ($objectData['@self'] ?? []));
 			$data = self::publishedPayload(objectData: $objectData);
 
-			$objectService->saveObject(object: $data, register: (string)$target['register'], schema: (string)$target['schema'], uuid: (string)$target['id']);
+			$objectService->saveObject(
+				object: $data,
+				options: $this->saveOptions(register: (string)$target['register'], schema: (string)$target['schema'], uuid: (string)$target['id'])
+			);
 
 			return ['success' => true, 'objectId' => $target['id'], 'publishedAt' => $data['publicationDate']];
 		} catch (\Exception $e) {

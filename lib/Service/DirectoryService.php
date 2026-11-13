@@ -44,6 +44,8 @@ use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
 use OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -1191,10 +1193,10 @@ class DirectoryService implements DirectoryServiceInterface {
 	private function saveListing(array $target, array $listingData, $uuid): void {
 		$target['objectService']->saveObject(
 			object: $listingData,
-			extend: [],
-			register: $target['register'],
-			schema: $target['schema'],
-			uuid: $uuid
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']),
+				uuid: $uuid
+			)
 		);
 	}//end saveListing()
 
@@ -1728,10 +1730,10 @@ class DirectoryService implements DirectoryServiceInterface {
 				// Use positional parameters for compatibility with different ObjectService versions.
 				$objectService->saveObject(
 					object: $errorData,
-					extend: [],
-					register: $listingRegister,
-					schema: $listingSchema,
-					uuid: $listingData['id']
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema),
+						uuid: $listingData['id']
+					)
 				);
 			}
 		} catch (\Exception $e) {

@@ -30,6 +30,7 @@ use OCA\OpenRegister\Db\RegisterMapper;
 use OCA\OpenRegister\Db\Schema;
 use OCA\OpenRegister\Db\SchemaMapper;
 use OCA\OpenRegister\Service\ObjectService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
@@ -300,10 +301,11 @@ class SettingsServiceCatalogScopeTest extends TestCase {
 			->getMock();
 		$objects->method('searchObjects')->willReturn($catalogues);
 		$objects->method('saveObject')->willReturnCallback(
-			function (mixed $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): ObjectEntity {
-				$this->assertSame('23', $register);
-				$this->assertSame('8', $schema);
-				$this->savedWithUuid[] = [$object, $uuid];
+			function (mixed $object, ObjectSaveOptions $options = new ObjectSaveOptions()): ObjectEntity {
+				$this->assertSame('23', $options->target->register);
+				$this->assertSame('8', $options->target->schema);
+				$this->savedWithUuid[] = [$object, $options->uuid];
+
 				return new ObjectEntity();
 			}
 		);

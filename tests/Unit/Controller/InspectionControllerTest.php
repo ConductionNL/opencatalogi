@@ -33,6 +33,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -452,18 +453,15 @@ class InspectionControllerTest extends TestCase {
 
 			/**
 			 * @param array<string, mixed> $object The object to store.
-			 * @param array<int, string> $extend Unused here.
+			 * @param ObjectSaveOptions $options Unused here.
 			 *
 			 * @return array<string, mixed> The stored object.
 			 */
 			public function saveObject(
 				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_unowned = false,
+				bool $_multitenancy = true,
 			): array {
 				$object['id'] = 'inspection-1';
 				$this->saved[] = $object;
@@ -649,13 +647,11 @@ class InspectionControllerTest extends TestCase {
 			 * Answer the saved inspection inside an OpenRegister envelope.
 			 *
 			 * @param array<string, mixed> $object The inspection.
-			 * @param array<int, string> $extend Unused here.
-			 * @param string $register Unused here.
-			 * @param string $schema Unused here.
+			 * @param ObjectSaveOptions $options Unused here.
 			 *
 			 * @return array<string, mixed> The envelope.
 			 */
-			public function saveObject(array $object, array $extend = [], string $register = '', string $schema = '', bool $_rbac = true, bool $_unowned = false): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
 				return ['id' => 'inspection-7', 'object' => ['termDays' => $object['termDays']]];
 			}
 		};
