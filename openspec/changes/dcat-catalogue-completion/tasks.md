@@ -19,7 +19,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 - [ ] 3.1 Route the dataset and catalogue IRIs with content negotiation (REQ-DCC-003). Verify: `tests/Unit/Controller/DcatDereferenceTest.php::testADatasetIriAnswersTurtle` (fails today), `::testHtmlRedirectsToThePublicPage`, `::testADraftIriIs404`.
 - [ ] 3.2 Add the SPARQL library (record its name, version and licence in the PR body; `composer audit` clean), the graph cache with invalidation on publication and catalogue events, and `GET`/`POST /api/sparql` with its CORS preflight (REQ-DCC-003). Verify: `tests/Unit/Controller/SparqlEndpointTest.php::testASelectQueryListsTheDatasetsOfATheme` (fails today), `::testAnUpdateIsRefused`, `::testServiceAndLoadAreRefused`, `::testTheRowCapIsSaid`; `tests/Unit/OpenApiParityTest.php` stays green with the route documented.
-- [ ] 3.3 Live: run the scenario query against the dev instance and paste the answer in the PR body (REQ-DCC-003). Verify: the pasted answer.
+- [ ] 3.3 Live: run the scenario query against the dev instance and paste the answer in the PR body (REQ-DCC-003). Verify: the pasted answer. (live pass, decision 139)
 
 ## 4. Docs
 

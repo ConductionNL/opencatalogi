@@ -15,7 +15,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 ## 3. Search
 
 - [ ] 3.1 Include themes in `assemblePublicSearchResults()` with `resultType` on every result and a `resultType` facet (REQ-SUB-004). Verify: `tests/Unit/Service/PublicSearchSubjectsTest.php::testASubjectIsAResultWithItsOwnType` (fails today), `::testAPublicationOnlySearchIsUnchanged`, and the existing `PublicationQueryServiceTest` and `PublicationQuerySearchContractTest` stay green.
-- [ ] 3.2 Live: on the dev instance search for a word only a subject holds through `GET /apps/opencatalogi/api/search`, and paste the result in the PR body (REQ-SUB-004). Verify: the pasted result.
+- [ ] 3.2 Live: on the dev instance search for a word only a subject holds through `GET /apps/opencatalogi/api/search`, and paste the result in the PR body (REQ-SUB-004). Verify: the pasted result. (live pass, decision 139)
 
 ## 4. Officer UI
 

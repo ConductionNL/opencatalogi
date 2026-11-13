@@ -20,7 +20,7 @@ Read `openspec/woo-build-rules.md` first. Start once `diwoo-metadata-on-the-publ
 - [ ] 4.1 Add the `wooPipelineIncident` schema with its notification rule and `PipelineIncidents::raise()` with coalescing (REQ-WNO-004). Verify: `tests/Unit/Service/Woo/PipelineIncidentsTest.php::testAnIdenticalOpenIncidentIsCoalesced`; gate-18 stays green (declarative, no imperative dispatch).
 - [ ] 4.2 Call `raise()` from every failure path named in REQ-WNO-004 (REQ-WNO-004). Verify: `tests/Unit/Service/Woo/PipelineIncidentsWiringTest.php`, one case per path through its real caller (`WooReadinessService`, `WooService::publishBatch()`, `NationalIndexService::deliver()`, `deliverToPlooi()`, `PlooiDeliveryService::deliver()`, the reconciliation and the standard check).
 - [ ] 4.3 Add the group setting and the open incidents list to the Woo settings, and the readiness failure when no group is set (REQ-WNO-004). Verify: `tests/e2e/woo-national-output-assurance.spec.ts` "a failed PLOOI delivery reaches the Woo team" with a failing PLOOI fake, carrying `@e2e` REQ-WNO-004; `WooReadinessServiceTest::testNoIncidentGroupFailsReadiness`.
-- [ ] 4.4 Live: on the dev instance make a PLOOI delivery fail, and paste the notification and the e-mail log entry in the PR body (REQ-WNO-004). Verify: the pasted output.
+- [ ] 4.4 Live: on the dev instance make a PLOOI delivery fail, and paste the notification and the e-mail log entry in the PR body (REQ-WNO-004). Verify: the pasted output. (live pass, decision 139)
 
 ## 5. Verification
 
