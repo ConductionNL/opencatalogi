@@ -265,6 +265,45 @@ class AttachDocumentsApplyTest extends TestCase {
 		$this->assertStringContainsString('SKIP doc-1 (A Document): its publication (' . self::PUB . ') could not be found.', $tester->getDisplay());
 	}
 
+	public function testADocumentWithoutMetadataMovesItsFileAndWritesNoMetadata(): void {
+		$bare = ['@self' => ['uuid' => 'doc-1'], 'publication' => self::PUB, 'summary' => '  '];
+		$tester = $this->commandOver(documents: [$bare], fileIds: [7]);
+
+		$this->assertSame(Command::SUCCESS, $tester->execute(['--apply' => true]));
+		$this->assertSame(['move 7 from doc-1 to ' . self::PUB, 'delete doc-1 {"_rbac":false,"_multitenancy":false}'], $this->calls);
+		$this->assertStringNotContainsString('window', $tester->getDisplay());
+	}
+
+	public function testADepublicationDateAloneWritesAWindowWithAnOpenStart(): void {
+		$document = $this->document();
+		unset($document['publicationDate']);
+		$document['depublicationDate'] = '2025-06-30T00:00:00+00:00';
+		$tester = $this->commandOver(documents: [$document], fileIds: [7]);
+
+		$this->assertSame(Command::SUCCESS, $tester->execute(['--apply' => true]));
+		$this->assertContains('window 107  2025-06-30', $this->calls);
+		$this->assertStringContainsString(', window unset to 2025-06-30', $tester->getDisplay());
+	}
+
+	public function testTheSummaryAndDescriptionBothBecomeTheFileDescription(): void {
+		$document = $this->document();
+		$document['summary'] = 'In short';
+		$document['depublicationDate'] = '2025-06-30T00:00:00+00:00';
+		$tester = $this->commandOver(documents: [$document], fileIds: [7]);
+
+		$this->assertSame(Command::SUCCESS, $tester->execute(['--apply' => true]));
+		$this->assertSame(
+			[
+				'move 7 from doc-1 to ' . self::PUB,
+				"description 107 In short\n\nAbout it",
+				'labels 107 A Document',
+				'window 107 2024-01-01 2025-06-30',
+				'delete doc-1 {"_rbac":false,"_multitenancy":false}',
+			],
+			$this->calls
+		);
+	}
+
 	public function testTheDryRunReportsWhatItWouldMove(): void {
 		$tester = $this->commandOver(documents: [$this->document()], fileIds: [7]);
 
