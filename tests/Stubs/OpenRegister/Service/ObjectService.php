@@ -131,9 +131,7 @@ class ObjectService {
 	/**
 	 * Delete an object by UUID.
 	 *
-	 * @param string $uuid Object UUID.
-	 * @param Register|string|integer|null $register Register context.
-	 * @param Schema|string|integer|null $schema Schema context.
+	 * @param \OCA\OpenRegister\Service\Object\ObjectDeletion $deletion The object, its register and schema.
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
 	 * @param boolean $_retentionSweep Retention sweep mode.
@@ -143,9 +141,7 @@ class ObjectService {
 	 * @return boolean
 	 */
 	public function deleteObject(
-		string $uuid,
-		Register|string|int|null $register = null,
-		Schema|string|int|null $schema = null,
+		\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 		bool $_retentionSweep = false,

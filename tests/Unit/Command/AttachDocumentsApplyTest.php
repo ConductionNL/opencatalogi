@@ -79,8 +79,8 @@ class AttachDocumentsApplyTest extends TestCase {
 				return ($this->entity)((string)$id);
 			}
 
-			public function deleteObject(string $uuid, ...$rest): bool {
-				$this->calls[] = 'delete ' . $uuid . ' ' . json_encode($rest);
+			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion, ...$rest): bool {
+				$this->calls[] = 'delete ' . $deletion->uuid . ' ' . json_encode($rest);
 				if (($this->fail['deleteObject'] ?? false) === true) {
 					throw new RuntimeException('delete broke');
 				}

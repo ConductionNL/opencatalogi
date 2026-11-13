@@ -31,6 +31,7 @@ namespace OCA\OpenCatalogi\Command;
 use DateTime;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenRegister\Service\File\FileTransfer;
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -507,7 +508,7 @@ class AttachDocumentsToPublicationsCommand extends Command {
 			// Anonymous and refuses the delete. The documents were read with the
 			// same flags: a migration that can see a row and not remove it moves
 			// its files and then strands it.
-			$run['services']['objects']->deleteObject(uuid: $doc['uuid'], _rbac: false, _multitenancy: false);
+			$run['services']['objects']->deleteObject(deletion: new ObjectDeletion(uuid: $doc['uuid']), _rbac: false, _multitenancy: false);
 		} catch (Throwable $e) {
 			self::say(output: $output, line: ['removeFailed', $e->getMessage()]);
 			self::say(output: $output, line: ['removeByHand', $doc['uuid'], $doc['uuid']]);

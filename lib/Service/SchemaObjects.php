@@ -22,6 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+
 /**
  * OpenRegister's ObjectService bound to one register and schema, without
  * RBAC or multitenancy.
@@ -106,7 +109,11 @@ final class SchemaObjects {
 	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
 	public function delete(string $id): void {
-		$this->objects->deleteObject(uuid: $id, register: $this->register, schema: $this->schema, _rbac: false, _multitenancy: false);
+		$this->objects->deleteObject(
+			deletion: new ObjectDeletion(uuid: $id, target: new ObjectFindTarget(register: $this->register, schema: $this->schema)),
+			_rbac: false,
+			_multitenancy: false
+		);
 
 	}//end delete()
 }//end class

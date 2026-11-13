@@ -34,6 +34,8 @@ use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Service\Object\ObjectDeletion;
+use OCA\OpenRegister\Service\Object\ObjectFindTarget;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -501,9 +503,7 @@ class ListingsController extends Controller {
 		// catch it here and return 404 explicitly.
 		try {
 			$result = $this->getObjectService()->deleteObject(
-				uuid: (string)$id,
-				register: $listingRegister,
-				schema: $listingSchema
+				deletion: new ObjectDeletion(uuid: (string)$id, target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema))
 			);
 		} catch (DoesNotExistException $e) {
 			return new JSONResponse(
