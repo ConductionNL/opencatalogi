@@ -35,6 +35,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -61,6 +62,7 @@ class PublicationStateController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param PublicationRights $rights The update right on one publication.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
+	 * @param PublishRight $publishRight The publish right: publishers and administrators only.
 	 */
 	public function __construct(
 		$appName,
@@ -69,6 +71,7 @@ class PublicationStateController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly PublicationRights $rights,
 		private readonly PublicationTransitions $registers,
+		private readonly PublishRight $publishRight,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -79,9 +82,10 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse `{state}`, or 404 when the caller cannot read it.
+	 * @return JSONResponse `{state, canPublish}`, or 404 when the caller cannot read it.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
 	 */
 	#[NoAdminRequired]
 	public function visibility(string $id): JSONResponse {
@@ -100,7 +104,12 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
-		return new JSONResponse(['state' => $this->registers->stateOf(publication: $this->asArray(object: $publication))]);
+		return new JSONResponse(
+			[
+				'state' => $this->registers->stateOf(publication: $this->asArray(object: $publication)),
+				'canPublish' => $this->publishRight->mayPublish(),
+			]
+		);
 	}//end visibility()
 
 	/**
@@ -108,13 +117,14 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse `{state: public}`, 403 without the update right, 409 when it is already public or archived.
+	 * @return JSONResponse `{state: public}`, 403 without the update right or the publish right, 409 when it is already public or archived.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 */
 	#[NoAdminRequired]
 	public function publish(string $id): JSONResponse {
-		[$publication, $refusal] = $this->guardWrite(id: $id);
+		[$publication, $refusal] = $this->guardPublish(id: $id);
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -139,13 +149,14 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse The stored depublication and the channels still outstanding.
+	 * @return JSONResponse The stored depublication and the channels still outstanding, 403 without the publish right.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 */
 	#[NoAdminRequired]
 	public function withdraw(string $id): JSONResponse {
-		[$publication, $refusal] = $this->guardWrite(id: $id);
+		[$publication, $refusal] = $this->guardPublish(id: $id);
 		if ($refusal !== null) {
 			return $refusal;
 		}
@@ -317,6 +328,31 @@ class PublicationStateController extends Controller {
 	}//end guardWrite()
 
 	/**
+	 * Load the publication for publishing or withdrawing, or the answer that refuses it.
+	 *
+	 * Every refusal of guardWrite() first, then 403 naming the publishers group
+	 * for a caller who may edit but not publish, before anything is sent or saved.
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return array{0: object|null, 1: JSONResponse|null} The publication, or the refusal.
+	 *
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 */
+	private function guardPublish(string $id): array {
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return [null, $refusal];
+		}
+
+		if ($this->publishRight->mayPublish() === false) {
+			return [null, $this->notAPublisher()];
+		}
+
+		return [$publication, null];
+	}//end guardPublish()
+
+	/**
 	 * Store the depublication and answer it with the outstanding channels.
 	 *
 	 * The depublication schema is writable by administrators only. Callers reach
@@ -463,6 +499,28 @@ class PublicationStateController extends Controller {
 		);
 
 	}//end forbidden()
+
+	/**
+	 * The answer for a caller who may edit the publication but not publish it.
+	 *
+	 * @return JSONResponse 403 naming the publishers group.
+	 *
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 */
+	private function notAPublisher(): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'error' => 'not-a-publisher',
+				'group' => PublishRight::GROUP,
+				'message' => $this->l10n->t(
+					'Only members of the group %s may publish or withdraw a publication.',
+					[PublishRight::GROUP]
+				),
+			],
+			statusCode: Http::STATUS_FORBIDDEN
+		);
+
+	}//end notAPublisher()
 
 	/**
 	 * The answer for a publication the caller cannot read.

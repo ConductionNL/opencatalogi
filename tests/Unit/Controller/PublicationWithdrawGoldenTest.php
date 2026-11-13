@@ -32,6 +32,7 @@ use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
@@ -182,11 +183,23 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			$this->l10n(),
 			$session,
 			$rights,
-			new PublicationTransitions($this->states(case: $case, calls: $calls), $this->depublisher(case: $case, calls: $calls), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $this->objects(case: $case, calls: $calls)))
+			new PublicationTransitions($this->states(case: $case, calls: $calls), $this->depublisher(case: $case, calls: $calls), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $this->objects(case: $case, calls: $calls))),
+			$this->publisher()
 		);
 
 		return $controller;
 	}//end controller()
+
+	/**
+	 * A publish right that holds: the recorded withdrawals were made by publishers.
+	 *
+	 * @return PublishRight The publish right.
+	 */
+	private function publisher(): PublishRight {
+		$publishRight = $this->createMock(PublishRight::class);
+		$publishRight->method('mayPublish')->willReturn(true);
+		return $publishRight;
+	}//end publisher()
 
 	/**
 	 * A localisation double that marks translated text.
