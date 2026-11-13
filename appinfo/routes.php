@@ -5,7 +5,8 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 
-return [
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases([
 	'routes' => [
 		/**
 		 * Here we have the private endpoints, the part of the API that is used by the backend and not publicly accessible
@@ -308,4 +309,4 @@ return [
 		// (aliased in Application::register); a distinct name keeps it from shadowing the / index route.
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
 	]
-];
+]);

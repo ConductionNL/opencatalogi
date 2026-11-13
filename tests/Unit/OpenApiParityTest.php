@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace Unit;
 
+use OCA\OpenCatalogi\Middleware\Support\StandardProtocolPaths;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -127,20 +128,29 @@ class OpenApiParityTest extends TestCase {
 	private function loadRoutes(): array {
 		$routes = include __DIR__ . '/../../appinfo/routes.php';
 
-		return $routes['routes'];
+		// The declared routes. Each one's /api/v1/ alias is the same route under
+		// the document's versioned server, pinned by ApiPathAliasesTest.
+		return array_values(
+			array_filter(
+				$routes['routes'],
+				static fn (array $route): bool => str_ends_with((string) ($route['postfix'] ?? ''), 'v1') === false
+			)
+		);
 	}//end loadRoutes()
 
 	/**
-	 * Load `openapi.json` as an associative array.
+	 * Load `openapi.json`, or another document beside it, as an associative array.
+	 *
+	 * @param string $file The document's file name in the repository root.
 	 *
 	 * @return array<string, mixed> The decoded document.
 	 */
-	private function loadOpenApiDocument(): array {
-		$raw = file_get_contents(__DIR__ . '/../../openapi.json');
-		$this->assertIsString($raw, 'openapi.json must be readable');
+	private function loadOpenApiDocument(string $file = 'openapi.json'): array {
+		$raw = file_get_contents(filename: __DIR__ . '/../../' . $file);
+		$this->assertIsString(actual: $raw, message: $file . ' must be readable');
 
-		$decoded = json_decode($raw, true);
-		$this->assertIsArray($decoded, 'openapi.json must parse as JSON');
+		$decoded = json_decode(json: $raw, associative: true);
+		$this->assertIsArray(actual: $decoded, message: $file . ' must parse as JSON');
 
 		return $decoded;
 	}//end loadOpenApiDocument()
@@ -285,10 +295,13 @@ class OpenApiParityTest extends TestCase {
 	 * @return array<string, true> Map of `"METHOD path"` => true.
 	 */
 	private function collectDocumentedRoutes(): array {
-		$document = $this->loadOpenApiDocument();
+		$paths = array_merge(
+			($this->loadOpenApiDocument()['paths'] ?? []),
+			($this->loadOpenApiDocument(file: 'openapi.standards.json')['paths'] ?? [])
+		);
 		$documented = [];
 
-		foreach (($document['paths'] ?? []) as $path => $operations) {
+		foreach ($paths as $path => $operations) {
 			foreach (array_keys($operations) as $verb) {
 				if (in_array($verb, ['get', 'post', 'put', 'patch', 'delete', 'options'], true) === false) {
 					continue;
@@ -399,4 +412,26 @@ class OpenApiParityTest extends TestCase {
 		$this->assertSame(expected: '3.0.3', actual: $document['openapi']);
 
 	}//end testDocumentParsesAndHasPaths()
+
+	/**
+	 * openapi.json names the versioned API root and describes no standard
+	 * protocol path; openapi.standards.json names the unversioned base and
+	 * describes only those.
+	 *
+	 * @return void
+	 */
+	public function testTheServerIsVersionedAndProtocolPathsKeepTheirBase(): void {
+		$document  = $this->loadOpenApiDocument();
+		$standards = $this->loadOpenApiDocument(file: 'openapi.standards.json');
+
+		$this->assertStringEndsWith(suffix: '/apps/opencatalogi/api/v1', string: $document['servers'][0]['url']);
+		$this->assertStringEndsWith(suffix: '/apps/opencatalogi/api', string: $standards['servers'][0]['url']);
+		foreach (array_keys($document['paths']) as $path) {
+			$this->assertFalse(condition: StandardProtocolPaths::matches(path: self::SERVER_BASE.$path), message: $path.' belongs in openapi.standards.json');
+		}
+
+		foreach (array_keys($standards['paths']) as $path) {
+			$this->assertTrue(condition: StandardProtocolPaths::matches(path: self::SERVER_BASE.$path), message: $path.' is not a standard protocol path');
+		}
+	}//end testTheServerIsVersionedAndProtocolPathsKeepTheirBase()
 }//end class

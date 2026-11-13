@@ -23,6 +23,7 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
@@ -44,6 +45,7 @@ class ApiContractMiddlewareTest extends TestCase {
 	private function decorate(string|false $path, Response $response): Response {
 		$request = $this->createMock(originalClassName: IRequest::class);
 		$request->method('getPathInfo')->willReturn($path);
+		$request->method('getRequestUri')->willReturn('/index.php'.(string) $path.'?q=1');
 		$appManager = $this->createMock(originalClassName: IAppManager::class);
 		$appManager->method('getAppVersion')->willReturn('1.2.3');
 
@@ -161,6 +163,70 @@ class ApiContractMiddlewareTest extends TestCase {
 		$this->assertSame(expected: '1.2.3', actual: $this->headersOf(response: $response)['API-Version']);
 		$this->assertSame(expected: 'gone', actual: $response->getData());
 	}//end testNonJsonErrorOnlyGetsTheHeader()
+
+	/**
+	 * An unversioned API path keeps answering and names its `/api/v1/` successor.
+	 *
+	 * @return void
+	 */
+	public function testUnversionedPathAnnouncesItsSuccessor(): void {
+		$response = $this->decorate(path: '/apps/opencatalogi/api/things/7/parts', response: new JSONResponse(data: ['id' => 7]));
+		$headers  = $this->headersOf(response: $response);
+
+		$this->assertSame(expected: ['id' => 7], actual: $response->getData());
+		$this->assertSame(expected: '@1794441600', actual: $headers['Deprecation']);
+		$this->assertSame(expected: '</index.php/apps/opencatalogi/api/v1/things/7/parts>; rel="successor-version"', actual: $headers['Link']);
+	}//end testUnversionedPathAnnouncesItsSuccessor()
+
+	/**
+	 * A versioned API path is not deprecated, and still carries the version.
+	 *
+	 * @return void
+	 */
+	public function testVersionedPathIsNotDeprecated(): void {
+		$headers = $this->headersOf(response: $this->decorate(path: '/apps/opencatalogi/api/v1/things/7', response: new JSONResponse(data: [])));
+
+		$this->assertSame(expected: '1.2.3', actual: $headers['API-Version']);
+		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Link', array: $headers);
+	}//end testVersionedPathIsNotDeprecated()
+
+	/**
+	 * A path that speaks a protocol defined elsewhere keeps the version header and
+	 * problem details it already had, and is not marked deprecated.
+	 *
+	 * @param string $path A standard protocol path.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('standardProtocolPaths')]
+	public function testStandardProtocolPathKeepsItsBehaviour(string $path): void {
+		$response = $this->decorate(path: $path, response: new JSONResponse(data: ['error' => 'x'], statusCode: 400));
+		$headers  = $this->headersOf(response: $response);
+		$data     = $response->getData();
+
+		$this->assertSame(expected: '1.2.3', actual: $headers['API-Version']);
+		$this->assertSame(expected: ApiContractMiddleware::PROBLEM_CONTENT_TYPE, actual: $headers['Content-Type']);
+		$this->assertSame(expected: 400, actual: $data['status']);
+		$this->assertSame(expected: 'x', actual: $data['error']);
+		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
+		$this->assertArrayNotHasKey(key: 'Link', array: $headers);
+	}//end testStandardProtocolPathKeepsItsBehaviour()
+
+	/**
+	 * Standard protocol paths: sitemaps, robots.txt, DCAT, feeds and federation.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function standardProtocolPaths(): array {
+		return [
+			'sitemap'    => ['/apps/opencatalogi/api/woo/sitemaps/1'],
+			'robots.txt' => ['/apps/opencatalogi/api/robots.txt'],
+			'dcat'       => ['/apps/opencatalogi/api/catalogs/woo/dcat'],
+			'feed'       => ['/apps/opencatalogi/api/feeds/publications'],
+			'federation' => ['/apps/opencatalogi/api/federation/publications'],
+		];
+	}//end standardProtocolPaths()
 
 	/**
 	 * The headers a response set, read without the server container that

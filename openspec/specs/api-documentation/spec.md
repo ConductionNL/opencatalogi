@@ -31,10 +31,12 @@ describes OpenCatalogi's actual public API surface: every route registered in
 supported) and response schemas that match the served envelopes. The document
 MUST carry the app's real metadata: title "OpenCatalogi", license EUPL-1.2,
 and a version equal to the `<version>` in `appinfo/info.xml`. Its server URL
-ends in `/api`, so documented paths are the route URLs without that prefix.
+ends in `/api/v1`, so documented paths are the route URLs without the `/api`
+prefix. The public paths that implement an external standard are described in
+`openapi.standards.json`, whose server is the unversioned base `/api`
+(API-DOC-007); API-DOC-002 compares the public routes against both documents.
 The document MUST pass the Spectral ruleset of the NL API Design Rules
-(`https://static.developer.overheid.nl/adr/ruleset.yaml`) apart from findings
-that need a breaking change to the public URLs. Content stemming from other
+(`https://static.developer.overheid.nl/adr/ruleset.yaml`). Content stemming from other
 applications MUST NOT be present.
 
 #### Scenario: stale foreign stub is gone
@@ -121,6 +123,43 @@ list, MUST be left as it is.
 - AND its body MUST be `{"type": "about:blank", "title": "Not Found", "status": 404, "detail": "Thing not found", "error": "Thing not found"}`.
 
 > @e2e exclude A content type and a body shape, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest.
+
+### Requirement: Every API path is served under its major version (API-DOC-006)
+
+**Priority:** Must **Status:** Implemented
+
+Every route under `/api/` MUST also be served under `/api/v1/`, with the same controller, requirements and defaults (/core/uri-version). A route the app already declares under `/api/v1/` keeps its path; an unversioned path whose versioned form such a route answers keeps no successor and is listed in `ApiPathAliases::WITHOUT_SUCCESSOR`. The unversioned path MUST keep answering exactly as before, and its responses MUST carry a `Deprecation` header and a `Link` header naming the `/api/v1/` successor with `rel="successor-version"` (/core/deprecation-schedule). The OpenAPI document MUST name `/index.php/apps/opencatalogi/api/v1` as its server and MUST describe the public versioned paths (API-DOC-002).
+
+#### Scenario: An unversioned path names its successor
+
+@e2e exclude response headers, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest and ApiPathAliasesTest.
+
+- GIVEN a client calls `GET /index.php/apps/opencatalogi/api/search`
+- THEN it MUST receive the same answer as before
+- AND the response MUST carry `Deprecation: @1794441600`
+- AND the response MUST carry `Link: </index.php/apps/opencatalogi/api/v1/search>; rel="successor-version"`
+
+#### Scenario: The versioned path answers the same request
+
+@e2e exclude a route table property; covered by PHPUnit ApiPathAliasesTest and OpenApiParityTest.
+
+- GIVEN a route `/api/search`
+- WHEN a client calls `/index.php/apps/opencatalogi/api/v1/search`
+- THEN the same controller method MUST answer it, without a `Deprecation` header
+
+### Requirement: Standard protocol paths keep their own formats (API-DOC-007)
+
+**Priority:** Must **Status:** Implemented
+
+Paths that implement a protocol defined elsewhere (Sitemaps (DiWoo), robots.txt, DCAT-AP, OOAPI, schema.org, Atom feeds, Federation between instances, Health check, Prometheus metrics) MUST NOT get a `/api/v1/` alias or a `Deprecation` header: their URLs belong to their standard. They keep the `API-Version` header and the problem details error bodies they already had. They are listed in `lib/Middleware/Support/StandardProtocolPaths.php` and are described in `openapi.standards.json`, under the unversioned base `/index.php/apps/opencatalogi/api`, rather than in `openapi.json`.
+
+#### Scenario: A protocol path keeps its URL and behaviour
+
+@e2e exclude a response shape, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest.
+
+- GIVEN a client calls `/index.php/apps/opencatalogi/api/woo/sitemaps/1` and it answers `400` with `{"error": "x"}`
+- THEN the response MUST carry no `Deprecation` and no `Link` header
+- AND it MUST keep the `API-Version` header and the problem details body it carried before
 
 ## Dependencies
 
