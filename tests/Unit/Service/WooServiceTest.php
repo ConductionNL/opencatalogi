@@ -586,6 +586,22 @@ class WooServiceTest extends TestCase {
 
 	}//end testInventarislijstRowsAndCsv()
 
+	/**
+	 * The PDF export is a real PDF that declares PDF/A conformance.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstPdfIsAPdfA(): void {
+		$this->seedBatchWithAssessments(leaveUnassessed: false);
+		$rows = $this->service->buildInventarislijst('batch-1');
+
+		$pdf = $this->service->renderInventarislijstPdf('batch-1', $rows);
+
+		$this->assertStringStartsWith(prefix: '%PDF-', string: $pdf);
+		$this->assertStringContainsString(needle: 'pdfaid:part', haystack: $pdf);
+
+	}//end testInventarislijstPdfIsAPdfA()
+
 	public function testPublishRequiresReadyForReview(): void {
 		$this->seedBatchWithAssessments(false);
 		// Still in_progress → publish must reject.

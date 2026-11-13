@@ -449,6 +449,7 @@
 					"showViewToggle": true,
 					"selectable": false
 				},
+				"rowRoute": "WooBatchDetail",
 				"documentationUrl": "https://opencatalogi.conduction.nl"
 			},
 			"_note": "WOO disclosure-batch list via the generic index renderer over the WOO register/schema (ADR-022 — reuses the lib, no bespoke table). Per-batch detail (deck board widget + WOO tabs) is the WooBatchDetail custom page."

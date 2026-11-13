@@ -163,7 +163,7 @@ export default {
 		/**
 		 * Build the inventarislijst download URL (CSV by default).
 		 *
-		 * @param {string} format The export format (csv|html).
+		 * @param {string} format The export format (csv|pdf).
 		 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
 		 * @return {string} The download URL.
 		 */
@@ -254,7 +254,7 @@ export default {
 				<NcButton :href="inventarislijstUrl('csv')">
 					{{ t('opencatalogi', 'Download inventarislijst (CSV)') }}
 				</NcButton>
-				<NcButton :href="inventarislijstUrl('html')">
+				<NcButton :href="inventarislijstUrl('pdf')">
 					{{ t('opencatalogi', 'Download inventarislijst (PDF/A)') }}
 				</NcButton>
 				<NcButton

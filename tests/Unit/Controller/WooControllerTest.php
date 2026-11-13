@@ -143,8 +143,57 @@ class WooControllerTest extends TestCase {
 
 	}//end testInventarislijstHonoursHtmlFormat()
 
-	public function testInventarislijstUnknownFormatFallsBackToCsv(): void {
+	/**
+	 * format=pdf answers with the PDF/A bytes as application/pdf.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstPdfFormatReturnsAPdf(): void {
 		$this->withParams(['format' => 'pdf']);
+
+		$rows = [['document' => 'doc-1']];
+		$this->wooService->method('buildInventarislijst')->willReturn($rows);
+		$this->wooService->expects($this->once())
+			->method('renderInventarislijstPdf')
+			->with('batch-1', $rows)
+			->willReturn('%PDF-1.4 inventarislijst');
+		$this->wooService->expects($this->never())->method('renderInventarislijstCsv');
+
+		$response = $this->controller->inventarislijst('batch-1');
+
+		$this->assertInstanceOf(expected: DataDownloadResponse::class, actual: $response);
+		$this->assertSame(expected: 'application/pdf', actual: $response->getHeaders()['Content-Type']);
+		$this->assertStringContainsString(needle: 'inventarislijst.pdf', haystack: $response->getHeaders()['Content-Disposition']);
+		$this->assertStringStartsWith(prefix: '%PDF', string: $response->render());
+
+	}//end testInventarislijstPdfFormatReturnsAPdf()
+
+	/**
+	 * The download route is registered for the GET its links send.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstRouteIsAGet(): void {
+		$routes = require __DIR__ . '/../../../appinfo/routes.php';
+		$verbs = [];
+		foreach ($routes['routes'] as $route) {
+			if ($route['name'] === 'woo#inventarislijst') {
+				$verbs[] = $route['verb'];
+			}
+		}
+
+		// The batch page downloads the list through a link, which always sends a GET.
+		$this->assertSame(expected: ['GET'], actual: $verbs);
+
+	}//end testInventarislijstRouteIsAGet()
+
+	/**
+	 * An unknown format falls back to CSV.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstUnknownFormatFallsBackToCsv(): void {
+		$this->withParams(params: ['format' => 'xlsx']);
 
 		$this->wooService->method('buildInventarislijst')->willReturn([]);
 		$this->wooService->expects($this->once())

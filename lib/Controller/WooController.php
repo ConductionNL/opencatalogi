@@ -297,11 +297,11 @@ class WooController extends Controller {
 	}//end markReadyForReview()
 
 	/**
-	 * Generate the inventarislijst for a batch and return it as a CSV download.
+	 * Generate the inventarislijst for a batch and return it as a download.
 	 *
-	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). CSV is
-	 * UTF-8 with BOM; HTML (archival PDF/A source) is available via the `format`
-	 * query parameter.
+	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). A read-only
+	 * GET reached through a plain link, so it carries no CSRF token. CSV (UTF-8
+	 * with BOM) by default; `format=pdf` returns PDF/A and `format=html` its source.
 	 *
 	 * @param string $batchId The batch uuid.
 	 *
@@ -316,6 +316,11 @@ class WooController extends Controller {
 		try {
 			$rows = $this->wooService->buildInventarislijst($batchId);
 			$format = (string)$this->request->getParam('format', 'csv');
+			if ($format === 'pdf') {
+				$pdf = $this->wooService->renderInventarislijstPdf($batchId, $rows);
+				return new DataDownloadResponse($pdf, 'inventarislijst.pdf', 'application/pdf');
+			}
+
 			if ($format === 'html') {
 				$html = $this->wooService->renderInventarislijstHtml($batchId, $rows);
 				return new DataDownloadResponse($html, 'inventarislijst.html', 'text/html');
