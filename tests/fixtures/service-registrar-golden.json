@@ -191,6 +191,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\FeedConsumerServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\FeedConsumerService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\DemoDataServiceInterface",
         "OCA\\OpenCatalogi\\Service\\DemoDataService"
     ],

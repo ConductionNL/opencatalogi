@@ -10,7 +10,9 @@
  * OoapiMappingService. Unlike DcatController/SchemaOrgController, these
  * routes are NOT anonymous-public (OOAPI-008) — every action requires an
  * authenticated Nextcloud user, optionally narrowed by the `ooapi_consumers`
- * allowlist. CORS headers are still emitted on every response (COR-001) —
+ * allowlist, or a feed consumer key for that one catalogue (REQ-FCC-002). The
+ * actions are routed as public pages only so a key-only request reaches this
+ * gate; the gate refuses everyone else with 401. CORS headers are still emitted on every response (COR-001) —
  * being non-anonymous does not exempt the endpoint from cross-origin-api-access.
  *
  * @category Controller
@@ -34,6 +36,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\FeedConsumerServiceInterface;
 use OCA\OpenCatalogi\Contract\OoapiPage;
 use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
@@ -77,6 +80,7 @@ class OoapiController extends Controller {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
+	 * @param FeedConsumerServiceInterface|null $feedConsumers Verifies feed consumer keys (REQ-FCC-002).
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -90,10 +94,19 @@ class OoapiController extends Controller {
 		private readonly LoggerInterface $logger,
 		private readonly OpenRegisterLookupInterface $registers,
 		private readonly ?IAppConfig $appConfig = null,
+		private readonly ?FeedConsumerServiceInterface $feedConsumers = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
+
+	/**
+	 * The feed consumer this request authenticated as with a key, or null when it
+	 * came in with a Nextcloud session.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	private ?array $keyConsumer = null;
 
 	/**
 	 * Build a JSON response carrying the standard OOAPI CORS headers (OOAPI-001).
@@ -134,6 +147,11 @@ class OoapiController extends Controller {
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-consumer-credential-authenticated-access-ooapi-008
 	 */
 	private function requireAuthenticatedConsumer(): ?JSONResponse {
+		$presentedKey = $this->presentedFeedKey();
+		if ($presentedKey !== null && $this->feedConsumers !== null) {
+			return $this->authenticateFeedKey(presentedKey: $presentedKey);
+		}
+
 		$user = $this->userSession->getUser();
 		if ($user === null) {
 			return $this->json(data: ['error' => $this->l10n->t('Authentication required')], status: Http::STATUS_UNAUTHORIZED);
@@ -146,6 +164,67 @@ class OoapiController extends Controller {
 
 		return null;
 	}//end requireAuthenticatedConsumer()
+
+	/**
+	 * The feed consumer key sent as `Authorization: Bearer oc_...`, or null.
+	 *
+	 * Other bearer tokens (a Nextcloud app token) are left to Nextcloud's own login.
+	 *
+	 * @return string|null The key.
+	 *
+	 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-a-key-reads-only-its-catalogues-protected-feeds-req-fcc-002
+	 */
+	private function presentedFeedKey(): ?string {
+		$header = trim($this->request->getHeader('Authorization'));
+		if (preg_match('/^Bearer\s+(oc_\S+)$/i', $header, $match) !== 1) {
+			return null;
+		}
+
+		return $match[1];
+	}//end presentedFeedKey()
+
+	/**
+	 * Serve the request as the key's consumer account, or refuse a wrong,
+	 * revoked or expired key with 401.
+	 *
+	 * @param string $presentedKey The key as sent.
+	 *
+	 * @return JSONResponse|null The 401, or null when the key is accepted.
+	 *
+	 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-a-key-reads-only-its-catalogues-protected-feeds-req-fcc-002
+	 */
+	private function authenticateFeedKey(string $presentedKey): ?JSONResponse {
+		$match = $this->feedConsumers->authenticate($presentedKey);
+		if ($match === null) {
+			return $this->json(data: ['error' => $this->l10n->t('Invalid, revoked or expired key')], status: Http::STATUS_UNAUTHORIZED);
+		}
+
+		$this->userSession->setVolatileActiveUser($match['user']);
+		$this->keyConsumer = $match['consumer'];
+		return null;
+	}//end authenticateFeedKey()
+
+	/**
+	 * Refuse a key consumer on a catalogue other than its own.
+	 *
+	 * @param array<string, mixed> $catalog The requested catalogue.
+	 *
+	 * @return JSONResponse|null The 403, or null when the request may read this catalogue.
+	 *
+	 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-a-key-reads-only-its-catalogues-protected-feeds-req-fcc-002
+	 */
+	private function refuseOtherCatalog(array $catalog): ?JSONResponse {
+		if ($this->keyConsumer === null) {
+			return null;
+		}
+
+		$catalogId = (string)($catalog['id'] ?? ($catalog['@self']['id'] ?? ''));
+		if ($catalogId !== '' && $catalogId === (string)($this->keyConsumer['catalog'] ?? '')) {
+			return null;
+		}
+
+		return $this->json(data: ['error' => $this->l10n->t('This key does not read this catalog')], status: Http::STATUS_FORBIDDEN);
+	}//end refuseOtherCatalog()
 
 	/**
 	 * Resolve an OOAPI-enabled catalog by slug, or a ready-to-return 404 response.
@@ -294,6 +373,11 @@ class OoapiController extends Controller {
 			return $resolved['error'];
 		}
 
+		$otherCatalog = $this->refuseOtherCatalog(catalog: $resolved['catalog']);
+		if ($otherCatalog !== null) {
+			return $otherCatalog;
+		}
+
 		$context = $this->resolveContext(
 			registerKey: $lookup['context'] . '_register',
 			schemaKey: $lookup['context'] . '_schema'
@@ -372,11 +456,12 @@ class OoapiController extends Controller {
 	 *
 	 * @return JSONResponse The organization list (0 or 1 entries — the catalog's own owning Organisation, OOAPI-002).
 	 *
-	 * @NoAdminRequired
+	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function organizations(string $catalogSlug): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'organization'],
@@ -410,11 +495,12 @@ class OoapiController extends Controller {
 	 *
 	 * @return JSONResponse The organization resource, or 404.
 	 *
-	 * @NoAdminRequired
+	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function organization(string $catalogSlug, string $id): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'organization'],
@@ -433,11 +519,12 @@ class OoapiController extends Controller {
 	 *
 	 * @return JSONResponse The paginated course list.
 	 *
-	 * @NoAdminRequired
+	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function courses(string $catalogSlug): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_courses'],
@@ -456,11 +543,12 @@ class OoapiController extends Controller {
 	 *
 	 * @return JSONResponse The course resource, or 404.
 	 *
-	 * @NoAdminRequired
+	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function course(string $catalogSlug, string $id): JSONResponse {
 		return $this->materializedResource(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_courses', 'id' => $id, 'idField' => 'courseId'],
@@ -476,11 +564,12 @@ class OoapiController extends Controller {
 	 *
 	 * @return JSONResponse The paginated program list.
 	 *
-	 * @NoAdminRequired
+	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function programs(string $catalogSlug): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_programs'],
@@ -499,11 +588,12 @@ class OoapiController extends Controller {
 	 *
 	 * @return JSONResponse The program resource, or 404.
 	 *
-	 * @NoAdminRequired
+	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function program(string $catalogSlug, string $id): JSONResponse {
 		return $this->materializedResource(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_programs', 'id' => $id, 'idField' => 'programId'],
@@ -520,11 +610,12 @@ class OoapiController extends Controller {
 	 *
 	 * @return JSONResponse The paginated offering list, filtered to the given course.
 	 *
-	 * @NoAdminRequired
+	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function courseOfferings(string $catalogSlug, string $courseId): JSONResponse {
 		return $this->inCatalogContext(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_offerings'],
@@ -547,11 +638,12 @@ class OoapiController extends Controller {
 	 *
 	 * @return JSONResponse The offering resource, or 404.
 	 *
-	 * @NoAdminRequired
+	 * @PublicPage
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
 	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
 	public function offering(string $catalogSlug, string $id): JSONResponse {
 		return $this->materializedResource(
 			lookup: ['catalogSlug' => $catalogSlug, 'context' => 'ooapi_offerings', 'id' => $id, 'idField' => 'offeringId'],
