@@ -261,6 +261,18 @@ class DcatMappingServiceTest extends TestCase {
 		$this->assertSame(['@id' => 'https://lic'], $pdf['dct:license']);
 	}
 
+	public function testATableDistributionConformsToItsDictionary(): void {
+		$file = ['downloadUrl' => 'https://host/d/7/download', 'extension' => 'csv', 'dataDictionaryUrl' => 'https://host/api/speeltuinen/p1/tables/t1/dictionary'];
+
+		$distribution = $this->service->mapDistribution($file, null);
+
+		$this->assertSame(['@id' => 'https://host/api/speeltuinen/p1/tables/t1/dictionary'], $distribution['dct:conformsTo']);
+	}
+
+	public function testAPlainDistributionHasNoConformsTo(): void {
+		$this->assertArrayNotHasKey('dct:conformsTo', $this->service->mapDistribution(['downloadUrl' => 'https://host/d/7/download', 'dataDictionaryUrl' => ''], null));
+	}
+
 	public function testDistributionSkippedWithoutDownloadUrl(): void {
 		$this->assertNull($this->service->mapDistribution(['extension' => 'pdf'], null));
 	}
