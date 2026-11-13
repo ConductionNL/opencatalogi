@@ -12,6 +12,13 @@ import { flushPromises, mount } from '@vue/test-utils'
 import DeleteObjectDialog from './DeleteObjectDialog.vue'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 
+// @nextcloud/auth ships ESM that Jest does not transform; the stores only
+// read the request token and current user from it, so stub that boundary.
+jest.mock('@nextcloud/auth', () => ({
+	getRequestToken: () => 'tok',
+	getCurrentUser: () => ({ uid: 'admin', displayName: 'Admin' }),
+}))
+
 const UNCONFIGURED = new Error('Invalid configuration for object type: publication')
 
 let log
