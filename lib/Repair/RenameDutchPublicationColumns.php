@@ -33,10 +33,15 @@
  *     so the step is reversible and a re-run is a no-op;
  *   - nothing is deleted.
  *
- * SCOPE. Resolves shard tables at runtime, because their names carry numeric
- * register and schema ids that differ per install. These three logical schemas
- * are duplicated across many registers on a real install — 25 shard tables over
- * 18 schema ids were observed — so every register is migrated, not the first.
+ * SCOPE. Every `openregister_table_*` shard on the install is considered, not
+ * only OpenCatalogi's own `Publication`/`Document`/`WooBatch` schemas: a
+ * tenant's domain schema (a Woo category, say) carries the exact same Dutch
+ * columns under its own title, and the visibility predicate this fixes
+ * (`publicatiedatum <= now`) runs against it too once it is in a catalog's
+ * scope. `run()`'s own per-table column check is what actually decides
+ * whether a table needs touching, so nothing here pre-filters by title or
+ * schema id — a shard table is migrated when it HAS one of the old columns,
+ * full stop.
  *
  * SPDX-License-Identifier: EUPL-1.2
  * SPDX-FileCopyrightText: 2026 Conduction B.V.
@@ -69,21 +74,6 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/publication-retention-lifecycle/spec.md
  */
 class RenameDutchPublicationColumns implements IRepairStep {
-	/**
-	 * Schema titles whose shard tables carry the renamed columns.
-	 *
-	 * Matched on `title`, not `slug`: the registered title is the human form
-	 * ("Customer Loyalty Account") while the slug stays camelCase, and keying
-	 * on the wrong one silently matches a fraction of the schemas.
-	 *
-	 * @var array<int, string>
-	 */
-	private const SCHEMA_TITLES = [
-		'Publication',
-		'Document',
-		'WooBatch',
-	];
-
 	/**
 	 * Old snake_case column name => new snake_case column name.
 	 *
@@ -183,30 +173,19 @@ class RenameDutchPublicationColumns implements IRepairStep {
 	}//end run()
 
 	/**
-	 * Resolve the shard tables for the affected schemas, across every register.
+	 * Every openregister shard table on the install.
+	 *
+	 * NOT filtered by schema title or id: this used to resolve `Publication`/
+	 * `Document`/`WooBatch` schema ids first and only consider their shards,
+	 * but a tenant's own domain schemas (a Woo category, say) carry the exact
+	 * same Dutch columns under a different title and were silently left out —
+	 * `run()`'s own per-table, per-column `columnsOf()` check already decides
+	 * correctly which tables actually need a column moved, so pre-filtering by
+	 * title here only ever narrowed that set wrongly, never usefully.
 	 *
 	 * @return array<int, string>
 	 */
 	private function shardTables(): array {
-		$placeholders = implode(',', array_fill(0, count(self::SCHEMA_TITLES), '?'));
-
-		try {
-			$ids = $this->db->executeQuery(
-				'SELECT id FROM `*PREFIX*openregister_schemas` WHERE title IN (' . $placeholders . ')',
-				self::SCHEMA_TITLES
-			)->fetchAll(\PDO::FETCH_COLUMN);
-		} catch (Exception $e) {
-			$this->logger->warning(
-				'RenameDutchPublicationColumns: could not resolve schema ids; skipping.',
-				['exception' => $e->getMessage()]
-			);
-			return [];
-		}
-
-		if ($ids === []) {
-			return [];
-		}
-
 		// Table discovery goes through information_schema, NOT IDBConnection.
 		// OCP\IDBConnection exposes neither getSchema() nor getPrefix(); both
 		// exist only on the concrete OC\DB\Connection. Calling them is a runtime
@@ -227,43 +206,16 @@ class RenameDutchPublicationColumns implements IRepairStep {
 			return [];
 		}
 
-		$suffixes = [];
-		foreach ($ids as $id) {
-			$suffixes[] = '_' . ((int)$id);
-		}
-
 		$tables = [];
 		while (($row = $stmt->fetch(\PDO::FETCH_ASSOC)) !== false) {
 			$name = (string)($row['table_name'] ?? '');
-			if ($this->isShardOfSchema(table: $name, suffixes: $suffixes) === true) {
+			if ($name !== '' && strpos($name, 'openregister_table_') !== false) {
 				$tables[] = $name;
 			}
 		}
 
 		return array_values(array_unique($tables));
 	}//end shardTables()
-
-	/**
-	 * Whether a table name is an openregister shard ending in one of the ids.
-	 *
-	 * @param string $table Table name from information_schema.
-	 * @param array<int, string> $suffixes `_<schemaId>` suffixes to accept.
-	 *
-	 * @return bool
-	 */
-	private function isShardOfSchema(string $table, array $suffixes): bool {
-		if ($table === '' || strpos($table, 'openregister_table_') === false) {
-			return false;
-		}
-
-		foreach ($suffixes as $suffix) {
-			if (substr($table, -strlen($suffix)) === $suffix) {
-				return true;
-			}
-		}
-
-		return false;
-	}//end isShardOfSchema()
 
 	/**
 	 * List the column names of a table.
