@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Contract\OoapiPage;
 use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Service\OoapiMappingService;
 use OCA\OpenCatalogi\Service\OoapiService;
+use OCA\OpenRegister\Kernel\Contracts\SearchOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -165,8 +166,8 @@ class OoapiCollectionGoldenTest extends TestCase {
 
 		$objects = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$objects->method('searchObjectsPaginated')->willReturnCallback(
-			function (array $query, bool $_rbac, bool $_multitenancy, bool $deleted): array {
-				$this->calls[] = ['search' => $query, 'flags' => [$_rbac, $_multitenancy, $deleted]];
+			function (array $query, bool $_rbac, bool $_multitenancy, SearchOptions $options): array {
+				$this->calls[] = ['search' => $query, 'flags' => [$_rbac, $_multitenancy, $options->deleted]];
 				$page = (int)$query['_page'];
 				$results = [
 					['@self' => ['uuid' => 'c-' . $page . '-a'], 'catalog' => $query['catalog'], 'code' => 'A' . $page, 'name' => 'Course A'],

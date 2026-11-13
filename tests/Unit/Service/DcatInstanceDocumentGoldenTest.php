@@ -39,6 +39,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\SearchOptions;
 
 /**
  * Golden test for DcatService::buildInstanceDocument.
@@ -160,7 +161,7 @@ class DcatInstanceDocumentGoldenTest extends TestCase {
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(
 			function (...$args) use ($world): array {
-				$this->searched[] = $args;
+				$this->searched[] = self::oldSearchArguments(args: $args);
 				$rows = $world['rows'];
 				if (($world['entities'] ?? false) === true) {
 					$rows = array_map(static fn (array $row): object => new class($row) implements \JsonSerializable {
@@ -197,4 +198,25 @@ class DcatInstanceDocumentGoldenTest extends TestCase {
 		);
 
 	}//end service()
+
+	/**
+	 * The searchObjectsPaginated call in its recorded positional shape, from before SearchOptions:
+	 * query, _rbac, _multitenancy, deleted, ids, uses, views.
+	 *
+	 * @param array<int, mixed> $args The arguments the mock received.
+	 *
+	 * @return array<int, mixed> The arguments in the old positional shape.
+	 */
+	private static function oldSearchArguments(array $args): array {
+		$options = ($args[3] ?? new SearchOptions());
+		return [
+			$args[0],
+			$args[1],
+			$args[2],
+			$options->deleted,
+			$options->selection->ids,
+			$options->selection->uses,
+			$options->views,
+		];
+	}//end oldSearchArguments()
 }//end class

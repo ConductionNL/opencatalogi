@@ -40,6 +40,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Unit\Support\SearchCallShape;
 
 /**
  * Golden test for DirectoryService::getKnownDirectoryUrls() and doCronSync().
@@ -156,7 +157,7 @@ class DirectoryCronTargetsGoldenTest extends TestCase {
 			$named[$parameter->getName()] = $args[$position];
 		}
 
-		$this->calls[] = ['ObjectService::' . $method => $named];
+		$this->calls[] = ['ObjectService::' . $method => SearchCallShape::named(args: $named)];
 
 	}//end record()
 

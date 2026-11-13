@@ -47,6 +47,7 @@ use OCA\OpenCatalogi\Service\SitemapRequest;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
+use OCA\OpenRegister\Kernel\Contracts\SearchOptions;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
@@ -215,8 +216,8 @@ class SitemapRequestGoldenTest extends TestCase {
 
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(
-			static function (array $query = [], bool $_rbac = true, bool $_multitenancy = true, bool $deleted = false) use (&$calls, $case): array {
-				$calls[] = ['searchObjectsPaginated' => $query, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy, 'deleted' => $deleted];
+			static function (array $query = [], bool $_rbac = true, bool $_multitenancy = true, SearchOptions $options = new SearchOptions()) use (&$calls, $case): array {
+				$calls[] = ['searchObjectsPaginated' => $query, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy, 'deleted' => $options->deleted];
 				if (($case['catalog'] ?? null) === null) {
 					return ['results' => []];
 				}

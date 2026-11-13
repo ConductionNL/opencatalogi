@@ -177,7 +177,11 @@ class OoapiServiceTest extends TestCase {
 				),
 				true,
 				true,
-				false
+				$this->callback(
+					static function (\OCA\OpenRegister\Kernel\Contracts\SearchOptions $options): bool {
+						return $options->deleted === false;
+					}
+				)
 			)
 			->willReturn(
 				[

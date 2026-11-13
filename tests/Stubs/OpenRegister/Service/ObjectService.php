@@ -161,10 +161,7 @@ class ObjectService {
 	 * @param array<string,mixed> $query Search query.
 	 * @param boolean $_rbac Apply RBAC filter.
 	 * @param boolean $_multitenancy Apply multitenancy filter.
-	 * @param array<mixed>|null $ids IDs to restrict search to.
-	 * @param string|null $uses Filter by uses relation.
-	 * @param array<mixed>|null $views Views to search.
-	 * @param boolean $_viewScopeRequired Require a view scope.
+	 * @param \OCA\OpenRegister\Kernel\Contracts\SearchOptions $options Selection, views and flags.
 	 *
 	 * @return array<ObjectEntity>|integer
 	 */
@@ -172,10 +169,7 @@ class ObjectService {
 		array $query = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		?array $ids = null,
-		?string $uses = null,
-		?array $views = null,
-		bool $_viewScopeRequired = false,
+		\OCA\OpenRegister\Kernel\Contracts\SearchOptions $options = new \OCA\OpenRegister\Kernel\Contracts\SearchOptions(),
 	): array|int {
 		return [];
 	}//end searchObjects()
@@ -205,10 +199,7 @@ class ObjectService {
 	 * @param array<string,mixed> $query Search query.
 	 * @param boolean $_rbac Apply RBAC filter.
 	 * @param boolean $_multitenancy Apply multitenancy filter.
-	 * @param boolean $deleted Include deleted objects.
-	 * @param array<mixed>|null $ids IDs to restrict to.
-	 * @param string|null $uses Filter by uses relation.
-	 * @param array<mixed>|null $views Views to search.
+	 * @param \OCA\OpenRegister\Kernel\Contracts\SearchOptions $options Selection, views and flags.
 	 *
 	 * @return array<string,mixed>
 	 */
@@ -216,10 +207,7 @@ class ObjectService {
 		array $query = [],
 		bool $_rbac = true,
 		bool $_multitenancy = true,
-		bool $deleted = false,
-		?array $ids = null,
-		?string $uses = null,
-		?array $views = null,
+		\OCA\OpenRegister\Kernel\Contracts\SearchOptions $options = new \OCA\OpenRegister\Kernel\Contracts\SearchOptions(),
 	): array {
 		return ['results' => [], 'total' => 0];
 	}//end searchObjectsPaginated()

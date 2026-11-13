@@ -24,6 +24,7 @@ namespace Unit\Command;
 
 use OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand;
 use OCA\OpenCatalogi\Service\AttachmentMigrationService;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -58,13 +59,12 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 			 * @return array<int, mixed>
 			 */
 			public function searchObjectsBySlug(
-				string $register,
-				string $schema,
+				RegisterSchemaRef $target,
 				array $filters = [],
-				bool $rbac = true,
-				bool $multitenancy = true,
+				bool $_rbac = true,
+				bool $_multitenancy = true,
 			): array {
-				return ($schema === 'document' ? $this->documents : []);
+				return ($target->schema === 'document' ? $this->documents : []);
 			}
 
 			public function find(int|string $id, ...$rest): object {
@@ -179,7 +179,7 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 	 */
 	public function testItFailsWhenTheDocumentsCannotBeRead(): void {
 		$objectService = new class {
-			public function searchObjectsBySlug(string $register, string $schema, ...$rest): array {
+			public function searchObjectsBySlug(RegisterSchemaRef $target, ...$rest): array {
 				throw new \RuntimeException('register offline');
 			}
 		};
@@ -199,7 +199,7 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 	 */
 	public function testItFailsWhenTheReaderReturnsACount(): void {
 		$objectService = new class {
-			public function searchObjectsBySlug(string $register, string $schema, ...$rest): int {
+			public function searchObjectsBySlug(RegisterSchemaRef $target, ...$rest): int {
 				return 3;
 			}
 		};

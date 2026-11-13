@@ -41,6 +41,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Unit\Support\SearchCallShape;
 
 /**
  * Golden test for EventService::shouldAutoPublishObject() and publishObjectAttachments().
@@ -204,13 +205,13 @@ class EventPublicationGateGoldenTest extends TestCase {
 				continue;
 			}
 
-			$value = $args[$position];
-			if (is_object($value) === true) {
-				$value = get_class($value);
-			}
-
-			$named[$parameter->getName()] = $value;
+			$named[$parameter->getName()] = $args[$position];
 		}
+
+		$named = array_map(
+			static fn (mixed $value): mixed => is_object($value) === true ? get_class($value) : $value,
+			SearchCallShape::named(args: $named)
+		);
 
 		$this->calls[] = [substr($call, (int)strrpos($call, '\\') + 1) => $named];
 

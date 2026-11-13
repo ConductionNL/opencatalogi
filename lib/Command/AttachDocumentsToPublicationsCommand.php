@@ -30,6 +30,7 @@ namespace OCA\OpenCatalogi\Command;
 
 use DateTime;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\RegisterSchemaRef;
 use OCA\OpenRegister\Service\File\FileTransfer;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
@@ -236,7 +237,12 @@ class AttachDocumentsToPublicationsCommand extends Command {
 		try {
 			$register = AttachmentMigrationServiceInterface::REGISTER_SLUG;
 			$schema = AttachmentMigrationServiceInterface::DOCUMENT_SCHEMA_SLUG;
-			$documents = $objectService->searchObjectsBySlug($register, $schema, ['_limit' => 5000], false, false);
+			$documents = $objectService->searchObjectsBySlug(
+				target: new RegisterSchemaRef(register: $register, schema: $schema),
+				filters: ['_limit' => 5000],
+				_rbac: false,
+				_multitenancy: false
+			);
 		} catch (Throwable $e) {
 			self::say(output: $output, line: ['readFailed', $e->getMessage()]);
 			return null;

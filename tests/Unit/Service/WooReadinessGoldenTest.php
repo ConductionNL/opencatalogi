@@ -37,6 +37,7 @@ use OCP\IAppConfig;
 use OCP\IURLGenerator;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
+use Unit\Support\SearchCallShape;
 
 /**
  * Golden test for WooReadinessService::runCheck.
@@ -343,6 +344,6 @@ class WooReadinessGoldenTest extends TestCase {
 			}
 		}
 
-		return $named;
+		return SearchCallShape::named(args: $named);
 	}//end passedArguments()
 }//end class
