@@ -456,6 +456,7 @@
         }
     ],
     "updated, future object": [],
+    "updated, future, attachments only": [],
     "updated, live, attachments only": [
         {
             "events": [
@@ -559,6 +560,46 @@
                 "OpenCatalogi: Processed object update event",
                 {
                     "objectId": "new-uuid",
+                    "published": 1,
+                    "attachmentsPublished": 2
+                }
+            ]
+        }
+    ],
+    "updated, no uuid": [
+        {
+            "retention": {
+                "publicationDate": "2024-01-01T00:00:00+00:00",
+                "title": "Live",
+                "@self": {
+                    "id": null,
+                    "uuid": null,
+                    "register": "reg-1",
+                    "schema": "sch-1",
+                    "files": []
+                }
+            }
+        },
+        {
+            "events": [
+                {
+                    "publicationDate": "2024-01-01T00:00:00+00:00",
+                    "title": "Live",
+                    "@self": {
+                        "id": null,
+                        "uuid": null,
+                        "register": "reg-1",
+                        "schema": "sch-1",
+                        "files": []
+                    }
+                }
+            ]
+        },
+        {
+            "info": [
+                "OpenCatalogi: Processed object update event",
+                {
+                    "objectId": "unknown",
                     "published": 1,
                     "attachmentsPublished": 2
                 }
