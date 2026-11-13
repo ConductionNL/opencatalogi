@@ -86,6 +86,49 @@ class CatalogiServiceTest extends TestCase {
 	}//end setUp()
 
 	// ──────────────────────────────────────────────────────────
+	// getCatalogSlugs (integration-maintenance-commands)
+	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * Every catalogue's slug in the configured register and schema, each once,
+	 * read outside RBAC; rows without a slug are left out.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function testGetCatalogSlugsListsEveryCatalogueOnce(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'catalog_schema' => '5',
+				'catalog_register' => '2',
+				default => $default,
+			}
+		);
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['slug' => 'open-data']);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('searchObjects')
+			->with(['@self' => ['register' => '2', 'schema' => '5']], false, false)
+			->willReturn([['slug' => 'woo'], $entity, ['slug' => 'woo'], ['title' => 'no slug'], ['slug' => '']]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->assertSame(['woo', 'open-data'], $this->service->getCatalogSlugs());
+	}//end testGetCatalogSlugsListsEveryCatalogueOnce()
+
+	/**
+	 * Without a configured catalogue register or schema there is nothing to list, and nothing is searched.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function testGetCatalogSlugsIsEmptyWhenUnconfigured(): void {
+		$this->config->method('getValueString')->willReturn('');
+		$this->container->expects($this->never())->method('get');
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$this->assertSame([], $this->service->getCatalogSlugs());
+	}//end testGetCatalogSlugsIsEmptyWhenUnconfigured()
+
+	// ──────────────────────────────────────────────────────────
 	// getObjectService
 	// ──────────────────────────────────────────────────────────
 	public function testGetObjectServiceAvailable(): void {

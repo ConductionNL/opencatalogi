@@ -655,28 +655,70 @@ class RetentionService implements RetentionServiceInterface {
 	 * Idempotent via retentionLastEvaluatedAt: an object already actioned today is
 	 * skipped. Every save is audited by OpenRegister's immutable audit trail.
 	 *
-	 * @return array<string, int> Counts: expiringSoon, reviewRequired, depublished, archived.
+	 * With `$dryRun` nothing is saved: the result also holds `planned`, one entry
+	 * per publication with its id, title and the count it would add to
+	 * (REQ-IMC-002). The decision is the same one the daily job takes.
+	 *
+	 * @param bool $dryRun Report the planned actions without saving anything.
+	 *
+	 * @return array<string, mixed> Counts: expiringSoon, reviewRequired, depublished, archived; plus `planned` on a dry run.
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 *
+	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag) The dry run is the command's safe default; the job keeps the plain call.
 	 */
-	public function evaluate(): array {
+	public function evaluate(bool $dryRun = false): array {
 		$counts = ['expiringSoon' => 0, 'reviewRequired' => 0, 'depublished' => 0, 'archived' => 0];
+		$planned = [];
 
 		$run = $this->configuredRun();
 		if ($run === null) {
 			$this->logger->info('[RetentionService] register/schema unconfigured or OpenRegister unavailable; skipping evaluation');
-			return $counts;
+			return $this->evaluationResult(counts: $counts, planned: $planned, dryRun: $dryRun);
 		}
 
 		foreach (($this->retentionCandidates(run: $run) ?? []) as $object) {
-			$outcome = $this->evaluatePublication(run: $run, data: $this->plainArray(object: $object));
-			if ($outcome !== null) {
-				$counts[$outcome]++;
+			$data = $this->plainArray(object: $object);
+			$outcome = $this->plannedOutcome(run: $run, data: $data);
+			if ($outcome === null) {
+				continue;
 			}
+
+			$counts[$outcome]++;
+			if ($dryRun === true) {
+				$planned[] = [
+					'id' => (string)($data['id'] ?? ($data['uuid'] ?? '')),
+					'title' => (string)($data['title'] ?? ''),
+					'action' => $outcome,
+				];
+				continue;
+			}
+
+			$this->applyOutcome(run: $run, data: $data, outcome: $outcome);
+		}
+
+		return $this->evaluationResult(counts: $counts, planned: $planned, dryRun: $dryRun);
+	}//end evaluate()
+
+	/**
+	 * The evaluation's answer: the counts, and on a dry run the planned actions.
+	 *
+	 * @param array<string, int> $counts The counts.
+	 * @param array<int, array<string, string>> $planned The planned actions.
+	 * @param bool $dryRun Whether this was a dry run.
+	 *
+	 * @return array<string, mixed>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private function evaluationResult(array $counts, array $planned, bool $dryRun): array {
+		if ($dryRun === true) {
+			$counts['planned'] = $planned;
 		}
 
 		return $counts;
-	}//end evaluate()
+	}//end evaluationResult()
 
 	/**
 	 * A run over the configured publication register and schema, or null when either is unset or OpenRegister is missing.
@@ -724,7 +766,8 @@ class RetentionService implements RetentionServiceInterface {
 	}//end retentionCandidates()
 
 	/**
-	 * Evaluate one publication: skip it, flag it as expiring soon, or act on its expiry.
+	 * Decide, without saving, what the evaluation does with one publication: skip it,
+	 * flag it as expiring soon or for review, or act on its expiry.
 	 *
 	 * A publication without a parseable expiry, or already evaluated today, is skipped.
 	 *
@@ -735,7 +778,7 @@ class RetentionService implements RetentionServiceInterface {
 	 *
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
 	 */
-	private function evaluatePublication(RetentionRun $run, array $data): ?string {
+	private function plannedOutcome(RetentionRun $run, array $data): ?string {
 		if ($run->evaluatedToday(data: $data) === true) {
 			return null;
 		}
@@ -746,12 +789,32 @@ class RetentionService implements RetentionServiceInterface {
 		}
 
 		if ($expiry > $run->now) {
-			$run->stampEvaluated(data: $data);
 			return 'expiringSoon';
 		}
 
-		return $this->actOnExpiry(run: $run, data: $data);
-	}//end evaluatePublication()
+		$counted = ['depublish' => 'depublished', 'archive' => 'archived'];
+		return ($counted[(string)($data['retentionAction'] ?? 'review')] ?? 'reviewRequired');
+	}//end plannedOutcome()
+
+	/**
+	 * Carry out a planned outcome: stamp a flag-only outcome, act on an expiry.
+	 *
+	 * @param RetentionRun $run The evaluation run.
+	 * @param array<string, mixed> $data The publication.
+	 * @param string $outcome The outcome {@see plannedOutcome()} chose.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
+	 */
+	private function applyOutcome(RetentionRun $run, array $data, string $outcome): void {
+		if ($outcome === 'expiringSoon' || $outcome === 'reviewRequired') {
+			$run->stampEvaluated(data: $data);
+			return;
+		}
+
+		$this->actOnExpiry(run: $run, data: $data);
+	}//end applyOutcome()
 
 	/**
 	 * Act on an expired publication per its retentionAction.
