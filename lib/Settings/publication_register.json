@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.7.1"
+    "version": "0.7.2"
   },
   "x-openregister": {
     "type": "application",
@@ -449,7 +449,7 @@
           }
         },
         "title": "Catalog",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A collection of publications organized by theme and schema",
         "description": "A catalog represents a curated collection of publications that can be organized by themes and schemas. It serves as the main organizational unit for content, allowing administrators to group related publications together and make them accessible through a unified interface. Catalogs can be public or private and can be associated with specific organizations.",
@@ -580,6 +580,13 @@
             "default": false,
             "facetable": false,
             "title": "Has OOAPI 5.0 Publication"
+          },
+          "hasDcat": {
+            "type": "boolean",
+            "description": "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on.",
+            "default": false,
+            "facetable": false,
+            "title": "Has DCAT feed"
           },
           "published": {
             "type": "string",
