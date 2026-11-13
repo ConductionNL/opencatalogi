@@ -31,6 +31,8 @@ use ReflectionProperty;
  * Pins the `API-Version` header and the problem details shape of API errors.
  *
  * @covers \OCA\OpenCatalogi\Middleware\ApiContractMiddleware
+ * @uses \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases
+ * @uses \OCA\OpenCatalogi\Middleware\Support\StandardProtocolPaths
  */
 class ApiContractMiddlewareTest extends TestCase {
 
