@@ -52,7 +52,7 @@
   - [ ] `@self` metadata fields (`schemaVersion`, `relations`, `locked`, `owner`, etc.) are stripped from all publication objects in the result.
   - [ ] Paginated JSON response with CORS headers is returned.
   - [ ] If catalog ID does not exist, `404 Not Found` with a static `message` field is returned — no stack trace, SQL, or internal path in the response body.
-  - [ ] Controller method annotated `#[PublicPage]`, `#[NoCSRFRequired]`, `#[NoAdminRequired]`.
+  - [x] Controller method annotated `#[PublicPage]`, `#[NoCSRFRequired]`, `#[NoAdminRequired]`. (verified: lib/Controller/CatalogiController.php, tests/Unit/Controller/CatalogiControllerTest.php)
 
 ## Task 5: CORS preflight OPTIONS routes (CAT-008)
 
@@ -70,13 +70,13 @@
 - **Status**: done
 - **Files**: `lib/Service/CatalogiService.php`
 - **Acceptance criteria**:
-  - [ ] `CatalogiService` creates a distributed cache via `ICacheFactory::createDistributed('opencatalogi_catalogs')` in its constructor.
-  - [ ] `getCatalogBySlug(string $slug)`: checks `cache->get("catalog_slug_{$slug}")` first; on miss, queries `ObjectService::searchObjects()`, stores with TTL `3600`, returns array or `null`.
-  - [ ] Null (slug not found) is NOT stored in cache.
-  - [ ] `invalidateCatalogCache(string $slug)`: calls `cache->remove("catalog_slug_{$slug}")`.
-  - [ ] `invalidateCatalogCacheById(int|string $id)`: resolves slug by ID via `ObjectService`, then calls `invalidateCatalogCache($slug)`.
-  - [ ] `warmupCatalogCache(string $slug)`: calls `invalidateCatalogCache($slug)` then re-fetches (forces a fresh entry).
-  - [ ] `warmupCatalogCacheById(int|string $id)`: resolves slug by ID, then calls `warmupCatalogCache($slug)`.
+  - [x] `CatalogiService` creates a distributed cache via `ICacheFactory::createDistributed('opencatalogi_catalogs')` in its constructor. (verified: lib/Service/CatalogiService.php:155)
+  - [x] `getCatalogBySlug(string $slug)`: checks `cache->get("catalog_slug_{$slug}")` first; on miss, queries `ObjectService::searchObjects()`, stores with TTL `3600`, returns array or `null`. (verified: lib/Service/CatalogiService.php, tests/Unit/Service/CatalogiServiceTest.php)
+  - [x] Null (slug not found) is NOT stored in cache. (verified: lib/Service/CatalogiService.php, tests/Unit/Service/CatalogiServiceTest.php)
+  - [x] `invalidateCatalogCache(string $slug)`: calls `cache->remove("catalog_slug_{$slug}")`. (verified: lib/Service/CatalogiService.php, tests/Unit/Service/CatalogiServiceTest.php)
+  - [x] `invalidateCatalogCacheById(int|string $id)`: resolves slug by ID via `ObjectService`, then calls `invalidateCatalogCache($slug)`. (verified: lib/Service/CatalogiService.php, tests/Unit/Service/CatalogiServiceTest.php)
+  - [x] `warmupCatalogCache(string $slug)`: calls `invalidateCatalogCache($slug)` then re-fetches (forces a fresh entry). (verified: lib/Service/CatalogiService.php, tests/Unit/Service/CatalogiServiceTest.php)
+  - [x] `warmupCatalogCacheById(int|string $id)`: resolves slug by ID, then calls `warmupCatalogCache($slug)`. (verified: lib/Service/CatalogiService.php, tests/Unit/Service/CatalogiServiceTest.php)
 
 ## Task 7: Automatic cache lifecycle via CatalogCacheEventListener (CAT-011)
 
@@ -84,12 +84,12 @@
 - **Status**: done
 - **Files**: `lib/Listener/CatalogCacheEventListener.php`, `lib/AppInfo/Application.php`
 - **Acceptance criteria**:
-  - [ ] `CatalogCacheEventListener` is registered in `Application.php` for `ObjectCreatedEvent`, `ObjectUpdatedEvent`, and `ObjectDeletedEvent`.
-  - [ ] On each event, the listener checks whether `object->getSchema() === catalog_schema && object->getRegister() === catalog_register` from `IAppConfig`. Non-catalog events are silently ignored (no log entry, no exception).
-  - [ ] `ObjectCreatedEvent` → `warmupCatalogCache($slug)`.
-  - [ ] `ObjectUpdatedEvent` → `warmupCatalogCache($slug)`.
-  - [ ] `ObjectDeletedEvent` → `invalidateCatalogCache($slug)`.
-  - [ ] The listener MUST NOT call `saveObject()` or any persistence method on the originating object (see CAT-012 in the `fix-catalog-update-infinite-loop` change).
+  - [x] `CatalogCacheEventListener` is registered in `Application.php` for `ObjectCreatedEvent`, `ObjectUpdatedEvent`, and `ObjectDeletedEvent`. (verified: lib/AppInfo/Application.php:156-164, lib/Listener/CatalogCacheEventListener.php, tests/Unit/Listener/CatalogCacheEventListenerTest.php)
+  - [x] On each event, the listener checks whether `object->getSchema() === catalog_schema && object->getRegister() === catalog_register` from `IAppConfig`. Non-catalog events are silently ignored (no log entry, no exception). (verified: lib/Listener/CatalogCacheEventListener.php, tests/Unit/Listener/CatalogCacheEventListenerTest.php)
+  - [x] `ObjectCreatedEvent` → `warmupCatalogCache($slug)`. (verified: lib/Listener/CatalogCacheEventListener.php, tests/Unit/Listener/CatalogCacheEventListenerTest.php)
+  - [x] `ObjectUpdatedEvent` → `warmupCatalogCache($slug)`. (verified: lib/Listener/CatalogCacheEventListener.php, tests/Unit/Listener/CatalogCacheEventListenerTest.php)
+  - [x] `ObjectDeletedEvent` → `invalidateCatalogCache($slug)`. (verified: lib/Listener/CatalogCacheEventListener.php, tests/Unit/Listener/CatalogCacheEventListenerTest.php)
+  - [x] The listener MUST NOT call `saveObject()` or any persistence method on the originating object (see CAT-012 in the `fix-catalog-update-infinite-loop` change). (verified: lib/Listener/CatalogCacheEventListener.php, tests/Unit/Listener/CatalogCacheEventListenerTest.php, no save call in the listener)
   - [ ] `@spec openspec/changes/catalogs/tasks.md#task-7` PHPDoc tag on the listener class.
 
 ## Task 8: Multi-schema and multi-register publication scoping (CAT-010)
@@ -108,7 +108,7 @@
 - **Status**: done
 - **Files**: `src/views/CatalogiIndex.vue`, `src/modals/CatalogModal.vue`, `src/modals/ViewCatalogi.vue`, `src/components/CatalogiWidget.vue`
 - **Acceptance criteria**:
-  - [ ] `CatalogiIndex.vue` uses `CnIndexPage` (or equivalent `@conduction/nextcloud-vue` list component) — no bespoke table.
+  - [x] `CatalogiIndex.vue` uses `CnIndexPage` (or equivalent `@conduction/nextcloud-vue` list component) — no bespoke table. (verified: src/views/catalogi/CatalogiIndex.vue)
   - [ ] `CatalogModal.vue` uses `CnFormDialog` or `CnAdvancedFormDialog` for create/edit — no bespoke form component.
   - [ ] `ViewCatalogi.vue` uses `CnDetailPage` or `CnDetailCard` sections.
   - [ ] `CatalogiWidget.vue` uses `CnWidgetWrapper` / `CnInfoWidget` or equivalent — no custom widget shell.
