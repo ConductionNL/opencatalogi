@@ -682,6 +682,36 @@ class StatutoryTermTest extends TestCase {
 	}//end testAStoreRowThatIsNotATermIsSkipped()
 
 	/**
+	 * A store that answers with something other than a list reports no rows.
+	 *
+	 * @return void
+	 */
+	public function testAStoreAnswerThatIsNotAListReportsNoRows(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			function (string $id): object {
+				if ($id === 'OCA\OpenRegister\Service\Flow\Timer\FlowTimerService') {
+					return $this->engine;
+				}
+
+				return new class {
+					public function findBySubject(string $subjectType, string $subjectUuid, array $states = []): mixed {
+						return null;
+					}
+				};
+			}
+		);
+		$terms = new StatutoryTerm(
+			$container,
+			$this->createMock(LoggerInterface::class),
+			$this->appManager(installed: true)
+		);
+
+		$this->assertSame([], $terms->forRequest(requestUuid: 'req-1'));
+
+	}//end testAStoreAnswerThatIsNotAListReportsNoRows()
+
+	/**
 	 * An engine that describes a term with something other than an array still
 	 * reports the two numbers, rather than failing on the derivation.
 	 *
