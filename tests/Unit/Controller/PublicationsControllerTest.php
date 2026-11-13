@@ -13,6 +13,7 @@ use OCA\OpenCatalogi\Controller\PublicationsController;
 use OCA\OpenCatalogi\Service\CatalogiService;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenRegister\Kernel\Contracts\RenderSelection;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -1792,8 +1793,9 @@ class PublicationsControllerTest extends TestCase {
 		// Inspect the rendered-entity call: only '@self.'-prefixed entries should survive.
 		$this->assertGreaterThan(0, count($captured));
 		$renderArgs = $captured[0];
-		// The _extend arg is the 2nd positional one.
-		$extendArg = $renderArgs[1];
+		// The extend list travels on the RenderSelection, the 2nd argument.
+		$this->assertInstanceOf(RenderSelection::class, $renderArgs[1]);
+		$extendArg = $renderArgs[1]->extend;
 		$this->assertContains('@self.files', $extendArg);
 		$this->assertContains('@self.metadata', $extendArg);
 		$this->assertNotContains('parent', $extendArg);
@@ -1832,7 +1834,8 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->controller->show('test-catalog', 'pub-123');
 
 		$this->assertEquals(200, $response->getStatus());
-		$this->assertCount(5, $captured[0][1]);
+		$this->assertInstanceOf(RenderSelection::class, $captured[0][1]);
+		$this->assertCount(5, $captured[0][1]->extend);
 	}
 
 	// =======================================================================

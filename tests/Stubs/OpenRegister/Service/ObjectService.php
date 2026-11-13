@@ -240,11 +240,7 @@ class ObjectService {
 	 * Render an entity with optional extension, depth, filter and RBAC controls.
 	 *
 	 * @param ObjectEntity $entity Entity to render.
-	 * @param array<mixed>|null $_extend Extension paths.
-	 * @param integer|null $depth Recursion depth.
-	 * @param array<mixed>|null $filter Field filter.
-	 * @param array<mixed>|null $fields Fields to include.
-	 * @param array<mixed>|null $unset Fields to unset.
+	 * @param \OCA\OpenRegister\Kernel\Contracts\RenderSelection|null $selection Extend, filter, fields and unset.
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
 	 *
@@ -252,11 +248,7 @@ class ObjectService {
 	 */
 	public function renderEntity(
 		ObjectEntity $entity,
-		?array $_extend = [],
-		?int $depth = 0,
-		?array $filter = [],
-		?array $fields = [],
-		?array $unset = [],
+		?\OCA\OpenRegister\Kernel\Contracts\RenderSelection $selection = null,
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): array {
