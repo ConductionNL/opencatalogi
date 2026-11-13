@@ -122,6 +122,11 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
+		// Document references (integration-publish-by-reference): refuse a URL
+		// that is not a public https address before OpenRegister stores it.
+		$context->registerEventListener(ObjectCreatingEvent::class, DocumentReferenceListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, DocumentReferenceListener::class);
+
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
 		// installed after OpenCatalogi, its register event completes the scope

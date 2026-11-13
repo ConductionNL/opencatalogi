@@ -217,7 +217,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 
 		$this->update(['schemas' => [['slug' => 'catalog', 'id' => 3]]]);
 
-		$this->assertCount(28, $looked);
+		$this->assertCount(29, $looked);
 		$this->assertSame('listing@opencatalogi', $looked[0]);
 		$this->assertSame(
 			[
