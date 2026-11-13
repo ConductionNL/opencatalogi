@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Http\TextResponse;
+use OCA\OpenCatalogi\Service\InstanceMode;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\IL10N;
@@ -53,6 +54,7 @@ class RobotsController extends Controller {
 	 * @param IURLGenerator $urlGenerator The URL generator.
 	 * @param IL10N $l10n The localization service.
 	 * @param SitemapDirectives $directives The catalogues that publish a Woo sitemap and their sitemap lines.
+	 * @param InstanceMode|null $instanceMode Staging disallows everything (instance-staging-mode).
 	 */
 	public function __construct(
 		$appName,
@@ -61,6 +63,7 @@ class RobotsController extends Controller {
 		private readonly IURLGenerator $urlGenerator,
 		private readonly IL10N $l10n,
 		private readonly SitemapDirectives $directives,
+		private readonly ?InstanceMode $instanceMode = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -80,6 +83,12 @@ class RobotsController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function index(): TextResponse {
+		// In staging nothing may be harvested, whatever the catalogues say
+		// (instance-staging-mode REQ-STG-003).
+		if ($this->instanceMode !== null && $this->instanceMode->isStaging() === true) {
+			return new TextResponse(text: "User-agent: *\nDisallow: /\n");
+		}
+
 		$settings = $this->settingsService->getSettings();
 
 		if (isset($settings['configuration']['catalog_register']) === false

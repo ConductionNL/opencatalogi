@@ -9,14 +9,14 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 2. Outbound gate
 
-- [ ] 2.1 Add `OutboundGate` and the `dryRunDelivery` schema fragment with `slug` and version (REQ-STG-002). Verify: `tests/Unit/Service/OutboundGateTest.php::testStagingDoesNotAllow`, `::testAnUnreadableModeDoesNotAllow`, `::testProductionAllows`.
+- [x] 2.1 Add `OutboundGate` and the `dryRunDelivery` schema fragment with `slug` and version (REQ-STG-002). Verify: `tests/Unit/Service/OutboundGateTest.php::testStagingDoesNotAllow`, `::testAnUnreadableModeDoesNotAllow`, `::testProductionAllows`.
 - [ ] 2.2 Put the gate first in the six named methods; a dry run stores the record and sets no delivery field (REQ-STG-002). Verify: `tests/Unit/Service/OutboundGateWiringTest.php::testEveryChannelRecordsADryRunInStaging` (fails today: each sends), `::testADryRunSetsNoDeliveryField`.
 - [ ] 2.3 Add a test that greps `lib/` for `new Client(`, `IClientService` and the gateway delivery event names, and fails on a site outside the six gated methods and the inbound readers it lists by name (REQ-STG-002). Verify: `tests/Unit/Service/OutboundGateCoverageTest.php::testNoUngatedOutboundSiteExists`.
 - [ ] 2.4 Add a Dry runs page listing `dryRunDelivery` records (REQ-STG-002). Verify: `tests/e2e/instance-staging-mode.spec.ts` "the officer reviews what would have gone out".
 
 ## 3. Public surface
 
-- [ ] 3.1 Add `StagingMiddleware`, registered with `registerMiddleware()`, and the staging branch in `RobotsController::index()` (REQ-STG-003). Verify: `tests/Unit/Middleware/StagingMiddlewareTest.php::testEveryPublicRouteAnswers503ToAnonymousInStaging` (fails today), `::testASignedInUserSeesThePublicView`, `::testProductionIsUntouched`; `tests/Unit/Controller/RobotsControllerTest.php::testStagingDisallowsEverything`.
+- [x] 3.1 Add `StagingMiddleware`, registered with `registerMiddleware()`, and the staging branch in `RobotsController::index()` (REQ-STG-003). Verify: `tests/Unit/Middleware/StagingMiddlewareTest.php::testEveryPublicRouteAnswers503ToAnonymousInStaging` (fails today), `::testASignedInUserSeesThePublicView`, `::testProductionIsUntouched`; `tests/Unit/Controller/RobotsControllerTest.php::testStagingDisallowsEverything`.
 - [ ] 3.2 Live: on the dev instance turn staging on, `curl` the sitemap index, `/api/dcat` and robots.txt anonymously, run one publish with announce, and paste the answers and the dry-run count in the PR body; turn staging off afterwards (REQ-STG-002, REQ-STG-003). Verify: the pasted output.
 
 ## 4. Docs
