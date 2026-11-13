@@ -122,6 +122,10 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
+		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, PublicationLinksListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationLinksListener::class);
+
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
 		// installed after OpenCatalogi, its register event completes the scope
