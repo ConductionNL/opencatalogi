@@ -38,6 +38,7 @@ use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -99,6 +100,7 @@ class PublicationsController extends Controller {
 	 * @param UsageCounterServiceInterface $usageCounterService Privacy-safe usage counter (fire-and-forget)
 	 * @param IAppConfig|null $appConfig App config for CORS allowlist (optional)
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
+	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -115,6 +117,7 @@ class PublicationsController extends Controller {
 		private readonly UsageCounterServiceInterface $usageCounterService,
 		private readonly ?IAppConfig $appConfig = null,
 		private readonly CorsSettings $cors = new CorsSettings(),
+		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -604,7 +607,10 @@ class PublicationsController extends Controller {
 	 *
 	 * @return JSONResponse The empty envelope, with CORS and cache headers.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
+	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 */
 	private function emptyCatalogEnvelope(array $catalog, string $catalogSlug): JSONResponse {
 		$this->logger->warning(
@@ -614,7 +620,15 @@ class PublicationsController extends Controller {
 
 		$about = $this->catalogAbout(catalog: $catalog, catalogSlug: $catalogSlug);
 		$about['schemas'] = [];
-		$response = new JSONResponse(['results' => [], 'total' => 0, '@catalog' => $about], 200);
+		$response = new JSONResponse(
+			[
+				'results' => [],
+				'total' => 0,
+				'@catalog' => $about,
+				'appliedFilters' => AppliedFilters::forResponse(appliedFilters: $this->appliedFilters),
+			],
+			200
+		);
 		$this->addCorsHeaders(response: $response);
 
 		return $this->cacheableForCaller(response: $response);
@@ -652,7 +666,10 @@ class PublicationsController extends Controller {
 	 *
 	 * @return JSONResponse The page, with the catalogue, its resolved schemas and registers, CORS and cache headers.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
+	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 */
 	private function catalogPublications(array $catalog, string $catalogSlug): JSONResponse {
 		$objectService = $this->getObjectService();
@@ -669,6 +686,7 @@ class PublicationsController extends Controller {
 		$resolved = $this->queryService->resolveSchemaAndRegisterObjects($catalog);
 		$result['@self']['schemas'] = $resolved['schemas'];
 		$result['@self']['registers'] = $resolved['registers'];
+		$result['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
 		$response = new JSONResponse($result, 200);
 		$this->addCorsHeaders(response: $response);

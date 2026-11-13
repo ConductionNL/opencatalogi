@@ -4,13 +4,13 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 1. Collector
 
-- [ ] 1.1 Add `AppliedFilters` as a request-scoped service registered in `Application::register()` (REQ-ASF-002). Verify: `tests/Unit/Service/AppliedFiltersTest.php::testRecordedFiltersAreReturnedOnce` and `::testANameOutsideTheListIsRefused`.
-- [ ] 1.2 Record at each filter site: catalogue scope, the anonymous evaluation, the RET-006 drop in `PublicationQueryService`, and `CallerScope::strip()` returning the removed keys (REQ-ASF-001, REQ-ASF-002). Verify: `tests/Unit/Service/CallerScopeTest.php::testStripReportsTheRemovedKeys` and `PublicationQueryServiceTest::testTheArchivedDropIsRecorded`.
+- [x] 1.1 Add `AppliedFilters` as a request-scoped service registered in `Application::register()` (REQ-ASF-002). Verify: `tests/Unit/Service/AppliedFiltersTest.php::testRecordedFiltersAreReturnedOnce` and `::testANameOutsideTheListIsRefused`.
+- [x] 1.2 Record at each filter site: catalogue scope, the anonymous evaluation, the RET-006 drop in `PublicationQueryService`, and `CallerScope::strip()` returning the removed keys (REQ-ASF-001, REQ-ASF-002). Verify: `tests/Unit/Service/CallerScopeTest.php::testStripReportsTheRemovedKeys` and `PublicationQueryServiceTest::testTheArchivedDropIsRecorded`.
 
 ## 2. Responses
 
-- [ ] 2.1 Add `appliedFilters` to every list response of `PublicationsController`, `SearchController`, `ThemesController` and `FederationController` (REQ-ASF-001). Verify: `tests/Unit/Controller/AppliedFiltersResponseTest.php::testTheCatalogueListReportsItsScope` (fails today), `::testArchivedRowsDroppedAreReported`, `::testAFilterThatDidNotApplyIsNotListed`, `::testAStrippedCallerScopeIsReported`, `::testAFailingCollectorReportsUnknown`, each driven through the controller method the route names.
-- [ ] 2.2 List every list route in `appinfo/routes.php` in a test and assert each one's controller method's response carries the key, so a new list route cannot skip it (REQ-ASF-001). Verify: `AppliedFiltersResponseTest::testEveryPublicListRouteCarriesAppliedFilters`.
+- [x] 2.1 Add `appliedFilters` to every list response of `PublicationsController`, `SearchController`, `ThemesController` and `FederationController` (REQ-ASF-001). Verify: `tests/Unit/Controller/AppliedFiltersResponseTest.php::testTheCatalogueListReportsItsScope` (fails today), `::testArchivedRowsDroppedAreReported`, `::testAFilterThatDidNotApplyIsNotListed`, `::testAStrippedCallerScopeIsReported`, `::testAFailingCollectorReportsUnknown`, each driven through the controller method the route names.
+- [x] 2.2 List every list route in `appinfo/routes.php` in a test and assert each one's controller method's response carries the key, so a new list route cannot skip it (REQ-ASF-001). Verify: `AppliedFiltersResponseTest::testEveryPublicListRouteCarriesAppliedFilters`.
 
 ## 3. OpenAPI
 
@@ -23,7 +23,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 5. Verification
 
-- [ ] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. Public search is central: run the full unit suite once.
+- [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. Public search is central: run the full unit suite once.
 - [ ] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
 - [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
 - [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.

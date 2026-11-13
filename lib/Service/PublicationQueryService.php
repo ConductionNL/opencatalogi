@@ -94,12 +94,15 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @param IAppConfig|null $config App config; used by the catalog-enumeration path to locate the catalog register/schema.
 	 * @param LoggerInterface|null $logger Logger — surfaces the fail-closed empty-envelope branch so silent
 	 *                                     catalog-scope resolution failure is observable in production (WOO-536).
+	 * @param AppliedFilters|null $appliedFilters The request's collector; each filter this service applies
+	 *                                            records itself there (REQ-ASF-002).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly ?IUserSession $userSession = null,
 		private readonly ?IAppConfig $config = null,
 		private readonly ?LoggerInterface $logger = null,
+		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 
 	}//end __construct()
@@ -329,6 +332,8 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 			return null;
 		}
 
+		$this->recordCatalogScope(schemaIds: $scope['schemas'], registerIds: $scope['registers']);
+
 		return $scope;
 	}//end guardedCatalogScope()
 
@@ -355,7 +360,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		// set past the resolved catalog boundary. This used to strip only `_schema` and
 		// `_registers`; `?schema=<S>&register=<R>` reached OR as `@self.schema`, won the
 		// precedence chain and bypassed the SCH-PFTS-CAT-002 guard (WOO-581 review).
-		$searchQuery = CallerScope::strip(query: $searchQuery);
+		$searchQuery = CallerScope::strip(query: $searchQuery, appliedFilters: $this->appliedFilters);
 		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
 		unset($searchQuery['_content']);
 		// OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
@@ -586,6 +591,10 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		// unknown, which would silently drop pre-status-migration rows). Enforcing here
 		// in PHP is deterministic and safe for legacy data.
 		if (($rowArray['status'] ?? null) === 'archived') {
+			$this->appliedFilters?->increment(
+				name: AppliedFilters::ARCHIVED_EXCLUDED,
+				reason: 'Archived publications are never shown on a public list.'
+			);
 			return null;
 		}
 
@@ -980,7 +989,13 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
 	 */
 	public function applySchemaScopeReadRuleGuard(array $schemaIds): array {
-		if ($this->isAnonymous() === false || empty($schemaIds) === true) {
+		if ($this->isAnonymous() === false) {
+			return $schemaIds;
+		}
+
+		// The anonymous caller's scope is the public read rules' scope.
+		$this->recordPublicOnly();
+		if (empty($schemaIds) === true) {
 			return $schemaIds;
 		}
 
@@ -2178,7 +2193,14 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 */
 	private function evaluateAsAnonymous(object $objectService, callable $operation): mixed {
 		if (method_exists($objectService, 'runAsAnonymous') === true) {
+			$this->recordPublicOnly();
 			return $objectService->runAsAnonymous($operation);
+		}
+
+		// Without the primitive the read runs with the caller's session: it is
+		// public-only only when that caller is anonymous.
+		if ($this->isAnonymous() === true) {
+			$this->recordPublicOnly();
 		}
 
 		if ($this->warnedAboutMissingAnonymousScope === false) {
@@ -2197,6 +2219,72 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 
 		return $operation();
 	}//end evaluateAsAnonymous()
+
+	/**
+	 * Record that the query ran as the anonymous public reader (REQ-ASF-001).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	private function recordPublicOnly(): void {
+		$this->appliedFilters?->record(
+			name: AppliedFilters::PUBLIC_ONLY,
+			value: true,
+			reason: 'Only what an anonymous reader may see is listed.'
+		);
+	}//end recordPublicOnly()
+
+	/**
+	 * Record the catalogue scope that narrowed a query, as schema and register slugs
+	 * (REQ-ASF-001). An id whose slug cannot be resolved is reported as the id.
+	 *
+	 * @param array<int|string> $schemaIds The schema ids of the scope.
+	 * @param array<int|string> $registerIds The register ids of the scope.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function recordCatalogScope(array $schemaIds, array $registerIds): void {
+		if ($this->appliedFilters === null) {
+			return;
+		}
+
+		$resolved = $this->resolveSchemaAndRegisterObjects(catalog: ['schemas' => $schemaIds, 'registers' => $registerIds]);
+		$this->appliedFilters->record(
+			name: AppliedFilters::CATALOG_SCOPE,
+			value: [
+				'schemas' => self::slugsOf(ids: $schemaIds, resolved: $resolved['schemas']),
+				'registers' => self::slugsOf(ids: $registerIds, resolved: $resolved['registers']),
+			],
+			reason: 'The list is limited to the schemas and registers of the catalogue.'
+		);
+	}//end recordCatalogScope()
+
+	/**
+	 * The slug of each id, or the id itself when it did not resolve.
+	 *
+	 * @param array<int|string> $ids The ids.
+	 * @param array<int|string, array> $resolved The resolved objects, keyed by id.
+	 *
+	 * @return array<int, string> The slugs, in the order of the ids.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	private static function slugsOf(array $ids, array $resolved): array {
+		$slugs = [];
+		foreach (array_values($ids) as $id) {
+			$slug = ($resolved[$id]['slug'] ?? null);
+			if (is_string($slug) === false || $slug === '') {
+				$slug = (string) $id;
+			}
+
+			$slugs[] = $slug;
+		}
+
+		return $slugs;
+	}//end slugsOf()
 
 	/**
 	 * Resolve the OpenRegister ObjectService from the container.
@@ -2241,6 +2329,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		// ['19', 19] does not list everything twice.
 		$scope = CatalogScopeIds::forCatalog(catalog: $catalog);
 		$scope = ['schemas' => array_values(array_unique($scope['schemas'])), 'registers' => array_values(array_unique($scope['registers']))];
+		$this->recordCatalogScope(schemaIds: $scope['schemas'], registerIds: $scope['registers']);
 
 		return self::withRegisterScope(searchQuery: self::withSchemaScope(searchQuery: $searchQuery, scope: $scope), registers: $scope['registers']);
 	}//end buildCatalogSearchQuery()
@@ -2264,7 +2353,10 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @spec openspec/specs/search/spec.md
 	 */
 	private function requestSearchQuery(array $queryParams, object $objectService): array {
-		$searchQuery = CallerScope::strip(query: array_merge($objectService->buildSearchQuery($queryParams), ['_includeDeleted' => false]));
+		$searchQuery = CallerScope::strip(
+			query: array_merge($objectService->buildSearchQuery($queryParams), ['_includeDeleted' => false]),
+			appliedFilters: $this->appliedFilters
+		);
 		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
 
 		if (isset($searchQuery['_order']) === true && is_string($searchQuery['_order']) === true) {

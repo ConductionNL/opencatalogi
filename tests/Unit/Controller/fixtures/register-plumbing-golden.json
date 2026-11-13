@@ -13104,7 +13104,14 @@
                 "limit": 5,
                 "offset": 0,
                 "page": 1,
-                "pages": 1
+                "pages": 1,
+                "appliedFilters": [
+                    {
+                        "name": "unknown",
+                        "value": null,
+                        "reason": "not recorded"
+                    }
+                ]
             },
             "headers": {
                 "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
@@ -13188,7 +13195,14 @@
                 "limit": 5,
                 "offset": 0,
                 "page": 1,
-                "pages": 1
+                "pages": 1,
+                "appliedFilters": [
+                    {
+                        "name": "unknown",
+                        "value": null,
+                        "reason": "not recorded"
+                    }
+                ]
             },
             "headers": {
                 "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
@@ -13341,7 +13355,14 @@
                 "limit": 5,
                 "offset": 0,
                 "page": 1,
-                "pages": 1
+                "pages": 1,
+                "appliedFilters": [
+                    {
+                        "name": "unknown",
+                        "value": null,
+                        "reason": "not recorded"
+                    }
+                ]
             },
             "headers": {
                 "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",

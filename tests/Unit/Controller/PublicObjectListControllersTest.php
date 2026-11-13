@@ -24,6 +24,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\GlossaryController;
 use OCA\OpenCatalogi\Controller\ThemesController;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -111,7 +112,7 @@ class PublicObjectListControllersTest extends TestCase {
 			return new GlossaryController('opencatalogi', $request, $config, new OpenRegisterLookup($container, $appManager), $l10n);
 		}
 
-		return new ThemesController('opencatalogi', $request, $config, new OpenRegisterLookup($container, $appManager));
+		return new ThemesController('opencatalogi', $request, $config, new OpenRegisterLookup($container, $appManager), appliedFilters: new AppliedFilters());
 	}
 
 	/**
@@ -136,20 +137,34 @@ class PublicObjectListControllersTest extends TestCase {
 		$response = $controller->index();
 
 		$this->assertSame([['q' => 'x', '@self' => ['owner' => 'me', 'schema' => '10', 'register' => '2']]], $this->queries);
-		$this->assertSame(
-			[
-				'results' => [['id' => 'a']],
-				'total' => 3,
-				'limit' => 20,
-				'offset' => 0,
-				'page' => 2,
-				'pages' => 1,
-				'next' => 'n',
-				'facets' => ['kind' => [1]],
-				'facetable' => ['kind'],
-			],
-			$response->getData()
-		);
+		$expected = [
+			'results' => [['id' => 'a']],
+			'total' => 3,
+			'limit' => 20,
+			'offset' => 0,
+			'page' => 2,
+			'pages' => 1,
+			'next' => 'n',
+			'facets' => ['kind' => [1]],
+			'facetable' => ['kind'],
+		];
+		if ($class === ThemesController::class) {
+			// The caller's scope keys are named, never echoed, and the configured pair is the scope.
+			$expected['appliedFilters'] = [
+				[
+					'name' => 'callerScopeIgnored',
+					'value' => ['_schemas', '@self.schema'],
+					'reason' => 'A public list sets its own register and schema scope; these query keys were ignored.',
+				],
+				[
+					'name' => 'catalogScope',
+					'value' => ['schemas' => ['10'], 'registers' => ['2']],
+					'reason' => 'The list is limited to the configured schema and register.',
+				],
+			];
+		}
+
+		$this->assertSame($expected, $response->getData());
 		$headers = $response->getHeaders();
 		$this->assertSame('https://b.example', $headers['Access-Control-Allow-Origin']);
 		$this->assertSame('PUT, POST, GET, DELETE, PATCH', $headers['Access-Control-Allow-Methods']);
