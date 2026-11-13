@@ -37,6 +37,7 @@ use RuntimeException;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  * @SuppressWarnings(PHPMD.ExcessiveClassComplexity)
+ * @SuppressWarnings(PHPMD.TooManyPublicMethods) mapDatasets() lets the changed-since read reuse the feed mapping instead of copying it.
  * @SuppressWarnings(PHPMD.TooManyMethods) Document building is split into small private steps to stay under the unit size and complexity limits.
  *
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints

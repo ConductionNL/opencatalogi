@@ -71,7 +71,7 @@ Decision D10 struck OAI-PMH (row 9.10). Groups 1 to 5 above specified the OAI-PM
 ## 7. Verification (amendment)
 
 - [x] 7.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 7.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
+- [x] 7.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
 - [ ] 7.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
 - [ ] 7.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 

@@ -48,6 +48,8 @@ use RuntimeException;
 /**
  * Controller for the changed-since read of a catalogue.
  *
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) The route attributes and response types count as couplings; the logic lives in ChangesService.
+ *
  * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md
  */
 class ChangesController extends Controller {

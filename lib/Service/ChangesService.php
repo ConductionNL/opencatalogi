@@ -46,6 +46,10 @@ use RuntimeException;
  * by id and date only, and only when a depublication record shows it was
  * public once.
  *
+ * @SuppressWarnings(PHPMD.ExcessiveClassComplexity) Parsing, window, cursor and the two reads are small steps of one answer.
+ * @SuppressWarnings(PHPMD.CouplingBetweenObjects) OpenRegister, the DCAT mapping, the clock and the URL generator, nothing else.
+ * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds, CallerScope and DateTimeImmutable::getLastErrors() are pure.
+ *
  * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md
  */
 class ChangesService {
