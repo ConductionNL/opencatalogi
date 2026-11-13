@@ -151,15 +151,15 @@ Every route under `/api/` MUST also be served under `/api/v1/`, with the same co
 
 **Priority:** Must **Status:** Implemented
 
-Paths that implement a protocol defined elsewhere (Sitemaps (DiWoo), robots.txt, DCAT-AP, OOAPI, schema.org, Atom feeds, Federation between instances, Health check, Prometheus metrics) MUST NOT get a `/api/v1/` alias, a `Deprecation` header, an `API-Version` header or a problem details rewrite: their formats belong to their standard. They are listed in `lib/Middleware/Support/StandardProtocolPaths.php` and are described in `openapi.standards.json`, under the unversioned base `/index.php/apps/opencatalogi/api`, rather than in `openapi.json`.
+Paths that implement a protocol defined elsewhere (Sitemaps (DiWoo), robots.txt, DCAT-AP, OOAPI, schema.org, Atom feeds, Federation between instances, Health check, Prometheus metrics) MUST NOT get a `/api/v1/` alias or a `Deprecation` header: their URLs belong to their standard. They keep the `API-Version` header and the problem details error bodies they already had. They are listed in `lib/Middleware/Support/StandardProtocolPaths.php` and are described in `openapi.standards.json`, under the unversioned base `/index.php/apps/opencatalogi/api`, rather than in `openapi.json`.
 
-#### Scenario: A protocol path is left alone
+#### Scenario: A protocol path keeps its URL and behaviour
 
 @e2e exclude a response shape, not browser behaviour; covered by PHPUnit ApiContractMiddlewareTest.
 
 - GIVEN a client calls `/index.php/apps/opencatalogi/api/woo/sitemaps/1` and it answers `400` with `{"error": "x"}`
-- THEN the body MUST stay `{"error": "x"}`
-- AND the response MUST carry no `API-Version` and no `Deprecation` header
+- THEN the response MUST carry no `Deprecation` and no `Link` header
+- AND it MUST keep the `API-Version` header and the problem details body it carried before
 
 ## Dependencies
 

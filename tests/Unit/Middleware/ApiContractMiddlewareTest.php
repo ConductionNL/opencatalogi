@@ -23,6 +23,7 @@ use OCP\AppFramework\Http\DataDisplayResponse;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
 use OCP\IRequest;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use ReflectionProperty;
 
@@ -191,18 +192,41 @@ class ApiContractMiddlewareTest extends TestCase {
 	}//end testVersionedPathIsNotDeprecated()
 
 	/**
-	 * A path that speaks a protocol defined elsewhere keeps that protocol's formats.
+	 * A path that speaks a protocol defined elsewhere keeps the version header and
+	 * problem details it already had, and is not marked deprecated.
+	 *
+	 * @param string $path A standard protocol path.
 	 *
 	 * @return void
 	 */
-	public function testStandardProtocolPathIsUntouched(): void {
-		$response = $this->decorate(path: '/apps/opencatalogi/api/woo/sitemaps/1', response: new JSONResponse(data: ['error' => 'x'], statusCode: 400));
+	#[DataProvider('standardProtocolPaths')]
+	public function testStandardProtocolPathKeepsItsBehaviour(string $path): void {
+		$response = $this->decorate(path: $path, response: new JSONResponse(data: ['error' => 'x'], statusCode: 400));
 		$headers  = $this->headersOf(response: $response);
+		$data     = $response->getData();
 
-		$this->assertSame(expected: ['error' => 'x'], actual: $response->getData());
-		$this->assertArrayNotHasKey(key: 'API-Version', array: $headers);
+		$this->assertSame(expected: '1.2.3', actual: $headers['API-Version']);
+		$this->assertSame(expected: ApiContractMiddleware::PROBLEM_CONTENT_TYPE, actual: $headers['Content-Type']);
+		$this->assertSame(expected: 400, actual: $data['status']);
+		$this->assertSame(expected: 'x', actual: $data['error']);
 		$this->assertArrayNotHasKey(key: 'Deprecation', array: $headers);
-	}//end testStandardProtocolPathIsUntouched()
+		$this->assertArrayNotHasKey(key: 'Link', array: $headers);
+	}//end testStandardProtocolPathKeepsItsBehaviour()
+
+	/**
+	 * Standard protocol paths: sitemaps, robots.txt, DCAT, feeds and federation.
+	 *
+	 * @return array<string,array{0:string}>
+	 */
+	public static function standardProtocolPaths(): array {
+		return [
+			'sitemap'    => ['/apps/opencatalogi/api/woo/sitemaps/1'],
+			'robots.txt' => ['/apps/opencatalogi/api/robots.txt'],
+			'dcat'       => ['/apps/opencatalogi/api/catalogs/woo/dcat'],
+			'feed'       => ['/apps/opencatalogi/api/feeds/publications'],
+			'federation' => ['/apps/opencatalogi/api/federation/publications'],
+		];
+	}//end standardProtocolPaths()
 
 	/**
 	 * The headers a response set, read without the server container that
