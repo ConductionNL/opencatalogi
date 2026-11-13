@@ -1,0 +1,44 @@
+{
+	"_note": "Register fragment for capability-rows-get-requirements (REQ-CRR-003). An archive decision hands the publication to OpenRegister's e-Depot transfer; the publication keeps the transfer reference and how it went, so an officer sees it without opening OpenRegister.",
+	"components": {
+		"schemas": {
+			"publication": {
+				"properties": {
+					"edepotTransfer": {
+						"type": "object",
+						"title": "e-Depot transfer",
+						"description": "The transfer of this publication to the e-depot, started by an archive decision: OpenRegister's transfer reference, its status (requested, transferred or failed) and, for a failed transfer, the reason.",
+						"facetable": false,
+						"properties": {
+							"reference": {
+								"type": "string",
+								"title": "Transfer reference",
+								"description": "The uuid of OpenRegister's transfer list; empty when the transfer could not be started."
+							},
+							"status": {
+								"type": "string",
+								"title": "Transfer status",
+								"enum": ["requested", "transferred", "failed"]
+							},
+							"reason": {
+								"type": "string",
+								"title": "Reason",
+								"description": "Why the transfer failed, as the e-depot or OpenRegister gave it."
+							},
+							"requestedAt": {
+								"type": "string",
+								"format": "date-time",
+								"title": "Requested at"
+							},
+							"updatedAt": {
+								"type": "string",
+								"format": "date-time",
+								"title": "Updated at"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

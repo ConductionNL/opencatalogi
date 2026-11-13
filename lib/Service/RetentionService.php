@@ -46,6 +46,7 @@ use RuntimeException;
  * Drives the publication retention lifecycle.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
+ * @SuppressWarnings(PHPMD.TooManyMethods) The lifecycle steps are small private methods; the public surface is the retention contract.
  * @SuppressWarnings(PHPMD.ExcessiveClassLength) Lifecycle steps are split into small documented
  *   private methods; the docblocks of those steps push the class past the line threshold.
  *
@@ -109,6 +110,13 @@ class RetentionService implements RetentionServiceInterface {
 	private ?object $objectService = null;
 
 	/**
+	 * Hands archived publications to the e-depot and reads back how it went.
+	 *
+	 * @var EdepotHandover
+	 */
+	private EdepotHandover $edepot;
+
+	/**
 	 * Cached OpenRegister DMN DecisionTableEvaluator instance.
 	 *
 	 * @var object|null
@@ -123,6 +131,7 @@ class RetentionService implements RetentionServiceInterface {
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
 	 * @param RetentionPolicyTable $policyTable Translates stored defaults into the DMN table shape.
+	 * @param EdepotHandover|null $edepot Hands archived publications to the e-depot; built from the container when null.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -130,7 +139,9 @@ class RetentionService implements RetentionServiceInterface {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly RetentionPolicyTable $policyTable = new RetentionPolicyTable(),
+		?EdepotHandover $edepot = null,
 	) {
+		$this->edepot = ($edepot ?? new EdepotHandover(container: $container, logger: $logger));
 
 	}//end __construct()
 
@@ -857,13 +868,36 @@ class RetentionService implements RetentionServiceInterface {
 			throw new RuntimeException('OpenRegister publication register/schema unavailable');
 		}
 
+		$publication = $this->findPublication(run: $run, publicationId: $publicationId);
 		$data = (new RetentionRules())->afterDecision(
-			data: $this->plainArray(object: $this->findPublication(run: $run, publicationId: $publicationId)),
+			data: $this->plainArray(object: $publication),
 			decision: ['decision' => $decision, 'note' => $rationale, 'months' => $extendMonths]
 		);
+		if ($decision === 'archive') {
+			$data['edepotTransfer'] = $this->edepot->request(publication: $publication, now: $run->now);
+		}
 
 		return $this->plainArray(object: $run->save(data: $this->recordDecision(data: $data, decision: $decision, note: $rationale)));
 	}//end recordHumanDecision()
+
+	/**
+	 * Bring every archived publication's pending e-depot transfer up to date with OpenRegister.
+	 *
+	 * A transfer that ended is saved on its publication: `transferred`, or
+	 * `failed` with the e-depot's reason. The publication stays archived.
+	 *
+	 * @return int How many publications got a new transfer status.
+	 *
+	 * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+	 */
+	public function refreshEdepotTransfers(): int {
+		$run = $this->configuredRun();
+		if ($run === null) {
+			return 0;
+		}
+
+		return $this->edepot->refreshArchived(run: $run);
+	}//end refreshEdepotTransfers()
 
 	/**
 	 * The publication a decision is about.

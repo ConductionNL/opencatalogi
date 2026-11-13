@@ -183,6 +183,15 @@ interface RetentionServiceInterface {
 	public function recordHumanDecision(string $publicationId, string $decision, string $rationale, int $extendMonths = 0): array;
 
 	/**
+	 * Bring every archived publication's pending e-depot transfer up to date with OpenRegister.
+	 *
+	 * @return int How many publications got a new transfer status.
+	 *
+	 * @spec openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle/spec.md#requirement-an-archive-decision-hands-the-publication-to-the-e-depot-req-crr-003
+	 */
+	public function refreshEdepotTransfers(): int;
+
+	/**
 	 * Build a retention report (rows) for a catalog and date range.
 	 *
 	 * Derived purely from stored fields + the decision log captured on each object
