@@ -51,8 +51,16 @@ class RenameDutchPublicationColumnsGoldenTest extends TestCase {
 	private array $calls = [];
 
 	/**
-	 * The recorded worlds: schema ids, the tables information_schema lists, the
-	 * columns per table, and what fails.
+	 * The recorded worlds: the tables information_schema lists, the columns
+	 * per table, and what fails.
+	 *
+	 * NO LONGER CARRIES `ids`: `shardTables()` no longer resolves schema ids by
+	 * title before listing shards — a tenant's own domain schema (a Woo
+	 * category, say) carries the exact same Dutch columns under a different
+	 * title, and was silently excluded by that lookup. Every
+	 * `openregister_table_*` row information_schema lists is now in scope;
+	 * `migrateTable()`'s own per-column check decides which of them actually
+	 * need a column moved.
 	 *
 	 * @return array<string, array{0: array<string, mixed>}>
 	 */
@@ -72,17 +80,14 @@ class RenameDutchPublicationColumnsGoldenTest extends TestCase {
 		];
 
 		return [
-			'schema ids unreadable' => [['fail' => ['ids']]],
-			'no schema ids' => [['ids' => []]],
-			'tables unlistable' => [['ids' => ['4'], 'fail' => ['tables']]],
-			'no shard tables' => [['ids' => ['4'], 'tables' => ['oc_other_table_4', '']]],
-			'renames and back-fills' => [['ids' => ['4', '9', 'x'], 'tables' => $tables, 'columns' => $columns]],
-			'a table without the Dutch columns' => [['ids' => ['4'], 'tables' => ['oc_openregister_table_1_4'], 'columns' => ['oc_openregister_table_1_4' => ['id', 'publication_date']]]],
-			'columns of one table unreadable' => [['ids' => ['4', '9'], 'tables' => $tables, 'columns' => $columns, 'fail' => ['columns:oc_openregister_table_1_4']]],
-			'some statements fail' => [['ids' => ['4', '9'], 'tables' => $tables, 'columns' => $columns, 'fail' => ['exec:RENAME COLUMN "besluit"', 'exec:SET "inventory_list"']]],
-			'a schema id only inside the table name' => [['ids' => ['4'], 'tables' => ['oc_openregister_table_4_9'], 'columns' => ['oc_openregister_table_4_9' => ['publicatiedatum']]]],
-			'a zero-padded schema id' => [['ids' => ['04'], 'tables' => ['oc_openregister_table_1_4'], 'columns' => ['oc_openregister_table_1_4' => ['publicatiedatum']]]],
-			'every statement fails' => [['ids' => ['4', '9'], 'tables' => $tables, 'columns' => $columns, 'fail' => ['exec:']]],
+			'tables unlistable' => [['fail' => ['tables']]],
+			'no shard tables' => [['tables' => ['oc_other_table_4', '']]],
+			'renames and back-fills' => [['tables' => $tables, 'columns' => $columns]],
+			'a table without the Dutch columns' => [['tables' => ['oc_openregister_table_1_4'], 'columns' => ['oc_openregister_table_1_4' => ['id', 'publication_date']]]],
+			'columns of one table unreadable' => [['tables' => $tables, 'columns' => $columns, 'fail' => ['columns:oc_openregister_table_1_4']]],
+			'some statements fail' => [['tables' => $tables, 'columns' => $columns, 'fail' => ['exec:RENAME COLUMN "besluit"', 'exec:SET "inventory_list"']]],
+			'a domain schema outside the canonical titles' => [['tables' => ['oc_openregister_table_4_9'], 'columns' => ['oc_openregister_table_4_9' => ['publicatiedatum']]]],
+			'every statement fails' => [['tables' => $tables, 'columns' => $columns, 'fail' => ['exec:']]],
 		];
 
 	}//end worlds()
@@ -166,24 +171,6 @@ class RenameDutchPublicationColumnsGoldenTest extends TestCase {
 				public function quoteSingleIdentifier(string $identifier): string {
 					return '"' . $identifier . '"';
 				}//end quoteSingleIdentifier()
-			}
-		);
-		$db->method('executeQuery')->willReturnCallback(
-			function (string $sql, array $params = []) use ($world): IResult {
-				$this->calls[] = ['executeQuery' => [$sql, $params]];
-				if (self::fails($world, 'ids') === true) {
-					throw new Exception('schemas table locked');
-				}
-
-				$result = $this->createMock(IResult::class);
-				$result->method('fetchAll')->willReturnCallback(
-					function (int $mode) use ($world): array {
-						$this->calls[] = ['fetchAll' => $mode];
-						return ($world['ids'] ?? []);
-					}
-				);
-
-				return $result;
 			}
 		);
 		$db->method('prepare')->willReturnCallback(

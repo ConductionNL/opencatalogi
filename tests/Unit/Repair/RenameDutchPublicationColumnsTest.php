@@ -31,7 +31,11 @@ declare(strict_types=1);
 namespace Unit\Repair;
 
 use OCA\OpenCatalogi\Repair\RenameDutchPublicationColumns;
+use OCP\DB\IPreparedStatement;
+use OCP\DB\IResult;
+use OCP\IDBConnection;
 use PHPUnit\Framework\TestCase;
+use Psr\Log\LoggerInterface;
 use ReflectionClass;
 use ReflectionMethod;
 
@@ -62,17 +66,19 @@ class RenameDutchPublicationColumnsTest extends TestCase {
 	}//end setUp()
 
 	/**
-	 * Invoke a private method on the step.
+	 * Invoke a private method on a step.
 	 *
 	 * @param string $name Method name.
 	 * @param array<mixed> $args Positional arguments.
+	 * @param RenameDutchPublicationColumns|null $on The step to invoke on; the
+	 *                                               constructor-less one when omitted.
 	 *
 	 * @return mixed
 	 */
-	private function call(string $name, array $args) {
+	private function call(string $name, array $args, ?RenameDutchPublicationColumns $on = null) {
 		$m = new ReflectionMethod(RenameDutchPublicationColumns::class, $name);
 		$m->setAccessible(true);
-		return $m->invokeArgs($this->step, $args);
+		return $m->invokeArgs($on ?? $this->step, $args);
 	}//end call()
 
 	/**
@@ -87,56 +93,81 @@ class RenameDutchPublicationColumnsTest extends TestCase {
 	}//end constant()
 
 	/**
-	 * A shard table whose schema id matches is selected.
+	 * Every openregister shard table is in scope, regardless of which schema
+	 * it belongs to.
+	 *
+	 * This used to resolve `Publication`/`Document`/`WooBatch` schema ids
+	 * first and only consider their shards, which silently excluded a
+	 * tenant's own domain schema (a Woo category, say) carrying the exact same
+	 * Dutch columns under a different title. There is no longer a schema
+	 * lookup at all: `shardTables()` lists every shard, and `migrateTable()`'s
+	 * own per-column check (not under test here) decides which of them
+	 * actually need a column moved.
 	 *
 	 * @return void
 	 */
-	public function testMatchesShardOfTheSchema(): void {
-		self::assertTrue($this->call('isShardOfSchema', ['oc_openregister_table_15_42', ['_42']]));
+	public function testListsEveryShardRegardlessOfSchema(): void {
+		$tables = $this->shardTablesOver(['oc_openregister_table_15_42', 'oc_openregister_table_2424_99']);
 
-	}//end testMatchesShardOfTheSchema()
+		self::assertSame(['oc_openregister_table_15_42', 'oc_openregister_table_2424_99'], $tables);
 
-	/**
-	 * The SAME schema in a DIFFERENT register is also selected.
-	 *
-	 * These publication schemas are duplicated across many registers — 25 shard
-	 * tables over 18 schema ids were observed on the reference install — so
-	 * migrating only the first register leaves most of the data behind.
-	 *
-	 * @return void
-	 */
-	public function testMatchesTheSameSchemaInEveryRegister(): void {
-		self::assertTrue($this->call('isShardOfSchema', ['oc_openregister_table_15_42', ['_42']]));
-		self::assertTrue($this->call('isShardOfSchema', ['oc_openregister_table_2424_42', ['_42']]));
-
-	}//end testMatchesTheSameSchemaInEveryRegister()
-
-	/**
-	 * Schema 42 must not match schema 142's shard.
-	 *
-	 * The suffix carries a leading underscore precisely so `_42` cannot match
-	 * `..._142`. Without it the step migrates an unrelated schema.
-	 *
-	 * @return void
-	 */
-	public function testDoesNotMatchALongerSchemaId(): void {
-		self::assertFalse($this->call('isShardOfSchema', ['oc_openregister_table_15_142', ['_42']]));
-
-	}//end testDoesNotMatchALongerSchemaId()
+	}//end testListsEveryShardRegardlessOfSchema()
 
 	/**
 	 * A table without the openregister marker is never selected.
 	 *
-	 * The suffix alone is not sufficient — `oc_some_other_42` ends in `_42`.
-	 * The marker check is what keeps the step off tables it does not own.
+	 * information_schema's `LIKE` match is already anchored on the marker, but
+	 * a defence-in-depth check on the fetched name is what keeps a same-named
+	 * table from an unrelated app off the migration.
 	 *
 	 * @return void
 	 */
 	public function testRequiresTheOpenregisterMarker(): void {
-		self::assertFalse($this->call('isShardOfSchema', ['oc_some_other_42', ['_42']]));
-		self::assertFalse($this->call('isShardOfSchema', ['', ['_42']]));
+		$tables = $this->shardTablesOver(['oc_some_other_42', '', 'oc_openregister_table_1_4']);
+
+		self::assertSame(['oc_openregister_table_1_4'], $tables);
 
 	}//end testRequiresTheOpenregisterMarker()
+
+	/**
+	 * Duplicate rows from information_schema collapse to one entry.
+	 *
+	 * @return void
+	 */
+	public function testDeduplicatesTables(): void {
+		$tables = $this->shardTablesOver(['oc_openregister_table_1_4', 'oc_openregister_table_1_4']);
+
+		self::assertSame(['oc_openregister_table_1_4'], $tables);
+
+	}//end testDeduplicatesTables()
+
+	/**
+	 * `shardTables()` over a fixed list of information_schema rows.
+	 *
+	 * @param array<int, string> $tableNames The `table_name` rows to answer with.
+	 *
+	 * @return array<int, string>
+	 */
+	private function shardTablesOver(array $tableNames): array {
+		$rows = array_map(static fn (string $name): array => ['table_name' => $name], $tableNames);
+
+		$statement = $this->createMock(IPreparedStatement::class);
+		$statement->method('bindValue')->willReturn(true);
+		$statement->method('execute')->willReturn($this->createMock(IResult::class));
+		$statement->method('fetch')->willReturnCallback(
+			static function () use (&$rows) {
+				return (array_shift($rows) ?? false);
+			}
+		);
+
+		$db = $this->createMock(IDBConnection::class);
+		$db->method('prepare')->willReturn($statement);
+
+		$step = new RenameDutchPublicationColumns($db, $this->createMock(LoggerInterface::class));
+
+		return $this->call('shardTables', [], $step);
+
+	}//end shardTablesOver()
 
 	/**
 	 * Every destination is snake_case, never camelCase.
