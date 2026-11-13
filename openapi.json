@@ -338,6 +338,62 @@
           }
         },
         "additionalProperties": true
+      },
+      "ChangesEnvelope": {
+        "type": "object",
+        "required": [
+          "changed",
+          "withdrawn",
+          "since",
+          "until",
+          "next"
+        ],
+        "properties": {
+          "changed": {
+            "type": "array",
+            "description": "DCAT dataset nodes (JSON-LD) of the publications changed in the window.",
+            "items": {
+              "type": "object",
+              "additionalProperties": true
+            }
+          },
+          "withdrawn": {
+            "type": "array",
+            "description": "Publications withdrawn in the window. Id and date only.",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "withdrawnAt"
+              ],
+              "additionalProperties": false,
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "withdrawnAt": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            }
+          },
+          "since": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "until": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The moment of the read. Use it as the next `since`."
+          },
+          "next": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true,
+            "description": "The next page, or null on the last."
+          }
+        }
       }
     },
     "parameters": {
@@ -1216,6 +1272,100 @@
         "operationId": "publications-preflight",
         "summary": "CORS preflight",
         "description": "CORS preflight for the catalog-scoped publications surface.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/changes": {
+      "get": {
+        "operationId": "changes-since",
+        "summary": "What changed in a catalog since a moment",
+        "description": "For a re-user who keeps a copy of a catalog. Lists the publications an anonymous visitor may read whose last change is at or after `since`, as DCAT dataset nodes ordered by last change and then id, and the publications withdrawn since then by id and date only. A withdrawn publication is listed only when a depublication record shows it was public once. Use `until` as the next `since`. Pages hold at most 100 entries; follow `next` while it is set.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": true,
+            "description": "An ISO 8601 date or date and time, such as 2026-04-01T00:00:00Z.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "description": "The cursor of a next page, as `next` carries it.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChangesEnvelope"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "`since` or `cursor` cannot be read; `parameter` names which.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "parameter": {
+                      "type": "string",
+                      "enum": [
+                        "since",
+                        "cursor"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          },
+          "503": {
+            "$ref": "#/components/responses/ServiceUnavailable"
+          }
+        }
+      },
+      "options": {
+        "operationId": "changes-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for the changed-since read.",
         "tags": [
           "Publications"
         ],

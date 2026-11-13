@@ -114,6 +114,19 @@ interface DcatServiceInterface {
 	public function buildCatalogDocument(array $catalog, string $catalogSlug, int $page = 1, array &$violations = []): array;
 
 	/**
+	 * Map publications of a catalog to DCAT dataset nodes, as the catalog feed does.
+	 *
+	 * @param array<string, mixed> $catalog The catalog object.
+	 * @param string $catalogSlug The catalog slug.
+	 * @param array<int, mixed> $publications The publications to map.
+	 *
+	 * @return array<int, array<string, mixed>> One dataset node per publication whose schema did not opt out.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	public function mapDatasets(array $catalog, string $catalogSlug, array $publications): array;
+
+	/**
 	 * Build the instance-level DCAT document listing every DCAT-enabled catalog.
 	 *
 	 * @return array<string, mixed> The JSON-LD document plus `_meta`.
