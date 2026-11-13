@@ -1507,7 +1507,19 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Alleen de groepen hieronder zien en bewerken de publicaties van deze catalogus.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
+        "Document type": "Documentsoort",
+        "The kind of document, from the national list of document types. The national Woo index reads it. Stored as the resource address of the list member.": "Het soort document, uit de landelijke lijst van documentsoorten. De landelijke Woo-index leest het. Opgeslagen als het bronadres van het lijstitem.",
+        "Document type per file": "Documentsoort per bestand",
+        "A different document type for one attached file, for example an annex to a decision. Keyed by the file id; each value is a member of the national list of document types.": "Een andere documentsoort voor één bijgevoegd bestand, bijvoorbeeld een bijlage bij een besluit. Per bestands-id; elke waarde komt uit de landelijke lijst van documentsoorten.",
+        "Language": "Taal",
+        "The language the document is written in.": "De taal waarin het document is geschreven.",
+        "Creation date": "Creatiedatum",
+        "The day the document was made. This is not the day it was published.": "De dag waarop het document is gemaakt. Dat is niet de dag waarop het is gepubliceerd.",
+        "Valid from": "Geldig vanaf",
+        "The day the content takes legal effect. This can differ from the publication date.": "De dag waarop de inhoud rechtskracht krijgt. Die kan afwijken van de publicatiedatum.",
+        "Valid until": "Geldig tot",
+        "The day the content loses legal effect. Leave it empty when it has no end.": "De dag waarop de inhoud zijn rechtskracht verliest. Laat dit leeg als er geen einde is."
     },
     "nplurals=2; plural=(n != 1);"
 )

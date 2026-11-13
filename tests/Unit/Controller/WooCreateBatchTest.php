@@ -119,6 +119,6 @@ class WooCreateBatchTest extends TestCase {
 			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
 
-		return new WooController('opencatalogi', $request, $service, $l10n, $this->createMock(IUserSession::class), $categories);
+		return new WooController('opencatalogi', $request, $service, $l10n, $this->createMock(IUserSession::class), $categories, new \OCA\OpenCatalogi\Service\TooiVocabularyService());
 	}//end controller()
 }//end class

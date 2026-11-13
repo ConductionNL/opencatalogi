@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use PHPUnit\Framework\TestCase;
 
@@ -142,4 +143,155 @@ class TooiVocabularyServiceTest extends TestCase {
 		$this->assertNull($this->service->resolveOrganisatie(null));
 
 	}//end testResolveOrganisatie()
+
+	/**
+	 * The enumeration of one simple type in the DiWoo value-list XSD, as the
+	 * authority publishes it: `{code, label, uri}` per member, in XSD order.
+	 *
+	 * @param string $typeName The simple type, e.g. `documentsoortlijst`.
+	 *
+	 * @return array<int, array{code: string, label: string, uri: string}> The members.
+	 */
+	private function xsdMembers(string $typeName): array {
+		$xsd = new \DOMDocument();
+		$xsd->load(__DIR__ . '/fixtures/diwoo-0.9.8/diwoo-metadata-lijsten.xsd');
+		$xpath = new \DOMXPath($xsd);
+		$xpath->registerNamespace('xs', 'http://www.w3.org/2001/XMLSchema');
+
+		$members = [];
+		foreach ($xpath->query("/xs:schema/xs:simpleType[@name='" . $typeName . "']/xs:restriction/xs:enumeration") as $enumeration) {
+			$uri = $enumeration->getAttribute('value');
+			$members[] = [
+				'code' => substr($uri, strrpos($uri, '/') + 1),
+				'label' => trim($enumeration->textContent),
+				'uri' => $uri,
+			];
+		}
+
+		return $members;
+
+	}//end xsdMembers()
+
+	/**
+	 * REQ-DWP-002: the bundled documentsoorten are exactly the members the
+	 * declared DiWoo 0.9.8 value-list XSD enumerates, with their code, label
+	 * and URI, and the bundle names that XSD as its source.
+	 *
+	 * @return void
+	 */
+	public function testTheBundledDocumentsoortenMatchTheDeclaredXsd(): void {
+		$expected = $this->xsdMembers(typeName: 'documentsoortlijst');
+
+		$this->assertCount(91, $expected, 'the XSD copy enumerates 91 documentsoorten');
+		$this->assertSame($expected, $this->service->documentsoortList());
+
+		$bundle = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/tooi_waardelijsten.json'), true);
+		$this->assertSame(StandardsVersionService::DIWOO_LISTS_XSD, $bundle['documentsoorten']['source']);
+		$this->assertSame(StandardsVersionService::DIWOO_VERSION, $bundle['documentsoorten']['xsdVersion']);
+
+	}//end testTheBundledDocumentsoortenMatchTheDeclaredXsd()
+
+	/**
+	 * REQ-DWP-002: the bundled languages are the members of the XSD's language list.
+	 *
+	 * @return void
+	 */
+	public function testTheBundledLanguagesMatchTheDeclaredXsd(): void {
+		$this->assertSame($this->xsdMembers(typeName: 'taallijst'), $this->service->languageList());
+
+		$bundle = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/tooi_waardelijsten.json'), true);
+		$this->assertSame(StandardsVersionService::DIWOO_LISTS_XSD, $bundle['talen']['source']);
+
+	}//end testTheBundledLanguagesMatchTheDeclaredXsd()
+
+	/**
+	 * REQ-DWP-003: the mandatory-element fixture is what the declared metadata
+	 * XSD requires: its hash matches the XSD copy, and each path's elements are
+	 * declared without minOccurs="0".
+	 *
+	 * @return void
+	 */
+	public function testTheMandatoryElementFixtureFollowsTheXsd(): void {
+		$fixture = json_decode((string)file_get_contents(__DIR__ . '/../../fixtures/diwoo/0.9.8-mandatory-elements.json'), true);
+		$xsdPath = __DIR__ . '/fixtures/diwoo-0.9.8/diwoo-metadata.xsd';
+
+		$this->assertSame(StandardsVersionService::DIWOO_METADATA_XSD, $fixture['source']);
+		$this->assertSame(hash_file('sha256', $xsdPath), $fixture['sha256']);
+		$this->assertSame(
+			[
+				'publisher',
+				'titelcollectie/officieleTitel',
+				'classificatiecollectie/informatiecategorieen/informatiecategorie',
+				'documenthandelingen/documenthandeling/soortHandeling',
+				'documenthandelingen/documenthandeling/atTime',
+			],
+			$fixture['mandatory']
+		);
+
+		$xsd = new \DOMDocument();
+		$xsd->load($xsdPath);
+		$xpath = new \DOMXPath($xsd);
+		$xpath->registerNamespace('xs', 'http://www.w3.org/2001/XMLSchema');
+		foreach ($fixture['mandatory'] as $path) {
+			foreach (explode('/', $path) as $name) {
+				$declarations = $xpath->query("//xs:complexType//xs:element[@name='" . $name . "']");
+				$this->assertGreaterThan(0, $declarations->length, $name . ' is declared');
+				$this->assertNotSame('0', $declarations->item(0)->getAttribute('minOccurs'), $name . ' is mandatory');
+			}
+		}
+
+	}//end testTheMandatoryElementFixtureFollowsTheXsd()
+
+	/**
+	 * REQ-DWP-002: a document type resolves from its URI, its code or its label,
+	 * case-insensitive, to the same member.
+	 *
+	 * @return void
+	 */
+	public function testADocumentsoortResolvesFromUriCodeOrLabel(): void {
+		$expected = [
+			'code' => 'c_852da199',
+			'label' => 'Afkondigingsblad',
+			'uri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_852da199',
+		];
+
+		$this->assertSame($expected, $this->service->resolveDocumentsoort('https://identifier.overheid.nl/tooi/def/thes/kern/c_852da199'));
+		$this->assertSame($expected, $this->service->resolveDocumentsoort('c_852da199'));
+		$this->assertSame($expected, $this->service->resolveDocumentsoort('Afkondigingsblad'));
+		$this->assertSame($expected, $this->service->resolveDocumentsoort('  aFKONDIGINGSBLAD '));
+
+	}//end testADocumentsoortResolvesFromUriCodeOrLabel()
+
+	/**
+	 * REQ-DWP-002: anything that is not a member resolves to null, never to a literal.
+	 *
+	 * @return void
+	 */
+	public function testAnUnknownDocumentsoortResolvesToNull(): void {
+		$this->assertNull($this->service->resolveDocumentsoort('memo van de wethouder'));
+		$this->assertNull($this->service->resolveDocumentsoort('Afkondigings'));
+		$this->assertNull($this->service->resolveDocumentsoort(''));
+		$this->assertNull($this->service->resolveDocumentsoort(null));
+
+	}//end testAnUnknownDocumentsoortResolvesToNull()
+
+	/**
+	 * A language resolves from its URI, code or label; anything else is null.
+	 *
+	 * @return void
+	 */
+	public function testALanguageResolvesFromUriCodeOrLabel(): void {
+		$dutch = [
+			'code' => 'NLD',
+			'label' => 'Nederlands',
+			'uri' => 'http://publications.europa.eu/resource/authority/language/NLD',
+		];
+
+		$this->assertSame($dutch, $this->service->resolveLanguage('http://publications.europa.eu/resource/authority/language/NLD'));
+		$this->assertSame($dutch, $this->service->resolveLanguage('nld'));
+		$this->assertSame($dutch, $this->service->resolveLanguage('Nederlands'));
+		$this->assertNull($this->service->resolveLanguage('Klingon'));
+		$this->assertNull($this->service->resolveLanguage(null));
+
+	}//end testALanguageResolvesFromUriCodeOrLabel()
 }//end class

@@ -69,7 +69,8 @@ class WooControllerTest extends TestCase {
 			$this->wooService,
 			$l10n,
 			$this->userSession,
-			$categories
+			$categories,
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService()
 		);
 
 	}//end setUp()
@@ -177,7 +178,8 @@ class WooControllerTest extends TestCase {
 		$routes = require __DIR__ . '/../../../appinfo/routes.php';
 		$verbs = [];
 		foreach ($routes['routes'] as $route) {
-			if ($route['name'] === 'woo#inventarislijst') {
+			// ApiPathAliases adds an /api/v1/ alias by the same name; check the unversioned route.
+			if ($route['name'] === 'woo#inventarislijst' && str_starts_with($route['url'], '/api/v1/') === false) {
 				$verbs[] = $route['verb'];
 			}
 		}
@@ -268,6 +270,60 @@ class WooControllerTest extends TestCase {
 		}
 
 	}//end testEveryCategoryRowSaysWhatItPublishesUnderAndWhereItCameFrom()
+
+	/**
+	 * REQ-DWP-002: the documentsoorten endpoint lists the bundled members as
+	 * `{code, label, uri}`.
+	 *
+	 * @return void
+	 */
+	public function testDocumentsoortenListsTheBundledMembers(): void {
+		$this->authenticate();
+
+		$response = $this->controller->documentsoorten();
+		$data = $response->getData();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(91, $data['total']);
+		$this->assertCount(91, $data['results']);
+		$this->assertSame(
+			[
+				'code' => 'c_852da199',
+				'label' => 'Afkondigingsblad',
+				'uri' => 'https://identifier.overheid.nl/tooi/def/thes/kern/c_852da199',
+			],
+			$data['results'][0]
+		);
+
+	}//end testDocumentsoortenListsTheBundledMembers()
+
+	/**
+	 * The documentsoorten endpoint refuses an anonymous caller, like categories().
+	 *
+	 * @return void
+	 */
+	public function testDocumentsoortenAnonymousReturns401(): void {
+		$this->userSession->method('getUser')->willReturn(null);
+		$this->assertSame(401, $this->controller->documentsoorten()->getStatus());
+
+	}//end testDocumentsoortenAnonymousReturns401()
+
+	/**
+	 * The method has a caller: a GET route beside woo#categories.
+	 *
+	 * @return void
+	 */
+	public function testTheDocumentsoortenRouteIsAGet(): void {
+		$routes = require __DIR__ . '/../../../appinfo/routes.php';
+		$found = array_values(array_filter($routes['routes'], static fn (array $route): bool => $route['name'] === 'woo#documentsoorten'));
+
+		// ApiPathAliases serves every unversioned route under /api/v1/ as well, by the same name.
+		$urls = array_column($found, 'url');
+		sort($urls);
+		$this->assertSame(['/api/v1/woo/documentsoorten', '/api/woo/documentsoorten'], $urls);
+		$this->assertSame(['GET', 'GET'], array_column($found, 'verb'));
+
+	}//end testTheDocumentsoortenRouteIsAGet()
 
 	public function testCategoriesAnonymousReturns401(): void {
 		$this->userSession->method('getUser')->willReturn(null);
