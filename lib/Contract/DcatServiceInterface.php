@@ -123,6 +123,8 @@ interface DcatServiceInterface {
 	 * @return array<int, array<string, mixed>> One dataset node per publication whose schema did not opt out.
 	 *
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 *
+	 * @contract-shift internal-only — only DcatService implements it; no other app consumes this interface.
 	 */
 	public function mapDatasets(array $catalog, string $catalogSlug, array $publications): array;
 

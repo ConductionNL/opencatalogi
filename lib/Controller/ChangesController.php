@@ -102,6 +102,12 @@ class ChangesController extends Controller {
 	 *                      parameter it cannot read; 404 for an unknown catalogue;
 	 *                      503 when OpenRegister cannot read anonymously.
 	 *
+	 * @no-admin-idor-exempt the only caller-supplied identifier is a catalogue slug, and a
+	 *   catalogue is public by design, as on the DCAT feed. The catalogue is guarded with
+	 *   applyCatalogReadRuleGuard(), the publications are read inside OpenRegister's
+	 *   anonymous scope (refused with 503 when that scope is missing), and the withdrawn
+	 *   list leaves the system read as ids and dates only.
+	 *
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
 	 */
