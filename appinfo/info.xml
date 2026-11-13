@@ -224,6 +224,9 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				bundled one. Idempotent: a schema whose rules already match is not written.
 			-->
 			<step>OCA\OpenCatalogi\Repair\RecomputeCatalogAccess</step>
+			<!-- Hands depublication, inspection, comment-period, community and Woo-request records an
+			     editor came to own to the system. Needs OpenRegister's release-to-system call; idempotent. -->
+			<step>OCA\OpenCatalogi\Repair\HandRecordsToSystem</step>
 			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.
