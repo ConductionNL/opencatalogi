@@ -163,7 +163,7 @@ class TooiVocabularyServiceTest extends TestCase {
 			$uri = $enumeration->getAttribute('value');
 			$members[] = [
 				'code' => substr($uri, strrpos($uri, '/') + 1),
-				'label' => trim($enumeration->textContent),
+				'label' => self::memberLabel(enumeration: $enumeration, xpath: $xpath),
 				'uri' => $uri,
 			];
 		}
@@ -171,6 +171,25 @@ class TooiVocabularyServiceTest extends TestCase {
 		return $members;
 
 	}//end xsdMembers()
+
+	/**
+	 * A member's label: the first paragraph of its documentation, which is the
+	 * term; the paragraphs after it are the definition and the legal reference.
+	 *
+	 * @param \DOMElement $enumeration The XSD enumeration.
+	 * @param \DOMXPath $xpath The XPath over the XSD.
+	 *
+	 * @return string The label.
+	 */
+	private static function memberLabel(\DOMElement $enumeration, \DOMXPath $xpath): string {
+		$paragraphs = $xpath->query(".//*[local-name()='p']", $enumeration);
+		if ($paragraphs->length > 0) {
+			return trim($paragraphs->item(0)->textContent);
+		}
+
+		return trim($enumeration->textContent);
+
+	}//end memberLabel()
 
 	/**
 	 * REQ-DWP-002: the bundled documentsoorten are exactly the members the
