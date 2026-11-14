@@ -142,6 +142,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
 	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
 	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
+	 * @param FileFacts|null $fileFacts Reads a document's type from its stored bytes (REQ-PFF-001).
 	 */
 	public function __construct(
 		private readonly RegisterBindings $bindings,
@@ -150,6 +151,7 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		private readonly IL10N $l10n,
 		private readonly BatchPublicationWriter $publications,
 		private readonly DocumentRedactor $redactor,
+		private readonly ?FileFacts $fileFacts = null,
 	) {
 
 	}//end __construct()
@@ -361,10 +363,11 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
 	 */
 	private function newAssessment(array $document, string $caseReference): array {
+		$reference = (string)($document['documentReference'] ?? ($document['id'] ?? ''));
 		return [
-			'documentReference' => (string)($document['documentReference'] ?? ($document['id'] ?? '')),
+			'documentReference' => $reference,
 			'fileName' => (string)($document['fileName'] ?? ''),
-			'fileType' => (string)($document['fileType'] ?? ''),
+			...$this->assessedFileType(reference: $reference, claimed: (string)($document['fileType'] ?? '')),
 			'assessment' => 'te_beoordelen',
 			'weigeringsgronden' => [],
 			'redactionInstructions' => '',
@@ -375,6 +378,41 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		];
 
 	}//end newAssessment()
+
+	/**
+	 * The assessment's `fileType` from the document's stored bytes, and the
+	 * caller's value as `fileTypeClaimed` when it differs (REQ-PFF-001).
+	 *
+	 * Bytes that cannot be read, or a document that cannot be found, give an
+	 * empty `fileType`: the caller's value is kept only as the claim, never
+	 * taken as the type.
+	 *
+	 * @param string $reference The document reference (file id or path).
+	 * @param string $claimed   The type the caller sent.
+	 *
+	 * @return array{fileType: string, fileTypeClaimed?: string} The assessment fields.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	private function assessedFileType(string $reference, string $claimed): array {
+		if ($this->fileFacts === null) {
+			return ['fileType' => $claimed];
+		}
+
+		$owner = (string)$this->userSession->getUser()?->getUID();
+		$file = $this->publications->resolve(reference: $reference, owner: $owner);
+		$detected = null;
+		if ($file !== null) {
+			$detected = $this->fileFacts->mimeTypeOf(file: $file);
+		}
+
+		$fields = ['fileType' => (string)$detected];
+		if ($claimed !== '' && $claimed !== $detected) {
+			$fields['fileTypeClaimed'] = $claimed;
+		}
+
+		return $fields;
+	}//end assessedFileType()
 
 	/**
 	 * A new batch object, in progress, for its saved assessments.
