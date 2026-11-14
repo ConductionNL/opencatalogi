@@ -84,13 +84,15 @@ class SitemapDocumentMapper {
 	 * @param array $publication The publication as returned from ObjectService
 	 * @param array $file The file metadata belonging to that publication
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference)
+	 * @param array<string, array<string, mixed>> $relations The document's `isPartOf` or `hasParts` element, if any ({@see SitemapDocumentRelations}).
 	 *
 	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array} The url entry, ready for XMLResponse.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
-	public function map(array $publication, array $file, array &$violations = []): array {
+	public function map(array $publication, array $file, array &$violations = [], array $relations = []): array {
 		$loc = ($file['downloadUrl'] ?? '');
 		$diwoo = $this->diwooCore(publication: $publication, file: $file);
 		// Each optional axis is its element, or null with the violation that omits it.
@@ -99,14 +101,44 @@ class SitemapDocumentMapper {
 			$this->addViolation(violations: $violations, loc: $loc, axis: $gap[0], reason: $gap[1]);
 		}
 
-		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null));
+		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null), $relations);
 
 		return [
 			'loc' => $loc,
-			'lastmod' => self::utcDateTime(value: ($file['published'] ?? $publication['@self']['updated'] ?? 'now')),
+			'lastmod' => self::lastModified(publication: $publication, file: $file),
 			'diwoo:Document' => ['diwoo:DiWoo' => $diwoo],
 		];
 	}//end map()
+
+	/**
+	 * When the document last changed: the latest of the file's modified time,
+	 * the file's published time and the publication's last update, so a change
+	 * to the publication's metadata alone moves every document's `lastmod`
+	 * (REQ-WSD-001). With none of the three, now.
+	 *
+	 * @param array $publication The publication.
+	 * @param array $file The file.
+	 *
+	 * @return string The moment in DATE_ATOM form, UTC.
+	 *
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-documents-lastmod-follows-its-metadata-as-well-as-its-file-req-wsd-001
+	 */
+	private static function lastModified(array $publication, array $file): string {
+		$moments = [];
+		foreach ([($file['modified'] ?? null), ($file['published'] ?? null), ($publication['@self']['updated'] ?? null)] as $value) {
+			// A stored value that is not a date still counts, as the epoch (utcDateTime()).
+			if ($value !== null && $value !== '') {
+				$moments[] = self::utcDateTime(value: $value);
+			}
+		}
+
+		if ($moments === []) {
+			return self::utcDateTime(value: 'now');
+		}
+
+		// DATE_ATOM in UTC sorts as text in time order.
+		return max($moments);
+	}//end lastModified()
 
 	/**
 	 * What the document is missing, as axis and reason pairs: the publisher's
