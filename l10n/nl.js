@@ -1164,6 +1164,8 @@ OC.L10N.register(
         "The publication leaves the public site at once, and every national channel it reached is told to take it down.": "De publicatie verdwijnt meteen van de publieke site. Elk landelijk kanaal dat haar had, krijgt een intrekking.",
         "Document (leave empty to withdraw the whole publication)": "Document (leeg laten om de hele publicatie terug te trekken)",
         "It was taken down, but the record of why could not be stored.": "Het is offline gehaald, maar de reden kon niet worden vastgelegd.",
+        "Name the publication to take down by its id.": "Noem de publicatie die offline moet met haar id.",
+        "The publication could not be taken down, so no withdrawal was sent.": "De publicatie kon niet offline worden gehaald, dus er is geen intrekking verstuurd.",
         "Say why it is being withdrawn.": "Geef aan waarom het wordt teruggetrokken.",
         "Publication status": "Publicatiestatus",
         "Document": "Document",

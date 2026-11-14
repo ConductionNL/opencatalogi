@@ -1210,6 +1210,8 @@ OC.L10N.register(
         "The publication leaves the public site at once, and every national channel it reached is told to take it down.": "The publication leaves the public site at once, and every national channel it reached is told to take it down.",
         "Document (leave empty to withdraw the whole publication)": "Document (leave empty to withdraw the whole publication)",
         "It was taken down, but the record of why could not be stored.": "It was taken down, but the record of why could not be stored.",
+        "Name the publication to take down by its id.": "Name the publication to take down by its id.",
+        "The publication could not be taken down, so no withdrawal was sent.": "The publication could not be taken down, so no withdrawal was sent.",
         "Say why it is being withdrawn.": "Say why it is being withdrawn.",
         "Publication status": "Publication status",
         "Document": "Document",
