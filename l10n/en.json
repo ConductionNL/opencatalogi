@@ -1551,7 +1551,20 @@
         "Only the groups below see and edit this catalogue's publications.": "Only the groups below see and edit this catalogue's publications.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
+        "Decided by": "Decided by",
+        "Field": "Field",
+        "Metadata suggestion": "Metadata suggestion",
+        "Pending until a person accepts or rejects it.": "Pending until a person accepts or rejects it.",
+        "The proposed value as an editor reads it.": "The proposed value as an editor reads it.",
+        "The proposed value, as the publication field stores it.": "The proposed value, as the publication field stores it.",
+        "The publication field the value is proposed for.": "The publication field the value is proposed for.",
+        "The publication the value is proposed for.": "The publication the value is proposed for.",
+        "The user who accepted or rejected the suggestion.": "The user who accepted or rejected the suggestion.",
+        "Value label": "Value label",
+        "When the suggestion was accepted or rejected.": "When the suggestion was accepted or rejected.",
+        "Where the proposal came from: the rules floor, or Hermiq on an editor's request.": "Where the proposal came from: the rules floor, or Hermiq on an editor's request.",
+        "Why this value is proposed, in a sentence an editor can check.": "Why this value is proposed, in a sentence an editor can check."
     },
     "plurals": {}
 }

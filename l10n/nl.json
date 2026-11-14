@@ -1506,7 +1506,20 @@
         "Only the groups below see and edit this catalogue's publications.": "Alleen de groepen hieronder zien en bewerken de publicaties van deze catalogus.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
+        "Decided by": "Besloten door",
+        "Field": "Veld",
+        "Metadata suggestion": "Metadatavoorstel",
+        "Pending until a person accepts or rejects it.": "Openstaand tot iemand het accepteert of afwijst.",
+        "The proposed value as an editor reads it.": "De voorgestelde waarde zoals een redacteur die leest.",
+        "The proposed value, as the publication field stores it.": "De voorgestelde waarde, zoals het veld van de publicatie die opslaat.",
+        "The publication field the value is proposed for.": "Het veld van de publicatie waarvoor de waarde wordt voorgesteld.",
+        "The publication the value is proposed for.": "De publicatie waarvoor de waarde wordt voorgesteld.",
+        "The user who accepted or rejected the suggestion.": "De gebruiker die het voorstel heeft geaccepteerd of afgewezen.",
+        "Value label": "Weergavewaarde",
+        "When the suggestion was accepted or rejected.": "Wanneer het voorstel is geaccepteerd of afgewezen.",
+        "Where the proposal came from: the rules floor, or Hermiq on an editor's request.": "Waar het voorstel vandaan komt: de vaste regels, of Hermiq op verzoek van een redacteur.",
+        "Why this value is proposed, in a sentence an editor can check.": "Waarom deze waarde wordt voorgesteld, in een zin die een redacteur kan controleren."
     },
     "plurals": {}
 }
