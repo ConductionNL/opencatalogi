@@ -60,9 +60,8 @@ class PublicationStateController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param PublicationRights $rights The update right on one publication.
+	 * @param PublicationRights $rights The update right on one publication, and the publish right.
 	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
-	 * @param PublishRight $publishRight The publish right: publishers and administrators only.
 	 */
 	public function __construct(
 		$appName,
@@ -71,7 +70,6 @@ class PublicationStateController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly PublicationRights $rights,
 		private readonly PublicationTransitions $registers,
-		private readonly PublishRight $publishRight,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -107,7 +105,7 @@ class PublicationStateController extends Controller {
 		return new JSONResponse(
 			[
 				'state' => $this->registers->stateOf(publication: $this->asArray(object: $publication)),
-				'canPublish' => $this->publishRight->mayPublish(),
+				'canPublish' => $this->rights->mayPublish(),
 			]
 		);
 	}//end visibility()
@@ -345,7 +343,7 @@ class PublicationStateController extends Controller {
 			return [null, $refusal];
 		}
 
-		if ($this->publishRight->mayPublish() === false) {
+		if ($this->rights->mayPublish() === false) {
 			return [null, $this->notAPublisher()];
 		}
 

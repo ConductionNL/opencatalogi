@@ -28,7 +28,6 @@ use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
-use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Db\ObjectEntity;
@@ -147,8 +146,9 @@ class PublicationStateControllerTest extends TestCase {
 
 		$this->rights = $this->getMockBuilder(PublicationRights::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['mayUpdate'])
+			->onlyMethods(['mayUpdate', 'mayPublish'])
 			->getMock();
+		$this->rights->method('mayPublish')->willReturnCallback(fn (): bool => $this->mayPublish);
 
 		$this->index = $this->getMockBuilder(NationalIndexService::class)
 			->disableOriginalConstructor()
@@ -173,17 +173,13 @@ class PublicationStateControllerTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
-		$publishRight = $this->createMock(PublishRight::class);
-		$publishRight->method('mayPublish')->willReturnCallback(fn (): bool => $this->mayPublish);
-
 		$this->controller = new PublicationStateController(
 			'opencatalogi',
 			$this->request,
 			$l10n,
 			$session,
 			$this->rights,
-			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects)),
-			$publishRight
+			new PublicationTransitions(new PublicationStateService(), new DepublicationService($this->index, $this->createMock(LoggerInterface::class)), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects))
 		);
 	}
 
