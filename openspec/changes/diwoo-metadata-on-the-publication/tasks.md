@@ -50,7 +50,8 @@ Read `openspec/woo-build-rules.md` before the first command. For every OpenRegis
 
 ## 9. Docs
 
-- [ ] 9.1 Document the DiWoo fields, the refusal and the release note of the proposal in `docs/`, following the writing skill (no em-dashes, sentence case). Verify: `npm run lint` and a grep for U+2014 on the changed docs returns nothing.
+- [x] 9.1 Document the DiWoo fields, the refusal and the release note of the proposal in `docs/`, following the writing skill (no em-dashes, sentence case). Verify: `npm run lint` and a grep for U+2014 on the changed docs returns nothing.
+  - Done: a section in `docs/features/woo-transparency.md` with the fields, the refusal, the sitemap fallback and the release notes. No em-dashes.
 
 ## 10. Verification
 
