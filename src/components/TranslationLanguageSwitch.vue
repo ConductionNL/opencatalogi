@@ -3,7 +3,9 @@
   - SPDX-License-Identifier: EUPL-1.2
 -->
 <template>
-	<div class="translation-language-switch" data-testid="translation-language-switch">
+	<div
+		class="translation-language-switch"
+		data-testid="translation-language-switch">
 		<div
 			class="translation-language-switch__options"
 			role="radiogroup"
@@ -24,26 +26,45 @@
 			</NcButton>
 		</div>
 		<p class="translation-language-switch__hint">
-			{{ t('opencatalogi', 'Title, summary and description are translatable. Empty fields fall back to Dutch.') }}
+			{{
+				t(
+					'opencatalogi',
+					'Title, summary and description are translatable. Empty fields fall back to Dutch.',
+				)
+			}}
 		</p>
 		<p
 			v-if="modelValue !== sourceLanguage"
 			class="translation-language-switch__hint"
 			data-testid="translation-same-everywhere">
-			{{ t('opencatalogi', 'The other fields are the same in every language and read-only here.') }}
+			{{
+				t(
+					'opencatalogi',
+					'The other fields are the same in every language and read-only here.',
+				)
+			}}
 		</p>
 		<NcNoteCard
 			v-if="modelValue !== sourceLanguage && outdatedNames"
 			type="warning"
 			data-testid="translation-outdated">
-			{{ t('opencatalogi', 'Dutch changed since this was translated: {fields}', { fields: outdatedNames }) }}
+			{{
+				t(
+					'opencatalogi',
+					'Dutch changed since this was translated: {fields}',
+					{ fields: outdatedNames },
+				)
+			}}
 		</NcNoteCard>
 	</div>
 </template>
 
 <script>
 import { NcButton, NcNoteCard } from '@nextcloud/vue'
-import { languageName, SOURCE_LANGUAGE } from '../services/publicationTranslations.js'
+import {
+	languageName,
+	SOURCE_LANGUAGE,
+} from '../services/publicationTranslations.js'
 
 /**
  * The language switch above the fields of a publication or catalogue edit
@@ -80,9 +101,12 @@ export default {
 			const locale = document.documentElement.lang || 'en'
 			return this.languages.map((tag) => ({
 				id: tag,
-				label: tag === SOURCE_LANGUAGE
-					? this.t('opencatalogi', '{language}, source', { language: languageName(tag, locale) })
-					: languageName(tag, locale),
+				label:
+					tag === SOURCE_LANGUAGE
+						? this.t('opencatalogi', '{language}, source', {
+								language: languageName(tag, locale),
+							})
+						: languageName(tag, locale),
 			}))
 		},
 
@@ -96,7 +120,10 @@ export default {
 			const names = {
 				title: this.t('opencatalogi', 'Title').toLocaleLowerCase(),
 				summary: this.t('opencatalogi', 'Summary').toLocaleLowerCase(),
-				description: this.t('opencatalogi', 'Description').toLocaleLowerCase(),
+				description: this.t(
+					'opencatalogi',
+					'Description',
+				).toLocaleLowerCase(),
 			}
 			return this.outdated.map((field) => names[field] || field).join(', ')
 		},

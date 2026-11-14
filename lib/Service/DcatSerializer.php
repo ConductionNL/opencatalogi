@@ -425,13 +425,9 @@ class DcatSerializer implements DcatSerializerInterface {
 			return $out;
 		}
 
-		if (is_array($value) === true && self::isLanguageLiteral(value: $value) === true) {
-			return '    <' . $tag . ' xml:lang="' . htmlspecialchars((string)$value['@language'], ENT_QUOTES) . '">'
-				. htmlspecialchars((string)$value['@value'], ENT_QUOTES) . '</' . $tag . '>' . "\n";
-		}
-
-		if (is_array($value) === true && isset($value['@id']) === true && count($value) === 1) {
-			return '    <' . $tag . ' rdf:resource="' . htmlspecialchars((string)$value['@id'], ENT_QUOTES) . '"/>' . "\n";
+		$single = $this->rdfXmlSingleTerm(tag: $tag, value: $value);
+		if ($single !== null) {
+			return $single;
 		}
 
 		// Nested blank node.
@@ -462,6 +458,34 @@ class DcatSerializer implements DcatSerializerInterface {
 
 		return $key;
 	}//end rdfXmlTag()
+
+	/**
+	 * A single-term value as one RDF/XML element: a language-tagged literal
+	 * with xml:lang, or an IRI reference as rdf:resource; null for anything else.
+	 *
+	 * @param string $tag The property tag (CURIE).
+	 * @param mixed $value The property value.
+	 *
+	 * @return string|null The element, or null.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function rdfXmlSingleTerm(string $tag, mixed $value): ?string {
+		if (is_array($value) === false) {
+			return null;
+		}
+
+		if (self::isLanguageLiteral(value: $value) === true) {
+			return '    <' . $tag . ' xml:lang="' . htmlspecialchars((string)$value['@language'], ENT_QUOTES) . '">'
+				. htmlspecialchars((string)$value['@value'], ENT_QUOTES) . '</' . $tag . '>' . "\n";
+		}
+
+		if (isset($value['@id']) === true && count($value) === 1) {
+			return '    <' . $tag . ' rdf:resource="' . htmlspecialchars((string)$value['@id'], ENT_QUOTES) . '"/>' . "\n";
+		}
+
+		return null;
+	}//end rdfXmlSingleTerm()
 
 	/**
 	 * Whether a value is a JSON-LD language-tagged literal: exactly `@value` and `@language`.

@@ -53,6 +53,7 @@ export function publicationLanguagesFrom(stored) {
  * @param {string} tag - The BCP 47 tag
  * @param {string} locale - The reader's locale
  * @return {string} The name
+ * @spec openspec/changes/publication-translations/design.md
  */
 export function languageName(tag, locale) {
 	try {
@@ -174,8 +175,14 @@ export function translationSaveOptions(payload, language, requestToken) {
  * @return {Array<object>} The rows
  */
 function rowsIn(answer, language) {
-	const rows = (answer && Array.isArray(answer.translations)) ? answer.translations : []
-	return rows.filter((row) => row && row.language === language && TRANSLATABLE_FIELDS.includes(row.property))
+	const rows =
+		answer && Array.isArray(answer.translations) ? answer.translations : []
+	return rows.filter(
+		(row) =>
+			row
+			&& row.language === language
+			&& TRANSLATABLE_FIELDS.includes(row.property),
+	)
 }
 
 /**
@@ -206,16 +213,26 @@ export function outdatedFields(answer, language) {
 export function languageStates(answer, languages) {
 	return languages.map((language) => {
 		if (language === SOURCE_LANGUAGE) {
-			return { language, source: true, translated: [...TRANSLATABLE_FIELDS], missing: [], outdated: [] }
+			return {
+				language,
+				source: true,
+				translated: [...TRANSLATABLE_FIELDS],
+				missing: [],
+				outdated: [],
+			}
 		}
 		const filled = rowsIn(answer, language)
-			.filter((row) => typeof row.value === 'string' && row.value.trim() !== '')
+			.filter(
+				(row) => typeof row.value === 'string' && row.value.trim() !== '',
+			)
 			.map((row) => row.property)
 		const outdated = outdatedFields(answer, language)
 		return {
 			language,
 			source: false,
-			translated: TRANSLATABLE_FIELDS.filter((field) => filled.includes(field) && !outdated.includes(field)),
+			translated: TRANSLATABLE_FIELDS.filter(
+				(field) => filled.includes(field) && !outdated.includes(field),
+			),
 			missing: TRANSLATABLE_FIELDS.filter((field) => !filled.includes(field)),
 			outdated,
 		}
@@ -279,17 +296,31 @@ export function languageSummary(state, t) {
 	} else if (state.translated.length === 0 && state.outdated.length === 0) {
 		parts.push(t('opencatalogi', 'Not translated yet'))
 	} else if (state.translated.length > 0 && state.missing.length > 0) {
-		parts.push(t('opencatalogi', '{translated} translated, {missing} missing', {
-			translated: fieldPhrase(state.translated, t, true),
-			missing: fieldPhrase(state.missing, t, false),
-		}))
+		parts.push(
+			t('opencatalogi', '{translated} translated, {missing} missing', {
+				translated: fieldPhrase(state.translated, t, true),
+				missing: fieldPhrase(state.missing, t, false),
+			}),
+		)
 	} else if (state.translated.length > 0) {
-		parts.push(t('opencatalogi', '{translated} translated', { translated: fieldPhrase(state.translated, t, true) }))
+		parts.push(
+			t('opencatalogi', '{translated} translated', {
+				translated: fieldPhrase(state.translated, t, true),
+			}),
+		)
 	} else if (state.missing.length > 0) {
-		parts.push(t('opencatalogi', '{missing} missing', { missing: fieldPhrase(state.missing, t, true) }))
+		parts.push(
+			t('opencatalogi', '{missing} missing', {
+				missing: fieldPhrase(state.missing, t, true),
+			}),
+		)
 	}
 	if (state.outdated.length > 0) {
-		parts.push(t('opencatalogi', 'Outdated: {fields}', { fields: fieldPhrase(state.outdated, t, false) }))
+		parts.push(
+			t('opencatalogi', 'Outdated: {fields}', {
+				fields: fieldPhrase(state.outdated, t, false),
+			}),
+		)
 	}
 	return parts.join('. ')
 }
@@ -332,5 +363,7 @@ export function takeRequestedEditorLanguage() {
  * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
  */
 export function hasTranslatableFields(schema) {
-	return Object.values((schema && schema.properties) || {}).some((property) => property && property.translatable === true)
+	return Object.values((schema && schema.properties) || {}).some(
+		(property) => property && property.translatable === true,
+	)
 }

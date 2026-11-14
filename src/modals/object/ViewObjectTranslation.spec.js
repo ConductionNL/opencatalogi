@@ -13,21 +13,51 @@ import { requestEditorLanguage } from '../../services/publicationTranslations.js
 
 jest.mock('@toast-ui/editor/dist/toastui-editor.css', () => ({}))
 // @nextcloud/browser-storage ships ESM only, which this Jest setup does not transform.
-jest.mock('@nextcloud/browser-storage', () => ({ getBuilder: () => ({ persist: () => ({ build: () => new Map() }), build: () => new Map() }) }), { virtual: true })
-jest.mock('@conduction/nextcloud-vue', () => ({ dispatchObjectsChanged: jest.fn(), CnMetadataTab: {}, CnPropertiesTab: {} }))
+jest.mock(
+	'@nextcloud/browser-storage',
+	() => ({
+		getBuilder: () => ({
+			persist: () => ({ build: () => new Map() }),
+			build: () => new Map(),
+		}),
+	}),
+	{ virtual: true },
+)
+jest.mock('@conduction/nextcloud-vue', () => ({
+	dispatchObjectsChanged: jest.fn(),
+	CnMetadataTab: {},
+	CnPropertiesTab: {},
+}))
 jest.mock('@nextcloud/vue', () => ({}))
 jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'tok' }))
 jest.mock('@nextcloud/router', () => ({
-	generateUrl: (path, params = {}) => '/nc' + path.replace(/{(\w+)}/g, (_, k) => params[k]),
+	generateUrl: (path, params = {}) =>
+		'/nc' + path.replace(/{(\w+)}/g, (_, k) => params[k]),
 }))
 jest.mock('../../store/store.js', () => ({
 	catalogStore: { fetchPublications: jest.fn() },
 	navigationStore: {},
-	objectStore: { availableRegisters: [], availableSchemas: [], selectedAttachments: [], setActiveObject: jest.fn() },
+	objectStore: {
+		availableRegisters: [],
+		availableSchemas: [],
+		selectedAttachments: [],
+		setActiveObject: jest.fn(),
+	},
 }))
 
-const publication = { id: 'p1', title: 'Jaarverslag', summary: 'Kort', '@self': { id: 'p1', register: 3, schema: 9 } }
-const schema = { properties: { title: { type: 'string', translatable: true }, summary: { type: 'string', translatable: true }, organization: { type: 'string' } } }
+const publication = {
+	id: 'p1',
+	title: 'Jaarverslag',
+	summary: 'Kort',
+	'@self': { id: 'p1', register: 3, schema: 9 },
+}
+const schema = {
+	properties: {
+		title: { type: 'string', translatable: true },
+		summary: { type: 'string', translatable: true },
+		organization: { type: 'string' },
+	},
+}
 
 /**
  * A plain `this` with the given state, the component's methods and its
@@ -52,7 +82,9 @@ function vm(state = {}) {
 	for (const [name, fn] of Object.entries(ViewObject.methods)) {
 		if (!(name in ctx)) ctx[name] = fn.bind(ctx)
 	}
-	Object.defineProperty(ctx, 'translatable', { get: () => ViewObject.computed.translatable.call(ctx) })
+	Object.defineProperty(ctx, 'translatable', {
+		get: () => ViewObject.computed.translatable.call(ctx),
+	})
 	return ctx
 }
 
@@ -78,9 +110,22 @@ afterEach(() => {
 describe('ViewObject language switch (REQ-PTR-003)', () => {
 	it('offers the languages enabled in the settings, reads the status, and opens the language asked for', async () => {
 		const calls = fakeFetch({
-			'/nc/apps/opencatalogi/api/settings': { configuration: { publication_languages: '["nl","en"]' } },
-			'/nc/apps/openregister/api/translations/object/p1?schema=9': { translations: [{ property: 'summary', language: 'en', value: 'Short', status: 'outdated' }] },
-			'/index.php/apps/openregister/api/objects/3/9/p1?_translations=all': { title: { nl: 'Jaarverslag', en: 'Annual report' } },
+			'/nc/apps/opencatalogi/api/settings': {
+				configuration: { publication_languages: '["nl","en"]' },
+			},
+			'/nc/apps/openregister/api/translations/object/p1?schema=9': {
+				translations: [
+					{
+						property: 'summary',
+						language: 'en',
+						value: 'Short',
+						status: 'outdated',
+					},
+				],
+			},
+			'/index.php/apps/openregister/api/objects/3/9/p1?_translations=all': {
+				title: { nl: 'Jaarverslag', en: 'Annual report' },
+			},
 		})
 		const ctx = vm()
 
@@ -88,8 +133,12 @@ describe('ViewObject language switch (REQ-PTR-003)', () => {
 
 		expect(ctx.editLanguages).toEqual(['nl', 'en'])
 		expect(ctx.editLanguage).toBe('en')
-		expect(ViewObject.computed.editLanguageOutdated.call(ctx)).toEqual(['summary'])
-		expect(ctx.allTranslations).toEqual({ title: { nl: 'Jaarverslag', en: 'Annual report' } })
+		expect(ViewObject.computed.editLanguageOutdated.call(ctx)).toEqual([
+			'summary',
+		])
+		expect(ctx.allTranslations).toEqual({
+			title: { nl: 'Jaarverslag', en: 'Annual report' },
+		})
 		expect(calls.map(([url]) => url)).toEqual([
 			'/nc/apps/opencatalogi/api/settings',
 			'/nc/apps/openregister/api/translations/object/p1?schema=9',
@@ -99,7 +148,9 @@ describe('ViewObject language switch (REQ-PTR-003)', () => {
 
 	it('reads nothing for a schema without translatable fields', async () => {
 		const calls = fakeFetch({})
-		const ctx = vm({ resolvedSchema: { properties: { title: { type: 'string' } } } })
+		const ctx = vm({
+			resolvedSchema: { properties: { title: { type: 'string' } } },
+		})
 
 		await ctx.loadTranslationContext('en')
 
@@ -124,23 +175,38 @@ describe('ViewObject language switch (REQ-PTR-003)', () => {
 	})
 
 	it('shows the fields in the language edited with the other fields read-only', () => {
-		const ctx = vm({ editLanguage: 'en', allTranslations: { title: { en: 'Annual report' } } })
+		const ctx = vm({
+			editLanguage: 'en',
+			allTranslations: { title: { en: 'Annual report' } },
+		})
 
 		const bindings = ViewObject.computed.propertiesPanelBindings.call(ctx)
 
-		expect(bindings.currentObject).toMatchObject({ title: 'Annual report', summary: '' })
+		expect(bindings.currentObject).toMatchObject({
+			title: 'Annual report',
+			summary: '',
+		})
 		expect(bindings.resolvedSchema.properties.organization.readOnly).toBe(true)
 		expect(bindings.resolvedSchema.properties.title.readOnly).toBeUndefined()
 	})
 
 	it('saves another language as a PATCH of only its translatable fields', async () => {
-		const ctx = vm({ editLanguage: 'en', formData: { summary: 'Short', organization: 'org-2' } })
+		const ctx = vm({
+			editLanguage: 'en',
+			formData: { summary: 'Short', organization: 'org-2' },
+		})
 		const request = ctx.saveRequest(false)
-		const calls = fakeFetch({ '/index.php/apps/openregister/api/objects/3/9/p1': { id: 'p1' } })
+		const calls = fakeFetch({
+			'/index.php/apps/openregister/api/objects/3/9/p1': { id: 'p1' },
+		})
 
 		await ctx.sendSave(request)
 
-		expect(request).toMatchObject({ method: 'PATCH', language: 'en', objectData: { summary: 'Short' } })
+		expect(request).toMatchObject({
+			method: 'PATCH',
+			language: 'en',
+			objectData: { summary: 'Short' },
+		})
 		expect(calls[0][0]).toBe('/index.php/apps/openregister/api/objects/3/9/p1')
 		expect(calls[0][1].method).toBe('PATCH')
 		expect(calls[0][1].headers['X-Translation-Target-Language']).toBe('en')
@@ -150,7 +216,9 @@ describe('ViewObject language switch (REQ-PTR-003)', () => {
 	it('saves Dutch as before: a PUT of the whole object without a target language', async () => {
 		const ctx = vm({ buildCompleteObjectData: () => ({ title: 'Jaarverslag' }) })
 		const request = ctx.saveRequest(false)
-		const calls = fakeFetch({ '/index.php/apps/openregister/api/objects/3/9/p1': { id: 'p1' } })
+		const calls = fakeFetch({
+			'/index.php/apps/openregister/api/objects/3/9/p1': { id: 'p1' },
+		})
 
 		await ctx.sendSave(request)
 

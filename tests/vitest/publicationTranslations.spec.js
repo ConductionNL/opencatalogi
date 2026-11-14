@@ -26,7 +26,11 @@ import {
  * @param {object} vars The placeholder values.
  * @return {string} The text.
  */
-const t = (app, text, vars = {}) => text.replace(/{(\w+)}/g, (match, name) => (name in vars ? vars[name] : match))
+function t(app, text, vars = {}) {
+	return text.replace(/{(\w+)}/g, (match, name) =>
+		name in vars ? vars[name] : match,
+	)
+}
 
 /**
  * A translation row as OpenRegister serialises it.
@@ -37,11 +41,24 @@ const t = (app, text, vars = {}) => text.replace(/{(\w+)}/g, (match, name) => (n
  * @param {string} status The workflow status.
  * @return {object} The row.
  */
-const row = (property, language, value, status = 'draft') => ({ objectUuid: 'u1', property, language, value, status, isSource: language === 'nl' })
+function row(property, language, value, status = 'draft') {
+	return {
+		objectUuid: 'u1',
+		property,
+		language,
+		value,
+		status,
+		isSource: language === 'nl',
+	}
+}
 
 describe('publicationLanguagesFrom', () => {
 	it('keeps Dutch first and once, and falls back to Dutch and English', () => {
-		expect(publicationLanguagesFrom('["en","nl","de"]')).toEqual(['nl', 'en', 'de'])
+		expect(publicationLanguagesFrom('["en","nl","de"]')).toEqual([
+			'nl',
+			'en',
+			'de',
+		])
 		expect(publicationLanguagesFrom(['fr', 7, 'fr'])).toEqual(['nl', 'fr'])
 		expect(publicationLanguagesFrom('{')).toEqual(['nl', 'en'])
 		expect(publicationLanguagesFrom(null)).toEqual(['nl', 'en'])
@@ -65,19 +82,38 @@ describe('the edit form in another language (REQ-PTR-003)', () => {
 
 		expect(shown.properties.title).toEqual({ type: 'string' })
 		expect(shown.properties.description).toEqual({ type: 'string' })
-		expect(shown.properties.organization).toEqual({ type: 'string', readOnly: true })
-		expect(shown.properties.publicationDate).toEqual({ type: 'string', format: 'date', readOnly: true })
+		expect(shown.properties.organization).toEqual({
+			type: 'string',
+			readOnly: true,
+		})
+		expect(shown.properties.publicationDate).toEqual({
+			type: 'string',
+			format: 'date',
+			readOnly: true,
+		})
 		expect(schema.properties.organization.readOnly).toBeUndefined()
 	})
 
 	it('leaves the Dutch form as it is', () => {
 		expect(translationSchema(schema, 'nl')).toBe(schema)
-		expect(translationItem({ title: 'Jaarverslag' }, null, 'nl')).toEqual({ title: 'Jaarverslag' })
+		expect(translationItem({ title: 'Jaarverslag' }, null, 'nl')).toEqual({
+			title: 'Jaarverslag',
+		})
 	})
 
 	it('shows the fields in the language edited, empty where not translated yet', () => {
-		const object = { id: 'u1', title: 'Jaarverslag', summary: 'Kort', description: 'Lang', organization: 'org-1' }
-		const all = { title: { nl: 'Jaarverslag', en: 'Annual report' }, summary: { nl: 'Kort' }, description: 'Lang' }
+		const object = {
+			id: 'u1',
+			title: 'Jaarverslag',
+			summary: 'Kort',
+			description: 'Lang',
+			organization: 'org-1',
+		}
+		const all = {
+			title: { nl: 'Jaarverslag', en: 'Annual report' },
+			summary: { nl: 'Kort' },
+			description: 'Lang',
+		}
 
 		expect(translationItem(object, all, 'en')).toEqual({
 			id: 'u1',
@@ -89,7 +125,11 @@ describe('the edit form in another language (REQ-PTR-003)', () => {
 	})
 
 	it('writes only the changed translatable fields, with a PATCH for that language', () => {
-		const payload = translationPayload({ summary: 'Short', organization: 'org-2', title: '' })
+		const payload = translationPayload({
+			summary: 'Short',
+			organization: 'org-2',
+			title: '',
+		})
 
 		expect(payload).toEqual({ summary: 'Short', title: '' })
 		expect(translationSaveOptions(payload, 'en', 'tok')).toEqual({
@@ -104,7 +144,13 @@ describe('the edit form in another language (REQ-PTR-003)', () => {
 	})
 
 	it('names the fields whose Dutch changed since they were translated', () => {
-		const answer = { translations: [row('summary', 'en', 'Short', 'outdated'), row('title', 'en', 'T', 'outdated'), row('title', 'de', 'T', 'outdated')] }
+		const answer = {
+			translations: [
+				row('summary', 'en', 'Short', 'outdated'),
+				row('title', 'en', 'T', 'outdated'),
+				row('title', 'de', 'T', 'outdated'),
+			],
+		}
 
 		expect(outdatedFields(answer, 'en')).toEqual(['title', 'summary'])
 		expect(outdatedFields(null, 'en')).toEqual([])
@@ -113,25 +159,51 @@ describe('the edit form in another language (REQ-PTR-003)', () => {
 
 describe('the Languages card (REQ-PTR-004)', () => {
 	it('reads "Title and summary translated, description missing" for a partial English translation', () => {
-		const answer = { translations: [row('title', 'en', 'Annual report'), row('summary', 'en', 'Short'), row('description', 'en', '  ')] }
+		const answer = {
+			translations: [
+				row('title', 'en', 'Annual report'),
+				row('summary', 'en', 'Short'),
+				row('description', 'en', '  '),
+			],
+		}
 
 		const [dutch, english] = languageStates(answer, ['nl', 'en'])
 
-		expect(dutch).toEqual({ language: 'nl', source: true, translated: ['title', 'summary', 'description'], missing: [], outdated: [] })
-		expect(english).toEqual({ language: 'en', source: false, translated: ['title', 'summary'], missing: ['description'], outdated: [] })
+		expect(dutch).toEqual({
+			language: 'nl',
+			source: true,
+			translated: ['title', 'summary', 'description'],
+			missing: [],
+			outdated: [],
+		})
+		expect(english).toEqual({
+			language: 'en',
+			source: false,
+			translated: ['title', 'summary'],
+			missing: ['description'],
+			outdated: [],
+		})
 		expect(languageSummary(dutch, t)).toBe('Source language, complete')
-		expect(languageSummary(english, t)).toBe('Title and summary translated, description missing')
+		expect(languageSummary(english, t)).toBe(
+			'Title and summary translated, description missing',
+		)
 	})
 
 	it('says complete, not translated, missing and outdated', () => {
 		const answer = {
 			translations: [
-				row('title', 'en', 'A'), row('summary', 'en', 'B'), row('description', 'en', 'C'),
-				row('title', 'fr', 'A'), row('summary', 'fr', 'B', 'outdated'), row('description', 'fr', 'C'),
+				row('title', 'en', 'A'),
+				row('summary', 'en', 'B'),
+				row('description', 'en', 'C'),
+				row('title', 'fr', 'A'),
+				row('summary', 'fr', 'B', 'outdated'),
+				row('description', 'fr', 'C'),
 				row('summary', 'it', 'B', 'outdated'),
 			],
 		}
-		const lines = languageStates(answer, ['en', 'fr', 'de', 'it']).map((state) => languageSummary(state, t))
+		const lines = languageStates(answer, ['en', 'fr', 'de', 'it']).map((state) =>
+			languageSummary(state, t),
+		)
 
 		expect(lines).toEqual([
 			'Complete',
@@ -142,10 +214,38 @@ describe('the Languages card (REQ-PTR-004)', () => {
 	})
 
 	it('lists three fields with commas', () => {
-		expect(languageSummary({ source: false, translated: [], missing: ['title', 'summary', 'description'], outdated: ['title'] }, t))
-			.toBe('Title, summary and description missing. Outdated: title')
-		expect(languageSummary({ source: false, translated: ['summary'], missing: [], outdated: [] }, t)).toBe('Complete')
-		expect(languageSummary({ source: false, translated: ['summary', 'title'], missing: [], outdated: ['description'] }, t))
-			.toBe('Summary and title translated. Outdated: description')
+		expect(
+			languageSummary(
+				{
+					source: false,
+					translated: [],
+					missing: ['title', 'summary', 'description'],
+					outdated: ['title'],
+				},
+				t,
+			),
+		).toBe('Title, summary and description missing. Outdated: title')
+		expect(
+			languageSummary(
+				{
+					source: false,
+					translated: ['summary'],
+					missing: [],
+					outdated: [],
+				},
+				t,
+			),
+		).toBe('Complete')
+		expect(
+			languageSummary(
+				{
+					source: false,
+					translated: ['summary', 'title'],
+					missing: [],
+					outdated: ['description'],
+				},
+				t,
+			),
+		).toBe('Summary and title translated. Outdated: description')
 	})
 })

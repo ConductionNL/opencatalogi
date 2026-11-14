@@ -246,14 +246,8 @@ class DcatMappingService {
 	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	private function languageTaggedLiterals(array $value): ?array {
-		if ($value === [] || array_is_list($value) === true) {
+		if ($this->isKeyedByLanguage(value: $value) === false) {
 			return $value;
-		}
-
-		foreach (array_keys($value) as $key) {
-			if (preg_match(self::LANGUAGE_KEY, (string)$key) !== 1) {
-				return $value;
-			}
 		}
 
 		$ordered = $value;
@@ -274,6 +268,29 @@ class DcatMappingService {
 
 		return $literals;
 	}//end languageTaggedLiterals()
+
+	/**
+	 * Whether a value is a non-empty map whose every key is a language tag.
+	 *
+	 * @param array<mixed> $value The mapped value.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function isKeyedByLanguage(array $value): bool {
+		if ($value === [] || array_is_list($value) === true) {
+			return false;
+		}
+
+		foreach (array_keys($value) as $key) {
+			if (preg_match(self::LANGUAGE_KEY, (string)$key) !== 1) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end isKeyedByLanguage()
 
 	/**
 	 * The publication value at each mapped path, leaving out empty values.

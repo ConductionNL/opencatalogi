@@ -2196,6 +2196,7 @@ export default {
 		 *
 		 * @param {boolean} isCreating - Whether a new object is created
 		 * @return {{isCreating: boolean, objectData: object, endpoint: string, method: string, language?: string}} The request
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		saveRequest(isCreating) {
 			// Build the complete object with all schema properties
@@ -2230,6 +2231,7 @@ export default {
 		 * @param {{isCreating: boolean, objectData: object, endpoint: string, method: string, language?: string}} request - The request
 		 * @return {Promise<object>} The saved object
 		 * @throws {Error} When the answer is not ok
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		async sendSave({ isCreating, objectData, endpoint, method, language }) {
 			const response = await fetch(endpoint, saveOptions({ objectData, method, language }))

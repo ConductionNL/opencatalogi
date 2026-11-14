@@ -103,82 +103,82 @@ const { isAdmin } = useIsAdmin()
 				<fieldset
 					class="catalog-shared-fields"
 					:disabled="editLanguage !== sourceLanguage">
-				<NcTextField
-					v-model="catalogi.slug"
-					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Slug*')"
-					maxlength="255"
-					:error="!!inputValidation.fieldErrors?.['slug']"
-					:helperText="
-						inputValidation.fieldErrors?.['slug']?.[0]
-						|| t(
-							'opencatalogi',
-							'URL-friendly identifier (e.g., publications, datasets)',
-						)
-					"
-					:placeholder="t('opencatalogi', 'publications')" />
-				<NcCheckboxRadioSwitch
-					v-model="catalogi.listed"
-					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Publicly available')">
-					{{ t('opencatalogi', 'Publicly available') }}
-				</NcCheckboxRadioSwitch>
-				<NcSelect
-					v-model="selectedOrganization"
-					:options="organizationOptions"
-					:inputLabel="t('opencatalogi', 'Organization')"
-					:disabled="objectStore.isLoading('catalog')" />
-				<NcSelect
-					v-model="selectedRegisters"
-					:options="registerOptions"
-					:inputLabel="t('opencatalogi', 'Registers*')"
-					:disabled="objectStore.isLoading('catalog')"
-					multiple />
-				<NcSelect
-					v-model="selectedSchemas"
-					:options="schemaOptions"
-					:inputLabel="t('opencatalogi', 'Schemas*')"
-					:disabled="objectStore.isLoading('catalog')"
-					:keepOpen="true"
-					multiple />
-				<NcSelect
-					v-model="catalogi.status"
-					:options="statusOptions"
-					labelAttribute="label"
-					:inputLabel="t('opencatalogi', 'Status*')"
-					:disabled="objectStore.isLoading('catalog')" />
-				<NcCheckboxRadioSwitch
-					v-model="catalogi.hasWooSitemap"
-					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Has Woo Sitemap')">
-					{{ t('opencatalogi', 'Requires Woo sitemap') }}
-				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch
-					v-model="catalogi.hasOoapi"
-					:disabled="objectStore.isLoading('catalog')"
-					:label="t('opencatalogi', 'Has OOAPI 5.0 publication')">
-					{{
-						t(
-							'opencatalogi',
-							"Publish this catalog's course/program/offering data via the Open Onderwijs API (OOAPI 5.0)",
-						)
-					}}
-				</NcCheckboxRadioSwitch>
-				<NcCheckboxRadioSwitch
-					v-model="catalogi.showWithheld"
-					:disabled="objectStore.isLoading('catalog')"
-					data-testid="catalog-show-withheld">
-					{{
-						t(
-							'opencatalogi',
-							'Show which documents of a publication were withheld, and on which grounds',
-						)
-					}}
-				</NcCheckboxRadioSwitch>
-				<CatalogStaffAccessFields
-					v-if="isAdmin"
-					v-model="catalogi.staffAccess"
-					:disabled="objectStore.isLoading('catalog')" />
+					<NcTextField
+						v-model="catalogi.slug"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Slug*')"
+						maxlength="255"
+						:error="!!inputValidation.fieldErrors?.['slug']"
+						:helperText="
+							inputValidation.fieldErrors?.['slug']?.[0]
+							|| t(
+								'opencatalogi',
+								'URL-friendly identifier (e.g., publications, datasets)',
+							)
+						"
+						:placeholder="t('opencatalogi', 'publications')" />
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.listed"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Publicly available')">
+						{{ t('opencatalogi', 'Publicly available') }}
+					</NcCheckboxRadioSwitch>
+					<NcSelect
+						v-model="selectedOrganization"
+						:options="organizationOptions"
+						:inputLabel="t('opencatalogi', 'Organization')"
+						:disabled="objectStore.isLoading('catalog')" />
+					<NcSelect
+						v-model="selectedRegisters"
+						:options="registerOptions"
+						:inputLabel="t('opencatalogi', 'Registers*')"
+						:disabled="objectStore.isLoading('catalog')"
+						multiple />
+					<NcSelect
+						v-model="selectedSchemas"
+						:options="schemaOptions"
+						:inputLabel="t('opencatalogi', 'Schemas*')"
+						:disabled="objectStore.isLoading('catalog')"
+						:keepOpen="true"
+						multiple />
+					<NcSelect
+						v-model="catalogi.status"
+						:options="statusOptions"
+						labelAttribute="label"
+						:inputLabel="t('opencatalogi', 'Status*')"
+						:disabled="objectStore.isLoading('catalog')" />
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.hasWooSitemap"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Has Woo Sitemap')">
+						{{ t('opencatalogi', 'Requires Woo sitemap') }}
+					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.hasOoapi"
+						:disabled="objectStore.isLoading('catalog')"
+						:label="t('opencatalogi', 'Has OOAPI 5.0 publication')">
+						{{
+							t(
+								'opencatalogi',
+								"Publish this catalog's course/program/offering data via the Open Onderwijs API (OOAPI 5.0)",
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+					<NcCheckboxRadioSwitch
+						v-model="catalogi.showWithheld"
+						:disabled="objectStore.isLoading('catalog')"
+						data-testid="catalog-show-withheld">
+						{{
+							t(
+								'opencatalogi',
+								'Show which documents of a publication were withheld, and on which grounds',
+							)
+						}}
+					</NcCheckboxRadioSwitch>
+					<CatalogStaffAccessFields
+						v-if="isAdmin"
+						v-model="catalogi.staffAccess"
+						:disabled="objectStore.isLoading('catalog')" />
 				</fieldset>
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
@@ -380,7 +380,9 @@ export default {
 		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
 		 */
 		textFields() {
-			return this.editLanguage === SOURCE_LANGUAGE ? this.catalogi : this.translation
+			return this.editLanguage === SOURCE_LANGUAGE
+				? this.catalogi
+				: this.translation
 		},
 
 		/**
@@ -582,17 +584,31 @@ export default {
 			this.editLanguage = SOURCE_LANGUAGE
 			this.translationError = ''
 			try {
-				const settings = await (await fetch(generateUrl('/apps/opencatalogi/api/settings'))).json()
-				this.editLanguages = publicationLanguagesFrom(settings?.configuration?.publication_languages)
+				const settings = await (
+					await fetch(generateUrl('/apps/opencatalogi/api/settings'))
+				).json()
+				this.editLanguages = publicationLanguagesFrom(
+					settings?.configuration?.publication_languages,
+				)
 				const active = objectStore.getActiveObject('catalog') || {}
 				const self = active['@self'] || {}
-				const statusUrl = generateUrl('/apps/openregister/api/translations/object/{id}', { id: self.id || active.id })
-				this.translationStatus = await (await fetch(statusUrl + '?schema=' + encodeURIComponent(self.schema))).json()
+				const statusUrl = generateUrl(
+					'/apps/openregister/api/translations/object/{id}',
+					{ id: self.id || active.id },
+				)
+				this.translationStatus = await (
+					await fetch(
+						statusUrl + '?schema=' + encodeURIComponent(self.schema),
+					)
+				).json()
 			} catch {
 				this.editLanguages = [SOURCE_LANGUAGE]
 				this.translationStatus = null
 			}
-			if (language !== SOURCE_LANGUAGE && this.editLanguages.includes(language)) {
+			if (
+				language !== SOURCE_LANGUAGE
+				&& this.editLanguages.includes(language)
+			) {
 				await this.setEditLanguage(language)
 			}
 		},
@@ -613,7 +629,11 @@ export default {
 				.then((response) => response.json())
 				.catch(() => null)
 			const item = translationItem(this.catalogi, all, language)
-			this.translation = { title: item.title, summary: item.summary, description: item.description }
+			this.translation = {
+				title: item.title,
+				summary: item.summary,
+				description: item.description,
+			}
 			this.translationOpened = { ...this.translation }
 		},
 
@@ -625,12 +645,18 @@ export default {
 		 */
 		async saveTranslation() {
 			this.translationError = ''
-			const stored = await objectStore.saveObjectTranslation(this.catalogObjectUrl(), {
-				fields: translationPayload(this.translationChanges),
-				language: this.editLanguage,
-			})
+			const stored = await objectStore.saveObjectTranslation(
+				this.catalogObjectUrl(),
+				{
+					fields: translationPayload(this.translationChanges),
+					language: this.editLanguage,
+				},
+			)
 			if (!stored) {
-				this.translationError = t('opencatalogi', 'The translation could not be saved. Try again.')
+				this.translationError = t(
+					'opencatalogi',
+					'The translation could not be saved. Try again.',
+				)
 				return
 			}
 			this.translationOpened = { ...this.translation }

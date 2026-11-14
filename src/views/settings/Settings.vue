@@ -774,10 +774,15 @@ export default defineComponent({
 		 * @spec openspec/changes/publication-translations/design.md
 		 */
 		publicationLanguageSelection: {
+			/** @spec openspec/changes/publication-translations/design.md */
 			get() {
 				return this.publicationLanguageChoices.filter((option) => this.publicationLanguages.includes(option.id))
 			},
 
+			/**
+			 * @param {Array<{id: string}>} options The selected options.
+			 * @spec openspec/changes/publication-translations/design.md
+			 */
 			set(options) {
 				this.publicationLanguages = publicationLanguagesPayload(options)
 			},
@@ -917,6 +922,7 @@ export default defineComponent({
 		 *
 		 * @param {object|undefined} configuration - The stored configuration
 		 * @return {void}
+		 * @spec openspec/changes/publication-translations/design.md
 		 */
 		applyStoredConfiguration(configuration) {
 			this.channelSources = {

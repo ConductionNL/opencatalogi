@@ -15,7 +15,8 @@ import { navigationStore, objectStore } from '../../store/store.js'
 
 jest.mock('@nextcloud/axios', () => ({ get: jest.fn() }))
 jest.mock('@nextcloud/router', () => ({
-	generateUrl: (path, params = {}) => path.replace(/{(\w+)}/g, (_, key) => params[key]),
+	generateUrl: (path, params = {}) =>
+		path.replace(/{(\w+)}/g, (_, key) => params[key]),
 }))
 jest.mock('../../store/store.js', () => ({
 	navigationStore: { setModal: jest.fn() },
@@ -70,12 +71,24 @@ beforeEach(() => {
 describe('PublicationLanguagesWidget', () => {
 	it('names a missing English description, with Dutch as the complete source', async () => {
 		answerReads({
-			settings: Promise.resolve({ data: { configuration: { publication_languages: '["nl","en"]' } } }),
+			settings: Promise.resolve({
+				data: { configuration: { publication_languages: '["nl","en"]' } },
+			}),
 			status: Promise.resolve({
 				data: {
 					translations: [
-						{ property: 'title', language: 'en', value: 'Annual report', status: 'draft' },
-						{ property: 'summary', language: 'en', value: 'Short', status: 'draft' },
+						{
+							property: 'title',
+							language: 'en',
+							value: 'Annual report',
+							status: 'draft',
+						},
+						{
+							property: 'summary',
+							language: 'en',
+							value: 'Short',
+							status: 'draft',
+						},
 					],
 				},
 			}),
@@ -83,28 +96,53 @@ describe('PublicationLanguagesWidget', () => {
 
 		const wrapper = await mountWidget()
 
-		expect(axios.get).toHaveBeenCalledWith(STATUS_URL, { params: { schema: 'publication' } })
-		expect(wrapper.get('[data-testid="publication-language-nl"]').text()).toContain('Source language, complete')
-		expect(wrapper.find('[data-testid="publication-language-translate-nl"]').exists()).toBe(false)
+		expect(axios.get).toHaveBeenCalledWith(STATUS_URL, {
+			params: { schema: 'publication' },
+		})
+		expect(
+			wrapper.get('[data-testid="publication-language-nl"]').text(),
+		).toContain('Source language, complete')
+		expect(
+			wrapper
+				.find('[data-testid="publication-language-translate-nl"]')
+				.exists(),
+		).toBe(false)
 		const english = wrapper.get('[data-testid="publication-language-en"]').text()
 		expect(english).toContain('English')
-		expect(english).toContain('Title and summary translated, description missing')
-		expect(wrapper.text()).toContain('The public API answers in the language the visitor asks for and falls back to Dutch.')
-		expect(wrapper.find('[data-testid="publication-languages-failed"]').exists()).toBe(false)
+		expect(english).toContain(
+			'Title and summary translated, description missing',
+		)
+		expect(wrapper.text()).toContain(
+			'The public API answers in the language the visitor asks for and falls back to Dutch.',
+		)
+		expect(
+			wrapper.find('[data-testid="publication-languages-failed"]').exists(),
+		).toBe(false)
 	})
 
 	it('opens the editor in the language chosen, on this publication', async () => {
 		answerReads({
-			settings: Promise.resolve({ data: { configuration: { publication_languages: '["nl","de"]' } } }),
+			settings: Promise.resolve({
+				data: { configuration: { publication_languages: '["nl","de"]' } },
+			}),
 			status: Promise.resolve({ data: { translations: [] } }),
 		})
 		const publication = { id: 'pub-1', title: 'Jaarverslag' }
 
-		const wrapper = await mountWidget({ cnObjectContext: { objectId: 'pub-1', object: publication } })
-		expect(wrapper.get('[data-testid="publication-language-de"]').text()).toContain('Not translated yet')
-		await wrapper.get('[data-testid="publication-language-translate-de"]').trigger('click')
+		const wrapper = await mountWidget({
+			cnObjectContext: { objectId: 'pub-1', object: publication },
+		})
+		expect(
+			wrapper.get('[data-testid="publication-language-de"]').text(),
+		).toContain('Not translated yet')
+		await wrapper
+			.get('[data-testid="publication-language-translate-de"]')
+			.trigger('click')
 
-		expect(objectStore.setActiveObject).toHaveBeenCalledWith('publication', publication)
+		expect(objectStore.setActiveObject).toHaveBeenCalledWith(
+			'publication',
+			publication,
+		)
 		expect(navigationStore.setModal).toHaveBeenCalledWith('viewObject')
 		expect(takeRequestedEditorLanguage()).toBe('de')
 	})
@@ -117,10 +155,11 @@ describe('PublicationLanguagesWidget', () => {
 
 		const wrapper = await mountWidget()
 
-		expect(wrapper.find('[data-testid="publication-languages-failed"]').exists()).toBe(true)
-		expect(wrapper.findAll('li').map((item) => item.attributes('data-testid'))).toEqual([
-			'publication-language-nl',
-			'publication-language-en',
-		])
+		expect(
+			wrapper.find('[data-testid="publication-languages-failed"]').exists(),
+		).toBe(true)
+		expect(
+			wrapper.findAll('li').map((item) => item.attributes('data-testid')),
+		).toEqual(['publication-language-nl', 'publication-language-en'])
 	})
 })

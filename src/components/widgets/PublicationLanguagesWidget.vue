@@ -12,7 +12,9 @@
 				:data-testid="'publication-language-' + row.language">
 				<div class="publication-languages__text">
 					<span class="publication-languages__name">{{ row.name }}</span>
-					<span class="publication-languages__state">{{ row.summary }}</span>
+					<span class="publication-languages__state">{{
+						row.summary
+					}}</span>
 				</div>
 				<NcButton
 					v-if="!row.source"
@@ -23,11 +25,19 @@
 				</NcButton>
 			</li>
 		</ul>
-		<NcNoteCard v-if="failed" type="warning" data-testid="publication-languages-failed">
+		<NcNoteCard
+			v-if="failed"
+			type="warning"
+			data-testid="publication-languages-failed">
 			{{ t('opencatalogi', 'The translation status could not be read.') }}
 		</NcNoteCard>
 		<p class="publication-languages__footnote">
-			{{ t('opencatalogi', 'The public API answers in the language the visitor asks for and falls back to Dutch.') }}
+			{{
+				t(
+					'opencatalogi',
+					'The public API answers in the language the visitor asks for and falls back to Dutch.',
+				)
+			}}
 		</p>
 	</div>
 </template>
@@ -131,8 +141,12 @@ export default {
 		async load() {
 			this.failed = false
 			try {
-				const { data } = await axios.get(generateUrl('/apps/opencatalogi/api/settings'))
-				this.languages = publicationLanguagesFrom(data?.configuration?.publication_languages)
+				const { data } = await axios.get(
+					generateUrl('/apps/opencatalogi/api/settings'),
+				)
+				this.languages = publicationLanguagesFrom(
+					data?.configuration?.publication_languages,
+				)
 			} catch {
 				this.languages = publicationLanguagesFrom(undefined)
 			}
@@ -140,7 +154,10 @@ export default {
 			try {
 				const schema = schemaSlug(this.schema || this.ctx.schema)
 				const { data } = await axios.get(
-					generateUrl('/apps/openregister/api/translations/object/{uuid}', { uuid: this.resolvedObjectId }),
+					generateUrl(
+						'/apps/openregister/api/translations/object/{uuid}',
+						{ uuid: this.resolvedObjectId },
+					),
 					{ params: schema ? { schema } : {} },
 				)
 				this.status = data
