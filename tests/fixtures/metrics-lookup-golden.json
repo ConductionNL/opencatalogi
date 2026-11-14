@@ -76,6 +76,24 @@
                 ]
             },
             {
+                "name": "federation_reachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "federation_unreachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
                 "name": "publication_views_total",
                 "samples": [
                     {
@@ -236,6 +254,24 @@
                 ]
             },
             {
+                "name": "federation_reachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "federation_unreachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
                 "name": "publication_views_total",
                 "samples": [
                     {
@@ -336,6 +372,24 @@
                 ]
             },
             {
+                "name": "federation_reachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "federation_unreachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
                 "name": "publication_views_total",
                 "samples": [
                     {
@@ -403,6 +457,24 @@
                 ]
             },
             {
+                "name": "federation_reachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "federation_unreachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
                 "name": "publication_views_total",
                 "samples": [
                     {
@@ -454,6 +526,24 @@
             },
             {
                 "name": "directory_entries_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "federation_reachable_total",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "name": "federation_unreachable_total",
                 "samples": [
                     {
                         "labels": [],

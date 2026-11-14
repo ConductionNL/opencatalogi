@@ -420,7 +420,8 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			help: 'Total catalogs',
 			value: $this->countObjectsBySchemaNeedle(needle: 'atalog')
 		);
-		$samples[] = $this->listingsSample();
+		$listings = $this->fetchObjectsBySchemaNeedle(needle: 'isting');
+		$samples[] = $this->listingsSample(listings: $listings);
 		$samples[] = MetricSample::single(
 			name: 'directory_entries_total',
 			type: 'gauge',
@@ -428,8 +429,57 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			value: $this->countObjectsBySchemaNeedle(needle: 'irectory')
 		);
 
+		array_push($samples, ...$this->federationSamples(listings: $listings));
+
 		return array_merge($samples, $this->usageSamples());
 	}//end metrics()
+
+	/**
+	 * Federated listings split by the outcome of their last directory sync.
+	 *
+	 * A listing whose last sync answered 2xx is reachable; one whose last sync
+	 * recorded any other status code is unreachable. A listing never synced
+	 * (no statusCode) is in neither. Both gauges are always emitted, 0 when
+	 * there are no listings.
+	 *
+	 * @param array<int,array<string,mixed>> $listings The listing objects.
+	 *
+	 * @return array<int,MetricSample> The reachable and unreachable gauges.
+	 *
+	 * @spec openspec/changes/prometheus-metrics/specs/prometheus-metrics/spec.md
+	 */
+	private function federationSamples(array $listings): array {
+		$reachable = 0;
+		$unreachable = 0;
+		foreach ($listings as $listing) {
+			$code = ($listing['statusCode'] ?? null);
+			if (is_numeric($code) === false) {
+				continue;
+			}
+
+			if ((int)$code >= 200 && (int)$code < 300) {
+				$reachable++;
+				continue;
+			}
+
+			$unreachable++;
+		}
+
+		return [
+			MetricSample::single(
+				name: 'federation_reachable_total',
+				type: 'gauge',
+				help: 'Federated listings whose last directory sync succeeded',
+				value: $reachable
+			),
+			MetricSample::single(
+				name: 'federation_unreachable_total',
+				type: 'gauge',
+				help: 'Federated listings whose last directory sync failed',
+				value: $unreachable
+			),
+		];
+	}//end federationSamples()
 
 	/**
 	 * The publications total by status and catalog.
@@ -461,13 +511,15 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	/**
 	 * The listings total by status, with the historical zero fallback.
 	 *
+	 * @param array<int,array<string,mixed>> $listings The listing objects.
+	 *
 	 * @return MetricSample The `listings_total` family.
 	 *
 	 * @spec openspec/specs/adopt-apphost/spec.md
 	 */
-	private function listingsSample(): MetricSample {
+	private function listingsSample(array $listings): MetricSample {
 		$points = [];
-		foreach ($this->getListingCounts() as $row) {
+		foreach ($this->getListingCounts(listings: $listings) as $row) {
 			$points[] = [
 				'labels' => ['status' => (string)($row['status'] ?? '')],
 				'value' => (int)($row['cnt'] ?? 0),
@@ -573,13 +625,15 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	/**
 	 * Get listing counts grouped by status, via OR aggregation.
 	 *
+	 * @param array<int,array<string,mixed>> $listings The listing objects.
+	 *
 	 * @return array<array{status: string, cnt: int}> Grouped counts.
 	 *
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
 	 */
-	private function getListingCounts(): array {
+	private function getListingCounts(array $listings): array {
 		$grouped = [];
-		foreach ($this->fetchObjectsBySchemaNeedle(needle: 'isting') as $object) {
+		foreach ($listings as $object) {
 			$status = (string)($object['status'] ?? '');
 			if (isset($grouped[$status]) === false) {
 				$grouped[$status] = ['status' => $status, 'cnt' => 0];
