@@ -6,7 +6,7 @@
  * every widget, in order, with its title and icon settings.
  */
 
-import Dashboard from './Dashboard.vue'
+import Dashboard, { attachmentCount } from './Dashboard.vue'
 
 jest.mock('@conduction/nextcloud-vue', () => ({
 	...jest.requireActual('@conduction/nextcloud-vue'),
@@ -35,6 +35,8 @@ describe('Dashboard widgetDefs', () => {
 			{ id: 'count-concept-publications', title: 'Concept Publications', type: 'custom' },
 			{ id: 'count-published-publications', title: 'Published Publications', type: 'custom' },
 			{ id: 'count-depublished-publications', title: 'Depublished Publications', type: 'custom' },
+			{ id: 'count-catalogs', title: 'Catalogs', type: 'custom' },
+			{ id: 'count-attachments', title: 'Attachments', type: 'custom' },
 			{ id: 'publications-by-category', title: 'Publications by Category', type: 'custom' },
 			{ id: 'activity', title: 'Activity', type: 'custom' },
 			{ id: 'usage', title: 'Publication views', type: 'custom' },
@@ -48,7 +50,7 @@ describe('Dashboard widgetDefs', () => {
 	it('keeps the key order of each definition', () => {
 		const defs = Dashboard.computed.widgetDefs.call({})
 		expect(Object.keys(defs[0])).toEqual(['id', 'title', 'type'])
-		expect(Object.keys(defs[8])).toEqual(['id', 'title', 'type', 'titleIconPosition', 'titleIconColor'])
+		expect(Object.keys(defs[10])).toEqual(['id', 'title', 'type', 'titleIconPosition', 'titleIconColor'])
 	})
 })
 
@@ -73,5 +75,48 @@ describe('Dashboard publicationsByCategoryData', () => {
 			labels: ['3', '99', 'Embedded', 'Named', 'Unknown', 'Doc', 'Note'],
 			series: [1, 1, 1, 1, 3, 2, 1],
 		})
+	})
+})
+
+describe('Dashboard counts', () => {
+	it('counts the attachments each publication carries, as a number or a list', () => {
+		expect(attachmentCount([])).toBe(0)
+		expect(attachmentCount([
+			{ '@self': { files: 2 } },
+			{ '@self': { files: ['a', 'b', 'c'] } },
+			{ '@self': { files: '4' } },
+			{ '@self': { files: null } },
+			{ '@self': { files: -1 } },
+			{ '@self': { files: 'x' } },
+			{ '@self': {} },
+			{},
+			null,
+		])).toBe(9)
+	})
+
+	it('reports catalogues, publications and attachments in the KPIs', () => {
+		const kpis = Dashboard.computed.kpis.call({
+			catalogs: [{ id: 1 }, { id: 2 }, { id: 3 }],
+			publicationTotal: 40,
+			allPublications: [{ '@self': { files: 90 } }, { '@self': { files: 5 } }],
+			conceptPublications: [],
+			publishedPublications: [],
+			depublishedPublications: [],
+		})
+		expect(kpis.catalogCount).toBe(3)
+		expect(kpis.publicationCount).toBe(40)
+		expect(kpis.attachmentCount).toBe(95)
+	})
+
+	it('shows zero for every count on a new installation', () => {
+		const kpis = Dashboard.computed.kpis.call({
+			catalogs: [],
+			publicationTotal: 0,
+			allPublications: [],
+			conceptPublications: [],
+			publishedPublications: [],
+			depublishedPublications: [],
+		})
+		expect(kpis).toEqual(expect.objectContaining({ catalogCount: 0, publicationCount: 0, attachmentCount: 0 }))
 	})
 })

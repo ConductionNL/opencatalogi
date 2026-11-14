@@ -46,6 +46,7 @@ OC.L10N.register(
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -267,6 +268,7 @@ OC.L10N.register(
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1573,7 +1575,8 @@ OC.L10N.register(
         "data.overheid.nl registration": "data.overheid.nl registration",
         "{donl} of {feed} datasets on data.overheid.nl, checked on {date}.": "{donl} of {feed} datasets on data.overheid.nl, checked on {date}.",
         "The data.overheid.nl registration could not be saved: %s": "The data.overheid.nl registration could not be saved: %s",
-        "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on.": "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on."
+        "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on.": "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on.",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
 )
