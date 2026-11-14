@@ -30,6 +30,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingQueue;
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\WooCategory;
 use OCP\App\IAppManager;
@@ -62,6 +63,7 @@ class BatchPublicationWriter {
 	 * @param PublicationLinker $linker The public link to the publication.
 	 * @param IL10N $l10n The refusal message.
 	 * @param IAppManager|null $appManager Whether OpenRegister is installed.
+	 * @param AttachmentReadingQueue|null $readingQueue Queues the reading of each attached document.
 	 */
 	public function __construct(
 		private readonly IRootFolder $rootFolder,
@@ -69,6 +71,7 @@ class BatchPublicationWriter {
 		private readonly PublicationLinker $linker,
 		private readonly IL10N $l10n,
 		private readonly ?IAppManager $appManager = null,
+		private readonly ?AttachmentReadingQueue $readingQueue = null,
 	) {
 
 	}//end __construct()
@@ -360,6 +363,7 @@ class BatchPublicationWriter {
 		}
 
 		$files->publishFile(object: $target, file: $created->getId());
+		$this->readingQueue?->queue(fileId: (int)$created->getId(), publicationId: (string)$publication['id']);
 
 	}//end attach()
 

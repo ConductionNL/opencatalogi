@@ -193,6 +193,12 @@ class SettingsService implements SettingsServiceInterface {
 				'record_vote_schema' => 'recordVote',
 			],
 		],
+		[
+			'register' => null,
+			'schemas' => [
+				'attachment_reading_schema' => 'attachmentReading',
+			],
+		],
 	];
 
 	/**

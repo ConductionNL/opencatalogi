@@ -2142,6 +2142,42 @@
             "answer": "not delivered: no integriq source is set for the channel"
           }
         ]
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "attachmentReading",
+          "slug": "attachmentreading-1"
+        },
+        "fileId": 9001,
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "state": "typed",
+        "reason": "",
+        "updatedAt": "2026-10-01T10:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "attachmentReading",
+          "slug": "attachmentreading-2"
+        },
+        "fileId": 9002,
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "state": "unavailable",
+        "reason": "OCR is not installed",
+        "updatedAt": "2026-10-01T10:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
+          "schema": "attachmentReading",
+          "slug": "attachmentreading-3"
+        },
+        "fileId": 9003,
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "state": "ocr",
+        "reason": "",
+        "updatedAt": "2026-10-01T10:00:00+00:00"
       }
     ]
   }
