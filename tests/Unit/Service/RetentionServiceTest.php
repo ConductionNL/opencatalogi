@@ -451,6 +451,48 @@ class RetentionServiceTest extends TestCase {
 
 	}//end testEvaluateReviewActionNeverChangesVisibility()
 
+	/**
+	 * A dry run plans every action the daily job would take, and saves nothing (REQ-IMC-002).
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function testEvaluateDryRunPlansWithoutSaving(): void {
+		$soon = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->modify('+3 days')->format(\DateTimeInterface::ATOM);
+		$this->fake->objects = [
+			['id' => 'd1', 'title' => 'Permit', 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00', 'retentionAction' => 'depublish'],
+			['id' => 'd2', 'title' => 'Decision', 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00', 'retentionAction' => 'archive'],
+			['id' => 'd3', 'title' => 'Letter', 'retentionExpiresAt' => '2025-01-01T00:00:00+00:00', 'retentionAction' => 'review'],
+			['id' => 'd4', 'title' => 'Report', 'retentionExpiresAt' => $soon, 'retentionAction' => 'archive'],
+			['id' => 'd5', 'title' => 'No expiry'],
+		];
+
+		$result = $this->service->evaluate(dryRun: true);
+
+		$this->assertSame([], $this->fake->saved, 'a dry run saves nothing');
+		$this->assertSame(
+			[
+				'expiringSoon' => 1,
+				'reviewRequired' => 1,
+				'depublished' => 1,
+				'archived' => 1,
+				'planned' => [
+					['id' => 'd1', 'title' => 'Permit', 'action' => 'depublished'],
+					['id' => 'd2', 'title' => 'Decision', 'action' => 'archived'],
+					['id' => 'd3', 'title' => 'Letter', 'action' => 'reviewRequired'],
+					['id' => 'd4', 'title' => 'Report', 'action' => 'expiringSoon'],
+				],
+			],
+			$result
+		);
+
+		// The same publications, applied, give the same counts and do save.
+		$applied = $this->service->evaluate();
+		$this->assertArrayNotHasKey('planned', $applied);
+		$this->assertSame([1, 1, 1, 1], [$applied['expiringSoon'], $applied['reviewRequired'], $applied['depublished'], $applied['archived']]);
+		$this->assertCount(4, $this->fake->saved);
+
+	}//end testEvaluateDryRunPlansWithoutSaving()
+
 	public function testEvaluateIsIdempotentForToday(): void {
 		$today = (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format(\DateTimeInterface::ATOM);
 		$this->fake->objects = [
