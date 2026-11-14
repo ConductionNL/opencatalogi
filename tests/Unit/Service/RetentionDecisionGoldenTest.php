@@ -41,6 +41,7 @@ use Psr\Log\LoggerInterface;
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
  * @uses \OCA\OpenCatalogi\Service\RetentionRules
+ * @uses \OCA\OpenCatalogi\Service\EdepotHandover
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\RetentionPolicyTable
  * @uses   \OCA\OpenCatalogi\Service\RetentionRun

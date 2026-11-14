@@ -1,0 +1,17 @@
+{
+  "$comment": "openspec/changes/leaf-integrations. Declares the Mail-sidebar intake and the calendar planning leaf on the publication schema. The mail template maps only title, summary and description: it never sets publicationDate, depublicationDate, status, organization, themes or a retention field, so a publication created from an email is a draft the public cannot read until an editor publishes it (REQ-002). The organization leaves of this change are not declared here: the organization schema is OpenRegister's shared one, not part of this register.",
+  "components": {
+    "schemas": {
+      "publication": {
+        "configuration": {
+          "linkedTypes": ["mail", "calendar"],
+          "mailObjectTemplate": {
+            "title": "{{subject}}",
+            "summary": "{{preview}}",
+            "description": "Received by email from {{senderName}} <{{sender}}> on {{date}}.\n\n{{preview}}"
+          }
+        }
+      }
+    }
+  }
+}

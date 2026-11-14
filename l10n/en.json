@@ -45,6 +45,7 @@
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -266,6 +267,7 @@
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1555,7 +1557,8 @@
         "Redaction log": "Redaction log",
         "What was removed from the partly public document and on which grounds, one entry per redacted passage. Internal: never part of a public response.": "What was removed from the partly public document and on which grounds, one entry per redacted passage. Internal: never part of a public response.",
         "The redaction log cannot be read. The document stays unpublished.": "The redaction log cannot be read. The document stays unpublished.",
-        "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s": "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s"
+        "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s": "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "plurals": {}
 }

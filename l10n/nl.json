@@ -37,6 +37,7 @@
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -274,6 +275,7 @@
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1510,7 +1512,8 @@
         "Redaction log": "Laklogboek",
         "What was removed from the partly public document and on which grounds, one entry per redacted passage. Internal: never part of a public response.": "Wat uit het deels openbare document is weggelakt en op welke gronden, één regel per gelakte passage. Intern: nooit onderdeel van een openbaar antwoord.",
         "The redaction log cannot be read. The document stays unpublished.": "Het laklogboek kan niet worden gelezen. Het document blijft ongepubliceerd.",
-        "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s": "Publiceren is geblokkeerd: het laklogboek van deze deels openbare documenten ontbreekt, is leeg of heeft een passage zonder grond: %s"
+        "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s": "Publiceren is geblokkeerd: het laklogboek van deze deels openbare documenten ontbreekt, is leeg of heeft een passage zonder grond: %s",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "plurals": {}
 }
