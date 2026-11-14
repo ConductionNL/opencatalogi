@@ -60,11 +60,13 @@ class SitemapDocumentMapper {
 	 * @param TooiVocabularyService $tooiVocabulary Resolves organisations and handling types to TOOI.
 	 * @param WooCategoryRegistry $categories Resolves a publication's category.
 	 * @param OpenRegisterLookup $openRegister Reaches OpenRegister for the organisation lookup.
+	 * @param FileFacts|null $fileFacts Reads each file's type from its bytes (REQ-PFF-001); without it no format is emitted.
 	 */
 	public function __construct(
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly WooCategoryRegistry $categories,
 		private readonly OpenRegisterLookup $openRegister,
+		private readonly ?FileFacts $fileFacts = null,
 	) {
 	}//end __construct()
 
@@ -93,6 +95,15 @@ class SitemapDocumentMapper {
 	public function map(array $publication, array $file, array &$violations = []): array {
 		$loc = ($file['downloadUrl'] ?? '');
 		$diwoo = $this->diwooCore(publication: $publication, file: $file);
+		$format = $this->formatOf(file: $file);
+		if ($format['element'] !== null) {
+			$diwoo['diwoo:format'] = $format['element'];
+		}
+
+		if ($format['reason'] !== null) {
+			$this->addViolation(violations: $violations, loc: $loc, axis: 'format', reason: $format['reason']);
+		}
+
 		// Each optional axis is its element, or null with the violation that omits it.
 		$elements = $this->optionalAxes(publication: $publication, file: $file);
 		foreach ($this->axisGaps(diwoo: $diwoo, elements: $elements) as $gap) {
@@ -151,12 +162,47 @@ class SitemapDocumentMapper {
 		return [
 			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
 			'diwoo:publisher' => $this->publisherElement(publication: $publication),
-			'diwoo:format' => [
-				'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($file['extension']),
-				'#text' => strtolower($file['extension']),
-			],
 		];
 	}//end diwooCore()
+
+	/**
+	 * The DiWoo format of a file, taken from its bytes, never from its name
+	 * (REQ-PFF-001), and why it is missing or doubtful.
+	 *
+	 * Unreadable bytes give no format and the reason `type-unreadable`. A
+	 * format that differs from the one the file's extension claims is still
+	 * emitted, with the reason `type-mismatch`.
+	 *
+	 * @param array $file The file metadata, with its Nextcloud `id`.
+	 *
+	 * @return array{element: array{'@resource': string, '#text': string}|null, reason: string|null}
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) FileFacts::diwooFormat() is a pure lookup.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	private function formatOf(array $file): array {
+		$mimeType = $this->fileFacts?->mimeTypeOfListedFile(file: $file);
+		if ($mimeType === null) {
+			return ['element' => null, 'reason' => 'type-unreadable'];
+		}
+
+		$code = FileFacts::diwooFormat(mimeType: $mimeType);
+		if ($code === null) {
+			return ['element' => null, 'reason' => 'type-unlisted'];
+		}
+
+		$element = [
+			'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . $code,
+			'#text' => strtolower($code),
+		];
+		$claimed = strtolower(trim((string)($file['extension'] ?? '')));
+		if ($claimed !== strtolower($code)) {
+			return ['element' => $element, 'reason' => 'type-mismatch'];
+		}
+
+		return ['element' => $element, 'reason' => null];
+	}//end formatOf()
 
 	/**
 	 * The optional axes of one file's document, each its element or null.

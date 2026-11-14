@@ -9,10 +9,6 @@
                     "diwoo:publisher": {
                         "#text": ""
                     },
-                    "diwoo:format": {
-                        "@resource": "http://publications.europa.eu/resource/authority/file-type/XML",
-                        "#text": "xml"
-                    },
                     "diwoo:classificatiecollectie": {
                         "diwoo:informatiecategorieen": {
                             "diwoo:informatiecategorie": {
@@ -38,6 +34,11 @@
                 "documentLoc": "earlier",
                 "axis": "kept",
                 "reason": "appended to"
+            },
+            {
+                "documentLoc": "",
+                "axis": "format",
+                "reason": "type-unlisted"
             },
             {
                 "documentLoc": "",

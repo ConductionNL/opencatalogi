@@ -9,6 +9,8 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+require_once __DIR__ . '/Support/FileFactsByExtension.php';
+
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\InstanceSettings;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -121,7 +123,8 @@ class SitemapServiceTest extends TestCase {
 			new InstanceSettings($this->urlGenerator, $this->config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories
+			$this->wooCategories,
+			\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
 		);
 	}
 
@@ -1638,7 +1641,8 @@ class SitemapServiceTest extends TestCase {
 				$registrySettings,
 				$this->createMock(\Psr\Log\LoggerInterface::class),
 				new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission($tooi),
-			)
+			),
+			\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
 		);
 	}
 
@@ -1684,7 +1688,8 @@ class SitemapServiceTest extends TestCase {
 			new InstanceSettings($this->urlGenerator, $config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories
+			$this->wooCategories,
+			\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
 		);
 
 		$reflection = new \ReflectionClass($service);
@@ -1703,7 +1708,8 @@ class SitemapServiceTest extends TestCase {
 			new InstanceSettings($this->urlGenerator, $config),
 			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
 			$this->queryService,
-			$this->wooCategories
+			$this->wooCategories,
+			\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
 		);
 
 		$reflection = new \ReflectionClass($service);
@@ -1715,6 +1721,92 @@ class SitemapServiceTest extends TestCase {
 	// ──────────────────────────────────────────────────────────
 	// Helper methods
 	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * A PDF stored under a .docx name is listed as a PDF and reported as a mismatch (REQ-PFF-001).
+	 *
+	 * @return void
+	 */
+	public function testTheFormatComesFromTheBytesNotTheName(): void {
+		$service = $this->serviceReadingBytes(bytes: "%PDF-1.7\n%binary", detected: 'application/pdf');
+		$file = ['id' => 42, 'downloadUrl' => 'https://example.com/besluit.docx', 'extension' => 'docx'];
+
+		$violations = [];
+		$result = (new \ReflectionMethod($service, 'mapDiwooDocument'))->invokeArgs($service, [$this->publicationWithFiles([]), $file, &$violations]);
+
+		$format = $result['diwoo:Document']['diwoo:DiWoo']['diwoo:format'];
+		$this->assertSame('http://publications.europa.eu/resource/authority/file-type/PDF', $format['@resource']);
+		$this->assertSame('pdf', $format['#text']);
+		$this->assertContains(['documentLoc' => 'https://example.com/besluit.docx', 'axis' => 'format', 'reason' => 'type-mismatch'], $violations);
+	}
+
+	/**
+	 * Unreadable bytes give no format, and the document is reported; the extension is not used (REQ-PFF-001).
+	 *
+	 * @return void
+	 */
+	public function testUnreadableBytesOmitTheFormatAndReportIt(): void {
+		$service = $this->serviceReadingBytes(bytes: null, detected: 'application/pdf');
+		$publication = $this->publicationWithFiles([['id' => 43, 'downloadUrl' => 'https://example.com/besluit.pdf', 'extension' => 'pdf']]);
+
+		$violations = $service->collectDiwooViolations([$publication]);
+		$result = (new \ReflectionMethod($service, 'mapDiwooDocument'))->invoke($service, $publication, $publication['@self']['files'][0]);
+
+		$this->assertArrayNotHasKey('diwoo:format', $result['diwoo:Document']['diwoo:DiWoo']);
+		$this->assertContains(['documentLoc' => 'https://example.com/besluit.pdf', 'axis' => 'format', 'reason' => 'type-unreadable'], $violations);
+	}
+
+	/**
+	 * A minimal public publication carrying these files.
+	 *
+	 * @param array<int, array<string, mixed>> $files The files.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function publicationWithFiles(array $files): array {
+		return [
+			'id' => 'pub-1',
+			'title' => 'Besluit',
+			'@self' => ['created' => '2024-01-15 10:00:00', 'updated' => '2024-06-20 14:30:00', 'files' => $files],
+		];
+	}
+
+	/**
+	 * This test's service over a real FileFacts whose stored file holds these bytes.
+	 *
+	 * @param string|null $bytes    The stored bytes, or null when reading them throws.
+	 * @param string      $detected What the detector answers for them.
+	 *
+	 * @return SitemapService
+	 */
+	private function serviceReadingBytes(?string $bytes, string $detected): SitemapService {
+		$stored = $this->createMock(\OCP\Files\File::class);
+		if ($bytes === null) {
+			$stored->method('fopen')->willThrowException(new \OCP\Files\NotPermittedException('unreadable'));
+		} else {
+			$stored->method('fopen')->willReturnCallback(static function () use ($bytes) {
+				$handle = fopen('php://memory', 'r+');
+				fwrite($handle, $bytes);
+				rewind($handle);
+				return $handle;
+			});
+		}
+
+		$root = $this->createMock(\OCP\Files\IRootFolder::class);
+		$root->method('getFirstNodeById')->willReturn($stored);
+		$detector = $this->createMock(\OCP\Files\IMimeTypeDetector::class);
+		$detector->method('detectString')->with($bytes ?? '')->willReturn($detected);
+
+		return new SitemapService(
+			new OpenRegisterLookup($this->container, $this->appManager),
+			$this->settingsService,
+			new InstanceSettings($this->urlGenerator, $this->config),
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
+			$this->wooCategories,
+			new \OCA\OpenCatalogi\Service\FileFacts($detector, $root)
+		);
+	}
 
 	/**
 	 * Get a private method via reflection.

@@ -4,8 +4,9 @@ Read `openspec/woo-build-rules.md` first. Mock `OCP\Files\File` and `OCP\Files\I
 
 ## 1. Type from the bytes
 
-- [ ] 1.1 Add `FileFacts::mimeTypeOf()` (REQ-PFF-001). Verify: `tests/Unit/Service/FileFactsTest.php::testAPdfNamedDocxIsDetectedAsPdf`, `::testUnreadableBytesGiveNull`, `::testOnlyTheFirst8KbAreRead`.
+- [x] 1.1 Add `FileFacts::mimeTypeOf()` (REQ-PFF-001). Verify: `tests/Unit/Service/FileFactsTest.php::testAPdfNamedDocxIsDetectedAsPdf`, `::testUnreadableBytesGiveNull`, `::testOnlyTheFirst8KbAreRead`.
 - [ ] 1.2 Use it in `SitemapService::mapDiwooDocument()` and `DcatMappingService`, and report `type-mismatch` and `type-unreadable` in `collectDiwooViolations()` (REQ-PFF-001). Verify: `tests/Unit/Service/SitemapServiceTest.php::testTheFormatComesFromTheBytesNotTheName` (fails today), `::testUnreadableBytesOmitTheFormatAndReportIt`; `tests/Unit/Service/DcatMappingServiceTest.php::testTheMediaTypeComesFromTheBytes`.
+  - Sitemap half done: `SitemapDocumentMapper` takes `diwoo:format` from `FileFacts::mimeTypeOfListedFile()` (the file's Nextcloud id), mapped to the DiWoo format list, and reports `type-mismatch` and `type-unreadable` (and `type-unlisted` for a detected type the DiWoo list has no format for) through `collectDiwooViolations()`. `DcatMappingService` is still open, so this box stays unticked.
 - [ ] 1.3 Store the detected type and `fileTypeClaimed` in `WooService` (REQ-PFF-001); add `fileTypeClaimed` to `#wooAssessment` with a bumped version. Verify: `tests/Unit/Service/WooServiceTest.php::testTheAssessmentFileTypeIsTheDetectedTypeAndTheClaimIsKept`.
 
 ## 2. Title in the file
