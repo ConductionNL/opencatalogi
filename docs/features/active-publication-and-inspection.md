@@ -157,6 +157,30 @@ without a release. A configuration that cannot be read refuses: read as
 "publish nothing" it silently stops a statutory publication, and read as
 "publish everything" it publishes what nobody approved.
 
+Each collection names a `recordType`, its `anonymousProperties` and its
+`conditions`, and optionally the `register` its records live in. The record
+type is matched against a record's `@type`, else its `recordType`, else the id
+of its schema.
+
+The configured set is applied where an anonymous reader reads a publication:
+
+- `GET /api/{catalogSlug}/{id}` answers a record of a covered type with only
+  the collection's anonymous properties, beside its `id` and `@self`. A record
+  that fails the collection's conditions answers 404.
+- `GET /api/{catalogSlug}` leaves such records out of the page, lowers the
+  `total` by as many, and answers the rest the same way.
+- A signed-in reader, and a record of a type no collection covers, get the
+  publication as before.
+
+### Searching what is published
+
+`POST /api/publications/search` with a `q` and no `records` reads the stored
+records of every collection that names a `register`, and matches the words
+against what the collection lets an anonymous reader read. A word that occurs
+only in a withheld property does not return the record. Every result names the
+dossier its record names. OpenRegister's own access rules still apply to the
+read.
+
 ## Which parts of the published standards this implements
 
 - **Woo actieve openbaarmaking** as a rule engine and an obligation overview. The DIWOO and TPOD payload profiles themselves belong to
