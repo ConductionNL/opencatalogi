@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Middleware;
 
 use OCA\OpenCatalogi\Controller\RobotsController;
+use OCA\OpenCatalogi\Http\TextResponse;
 use OCA\OpenCatalogi\Service\InstanceMode;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -38,8 +39,9 @@ use RuntimeException;
  * answers an anonymous caller 503 with `X-Robots-Tag: noindex, nofollow` and
  * `{error: "staging"}` (REQ-STG-003). One middleware rather than a check per
  * controller, so a new public route is covered by default. A signed-in user
- * sees the public view as a reader would in production. robots.txt is left
- * to answer, because in staging it disallows everything.
+ * sees the public view as a reader would in production. robots.txt answers
+ * every caller `Disallow: /` in staging, so nothing is harvested whatever the
+ * catalogues say.
  *
  * @spec openspec/changes/instance-staging-mode
  */
@@ -49,6 +51,11 @@ class StagingMiddleware extends Middleware {
 	 * The marker this middleware throws to answer with the staging response.
 	 */
 	private const CLOSED = 'opencatalogi-staging-closed';
+
+	/**
+	 * The marker this middleware throws to answer robots.txt with disallow-all.
+	 */
+	private const DISALLOW_ALL = 'opencatalogi-staging-robots';
 
 	/**
 	 * Constructor.
@@ -75,7 +82,15 @@ class StagingMiddleware extends Middleware {
 	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
 	 */
 	public function beforeController($controller, $methodName): void {
-		if ($controller instanceof RobotsController || self::isPublic(controller: $controller, method: (string)$methodName) === false) {
+		if ($controller instanceof RobotsController) {
+			if ($this->mode->isStaging() === true) {
+				throw new RuntimeException(self::DISALLOW_ALL);
+			}
+
+			return;
+		}
+
+		if (self::isPublic(controller: $controller, method: (string)$methodName) === false) {
 			return;
 		}
 
@@ -87,7 +102,7 @@ class StagingMiddleware extends Middleware {
 	}//end beforeController()
 
 	/**
-	 * Answer the staging marker; rethrow anything else.
+	 * Answer the staging markers; rethrow anything else.
 	 *
 	 * @param object    $controller The controller.
 	 * @param string    $methodName The method.
@@ -100,7 +115,15 @@ class StagingMiddleware extends Middleware {
 	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-the-public-surface-is-closed-to-anonymous-callers-in-staging-req-stg-003
 	 */
 	public function afterException($controller, $methodName, \Exception $exception): Response {
-		if (($exception instanceof RuntimeException) === false || $exception->getMessage() !== self::CLOSED) {
+		if (($exception instanceof RuntimeException) === false) {
+			throw $exception;
+		}
+
+		if ($exception->getMessage() === self::DISALLOW_ALL) {
+			return new TextResponse(text: "User-agent: *\nDisallow: /\n");
+		}
+
+		if ($exception->getMessage() !== self::CLOSED) {
 			throw $exception;
 		}
 

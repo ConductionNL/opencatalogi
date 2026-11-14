@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Middleware;
 
 use OCA\OpenCatalogi\Controller\RobotsController;
+use OCA\OpenCatalogi\Http\TextResponse;
 use OCA\OpenCatalogi\Middleware\StagingMiddleware;
 use OCA\OpenCatalogi\Service\InstanceMode;
 use OCP\AppFramework\Http\Attribute\PublicPage;
@@ -41,6 +42,7 @@ use RuntimeException;
  *
  * @covers \OCA\OpenCatalogi\Middleware\StagingMiddleware
  * @uses   \OCA\OpenCatalogi\Service\InstanceMode
+ * @uses   \OCA\OpenCatalogi\Http\TextResponse
  */
 class StagingMiddlewareTest extends TestCase {
 
@@ -103,7 +105,6 @@ class StagingMiddlewareTest extends TestCase {
 
 		foreach ($routes as $name => [$controller, $method]) {
 			if ($controller instanceof RobotsController) {
-				$middleware->beforeController($controller, $method);
 				continue;
 			}
 
@@ -128,12 +129,40 @@ class StagingMiddlewareTest extends TestCase {
 	public function testASignedInUserSeesThePublicView(): void {
 		$middleware = $this->middleware('staging', true);
 
-		foreach (self::publicRoutes() as [$controller, $method]) {
-			$middleware->beforeController($controller, $method);
+		$routes = self::publicRoutes();
+		foreach ($routes as [$controller, $method]) {
+			if ($controller instanceof RobotsController) {
+				continue;
+			}
+
+			$middleware->beforeController(controller: $controller, methodName: $method);
 		}
 
-		$this->addToAssertionCount(count(self::publicRoutes()));
+		$this->addToAssertionCount(count: count($routes));
 	}//end testASignedInUserSeesThePublicView()
+
+	/**
+	 * In staging robots.txt disallows everything, for every caller, before the
+	 * controller reads any settings (REQ-STG-003).
+	 *
+	 * @return void
+	 */
+	public function testStagingRobotsDisallowsEverything(): void {
+		$robots = (new ReflectionClass(objectOrClass: RobotsController::class))->newInstanceWithoutConstructor();
+
+		foreach ([false, true] as $signedIn) {
+			$middleware = $this->middleware(mode: 'staging', signedIn: $signedIn);
+			try {
+				$middleware->beforeController(controller: $robots, methodName: 'index');
+				$this->fail(message: 'robots.txt reached the controller in staging');
+			} catch (RuntimeException $e) {
+				$response = $middleware->afterException(controller: $robots, methodName: 'index', exception: $e);
+				$this->assertInstanceOf(expected: TextResponse::class, actual: $response);
+				$this->assertSame(expected: "User-agent: *\nDisallow: /\n", actual: $response->render());
+				$this->assertSame(expected: 200, actual: $response->getStatus());
+			}
+		}
+	}//end testStagingRobotsDisallowsEverything()
 
 	/**
 	 * Production is untouched, and a non-public route is never closed.

@@ -324,30 +324,4 @@ class RobotsControllerTest extends TestCase {
 		$this->assertStringContainsString("Allow: /apps/opencatalogi/api/\n", $text);
 		$this->assertStringContainsString("Allow: /index.php/apps/opencatalogi/api/\n", $text);
 	}
-
-	/**
-	 * In staging robots.txt disallows everything and reads no settings
-	 * (instance-staging-mode REQ-STG-003).
-	 *
-	 * @return void
-	 */
-	public function testStagingDisallowsEverything(): void {
-		$config = $this->createMock(\OCP\IAppConfig::class);
-		$config->method('getValueString')->with('opencatalogi', 'instance_mode', 'production')->willReturn('staging');
-		$this->settingsService->expects($this->never())->method('getSettings');
-		$controller = new RobotsController(
-			'opencatalogi',
-			$this->request,
-			$this->settingsService,
-			$this->urlGenerator,
-			$this->l10n,
-			$this->createMock(\OCA\OpenCatalogi\Controller\SitemapDirectives::class),
-			new \OCA\OpenCatalogi\Service\InstanceMode($config)
-		);
-
-		$response = $controller->index();
-
-		$this->assertSame("User-agent: *\nDisallow: /\n", $response->render());
-		$this->assertSame(200, $response->getStatus());
-	}
 }

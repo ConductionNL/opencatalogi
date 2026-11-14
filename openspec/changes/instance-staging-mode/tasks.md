@@ -16,7 +16,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 3. Public surface
 
-- [x] 3.1 Add `StagingMiddleware`, registered with `registerMiddleware()`, and the staging branch in `RobotsController::index()` (REQ-STG-003). Verify: `tests/Unit/Middleware/StagingMiddlewareTest.php::testEveryPublicRouteAnswers503ToAnonymousInStaging` (fails today), `::testASignedInUserSeesThePublicView`, `::testProductionIsUntouched`; `tests/Unit/Controller/RobotsControllerTest.php::testStagingDisallowsEverything`.
+- [x] 3.1 Add `StagingMiddleware`, registered with `registerMiddleware()`, which also answers robots.txt `Disallow: /` in staging (REQ-STG-003). Verify: `tests/Unit/Middleware/StagingMiddlewareTest.php::testEveryPublicRouteAnswers503ToAnonymousInStaging` (fails today), `::testASignedInUserSeesThePublicView`, `::testProductionIsUntouched`; `::testStagingRobotsDisallowsEverything`.
 - [ ] 3.2 Live: on the dev instance turn staging on, `curl` the sitemap index, `/api/dcat` and robots.txt anonymously, run one publish with announce, and paste the answers and the dry-run count in the PR body; turn staging off afterwards (REQ-STG-002, REQ-STG-003). Verify: the pasted output.
 
 ## 4. Docs
