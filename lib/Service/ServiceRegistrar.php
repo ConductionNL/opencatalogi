@@ -67,6 +67,7 @@ use OCA\OpenCatalogi\Contract\QualityServiceInterface;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
 use OCA\OpenCatalogi\Contract\SavedSearchServiceInterface;
+use OCA\OpenCatalogi\Contract\FeedConsumerServiceInterface;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
@@ -164,6 +165,7 @@ class ServiceRegistrar {
 		CaseTypeCatalogueServiceInterface::class => CaseTypeCatalogueService::class,
 		IndexRegistrationServiceInterface::class => WooRegistrationService::class,
 		SavedSearchServiceInterface::class => SavedSearchService::class,
+		FeedConsumerServiceInterface::class => FeedConsumerService::class,
 		DemoDataServiceInterface::class => DemoDataService::class,
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
 		InformationRequestStoreInterface::class => WooRequestStore::class,

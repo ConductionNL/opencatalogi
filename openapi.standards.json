@@ -108,10 +108,50 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/courses": {
+      "get": {
+        "operationId": "ooapi-courses",
+        "summary": "List the catalogue's OOAPI courses",
+        "description": "OOAPI 5.0 resource (OOAPI-001). Not anonymous: the caller authenticates with a feed consumer key for this catalogue (`Authorization: Bearer`), or with a Nextcloud account on the instance-wide consumer list (OOAPI-008, REQ-FCC-002). A key for another catalogue answers 403; a wrong, revoked or expired key answers 401.",
+        "tags": [
+          "OOAPI"
+        ],
+        "security": [
+          {
+            "feedConsumerKey": []
+          },
+          {
+            "nextcloudAccount": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "401": {
+            "description": "No account and no valid key."
+          },
+          "403": {
+            "description": "The account is not on the consumer list, or the key is for another catalogue."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
       "options": {
         "operationId": "ooapi-preflight-4",
         "summary": "CORS preflight",
-        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "description": "CORS preflight only (OOAPI-001/COR-001).",
         "tags": [
           "OOAPI"
         ],
@@ -128,10 +168,58 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/courses/{courseId}/offerings": {
+      "get": {
+        "operationId": "ooapi-course-offerings",
+        "summary": "List a course's OOAPI offerings",
+        "description": "OOAPI 5.0 resource (OOAPI-001). Not anonymous: the caller authenticates with a feed consumer key for this catalogue (`Authorization: Bearer`), or with a Nextcloud account on the instance-wide consumer list (OOAPI-008, REQ-FCC-002). A key for another catalogue answers 403; a wrong, revoked or expired key answers 401.",
+        "tags": [
+          "OOAPI"
+        ],
+        "security": [
+          {
+            "feedConsumerKey": []
+          },
+          {
+            "nextcloudAccount": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "courseId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "401": {
+            "description": "No account and no valid key."
+          },
+          "403": {
+            "description": "The account is not on the consumer list, or the key is for another catalogue."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
       "options": {
         "operationId": "ooapi-preflight-6",
         "summary": "CORS preflight",
-        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "description": "CORS preflight only (OOAPI-001/COR-001).",
         "tags": [
           "OOAPI"
         ],
@@ -151,10 +239,58 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/courses/{id}": {
+      "get": {
+        "operationId": "ooapi-course",
+        "summary": "One OOAPI course",
+        "description": "OOAPI 5.0 resource (OOAPI-001). Not anonymous: the caller authenticates with a feed consumer key for this catalogue (`Authorization: Bearer`), or with a Nextcloud account on the instance-wide consumer list (OOAPI-008, REQ-FCC-002). A key for another catalogue answers 403; a wrong, revoked or expired key answers 401.",
+        "tags": [
+          "OOAPI"
+        ],
+        "security": [
+          {
+            "feedConsumerKey": []
+          },
+          {
+            "nextcloudAccount": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "401": {
+            "description": "No account and no valid key."
+          },
+          "403": {
+            "description": "The account is not on the consumer list, or the key is for another catalogue."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
       "options": {
         "operationId": "ooapi-preflight-5",
         "summary": "CORS preflight",
-        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "description": "CORS preflight only (OOAPI-001/COR-001).",
         "tags": [
           "OOAPI"
         ],
@@ -174,10 +310,58 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/offerings/{id}": {
+      "get": {
+        "operationId": "ooapi-offering",
+        "summary": "One OOAPI offering",
+        "description": "OOAPI 5.0 resource (OOAPI-001). Not anonymous: the caller authenticates with a feed consumer key for this catalogue (`Authorization: Bearer`), or with a Nextcloud account on the instance-wide consumer list (OOAPI-008, REQ-FCC-002). A key for another catalogue answers 403; a wrong, revoked or expired key answers 401.",
+        "tags": [
+          "OOAPI"
+        ],
+        "security": [
+          {
+            "feedConsumerKey": []
+          },
+          {
+            "nextcloudAccount": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "401": {
+            "description": "No account and no valid key."
+          },
+          "403": {
+            "description": "The account is not on the consumer list, or the key is for another catalogue."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
       "options": {
         "operationId": "ooapi-preflight-7",
         "summary": "CORS preflight",
-        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "description": "CORS preflight only (OOAPI-001/COR-001).",
         "tags": [
           "OOAPI"
         ],
@@ -197,10 +381,50 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/organizations": {
+      "get": {
+        "operationId": "ooapi-organizations",
+        "summary": "List the catalogue's OOAPI organizations",
+        "description": "OOAPI 5.0 resource (OOAPI-001). Not anonymous: the caller authenticates with a feed consumer key for this catalogue (`Authorization: Bearer`), or with a Nextcloud account on the instance-wide consumer list (OOAPI-008, REQ-FCC-002). A key for another catalogue answers 403; a wrong, revoked or expired key answers 401.",
+        "tags": [
+          "OOAPI"
+        ],
+        "security": [
+          {
+            "feedConsumerKey": []
+          },
+          {
+            "nextcloudAccount": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "401": {
+            "description": "No account and no valid key."
+          },
+          "403": {
+            "description": "The account is not on the consumer list, or the key is for another catalogue."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
       "options": {
         "operationId": "ooapi-preflight-0",
         "summary": "CORS preflight",
-        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "description": "CORS preflight only (OOAPI-001/COR-001).",
         "tags": [
           "OOAPI"
         ],
@@ -217,10 +441,58 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/organizations/{id}": {
+      "get": {
+        "operationId": "ooapi-organization",
+        "summary": "One OOAPI organization",
+        "description": "OOAPI 5.0 resource (OOAPI-001). Not anonymous: the caller authenticates with a feed consumer key for this catalogue (`Authorization: Bearer`), or with a Nextcloud account on the instance-wide consumer list (OOAPI-008, REQ-FCC-002). A key for another catalogue answers 403; a wrong, revoked or expired key answers 401.",
+        "tags": [
+          "OOAPI"
+        ],
+        "security": [
+          {
+            "feedConsumerKey": []
+          },
+          {
+            "nextcloudAccount": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "401": {
+            "description": "No account and no valid key."
+          },
+          "403": {
+            "description": "The account is not on the consumer list, or the key is for another catalogue."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
       "options": {
         "operationId": "ooapi-preflight-1",
         "summary": "CORS preflight",
-        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "description": "CORS preflight only (OOAPI-001/COR-001).",
         "tags": [
           "OOAPI"
         ],
@@ -240,10 +512,50 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/programs": {
+      "get": {
+        "operationId": "ooapi-programs",
+        "summary": "List the catalogue's OOAPI programs",
+        "description": "OOAPI 5.0 resource (OOAPI-001). Not anonymous: the caller authenticates with a feed consumer key for this catalogue (`Authorization: Bearer`), or with a Nextcloud account on the instance-wide consumer list (OOAPI-008, REQ-FCC-002). A key for another catalogue answers 403; a wrong, revoked or expired key answers 401.",
+        "tags": [
+          "OOAPI"
+        ],
+        "security": [
+          {
+            "feedConsumerKey": []
+          },
+          {
+            "nextcloudAccount": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "401": {
+            "description": "No account and no valid key."
+          },
+          "403": {
+            "description": "The account is not on the consumer list, or the key is for another catalogue."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
       "options": {
         "operationId": "ooapi-preflight-2",
         "summary": "CORS preflight",
-        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "description": "CORS preflight only (OOAPI-001/COR-001).",
         "tags": [
           "OOAPI"
         ],
@@ -260,10 +572,58 @@
       }
     },
     "/catalogs/{catalogSlug}/ooapi/v5/programs/{id}": {
+      "get": {
+        "operationId": "ooapi-program",
+        "summary": "One OOAPI program",
+        "description": "OOAPI 5.0 resource (OOAPI-001). Not anonymous: the caller authenticates with a feed consumer key for this catalogue (`Authorization: Bearer`), or with a Nextcloud account on the instance-wide consumer list (OOAPI-008, REQ-FCC-002). A key for another catalogue answers 403; a wrong, revoked or expired key answers 401.",
+        "tags": [
+          "OOAPI"
+        ],
+        "security": [
+          {
+            "feedConsumerKey": []
+          },
+          {
+            "nextcloudAccount": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "401": {
+            "description": "No account and no valid key."
+          },
+          "403": {
+            "description": "The account is not on the consumer list, or the key is for another catalogue."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
       "options": {
         "operationId": "ooapi-preflight-3",
         "summary": "CORS preflight",
-        "description": "CORS preflight only (OOAPI-001/COR-001). The `GET` resource on this path requires OOAPI-008 consumer-credential authentication (`@NoAdminRequired`, not `@PublicPage`) — out of scope for this anonymous-public document.",
+        "description": "CORS preflight only (OOAPI-001/COR-001).",
         "tags": [
           "OOAPI"
         ],
@@ -1196,7 +1556,18 @@
         }
       }
     },
-    "securitySchemes": {}
+    "securitySchemes": {
+      "feedConsumerKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "description": "A feed consumer key (`oc_<consumer>.<key>.<secret>`) an administrator issued for one catalogue. It reads only that catalogue's protected feeds."
+      },
+      "nextcloudAccount": {
+        "type": "http",
+        "scheme": "basic",
+        "description": "A Nextcloud account and app password on the instance-wide consumer list (`ooapi_consumers`; empty means every account)."
+      }
+    }
   },
   "tags": [
     {

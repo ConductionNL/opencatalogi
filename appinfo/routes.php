@@ -35,6 +35,11 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'dcat#donlReport', 'url' => '/api/catalogs/{catalogSlug}/dcat/donl-validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// OOAPI 5.0 feed validation (admin-only — auditable via AuthorizedAdminSetting)
 		['name' => 'ooapi#validate', 'url' => '/api/catalogs/{catalogSlug}/ooapi/validate', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#index', 'url' => '/api/catalogs/{catalogSlug}/consumers', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#create', 'url' => '/api/catalogs/{catalogSlug}/consumers', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#generateKey', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/keys', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#revokeKey', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/keys/{keyId}/revoke', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'feedConsumer#disable', 'url' => '/api/catalogs/{catalogSlug}/consumers/{id}/disable', 'verb' => 'POST', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// Robots
 		['name' => 'robots#index', 'url' => '/api/robots.txt', 'verb' => 'GET'],
 		// Global Configuration
