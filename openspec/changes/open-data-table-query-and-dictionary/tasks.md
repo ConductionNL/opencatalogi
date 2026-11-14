@@ -2,14 +2,14 @@
 
 ## 1. Store
 
-- [ ] 1.1 Add `publishedTable` and provision the `open-data-tables` register in `lib/Settings/register.d/open-data-tables.json` (REQ-ODT-001). Verify: clean `occ app:enable` imports both.
-- [ ] 1.2 Add `PublishedTableService::createFromFile()` that builds the schema from the header and a 200-row sample (REQ-ODT-001). Verify: `tests/Unit/Service/PublishedTableServiceTest.php` with a CSV of mixed column types.
-- [ ] 1.3 Drive OpenRegister's import preview and commit, storing `failed` with the first refused row (REQ-ODT-001). Verify: same test class with a fake import service, a clean and a refused file.
+- [x] 1.1 Add `publishedTable` and provision the `open-data-tables` register in `lib/Settings/register.d/open-data-tables.json` (REQ-ODT-001). Verify: clean `occ app:enable` imports both.
+- [x] 1.2 Add `PublishedTableService::createFromFile()` that builds the schema from the header and a 200-row sample (REQ-ODT-001). Verify: `tests/Unit/Service/PublishedTableServiceTest.php` with a CSV of mixed column types.
+- [x] 1.3 Drive OpenRegister's import preview and commit, storing `failed` with the first refused row (REQ-ODT-001). Verify: same test class with a fake import service, a clean and a refused file.
 - [ ] 1.4 Tie the table schema's read rule to the publication being public (REQ-ODT-002). Verify: API test reads rows anonymously for a public publication and gets nothing for a draft.
 
 ## 2. Query
 
-- [ ] 2.1 Add `GET /api/{catalogSlug}/{publicationId}/tables/{tableId}/rows` with filters, search, sort and pages, refusing undeclared properties (REQ-ODT-002). Verify: `tests/Unit/Controller/PublishedTableControllerTest.php`; a Newman request filters a sample table.
+- [x] 2.1 Add `GET /api/{catalogSlug}/{publicationId}/tables/{tableId}/rows` with filters, search, sort and pages, refusing undeclared properties (REQ-ODT-002). Verify: `tests/Unit/Controller/PublishedTableControllerTest.php`; a Newman request filters a sample table.
 
 ## 3. Dictionary
 

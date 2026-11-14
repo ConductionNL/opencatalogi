@@ -27,6 +27,8 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+require_once __DIR__ . '/../Service/Publication/TermRollFixture.php';
+
 use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\BannerDismissals;
@@ -90,11 +92,13 @@ use ReflectionMethod;
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses \OCA\OpenCatalogi\Service\Publication\DepublicationService
  * @uses \OCA\OpenCatalogi\Service\Publication\InspectionService
+ * @uses \OCA\OpenCatalogi\Service\Publication\TermRoll
  * @uses \OCA\OpenCatalogi\Service\Publication\PublicationRuleService
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\ObjectInPair
  */
 class DelegatedAdminSavesTest extends TestCase {
+	use \Unit\Service\Publication\TermRollFixture;
 
 	/**
 	 * The schema each configuration key resolves to, named by slug so the store can find its block.
@@ -252,7 +256,7 @@ class DelegatedAdminSavesTest extends TestCase {
 			$this->config(),
 			$this->l10n(),
 			$this->session(),
-			new InspectionRecords(new InspectionService(), $this->registers())
+			new InspectionRecords(new InspectionService($this->termRoll()), $this->registers())
 		);
 	}//end inspection()
 

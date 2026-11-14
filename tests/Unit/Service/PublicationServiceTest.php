@@ -934,6 +934,104 @@ class PublicationServiceTest extends TestCase {
 		$this->assertArrayHasKey('results', $data);
 	}
 
+	/**
+	 * A publication held here answers with its own attachments and no peer is asked.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsOfALocalPublicationStayLocal(): void {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$objectService->method('searchObjects')->willReturn([$this->createSerializableObject(['registers' => [1], 'schemas' => [1]])]);
+		$this->container->method('get')
+			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+				return match ($class) {
+					'OCA\OpenRegister\Service\ObjectService' => $objectService,
+					'OCA\OpenRegister\Service\FileService' => $fileService,
+					\OCA\OpenCatalogi\Service\PublicationQueryService::class => $queryService,
+					default => null,
+				};
+			});
+		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+		$fileService->method('getFiles')->willReturn([['raw-file']]);
+		$fileService->method('formatFiles')->willReturn(['results' => [['name' => 'local.pdf']], 'total' => 1]);
+		$this->request->method('getParams')->willReturn([]);
+
+		$this->directoryService->expects($this->never())->method('getRemoteAttachments');
+
+		$response = $this->service->getFederatedAttachments('pub-1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [['name' => 'local.pdf']], 'total' => 1], $response->getData());
+	}
+
+	/**
+	 * A publication not held here is read from the instance that holds it.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsOfARemotePublicationComeFromItsSource(): void {
+		$files = [
+			['id' => 'f1', 'downloadUrl' => 'https://peer.example.org/dav/f1', 'source' => ['instance' => 'https://peer.example.org']],
+			['id' => 'f2', 'downloadUrl' => 'https://peer.example.org/dav/f2', 'source' => ['instance' => 'https://peer.example.org']],
+		];
+		$this->directoryService->expects($this->once())
+			->method('getRemoteAttachments')
+			->with('remote-1', ['timeout' => 10, 'query_params' => ['timeout' => '10']])
+			->willReturn(['results' => $files, 'source' => ['peer.example.org' => 'https://peer.example.org/x']]);
+
+		$response = $this->service->getFederatedAttachments('remote-1', ['timeout' => '10']);
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(
+			['results' => $files, 'total' => 2, 'page' => 1, 'pages' => 1, 'sources' => ['peer.example.org' => 'https://peer.example.org/x']],
+			$response->getData()
+		);
+	}
+
+	/**
+	 * Without a reachable source the answer is a 404 that says so.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsWithoutAReachableSourceAre404(): void {
+		$this->directoryService->method('getRemoteAttachments')->willReturn(null);
+
+		$response = $this->service->getFederatedAttachments('remote-1');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['error' => 'Not Found: no reachable source holds this publication'], $response->getData());
+	}
+
+	/**
+	 * A failing peer lookup is a 404 too, not an error page.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsTreatAFailingLookupAsUnreachable(): void {
+		$this->directoryService->method('getRemoteAttachments')->willThrowException(new RuntimeException('directory down'));
+
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1')->getStatus());
+	}
+
+	/**
+	 * A peer asking with _aggregate=false gets the local answer and no fan-out.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsWithoutAggregationNeverAskPeers(): void {
+		$this->directoryService->expects($this->never())->method('getRemoteAttachments');
+
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1', ['_aggregate' => 'false'])->getStatus());
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1', ['_aggregate' => '0'])->getStatus());
+	}
+
 	public function testAttachmentsReturns404OnDoesNotExist(): void {
 		$objectService = $this->createObjectServiceMock();
 		$fileService = $this->createFileServiceMock();

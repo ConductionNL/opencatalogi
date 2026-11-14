@@ -181,6 +181,26 @@ class ApiContractMiddlewareTest extends TestCase {
 	}//end testUnversionedPathAnnouncesItsSuccessor()
 
 	/**
+	 * When the request URI does not contain the path info, the successor link
+	 * carries no front-controller prefix.
+	 *
+	 * @return void
+	 */
+	public function testSuccessorLinkWithoutPathInTheUriHasNoPrefix(): void {
+		$request = $this->createMock(originalClassName: IRequest::class);
+		$request->method('getPathInfo')->willReturn('/apps/opencatalogi/api/things/7');
+		$request->method('getRequestUri')->willReturn('/rewritten/elsewhere');
+		$appManager = $this->createMock(originalClassName: IAppManager::class);
+		$appManager->method('getAppVersion')->willReturn('1.2.3');
+
+		$response = (new ApiContractMiddleware(request: $request, appManager: $appManager))
+			->afterController(controller: null, methodName: 'any', response: new JSONResponse(data: []));
+		$headers  = $this->headersOf(response: $response);
+
+		$this->assertSame(expected: '</apps/opencatalogi/api/v1/things/7>; rel="successor-version"', actual: $headers['Link']);
+	}//end testSuccessorLinkWithoutPathInTheUriHasNoPrefix()
+
+	/**
 	 * A versioned API path is not deprecated, and still carries the version.
 	 *
 	 * @return void

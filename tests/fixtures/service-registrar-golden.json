@@ -121,6 +121,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublishedTableServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Table\\PublishedTableService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\CatalogAccessServiceInterface",
         "OCA\\OpenCatalogi\\Service\\CatalogAccessService"
     ],

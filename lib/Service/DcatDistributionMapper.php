@@ -74,8 +74,31 @@ final class DcatDistributionMapper {
 			'dcat:accessURL' => ['@id' => (string)($file['accessUrl'] ?? $downloadUrl)],
 		];
 
-		return array_replace($distribution, $this->fileDetails(file: $file), $this->licenseNode(license: $defaultLicense));
+		return array_replace(
+			$distribution,
+			$this->fileDetails(file: $file),
+			$this->licenseNode(license: $defaultLicense),
+			$this->dictionaryNode(file: $file)
+		);
 	}//end map()
+
+	/**
+	 * The `dct:conformsTo` of a file published as a table: its data dictionary URL.
+	 *
+	 * @param array<string, mixed> $file A formatFiles-shape file entry, with `dataDictionaryUrl` when it is a table.
+	 *
+	 * @return array<string, mixed> The property, or an empty array.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	private function dictionaryNode(array $file): array {
+		$url = ($file['dataDictionaryUrl'] ?? null);
+		if (is_string($url) === false || $url === '') {
+			return [];
+		}
+
+		return ['dct:conformsTo' => ['@id' => $url]];
+	}//end dictionaryNode()
 
 	/**
 	 * The title, media type, format and byte size of a distribution, each only when known.

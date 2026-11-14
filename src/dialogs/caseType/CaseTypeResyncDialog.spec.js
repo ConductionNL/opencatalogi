@@ -12,6 +12,13 @@ import { flushPromises, mount } from '@vue/test-utils'
 import CaseTypeResyncDialog from './CaseTypeResyncDialog.vue'
 import { navigationStore } from '../../store/store.js'
 
+// @nextcloud/auth ships ESM that Jest does not transform; the stores only
+// read the request token and current user from it, so stub that boundary.
+jest.mock('@nextcloud/auth', () => ({
+	getRequestToken: () => 'tok',
+	getCurrentUser: () => ({ uid: 'admin', displayName: 'Admin' }),
+}))
+
 jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,
 	default: { get: jest.fn(), post: jest.fn() },

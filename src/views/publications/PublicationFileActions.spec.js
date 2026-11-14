@@ -11,6 +11,8 @@
 
 import PublicationDetail from './PublicationDetail.vue'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'token-1' }))
+
 jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,
 	default: { get: jest.fn(), post: jest.fn() },
@@ -81,7 +83,7 @@ describe.each([
 		await ctx[method]({ id: 3 })
 		await flush()
 		expect(log).toEqual([
-			['fetch', `/index.php/apps/openregister/api/objects/r/s/p/files/3/${action}`, { method: 'POST' }, [7, 3], [7, 3]],
+			['fetch', `/index.php/apps/openregister/api/objects/r/s/p/files/3/${action}`, { method: 'POST', headers: { requesttoken: 'token-1' } }, [7, 3], [7, 3]],
 			['getPublicationAttachments'],
 			['fetchPublications'],
 		])
