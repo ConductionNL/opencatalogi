@@ -1567,7 +1567,9 @@ OC.L10N.register(
         "The day the content takes legal effect. This can differ from the publication date.": "The day the content takes legal effect. This can differ from the publication date.",
         "Valid until": "Valid until",
         "The day the content loses legal effect. Leave it empty when it has no end.": "The day the content loses legal effect. Leave it empty when it has no end.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "The batch was not published: %s": "The batch was not published: %s",
+        "The batch was not published. Its publication is missing: %s": "The batch was not published. Its publication is missing: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

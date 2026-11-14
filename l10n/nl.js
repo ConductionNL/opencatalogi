@@ -1522,7 +1522,9 @@ OC.L10N.register(
         "The day the content takes legal effect. This can differ from the publication date.": "De dag waarop de inhoud rechtskracht krijgt. Die kan afwijken van de publicatiedatum.",
         "Valid until": "Geldig tot",
         "The day the content loses legal effect. Leave it empty when it has no end.": "De dag waarop de inhoud zijn rechtskracht verliest. Laat dit leeg als er geen einde is.",
-        "Planning (does not publish)": "Planning (publiceert niet)"
+        "Planning (does not publish)": "Planning (publiceert niet)",
+        "The batch was not published: %s": "De batch is niet gepubliceerd: %s",
+        "The batch was not published. Its publication is missing: %s": "De batch is niet gepubliceerd. Aan de publicatie ontbreekt: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )
