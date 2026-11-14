@@ -73,6 +73,7 @@ use ZipArchive;
  *
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+ * @spec openspec/changes/publications/tasks.md
  */
 class PublicationService implements PublicationServiceInterface {
 

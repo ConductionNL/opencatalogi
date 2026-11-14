@@ -27,6 +27,7 @@
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/specs/publications/spec.md
+ * @spec openspec/changes/publications/tasks.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
@@ -70,6 +71,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.TooManyMethods) The public read helpers stay private to this controller.
  *
  * @spec openspec/specs/publications/spec.md
+ * @spec openspec/changes/publications/tasks.md
  */
 class PublicationsController extends Controller {
 	use AnswersCacheably;
@@ -558,6 +560,7 @@ class PublicationsController extends Controller {
 	 * @SuppressWarnings(PHPMD.StaticAccess) CatalogScopeIds::forCatalog() is a pure function over the catalog.
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publications/tasks.md#task-2
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
@@ -781,6 +784,7 @@ class PublicationsController extends Controller {
 	 *
 	 * @spec openspec/specs/publications/spec.md
 	 * @spec openspec/specs/publications/spec.md#requirement-slug-resolution-must-be-backwards-compatible-pub-020
+	 * @spec openspec/changes/publications/tasks.md#task-4
 	 */
 	#[PublicPage]
 	#[NoCSRFRequired]
