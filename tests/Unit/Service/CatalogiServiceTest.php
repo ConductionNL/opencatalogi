@@ -2088,4 +2088,55 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertSame(200, $response->getStatus());
 		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
 	}//end testIndexFailsClosedWhenTheGuardEmptiesTheScope()
+
+	/**
+	 * A catalogue id that matches no catalogue answers 404 with a static message, and no publication search runs.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 */
+	public function testIndexAnswers404ForAnUnknownCatalogId(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+		$this->injectObjectService($objectService);
+
+		$response = $this->service->index('no-such-catalog');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['message' => 'Catalog not found'], $response->getData());
+	}//end testIndexAnswers404ForAnUnknownCatalogId()
+
+	/**
+	 * Without a catalogue id, no catalogues at all is still an empty list, not a 404.
+	 *
+	 * @spec openspec/changes/catalogs/tasks.md#task-4
+	 */
+	public function testIndexWithoutAnIdAndNoCatalogsIsAnEmptyList(): void {
+		$this->request->method('getParams')->willReturn([]);
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([]);
+		$this->injectObjectService($objectService);
+
+		$response = $this->service->index();
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [], 'total' => 0], $response->getData());
+	}//end testIndexWithoutAnIdAndNoCatalogsIsAnEmptyList()
 }//end class
