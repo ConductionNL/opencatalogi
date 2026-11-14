@@ -1552,7 +1552,11 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Only the groups below see and edit this catalogue's publications.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
+        "Redaction log": "Redaction log",
+        "What was removed from the partly public document and on which grounds, one entry per redacted passage. Internal: never part of a public response.": "What was removed from the partly public document and on which grounds, one entry per redacted passage. Internal: never part of a public response.",
+        "The redaction log cannot be read. The document stays unpublished.": "The redaction log cannot be read. The document stays unpublished.",
+        "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s": "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

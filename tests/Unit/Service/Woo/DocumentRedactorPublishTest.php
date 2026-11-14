@@ -151,6 +151,7 @@ class DocumentRedactorPublishTest extends TestCase {
 			'document' => 'gelakt.pdf',
 			'redactionStatus' => DocumentRedactor::VERIFIED,
 			'redactionHash' => $hash,
+			'redactionLogState' => DocumentRedactor::LOG_GROUNDED,
 		];
 	}//end listing()
 
@@ -202,7 +203,7 @@ class DocumentRedactorPublishTest extends TestCase {
 		$container->expects($this->never())->method('get');
 
 		$this->assertSame(
-			['anonymizedDocument' => '', 'anonymizedDocumentHash' => '', 'redactionStatus' => '', 'redactionMessage' => ''],
+			['anonymizedDocument' => '', 'anonymizedDocumentHash' => '', 'redactionStatus' => '', 'redactionMessage' => '', 'redactionLog' => []],
 			$this->redactor($container)->forAssessment(assessment: ['assessment' => 'openbaar'], batchId: 'b1', fallbackOwner: 'bob')
 		);
 	}//end testANonPartlyPublicAssessmentNeedsNoRedaction()
@@ -230,4 +231,60 @@ class DocumentRedactorPublishTest extends TestCase {
 		$this->assertSame([['origineel.pdf', 'alice']], $this->resolved);
 		$this->assertSame(DocumentRedactor::FAILED, $result['redactionStatus']);
 	}//end testTheOriginalIsLookedUpUnderTheBatchCreatorFromASerialisedEntity()
+
+	/**
+	 * A verified partly public listing whose log state is not grounded.
+	 *
+	 * @param string $state The log state the listing carries, or null for none.
+	 *
+	 * @return array<string, string>
+	 */
+	private function verifiedListingWithLog(?string $state): array {
+		$this->filesByReference['alice:gelakt.pdf'] = $this->file(id: 2, content: 'gelakt');
+		$this->filesByReference['alice:origineel.pdf'] = $this->file(id: 1, content: 'origineel');
+		$listing = $this->listing(hash('sha256', 'gelakt'));
+		$listing['title'] = 'Besluit';
+		unset($listing['redactionLogState']);
+		if ($state !== null) {
+			$listing['redactionLogState'] = $state;
+		}
+
+		return $listing;
+	}//end verifiedListingWithLog()
+
+	/**
+	 * A passage without a ground blocks the publish and names the document (REQ-WRV-003).
+	 *
+	 * @return void
+	 */
+	public function testAPassageWithoutAGroundBlocksThePublish(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('has a passage without a ground: Besluit');
+
+		$this->redactor()->assertPublishable(listings: [$this->verifiedListingWithLog(DocumentRedactor::LOG_UNGROUNDED)], owner: 'alice');
+	}//end testAPassageWithoutAGroundBlocksThePublish()
+
+	/**
+	 * An empty log on a redacted document blocks the publish (REQ-WRV-003).
+	 *
+	 * @return void
+	 */
+	public function testAnEmptyLogForARedactedDocumentBlocksThePublish(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('redaction log of these partly public documents is missing, empty');
+
+		$this->redactor()->assertPublishable(listings: [$this->verifiedListingWithLog(DocumentRedactor::LOG_EMPTY)], owner: 'alice');
+	}//end testAnEmptyLogForARedactedDocumentBlocksThePublish()
+
+	/**
+	 * A listing without a readable log blocks the publish (REQ-WRV-003).
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableLogBlocksThePublish(): void {
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('Besluit');
+
+		$this->redactor()->assertPublishable(listings: [$this->verifiedListingWithLog(null)], owner: 'alice');
+	}//end testAnUnreadableLogBlocksThePublish()
 }//end class

@@ -67,6 +67,7 @@ class WriterFakeObjectService {
  * Tests for BatchPublicationWriter.
  *
  * @covers \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
+ * @uses   \OCA\OpenCatalogi\Service\Woo\DocumentRedactor
  */
 class BatchPublicationWriterEdgesTest extends TestCase {
 
@@ -192,4 +193,27 @@ class BatchPublicationWriterEdgesTest extends TestCase {
 
 		$this->assertSame('pub-plain', $this->writer()->publication(batch: [], now: '2026-11-13')['id']);
 	}//end testAPlainArrayEntityFallsBackToItsId()
+
+	/**
+	 * The listings carry only the log's state, never its values, from the assessment (REQ-WRV-003).
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-redaction-log-records-what-was-removed-and-on-which-ground-req-wrv-003
+	 *
+	 * @return void
+	 */
+	public function testTheListingCarriesTheLogStateNotItsValues(): void {
+		$writer = $this->writer();
+		$log = [['relationId' => 7, 'entityType' => 'PERSON', 'positionStart' => 0, 'positionEnd' => 10, 'value' => 'Jan Jansen', 'grounds' => ['5.1.2.e']]];
+
+		$listings = $writer->listings([
+			['assessment' => 'deels_openbaar', 'documentReference' => 'a.pdf', 'redactionLog' => $log],
+			['assessment' => 'deels_openbaar', 'documentReference' => 'b.pdf'],
+			['assessment' => 'openbaar', 'documentReference' => 'c.pdf', 'redactionLog' => $log],
+		]);
+
+		$this->assertSame(\OCA\OpenCatalogi\Service\Woo\DocumentRedactor::LOG_GROUNDED, $listings[0]['redactionLogState']);
+		$this->assertSame(\OCA\OpenCatalogi\Service\Woo\DocumentRedactor::LOG_UNREADABLE, $listings[1]['redactionLogState']);
+		$this->assertArrayNotHasKey('redactionLogState', $listings[2]);
+		$this->assertStringNotContainsString('Jan Jansen', json_encode($listings));
+	}//end testTheListingCarriesTheLogStateNotItsValues()
 }//end class

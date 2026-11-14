@@ -16,8 +16,10 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 3. Redaction log
 
-- [ ] 3.1 Add `redactionLog` to `#wooAssessment`, fill it in `DocumentRedactor` after verification, and block in `assertPublishable()` (REQ-WRV-003). Verify: `tests/Unit/Service/Woo/DocumentRedactorTest.php::testTheRedactionLogListsEachPassageWithItsGrounds` (fails today), `::testAPassageWithoutAGroundBlocksThePublish`, `::testAnEmptyLogForARedactedDocumentBlocksThePublish`, `::testAnUnreadableLogBlocksThePublish`.
-- [ ] 3.2 Assert no public route returns `redactionLog` (REQ-WRV-003). Verify: `tests/Unit/Service/PublicationQueryServiceTest.php::testNoPublicResponseCarriesARedactionLog`.
+- [x] 3.1 Add `redactionLog` to `#wooAssessment`, fill it in `DocumentRedactor` after verification, and block in `assertPublishable()` (REQ-WRV-003). Verify: `tests/Unit/Service/Woo/DocumentRedactorTest.php::testTheRedactionLogListsEachPassageWithItsGrounds` (fails today), `::testAPassageWithoutAGroundBlocksThePublish`, `::testAnEmptyLogForARedactedDocumentBlocksThePublish`, `::testAnUnreadableLogBlocksThePublish`.
+  - Done: the log is filled from `findAnonymisedEntitiesWithBasesForFile()` after verification (an unreadable log fails the redaction closed). The publish gate reads only the log's state, which `BatchPublicationWriter::listings()` derives from the assessment, so no log value travels with the listing. The log tests sit in `DocumentRedactorTest`, the publish-gate tests in `DocumentRedactorPublishTest`, the listing test in `BatchPublicationWriterEdgesTest`. Prerequisite checked: OpenRegister's `anonymizeDocument()` marks the relations `anonymized`.
+- [x] 3.2 Assert no public route returns `redactionLog` (REQ-WRV-003). Verify: `tests/Unit/Service/PublicationQueryServiceTest.php::testNoPublicResponseCarriesARedactionLog`.
+  - Done as `tests/Unit/Settings/WooRegisterSchemasTest.php::testNoPublicResponseCarriesARedactionLog`: only `wooAssessment` declares the field and only admins read it; the listing test above covers the publish path.
 - [ ] 3.3 Show the log on the review and assessment pages (REQ-WRV-003). Verify: `tests/e2e/woo-review-surface.spec.ts` "the reviewer reads the log".
 - [ ] 3.4 Live: on the dev instance redact a document with two grounded passages, read the assessment back, and paste its `redactionLog` (values masked) in the PR body. Verify: the pasted log.
 
