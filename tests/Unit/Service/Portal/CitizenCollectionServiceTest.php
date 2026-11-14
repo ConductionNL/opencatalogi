@@ -331,4 +331,52 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->assertSame(['s2'], array_keys($this->store->objects['savedSearch']));
 		$this->assertSame(0, $this->service->removeEverythingOf(owner: ''));
 	}
+
+	public function testANewDossierIsRefusedOnceTheResidentHasTheMost(): void {
+		for ($i = 0; $i < CitizenCollectionService::MAX_DOSSIERS; $i++) {
+			$this->store->objects['collection']['d-' . $i] = ['id' => 'd-' . $i, 'title' => 'D' . $i, 'owner' => 'subject-1', 'items' => []];
+		}
+
+		try {
+			$this->service->addItem(owner: 'subject-1', input: ['title' => 'Nog een', 'publication' => self::PUB_A]);
+			$this->fail('Expected refusal of a dossier past the most');
+		} catch (PortalInputException $e) {
+			$this->assertSame('You have the most dossiers you can have', $e->getMessage());
+		}
+
+		$this->assertCount(CitizenCollectionService::MAX_DOSSIERS, $this->store->objects['collection']);
+		$view = $this->service->addItem(owner: 'subject-2', input: ['title' => 'Eigen', 'publication' => self::PUB_A]);
+		$this->assertSame('subject-2', $this->store->objects['collection'][$view['id']]['owner']);
+	}
+
+	public function testANoteOnAnItemTheDossierDoesNotHoldAnswersNotFound(): void {
+		$view = $this->dossierOf('subject-1', [self::PUB_A]);
+		$before = $this->store->objects['collection'][$view['id']];
+
+		try {
+			$this->service->note(owner: 'subject-1', collectionId: $view['id'], itemId: 'no-such-item', note: 'x');
+			$this->fail('Expected not found');
+		} catch (PortalNotFoundException $e) {
+			$this->assertSame('Not found', $e->getMessage());
+		}
+
+		$this->assertSame($before, $this->store->objects['collection'][$view['id']]);
+	}
+
+	public function testATitleThatIsNotTextOrTooLongIsRefusedByName(): void {
+		foreach ([
+			[['title' => ['Windpark'], 'publication' => self::PUB_A], 'title must be text'],
+			[['title' => str_repeat('x', 201), 'publication' => self::PUB_A], 'title is too long'],
+			[['title' => 'x', 'publication' => 42], 'publication must be text'],
+		] as [$input, $message]) {
+			try {
+				$this->service->addItem(owner: 'subject-1', input: $input);
+				$this->fail('Expected refusal: ' . $message);
+			} catch (PortalInputException $e) {
+				$this->assertSame($message, $e->getMessage());
+			}
+		}
+
+		$this->assertSame([], ($this->store->objects['collection'] ?? []));
+	}
 }
