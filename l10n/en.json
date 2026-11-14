@@ -1,5 +1,10 @@
 {
     "translations": {
+        "Featured": "Featured",
+        "Featured order": "Featured order",
+        "Position among the featured subjects, lowest first": "Position among the featured subjects, lowest first",
+        "Show this subject on the portal's home page": "Show this subject on the portal's home page",
+        "Web address name of the subject, lowercase letters, digits and hyphens": "Web address name of the subject, lowercase letters, digits and hyphens",
         "Show which documents of a publication were withheld, and on which grounds": "Show which documents of a publication were withheld, and on which grounds",
         "Show withheld documents": "Show withheld documents",
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",

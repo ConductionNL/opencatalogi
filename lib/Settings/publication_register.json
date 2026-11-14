@@ -3,7 +3,7 @@
   "info": {
     "title": "Publication Register (Magic Mapper)",
     "description": "Magic Mapper version - Uses dedicated SQL tables for high-performance schema storage. The publication register is the core register of the OpenCatalogi application. It manages all content types needed for creating and maintaining a catalog website.",
-    "version": "0.7.1"
+    "version": "0.7.2"
   },
   "x-openregister": {
     "type": "application",
@@ -865,7 +865,7 @@
         "slug": "theme",
         "x-schema-org": "schema:DefinedTerm",
         "title": "Theme",
-        "version": "0.0.4",
+        "version": "0.0.5",
         "published": "2025-01-01T00:00:00+00:00",
         "summary": "A category for organizing publications",
         "description": "Themes are used to categorize publications within catalogs. They provide a way to group related publications together, making it easier for users to find content they're interested in. Themes can be hierarchical and can be used for navigation and filtering purposes.",
@@ -936,6 +936,28 @@
             "description": "Sort order for display",
             "facetable": false,
             "title": "Sort Order"
+          },
+          "featured": {
+            "type": "boolean",
+            "default": false,
+            "description": "Show this subject on the portal's home page",
+            "facetable": true,
+            "title": "Featured"
+          },
+          "featuredOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Position among the featured subjects, lowest first",
+            "facetable": false,
+            "title": "Featured order"
+          },
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+            "maxLength": 255,
+            "description": "Web address name of the subject, lowercase letters, digits and hyphens",
+            "facetable": false,
+            "title": "Slug"
           }
         },
         "configuration": {

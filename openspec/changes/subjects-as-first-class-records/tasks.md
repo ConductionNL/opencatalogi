@@ -4,13 +4,13 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 1. Schema
 
-- [ ] 1.1 Add `featured`, `featuredOrder` and `slug` to `#theme`, bump its version, and add the Dutch and English labels (REQ-SUB-001). Verify: `tests/Unit/Settings/ThemeSchemaTest.php::testTheThemeSchemaDeclaresFeaturedOrderAndSlug` and `npm run check:schema-l10n`.
-- [ ] 1.2 Add the featured-needs-title check to a pre-save listener registered in `Application::register()` (REQ-SUB-001). Verify: `tests/Unit/Listener/ThemeFeaturedCheckTest.php::testAFeaturedSubjectWithoutATitleIsRefused` on the REAL `ObjectCreatingEvent` and `ObjectUpdatingEvent`, and an `ApplicationRegisterInvariantTest` case.
+- [x] 1.1 Add `featured`, `featuredOrder` and `slug` to `#theme`, bump its version, and add the Dutch and English labels (REQ-SUB-001). Verify: `tests/Unit/Settings/ThemeSchemaTest.php::testTheThemeSchemaDeclaresFeaturedOrderAndSlug` and `npm run check:schema-l10n`.
+- [x] 1.2 Add the featured-needs-title check to a pre-save listener registered in `Application::register()` (REQ-SUB-001). Verify: `tests/Unit/Listener/ThemeFeaturedCheckTest.php::testAFeaturedSubjectWithoutATitleIsRefused` on the REAL `ObjectCreatingEvent` and `ObjectUpdatingEvent`, and an `ApplicationRegisterInvariantTest` case.
 
 ## 2. Routes
 
-- [ ] 2.1 `ThemesController::index()` honours `featured=true`, orders by `featuredOrder`, and adds `publicationCount` from the anonymous read (REQ-SUB-002). Verify: `tests/Unit/Controller/FeaturedThemesTest.php::testTheCountOnlyCountsPublicPublications` (fails today) and `::testFeaturedSubjectsComeInOrder`.
-- [ ] 2.2 Add `themes#publications` at `GET /api/themes/{id}/publications` with its CORS preflight, and `publicationsUrl` on `show()` (REQ-SUB-003). Verify: `tests/Unit/Controller/ThemePublicationsTest.php::testADraftUnderASubjectIsNotListed` (fails today: no route), `::testTheSubjectListsItsPublicPublicationsNewestFirst`, `::testASlugResolves`, and `tests/Unit/AppInfo/RouteNameUniquenessTest.php`.
+- [x] 2.1 `ThemesController::index()` honours `featured=true`, orders by `featuredOrder`, and adds `publicationCount` from the anonymous read (REQ-SUB-002). Verify: `tests/Unit/Controller/FeaturedThemesTest.php::testTheCountOnlyCountsPublicPublications` (fails today) and `::testFeaturedSubjectsComeInOrder`.
+- [x] 2.2 Add `themes#publications` at `GET /api/themes/{id}/publications` with its CORS preflight, and `publicationsUrl` on `show()` (REQ-SUB-003). Verify: `tests/Unit/Controller/ThemePublicationsTest.php::testADraftUnderASubjectIsNotListed` (fails today: no route), `::testTheSubjectListsItsPublicPublicationsNewestFirst`, `::testASlugResolves`, and `tests/Unit/AppInfo/RouteNameUniquenessTest.php`.
 
 ## 3. Search
 
@@ -27,7 +27,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 6. Verification
 
-- [ ] 6.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. Public search is central: run the full unit suite once.
+- [x] 6.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. Public search is central: run the full unit suite once.
 - [ ] 6.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran. gate-19 wants the `@e2e` references of 4.1.
 - [ ] 6.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
 - [ ] 6.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
