@@ -1552,7 +1552,18 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Only the groups below see and edit this catalogue's publications.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
+        "App": "App",
+        "Information category label": "Information category label",
+        "Notes": "Notes",
+        "Object type": "Object type",
+        "The TOOI URI of the informatiecategorie, a member of the official waardelijst.": "The TOOI URI of the informatiecategorie, a member of the official waardelijst.",
+        "The app that owns the object type, for example opencatalogi or decidesk.": "The app that owns the object type, for example opencatalogi or decidesk.",
+        "The canonical label of that informatiecategorie, shown beside the URI for review.": "The canonical label of that informatiecategorie, shown beside the URI for review.",
+        "The owning app's schema slug or payload kind the default applies to.": "The owning app's schema slug or payload kind the default applies to.",
+        "Whether the default applies. An inactive row is kept but never used.": "Whether the default applies. An inactive row is kept but never used.",
+        "Why this default was chosen, and where it came from.": "Why this default was chosen, and where it came from.",
+        "Woo category mapping": "Woo category mapping"
     },
     "nplurals=2; plural=(n != 1);"
 )
