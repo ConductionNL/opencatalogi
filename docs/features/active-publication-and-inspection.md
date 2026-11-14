@@ -61,8 +61,12 @@ term; read as closed it withholds what is owed.
 
 ## Taking a publication back
 
-`POST /api/publications/depublish` is one action. It records who and why, and
-sends a withdrawal to every channel the publication reached.
+`POST /api/publications/depublish` is one action. It takes the publication off
+the public side by setting its `depublicationDate`, records who and why, and
+sends a withdrawal to every channel the publication reached. The publication is
+read by its id from the configured publication register, so an unknown id
+answers 404 and nothing is sent; one already withdrawn keeps the date it came
+down on. When the publication cannot be taken down, no withdrawal is sent.
 
 A withdrawal a channel has not acknowledged is shown as outstanding. An undo
 that leaves the document in a harvester's copy is not one, so a channel that

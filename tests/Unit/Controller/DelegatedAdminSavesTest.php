@@ -47,6 +47,7 @@ use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
+use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -106,6 +107,7 @@ class DelegatedAdminSavesTest extends TestCase {
 	private const SCHEMA_KEYS = [
 		'inspection_schema' => 'inspection',
 		'depublication_schema' => 'depublication',
+		'publication_schema' => 'publication',
 		'service_status_schema' => 'serviceStatus',
 		'notice_board_schema' => 'noticeBoard',
 		'notice_schema' => 'notice',
@@ -139,6 +141,10 @@ class DelegatedAdminSavesTest extends TestCase {
 			groups: $groups,
 			seed: [
 				'dep-1' => ['schema' => 'depublication', 'object' => self::DEPUBLICATION],
+				// Already withdrawn, so depublishing it saves only the depublication:
+				// the flows below count one save. Taking a public one down is
+				// DepublicationControllerTest's.
+				'pub-1' => ['schema' => 'publication', 'object' => ['title' => 'Besluit', 'publicationDate' => '2020-01-01T00:00:00+00:00', 'depublicationDate' => '2020-02-01T00:00:00+00:00']],
 				'ct-1' => ['schema' => 'caseTypeDefinition', 'object' => self::IMPORTED_CASE_TYPE],
 			]
 		);
@@ -280,7 +286,8 @@ class DelegatedAdminSavesTest extends TestCase {
 			$this->l10n(),
 			$this->session(),
 			new DepublicationService($index, $this->createMock(LoggerInterface::class)),
-			$this->registers()
+			$this->registers(),
+			new PublicationStateService()
 		);
 	}//end depublication()
 

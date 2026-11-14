@@ -33,7 +33,7 @@
 - [x] 5.1 Depublish in one action, recording who and why (REQ-PIN-106)
 - [x] 5.2 Withdraw from every channel the publication reached, and record each acknowledgement (REQ-PIN-106)
 - [x] 5.3 Show an unacknowledged withdrawal as outstanding (REQ-PIN-106)
-- [ ] 5.4 Make the depublish action take the publication itself off the public side: set its `depublicationDate` (or its withdrawn state) in the same action that records who, why and the channel withdrawals, so a public read answers 404 afterwards (REQ-PIN-106, row `lc-depublish`)
+- [x] 5.4 Make the depublish action take the publication itself off the public side: set its `depublicationDate` (or its withdrawn state) in the same action that records who, why and the channel withdrawals, so a public read answers 404 afterwards (REQ-PIN-106, row `lc-depublish`)
 
 ## 6. The national channels
 

@@ -42,6 +42,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -75,6 +76,7 @@ class DepublicationController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param DepublicationServiceInterface $depublicationService Taking a publication back.
 	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
+	 * @param PublicationStateServiceInterface $states The publication's state and its withdrawn record.
 	 */
 	public function __construct(
 		$appName,
@@ -83,6 +85,7 @@ class DepublicationController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly DepublicationServiceInterface $depublicationService,
 		private readonly RegisterAccess $registers,
+		private readonly PublicationStateServiceInterface $states,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -118,6 +121,12 @@ class DepublicationController extends Controller {
 	/**
 	 * Depublish in one action and withdraw from every channel it reached.
 	 *
+	 * The publication itself comes off the public side in the same action: its
+	 * stored record gets a `depublicationDate` of now, before any withdrawal is
+	 * sent, so a public read answers 404 whatever the channels answer after. A
+	 * publication that is already withdrawn keeps the date it has. Without a
+	 * reason nothing is taken down and the service's refusal is answered.
+	 *
 	 * @return JSONResponse The depublication, with any outstanding channel named.
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
@@ -129,10 +138,22 @@ class DepublicationController extends Controller {
 			return new JSONResponse(data: ['error' => 'missing-publication'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
+		$reason = trim((string)$this->request->getParam('reason', ''));
+		$takenDown = [];
+		if ($reason !== '') {
+			$down = $this->takeDown(publication: $publication);
+			if ($down instanceof JSONResponse) {
+				return $down;
+			}
+
+			$takenDown = $down;
+			$publication = $down['record'];
+		}
+
 		try {
 			$depublication = $this->depublicationService->depublish(
 				publication: $publication,
-				reason: trim((string)$this->request->getParam('reason', '')),
+				reason: $reason,
 				depublishedBy: $this->actor(),
 				channels: $this->requestedChannels()
 			);
@@ -143,8 +164,128 @@ class DepublicationController extends Controller {
 			);
 		}
 
-		return $this->storeDepublication(depublication: $depublication);
+		return $this->storeDepublication(depublication: $depublication, takenDown: $takenDown);
 	}//end depublish()
+
+	/**
+	 * Take the stored publication off the public side by setting its depublication date.
+	 *
+	 * The publication is read from the configured publication register and
+	 * schema by the id the request names, never from the posted properties, so
+	 * what is saved is the stored record with only the depublication date set.
+	 *
+	 * @param array<string, mixed> $publication The posted publication, read for its id.
+	 *
+	 * @return array{record: array<string, mixed>, state: string, depublicationDate: mixed}|JSONResponse What was taken down, or the refusal.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
+	 */
+	private function takeDown(array $publication): array|JSONResponse {
+		$id = trim((string)($publication['id'] ?? ''));
+		if ($id === '') {
+			return $this->badRequest(
+				error: 'missing-publication',
+				message: $this->l10n->t('Name the publication to take down by its id.')
+			);
+		}
+
+		$found = $this->findPublication(id: $id);
+		if ($found instanceof JSONResponse) {
+			return $found;
+		}
+
+		$record = $found['publication'];
+		$state = $this->states->stateOf(publication: $record);
+		if ($state !== PublicationStateServiceInterface::STATE_WITHDRAWN) {
+			$record = $this->states->withdrawnRecord(publication: $record);
+			$saved = $this->saveWithdrawnPublication(found: $found, record: $record);
+			if ($saved instanceof JSONResponse) {
+				return $saved;
+			}
+		}
+
+		$record['id'] = $id;
+
+		return ['record' => $record, 'state' => $state, 'depublicationDate' => ($record['depublicationDate'] ?? null)];
+	}//end takeDown()
+
+	/**
+	 * Read a stored publication with the register and schema it lives in.
+	 *
+	 * @param string $id The publication's id.
+	 *
+	 * @return array<string, mixed>|JSONResponse The `id`, `config` and `publication`, or the 503 or 404 answer.
+	 */
+	private function findPublication(string $id): array|JSONResponse {
+		try {
+			$config = $this->resolveRegisterConfiguration(
+				registerKey: 'publication_register',
+				schemaKey: 'publication_schema'
+			);
+		} catch (\Throwable $e) {
+			return $this->registerConfigErrorResponse(e: $e);
+		}
+
+		try {
+			$publication = $this->asArray(
+				object: ObjectInPair::require(
+					found: $this->registers->getObjectService()->find(
+						id: $id,
+						register: $config['register'],
+						schema: $config['schema'],
+						_rbac: false
+					),
+					config: $config
+				)
+			);
+		} catch (CatalogueUnreadableException $e) {
+			return new JSONResponse(
+				data: ['error' => 'publication-unreadable'],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		} catch (\Throwable $e) {
+			return new JSONResponse(data: ['error' => 'publication-not-found'], statusCode: Http::STATUS_NOT_FOUND);
+		}
+
+		if ($publication === []) {
+			return new JSONResponse(data: ['error' => 'publication-not-found'], statusCode: Http::STATUS_NOT_FOUND);
+		}
+
+		return ['id' => $id, 'config' => $config, 'publication' => $publication];
+	}//end findPublication()
+
+	/**
+	 * Save the withdrawn record of a publication under its own id.
+	 *
+	 * @param array<string, mixed> $found The `id`, `config` and `publication` from findPublication().
+	 * @param array<string, mixed> $record The withdrawn record.
+	 *
+	 * @return JSONResponse|null The 503 answer when it could not be saved, null when it was.
+	 */
+	private function saveWithdrawnPublication(array $found, array $record): ?JSONResponse {
+		unset($record['id']);
+
+		try {
+			$this->registers->getObjectService()->saveObject(
+				object: $record,
+				extend: [],
+				register: $found['config']['register'],
+				schema: $found['config']['schema'],
+				uuid: $found['id'],
+				_rbac: false
+			);
+		} catch (\Throwable $e) {
+			return new JSONResponse(
+				data: [
+					'error' => 'publication-not-taken-down',
+					'message' => $this->l10n->t('The publication could not be taken down, so no withdrawal was sent.'),
+				],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		}
+
+		return null;
+	}//end saveWithdrawnPublication()
 
 	/**
 	 * The channels the request asks to withdraw from, as strings; none when it names no list.
@@ -171,10 +312,11 @@ class DepublicationController extends Controller {
 	 * The system owns the record, so whoever wrote it cannot rewrite or delete it.
 	 *
 	 * @param array<string, mixed> $depublication The depublication.
+	 * @param array<string, mixed> $takenDown What takeDown() answered, empty when nothing was taken down.
 	 *
 	 * @return JSONResponse The stored depublication, or why it could not be stored.
 	 */
-	private function storeDepublication(array $depublication): JSONResponse {
+	private function storeDepublication(array $depublication, array $takenDown = []): JSONResponse {
 		try {
 			$saved = $this->registers->getObjectService()->saveObject(
 				object: $depublication,
@@ -196,17 +338,36 @@ class DepublicationController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		return $this->withOutstanding(saved: $saved);
+		return $this->withOutstanding(saved: $saved, publication: $this->publicationState(takenDown: $takenDown));
 	}//end storeDepublication()
+
+	/**
+	 * The publication's state after the action, for the answer.
+	 *
+	 * @param array<string, mixed> $takenDown What takeDown() answered, empty when nothing was taken down.
+	 *
+	 * @return array<string, mixed> The state and depublication date, or nothing.
+	 */
+	private function publicationState(array $takenDown): array {
+		if ($takenDown === []) {
+			return [];
+		}
+
+		return [
+			'publicationState' => PublicationStateServiceInterface::STATE_WITHDRAWN,
+			'publicationDepublicationDate' => $takenDown['depublicationDate'],
+		];
+	}//end publicationState()
 
 	/**
 	 * A stored depublication with its outstanding channels and whether it is complete.
 	 *
 	 * @param mixed $saved What the object store answered.
+	 * @param array<string, mixed> $publication The publication's state after the action, if it changed.
 	 *
 	 * @return JSONResponse The depublication.
 	 */
-	private function withOutstanding(mixed $saved): JSONResponse {
+	private function withOutstanding(mixed $saved, array $publication = []): JSONResponse {
 		$stored = $this->asArray(object: $saved);
 		$outstanding = $this->depublicationService->outstandingChannels(depublication: $stored);
 
@@ -216,7 +377,8 @@ class DepublicationController extends Controller {
 				[
 					'outstandingChannels' => $outstanding,
 					'complete' => ($outstanding === []),
-				]
+				],
+				$publication
 			)
 		);
 
