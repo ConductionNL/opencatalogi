@@ -1552,7 +1552,9 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Only the groups below see and edit this catalogue's publications.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
+        "Has DCAT feed": "Has DCAT feed",
+        "Publish this catalog's datasets as a DCAT-AP-NL feed that data.overheid.nl can harvest": "Publish this catalog's datasets as a DCAT-AP-NL feed that data.overheid.nl can harvest"
     },
     "nplurals=2; plural=(n != 1);"
 )
