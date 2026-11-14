@@ -41,6 +41,7 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
 use OCA\OpenCatalogi\Service\Publication\PublicationRelations;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -765,7 +766,8 @@ class PublicationsController extends Controller {
 		}
 
 		if (is_array($item) === true) {
-			return $this->queryService->stripEmptyValues(data: $item);
+			// REQ-PRS-003: only public source identifiers on the public list.
+			return $this->queryService->stripEmptyValues(data: (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $item));
 		}
 
 		return $item;
@@ -1182,6 +1184,11 @@ class PublicationsController extends Controller {
 			_rbac: true,
 			_multitenancy: false,
 		);
+
+		// REQ-PRS-003: an internal source identifier never leaves on the public API.
+		if (is_array($result) === true) {
+			$result = (new PublicationLinkRules())->withPublicSourceIdentifiers(publication: $result);
+		}
 
 		if ($this->wantsSchemaOrg() === true) {
 			$response = $this->schemaOrgResponse(read: $read, result: $result);

@@ -105,6 +105,34 @@ final class PublicationLinkRules {
 	}//end withMirroredCaseReference()
 
 	/**
+	 * The publication with only its public source identifiers, for a public answer.
+	 *
+	 * An entry is public only when `public` is exactly true; anything else,
+	 * including a missing flag, stays internal. A publication without the
+	 * property is returned unchanged.
+	 *
+	 * @param array<string, mixed> $publication The publication as read.
+	 *
+	 * @return array<string, mixed> The publication for the public answer.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function withPublicSourceIdentifiers(array $publication): array {
+		if (array_key_exists('sourceIdentifiers', $publication) === false) {
+			return $publication;
+		}
+
+		$publication['sourceIdentifiers'] = array_values(
+			array_filter(
+				self::identifiers(value: $publication['sourceIdentifiers']),
+				static fn (array $entry): bool => ($entry['public'] ?? false) === true
+			)
+		);
+
+		return $publication;
+	}//end withPublicSourceIdentifiers()
+
+	/**
 	 * The stored source identifiers as a list, dropping anything that is not an entry.
 	 *
 	 * @param mixed $value The stored value.

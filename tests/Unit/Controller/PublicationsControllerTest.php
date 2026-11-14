@@ -2124,7 +2124,7 @@ class PublicationsControllerTest extends TestCase {
 	 *
 	 * @return JSONResponse The answer.
 	 */
-	private function showAs(bool $signedIn, string $accept, string $ifNoneMatch = ''): JSONResponse {
+	private function showAs(bool $signedIn, string $accept, string $ifNoneMatch = '', array $rendered = self::SHOWN_PUBLICATION): JSONResponse {
 		$mockObjService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$schemaOrg = $this->createMock(\OCA\OpenCatalogi\Service\SchemaOrgService::class);
 		$schemaOrg->method('buildPublicationNode')->willReturn(self::SHOWN_NODE);
@@ -2145,7 +2145,7 @@ class PublicationsControllerTest extends TestCase {
 		$this->catalogiService->method('getCatalogBySlug')
 			->willReturn(['title' => 'Test', 'schemas' => [1], 'registers' => [1]]);
 		$mockObjService->method('searchObjects')->willReturn([$this->createObjectEntityMock()]);
-		$mockObjService->method('renderEntity')->willReturn(self::SHOWN_PUBLICATION);
+		$mockObjService->method('renderEntity')->willReturn($rendered);
 		$this->request->method('getParams')->willReturn([]);
 		$this->request->method('getHeader')->willReturnCallback(
 			static fn (string $name): string => match ($name) {
@@ -2421,5 +2421,44 @@ class PublicationsControllerTest extends TestCase {
 		foreach ($this->internalFragments() as $fragment) {
 			$this->assertStringNotContainsString($fragment, $body);
 		}
+	}
+
+	/**
+	 * REQ-PRS-003: the public detail answer carries only the public source identifiers.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testAPrivateIdentifierIsNotReturnedOnThePublicDetail(): void {
+		$response = $this->showAs(
+			signedIn: false,
+			accept: 'application/json',
+			rendered: self::SHOWN_PUBLICATION + ['sourceIdentifiers' => [
+				['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false],
+				['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true],
+			]]
+		);
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame([['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true]], $response->getData()['sourceIdentifiers']);
+		$this->assertSame([], $response->getData()['relations']);
+	}
+
+	/**
+	 * REQ-PRS-003: a row of the public catalogue list keeps only its public source identifiers.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testACatalogueListRowCarriesOnlyItsPublicSourceIdentifiers(): void {
+		$method = new \ReflectionMethod(PublicationsController::class, 'withoutEmptyItemValues');
+
+		$row = $method->invoke($this->controller, [
+			'id' => 'p1',
+			'sourceIdentifiers' => [
+				['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false],
+				['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true],
+			],
+		]);
+
+		$this->assertSame([['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true]], $row['sourceIdentifiers']);
 	}
 }

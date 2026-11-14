@@ -47,6 +47,7 @@ use RuntimeException;
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationsController
  * @uses   \OCA\OpenCatalogi\Controller\CatalogSlugQuery
+ * @uses   \OCA\OpenCatalogi\Service\Publication\PublicationLinkRules
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses   \OCA\OpenCatalogi\Controller\FoundPublication
  * @uses   \OCA\OpenCatalogi\Controller\PublicationRead

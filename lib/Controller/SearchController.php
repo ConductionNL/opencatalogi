@@ -30,6 +30,7 @@ use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
 use OCA\OpenCatalogi\Service\AppliedFilters;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinkRules;
 use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -161,6 +162,7 @@ class SearchController extends Controller {
 				queryParams: SearchQueryTranslator::translateSearchParams(params: $this->request->getParams()),
 				objectService: $objectService
 			);
+			$result['results'] = $this->withPublicSourceIdentifiers(rows: ($result['results'] ?? []));
 			$result['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
 			// REQ-PAC-001/002: public cache headers for an anonymous caller only.
@@ -174,6 +176,39 @@ class SearchController extends Controller {
 		}//end try
 
 	}//end index()
+
+	/**
+	 * The search rows with only their public source identifiers (REQ-PRS-003).
+	 *
+	 * A row that is not an array is serialised first; anything else is kept as it is.
+	 *
+	 * @param mixed $rows The search rows.
+	 *
+	 * @return array<int|string, mixed> The rows for the public answer.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	private function withPublicSourceIdentifiers(mixed $rows): array {
+		if (is_array($rows) === false) {
+			return [];
+		}
+
+		$rules = new PublicationLinkRules();
+		return array_map(
+			static function (mixed $row) use ($rules): mixed {
+				if (is_object($row) === true && method_exists($row, 'jsonSerialize') === true) {
+					$row = $row->jsonSerialize();
+				}
+
+				if (is_array($row) === false) {
+					return $row;
+				}
+
+				return $rules->withPublicSourceIdentifiers(publication: $row);
+			},
+			$rows
+		);
+	}//end withPublicSourceIdentifiers()
 
 	/**
 	 * The 400 for a range bound that is not a date or a number (REQ-SCF-002).

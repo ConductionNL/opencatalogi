@@ -88,4 +88,29 @@ class PublicationLinkRulesTest extends TestCase {
 			'sourceIdentifiers' => [['system' => 'case', 'identifier' => 'Z-1', 'public' => true]],
 		]));
 	}//end testNothingChangesWithoutANewCaseReference()
+
+	/**
+	 * Only entries whose `public` is exactly true stay; a missing flag counts as internal.
+	 *
+	 * @return void
+	 */
+	public function testOnlyPublicSourceIdentifiersAreKeptForAPublicAnswer(): void {
+		$publication = [
+			'title' => 'Raadsbesluit',
+			'sourceIdentifiers' => [
+				['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => false],
+				['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true],
+				['system' => 'case', 'identifier' => 'c-1'],
+				['system' => 'x', 'identifier' => 'y', 'public' => 'true'],
+				'not an entry',
+			],
+		];
+
+		$this->assertSame(
+			['title' => 'Raadsbesluit', 'sourceIdentifiers' => [['system' => 'raad', 'identifier' => 'RB-2026-17', 'public' => true]]],
+			(new PublicationLinkRules())->withPublicSourceIdentifiers($publication)
+		);
+		$this->assertSame(['title' => 'Geen'], (new PublicationLinkRules())->withPublicSourceIdentifiers(['title' => 'Geen']));
+		$this->assertSame(['sourceIdentifiers' => []], (new PublicationLinkRules())->withPublicSourceIdentifiers(['sourceIdentifiers' => 'Z-1']));
+	}//end testOnlyPublicSourceIdentifiersAreKeptForAPublicAnswer()
 }//end class
