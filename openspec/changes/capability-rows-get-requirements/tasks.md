@@ -8,5 +8,5 @@
 
 ## 2. Requirements still to build
 
-- [ ] 2.1 In `lib/Service/RetentionService.php`, hand an archive decision to OpenRegister's e-Depot transfer and store the transfer reference on the publication (REQ-CRR-003). Set row `lc-archive` to `built` when the test is green.
-- [ ] 2.2 In `src/views/dashboard/Dashboard.vue`, show the catalogue count and the attachment count on the app's dashboard next to the publication counts (REQ-CRR-005). Set row `ops-dashboard` to `built` when the test is green.
+- [x] 2.1 In `lib/Service/RetentionService.php`, hand an archive decision to OpenRegister's e-Depot transfer and store the transfer reference on the publication (REQ-CRR-003). Set row `lc-archive` to `built` when the test is green.
+- [x] 2.2 In `src/views/dashboard/Dashboard.vue`, show the catalogue count and the attachment count on the app's dashboard next to the publication counts (REQ-CRR-005). Set row `ops-dashboard` to `built` when the test is green.

@@ -504,7 +504,7 @@ watch(
 								getFieldDisplayName(
 									fieldName
 										.replace('@self.', '')
-										.replace('@self', 'metadata'),
+										.replace('@self', t('opencatalogi', 'Metadata')),
 								)
 							}}</label>
 							<NcSelect

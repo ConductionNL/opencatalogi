@@ -38,6 +38,7 @@ OC.L10N.register(
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -275,6 +276,7 @@ OC.L10N.register(
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1519,7 +1521,8 @@ OC.L10N.register(
         "Valid from": "Geldig vanaf",
         "The day the content takes legal effect. This can differ from the publication date.": "De dag waarop de inhoud rechtskracht krijgt. Die kan afwijken van de publicatiedatum.",
         "Valid until": "Geldig tot",
-        "The day the content loses legal effect. Leave it empty when it has no end.": "De dag waarop de inhoud zijn rechtskracht verliest. Laat dit leeg als er geen einde is."
+        "The day the content loses legal effect. Leave it empty when it has no end.": "De dag waarop de inhoud zijn rechtskracht verliest. Laat dit leeg als er geen einde is.",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "nplurals=2; plural=(n != 1);"
 )

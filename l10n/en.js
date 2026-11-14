@@ -46,6 +46,7 @@ OC.L10N.register(
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -267,6 +268,7 @@ OC.L10N.register(
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1564,7 +1566,8 @@ OC.L10N.register(
         "Valid from": "Valid from",
         "The day the content takes legal effect. This can differ from the publication date.": "The day the content takes legal effect. This can differ from the publication date.",
         "Valid until": "Valid until",
-        "The day the content loses legal effect. Leave it empty when it has no end.": "The day the content loses legal effect. Leave it empty when it has no end."
+        "The day the content loses legal effect. Leave it empty when it has no end.": "The day the content loses legal effect. Leave it empty when it has no end.",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
 )
