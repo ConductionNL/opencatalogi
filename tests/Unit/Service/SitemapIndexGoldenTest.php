@@ -277,10 +277,9 @@ class SitemapIndexGoldenTest extends TestCase {
 			new OpenRegisterLookup($container, $apps),
 			$settings,
 			new InstanceSettings($urls, $config),
-			new TooiVocabularyService(),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($container, $apps), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$queryService,
-			$categories,
-			\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
+			$categories
 		);
 		$response = $service->buildSitemapIndex('the-catalog', 'sitemapindex-diwoo-infocat001.xml');
 

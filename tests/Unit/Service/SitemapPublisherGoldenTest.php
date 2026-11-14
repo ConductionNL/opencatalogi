@@ -209,10 +209,9 @@ class SitemapPublisherGoldenTest extends TestCase {
 			new OpenRegisterLookup($container, $apps),
 			$settings,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new TooiVocabularyService(),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($container, $apps), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$this->createMock(PublicationQueryService::class),
-			$categories,
-			\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
+			$categories
 		);
 	}//end service()
 }//end class

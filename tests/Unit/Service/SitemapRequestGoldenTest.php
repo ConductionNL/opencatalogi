@@ -232,10 +232,9 @@ class SitemapRequestGoldenTest extends TestCase {
 			new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)),
 			$settingsService,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new TooiVocabularyService(),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$this->createMock(PublicationQueryService::class),
-			$categories,
-			\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
+			$categories
 		);
 
 		$request = new SitemapRequest(catalogSlug: 'the-catalog', categoryCode: 'sitemapindex-diwoo-infocat001.xml');
