@@ -20,6 +20,8 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+require_once __DIR__ . '/Support/FileFactsByExtension.php';
+
 use OCA\OpenCatalogi\Service\InstanceSettings;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
@@ -41,6 +43,7 @@ use Psr\Log\LoggerInterface;
  * @covers \OCA\OpenCatalogi\Service\SitemapService
  * @covers \OCA\OpenCatalogi\Service\SitemapDocumentMapper
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Service\FileFacts
  * @uses \OCA\OpenCatalogi\Service\TooiVocabularyService
  * @uses \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry
  * @uses \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission
@@ -208,7 +211,8 @@ class SitemapPublisherGoldenTest extends TestCase {
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
 			new TooiVocabularyService(),
 			$this->createMock(PublicationQueryService::class),
-			$categories
+			$categories,
+			\OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)
 		);
 	}//end service()
 }//end class

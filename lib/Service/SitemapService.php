@@ -98,6 +98,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param TooiVocabularyService $tooiVocabulary The TOOI value-list resolver
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
+	 * @param FileFacts|null $fileFacts Reads each file's type from its bytes (REQ-PFF-001); without it no format is emitted.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -106,6 +107,7 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
+		private readonly ?FileFacts $fileFacts = null,
 	) {
 
 	}//end __construct()
@@ -281,7 +283,8 @@ class SitemapService implements SitemapServiceInterface {
 			$this->documentMapper = new SitemapDocumentMapper(
 				tooiVocabulary: $this->tooiVocabulary,
 				categories: $this->categories,
-				openRegister: $this->openRegister
+				openRegister: $this->openRegister,
+				fileFacts: $this->fileFacts
 			);
 		}
 
