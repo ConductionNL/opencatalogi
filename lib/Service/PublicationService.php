@@ -44,6 +44,7 @@ namespace OCA\OpenCatalogi\Service;
 use Exception;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\AttachmentOrder;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
 use OCP\App\IAppManager;
@@ -1187,6 +1188,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/specs/publications/spec.md
+	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-an-officer-orders-a-publication-s-documents-and-the-public-list-keeps-that-order-req-pdp-001
 	 */
 	public function attachments(string $id): JSONResponse {
 		// Catalog-scope gate (C-1 / wave-7): verify the requested object belongs to one
@@ -1214,10 +1216,14 @@ class PublicationService implements PublicationServiceInterface {
 			// Get the raw files from the file service.
 			$files = $fileService->getFiles(object: $id, sharedFilesOnly: true);
 
+			// The officer's order first, then the rest by upload time (REQ-PDP-001),
+			// before paging so every page continues the same sequence.
+			$files = AttachmentOrder::sort(files: $files, order: AttachmentOrder::storedOrder(publication: $object));
+
 			// Format the files with pagination using request parameters.
 			$formattedFiles = $fileService->formatFiles($files, $this->request->getParams());
 
-			return new JSONResponse($formattedFiles);
+			return new JSONResponse(AttachmentOrder::withPositions(page: $formattedFiles));
 		} catch (DoesNotExistException $e) {
 			return new JSONResponse(['error' => 'Object not found'], 404);
 		} catch (NotFoundException $e) {

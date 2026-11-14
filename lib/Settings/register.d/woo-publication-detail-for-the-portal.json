@@ -1,0 +1,22 @@
+{
+	"_note": "Register fragment for publication-detail-for-the-portal (REQ-PDP-001). The publication carries attachmentOrder, the file ids of its documents in the order an officer set; PublicationService::attachments() answers the public and federation attachment lists in that order. Named to merge after woo-information-categories-as-data.json, so its version wins.",
+	"components": {
+		"schemas": {
+			"publication": {
+				"slug": "publication",
+				"version": "0.0.8",
+				"properties": {
+					"attachmentOrder": {
+						"type": "array",
+						"title": "Attachment order",
+						"description": "The file ids of the publication's documents in the order the portal shows them. Files not listed follow by upload time.",
+						"items": {
+							"type": "string"
+						},
+						"default": []
+					}
+				}
+			}
+		}
+	}
+}
