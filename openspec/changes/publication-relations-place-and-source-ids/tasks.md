@@ -6,7 +6,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 - [x] 1.1 Declare the vocabulary and the four relation properties in `lib/Settings/register.d/publication-relations-place-and-source-ids.json` with `slug` and a bumped version (REQ-PRS-001). Verify: `tests/Unit/Settings/PublicationRelationsSchemaTest.php::testTheVocabularyDeclaresFourTypes` and `::testTheDeclarationPassesOpenRegistersRelationValidator`, which runs `RelationAnnotationValidator` over the merged schema when the class exists.
 - [x] 1.2 Add the self-relation check to a pre-save listener registered in `Application::register()` (REQ-PRS-001). Verify: `tests/Unit/Listener/PublicationRelationCheckTest.php::testASelfRelationIsRefused` on the REAL event, and an `ApplicationRegisterInvariantTest` case.
-- [ ] 1.3 Add `relations` to `PublicationsController::show()`, filtered through the public read path (REQ-PRS-002). Verify: `tests/Unit/Controller/PublicationRelationsResponseTest.php::testBothSidesReadTheRelation` and `::testARelationToANonPublicPublicationIsLeftOut` (fails today: no `relations` key).
+- [x] 1.3 Add `relations` to `PublicationsController::show()`, filtered through the public read path (REQ-PRS-002). Verify: `tests/Unit/Controller/PublicationRelationsResponseTest.php::testBothSidesReadTheRelation` and `::testARelationToANonPublicPublicationIsLeftOut` (fails today: no `relations` key).
 - [ ] 1.4 Show the relations with their labels in the Related panel of the publication page and add the four properties to the edit form (REQ-PRS-001). Verify: `tests/e2e/publication-relations.spec.ts` "both sides read the relation", carrying `@e2e` REQ-PRS-001.
 
 ## 2. Source identifiers

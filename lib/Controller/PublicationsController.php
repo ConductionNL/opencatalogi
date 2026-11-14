@@ -41,6 +41,7 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
+use OCA\OpenCatalogi\Service\Publication\PublicationRelations;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -1193,6 +1194,10 @@ class PublicationsController extends Controller {
 				);
 			}
 
+			if (is_array($result) === true) {
+				$result['relations'] = $this->relationsOf(read: $read, found: $found);
+			}
+
 			$response = new JSONResponse($result, 200);
 		}
 
@@ -1200,6 +1205,38 @@ class PublicationsController extends Controller {
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
+
+	/**
+	 * The relations of a shown publication a reader may see (REQ-PRS-002).
+	 *
+	 * Without the relations reader the answer carries none, never an unguarded list.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param FoundPublication $found The publication found.
+	 *
+	 * @return array<int, array<string, mixed>> The relations.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-the-public-response-carries-the-relations-a-reader-may-see-req-prs-002
+	 */
+	private function relationsOf(PublicationRead $read, FoundPublication $found): array {
+		try {
+			$relations = $this->container->get(PublicationRelations::class);
+		} catch (\Throwable $e) {
+			return [];
+		}
+
+		if ($relations instanceof PublicationRelations === false) {
+			return [];
+		}
+
+		return $relations->forPublication(
+			objectService: $read->objectService,
+			publicationId: $found->publicationId,
+			registers: $read->query->registers,
+			schemas: $read->query->schemas,
+			catalogSlug: $read->query->catalogSlug
+		);
+	}//end relationsOf()
 
 	/**
 	 * The schema.org JSON-LD answer for a rendered publication (SDD-001/SDD-003).

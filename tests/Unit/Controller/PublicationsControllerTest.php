@@ -2199,7 +2199,7 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->showAs(
 			signedIn: true,
 			accept: 'application/json',
-			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION)
+			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION + ['relations' => []])
 		);
 		$headers = $response->getHeaders();
 
@@ -2300,7 +2300,7 @@ class PublicationsControllerTest extends TestCase {
 		$response = $this->showAs(
 			signedIn: false,
 			accept: 'application/json',
-			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION)
+			ifNoneMatch: self::weakEtagOf(data: self::SHOWN_PUBLICATION + ['relations' => []])
 		);
 
 		$this->assertSame(304, $response->getStatus());
