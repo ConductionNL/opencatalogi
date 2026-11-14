@@ -303,6 +303,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'ui#publicationsIndex', 'url' => '/publications/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'ui#publicationsPage', 'url' => '/publications/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'id' => '[A-Za-z0-9-]+']],
 		['name' => 'ui#search', 'url' => '/search', 'verb' => 'GET'],
+		['name' => 'ui#federatedPublication', 'url' => '/federation/publications/{id}', 'verb' => 'GET', 'requirements' => ['id' => '[A-Za-z0-9-]+']],
 		['name' => 'ui#organizations', 'url' => '/organizations', 'verb' => 'GET'],
 		['name' => 'ui#themes', 'url' => '/themes', 'verb' => 'GET'],
 		['name' => 'ui#glossary', 'url' => '/glossary', 'verb' => 'GET'],

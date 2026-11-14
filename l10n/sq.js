@@ -723,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Shtoni një regjistër dhe një skemë në katalog që botimet e tij të shfaqen këtu.",
         "Open catalog": "Hap katalogun",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Krijoni katalogun tuaj të parë. Është kontejneri ku do të jenë botimet tuaja. Zgjidhni regjistrin Publication dhe skemën Publication, që katalogu të shfaqë botimet që shtoni.",
-        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre"
+        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre",
+        "Open at the source": "Hap në burim"
     },
     "nplurals=2; plural=(n != 1);"
 )
