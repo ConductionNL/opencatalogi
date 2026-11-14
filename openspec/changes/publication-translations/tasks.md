@@ -2,7 +2,7 @@
 
 Read `design.md`; D1 lists what OpenRegister already does on its `development`. Read `openspec/woo-build-rules.md` for branch and test rules.
 
-- [ ] 1.1 Mark `title`, `summary`, `description` translatable with source `nl` on `publication` and `catalog` in `lib/Settings/publication_register.json`, versions bumped (REQ-PTR-001). Verify: `tests/Unit/Settings/PublicationTranslationsSchemaTest.php::testTheThreeFieldsAreTranslatable`; clean `occ app:enable` imports it.
+- [x] 1.1 Mark `title`, `summary`, `description` translatable with source `nl` on `publication` and `catalog` in `lib/Settings/publication_register.json`, versions bumped (REQ-PTR-001). Verify: `tests/Unit/Settings/PublicationTranslationsSchemaTest.php::testTheThreeFieldsAreTranslatable`; clean `occ app:enable` imports it.
 - [ ] 1.2 Pass the visitor's language through `PublicationQueryService` and the public catalogue reads; set `Content-Language`; pass `X-Source-Language`; forward the language on federation reads (REQ-PTR-002). Verify: `tests/Unit/Service/PublicationQueryServiceTest.php::testTheVisitorsLanguageIsPassedToOpenRegister`, `::testAnInvalidTagFallsBackToDutch`.
 - [ ] 1.3 Language-tagged literals in `DcatMappingService` (REQ-PTR-002). Verify: `tests/Unit/Service/DcatMappingServiceTest.php::testEachLanguageIsATaggedLiteral`.
 - [ ] 1.4 IAppConfig key `publication_languages` (default `["nl","en"]`) in the settings service and the admin-settings inventory, with the `NcSelect` on the settings page (design D6).
