@@ -74,6 +74,7 @@ use ZipArchive;
  *
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+ * @spec openspec/changes/publications/tasks.md
  */
 class PublicationService implements PublicationServiceInterface {
 
@@ -793,9 +794,13 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure function over the query (WOO-581)
 	 */
 	private function searchObjectsWithinScope($objectService, array $query, array $registers, array $schemas): array {
+		// The list is narrowed to the catalogue union; say so in the response (REQ-ASF-001).
+		$this->getQueryService()->recordCatalogScope(schemaIds: $schemas, registerIds: $registers);
+
 		try {
 			return $objectService->searchObjectsPaginated(
 				query: CallerScope::writeScope(query: $query, registers: $registers, schemas: $schemas),
@@ -1058,6 +1063,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @return JSONResponse A JSON response containing the list of objects
 	 *
+	 * @spec openspec/changes/search/tasks.md#task-2.3
 	 * @spec openspec/specs/publications/spec.md
 	 */
 	public function index(null|string|int $catalogId = null, ?array $customParams = null): JSONResponse {
@@ -1819,6 +1825,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @spec openspec/changes/search/tasks.md#task-2.4
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array {

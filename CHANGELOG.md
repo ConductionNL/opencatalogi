@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Mail intake for publications** — with the Nextcloud Mail app, an email becomes a draft publication from the Mail sidebar (title from the subject, summary and a provenance description from the message). The template never sets the publication date, status, organization, themes or retention, so an emailed request is never public until an editor publishes it (change `leaf-integrations`).
+- **Publication planning panel** — "Planning (does not publish)" on the publication page links calendar events to a publication; it never changes whether the publication is public.
+
 ### Changed
 
 - **MCP tools are derived from the register (ADR-063, opencatalogi-mcp-adoption).** `publication`, `catalog` and `theme` declare `x-openregister-mcp` with a read-only `search` and `get` each; `PublicationService` carries two curated `#[McpTool]` methods, `searchCatalogPublications` and `listPublicationFiles`, registered through `OpenCatalogiScannableServices`. No schema declares a write verb, because publishing is a writable date.
