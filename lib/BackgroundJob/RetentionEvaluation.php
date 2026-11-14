@@ -82,6 +82,7 @@ class RetentionEvaluation extends TimedJob {
 	protected function run($argument): void {
 		try {
 			$counts = $this->retentionService->evaluate();
+			$counts['edepotTransfersUpdated'] = $this->retentionService->refreshEdepotTransfers();
 			$this->logger->info(
 				'[RetentionEvaluation] retention pass complete',
 				$counts

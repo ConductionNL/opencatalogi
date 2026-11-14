@@ -46,6 +46,30 @@
             },
             {
                 "class": "OCA\\OpenRegister\\AppHost\\Observability\\MetricSample",
+                "name": "federation_reachable_total",
+                "type": "gauge",
+                "help": "Federated listings whose last directory sync succeeded",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "class": "OCA\\OpenRegister\\AppHost\\Observability\\MetricSample",
+                "name": "federation_unreachable_total",
+                "type": "gauge",
+                "help": "Federated listings whose last directory sync failed",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "class": "OCA\\OpenRegister\\AppHost\\Observability\\MetricSample",
                 "name": "publication_views_total",
                 "type": "counter",
                 "help": "Total counted publication views by catalog",
@@ -165,6 +189,30 @@
             },
             {
                 "class": "OCA\\OpenRegister\\AppHost\\Observability\\MetricSample",
+                "name": "federation_reachable_total",
+                "type": "gauge",
+                "help": "Federated listings whose last directory sync succeeded",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "class": "OCA\\OpenRegister\\AppHost\\Observability\\MetricSample",
+                "name": "federation_unreachable_total",
+                "type": "gauge",
+                "help": "Federated listings whose last directory sync failed",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "class": "OCA\\OpenRegister\\AppHost\\Observability\\MetricSample",
                 "name": "publication_views_total",
                 "type": "counter",
                 "help": "Total counted publication views by catalog",
@@ -245,6 +293,30 @@
                 "name": "directory_entries_total",
                 "type": "gauge",
                 "help": "Total federated directory entries",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "class": "OCA\\OpenRegister\\AppHost\\Observability\\MetricSample",
+                "name": "federation_reachable_total",
+                "type": "gauge",
+                "help": "Federated listings whose last directory sync succeeded",
+                "samples": [
+                    {
+                        "labels": [],
+                        "value": 0
+                    }
+                ]
+            },
+            {
+                "class": "OCA\\OpenRegister\\AppHost\\Observability\\MetricSample",
+                "name": "federation_unreachable_total",
+                "type": "gauge",
+                "help": "Federated listings whose last directory sync failed",
                 "samples": [
                     {
                         "labels": [],

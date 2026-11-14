@@ -37,6 +37,7 @@
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -274,6 +275,7 @@
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -755,6 +757,7 @@
         "Warnings": "Waarschuwingen",
         "When an object is published, automatically publish all its attachments as Nextcloud shares": "Wanneer een object wordt gepubliceerd, publiceer dan automatisch alle bijlagen als Nextcloud-shares",
         "When an object matching a catalog schema is created, automatically apply public read access via RBAC rules": "Wanneer een object dat overeenkomt met een catalogusschema wordt aangemaakt, pas dan automatisch openbare leestoegang toe via RBAC-regels",
+        "%s must be an ISO 8601 date, such as 2026-04-01T00:00:00Z.": "%s moet een ISO 8601-datum zijn, zoals 2026-04-01T00:00:00Z.",
         "When to use mass validation:": "Wanneer bulkvalidatie gebruiken:",
         "Which attachments require your attention?": "Welke bijlagen vereisen uw aandacht?",
         "Which publication type would you like to take from this catalog?": "Welk publicatietype wilt u uit deze catalogus overnemen?",
@@ -1507,7 +1510,7 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
-        "%s must be an ISO 8601 date, such as 2026-04-01T00:00:00Z.": "%s moet een ISO 8601-datum zijn, zoals 2026-04-01T00:00:00Z."
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "plurals": {}
 }
