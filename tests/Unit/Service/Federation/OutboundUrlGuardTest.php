@@ -227,4 +227,20 @@ class OutboundUrlGuardTest extends TestCase {
 		}
 
 	}//end testAddressesOfRefusesLocalNames()
+
+	/**
+	 * A name that resolves to nothing is refused with the caller's label.
+	 *
+	 * `.invalid` is reserved (RFC 6761) and never resolves, so neither the DNS
+	 * records nor the gethostbyname() fallback yield an address.
+	 *
+	 * @return void
+	 */
+	public function testAddressesOfRefusesAnUnresolvableName(): void {
+		$this->expectException(InvalidArgumentException::class);
+		$this->expectExceptionMessage('Broadcast URL host could not be resolved');
+		$this->guard->addressesOf('directory.example.invalid', 'Broadcast');
+
+	}//end testAddressesOfRefusesAnUnresolvableName()
+
 }//end class

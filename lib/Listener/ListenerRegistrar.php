@@ -122,6 +122,11 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
+		// A statutory end date written through any API lands on a working day
+		// (inspection-period-rolls-on-the-calendar, REQ-IPR-002).
+		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
+
 		// Refuse a self-relation and mirror caseReference into sourceIdentifiers (REQ-PRS-001, REQ-PRS-003).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationLinksListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationLinksListener::class);
