@@ -18,7 +18,12 @@ declare(strict_types=1);
 
 namespace Unit\Portal;
 
+use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
 use OCA\OpenCatalogi\Portal\PortalContributionProvider;
+use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
+use OCP\App\IAppManager;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -259,4 +264,77 @@ class PortalContributionProviderTest extends TestCase {
 		$options = $this->byId($manifest['actions'])['updateSavedSearch']['optionsProviders']['frequency']['options'];
 		$this->assertSame($words, array_column($options, 'label', 'value'));
 	}
+
+	/**
+	 * While dossiq is installed the portal request goes there with origin
+	 * portal-form, OpenCatalogi's own intake is never called, and the answer
+	 * carries dossiq's five contract keys.
+	 *
+	 * @return void
+	 */
+	public function testReceiveWooRequestForwardsToDossiq(): void {
+		$own = $this->createMock(InformationRequestIntakeInterface::class);
+		$own->expects(self::never())->method(self::anything());
+		$calls = [];
+		$intake = new class($calls) {
+			/**
+			 * Constructor.
+			 *
+			 * @param array $calls Receives the calls.
+			 */
+			public function __construct(private array &$calls) {
+			}
+
+			/**
+			 * Records the call and answers armed.
+			 *
+			 * @param array  $answers    Answers.
+			 * @param string $receivedAt Moment.
+			 * @param string $origin     Origin.
+			 *
+			 * @return array
+			 */
+			public function receive(array $answers, string $receivedAt = '', string $origin = 'portal-form'): array {
+				$this->calls[] = [$answers, $receivedAt, $origin];
+				return ['outcome' => 'armed', 'requestId' => 'c1', 'reference' => 'WOO-1', 'dueAt' => '2026-12-28', 'message' => 'ok', 'caseUrl' => 'https://x/cases/c1'];
+			}
+		};
+
+		$provider = new PortalContributionProvider(wooRequests: $own, dossiqForward: $this->dossiqForward(enabled: true, intake: $intake));
+		$answer = $provider->receiveWooRequest(['requestedInformation' => 'Alle adviezen'], '2026-11-27T10:15:00+01:00');
+
+		$this->assertSame([[['requestedInformation' => 'Alle adviezen'], '2026-11-27T10:15:00+01:00', 'portal-form']], $calls);
+		$this->assertSame(['outcome' => 'armed', 'requestId' => 'c1', 'reference' => 'WOO-1', 'dueAt' => '2026-12-28', 'message' => 'ok'], $answer);
+	}//end testReceiveWooRequestForwardsToDossiq()
+
+	/**
+	 * Without dossiq the request still goes to OpenCatalogi's own intake.
+	 *
+	 * @return void
+	 */
+	public function testWithoutDossiqTheOwnIntakeStillReceives(): void {
+		$own = $this->createMock(InformationRequestIntakeInterface::class);
+		$own->expects(self::once())->method('receive')->with(['requestedInformation' => 'x'], '')->willReturn(['outcome' => 'armed']);
+
+		$provider = new PortalContributionProvider(wooRequests: $own, dossiqForward: $this->dossiqForward(enabled: false, intake: null));
+
+		$this->assertSame(['outcome' => 'armed'], $provider->receiveWooRequest(['requestedInformation' => 'x']));
+	}//end testWithoutDossiqTheOwnIntakeStillReceives()
+
+	/**
+	 * A forward over a container holding the given dossiq intake.
+	 *
+	 * @param bool        $enabled Whether dossiq is enabled.
+	 * @param object|null $intake  The dossiq intake double.
+	 *
+	 * @return DossiqWooForward
+	 */
+	private function dossiqForward(bool $enabled, ?object $intake): DossiqWooForward {
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isEnabledForAnyone')->willReturn($enabled);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn($intake);
+
+		return new DossiqWooForward(appManager: $apps, container: $container, logger: $this->createMock(LoggerInterface::class));
+	}//end dossiqForward()
 }
