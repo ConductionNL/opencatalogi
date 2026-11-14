@@ -1554,7 +1554,26 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "Column": "Column",
+        "Description of {column}": "Description of {column}",
+        "Importing the rows…": "Importing the rows…",
+        "No tables yet. Add a CSV attachment to publish it as a table.": "No tables yet. Add a CSV attachment to publish it as a table.",
+        "Not published: {error}": "Not published: {error}",
+        "Nothing changed.": "Nothing changed.",
+        "Publish as table": "Publish as table",
+        "Rows: {count}": "Rows: {count}",
+        "Save dictionary": "Save dictionary",
+        "Tables": "Tables",
+        "The dictionary is saved.": "The dictionary is saved.",
+        "The table is published.": "The table is published.",
+        "Title of {column}": "Title of {column}",
+        "Try the query in the browser": "Try the query in the browser",
+        "Choose the CSV attachment to publish as a table.": "Choose the CSV attachment to publish as a table.",
+        "Send the columns as a list.": "Send the columns as a list.",
+        "The table could not be published.": "The table could not be published.",
+        "This table has no column named %s.": "This table has no column named %s.",
+        "The table \"%s\" does not exist or is not accessible.": "The table \"%s\" does not exist or is not accessible."
     },
     "plurals": {}
 }

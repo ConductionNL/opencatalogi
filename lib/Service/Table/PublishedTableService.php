@@ -79,6 +79,11 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	public const MAX_LIMIT = 1000;
 
 	/**
+	 * The longest column title or description an editor can store.
+	 */
+	public const MAX_TEXT = 2000;
+
+	/**
 	 * Query parameters that are not a filter on a column.
 	 *
 	 * @var array<int, string>
@@ -366,6 +371,131 @@ class PublishedTableService implements PublishedTableServiceInterface {
 			'pages' => (int)($found['pages'] ?? 1),
 		];
 	}//end rows()
+
+	/**
+	 * Publish a CSV attachment of a publication as a table (REQ-ODT-001).
+	 *
+	 * The caller has checked that the user may update the publication. The file
+	 * is read from the publication's own attachments, copied to a temporary file
+	 * OpenRegister's reader can open, and imported through createFromFile().
+	 *
+	 * @param object     $publication The publication as OpenRegister returned it.
+	 * @param string     $fileId      The attachment's file id.
+	 * @param IUser|null $user        The editor.
+	 *
+	 * @return array<string, mixed> The stored table record.
+	 *
+	 * @throws InvalidArgumentException When the publication has no such attachment, or it is not a CSV.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-an-editor-publishes-a-csv-attachment-as-a-table-req-odt-001
+	 */
+	public function publishAttachment(object $publication, string $fileId, ?IUser $user = null): array {
+		$file = $this->service(class: 'OCA\OpenRegister\Service\FileService')->getFile(object: $publication, file: (int)$fileId);
+		if ($file === null) {
+			throw new InvalidArgumentException('The publication has no attachment '.$fileId.'.');
+		}
+
+		$name = (string)$file->getName();
+		if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) !== 'csv') {
+			throw new InvalidArgumentException('Only a CSV attachment can be published as a table; "'.$name.'" is not one.');
+		}
+
+		$path = (string)$this->service(class: 'OCP\ITempManager')->getTemporaryFile('.csv');
+		file_put_contents($path, (string)$file->getContent());
+		$record = self::plain(value: $publication);
+
+		return $this->createFromFile(
+			publication: is_array($record) === true ? $record : ['id' => (string)$publication->getUuid()],
+			file: new TableFile(path: $path, id: (string)$file->getId(), name: $name),
+			user: $user
+		);
+	}//end publishAttachment()
+
+	/**
+	 * Every table of a publication, whatever its status, for its editors.
+	 *
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<int, array<string, mixed>> The table records, each with its `dictionary` when it is ready.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function tablesFor(string $publicationId): array {
+		if ($publicationId === '') {
+			return [];
+		}
+
+		$found = $this->tables()->search(filters: ['publication' => $publicationId, '_limit' => 100]);
+		$tables = [];
+		foreach ((array)(self::plain(value: $found)['results'] ?? []) as $record) {
+			$table = self::plain(value: $record);
+			if (is_array($table) === false) {
+				continue;
+			}
+
+			if (($table['status'] ?? null) === self::STATUS_READY) {
+				$table['dictionary'] = $this->dictionary(table: $table);
+			}
+
+			$tables[] = $table;
+		}
+
+		return $tables;
+	}//end tablesFor()
+
+	/**
+	 * Write the titles and descriptions an editor gave a table's columns (REQ-ODT-003).
+	 *
+	 * Only columns the table declares are written, and only their title and
+	 * description; the names and types stay as the import made them.
+	 *
+	 * @param array<string, mixed>            $table   The table record.
+	 * @param array<int, array<string,mixed>> $columns Each `{name, title?, description?}`.
+	 *
+	 * @return array<int, array<string, string>> The dictionary after the change.
+	 *
+	 * @throws InvalidArgumentException When a column is not one the table declares.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function updateDictionary(array $table, array $columns): array {
+		$mapper = $this->service(class: 'OCA\OpenRegister\Db\SchemaMapper');
+		$schema = $mapper->find((string)($table['schema'] ?? ''));
+		$properties = (array)$schema->getProperties();
+		foreach ($columns as $column) {
+			$name = (string)(is_array($column) === true ? ($column['name'] ?? '') : '');
+			if (is_array($properties[$name] ?? null) === false) {
+				throw new InvalidArgumentException('This table has no column named '.$name.'.');
+			}
+
+			$properties[$name] = array_merge($properties[$name], self::describedColumn(column: $column));
+		}
+
+		$schema->setProperties($properties);
+		$mapper->update($schema);
+
+		return $this->dictionary(table: $table);
+	}//end updateDictionary()
+
+	/**
+	 * The title and description an editor gave one column, trimmed and capped; an empty title is left out.
+	 *
+	 * @param array<string, mixed> $column The column as the editor sent it.
+	 *
+	 * @return array<string, string> The `title` and `description` it carries.
+	 */
+	private static function describedColumn(array $column): array {
+		$described = [];
+		foreach (['title', 'description'] as $field) {
+			$text = is_string($column[$field] ?? null) === true ? mb_substr(trim($column[$field]), 0, self::MAX_TEXT) : null;
+			// A column always keeps a title; an empty one leaves the current title.
+			if ($text !== null && ($text !== '' || $field === 'description')) {
+				$described[$field] = $text;
+			}
+		}
+
+		return $described;
+	}//end describedColumn()
 
 	/**
 	 * The ready tables of a publication, each with its rows and dictionary URLs.

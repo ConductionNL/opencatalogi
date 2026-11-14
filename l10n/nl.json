@@ -1509,7 +1509,26 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
-        "Planning (does not publish)": "Planning (publiceert niet)"
+        "Planning (does not publish)": "Planning (publiceert niet)",
+        "Column": "Kolom",
+        "Description of {column}": "Beschrijving van {column}",
+        "Importing the rows…": "De rijen worden geïmporteerd…",
+        "No tables yet. Add a CSV attachment to publish it as a table.": "Nog geen tabellen. Voeg een CSV-bijlage toe om die als tabel te publiceren.",
+        "Not published: {error}": "Niet gepubliceerd: {error}",
+        "Nothing changed.": "Er is niets gewijzigd.",
+        "Publish as table": "Publiceren als tabel",
+        "Rows: {count}": "Rijen: {count}",
+        "Save dictionary": "Gegevenswoordenboek opslaan",
+        "Tables": "Tabellen",
+        "The dictionary is saved.": "Het gegevenswoordenboek is opgeslagen.",
+        "The table is published.": "De tabel is gepubliceerd.",
+        "Title of {column}": "Titel van {column}",
+        "Try the query in the browser": "Probeer de zoekvraag in de browser",
+        "Choose the CSV attachment to publish as a table.": "Kies de CSV-bijlage die je als tabel wilt publiceren.",
+        "Send the columns as a list.": "Stuur de kolommen als lijst.",
+        "The table could not be published.": "De tabel kon niet worden gepubliceerd.",
+        "This table has no column named %s.": "Deze tabel heeft geen kolom met de naam %s.",
+        "The table \"%s\" does not exist or is not accessible.": "De tabel \"%s\" bestaat niet of is niet toegankelijk."
     },
     "plurals": {}
 }

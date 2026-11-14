@@ -18,8 +18,9 @@
 
 ## 4. Screen
 
-- [ ] 4.1 Add Publish as table on CSV attachments and the Tables section with the editable dictionary on `PublicationDetail` (REQ-ODT-001, REQ-ODT-003). Verify: `tests/e2e/open-data-tables.spec.ts` publishes a CSV as a table, edits a column description and reads it from the dictionary endpoint.
+- [x] 4.1 Add Publish as table on CSV attachments and the Tables section with the editable dictionary on `PublicationDetail` (REQ-ODT-001, REQ-ODT-003). Verify: `tests/e2e/open-data-tables.spec.ts` publishes a CSV as a table, edits a column description and reads it from the dictionary endpoint.
+  - Built: the `publication-tables` widget on `PublicationDetail` and its editor endpoints, with unit and component tests. Left: the Playwright test `tests/e2e/open-data-tables.spec.ts`, which needs a live instance.
 
 ## 5. Docs and strings
 
-- [ ] 5.1 Document publishing a table and querying it in `docs/`, and add the strings to `l10n/` in English and Dutch. Verify: `npm run lint` and the l10n check.
+- [x] 5.1 Document publishing a table and querying it in `docs/`, and add the strings to `l10n/` in English and Dutch. Verify: `npm run lint` and the l10n check.
