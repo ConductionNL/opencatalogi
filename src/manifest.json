@@ -911,6 +911,12 @@
 						"type": "publication-visibility",
 						"title": "Publication status",
 						"icon": "EyeOutline"
+					},
+					{
+						"id": "pub-languages",
+						"type": "publication-languages",
+						"title": "Languages",
+						"icon": "Translate"
 					}
 				],
 				"layout": [
@@ -1007,6 +1013,14 @@
 						"widgetId": "pub-calendar",
 						"gridX": 0,
 						"gridY": 29,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
+						"id": "14",
+						"widgetId": "pub-languages",
+						"gridX": 0,
+						"gridY": 33,
 						"gridWidth": 12,
 						"gridHeight": 4
 					}

@@ -1528,7 +1528,11 @@ OC.L10N.register(
         "{language}, source": "{language}, bron",
         "{translated} translated, {missing} missing": "{translated} vertaald, {missing} ontbreekt",
         "{translated} translated": "{translated} vertaald",
-        "{missing} missing": "{missing} ontbreekt"
+        "{missing} missing": "{missing} ontbreekt",
+        "Translate in the editor": "Vertalen in de editor",
+        "The translation status could not be read.": "De vertaalstatus kon niet worden gelezen.",
+        "The public API answers in the language the visitor asks for and falls back to Dutch.": "De publieke API antwoordt in de taal die de bezoeker vraagt en valt terug op Nederlands.",
+        "Languages": "Talen"
     },
     "nplurals=2; plural=(n != 1);"
 )

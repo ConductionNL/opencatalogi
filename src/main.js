@@ -29,6 +29,7 @@ import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
+import PublicationLanguagesWidget from './components/widgets/PublicationLanguagesWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
@@ -97,6 +98,16 @@ registerDashboardWidget('publication-visibility', {
 	defaultContent: {},
 	displayName: 'Publication status',
 	icon: 'EyeOutline',
+	surfaces: ['detail-page'],
+})
+// Per enabled language what is translated, with Translate in the editor
+// (publication-translations REQ-PTR-004, board OcPublicatie).
+registerDashboardWidget('publication-languages', {
+	renderer: PublicationLanguagesWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Languages',
+	icon: 'Translate',
 	surfaces: ['detail-page'],
 })
 // The publication's attachments with Add attachment, which opens the app's
