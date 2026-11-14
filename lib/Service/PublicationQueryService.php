@@ -2071,6 +2071,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @return array{register: int, schema: int}|null The register/schema IDs, or null.
 	 *
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 * @spec openspec/changes/publications/tasks.md#task-4
 	 */
 	public function findObjectLocation(
 		string $uuid,

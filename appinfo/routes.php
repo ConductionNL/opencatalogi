@@ -126,15 +126,6 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
 		
-		// Publications CORS (wildcard catalog-based endpoints)
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-dictionary', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// DCAT-AP-NL CORS (public harvest endpoints)
 		['name' => 'dcat#preflightedCors', 'postfix' => '-dcat', 'url' => '/api/dcat', 'verb' => 'OPTIONS'],
 		['name' => 'dcat#preflightedCors', 'postfix' => '-catalogs-catalogslug-dcat', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
@@ -286,6 +277,15 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'portalSavedSearch#pause', 'url' => '/api/portal/saved-searches/pause', 'verb' => 'POST'],
 		['name' => 'portalSavedSearch#delete', 'url' => '/api/portal/saved-searches/delete', 'verb' => 'POST'],
 		['name' => 'sharedCollection#show', 'url' => '/api/collections/shared/{token}', 'verb' => 'GET', 'requirements' => ['token' => '[0-9a-f-]{36}\.[0-9a-f]{48}']],
+		// Publications CORS (wildcard catalog-based endpoints). Declared after every named OPTIONS route, which /api/{catalogSlug} would otherwise answer.
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-dictionary', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// Publications (wildcard catalog-based endpoints - MUST BE ABSOLUTE LAST to avoid catching any specific routes)
 		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
