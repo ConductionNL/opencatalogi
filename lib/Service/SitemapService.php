@@ -208,7 +208,10 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @return XMLResponse The publications sitemap XML response.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SitemapDocumentRelations is a pure static helper.
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
 	public function buildSitemap(string $catalogSlug, string $categoryCode, int $page): XMLResponse {
 		$objectService = $this->getObjectService();
@@ -224,8 +227,11 @@ class SitemapService implements SitemapServiceInterface {
 		$publications = $this->publicationsWithFiles(rows: $builder->page(queries: $this->sitemapQueries(request: $request), page: $page)['results']);
 
 		$documents = [];
-		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
-			$documents[] = $this->mapDiwooDocument(publication: $publication, file: $file);
+		$apiBase = $this->instance->baseUrl() . '/apps/opencatalogi/api/' . rawurlencode($catalogSlug);
+		foreach ($publications as $publication) {
+			foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file, $relations]) {
+				$documents[] = $this->mapDiwooDocument(publication: $publication, file: $file, relations: $relations);
+			}
 		}
 
 		return new XMLResponse(data: self::documentsXml(documents: $documents));
@@ -265,13 +271,14 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param array $publication The publication as returned from ObjectService.
 	 * @param array $file The file metadata belonging to that publication.
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference).
+	 * @param array<string, array<string, mixed>> $relations The document's `isPartOf` or `hasParts` element, if any.
 	 *
 	 * @return array A DIWOO metadata array ready for XMLResponse.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function mapDiwooDocument(array $publication, array $file, array &$violations = []): array {
-		return $this->documentMapper->map(publication: $publication, file: $file, violations: $violations);
+	private function mapDiwooDocument(array $publication, array $file, array &$violations = [], array $relations = []): array {
+		return $this->documentMapper->map(publication: $publication, file: $file, violations: $violations, relations: $relations);
 	}//end mapDiwooDocument()
 
 	/**
@@ -627,12 +634,21 @@ class SitemapService implements SitemapServiceInterface {
 	 *
 	 * @return array<int, array<string, string>> The `{documentLoc, axis, reason}` violations.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) SitemapDocumentRelations is a pure static helper.
+	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	public function collectDiwooViolations(array $publications): array {
 		$violations = [];
 		foreach (self::downloadableFiles(publications: $publications) as [$publication, $file]) {
 			$this->mapDiwooDocument(publication: $publication, file: $file, violations: $violations);
+		}
+
+		foreach ($publications as $publication) {
+			$violation = SitemapDocumentRelations::mainDocumentViolation(publication: $publication);
+			if ($violation !== null) {
+				$violations[] = $violation;
+			}
 		}
 
 		return $violations;

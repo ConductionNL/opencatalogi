@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Mail intake for publications** — with the Nextcloud Mail app, an email becomes a draft publication from the Mail sidebar (title from the subject, summary and a provenance description from the message). The template never sets the publication date, status, organization, themes or retention, so an emailed request is never public until an editor publishes it (change `leaf-integrations`).
+- **Publication planning panel** — "Planning (does not publish)" on the publication page links calendar events to a publication; it never changes whether the publication is public.
+
 ## [0.7.54] - 2026-07-16
 
 ### Added
