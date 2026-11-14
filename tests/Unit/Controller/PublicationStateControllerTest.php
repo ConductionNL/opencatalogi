@@ -24,6 +24,7 @@ use OCA\OpenCatalogi\Controller\PublicationStateController;
 use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -70,6 +71,9 @@ class PublicationStateControllerTest extends TestCase {
 
 	/** @var string|null The schema whose save throws, null when every save succeeds. */
 	private ?string $failingSchema = null;
+
+	/** The completeness re-evaluation, null when the container holds none. */
+	private (CompletenessSweepService&MockObject)|null $sweeps = null;
 
 	private const GOLDEN = __DIR__ . '/fixtures/publication-withdraw-depublication-golden.json';
 
@@ -123,8 +127,15 @@ class PublicationStateControllerTest extends TestCase {
 		};
 
 		$container = $this->createMock(ContainerInterface::class);
+		$container->method('has')->willReturnCallback(
+			fn (string $id): bool => $id === CompletenessSweepService::class && $this->sweeps !== null
+		);
 		$container->method('get')->willReturnCallback(
 			function (string $id) use ($config) {
+				if ($id === CompletenessSweepService::class && $this->sweeps !== null) {
+					return $this->sweeps;
+				}
+
 				if ($id === IAppConfig::class) {
 					return $config;
 				}
@@ -524,6 +535,35 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertLessThanOrEqual($after, $window->depublished);
 		$this->assertSame('Bevat een woonadres', $this->saves[0]['object']['reason']);
 		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
+	}
+
+	/** REQ-PTS-002: withdrawing a file re-evaluates the publication's completeness, after the share is gone. */
+	public function testWithdrawingAFileReevaluatesTheCompleteness(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->sweeps = $this->createMock(CompletenessSweepService::class);
+		$this->sweeps->expects($this->once())->method('reevaluate')->willReturnCallback(
+			function (string $id): string {
+				$this->assertSame('p1', $id);
+				$this->assertSame([4711], $this->fileService->unpublished);
+				$this->assertCount(1, $this->fileMapper->windows);
+				return 'changed';
+			}
+		);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdrawFile('p1', '4711')->getStatus());
+	}
+
+	/** REQ-PTS-002: a refused file withdrawal re-evaluates nothing. */
+	public function testARefusedFileWithdrawalReevaluatesNothing(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->sweeps = $this->createMock(CompletenessSweepService::class);
+		$this->sweeps->expects($this->never())->method('reevaluate');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdrawFile('p1', '4711')->getStatus());
 	}
 
 	/** REQ-ATT-103: a file that never had a window gets one that only ends. */

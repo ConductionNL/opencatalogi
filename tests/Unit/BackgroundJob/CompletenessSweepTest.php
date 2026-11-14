@@ -128,6 +128,66 @@ final class CompletenessSweepTest extends TestCase {
 	}//end testWithoutAPublicationSchemaNothingIsRead()
 
 	/**
+	 * Re-evaluating after a file was withdrawn stores a complete publication as incomplete, keeping when it was complete.
+	 *
+	 * @return void
+	 */
+	public function testReevaluatingAfterAWithdrawnFileStoresIncomplete(): void {
+		$stored  = ['title' => 'Kept', 'publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'complete', 'completeAt' => '2026-02-01T00:00:00+00:00'];
+		$service = $this->service(rows: ['pub-1' => $stored], files: [['share_token' => 'a'], ['share_token' => '']]);
+
+		self::assertSame('changed', $service->reevaluate(id: 'pub-1'));
+
+		self::assertCount(1, $this->saved);
+		[$object, $uuid] = $this->saved[0];
+		self::assertSame('pub-1', $uuid);
+		self::assertSame('incomplete', $object['completeness']);
+		self::assertSame('2026-02-01T00:00:00+00:00', $object['completeAt']);
+		self::assertSame('Kept', $object['title']);
+	}//end testReevaluatingAfterAWithdrawnFileStoresIncomplete()
+
+	/**
+	 * Re-evaluating after the last file was shared stores complete; an unchanged value saves nothing; a failure is reported.
+	 *
+	 * @return void
+	 */
+	public function testReevaluatingSavesOnlyAChangedValue(): void {
+		$due     = ['publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'incomplete'];
+		$service = $this->service(rows: ['pub-1' => $due], files: [['share_token' => 'a'], ['share_token' => 'b']]);
+		self::assertSame('changed', $service->reevaluate(id: 'pub-1'));
+		self::assertSame('complete', $this->saved[0][0]['completeness']);
+
+		$this->saved = [];
+		$done        = ['publicationDate' => '2026-01-01T00:00:00+00:00', 'completeness' => 'complete'];
+		self::assertSame('unchanged', $this->service(rows: ['pub-2' => $done], files: [['share_token' => 'a']])->reevaluate(id: 'pub-2'));
+		self::assertSame([], $this->saved);
+
+		self::assertSame('failed', $this->service(rows: ['pub-3' => $due], files: new RuntimeException('gone'))->reevaluate(id: 'pub-3'));
+		self::assertSame([], $this->saved);
+	}//end testReevaluatingSavesOnlyAChangedValue()
+
+	/**
+	 * Without a configured publication schema, or without an id, re-evaluation reads nothing.
+	 *
+	 * @return void
+	 */
+	public function testReevaluatingWithoutAPublicationSchemaIsSkipped(): void {
+		$container = $this->createMock(ContainerInterface::class);
+		$container->expects(self::never())->method('get');
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturn('');
+		$service = new CompletenessSweepService(
+			completeness: new CompletenessService(states: new PublicationStateService(), container: $container),
+			container: $container,
+			config: $config,
+			logger: $this->createMock(LoggerInterface::class)
+		);
+
+		self::assertSame('skipped', $service->reevaluate(id: 'pub-1'));
+		self::assertSame('skipped', $this->service(rows: [], files: [])->reevaluate(id: ''));
+	}//end testReevaluatingWithoutAPublicationSchemaIsSkipped()
+
+	/**
 	 * The job is registered in appinfo/info.xml and runs every fifteen minutes.
 	 *
 	 * @return void

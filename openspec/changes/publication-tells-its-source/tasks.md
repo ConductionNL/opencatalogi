@@ -12,7 +12,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 ## 2. Completeness
 
 - [x] 2.1 Add `CompletenessService::evaluate()` (REQ-PTS-002). Verify: `tests/Unit/Service/Publication/CompletenessServiceTest.php::testFewerDocumentsThanExpectedIsIncomplete`, `::testAFileWithoutAShareIsIncomplete`, `::testANonPublicPublicationIsIncomplete`, `::testEveryFileSharedAndPublicIsComplete`, `::testALookupFailureThrows`.
-- [ ] 2.2 Add the `ObjectUpdatingEvent` listener writing `completeness` and `completeAt`, and re-evaluation after `publishObjectAttachments()` and `withdrawFile()` (REQ-PTS-002). Verify: `tests/Unit/Listener/CompletenessListenerTest.php` on the REAL event class, with `::testALookupFailureLeavesTheStoredValueAsItWas` and `::testWithdrawingAFileMovesBackToIncomplete`.
+- [x] 2.2 Add the `ObjectUpdatingEvent` listener writing `completeness` and `completeAt`, and re-evaluation after `publishObjectAttachments()` and `withdrawFile()` (REQ-PTS-002). Verify: `tests/Unit/Listener/CompletenessListenerTest.php` on the REAL event class, with `::testALookupFailureLeavesTheStoredValueAsItWas` and `::testWithdrawingAFileMovesBackToIncomplete`.
 - [x] 2.3 Add `CompletenessSweep` as a `TimedJob` registered in `appinfo/info.xml` `<background-jobs>` (REQ-PTS-002). Verify: `tests/Unit/BackgroundJob/CompletenessSweepTest.php::testAPublicationWhoseDatePassedIsMarkedComplete` (fails today: no job) and `::testTheJobIsRegistered`, which reads `appinfo/info.xml`.
 
 ## 3. Webhook contract

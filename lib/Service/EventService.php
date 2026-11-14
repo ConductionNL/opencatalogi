@@ -31,6 +31,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -285,10 +286,33 @@ class EventService implements EventServiceInterface {
 		$attachmentResult = $this->publishObjectAttachments(objectData: $objectData);
 		$outcome['detail']['actions'][] = 'attachments_processed';
 		$outcome['attachmentsPublished'] = $attachmentResult['published'];
+		if ($attachmentResult['published'] > 0) {
+			// Sharing files writes no publication: re-evaluate it now (REQ-PTS-002).
+			$this->reevaluateCompleteness(id: (string)($objectData['@self']['uuid'] ?? $objectData['@self']['id']));
+		}
+
 		$outcome['detail']['errors'] = array_merge($outcome['detail']['errors'], $attachmentResult['errors']);
 
 		return $outcome;
 	}//end withAttachments()
+
+	/**
+	 * Re-evaluate a publication's completeness after its files were shared.
+	 *
+	 * Only a run that shared a file calls this, so the save it may cause
+	 * (whose update event shares nothing new) does not call it again.
+	 *
+	 * @param string $id The publication's uuid.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 */
+	private function reevaluateCompleteness(string $id): void {
+		if ($this->container->has(CompletenessSweepService::class) === true) {
+			$this->container->get(CompletenessSweepService::class)->reevaluate(id: $id);
+		}
+	}//end reevaluateCompleteness()
 
 	/**
 	 * On a create event with auto-publishing on, publish an object that matches a catalog, and record the result.

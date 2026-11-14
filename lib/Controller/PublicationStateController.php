@@ -291,6 +291,9 @@ class PublicationStateController extends Controller {
 		);
 		$depublication['file'] = $fileId;
 
+		// The withdrawn file is no longer shared: a complete publication is incomplete again (REQ-PTS-002).
+		$this->registers->reevaluateCompleteness(id: $id);
+
 		return $this->record(depublication: $depublication);
 	}//end withdrawFile()
 

@@ -140,6 +140,41 @@ class CompletenessSweepService {
 	}//end sweep()
 
 	/**
+	 * Re-evaluate one publication after its files changed, and save it when its completeness changed.
+	 *
+	 * The file publish and withdraw paths call this after they act, because
+	 * sharing or withdrawing a file writes no publication, so no save
+	 * evaluates it (REQ-PTS-002). A publication that cannot be evaluated is
+	 * left as stored.
+	 *
+	 * @param string $id The publication's uuid.
+	 *
+	 * @return string `changed`, `unchanged`, `failed`, or `skipped` when no publication register, schema or OpenRegister is configured.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 */
+	public function reevaluate(string $id): string {
+		$register = $this->config->getValueString('opencatalogi', 'publication_register', '');
+		$schema   = $this->config->getValueString('opencatalogi', 'publication_schema', '');
+		if ($id === '' || $register === '' || $schema === '' || $this->container->has('OCA\OpenRegister\Service\ObjectService') === false) {
+			return 'skipped';
+		}
+
+		$now = new DateTimeImmutable();
+
+		return $this->refresh(
+			scope: [
+				'objects'  => $this->container->get('OCA\OpenRegister\Service\ObjectService'),
+				'register' => $register,
+				'schema'   => $schema,
+				'since'    => $now,
+				'now'      => $now,
+			],
+			id: $id
+		);
+	}//end reevaluate()
+
+	/**
 	 * One page of publications.
 	 *
 	 * @param SweepScope $scope The sweep's object service, register, schema and window.

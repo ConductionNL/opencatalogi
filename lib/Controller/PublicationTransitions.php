@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
+use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
 use Psr\Container\ContainerInterface;
 
 /**
@@ -204,4 +205,24 @@ class PublicationTransitions {
 
 		return null;
 	}//end endFileWindow()
+
+	/**
+	 * Re-evaluate a publication's completeness after one of its files was withdrawn.
+	 *
+	 * Withdrawing a file writes no publication, so no save evaluates it. A
+	 * failure is logged by the sweep service and leaves the stored value.
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return string `changed`, `unchanged`, `failed` or `skipped`.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
+	 */
+	public function reevaluateCompleteness(string $id): string {
+		if ($this->container->has(CompletenessSweepService::class) === false) {
+			return 'skipped';
+		}
+
+		return $this->container->get(CompletenessSweepService::class)->reevaluate(id: $id);
+	}//end reevaluateCompleteness()
 }//end class
