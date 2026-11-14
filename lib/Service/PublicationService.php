@@ -2935,6 +2935,57 @@ class PublicationService implements PublicationServiceInterface {
 	}//end getFederatedPublication()
 
 	/**
+	 * The attachments of a publication, local first and otherwise read from the
+	 * instance that holds it.
+	 *
+	 * A local publication answers with its own attachments, exactly as
+	 * attachments() does. When it is not held here and `_aggregate` is not
+	 * false, the instance that holds it is asked through
+	 * DirectoryService::getRemoteAttachments(); each attachment keeps that
+	 * instance's download URL. With `_aggregate=false` (a peer asking us) the
+	 * local answer stands, so a lookup never fans out twice.
+	 *
+	 * @param string $id The ID of the publication
+	 * @param array $queryParams Query parameters including aggregation settings
+	 *
+	 * @return JSONResponse The attachments, or a 404 when no reachable source holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getFederatedAttachments(string $id, array $queryParams = []): JSONResponse {
+		$local = $this->attachments(id: $id);
+		if ($local->getStatus() !== 404) {
+			return $local;
+		}
+
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		if ($aggregate === 'false' || $aggregate === '0') {
+			return $local;
+		}
+
+		try {
+			$remote = $this->directoryService->getRemoteAttachments($id, $this->federationRequestConfig(queryParams: $queryParams));
+		} catch (\Exception $e) {
+			$remote = null;
+		}
+
+		if ($remote === null) {
+			return new JSONResponse(['error' => 'Not Found: no reachable source holds this publication'], 404);
+		}
+
+		$total = count($remote['results']);
+		return new JSONResponse(
+			[
+				'results' => $remote['results'],
+				'total' => $total,
+				'page' => 1,
+				'pages' => 1,
+				'sources' => $remote['source'],
+			]
+		);
+	}//end getFederatedAttachments()
+
+	/**
 	 * Add this instance's catalogs to the `@self.catalogs` of a local publication.
 	 *
 	 * @param array $publication The local publication.

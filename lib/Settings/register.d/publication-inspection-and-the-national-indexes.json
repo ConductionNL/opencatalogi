@@ -145,7 +145,7 @@
 			"inspection": {
 				"slug": "inspection",
 				"title": "Inspection",
-				"version": "0.1.1",
+				"version": "0.2.0",
 				"authorization": {
 					"read": ["admin"],
 					"create": ["admin"],
@@ -194,6 +194,18 @@
 						"format": "date-time",
 						"title": "End date",
 						"description": "Computed from the record type's statutory term. Not typed."
+					},
+					"unrolledEndDate": {
+						"type": "string",
+						"format": "date-time",
+						"title": "End date before the roll",
+						"description": "Where the end date landed before the roll moved it. Empty unless a roll actually moved it."
+					},
+					"rolledBy": {
+						"type": "string",
+						"title": "Rolled by",
+						"description": "Why the end date moved, naming the non-working day. A date that moved with no reason given is one nobody can defend.",
+						"maxLength": 255
 					},
 					"termDays": {
 						"type": "integer",
