@@ -36,9 +36,8 @@ namespace OCA\OpenCatalogi\Repair;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenCatalogi\Service\SitemapDocumentMapper;
-use OCA\OpenCatalogi\Service\TooiVocabularyService;
+use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -62,16 +61,21 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	private const PAGE_SIZE = 200;
 
 	/**
+	 * The app-config key the sitemap reads ({@see \OCA\OpenCatalogi\Service\SitemapDocumentMapper::FIELDS_INTRODUCED_AT}).
+	 */
+	private const FIELDS_INTRODUCED_AT = 'diwoo_fields_introduced_at';
+
+	/**
 	 * Constructor.
 	 *
-	 * @param SettingsService $settings Reaches OpenRegister's registers and object service.
-	 * @param TooiVocabularyService $vocabulary The national list of document types.
+	 * @param SettingsServiceInterface $settings Reaches OpenRegister's registers and object service.
+	 * @param DocumentTypeVocabularyInterface $vocabulary The national list of document types.
 	 * @param IAppConfig $appConfig Holds the moment the DiWoo fields were introduced.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 */
 	public function __construct(
-		private readonly SettingsService $settings,
-		private readonly TooiVocabularyService $vocabulary,
+		private readonly SettingsServiceInterface $settings,
+		private readonly DocumentTypeVocabularyInterface $vocabulary,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,
 	) {
@@ -124,7 +128,7 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 	 * @return void
 	 */
 	private function recordIntroduction(): void {
-		$key = SitemapDocumentMapper::FIELDS_INTRODUCED_AT;
+		$key = self::FIELDS_INTRODUCED_AT;
 		if ($this->appConfig->getValueString('opencatalogi', $key, '') !== '') {
 			return;
 		}

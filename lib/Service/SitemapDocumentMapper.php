@@ -25,6 +25,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 
 /**
@@ -34,7 +35,7 @@ use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
  *
  * @spec openspec/specs/woo-compliance/spec.md
  */
-class SitemapDocumentMapper {
+class SitemapDocumentMapper implements DiwooCompletenessInterface {
 
 	/**
 	 * The optional DiWoo axes: the element key, the violation axis and the reason it is omitted.

@@ -31,12 +31,14 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
+
 /**
  * Resolves the three DIWOO metadata axes to official TOOI/DiWoo value-list URIs.
  *
  * @spec openspec/specs/woo-compliance/spec.md
  */
-class TooiVocabularyService {
+class TooiVocabularyService implements DocumentTypeVocabularyInterface {
 
 	/**
 	 * Base URI of the TOOI kern thesaurus.

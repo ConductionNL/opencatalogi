@@ -36,9 +36,9 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
-use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -64,7 +64,7 @@ class WooController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The current user session.
 	 * @param InformationCategoryRegistryInterface $categories The information categories, bundled plus local.
-	 * @param TooiVocabularyService $vocabulary The bundled DiWoo value lists.
+	 * @param DocumentTypeVocabularyInterface $vocabulary The bundled DiWoo value lists.
 	 */
 	public function __construct(
 		$appName,
@@ -73,7 +73,7 @@ class WooController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly InformationCategoryRegistryInterface $categories,
-		private readonly TooiVocabularyService $vocabulary,
+		private readonly DocumentTypeVocabularyInterface $vocabulary,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

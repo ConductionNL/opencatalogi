@@ -32,9 +32,9 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Listener;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
-use OCA\OpenCatalogi\Service\SitemapDocumentMapper;
-use OCA\OpenCatalogi\Service\TooiVocabularyService;
-use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
+use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
+use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -60,17 +60,17 @@ class DiwooCompletenessListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param TooiVocabularyService $vocabulary The bundled value lists.
-	 * @param SitemapDocumentMapper $documents The DiWoo document mapping, which decides what is mandatory.
-	 * @param WooCategoryRegistry $categories The Woo categories, which may name the schemas they cover.
+	 * @param DocumentTypeVocabularyInterface $vocabulary The bundled value lists.
+	 * @param DiwooCompletenessInterface $documents The DiWoo document mapping, which decides what is mandatory.
+	 * @param InformationCategoryRegistryInterface $categories The Woo categories, which may name the schemas they cover.
 	 * @param CatalogiServiceInterface $catalogi Reaches OpenRegister's schema mapper for a schema's slug.
 	 * @param IAppConfig $appConfig Holds the publication schema.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 */
 	public function __construct(
-		private readonly TooiVocabularyService $vocabulary,
-		private readonly SitemapDocumentMapper $documents,
-		private readonly WooCategoryRegistry $categories,
+		private readonly DocumentTypeVocabularyInterface $vocabulary,
+		private readonly DiwooCompletenessInterface $documents,
+		private readonly InformationCategoryRegistryInterface $categories,
 		private readonly CatalogiServiceInterface $catalogi,
 		private readonly IAppConfig $appConfig,
 		private readonly LoggerInterface $logger,

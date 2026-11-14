@@ -23,6 +23,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\DiwooCompletenessInterface;
+use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;
@@ -158,6 +160,8 @@ class ServiceRegistrar {
 		AttachmentMigrationServiceInterface::class => AttachmentMigrationService::class,
 		ServiceCatalogueServiceInterface::class => ServiceCatalogueService::class,
 		InformationCategoryRegistryInterface::class => WooCategoryRegistry::class,
+		DocumentTypeVocabularyInterface::class => TooiVocabularyService::class,
+		DiwooCompletenessInterface::class => SitemapDocumentMapper::class,
 		CmsMigrationServiceInterface::class => CmsMigrationService::class,
 		InformationRequestServiceInterface::class => WooRequestService::class,
 		StandardsVersionServiceInterface::class => StandardsVersionService::class,

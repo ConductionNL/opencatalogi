@@ -197,6 +197,17 @@ class ComponentRegistrarsTest extends TestCase {
 		);
 		$this->assertSame([PublishedCollectionsService::class], array_keys($factories));
 
+		// The DiWoo listener, repair step and Woo controller reach the vocabulary and the
+		// completeness check through these contracts (diwoo-metadata-on-the-publication).
+		$this->assertSame(
+			'OCA\\OpenCatalogi\\Service\\TooiVocabularyService',
+			$aliases['OCA\\OpenCatalogi\\Contract\\DocumentTypeVocabularyInterface'] ?? null
+		);
+		$this->assertSame(
+			'OCA\\OpenCatalogi\\Service\\SitemapDocumentMapper',
+			$aliases['OCA\\OpenCatalogi\\Contract\\DiwooCompletenessInterface'] ?? null
+		);
+
 		$config = $this->createMock(IAppConfig::class);
 		$config->expects($this->once())
 			->method('getValueString')
