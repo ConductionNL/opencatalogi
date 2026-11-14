@@ -1062,7 +1062,7 @@ export default {
 			return text.substring(0, maxLength) + '...'
 		},
 
-		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
+		/** @spec openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md#requirement-two-selected-publications-can-be-merged-from-the-list-req-pmm-001 */
 		async performMerge() {
 			if (!this.canMerge) {
 				return
