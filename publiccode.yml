@@ -5,6 +5,7 @@ url: "https://github.com/ConductionNL/opencatalogi"
 softwareVersion: "0.7.34"
 releaseDate: "2026-05-26"
 developmentStatus: stable
+softwareType: addon
 
 platforms:
   - nextcloud
