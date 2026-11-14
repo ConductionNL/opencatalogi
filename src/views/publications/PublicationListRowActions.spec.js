@@ -11,6 +11,8 @@ import { mount } from '@vue/test-utils'
 import PublicationList from './PublicationList.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'token-1' }))
+
 jest.mock('@nextcloud/vue', () => {
 	const slots = '<div><slot name="icon" /><slot name="subname" /><slot name="actions" /><slot /></div>'
 	const plain = { template: '<div />' }

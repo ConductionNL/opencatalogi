@@ -12,6 +12,10 @@ import { toRaw } from 'vue'
 import CatalogNavigation from './CatalogNavigation.vue'
 import { objectStore } from '../store/store.js'
 
+// @nextcloud/auth ships ESM that Jest does not transform; the object store
+// only reads the request token from it, so stub that boundary.
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'tok' }))
+
 /**
  * A menu manifest in the shape CnAppRoot hands its `#menu` slot.
  *
