@@ -720,7 +720,12 @@
         "Add a register and a schema to the catalog to list its publications here.": "Katalogu dodajte register in shemo, da bodo tukaj prikazane njegove objave.",
         "Open catalog": "Odpri katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Ustvarite svoj prvi katalog. To je vsebnik, v katerem bodo vaše objave. Izberite register Publication in shemo Publication, da bo katalog prikazoval objave, ki jih dodate.",
-        "Manage your publications and their status": "Upravljajte svoje publikacije in njihovo stanje"
+        "Manage your publications and their status": "Upravljajte svoje publikacije in njihovo stanje",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: različica OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister vsebuje pogon, ki ga OpenCatalogi potrebuje.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. V nameščenem OpenRegister manjka %2$s, zato OpenCatalogi namesto svojih strani prikaže obvestilo. Posodobite OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi se ne more zagnati",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi zahteva OpenRegister %1$s ali novejši. Prosite skrbnika, naj posodobi OpenRegister."
     },
     "plurals": {}
 }

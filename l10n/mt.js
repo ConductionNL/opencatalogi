@@ -721,7 +721,12 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Żid reġistru u skema mal-katalgu biex il-pubblikazzjonijiet tiegħu jidhru hawn.",
         "Open catalog": "Iftaħ il-katalgu",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Oħloq l-ewwel katalgu tiegħek. Huwa l-kontenitur fejn se jkunu l-pubblikazzjonijiet tiegħek. Agħżel ir-reġistru Publication u l-iskema Publication, biex il-katalgu juri l-pubblikazzjonijiet li żżid.",
-        "Manage your publications and their status": "Immaniġġja l-pubblikazzjonijiet tiegħek u l-istatus tagħhom"
+        "Manage your publications and their status": "Immaniġġja l-pubblikazzjonijiet tiegħek u l-istatus tagħhom",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: verżjoni ta' OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister fih il-magna li għandu bżonn OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi jeħtieġ OpenRegister %1$s jew aktar ġdid. Fl-OpenRegister installat jonqos %2$s, għalhekk OpenCatalogi juri avviż minflok il-paġni tiegħu. Aġġorna OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi ma jistax jibda",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi jeħtieġ OpenRegister %1$s jew aktar ġdid. Itlob lill-amministratur tiegħek jaġġorna OpenRegister."
     },
     "nplurals=2; plural=(n != 1);"
 )

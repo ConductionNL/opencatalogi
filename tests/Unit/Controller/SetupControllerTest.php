@@ -497,6 +497,46 @@ class SetupControllerTest extends TestCase {
 	}
 
 	/**
+	 * ONB-007 regression: the federation step can never hold the wizard back.
+	 *
+	 * With the catalogue steps done, the wizard reads as completed, the
+	 * federation step not done; an unreachable directory answers the action
+	 * with success false and HTTP 200 and leaves the completion record alone;
+	 * an empty directory leaves completion unaffected too.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-connect-to-federation-privileged-action-onb-007
+	 */
+	public function testTheFederationStepNeverGatesCompletion(): void {
+		$this->wireRegisters();
+		$this->configValues['default_catalog_scope'] = 'public';
+		$this->mockObjectService([$this->makeEntity()]);
+		$this->directoryService->method('syncDirectory')->willReturnOnConsecutiveCalls(
+			$this->throwException(new \RuntimeException('directory unreachable')),
+			['listings_created' => 0, 'listings_updated' => 0]
+		);
+
+		$before = $this->controller->status()->getData();
+		$this->assertTrue($before['completed']);
+		if (isset($before['steps']['connect-federation']) === true) {
+			$this->assertFalse($before['steps']['connect-federation']['done'] ?? false);
+		}
+
+		$completionBefore = ($this->configValues['onboarding_completed_version'] ?? null);
+		$failed = $this->controller->action('connect-federation');
+		$this->assertSame(Http::STATUS_OK, $failed->getStatus());
+		$this->assertFalse($failed->getData()['success']);
+		$this->assertSame($completionBefore, ($this->configValues['onboarding_completed_version'] ?? null));
+		$this->assertTrue($this->controller->status()->getData()['completed']);
+
+		$empty = $this->controller->action('connect-federation')->getData();
+		$this->assertTrue($empty['success']);
+		$this->assertSame($completionBefore, ($this->configValues['onboarding_completed_version'] ?? null));
+		$this->assertTrue($this->controller->status()->getData()['completed']);
+	}
+
+	/**
 	 * Picking the shipped dataset stores it, and the load step then imports it.
 	 *
 	 * The two halves are one flow: the choice step writes the answer through

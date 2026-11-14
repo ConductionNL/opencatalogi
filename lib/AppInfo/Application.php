@@ -25,6 +25,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\AppInfo;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Controller\OpenRegisterRequiredController;
+use OCA\OpenCatalogi\Controller\OpenRegisterRequiredHealthController;
 use OCA\OpenCatalogi\Dashboard\DashboardRegistrar;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
 use OCA\OpenCatalogi\Mcp\McpRegistrar;
@@ -32,6 +34,7 @@ use OCA\OpenCatalogi\Middleware\ApiContractMiddleware;
 use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
 use OCA\OpenCatalogi\Portal\PortalRegistrar;
 use OCA\OpenCatalogi\Service\ServiceRegistrar;
+use OCA\OpenCatalogi\SetupCheck\OpenRegisterVersionCheck;
 use OCA\OpenCatalogi\Tool\ToolRegistrar;
 use OCA\OpenRegister\AppHost\Controller\GenericDashboardController;
 use OCA\OpenRegister\AppHost\Controller\GenericHealthController;
@@ -41,13 +44,16 @@ use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
+use OCP\AppFramework\Controller;
+use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * Main Application class for OpenCatalogi.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
- * @spec exclude App bootstrap; wires the component registrars, no behaviour of its own.
+ * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
  */
 class Application extends App implements IBootstrap {
 	public const APP_ID = AppIdentity::APP_ID;
@@ -79,6 +85,7 @@ class Application extends App implements IBootstrap {
 	 * @psalm-suppress InvalidArgument OpenRegister events extend OCP Event.
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
+	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
 	 */
 	public function register(IRegistrationContext $context): void {
 		include_once __DIR__ . '/../../vendor/autoload.php';
@@ -94,6 +101,17 @@ class Application extends App implements IBootstrap {
 
 		// API-Version header and problem details on the JSON API (spec api-documentation).
 		$context->registerMiddleware(ApiContractMiddleware::class);
+
+		// ONB-009: tells an administrator when OpenRegister is too old for the
+		// AppHost bindings below. Registering the class probes nothing.
+		$context->registerSetupCheck(OpenRegisterVersionCheck::class);
+
+		// ONB-009: every AppHost binding below asks standIn() first. On an
+		// OpenRegister older than 2.0 the generics do not exist, and building
+		// one was a fatal "Class not found" 500 on every page. standIn() answers
+		// the route with a notice instead. The question is asked when a
+		// controller is built for a request, never here: at register() time
+		// OpenRegister is not on the autoloader yet (see OpenRegisterCompatibility).
 
 		// AppHost observability adoption (ADR-040). The /api/health and
 		// /api/metrics routes resolve to leaf-namespaced controller class names
@@ -112,6 +130,11 @@ class Application extends App implements IBootstrap {
 		$context->registerService(
 			'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericHealthController',
 			static function ($c) {
+				$standIn = self::standIn(container: $c, health: true);
+				if ($standIn !== null) {
+					return $standIn;
+				}
+
 				return new GenericHealthController(
 					appName: self::APP_ID,
 					request: $c->get('OCP\\IRequest'),
@@ -123,6 +146,11 @@ class Application extends App implements IBootstrap {
 		$context->registerService(
 			'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericMetricsController',
 			static function ($c) {
+				$standIn = self::standIn(container: $c, health: false);
+				if ($standIn !== null) {
+					return $standIn;
+				}
+
 				return new GenericMetricsController(
 					appName: self::APP_ID,
 					request: $c->get('OCP\\IRequest'),
@@ -162,6 +190,11 @@ class Application extends App implements IBootstrap {
 		$context->registerService(
 			'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericDashboardController',
 			static function ($c) {
+				$standIn = self::standIn(container: $c, health: false);
+				if ($standIn !== null) {
+					return $standIn;
+				}
+
 				return new GenericDashboardController(
 					appName: self::APP_ID,
 					request: $c->get('OCP\\IRequest')
@@ -171,6 +204,11 @@ class Application extends App implements IBootstrap {
 		$context->registerService(
 			'OCA\\OpenCatalogi\\AppHost\\Controller\\GenericPreferencesController',
 			static function ($c) {
+				$standIn = self::standIn(container: $c, health: false);
+				if ($standIn !== null) {
+					return $standIn;
+				}
+
 				return new GenericPreferencesController(
 					appName: self::APP_ID,
 					request: $c->get('OCP\\IRequest'),
@@ -185,17 +223,22 @@ class Application extends App implements IBootstrap {
 	/**
 	 * Boot the application.
 	 *
-	 * Registers the app-menu navigation entry via INavigationManager (see body).
+	 * Imports the configuration once after a clean install (ONB-001), and
+	 * registers the app-menu navigation entry via INavigationManager (see body).
 	 *
 	 * @param IBootContext $context The boot context.
 	 *
 	 * @return void
 	 *
-	 * @spec exclude Framework lifecycle hook; app-menu navigation registration is infrastructure, not a spec'd feature.
+	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-setup-wizard-gates-the-shell-on-required-publishing-configuration-onb-001
 	 */
 	public function boot(IBootContext $context): void {
-		// Initialization handled by the Repair step (InitializeSettings).
-		// See lib/Repair/InitializeSettings.php.
+		// ONB-001: a clean `app:install` / `app:enable` runs no <post-migration>
+		// repair step, so InitializeSettings never imported the configuration.
+		// Import it once here; FirstRunSettings records success and skips
+		// every later request.
+		$context->getAppContainer()->get(FirstRunSettings::class)->ensureInitialized();
+
 		//
 		// Register the app-menu navigation entry in PHP instead of info.xml.
 		// The dashboard SPA is served by the engine-namespaced AppHost route
@@ -223,4 +266,42 @@ class Application extends App implements IBootstrap {
 			}
 		);
 	}//end boot()
+
+	/**
+	 * The controller to answer an AppHost route with when OpenRegister is too
+	 * old for the AppHost generics, or null when the generic can be built.
+	 *
+	 * Called from the registerService closures, so when a controller is built
+	 * for a request, after every app has registered (ONB-009).
+	 *
+	 * @param ContainerInterface $container The app container.
+	 * @param bool               $health    Whether the route is the public health endpoint.
+	 *
+	 * @return Controller|null The stand-in, or null when OpenRegister is new enough.
+	 *
+	 * @spec openspec/changes/robust-first-run-setup/specs/first-time-onboarding/spec.md#requirement-openregister-apphost-compatibility-guard-onb-009
+	 */
+	private static function standIn(ContainerInterface $container, bool $health): ?Controller {
+		$compatibility = $container->get(OpenRegisterCompatibility::class);
+		if ($compatibility->appHostAvailable() === true) {
+			return null;
+		}
+
+		$container->get(LoggerInterface::class)->warning(
+			'OpenCatalogi needs OpenRegister ' . OpenRegisterCompatibility::REQUIRED_VERSION
+				. ' or newer; ' . $compatibility->markerClass() . ' is missing, so a notice answers instead of the app.',
+			['app' => self::APP_ID]
+		);
+
+		if ($health === true) {
+			return new OpenRegisterRequiredHealthController(appName: self::APP_ID, request: $container->get('OCP\\IRequest'));
+		}
+
+		return new OpenRegisterRequiredController(
+			appName: self::APP_ID,
+			request: $container->get('OCP\\IRequest'),
+			l: $container->get('OCP\\IL10N')
+		);
+
+	}//end standIn()
 }//end class

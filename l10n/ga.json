@@ -720,7 +720,12 @@
         "Add a register and a schema to the catalog to list its publications here.": "Cuir clár agus scéimre leis an gcatalóg chun a foilseacháin a liostú anseo.",
         "Open catalog": "Oscail an catalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cruthaigh do chéad chatalóg. Is é an coimeádán ina mbeidh do chuid foilseachán. Roghnaigh an clár Publication agus an scéimre Publication, ionas go liostóidh an catalóg na foilseacháin a chuireann tú leis.",
-        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas"
+        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: leagan OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "Tá an t-inneall atá de dhíth ar OpenCatalogi in OpenRegister.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "Teastaíonn OpenRegister %1$s nó níos nuaí ó OpenCatalogi. Tá %2$s in easnamh ar an OpenRegister suiteáilte, mar sin taispeánann OpenCatalogi fógra in ionad a leathanach. Nuashonraigh OpenRegister.",
+        "OpenCatalogi cannot start": "Ní féidir OpenCatalogi a thosú",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Teastaíonn OpenRegister %1$s nó níos nuaí ó OpenCatalogi. Iarr ar do riarthóir OpenRegister a nuashonrú."
     },
     "plurals": {}
 }

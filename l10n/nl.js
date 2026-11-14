@@ -1507,7 +1507,12 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Alleen de groepen hieronder zien en bewerken de publicaties van deze catalogus.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versie van OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister bevat de engine die OpenCatalogi nodig heeft.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. In de geïnstalleerde OpenRegister ontbreekt %2$s, daarom toont OpenCatalogi een melding in plaats van zijn pagina's. Werk OpenRegister bij.",
+        "OpenCatalogi cannot start": "OpenCatalogi kan niet starten",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vereist OpenRegister %1$s of nieuwer. Vraag je beheerder om OpenRegister bij te werken."
     },
     "nplurals=2; plural=(n != 1);"
 )

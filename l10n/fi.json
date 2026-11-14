@@ -720,7 +720,12 @@
         "Add a register and a schema to the catalog to list its publications here.": "Lisää luetteloon rekisteri ja skeema, jotta sen julkaisut näkyvät tässä.",
         "Open catalog": "Avaa luettelo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Luo ensimmäinen luettelosi. Se on säiliö, johon julkaisusi tallentuvat. Valitse rekisteri Publication ja skeema Publication, jotta luettelo näyttää lisäämäsi julkaisut.",
-        "Manage your publications and their status": "Hallitse julkaisujasi ja niiden tilaa"
+        "Manage your publications and their status": "Hallitse julkaisujasi ja niiden tilaa",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegisterin versio",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister sisältää moottorin, jota OpenCatalogi tarvitsee.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi vaatii OpenRegisterin version %1$s tai uudemman. Asennetusta OpenRegisteristä puuttuu %2$s, joten OpenCatalogi näyttää ilmoituksen sivujensa sijaan. Päivitä OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi ei voi käynnistyä",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vaatii OpenRegisterin version %1$s tai uudemman. Pyydä ylläpitäjää päivittämään OpenRegister."
     },
     "plurals": {}
 }

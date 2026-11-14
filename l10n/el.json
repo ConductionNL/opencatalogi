@@ -720,7 +720,12 @@
         "Add a register and a schema to the catalog to list its publications here.": "Προσθέστε ένα μητρώο και ένα σχήμα στον κατάλογο για να εμφανίζονται εδώ οι δημοσιεύσεις του.",
         "Open catalog": "Άνοιγμα καταλόγου",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Δημιουργήστε τον πρώτο σας κατάλογο. Είναι ο χώρος όπου θα βρίσκονται οι δημοσιεύσεις σας. Επιλέξτε το μητρώο Publication και το σχήμα Publication, ώστε ο κατάλογος να εμφανίζει τις δημοσιεύσεις που προσθέτετε.",
-        "Manage your publications and their status": "Διαχειριστείτε τις δημοσιεύσεις σας και την κατάστασή τους"
+        "Manage your publications and their status": "Διαχειριστείτε τις δημοσιεύσεις σας και την κατάστασή τους",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: έκδοση OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "Το OpenRegister περιέχει τη μηχανή που χρειάζεται το OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "Το OpenCatalogi απαιτεί OpenRegister %1$s ή νεότερο. Στο εγκατεστημένο OpenRegister λείπει το %2$s, οπότε το OpenCatalogi εμφανίζει μια ειδοποίηση αντί για τις σελίδες του. Ενημερώστε το OpenRegister.",
+        "OpenCatalogi cannot start": "Το OpenCatalogi δεν μπορεί να ξεκινήσει",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Το OpenCatalogi απαιτεί OpenRegister %1$s ή νεότερο. Ζητήστε από τον διαχειριστή να ενημερώσει το OpenRegister."
     },
     "plurals": {}
 }

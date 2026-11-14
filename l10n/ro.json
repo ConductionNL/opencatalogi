@@ -720,7 +720,12 @@
         "Add a register and a schema to the catalog to list its publications here.": "Adăugați un registru și o schemă la catalog pentru a-i afișa aici publicațiile.",
         "Open catalog": "Deschide catalogul",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creați primul dumneavoastră catalog. Este containerul în care vor sta publicațiile dumneavoastră. Alegeți registrul Publication și schema Publication, astfel încât catalogul să afișeze publicațiile pe care le adăugați.",
-        "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora"
+        "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versiunea OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister conține motorul de care are nevoie OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi necesită OpenRegister %1$s sau mai nou. Din OpenRegister instalat lipsește %2$s, așa că OpenCatalogi afișează o notificare în locul paginilor sale. Actualizați OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi nu poate porni",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi necesită OpenRegister %1$s sau mai nou. Rugați administratorul să actualizeze OpenRegister."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

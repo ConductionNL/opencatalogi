@@ -721,7 +721,12 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Bættu skráningu og skema við skrána til að birta útgáfur hennar hér.",
         "Open catalog": "Opna skrá",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Búðu til fyrstu skrána þína. Hún er ílátið sem útgáfurnar þínar verða í. Veldu skráninguna Publication og skemað Publication svo skráin birti útgáfurnar sem þú bætir við.",
-        "Manage your publications and their status": "Stjórnaðu útgáfum þínum og stöðu þeirra"
+        "Manage your publications and their status": "Stjórnaðu útgáfum þínum og stöðu þeirra",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: útgáfa OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister inniheldur vélina sem OpenCatalogi þarf.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi krefst OpenRegister %1$s eða nýrra. Í uppsettu OpenRegister vantar %2$s, svo OpenCatalogi sýnir tilkynningu í stað síðna sinna. Uppfærðu OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi getur ekki ræst",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi krefst OpenRegister %1$s eða nýrra. Biddu kerfisstjórann þinn að uppfæra OpenRegister."
     },
     "nplurals=2; plural=(n != 1);"
 )
