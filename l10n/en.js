@@ -1559,7 +1559,21 @@ OC.L10N.register(
         "Languages offered to editors": "Languages offered to editors",
         "Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.": "Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.",
         "Save languages": "Save languages",
-        "The languages could not be saved. Try again.": "The languages could not be saved. Try again."
+        "The languages could not be saved. Try again.": "The languages could not be saved. Try again.",
+        "Language": "Language",
+        "Complete": "Complete",
+        "Not translated yet": "Not translated yet",
+        "Outdated: {fields}": "Outdated: {fields}",
+        "Source language, complete": "Source language, complete",
+        "The other fields are the same in every language and read-only here.": "The other fields are the same in every language and read-only here.",
+        "The translation could not be saved. Try again.": "The translation could not be saved. Try again.",
+        "Title, summary and description are translatable. Empty fields fall back to Dutch.": "Title, summary and description are translatable. Empty fields fall back to Dutch.",
+        "Dutch changed since this was translated: {fields}": "Dutch changed since this was translated: {fields}",
+        "{first} and {last}": "{first} and {last}",
+        "{language}, source": "{language}, source",
+        "{translated} translated, {missing} missing": "{translated} translated, {missing} missing",
+        "{translated} translated": "{translated} translated",
+        "{missing} missing": "{missing} missing"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -176,6 +176,13 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 				<div v-else class="tabContainer">
 					<AppTabs v-model="activeTab" contentClass="mt-3" justified>
 						<AppTab :title="t('opencatalogi', 'Properties')" active>
+							<TranslationLanguageSwitch
+								v-if="translatable"
+								:languages="editLanguages"
+								:modelValue="editLanguage"
+								:outdated="editLanguageOutdated"
+								:disabled="isSaving"
+								@update:modelValue="setEditLanguage" />
 							<PropertiesPanel
 								v-bind="propertiesPanelBindings"
 								@update:selectedProperty="selectedProperty = $event"
@@ -955,8 +962,20 @@ import PropertiesPanel from '../../components/PropertiesPanel.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
+import TranslationLanguageSwitch from '../../components/TranslationLanguageSwitch.vue'
 import { fileSizeLabel } from '../../services/fileSizeLabel.js'
 import { formValue } from '../../services/formValue.js'
+import {
+	hasTranslatableFields,
+	outdatedFields,
+	publicationLanguagesFrom,
+	SOURCE_LANGUAGE,
+	takeRequestedEditorLanguage,
+	translationItem,
+	translationPayload,
+	translationSaveOptions,
+	translationSchema,
+} from '../../services/publicationTranslations.js'
 import { registerSchemaIdsOf } from '../../services/registerSchemaIds.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 import { editableFormData, initialCatalog } from './objectFormCopy.js'
@@ -1077,6 +1096,27 @@ function isReadOnlyProperty(schemaProperty) {
 }
 
 /**
+ * The fetch options of a save: a translation of one language through
+ * OpenRegister's target-language header, else the object as JSON.
+ *
+ * @param {{objectData: object, method: string, language?: string}} request - The request
+ * @return {object} The fetch options
+ */
+function saveOptions({ objectData, method, language }) {
+	if (language) {
+		return translationSaveOptions(objectData, language, getRequestToken())
+	}
+	return {
+		method,
+		headers: {
+			'Content-Type': 'application/json',
+			requesttoken: getRequestToken(),
+		},
+		body: JSON.stringify(objectData),
+	}
+}
+
+/**
  * Whether a schema title can be shown: a non-blank string that is not the
  * "new" placeholder.
  *
@@ -1151,6 +1191,7 @@ function isLiveNow(object, now) {
 export default {
 	name: 'ViewObject',
 	components: {
+		TranslationLanguageSwitch,
 		NcDialog,
 		NcButton,
 		NcNoteCard,
@@ -1189,6 +1230,13 @@ export default {
 		return {
 			activeTab: 0,
 			formData: {}, // Ensure this is always an object, never an array
+			// publication-translations REQ-PTR-003: the language being edited,
+			// the languages offered, the object with every translation and the
+			// object's translation status rows.
+			editLanguage: 'nl',
+			editLanguages: ['nl'],
+			allTranslations: null,
+			translationStatus: null,
 			selectedProperty: null,
 			isSaving: false,
 
@@ -1240,6 +1288,28 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		currentObject() {
 			return objectStore.getActiveObject('publication')
+		},
+
+		/**
+		 * Whether this edit can switch language: an existing object whose
+		 * schema declares translatable fields (REQ-PTR-003).
+		 *
+		 * @return {boolean}
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		translatable() {
+			return !this.isNewObject && hasTranslatableFields(this.resolvedSchema)
+		},
+
+		/**
+		 * The translatable fields whose Dutch changed since they were
+		 * translated into the language being edited.
+		 *
+		 * @return {Array<string>}
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		editLanguageOutdated() {
+			return outdatedFields(this.translationStatus, this.editLanguage)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -1534,8 +1604,8 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		propertiesPanelBindings() {
 			return {
-				resolvedSchema: this.resolvedSchema,
-				currentObject: this.currentObject,
+				resolvedSchema: translationSchema(this.resolvedSchema, this.editLanguage),
+				currentObject: translationItem(this.currentObject, this.allTranslations, this.editLanguage),
 				formData: this.formData,
 				selectedProperty: this.selectedProperty,
 				propertyOverrides: this.propertyOverrides,
@@ -1964,6 +2034,67 @@ export default {
 			// Ensure formData is always an object, never an array
 			this.formData = {}
 			this.formData = editableFormData(this.currentObject)
+			this.editLanguage = SOURCE_LANGUAGE
+			this.allTranslations = null
+			await this.loadTranslationContext(takeRequestedEditorLanguage())
+		},
+
+		/**
+		 * Read the languages offered and the object's translation status, then
+		 * open the language asked for (REQ-PTR-003). Without translatable
+		 * fields, or when a read fails, the form stays in Dutch.
+		 *
+		 * @param {string} language The language to open in.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		async loadTranslationContext(language) {
+			if (!this.translatable) {
+				return
+			}
+			try {
+				const settings = await (await fetch(generateUrl('/apps/opencatalogi/api/settings'))).json()
+				this.editLanguages = publicationLanguagesFrom(settings?.configuration?.publication_languages)
+			} catch {
+				this.editLanguages = [SOURCE_LANGUAGE]
+			}
+			try {
+				const { schemaId } = this.getRegisterSchemaIds(this.currentObject)
+				const id = this.currentObject['@self']?.id || this.currentObject.id
+				const url = generateUrl('/apps/openregister/api/translations/object/{id}', { id }) + '?schema=' + encodeURIComponent(schemaId)
+				this.translationStatus = await (await fetch(url)).json()
+			} catch {
+				this.translationStatus = null
+			}
+			if (language !== SOURCE_LANGUAGE && this.editLanguages.includes(language)) {
+				await this.setEditLanguage(language)
+			}
+		},
+
+		/**
+		 * Switch the form to a language. Dutch shows the object as it is;
+		 * another language shows its translation of the translatable fields,
+		 * read with every translation, and starts with nothing changed.
+		 *
+		 * @param {string} language The language.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		async setEditLanguage(language) {
+			this.editLanguage = language
+			if (language === SOURCE_LANGUAGE) {
+				this.formData = editableFormData(this.currentObject)
+				return
+			}
+			this.formData = {}
+			try {
+				const { registerId, schemaId } = this.getRegisterSchemaIds(this.currentObject)
+				const id = this.currentObject['@self']?.id || this.currentObject.id
+				const response = await fetch(`/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${id}?_translations=all`)
+				this.allTranslations = await response.json()
+			} catch {
+				this.allTranslations = null
+			}
 		},
 
 		/**
@@ -2064,7 +2195,7 @@ export default {
 		 * method that create a new object or update the current one.
 		 *
 		 * @param {boolean} isCreating - Whether a new object is created
-		 * @return {{isCreating: boolean, objectData: object, endpoint: string, method: string}} The request
+		 * @return {{isCreating: boolean, objectData: object, endpoint: string, method: string, language?: string}} The request
 		 */
 		saveRequest(isCreating) {
 			// Build the complete object with all schema properties
@@ -2080,25 +2211,28 @@ export default {
 			)
 			const objectId = this.currentObject['@self']?.id || this.currentObject.id
 			const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
+			if (this.editLanguage !== SOURCE_LANGUAGE) {
+				// REQ-PTR-003: another language writes only its translatable fields.
+				return {
+					isCreating,
+					objectData: translationPayload(this.formData),
+					endpoint,
+					method: 'PATCH',
+					language: this.editLanguage,
+				}
+			}
 			return { isCreating, objectData, endpoint, method: 'PUT' }
 		},
 
 		/**
 		 * Send a save request to the openregister API.
 		 *
-		 * @param {{isCreating: boolean, objectData: object, endpoint: string, method: string}} request - The request
+		 * @param {{isCreating: boolean, objectData: object, endpoint: string, method: string, language?: string}} request - The request
 		 * @return {Promise<object>} The saved object
 		 * @throws {Error} When the answer is not ok
 		 */
-		async sendSave({ isCreating, objectData, endpoint, method }) {
-			const response = await fetch(endpoint, {
-				method,
-				headers: {
-					'Content-Type': 'application/json',
-					requesttoken: getRequestToken(),
-				},
-				body: JSON.stringify(objectData),
-			})
+		async sendSave({ isCreating, objectData, endpoint, method, language }) {
+			const response = await fetch(endpoint, saveOptions({ objectData, method, language }))
 
 			if (!response.ok) {
 				const errorText = await response.text()

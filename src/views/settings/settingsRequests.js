@@ -3,6 +3,10 @@
  * SPDX-License-Identifier: EUPL-1.2
  */
 
+import { languageName, publicationLanguagesFrom } from '../../services/publicationTranslations.js'
+
+export { languageName, publicationLanguagesFrom }
+
 /**
  * The requests of the admin settings page and the mapping of their answers:
  * the publishing options, the federation sync interval and the manual
@@ -139,50 +143,6 @@ export function directorySyncCounts(data) {
  * Dutch is the source language of every publication and always offered.
  */
 export const PUBLICATION_LANGUAGE_TAGS = ['nl', 'en', 'de', 'fr', 'fy', 'es', 'it', 'pl', 'pt', 'tr', 'ar', 'uk']
-
-/**
- * The stored publication languages: the JSON list the settings answer carries,
- * Dutch first; Dutch and English when nothing usable is stored.
- *
- * @param {string|Array<string>|undefined} stored - The stored value
- * @return {Array<string>} The language tags
- * @spec openspec/changes/publication-translations/design.md
- */
-export function publicationLanguagesFrom(stored) {
-	let tags = stored
-	if (typeof stored === 'string') {
-		try {
-			tags = JSON.parse(stored)
-		} catch {
-			tags = null
-		}
-	}
-	if (!Array.isArray(tags) || tags.length === 0) {
-		return ['nl', 'en']
-	}
-	const languages = ['nl']
-	for (const tag of tags) {
-		if (typeof tag === 'string' && tag !== '' && !languages.includes(tag)) {
-			languages.push(tag)
-		}
-	}
-	return languages
-}
-
-/**
- * The name of a language in the reader's own language, else its tag.
- *
- * @param {string} tag - The BCP 47 tag
- * @param {string} locale - The reader's locale
- * @return {string} The name
- */
-export function languageName(tag, locale) {
-	try {
-		return new Intl.DisplayNames([locale], { type: 'language' }).of(tag) || tag
-	} catch {
-		return tag
-	}
-}
 
 /**
  * The select options of the publication languages: every offerable language

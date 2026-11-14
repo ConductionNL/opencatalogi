@@ -1513,7 +1513,21 @@
         "Languages offered to editors": "Talen voor redacteuren",
         "Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.": "Redacteuren kunnen de titel, samenvatting en beschrijving van een publicatie of catalogus in deze talen schrijven. Nederlands is de brontaal en wordt altijd aangeboden.",
         "Save languages": "Talen opslaan",
-        "The languages could not be saved. Try again.": "De talen konden niet worden opgeslagen. Probeer het opnieuw."
+        "The languages could not be saved. Try again.": "De talen konden niet worden opgeslagen. Probeer het opnieuw.",
+        "Language": "Taal",
+        "Complete": "Volledig",
+        "Not translated yet": "Nog niet vertaald",
+        "Outdated: {fields}": "Verouderd: {fields}",
+        "Source language, complete": "Brontaal, volledig",
+        "The other fields are the same in every language and read-only here.": "De andere velden zijn in elke taal gelijk en hier alleen-lezen.",
+        "The translation could not be saved. Try again.": "De vertaling kon niet worden opgeslagen. Probeer het opnieuw.",
+        "Title, summary and description are translatable. Empty fields fall back to Dutch.": "Titel, samenvatting en beschrijving zijn vertaalbaar. Lege velden vallen terug op Nederlands.",
+        "Dutch changed since this was translated: {fields}": "Het Nederlands is gewijzigd sinds dit is vertaald: {fields}",
+        "{first} and {last}": "{first} en {last}",
+        "{language}, source": "{language}, bron",
+        "{translated} translated, {missing} missing": "{translated} vertaald, {missing} ontbreekt",
+        "{translated} translated": "{translated} vertaald",
+        "{missing} missing": "{missing} ontbreekt"
     },
     "plurals": {}
 }

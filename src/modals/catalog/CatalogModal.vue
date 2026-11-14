@@ -66,22 +66,32 @@ const { isAdmin } = useIsAdmin()
 					&& !objectStore.isLoading('catalog')
 				"
 				class="form-group">
+				<TranslationLanguageSwitch
+					v-if="isEdit && editLanguages.length > 1"
+					:languages="editLanguages"
+					:modelValue="editLanguage"
+					:outdated="editLanguageOutdated"
+					:disabled="objectStore.isLoading('catalog')"
+					@update:modelValue="setEditLanguage" />
+				<NcNoteCard v-if="translationError" type="error">
+					<p>{{ translationError }}</p>
+				</NcNoteCard>
 				<NcTextField
-					v-model="catalogi.title"
+					v-model="textFields.title"
 					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Title*')"
 					maxlength="255"
 					:error="!!inputValidation.fieldErrors?.['title']"
 					:helperText="inputValidation.fieldErrors?.['title']?.[0]" />
 				<NcTextField
-					v-model="catalogi.summary"
+					v-model="textFields.summary"
 					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Summary')"
 					maxlength="255"
 					:error="!!inputValidation.fieldErrors?.['summary']"
 					:helperText="inputValidation.fieldErrors?.['summary']?.[0]" />
 				<NcTextField
-					v-model="catalogi.description"
+					v-model="textFields.description"
 					:disabled="objectStore.isLoading('catalog')"
 					:label="t('opencatalogi', 'Description')"
 					maxlength="255"
@@ -89,6 +99,10 @@ const { isAdmin } = useIsAdmin()
 					:helperText="
 						inputValidation.fieldErrors?.['description']?.[0]
 					" />
+				<!-- REQ-PTR-003: the same in every language, read-only in another one. -->
+				<fieldset
+					class="catalog-shared-fields"
+					:disabled="editLanguage !== sourceLanguage">
 				<NcTextField
 					v-model="catalogi.slug"
 					:disabled="objectStore.isLoading('catalog')"
@@ -165,6 +179,7 @@ const { isAdmin } = useIsAdmin()
 					v-if="isAdmin"
 					v-model="catalogi.staffAccess"
 					:disabled="objectStore.isLoading('catalog')" />
+				</fieldset>
 			</div>
 			<div v-if="objectStore.isLoading('catalog')" class="loading-status">
 				<NcLoadingIcon :size="20" />
@@ -209,6 +224,8 @@ const { isAdmin } = useIsAdmin()
 </template>
 
 <script>
+import { translate as t } from '@nextcloud/l10n'
+import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -221,12 +238,21 @@ import {
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import ContentSaveOutline from 'vue-material-design-icons/ContentSaveOutline.vue'
 import CatalogStaffAccessFields from '../../components/CatalogStaffAccessFields.vue'
+import TranslationLanguageSwitch from '../../components/TranslationLanguageSwitch.vue'
 import { Catalogi } from '../../entities/index.js'
 import {
 	catalogFormFromObject,
 	catalogOrganizationOption,
 	idOptions,
 } from '../../services/catalogForm.js'
+import {
+	outdatedFields,
+	publicationLanguagesFrom,
+	SOURCE_LANGUAGE,
+	takeRequestedEditorLanguage,
+	translationItem,
+	translationPayload,
+} from '../../services/publicationTranslations.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
 
 /**
@@ -305,6 +331,7 @@ function schemaOption(schema) {
 export default {
 	name: 'CatalogModal',
 	components: {
+		TranslationLanguageSwitch,
 		CatalogStaffAccessFields,
 		NcModal,
 		NcTextField,
@@ -326,6 +353,15 @@ export default {
 			selectedRegisters: [],
 			selectedSchemas: [],
 			hasUpdated: false,
+			// publication-translations REQ-PTR-003: the language being edited,
+			// the languages offered, the text in that language and the status rows.
+			sourceLanguage: SOURCE_LANGUAGE,
+			editLanguage: SOURCE_LANGUAGE,
+			editLanguages: [SOURCE_LANGUAGE],
+			translation: { title: '', summary: '', description: '' },
+			translationOpened: { title: '', summary: '', description: '' },
+			translationStatus: null,
+			translationError: '',
 			statusOptions: [
 				{ id: 'development', label: 'Development' },
 				{ id: 'beta', label: 'Beta' },
@@ -336,6 +372,43 @@ export default {
 	},
 
 	computed: {
+		/**
+		 * The title, summary and description the text fields edit: the
+		 * catalogue's own in Dutch, the translation in another language.
+		 *
+		 * @return {object} The fields
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		textFields() {
+			return this.editLanguage === SOURCE_LANGUAGE ? this.catalogi : this.translation
+		},
+
+		/**
+		 * The translated fields the editor changed since the language was opened.
+		 *
+		 * @return {object} The changed fields
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		translationChanges() {
+			const changes = {}
+			for (const [field, value] of Object.entries(this.translation)) {
+				if (value !== this.translationOpened[field]) {
+					changes[field] = value
+				}
+			}
+			return changes
+		},
+
+		/**
+		 * The fields whose Dutch changed since they were translated.
+		 *
+		 * @return {Array<string>}
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		editLanguageOutdated() {
+			return outdatedFields(this.translationStatus, this.editLanguage)
+		},
+
 		isEdit() {
 			return !!objectStore.getActiveObject('catalog')
 		},
@@ -404,6 +477,7 @@ export default {
 			return
 		}
 		this.fillFromCatalog(objectStore.getActiveObject('catalog'))
+		this.loadTranslationContext(takeRequestedEditorLanguage())
 	},
 
 	methods: {
@@ -485,11 +559,94 @@ export default {
 		},
 
 		/**
-		 * Create or update the catalog via the object store.
+		 * The OpenRegister object URL of the catalogue being edited.
+		 *
+		 * @return {string} The URL
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		catalogObjectUrl() {
+			const active = objectStore.getActiveObject('catalog') || {}
+			const self = active['@self'] || {}
+			return `/index.php/apps/openregister/api/objects/${self.register}/${self.schema}/${self.id || active.id}`
+		},
+
+		/**
+		 * Read the languages offered and the catalogue's translation status,
+		 * then open the language asked for. A failed read keeps it in Dutch.
+		 *
+		 * @param {string} language The language to open in.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		async loadTranslationContext(language) {
+			this.editLanguage = SOURCE_LANGUAGE
+			this.translationError = ''
+			try {
+				const settings = await (await fetch(generateUrl('/apps/opencatalogi/api/settings'))).json()
+				this.editLanguages = publicationLanguagesFrom(settings?.configuration?.publication_languages)
+				const active = objectStore.getActiveObject('catalog') || {}
+				const self = active['@self'] || {}
+				const statusUrl = generateUrl('/apps/openregister/api/translations/object/{id}', { id: self.id || active.id })
+				this.translationStatus = await (await fetch(statusUrl + '?schema=' + encodeURIComponent(self.schema))).json()
+			} catch {
+				this.editLanguages = [SOURCE_LANGUAGE]
+				this.translationStatus = null
+			}
+			if (language !== SOURCE_LANGUAGE && this.editLanguages.includes(language)) {
+				await this.setEditLanguage(language)
+			}
+		},
+
+		/**
+		 * Switch the text fields to a language, read with every translation.
+		 *
+		 * @param {string} language The language.
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		async setEditLanguage(language) {
+			this.editLanguage = language
+			if (language === SOURCE_LANGUAGE) {
+				return
+			}
+			const all = await fetch(this.catalogObjectUrl() + '?_translations=all')
+				.then((response) => response.json())
+				.catch(() => null)
+			const item = translationItem(this.catalogi, all, language)
+			this.translation = { title: item.title, summary: item.summary, description: item.description }
+			this.translationOpened = { ...this.translation }
+		},
+
+		/**
+		 * Save the changed fields of the language being edited as its translation.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-an-editor-writes-a-translation-on-the-edit-page-req-ptr-003
+		 */
+		async saveTranslation() {
+			this.translationError = ''
+			const stored = await objectStore.saveObjectTranslation(this.catalogObjectUrl(), {
+				fields: translationPayload(this.translationChanges),
+				language: this.editLanguage,
+			})
+			if (!stored) {
+				this.translationError = t('opencatalogi', 'The translation could not be saved. Try again.')
+				return
+			}
+			this.translationOpened = { ...this.translation }
+			this.closeAfterFeedback()
+		},
+
+		/**
+		 * Create or update the catalog via the object store; in another
+		 * language than Dutch, save the translation only.
 		 *
 		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		saveCatalog() {
+			if (this.isEdit && this.editLanguage !== SOURCE_LANGUAGE) {
+				return this.saveTranslation()
+			}
 			const catalogiItem = this.catalogItem()
 
 			if (this.isEdit) {
@@ -535,5 +692,14 @@ export default {
 .form-group {
 	display: flex;
 	flex-direction: column;
+}
+
+.catalog-shared-fields {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	margin: 0;
+	padding: 0;
+	border: 0;
 }
 </style>
