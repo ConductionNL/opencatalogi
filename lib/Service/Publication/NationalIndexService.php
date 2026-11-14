@@ -193,11 +193,32 @@ class NationalIndexService implements NationalIndexServiceInterface {
 			'organisation' => (string)($decision['organisation'] ?? ''),
 			'url' => (string)($decision['url'] ?? ''),
 			'publicationType' => (string)($decision['publicationType'] ?? ''),
-			'effectiveDate' => (string)($decision['effectiveDate'] ?? ($decision['publicationDate'] ?? '')),
+			'effectiveDate' => self::effectiveDate(decision: $decision),
 			'composedAt' => $moment->format(DateTimeInterface::ATOM),
 		];
 
 	}//end composeNotice()
+
+	/**
+	 * The day the decision takes effect: the one the editor gave, else the stored
+	 * validFrom (REQ-DWP-001), else the publication date.
+	 *
+	 * @param array<string, mixed> $decision The decision.
+	 *
+	 * @return string The effective date, or '' when none is known.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-publication-stores-its-diwoo-metadata-req-dwp-001
+	 */
+	private static function effectiveDate(array $decision): string {
+		foreach (['effectiveDate', 'validFrom', 'publicationDate'] as $field) {
+			$value = $decision[$field] ?? null;
+			if (is_string($value) === true && trim($value) !== '') {
+				return $value;
+			}
+		}
+
+		return '';
+	}//end effectiveDate()
 
 	/**
 	 * Compose the notice for both channels at once.

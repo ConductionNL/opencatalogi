@@ -39,7 +39,8 @@ Read `openspec/woo-build-rules.md` before the first command. For every OpenRegis
 
 ## 6. National announcement
 
-- [ ] 6.1 `NationalIndexService::composeNotice()` takes `validFrom` as the effective date when none is given, and `NationalAnnounceWidget.vue` prefills it (REQ-DWP-001). Verify: `tests/Unit/Service/Publication/NationalIndexServiceTest.php::testTheNoticeTakesTheStoredValidFromAsItsEffectiveDate`.
+- [x] 6.1 `NationalIndexService::composeNotice()` takes `validFrom` as the effective date when none is given, and `NationalAnnounceWidget.vue` prefills it (REQ-DWP-001). Verify: `tests/Unit/Service/Publication/NationalIndexServiceTest.php::testTheNoticeTakesTheStoredValidFromAsItsEffectiveDate`.
+  - Done: the effective date is the editor's, else `validFrom`, else the publication date; an empty string counts as none. The widget reads the publication when it mounts and fills an empty date field with `validFrom` (two jest cases in `NationalAnnounceWidget.spec.js`).
 
 ## 7. Migration (decision D8)
 
