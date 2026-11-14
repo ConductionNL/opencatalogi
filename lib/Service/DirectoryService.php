@@ -2550,10 +2550,13 @@ class DirectoryService implements DirectoryServiceInterface {
 		$defaultGuzzleConfig = [
 			RequestOptions::TIMEOUT => 5,
 			RequestOptions::CONNECT_TIMEOUT => 2,
-			RequestOptions::HEADERS => [
-				'Accept' => 'application/json',
-				'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
-			],
+			RequestOptions::HEADERS => array_merge(
+				[
+					'Accept' => 'application/json',
+					'User-Agent' => 'OpenCatalogi-DirectoryService/1.0',
+				],
+				$this->peerLanguageHeaders()
+			),
 			RequestOptions::HTTP_ERRORS => false,
 		];
 		$lookup['client'] = new Client(array_merge($defaultGuzzleConfig, $lookup['guzzleConfig']));
@@ -2565,6 +2568,41 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		return $answers;
 	}//end fetchFromPeers()
+
+	/**
+	 * The language header a peer read forwards: the language the visitor asked
+	 * this instance for, so the peer answers in it and falls back to Dutch per
+	 * field the same way (publication-translations REQ-PTR-002).
+	 *
+	 * Nothing is forwarded when the visitor asked for no language, or when
+	 * OpenRegister has no language service: the peer then answers in its default.
+	 *
+	 * @return array<string, string> `Accept-Language` to the visitor's language, or empty.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function peerLanguageHeaders(): array {
+		try {
+			$languageService = $this->container->get('OCA\OpenRegister\Service\LanguageService');
+		} catch (\Throwable) {
+			return [];
+		}
+
+		if (is_object($languageService) === false
+			|| method_exists($languageService, 'getRequestedLanguageSource') === false
+			|| method_exists($languageService, 'getPreferredLanguage') === false
+			|| $languageService->getRequestedLanguageSource() === 'default'
+		) {
+			return [];
+		}
+
+		$language = (string)$languageService->getPreferredLanguage();
+		if ($language === '') {
+			return [];
+		}
+
+		return ['Accept-Language' => $language];
+	}//end peerLanguageHeaders()
 
 	/**
 	 * Call one peer and parse its answer.

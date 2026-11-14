@@ -31,6 +31,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
@@ -50,6 +51,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
+	use AnswersInTheVisitorsLanguage;
+
 	/**
 	 * FederationController constructor.
 	 *
@@ -59,6 +62,7 @@ class FederationController extends Controller {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
+	 * @param PublicationQueryServiceInterface|null $queryService Negotiates the visitor's language (REQ-PTR-002).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -67,6 +71,7 @@ class FederationController extends Controller {
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?WithheldFromPublicationInterface $withheld = null,
 		private readonly ?AppliedFilters $appliedFilters = null,
+		private readonly ?PublicationQueryServiceInterface $queryService = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -84,9 +89,12 @@ class FederationController extends Controller {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publications(): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		// Get all current query parameters.
 		$queryParams = $this->request->getParams();
 		$baseUrl = $this->paginationBaseUrl();
@@ -100,7 +108,7 @@ class FederationController extends Controller {
 			);
 			$responseData['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
-			return new JSONResponse($responseData);
+			return $this->withVisitorLanguageHeaders(response: new JSONResponse($responseData), queryService: $this->queryService);
 		} catch (\Exception $e) {
 			return $this->publicationsFailed(exception: $e);
 		}
@@ -160,9 +168,12 @@ class FederationController extends Controller {
 	 * @PublicPage
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publication(string $id): JSONResponse {
+		$this->negotiateVisitorLanguage(queryService: $this->queryService);
+
 		try {
 			// Use the service method to get the publication with federation support.
 			$result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
@@ -178,7 +189,10 @@ class FederationController extends Controller {
 				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
 			}
 
-			return new JSONResponse($result['data'], $result['status']);
+			return $this->withVisitorLanguageHeaders(
+				response: new JSONResponse($result['data'], $result['status']),
+				queryService: $this->queryService
+			);
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publication] Failed to retrieve publication',
