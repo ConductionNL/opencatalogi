@@ -131,4 +131,20 @@ class SavedSearchServiceTest extends TestCase {
 		$this->expectException(PortalInputException::class);
 		$this->service->save(owner: 'subject-1', input: ['title' => 'x', 'query' => ['text' => 'x']]);
 	}
+
+	public function testAQueryTextThatIsNotTextIsRefusedWithItsLimit(): void {
+		foreach ([
+			[['title' => 'x', 'query' => ['text' => ['wind']]], 'query.text must be text of at most 500 characters'],
+			[['title' => 'x', 'query' => ['text' => 'x', 'catalog' => str_repeat('c', 256)]], 'query.catalog must be text of at most 255 characters'],
+		] as [$input, $message]) {
+			try {
+				$this->service->save(owner: 'subject-1', input: $input);
+				$this->fail('Expected refusal: ' . $message);
+			} catch (PortalInputException $e) {
+				$this->assertSame($message, $e->getMessage());
+			}
+		}
+
+		$this->assertSame([], ($this->store->objects['savedSearch'] ?? []));
+	}
 }
