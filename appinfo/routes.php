@@ -22,6 +22,9 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// "App controller is not enabled". URL + auth posture unchanged.
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#page', 'url' => '/', 'verb' => 'GET'],
 
+		// Dashboard widgets: unpublished publications and documents the user can read.
+		['name' => 'unpublishedOverview#unpublished', 'url' => '/api/dashboard/unpublished', 'verb' => 'GET'],
+
 		// Catalogi
 		['name' => 'catalogi#index', 'url' => '/api/catalogi', 'verb' => 'GET'], // Public endpoint for getting all catalogs
 		['name' => 'catalogi#show', 'url' => '/api/catalogi/{id}', 'verb' => 'GET'],
