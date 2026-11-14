@@ -44,7 +44,8 @@ Read `openspec/woo-build-rules.md` before the first command. For every OpenRegis
 
 ## 7. Migration (decision D8)
 
-- [ ] 7.1 Add `OCA\OpenCatalogi\Repair\MoveDocumentsoortOutOfSummary` and register it in `appinfo/info.xml` under `<post-migration>` after `InitializeSettings` (REQ-DWP-005). Verify: `tests/Unit/Repair/MoveDocumentsoortOutOfSummaryTest.php` with `::testASummaryThatIsADocumentTypeIsMoved` (fails today: the class does not exist), `::testARealSummaryIsLeftAlone`, `::testASecondRunMovesNothing`, `::testTheStepIsRegisteredPostMigration` (reads `appinfo/info.xml`). gate-98 checks the registration too.
+- [x] 7.1 Add `OCA\OpenCatalogi\Repair\MoveDocumentsoortOutOfSummary` and register it in `appinfo/info.xml` under `<post-migration>` after `InitializeSettings` (REQ-DWP-005). Verify: `tests/Unit/Repair/MoveDocumentsoortOutOfSummaryTest.php` with `::testASummaryThatIsADocumentTypeIsMoved` (fails today: the class does not exist), `::testARealSummaryIsLeftAlone`, `::testASecondRunMovesNothing`, `::testTheStepIsRegisteredPostMigration` (reads `appinfo/info.xml`). gate-98 checks the registration too.
+  - Done: the step pages through every register's `publication` schema with OpenRegister's `ObjectService`, moves a trimmed summary that resolves through `resolveDocumentsoort()` when no type is stored, and reports moved, left and unsaved counts. A save a pre-save hook refuses (for example an incomplete Woo publication) is counted as not saved and logged; the run goes on.
 - [ ] 7.2 Run the step once on the dev instance against a publication carrying `summary` `besluit`, and record in the PR body the moved count and the object read back with `documentsoort` set (REQ-DWP-005). Verify: the read-back in the PR body. Set `appstoreenabled=false` before any `occ upgrade` on a mounted clone.
 
 ## 9. Docs

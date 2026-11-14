@@ -155,6 +155,13 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
 			<!--
+				Moves a document type written into a publication's summary to its own
+				field, and records once when the DiWoo fields were introduced
+				(diwoo-metadata-on-the-publication, REQ-DWP-005). After InitializeSettings,
+				which imports the schema that carries the field. Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\MoveDocumentsoortOutOfSummary</step>
+			<!--
 				Must run AFTER the register sync that adds the English columns, so it
 				can tell the rename case from the back-fill case. Idempotent and
 				non-destructive; safe to re-run.
