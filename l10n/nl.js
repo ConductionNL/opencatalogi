@@ -1507,7 +1507,11 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Alleen de groepen hieronder zien en bewerken de publicaties van deze catalogus.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
+        "Redaction log": "Laklogboek",
+        "What was removed from the partly public document and on which grounds, one entry per redacted passage. Internal: never part of a public response.": "Wat uit het deels openbare document is weggelakt en op welke gronden, één regel per gelakte passage. Intern: nooit onderdeel van een openbaar antwoord.",
+        "The redaction log cannot be read. The document stays unpublished.": "Het laklogboek kan niet worden gelezen. Het document blijft ongepubliceerd.",
+        "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s": "Publiceren is geblokkeerd: het laklogboek van deze deels openbare documenten ontbreekt, is leeg of heeft een passage zonder grond: %s"
     },
     "nplurals=2; plural=(n != 1);"
 )

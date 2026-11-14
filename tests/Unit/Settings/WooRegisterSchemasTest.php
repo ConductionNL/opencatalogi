@@ -90,6 +90,8 @@ class WooRegisterSchemasTest extends TestCase {
 		'anonymizedDocumentHash',
 		'redactionStatus',
 		'redactionMessage',
+		// The redaction log: what was removed and on which grounds (woo-review-surface, REQ-WRV-003).
+		'redactionLog',
 		'caseReference',
 		'assessedBy',
 		'assessedAt',
@@ -264,4 +266,29 @@ class WooRegisterSchemasTest extends TestCase {
 		}
 
 	}//end testWooSchemasShipAsARegisterFragmentNotInTheMonolith()
+
+	/**
+	 * The redaction log lives only on `wooAssessment`, which no public reader may read,
+	 * and no public schema carries it (REQ-WRV-003).
+	 *
+	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-redaction-log-records-what-was-removed-and-on-which-ground-req-wrv-003
+	 *
+	 * @return void
+	 */
+	public function testNoPublicResponseCarriesARedactionLog(): void {
+		$schemas = $this->effectiveRegister()['components']['schemas'];
+
+		$assessment = $schemas['wooAssessment'];
+		$this->assertSame('array', $assessment['properties']['redactionLog']['type']);
+		$this->assertSame(['admin'], $assessment['authorization']['read']);
+
+		$carriers = [];
+		foreach ($schemas as $slug => $schema) {
+			if (array_key_exists('redactionLog', ($schema['properties'] ?? [])) === true) {
+				$carriers[] = $slug;
+			}
+		}
+
+		$this->assertSame(['wooAssessment'], $carriers);
+	}//end testNoPublicResponseCarriesARedactionLog()
 }//end class

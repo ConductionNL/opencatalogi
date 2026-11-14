@@ -83,10 +83,27 @@ class RedactorFakeEntityRelationMapper {
 	/** @var array<int, int> */
 	public array $asked = [];
 
+	/** @var array<int, array<string, mixed>> */
+	public array $anonymised = [];
+
+	/** @var array<int, int> */
+	public array $logAsked = [];
+
+	public ?\Throwable $logThrow = null;
+
 	public function findEntitiesForAnonymization(int $fileId): array {
 		$this->asked[] = $fileId;
 		return $this->rows;
 	}//end findEntitiesForAnonymization()
+
+	public function findAnonymisedEntitiesWithBasesForFile(int $fileId): array {
+		$this->logAsked[] = $fileId;
+		if ($this->logThrow !== null) {
+			throw $this->logThrow;
+		}
+
+		return $this->anonymised;
+	}//end findAnonymisedEntitiesWithBasesForFile()
 }//end class
 
 /**
@@ -334,4 +351,101 @@ class DocumentRedactorTest extends TestCase {
 			$logged
 		);
 	}//end testFailuresAreLoggedWithoutTheirMessage()
+
+	/**
+	 * A verified redaction stores what OpenRegister removed, per passage, with its grounds (REQ-WRV-003).
+	 *
+	 * @return void
+	 */
+	public function testTheRedactionLogListsEachPassageWithItsGrounds(): void {
+		$this->relations->anonymised = [
+			['relation_id' => 7, 'entity_type' => 'PERSON', 'entity_value' => 'Jan Jansen', 'position_start' => 0, 'position_end' => 10, 'bases' => ['5.1.2.e']],
+			['relation_id' => 8, 'entity_type' => 'PHONE', 'entity_value' => '0612345678', 'position_start' => 17, 'position_end' => 27, 'bases' => ['5.1.2.e']],
+		];
+
+		$result = $this->redact();
+
+		$this->assertSame(DocumentRedactor::VERIFIED, $result['redactionStatus']);
+		$this->assertSame([11], $this->relations->logAsked);
+		$this->assertSame(
+			[
+				['relationId' => 7, 'entityType' => 'PERSON', 'positionStart' => 0, 'positionEnd' => 10, 'value' => 'Jan Jansen', 'grounds' => ['5.1.2.e']],
+				['relationId' => 8, 'entityType' => 'PHONE', 'positionStart' => 17, 'positionEnd' => 27, 'value' => '0612345678', 'grounds' => ['5.1.2.e']],
+			],
+			$result['redactionLog']
+		);
+		$this->assertSame(DocumentRedactor::LOG_GROUNDED, DocumentRedactor::redactionLogState($result['redactionLog']));
+	}//end testTheRedactionLogListsEachPassageWithItsGrounds()
+
+	/**
+	 * A passage OpenRegister holds without bases is logged with no grounds, so the log does not carry a publish.
+	 *
+	 * @return void
+	 */
+	public function testAPassageWithoutBasesIsLoggedWithoutAGround(): void {
+		$this->relations->anonymised = [
+			['relation_id' => 7, 'entity_type' => 'PERSON', 'entity_value' => 'Jan Jansen', 'position_start' => 0, 'position_end' => 10, 'bases' => ['5.1.2.e']],
+			['relation_id' => 8, 'entity_type' => 'PHONE', 'entity_value' => '0612345678', 'position_start' => 17, 'position_end' => 27, 'bases' => null],
+		];
+
+		$log = $this->redact()['redactionLog'];
+
+		$this->assertSame([], $log[1]['grounds']);
+		$this->assertSame(DocumentRedactor::LOG_UNGROUNDED, DocumentRedactor::redactionLogState($log));
+	}//end testAPassageWithoutBasesIsLoggedWithoutAGround()
+
+	/**
+	 * A log that cannot be read leaves no verified redacted version (fail closed).
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableLogFailsTheRedactionClosed(): void {
+		$this->relations->logThrow = new \RuntimeException('Jan Jansen');
+
+		$result = $this->redact();
+
+		$this->assertFailedClosed($result, 'redaction log cannot be read');
+		$this->assertSame([], $result['redactionLog']);
+	}//end testAnUnreadableLogFailsTheRedactionClosed()
+
+	/**
+	 * A failed redaction neither reads nor keeps a log.
+	 *
+	 * @return void
+	 */
+	public function testAFailedRedactionReadsNoLog(): void {
+		$this->files->result = $this->original;
+
+		$result = $this->redact();
+
+		$this->assertSame([], $result['redactionLog']);
+		$this->assertSame([], $this->relations->logAsked);
+	}//end testAFailedRedactionReadsNoLog()
+
+	/**
+	 * The log states: only a non-empty list whose every entry names a ground carries a publish.
+	 *
+	 * @return void
+	 */
+	public function testTheLogStateOfEachShape(): void {
+		$this->assertSame(DocumentRedactor::LOG_UNREADABLE, DocumentRedactor::redactionLogState(null));
+		$this->assertSame(DocumentRedactor::LOG_UNREADABLE, DocumentRedactor::redactionLogState('[]'));
+		$this->assertSame(DocumentRedactor::LOG_UNREADABLE, DocumentRedactor::redactionLogState(['a' => ['grounds' => ['5.1.2.e']]]));
+		$this->assertSame(DocumentRedactor::LOG_EMPTY, DocumentRedactor::redactionLogState([]));
+		$this->assertSame(DocumentRedactor::LOG_UNGROUNDED, DocumentRedactor::redactionLogState([['grounds' => ['5.1.2.e']], ['grounds' => []]]));
+		$this->assertSame(DocumentRedactor::LOG_UNGROUNDED, DocumentRedactor::redactionLogState([['value' => 'x']]));
+		$this->assertSame(DocumentRedactor::LOG_UNGROUNDED, DocumentRedactor::redactionLogState(['not an entry']));
+		$this->assertSame(DocumentRedactor::LOG_GROUNDED, DocumentRedactor::redactionLogState([['grounds' => ['5.1.2.e']]]));
+	}//end testTheLogStateOfEachShape()
+
+	/**
+	 * A document that is not partly public carries no log, so an earlier one is dropped.
+	 *
+	 * @return void
+	 */
+	public function testANonPartlyPublicAssessmentDropsTheLog(): void {
+		$result = $this->redactor()->forAssessment(['assessment' => 'openbaar', 'redactionLog' => [['value' => 'x']]], null, 'alice');
+
+		$this->assertSame([], $result['redactionLog']);
+	}//end testANonPartlyPublicAssessmentDropsTheLog()
 }//end class

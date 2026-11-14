@@ -153,6 +153,11 @@ class WooFakeEntityRelationMapper {
 	public function findEntitiesForAnonymization(int $fileId): array {
 		return [['entity_value' => 'Jan Jansen', 'entity_type' => 'PERSON']];
 	}//end findEntitiesForAnonymization()
+
+	/** Mirrors openregister EntityRelationMapper::findAnonymisedEntitiesWithBasesForFile. */
+	public function findAnonymisedEntitiesWithBasesForFile(int $fileId): array {
+		return [['relation_id' => 1, 'entity_type' => 'PERSON', 'entity_value' => 'Jan Jansen', 'position_start' => 0, 'position_end' => 10, 'bases' => ['5.1.2.e']]];
+	}//end findAnonymisedEntitiesWithBasesForFile()
 }//end class
 
 /**
@@ -1125,6 +1130,7 @@ class WooServiceTest extends TestCase {
 				'anonymizedDocument' => 'doc-c-anon',
 				'anonymizedDocumentHash' => hash('sha256', 'inhoud van c-gelakt.pdf'),
 				'redactionStatus' => 'verified',
+				'redactionLog' => [['relationId' => 1, 'entityType' => 'PERSON', 'positionStart' => 0, 'positionEnd' => 10, 'value' => 'Jan Jansen', 'grounds' => ['5.2.e']]],
 				'weigeringsgronden' => ['5.2.e'],
 			],
 			$fourth,

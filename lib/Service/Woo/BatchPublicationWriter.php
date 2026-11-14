@@ -108,6 +108,8 @@ class BatchPublicationWriter {
 				$listing['original'] = $document;
 				$listing['redactionStatus'] = (string)($assessment['redactionStatus'] ?? '');
 				$listing['redactionHash'] = (string)($assessment['anonymizedDocumentHash'] ?? '');
+				// Only whether the log may carry a publish; its values stay on the assessment.
+				$listing['redactionLogState'] = DocumentRedactor::redactionLogState(log: ($assessment['redactionLog'] ?? null));
 			}
 
 			$listings[] = $listing;

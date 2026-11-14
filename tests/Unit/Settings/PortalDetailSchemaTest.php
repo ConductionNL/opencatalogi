@@ -40,6 +40,6 @@ class PortalDetailSchemaTest extends TestCase {
 		$this->assertSame(['type' => 'boolean', 'default' => false], array_intersect_key($catalog['properties']['showWithheld'], ['type' => 1, 'default' => 1]));
 		$this->assertSame(['type' => 'boolean', 'default' => false], array_intersect_key($assessment['properties']['titlePublic'], ['type' => 1, 'default' => 1]));
 		$this->assertSame('0.4.0', $catalog['version'], 'a schema change moves its version');
-		$this->assertSame('0.3.0', $assessment['version'], 'a schema change moves its version');
+		$this->assertSame('0.4.0', $assessment['version'], 'a schema change moves its version');
 	}//end testTheDefaultsAreOff()
 }//end class
