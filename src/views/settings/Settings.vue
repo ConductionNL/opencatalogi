@@ -230,6 +230,12 @@
 							</div>
 						</li>
 					</ul>
+					<p
+						v-if="wooReadinessReport.mapping"
+						class="woo-readiness-mapping"
+						data-testid="woo-readiness-mapping">
+						{{ wooIndexMappingLine(wooReadinessReport.mapping) }}
+					</p>
 				</div>
 
 				<p v-else-if="!wooReadinessRunning" class="woo-readiness-empty">
@@ -1312,6 +1318,23 @@ export default defineComponent({
 			if (result.success) {
 				await Promise.all([this.loadVersionInfo(), this.loadSettings()])
 			}
+		},
+
+		/**
+		 * The one line saying where the Woo-index fields come from (REQ-WIM-004).
+		 *
+		 * @param {{source: string, refusal: ?{code: string, reason: string}}} mapping The report's `mapping`.
+		 * @return {string} The line.
+		 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+		 */
+		wooIndexMappingLine(mapping) {
+			const line = mapping.source === 'integriq'
+				? t('opencatalogi', 'Woo-index fields from integriq mapping woo-index-publication')
+				: t('opencatalogi', 'Woo-index fields built in')
+			if (!mapping.refusal) {
+				return line
+			}
+			return t('opencatalogi', '{line} (integriq refused: {code}, {reason})', { line, code: mapping.refusal.code, reason: mapping.refusal.reason })
 		},
 
 		/**

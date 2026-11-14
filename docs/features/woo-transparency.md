@@ -46,6 +46,10 @@ Press **Request registration**. OpenCatalogi composes the request: the organisat
 
 With no gateway installed, nothing is recorded as sent. The panel shows the composed request, so you can send it another way. When the Woo-index confirms, press **Mark as registered**.
 
+### Where the Woo-index fields come from
+
+Four fields of each document in the sitemap can be set from integriq's mapping `woo-index-publication`: the publisher, the official title (`officieleTitel`), the information category and the handling type (`soortHandeling`). An administrator changes where a field comes from on integriq's Mappings page; the next sitemap carries the change. OpenCatalogi asks the mapping once per publication. A field the mapping leaves empty keeps OpenCatalogi's own value, and so does every field when integriq is not installed or refuses (for example because the mapping no longer lists `opencatalogi` among the apps that may run it). A mapped value is checked exactly like OpenCatalogi's own: a category outside the informatiecategorieen list, a publisher that is not a TOOI organisation URI or a handling type that is not a DiWoo value is left out and shows in the readiness check. The readiness card says in one line whether the fields came from the mapping or are built in, with integriq's refusal when there was one.
+
 ### A current verdict
 
 The readiness check runs once a day while a catalogue publishes a Woo sitemap. It also runs once right after a catalogue is switched on for Woo.

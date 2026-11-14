@@ -412,6 +412,91 @@ class SitemapServiceTest extends TestCase {
 	// mapDiwooDocument (private, via reflection)
 	// ──────────────────────────────────────────────────────────
 
+	/**
+	 * A sitemap service whose Woo-index fields come from a listener answering
+	 * on integriq's event class (REQ-WIM-001).
+	 *
+	 * @param callable(\OCA\Integriq\Event\MappingExecutionRequestedEvent): void $answer How integriq answers.
+	 * @param string $eventClass The event class the mapper dispatches.
+	 *
+	 * @return SitemapService
+	 */
+	private function mappedService(callable $answer, string $eventClass = \OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper::EVENT_CLASS): SitemapService {
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(static function (object $event) use ($answer): void {
+			$answer($event);
+		});
+
+		return new SitemapService(
+			new OpenRegisterLookup($this->container, $this->appManager),
+			$this->settingsService,
+			new InstanceSettings($this->urlGenerator, $this->config),
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
+			$this->wooCategories,
+			new \OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper($dispatcher, $eventClass)
+		);
+	}
+
+	/**
+	 * The publication and file the mapping tests share.
+	 *
+	 * @return array{0: array<string, mixed>, 1: array<string, mixed>}
+	 */
+	private static function mappedPublicationAndFile(): array {
+		return [
+			[
+				'id' => 'pub-9',
+				'title' => 'Besluit',
+				'summary' => 'Besluit windpark Oostpolder',
+				'category' => 'infocat014',
+				'soortHandeling' => 'vaststelling',
+				'tooiIdentifier' => 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855',
+				'@self' => ['id' => 'pub-9', 'created' => '2024-01-15 10:00:00', 'updated' => '2024-06-20 14:30:00'],
+			],
+			['downloadUrl' => 'https://example.com/files/doc.pdf', 'extension' => 'pdf', 'published' => '2024-05-10 12:00:00'],
+		];
+	}
+
+	/**
+	 * When the mapping takes officieleTitel from the summary, the sitemap carries it (REQ-WIM-001).
+	 *
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
+	 */
+	public function testAMappedOfficialTitleIsInTheSitemap(): void {
+		[$publication, $file] = self::mappedPublicationAndFile();
+		$service = $this->mappedService(static function (\OCA\Integriq\Event\MappingExecutionRequestedEvent $event): void {
+			$event->setOutput(['officieleTitel' => $event->getInput()['summary']]);
+		});
+
+		$doc = $this->getPrivateMethod('mapDiwooDocument')->invoke($service, $publication, $file)['diwoo:Document']['diwoo:DiWoo'];
+
+		$this->assertSame(['diwoo:officieleTitel' => 'Besluit windpark Oostpolder'], $doc['diwoo:titelcollectie']);
+		$this->assertSame('vaststelling', $doc['diwoo:documenthandelingen']['diwoo:documenthandeling']['diwoo:soortHandeling']['#text'], 'unmapped fields keep their built-in read');
+	}
+
+	/**
+	 * Without integriq, or with a refused mapping, the document is exactly
+	 * what it was before this change (REQ-WIM-002).
+	 *
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-sitemap-never-depends-on-the-mapping-answering-req-wim-002
+	 */
+	public function testWithoutIntegriqTheSitemapIsUnchanged(): void {
+		[$publication, $file] = self::mappedPublicationAndFile();
+		$method = $this->getPrivateMethod('mapDiwooDocument');
+		$before = json_encode($method->invoke($this->service, $publication, $file));
+
+		$absent = $this->mappedService(static function (): void {
+			self::fail('nothing is dispatched without integriq');
+		}, 'OCA\\Missing\\MappingExecutionRequestedEvent');
+		$refused = $this->mappedService(static function (\OCA\Integriq\Event\MappingExecutionRequestedEvent $event): void {
+			$event->refuse('not on the list', 'not-allowed');
+		});
+
+		$this->assertSame($before, json_encode($method->invoke($absent, $publication, $file)));
+		$this->assertSame($before, json_encode($method->invoke($refused, $publication, $file)));
+	}
+
 	public function testMapDiwooDocument(): void {
 		// Fully value-list-bindable publication: category resolves to infocat014,
 		// organisation carries a valid TOOI organisatie identifier, declared

@@ -565,4 +565,55 @@ XML;
 
 		$this->assertSame([], $catalogChecks);
 	}
+
+	/**
+	 * The report says where the Woo-index fields come from: built in without
+	 * integriq, from the mapping when it fills fields, with the refusal when
+	 * integriq refuses (REQ-WIM-004).
+	 *
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-the-administrator-sees-where-the-fields-come-from-req-wim-004
+	 */
+	public function testTheReportNamesTheMappingSource(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+
+		$this->assertSame(['source' => 'built-in', 'refusal' => null, 'fieldsFromMapping' => []], $this->service->runCheck()['mapping']);
+
+		$answer = static function (\OCA\Integriq\Event\MappingExecutionRequestedEvent $event): void {
+			$event->setOutput(['publisher' => '', 'officieleTitel' => $event->getInput()['summary'], 'soortHandeling' => 'ontvangst']);
+		};
+		$this->assertSame(
+			['source' => 'integriq', 'refusal' => null, 'fieldsFromMapping' => ['officieleTitel', 'soortHandeling']],
+			$this->serviceWithMapping($answer)->runCheck()['mapping']
+		);
+
+		$refused = $this->serviceWithMapping(static function (\OCA\Integriq\Event\MappingExecutionRequestedEvent $event): void {
+			$event->refuse('No mapping has this slug.', 'not-found');
+		})->runCheck()['mapping'];
+		$this->assertSame(['source' => 'built-in', 'refusal' => ['code' => 'not-found', 'reason' => 'No mapping has this slug.'], 'fieldsFromMapping' => []], $refused);
+	}
+
+	/**
+	 * The service with a field mapper whose listener answers as given.
+	 *
+	 * @param callable $answer How integriq answers the event.
+	 *
+	 * @return WooReadinessService
+	 */
+	private function serviceWithMapping(callable $answer): WooReadinessService {
+		$dispatcher = $this->createMock(\OCP\EventDispatcher\IEventDispatcher::class);
+		$dispatcher->method('dispatchTyped')->willReturnCallback(static function (object $event) use ($answer): void {
+			$answer($event);
+		});
+
+		return new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			new SitemapStandards($this->sitemapService, $this->standardsVersionService),
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			new \OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper($dispatcher)
+		);
+	}
 }
