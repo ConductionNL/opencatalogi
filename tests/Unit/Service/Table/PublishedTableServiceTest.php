@@ -29,6 +29,7 @@ use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Table\PublishedTableService;
 use OCA\OpenCatalogi\Contract\TableFile;
 use OCA\OpenRegister\Service\Import\ImportCommit;
+use OCP\IURLGenerator;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
@@ -189,6 +190,10 @@ class PublishedTableServiceTest extends TestCase {
 
 	private PublishedTableService $service;
 
+	private ContainerInterface $container;
+
+	private OpenRegisterLookupInterface $registers;
+
 	/**
 	 * Wire the service to the fakes.
 	 *
@@ -223,8 +228,24 @@ class PublishedTableServiceTest extends TestCase {
 			}
 		);
 
+		$this->container = $container;
+		$this->registers = $registers;
 		$this->service = new PublishedTableService(registers: $registers, container: $container);
 	}//end setUp()
+
+	/**
+	 * The service with a URL generator that spells out each route and its arguments.
+	 *
+	 * @return PublishedTableService
+	 */
+	private function serviceWithUrls(): PublishedTableService {
+		$urls = $this->createMock(IURLGenerator::class);
+		$urls->method('linkToRouteAbsolute')->willReturnCallback(
+			static fn (string $route, array $args): string => 'https://example.org/'.$route.'/'.$args['catalogSlug'].'/'.$args['publicationId'].'/'.$args['tableId']
+		);
+
+		return new PublishedTableService(registers: $this->registers, container: $this->container, urls: $urls);
+	}//end serviceWithUrls()
 
 	/**
 	 * Publish the playground list.
@@ -436,4 +457,89 @@ class PublishedTableServiceTest extends TestCase {
 		$this->openRegister->found = new \RuntimeException('forbidden');
 		$this->assertFalse($this->service->canReadPublication(publicationId: 'p1'));
 	}//end testAPublicationIsReadableOnlyWhenFoundWithRbac()
+
+	/**
+	 * A publication's ready tables are listed with their rows and dictionary URLs.
+	 *
+	 * @return void
+	 */
+	public function testTablesOfListsReadyTablesWithTheirUrls(): void {
+		$this->openRegister->searchAnswer = [
+			'results' => [
+				['id' => 't1', 'title' => 'speeltuinen.csv', 'file' => '77', 'rowCount' => 2, 'status' => 'ready'],
+				['id' => 't2', 'title' => 'oud.csv', 'file' => '78', 'status' => 'failed'],
+			],
+		];
+
+		$tables = $this->serviceWithUrls()->tablesOf(publicationId: 'p1', catalogSlug: 'speeltuinen');
+
+		$this->assertSame(
+			[
+				[
+					'id' => 't1',
+					'title' => 'speeltuinen.csv',
+					'file' => '77',
+					'rowCount' => 2,
+					'rowsUrl' => 'https://example.org/opencatalogi.publishedTable.rows/speeltuinen/p1/t1',
+					'dictionaryUrl' => 'https://example.org/opencatalogi.publishedTable.dictionary/speeltuinen/p1/t1',
+				],
+			],
+			$tables
+		);
+		$this->assertSame(
+			[
+				'query' => ['@self' => ['register' => 'pub', 'schema' => 'tbl'], 'publication' => 'p1', 'status' => 'ready', '_limit' => 100],
+				'_rbac' => false,
+				'_multitenancy' => false,
+			],
+			$this->openRegister->searches[0]
+		);
+	}//end testTablesOfListsReadyTablesWithTheirUrls()
+
+	/**
+	 * Without a publication nothing is searched; without a URL generator the URLs are empty.
+	 *
+	 * @return void
+	 */
+	public function testTablesOfWithoutAPublicationOrUrlGenerator(): void {
+		$this->assertSame([], $this->service->tablesOf(publicationId: '', catalogSlug: 'c'));
+		$this->assertSame([], $this->openRegister->searches);
+
+		$this->openRegister->searchAnswer = ['results' => [['id' => 't1', 'file' => '77', 'status' => 'ready']]];
+		$tables = $this->service->tablesOf(publicationId: 'p1', catalogSlug: 'c');
+		$this->assertSame('', $tables[0]['rowsUrl']);
+		$this->assertSame('', $tables[0]['dictionaryUrl']);
+		$this->assertSame(0, $tables[0]['rowCount']);
+	}//end testTablesOfWithoutAPublicationOrUrlGenerator()
+
+	/**
+	 * Only the file published as a table gets its dictionary URL.
+	 *
+	 * @return void
+	 */
+	public function testWithDictionaryUrlsMarksTheTablesFile(): void {
+		$this->openRegister->searchAnswer = ['results' => [['id' => 't1', 'file' => '77', 'status' => 'ready']]];
+		$files = [['id' => 77, 'title' => 'speeltuinen.csv'], ['id' => 80, 'title' => 'toelichting.pdf']];
+
+		$this->assertSame(
+			[
+				['id' => 77, 'title' => 'speeltuinen.csv', 'dataDictionaryUrl' => 'https://example.org/opencatalogi.publishedTable.dictionary/c/p1/t1'],
+				['id' => 80, 'title' => 'toelichting.pdf'],
+			],
+			$this->serviceWithUrls()->withDictionaryUrls(files: $files, publicationId: 'p1', catalogSlug: 'c')
+		);
+	}//end testWithDictionaryUrlsMarksTheTablesFile()
+
+	/**
+	 * Without tables, or without URLs, the files come back unchanged.
+	 *
+	 * @return void
+	 */
+	public function testWithDictionaryUrlsLeavesFilesWithoutTablesAlone(): void {
+		$files = [['id' => 77]];
+		$this->assertSame($files, $this->serviceWithUrls()->withDictionaryUrls(files: $files, publicationId: 'p1', catalogSlug: 'c'));
+
+		$this->openRegister->searchAnswer = ['results' => [['id' => 't1', 'file' => '77', 'status' => 'ready']]];
+		$this->assertSame($files, $this->service->withDictionaryUrls(files: $files, publicationId: 'p1', catalogSlug: 'c'));
+	}//end testWithDictionaryUrlsLeavesFilesWithoutTablesAlone()
 }//end class

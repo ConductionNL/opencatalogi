@@ -100,4 +100,29 @@ interface PublishedTableServiceInterface {
 	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-anyone-queries-the-rows-of-a-public-table-req-odt-002
 	 */
 	public function rows(array $table, array $query): array;
+
+	/**
+	 * The ready tables of a publication, each with its rows and dictionary URLs.
+	 *
+	 * @param string $publicationId The publication.
+	 * @param string $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, array<string, mixed>> The tables: id, title, file, rowCount, rowsUrl, dictionaryUrl.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function tablesOf(string $publicationId, string $catalogSlug): array;
+
+	/**
+	 * Give each file published as a table its `dataDictionaryUrl`, for the DCAT distribution.
+	 *
+	 * @param array<int, array<string, mixed>> $files         formatFiles-shape file entries.
+	 * @param string                           $publicationId The publication the files belong to.
+	 * @param string                           $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, array<string, mixed>> The files, a table's file with its dictionary URL.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function withDictionaryUrls(array $files, string $publicationId, string $catalogSlug): array;
 }//end interface

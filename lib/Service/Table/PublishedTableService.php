@@ -27,6 +27,7 @@ use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\TableFile;
 use OCA\OpenRegister\Service\Import\ImportCommit;
+use OCP\IURLGenerator;
 use OCP\IUser;
 use Psr\Container\ContainerInterface;
 
@@ -89,10 +90,12 @@ class PublishedTableService implements PublishedTableServiceInterface {
 	 *
 	 * @param OpenRegisterLookupInterface $registers The OpenRegister ObjectService and register configuration.
 	 * @param ContainerInterface $container Resolves OpenRegister's schema, register and import services.
+	 * @param IURLGenerator|null $urls The URL generator for the rows and dictionary URLs; null leaves them empty.
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookupInterface $registers,
 		private readonly ContainerInterface $container,
+		private readonly ?IURLGenerator $urls = null,
 	) {
 	}//end __construct()
 
@@ -363,6 +366,109 @@ class PublishedTableService implements PublishedTableServiceInterface {
 			'pages' => (int)($found['pages'] ?? 1),
 		];
 	}//end rows()
+
+	/**
+	 * The ready tables of a publication, each with its rows and dictionary URLs.
+	 *
+	 * @param string $publicationId The publication.
+	 * @param string $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, array<string, mixed>> The tables: id, title, file, rowCount, rowsUrl, dictionaryUrl.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function tablesOf(string $publicationId, string $catalogSlug): array {
+		if ($publicationId === '') {
+			return [];
+		}
+
+		$found = $this->tables()->search(filters: ['publication' => $publicationId, 'status' => self::STATUS_READY, '_limit' => 100]);
+		$tables = [];
+		foreach ((array)(self::plain(value: $found)['results'] ?? []) as $record) {
+			$table = self::plain(value: $record);
+			if (is_array($table) === true && ($table['status'] ?? null) === self::STATUS_READY) {
+				$tables[] = $this->tableEntry(table: $table, publicationId: $publicationId, catalogSlug: $catalogSlug);
+			}
+		}
+
+		return $tables;
+	}//end tablesOf()
+
+	/**
+	 * Give each file published as a table its `dataDictionaryUrl`, for the DCAT distribution.
+	 *
+	 * @param array<int, array<string, mixed>> $files         formatFiles-shape file entries.
+	 * @param string                           $publicationId The publication the files belong to.
+	 * @param string                           $catalogSlug   The catalogue the URLs are under.
+	 *
+	 * @return array<int, array<string, mixed>> The files, a table's file with its dictionary URL.
+	 *
+	 * @spec openspec/changes/open-data-table-query-and-dictionary/specs/open-data-tables/spec.md#requirement-readers-see-what-each-column-means-req-odt-003
+	 */
+	public function withDictionaryUrls(array $files, string $publicationId, string $catalogSlug): array {
+		$urls = [];
+		foreach ($this->tablesOf(publicationId: $publicationId, catalogSlug: $catalogSlug) as $table) {
+			$urls[$table['file']] ??= $table['dictionaryUrl'];
+		}
+
+		if ($urls === []) {
+			return $files;
+		}
+
+		return array_map(
+			static function (mixed $file) use ($urls): mixed {
+				if (is_array($file) === false || ($urls[(string)($file['id'] ?? '')] ?? '') === '') {
+					return $file;
+				}
+
+				return array_merge($file, ['dataDictionaryUrl' => $urls[(string)$file['id']]]);
+			},
+			$files
+		);
+	}//end withDictionaryUrls()
+
+	/**
+	 * One table as the public publication answer lists it.
+	 *
+	 * @param array<string, mixed> $table         The table record.
+	 * @param string               $publicationId The publication.
+	 * @param string               $catalogSlug   The catalogue.
+	 *
+	 * @return array<string, mixed> The entry.
+	 */
+	private function tableEntry(array $table, string $publicationId, string $catalogSlug): array {
+		$id = (string)($table['id'] ?? $table['@self']['id'] ?? '');
+
+		return [
+			'id' => $id,
+			'title' => (string)($table['title'] ?? ''),
+			'file' => (string)($table['file'] ?? ''),
+			'rowCount' => (int)($table['rowCount'] ?? 0),
+			'rowsUrl' => $this->tableUrl(route: 'rows', catalogSlug: $catalogSlug, publicationId: $publicationId, tableId: $id),
+			'dictionaryUrl' => $this->tableUrl(route: 'dictionary', catalogSlug: $catalogSlug, publicationId: $publicationId, tableId: $id),
+		];
+	}//end tableEntry()
+
+	/**
+	 * The absolute URL of a table's public rows or dictionary endpoint.
+	 *
+	 * @param string $route         `rows` or `dictionary`.
+	 * @param string $catalogSlug   The catalogue.
+	 * @param string $publicationId The publication.
+	 * @param string $tableId       The table.
+	 *
+	 * @return string The URL; empty without a URL generator.
+	 */
+	private function tableUrl(string $route, string $catalogSlug, string $publicationId, string $tableId): string {
+		if ($this->urls === null) {
+			return '';
+		}
+
+		return $this->urls->linkToRouteAbsolute(
+			'opencatalogi.publishedTable.'.$route,
+			['catalogSlug' => $catalogSlug, 'publicationId' => $publicationId, 'tableId' => $tableId]
+		);
+	}//end tableUrl()
 
 	/**
 	 * An OpenRegister entity as its array, anything else as it is.

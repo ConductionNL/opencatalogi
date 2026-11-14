@@ -5,7 +5,7 @@
 - [x] 1.1 Add `publishedTable` and provision the `open-data-tables` register in `lib/Settings/register.d/open-data-tables.json` (REQ-ODT-001). Verify: clean `occ app:enable` imports both.
 - [x] 1.2 Add `PublishedTableService::createFromFile()` that builds the schema from the header and a 200-row sample (REQ-ODT-001). Verify: `tests/Unit/Service/PublishedTableServiceTest.php` with a CSV of mixed column types.
 - [x] 1.3 Drive OpenRegister's import preview and commit, storing `failed` with the first refused row (REQ-ODT-001). Verify: same test class with a fake import service, a clean and a refused file.
-- [ ] 1.4 Tie the table schema's read rule to the publication being public (REQ-ODT-002). Verify: API test reads rows anonymously for a public publication and gets nothing for a draft.
+- [x] 1.4 Tie the table schema's read rule to the publication being public (REQ-ODT-002). Verify: API test reads rows anonymously for a public publication and gets nothing for a draft.
 
 ## 2. Query
 
@@ -13,8 +13,8 @@
 
 ## 3. Dictionary
 
-- [ ] 3.1 Add `GET .../tables/{tableId}/dictionary` and list tables on the public publication answer (REQ-ODT-003). Verify: controller test.
-- [ ] 3.2 Add `dct:conformsTo` with the dictionary URL to the CSV's DCAT distribution (REQ-ODT-003). Verify: `tests/Unit/Service/DcatMappingServiceTest.php`.
+- [x] 3.1 Add `GET .../tables/{tableId}/dictionary` and list tables on the public publication answer (REQ-ODT-003). Verify: controller test.
+- [x] 3.2 Add `dct:conformsTo` with the dictionary URL to the CSV's DCAT distribution (REQ-ODT-003). Verify: `tests/Unit/Service/DcatMappingServiceTest.php`.
 
 ## 4. Screen
 
