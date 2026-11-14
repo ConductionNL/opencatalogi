@@ -38,6 +38,7 @@ OC.L10N.register(
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -275,6 +276,7 @@ OC.L10N.register(
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1516,7 +1518,8 @@ OC.L10N.register(
         "Updated at": "Bijgewerkt op",
         "When the reading job last recorded the state.": "Wanneer de leestaak de status voor het laatst heeft vastgelegd.",
         "Why the attachment has this state, when the state alone does not say it.": "Waarom de bijlage deze status heeft, als de status dat zelf niet zegt.",
-        "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.": "typed: OpenRegister heeft tekst uitgelezen; ocr: OCR heeft het bestand gelezen; waiting: OCR is uitgevoerd en de tekst is nog niet geïndexeerd; none: er is geen tekst gevonden; unavailable: er is geen OCR geïnstalleerd; failed: lezen is mislukt, zie de reden."
+        "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.": "typed: OpenRegister heeft tekst uitgelezen; ocr: OCR heeft het bestand gelezen; waiting: OCR is uitgevoerd en de tekst is nog niet geïndexeerd; none: er is geen tekst gevonden; unavailable: er is geen OCR geïnstalleerd; failed: lezen is mislukt, zie de reden.",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "nplurals=2; plural=(n != 1);"
 )
