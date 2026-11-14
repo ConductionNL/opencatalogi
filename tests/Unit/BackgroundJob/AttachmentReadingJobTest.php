@@ -20,6 +20,7 @@ namespace Unit\BackgroundJob;
 
 use OCA\OpenCatalogi\BackgroundJob\AttachmentReadingJob;
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
+use OCA\OpenCatalogi\Service\AttachmentReading\RedactedOriginalGuard;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\Files\File;
@@ -85,6 +86,13 @@ class AttachmentReadingJobTest extends TestCase {
 
 	private string $mimeType = 'application/pdf';
 
+	/**
+	 * The redaction guard the job is built with, or null for none.
+	 *
+	 * @var RedactedOriginalGuard|null
+	 */
+	private ?RedactedOriginalGuard $guard = null;
+
 	/** @var list<array<string, mixed>> */
 	private array $recorded = [];
 
@@ -135,7 +143,8 @@ class AttachmentReadingJobTest extends TestCase {
 			$apps,
 			$root,
 			$store,
-			new NullLogger()
+			new NullLogger(),
+			$this->guard
 		);
 	}//end job()
 
@@ -161,6 +170,54 @@ class AttachmentReadingJobTest extends TestCase {
 			eval('namespace OCA\Filinq\Service\Ocr; class OcrExtractionFallback {}');
 		}
 	}//end defineFilinqClass()
+
+	/**
+	 * A guard that answers for this file.
+	 *
+	 * @param bool|null $answer What isRedactedOriginal() answers.
+	 *
+	 * @return void
+	 */
+	private function guardAnswers(?bool $answer): void {
+		$this->guard = $this->createMock(RedactedOriginalGuard::class);
+		$this->guard->method('isRedactedOriginal')->willReturn($answer);
+	}//end guardAnswers()
+
+	public function testTheOriginalOfARedactedDocumentIsNeverRead(): void {
+		$this->defineFilinqClass();
+		$this->extractor->text = '';
+		$this->fallback = new ReadingFakeFallback(['ocr' => ['ran' => true, 'ingested' => true]]);
+		$this->guardAnswers(answer: true);
+
+		$this->runJob(['fileId' => 42, 'publication' => 'pub-1']);
+
+		$this->assertSame(
+			[['fileId' => 42, 'publication' => 'pub-1', 'state' => 'none', 'reason' => 'Original of a redacted document is not indexed']],
+			$this->recorded
+		);
+		$this->assertSame([], $this->extractor->asked, 'the original is not even read for typed text');
+		$this->assertSame([], $this->fallback->calls, 'the original is never sent to OCR');
+	}//end testTheOriginalOfARedactedDocumentIsNeverRead()
+
+	public function testAnUncheckableFileIsNotRead(): void {
+		$this->defineFilinqClass();
+		$this->guardAnswers(answer: null);
+
+		$this->runJob(['fileId' => 42, 'publication' => 'pub-1']);
+
+		$this->assertSame('failed', $this->recorded[0]['state']);
+		$this->assertSame([], $this->extractor->asked);
+	}//end testAnUncheckableFileIsNotRead()
+
+	public function testAFileThatIsNoRedactedOriginalIsReadAsBefore(): void {
+		$this->defineFilinqClass();
+		$this->extractor->text = 'Besluit op het verzoek om informatie';
+		$this->guardAnswers(answer: false);
+
+		$this->runJob(['fileId' => 42, 'publication' => 'pub-1']);
+
+		$this->assertSame('typed', $this->recorded[0]['state']);
+	}//end testAFileThatIsNoRedactedOriginalIsReadAsBefore()
 
 	public function testATypedPdfIsRecordedAsTypedWithoutOcr(): void {
 		$this->defineFilinqClass();

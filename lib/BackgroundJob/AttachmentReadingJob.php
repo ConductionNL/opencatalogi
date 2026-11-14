@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\BackgroundJob;
 
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
+use OCA\OpenCatalogi\Service\AttachmentReading\RedactedOriginalGuard;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
@@ -97,6 +98,11 @@ class AttachmentReadingJob extends QueuedJob {
 	public const OCR_FALLBACK_METHOD = 'afterExtraction';
 
 	/**
+	 * The reason recorded for the original of a redacted document (design D3).
+	 */
+	public const REDACTED_ORIGINAL = 'Original of a redacted document is not indexed';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
@@ -105,6 +111,7 @@ class AttachmentReadingJob extends QueuedJob {
 	 * @param IRootFolder $rootFolder The file's MIME type.
 	 * @param AttachmentReadingStore $store Records the state.
 	 * @param LoggerInterface $logger Logger.
+	 * @param RedactedOriginalGuard|null $redactions Tells the original of a redacted document; null reads every file.
 	 */
 	public function __construct(
 		ITimeFactory $time,
@@ -113,6 +120,7 @@ class AttachmentReadingJob extends QueuedJob {
 		private readonly IRootFolder $rootFolder,
 		private readonly AttachmentReadingStore $store,
 		private readonly LoggerInterface $logger,
+		private readonly ?RedactedOriginalGuard $redactions=null,
 	) {
 		parent::__construct(time: $time);
 
@@ -162,6 +170,22 @@ class AttachmentReadingJob extends QueuedJob {
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-without-filinq-the-state-says-so-and-nothing-breaks-req-socr-002
 	 */
 	public function read(int $fileId, bool $force): array {
+		// Only the published bytes are read (design D3): the original of a
+		// redacted document never reaches the text index. Fails closed: a
+		// guard that cannot check reads nothing.
+		$redacted = false;
+		if ($this->redactions !== null) {
+			$redacted = $this->redactions->isRedactedOriginal(fileId: $fileId);
+		}
+
+		if ($redacted === true) {
+			return [self::STATE_NONE, self::REDACTED_ORIGINAL];
+		}
+
+		if ($redacted === null) {
+			return [self::STATE_FAILED, 'Whether this is the original of a redacted document could not be checked'];
+		}
+
 		$extractor = $this->textExtractor();
 		if ($extractor === null) {
 			return [self::STATE_FAILED, 'Text extraction is not available'];
