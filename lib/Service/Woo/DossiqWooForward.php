@@ -98,6 +98,20 @@ class DossiqWooForward {
 			return self::unavailable();
 		}
 
+		return $this->checkedAnswer(answer: $answer);
+	}//end forward()
+
+	/**
+	 * Dossiq's answer in the shape OpenCatalogi answers with, or the
+	 * unavailable answer when it lacks a string field.
+	 *
+	 * @param mixed $answer What dossiq's intake returned.
+	 *
+	 * @return array{outcome: string, requestId: string, reference: string, dueAt: string, message: string, caseUrl: string}
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-a-new-request-is-forwarded-to-dossiq-and-minted-only-there-req-whd-002
+	 */
+	private function checkedAnswer(mixed $answer): array {
 		if (is_array($answer) === false) {
 			$this->logger->error('OpenCatalogi: dossiq answered a Woo request with something other than an array.');
 			return self::unavailable();
@@ -123,7 +137,7 @@ class DossiqWooForward {
 			'message' => $answer['message'],
 			'caseUrl' => $caseUrl,
 		];
-	}//end forward()
+	}//end checkedAnswer()
 
 	/**
 	 * The answer when the request could not be handed over.
