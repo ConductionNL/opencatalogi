@@ -4,16 +4,16 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 1. Links
 
-- [ ] 1.1 Add `publicUrl`, `officerUrl`, `completeness`, `completeAt` and `expectedDocuments` to `#publication` in a `lib/Settings/register.d/publication-tells-its-source.json` fragment with `slug` and a bumped `version` (REQ-PTS-001, REQ-PTS-002). Verify: `tests/Unit/Settings/PublicationTellsItsSourceSchemaTest.php::testTheFragmentDeclaresTheFiveProperties`, which asserts the slug.
+- [x] 1.1 Add `publicUrl`, `officerUrl`, `completeness`, `completeAt` and `expectedDocuments` to `#publication` in a `lib/Settings/register.d/publication-tells-its-source.json` fragment with `slug` and a bumped `version` (REQ-PTS-001, REQ-PTS-002). Verify: `tests/Unit/Settings/PublicationTellsItsSourceSchemaTest.php::testTheFragmentDeclaresTheFiveProperties`, which asserts the slug.
 - [ ] 1.2 Add `PublicationLinksListener` on `ObjectCreatingEvent`, registered in `Application::register()` (REQ-PTS-001). Verify: `tests/Unit/Listener/PublicationLinksListenerTest.php::testACreateThroughOpenRegisterReturnsBothPages` (fails today: the properties do not exist), `::testNoPublicLinkLeavesPublicUrlEmpty`, `::testACallerSuppliedValueIsIgnored`, and `tests/Unit/AppInfo/ApplicationRegisterInvariantTest.php::testThePublicationLinksListenerIsRegistered`. Assert in the first test that the entity has a uuid at `ObjectCreatingEvent` time; if it does not on the real `MagicMapper::insertObjectEntity()`, move the write to `ObjectCreatedEvent` with a second save guarded against recursion and say so in the PR body.
 - [ ] 1.3 `PublicationsController::show()` returns both values computed fresh (REQ-PTS-001). Verify: `tests/Unit/Controller/PublicationsControllerTest.php::testShowCarriesThePublicAndOfficerPages`.
 - [ ] 1.4 A queued job rewrites both properties when `publication_url_template` or `publication_url_catalog` is saved through `SettingsController` (REQ-PTS-001). Verify: `tests/Unit/Controller/SettingsControllerTest.php::testChangingTheLinkTemplateQueuesTheRewrite`.
 
 ## 2. Completeness
 
-- [ ] 2.1 Add `CompletenessService::evaluate()` (REQ-PTS-002). Verify: `tests/Unit/Service/Publication/CompletenessServiceTest.php::testFewerDocumentsThanExpectedIsIncomplete`, `::testAFileWithoutAShareIsIncomplete`, `::testANonPublicPublicationIsIncomplete`, `::testEveryFileSharedAndPublicIsComplete`, `::testALookupFailureThrows`.
+- [x] 2.1 Add `CompletenessService::evaluate()` (REQ-PTS-002). Verify: `tests/Unit/Service/Publication/CompletenessServiceTest.php::testFewerDocumentsThanExpectedIsIncomplete`, `::testAFileWithoutAShareIsIncomplete`, `::testANonPublicPublicationIsIncomplete`, `::testEveryFileSharedAndPublicIsComplete`, `::testALookupFailureThrows`.
 - [ ] 2.2 Add the `ObjectUpdatingEvent` listener writing `completeness` and `completeAt`, and re-evaluation after `publishObjectAttachments()` and `withdrawFile()` (REQ-PTS-002). Verify: `tests/Unit/Listener/CompletenessListenerTest.php` on the REAL event class, with `::testALookupFailureLeavesTheStoredValueAsItWas` and `::testWithdrawingAFileMovesBackToIncomplete`.
-- [ ] 2.3 Add `CompletenessSweep` as a `TimedJob` registered in `appinfo/info.xml` `<background-jobs>` (REQ-PTS-002). Verify: `tests/Unit/BackgroundJob/CompletenessSweepTest.php::testAPublicationWhoseDatePassedIsMarkedComplete` (fails today: no job) and `::testTheJobIsRegistered`, which reads `appinfo/info.xml`.
+- [x] 2.3 Add `CompletenessSweep` as a `TimedJob` registered in `appinfo/info.xml` `<background-jobs>` (REQ-PTS-002). Verify: `tests/Unit/BackgroundJob/CompletenessSweepTest.php::testAPublicationWhoseDatePassedIsMarkedComplete` (fails today: no job) and `::testTheJobIsRegistered`, which reads `appinfo/info.xml`.
 
 ## 3. Webhook contract
 
