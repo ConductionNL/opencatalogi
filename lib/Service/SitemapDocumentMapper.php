@@ -111,6 +111,48 @@ class SitemapDocumentMapper {
 	}//end map()
 
 	/**
+	 * The mandatory DiWoo elements a publication cannot fill, keyed by the publication
+	 * field an editor sets, each with the reason (REQ-DWP-003).
+	 *
+	 * The mandatory set is the one the DiWoo metadata XSD requires under `diwoo:DiWoo`
+	 * (tests/fixtures/diwoo/0.9.8-mandatory-elements.json): the publisher, the official
+	 * title, the informatiecategorie and the documenthandeling. `atTime` is always
+	 * filled from the publication date. The same resolution as {@see map()} decides,
+	 * so a publication this accepts is one the sitemap can emit.
+	 *
+	 * @param array<string, mixed> $publication The publication, with `@self.organisation`.
+	 *
+	 * @return array<string, string> The missing fields and why, empty when complete.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication
+	 */
+	public function mandatoryGaps(array $publication): array {
+		$gaps = [];
+		$publisher = $this->publisherElement(publication: $publication);
+		if ($publisher['#text'] === '') {
+			$gaps['publisher'] = 'organisation has no name';
+		}
+
+		if (isset($publisher['@resource']) === false) {
+			$gaps['publisher'] = 'organisation has no TOOI identifier';
+		}
+
+		if ($this->titleElement(publication: $publication) === null) {
+			$gaps['title'] = self::OPTIONAL_AXES['diwoo:titelcollectie'][1];
+		}
+
+		if ($this->categoryElement(publication: $publication) === null) {
+			$gaps['wooCategory'] = self::OPTIONAL_AXES['diwoo:classificatiecollectie'][1];
+		}
+
+		if ($this->handlingElement(publication: $publication, handlingTime: '') === null) {
+			$gaps['soortHandeling'] = self::OPTIONAL_AXES['diwoo:documenthandelingen'][1];
+		}
+
+		return $gaps;
+	}//end mandatoryGaps()
+
+	/**
 	 * When the document last changed: the latest of the file's modified time,
 	 * the file's published time and the publication's last update, so a change
 	 * to the publication's metadata alone moves every document's `lastmod`
