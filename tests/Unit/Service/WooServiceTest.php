@@ -553,6 +553,13 @@ class WooServiceTest extends TestCase {
 
 	}//end testGetBatchProducesDocumentSummary()
 
+	/**
+	 * A document still to be assessed keeps the batch out of review.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
 	public function testCanMarkReadyForReviewFalseWhenUnassessed(): void {
 		$this->seedBatchWithAssessments();
 		$this->assertFalse($this->service->canMarkReadyForReview('batch-1'));
@@ -561,6 +568,38 @@ class WooServiceTest extends TestCase {
 
 	}//end testCanMarkReadyForReviewFalseWhenUnassessed()
 
+	/**
+	 * A batch without documents is refused and stays in progress.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
+	public function testAnEmptyBatchIsRefusedForReview(): void {
+		$this->objects->objects = [
+			['id' => 'batch-1', 'status' => 'in_progress', 'caseReference' => 'WOO-2026-010', 'documents' => [], 'createdBy' => 'alice'],
+		];
+
+		$this->assertFalse($this->service->canMarkReadyForReview('batch-1'));
+
+		try {
+			$this->service->markReadyForReview('batch-1');
+			$this->fail('An empty batch was marked ready for review.');
+		} catch (\RuntimeException $e) {
+			$this->assertSame('All documents must be assessed before review', $e->getMessage());
+		}
+
+		$this->assertSame('in_progress', $this->service->getBatch('batch-1')['status']);
+
+	}//end testAnEmptyBatchIsRefusedForReview()
+
+	/**
+	 * Once every document is assessed the batch moves to review.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
 	public function testMarkReadyForReviewWhenAllAssessed(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->assertTrue($this->service->canMarkReadyForReview('batch-1'));

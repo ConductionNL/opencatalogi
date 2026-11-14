@@ -60,6 +60,7 @@ class InspectionRecords {
 	 * @return array<string, mixed> The inspection to save.
 	 *
 	 * @throws \DomainException When the type declares no term, or no document was chosen.
+	 * @throws \OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException When the end date cannot be rolled off a non-working day.
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */

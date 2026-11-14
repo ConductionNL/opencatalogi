@@ -287,12 +287,15 @@ class FederationController extends Controller {
 	 * @no-admin-idor-exempt PublicationService::attachments() refuses an id outside the configured
 	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
 	 *   anonymous callers get public-group reads only) and lists shared files only (sharedFilesOnly).
+	 *   An id not held here is only answered with what the public federation endpoint of the
+	 *   instance that holds it returns (getFederatedAttachments()).
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
-		return $this->publicationService->attachments(id: $id);
+		return $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams());
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of

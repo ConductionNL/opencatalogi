@@ -2,8 +2,8 @@
 
 ## 1. Server
 
-- [ ] 1.1 Add `DirectoryService::getRemoteAttachments()` and move `getPublication()` to the peer's federation endpoint with `_aggregate=false` (REQ-FOR-002). Verify: `tests/Unit/Service/DirectoryServiceTest.php` with a fake client, asserting the URL and that an unsafe URL is refused.
-- [ ] 1.2 Fall back to the peer in `FederationController::publicationAttachments()` (REQ-FOR-002). Verify: `tests/Unit/Controller/FederationControllerTest.php`, a local and a remote id.
+- [x] 1.1 Add `DirectoryService::getRemoteAttachments()` and move `getPublication()` to the peer's federation endpoint with `_aggregate=false` (REQ-FOR-002). Verify: `tests/Unit/Service/DirectoryServiceTest.php` with a fake client, asserting the URL and that an unsafe URL is refused.
+- [x] 1.2 Fall back to the peer in `FederationController::publicationAttachments()` (REQ-FOR-002). Verify: `tests/Unit/Controller/FederationControllerTest.php`, a local and a remote id.
 
 ## 2. Page
 

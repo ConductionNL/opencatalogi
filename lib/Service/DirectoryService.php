@@ -2375,6 +2375,97 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end getPublication()
 
 	/**
+	 * The attachments of a publication another instance holds.
+	 *
+	 * Asks each available peer's `/api/federation/publications/{id}/attachments`
+	 * with `_aggregate=false`, so the peer answers with its own attachments and
+	 * never fans out again, and returns the first answer. A peer that does not
+	 * hold the publication answers 404 and is passed over. The peer addresses go
+	 * through the outbound URL guard in peerTargets(), so an address on a private
+	 * network is never called. Each attachment keeps the peer's download URL and
+	 * is marked with the instance it came from.
+	 *
+	 * @param string $publicationId The ID of the publication
+	 * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+	 *
+	 * @return array|null The attachments (`results`) and the peer that answered (`source`),
+	 *                    or null when no reachable peer holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getRemoteAttachments(string $publicationId, array $guzzleConfig = []): ?array {
+		$directories = $this->getUniqueDirectories(availableOnly: true);
+		if (empty($directories) === true) {
+			return null;
+		}
+
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl)
+				. '/' . urlencode($publicationId) . '/attachments',
+			'parse' => $this->parsePeerResults(...),
+		];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
+
+		foreach ($answers as $index => $attachments) {
+			if ($attachments === null) {
+				continue;
+			}
+
+			$instance = self::peerOrigin(url: $targets[$index]['url']);
+			return [
+				'results' => array_map(
+					static fn (mixed $attachment): mixed => self::withAttachmentSource(attachment: $attachment, instance: $instance),
+					array_values($attachments)
+				),
+				'source' => [$targets[$index]['name'] => $targets[$index]['url']],
+			];
+		}
+
+		return null;
+	}//end getRemoteAttachments()
+
+	/**
+	 * One remote attachment, marked with the instance it was read from.
+	 *
+	 * @param mixed $attachment The attachment as the peer returned it
+	 * @param string $instance The peer's origin, `scheme://host[:port]`
+	 *
+	 * @return mixed The attachment with `source.instance`, or the value as it was when it is no attachment
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	private static function withAttachmentSource(mixed $attachment, string $instance): mixed {
+		if (is_array($attachment) === false) {
+			return $attachment;
+		}
+
+		$attachment['source'] = ['instance' => $instance];
+		return $attachment;
+	}//end withAttachmentSource()
+
+	/**
+	 * The origin of a peer URL: scheme, host and, when set, port.
+	 *
+	 * @param string $url A URL on the peer
+	 *
+	 * @return string The origin, e.g. `https://peer.example.org`
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	private static function peerOrigin(string $url): string {
+		$parts = parse_url($url);
+		$origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+		if (isset($parts['port']) === true) {
+			$origin .= ':' . $parts['port'];
+		}
+
+		return $origin;
+	}//end peerOrigin()
+
+	/**
 	 * The query every peer lookup sends: the caller's `query_params`, the extra
 	 * parameters, no fan-out on the peer's side and the schema and register extended.
 	 *

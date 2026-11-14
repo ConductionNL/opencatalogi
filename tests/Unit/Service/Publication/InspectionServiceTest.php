@@ -9,23 +9,28 @@ declare(strict_types=1);
 
 namespace Unit\Service\Publication;
 
+require_once __DIR__ . '/TermRollFixture.php';
+
 use DateTimeImmutable;
 use DateTimeZone;
 use DomainException;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
+use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Unit tests for InspectionService.
  *
  * @covers \OCA\OpenCatalogi\Service\Publication\InspectionService
+ * @uses \OCA\OpenCatalogi\Service\Publication\TermRoll
  */
 class InspectionServiceTest extends TestCase {
+	use TermRollFixture;
 
 	private InspectionService $service;
 
 	protected function setUp(): void {
-		$this->service = new InspectionService();
+		$this->service = new InspectionService($this->termRoll());
 
 	}//end setUp()
 
@@ -54,6 +59,94 @@ class InspectionServiceTest extends TestCase {
 		$this->assertSame(['d1', 'd2'], $inspection['documents']);
 
 	}//end testTheEndDateIsComputedFromTheTypesTerm()
+
+	/**
+	 * An inspection whose term ends on a Sunday ends on the Monday (Atw art. 1 lid 1).
+	 *
+	 * @return void
+	 */
+	public function testAnEndOnASundayRollsToMonday(): void {
+		$inspection = $this->service->open(
+			record: ['id' => 'r1'],
+			recordType: ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+			documents: ['d1'],
+			openedBy: 'admin',
+			start: $this->at('2026-11-01T00:00:00+00:00')
+		);
+
+		$this->assertSame('2026-12-14T00:00:00+00:00', $inspection['endDate']);
+		$this->assertSame('2026-12-13T00:00:00+00:00', $inspection['unrolledEndDate']);
+		$this->assertSame('weekend', $inspection['rolledBy']);
+		$this->assertSame('2026-11-01T00:00:00+00:00', $inspection['startDate']);
+		$this->assertSame(42, $inspection['termDays']);
+
+	}//end testAnEndOnASundayRollsToMonday()
+
+	/**
+	 * An end on Christmas Day rolls past both Christmas days and the weekend (Atw art. 3).
+	 *
+	 * @return void
+	 */
+	public function testAnEndOnChristmasRollsPastBothHolidays(): void {
+		$inspection = $this->service->open(
+			record: ['id' => 'r1'],
+			recordType: ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 24],
+			documents: ['d1'],
+			openedBy: 'admin',
+			start: $this->at('2026-12-01T00:00:00+00:00')
+		);
+
+		$this->assertSame('2026-12-28T00:00:00+00:00', $inspection['endDate']);
+		$this->assertSame('2026-12-25T00:00:00+00:00', $inspection['unrolledEndDate']);
+		$this->assertSame('Kerstmis', $inspection['rolledBy']);
+
+	}//end testAnEndOnChristmasRollsPastBothHolidays()
+
+	/**
+	 * With no term engine the inspection is refused, not opened on an unrolled end.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreachableEngineRefusesToOpen(): void {
+		$service = new InspectionService($this->termRoll(engineAvailable: false));
+
+		$this->expectException(TermRollUnavailableException::class);
+		$this->expectExceptionMessage('The term engine is unavailable');
+
+		$service->open(
+			record: ['id' => 'r1'],
+			recordType: ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+			documents: ['d1'],
+			openedBy: 'admin',
+			start: $this->at('2026-11-01T00:00:00+00:00')
+		);
+
+	}//end testAnUnreachableEngineRefusesToOpen()
+
+	/**
+	 * The link reads the rolled end: past the unrolled Sunday it still works,
+	 * up to the rolled Monday, and not after it.
+	 *
+	 * @return void
+	 */
+	public function testTheLinkStillWorksOnTheRolledDay(): void {
+		$inspection = $this->service->open(
+			record: ['id' => 'r1'],
+			recordType: ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+			documents: ['d1'],
+			openedBy: 'admin',
+			start: $this->at('2026-11-01T00:00:00+00:00')
+		);
+
+		$pastTheUnrolledEnd = $this->service->resolveLink(inspection: $inspection, token: $inspection['token'], now: $this->at('2026-12-13T12:00:00+00:00'));
+		$this->assertTrue($pastTheUnrolledEnd['readable']);
+		$this->assertTrue($this->service->isOpen(inspection: $inspection, now: $this->at('2026-12-14T00:00:00+00:00')));
+
+		$after = $this->service->resolveLink(inspection: $inspection, token: $inspection['token'], now: $this->at('2026-12-14T00:00:01+00:00'));
+		$this->assertFalse($after['readable']);
+		$this->assertSame('2026-12-14T00:00:00+00:00', $after['endDate']);
+
+	}//end testTheLinkStillWorksOnTheRolledDay()
 
 	public function testTheInspectionIsShapedWholeWithUniqueDocuments(): void {
 		$inspection = $this->service->open(
