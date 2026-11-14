@@ -155,6 +155,13 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		<post-migration>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
 			<!--
+				Adds each stored publication's caseReference to its sourceIdentifiers
+				(publication-relations-place-and-source-ids, REQ-PRS-003). After
+				InitializeSettings, which imports the sourceIdentifiers property.
+				Idempotent: a second run writes nothing.
+			-->
+			<step>OCA\OpenCatalogi\Repair\MirrorCaseReferenceIntoSourceIdentifiers</step>
+			<!--
 				Must run AFTER the register sync that adds the English columns, so it
 				can tell the rename case from the back-fill case. Idempotent and
 				non-destructive; safe to re-run.

@@ -1,0 +1,145 @@
+{
+	"_note": "Register fragment for publication-relations-place-and-source-ids (REQ-PRS-001, REQ-PRS-003). Publications name how they relate to each other, readable from both sides through OpenRegister's relation vocabulary, and carry the identifiers their source systems know them by. The place (REQ-PRS-004) is gated on decision D10 and not declared here.",
+	"components": {
+		"schemas": {
+			"publication": {
+				"slug": "publication",
+				"version": "0.0.8",
+				"x-openregister-relation-types": [
+					{
+						"key": "replaces",
+						"label": {
+							"en": "replaces",
+							"nl": "vervangt"
+						},
+						"inverseLabel": {
+							"en": "is replaced by",
+							"nl": "wordt vervangen door"
+						}
+					},
+					{
+						"key": "amends",
+						"label": {
+							"en": "amends",
+							"nl": "wijzigt"
+						},
+						"inverseLabel": {
+							"en": "is amended by",
+							"nl": "wordt gewijzigd door"
+						}
+					},
+					{
+						"key": "implements",
+						"label": {
+							"en": "implements",
+							"nl": "geeft uitvoering aan"
+						},
+						"inverseLabel": {
+							"en": "is implemented by",
+							"nl": "wordt uitgevoerd door"
+						}
+					},
+					{
+						"key": "relatedTo",
+						"label": {
+							"en": "is related to",
+							"nl": "hoort bij"
+						},
+						"symmetric": true
+					}
+				],
+				"properties": {
+					"replaces": {
+						"type": "array",
+						"title": "Replaces",
+						"description": "The publications this one replaces. Each of them reads that it is replaced by this one.",
+						"items": {
+							"type": "string",
+							"format": "uuid",
+							"$ref": "publication",
+							"x-openregister-relation": {
+								"type": "replaces"
+							}
+						},
+						"facetable": false
+					},
+					"amends": {
+						"type": "array",
+						"title": "Amends",
+						"description": "The publications this one amends. Each of them reads that it is amended by this one.",
+						"items": {
+							"type": "string",
+							"format": "uuid",
+							"$ref": "publication",
+							"x-openregister-relation": {
+								"type": "amends"
+							}
+						},
+						"facetable": false
+					},
+					"implements": {
+						"type": "array",
+						"title": "Implements",
+						"description": "The publications this one implements. Each of them reads that it is implemented by this one.",
+						"items": {
+							"type": "string",
+							"format": "uuid",
+							"$ref": "publication",
+							"x-openregister-relation": {
+								"type": "implements"
+							}
+						},
+						"facetable": false
+					},
+					"relatedTo": {
+						"type": "array",
+						"title": "Related to",
+						"description": "Publications that belong with this one. The relation reads the same from both sides.",
+						"items": {
+							"type": "string",
+							"format": "uuid",
+							"$ref": "publication",
+							"x-openregister-relation": {
+								"type": "relatedTo"
+							}
+						},
+						"facetable": false
+					},
+					"sourceIdentifiers": {
+						"type": "array",
+						"title": "Source identifiers",
+						"description": "The identifiers the source systems know this publication by. An identifier is shown and searchable on the public API only when it is marked public.",
+						"facetable": false,
+						"items": {
+							"type": "object",
+							"required": [
+								"system",
+								"identifier"
+							],
+							"properties": {
+								"system": {
+									"type": "string",
+									"title": "System",
+									"description": "The source system, such as case or decos.",
+									"maxLength": 100
+								},
+								"identifier": {
+									"type": "string",
+									"title": "Identifier",
+									"description": "The identifier the source system uses.",
+									"maxLength": 255
+								},
+								"public": {
+									"type": "boolean",
+									"title": "Public",
+									"description": "Whether the identifier may be shown and searched on the public API.",
+									"default": false
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

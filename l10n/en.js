@@ -1552,7 +1552,21 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Only the groups below see and edit this catalogue's publications.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
+        "Amends": "Amends",
+        "Implements": "Implements",
+        "Publications that belong with this one. The relation reads the same from both sides.": "Publications that belong with this one. The relation reads the same from both sides.",
+        "Related to": "Related to",
+        "Replaces": "Replaces",
+        "Source identifiers": "Source identifiers",
+        "System": "System",
+        "The identifier the source system uses.": "The identifier the source system uses.",
+        "The identifiers the source systems know this publication by. An identifier is shown and searchable on the public API only when it is marked public.": "The identifiers the source systems know this publication by. An identifier is shown and searchable on the public API only when it is marked public.",
+        "The publications this one amends. Each of them reads that it is amended by this one.": "The publications this one amends. Each of them reads that it is amended by this one.",
+        "The publications this one implements. Each of them reads that it is implemented by this one.": "The publications this one implements. Each of them reads that it is implemented by this one.",
+        "The publications this one replaces. Each of them reads that it is replaced by this one.": "The publications this one replaces. Each of them reads that it is replaced by this one.",
+        "The source system, such as case or decos.": "The source system, such as case or decos.",
+        "Whether the identifier may be shown and searched on the public API.": "Whether the identifier may be shown and searched on the public API."
     },
     "nplurals=2; plural=(n != 1);"
 )
