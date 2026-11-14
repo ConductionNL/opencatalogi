@@ -33,6 +33,7 @@ use OCA\OpenCatalogi\Mcp\McpRegistrar;
 use OCA\OpenCatalogi\Middleware\ApiContractMiddleware;
 use OCA\OpenCatalogi\Observability\ObservabilityRegistrar;
 use OCA\OpenCatalogi\Portal\PortalRegistrar;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\ServiceRegistrar;
 use OCA\OpenCatalogi\SetupCheck\OpenRegisterVersionCheck;
 use OCA\OpenCatalogi\Tool\ToolRegistrar;
@@ -99,8 +100,15 @@ class Application extends App implements IBootstrap {
 		(new ServiceRegistrar(appName: self::APP_ID))->register($context);
 		(new ToolRegistrar())->register($context);
 
+		// One collector per request: every filter site and the list controllers
+		// that answer `appliedFilters` must share it (REQ-ASF-002).
+		$context->registerService(AppliedFilters::class, static fn (): AppliedFilters => new AppliedFilters(), true);
+
 		// API-Version header and problem details on the JSON API (spec api-documentation).
 		$context->registerMiddleware(ApiContractMiddleware::class);
+
+		// Staging closes every public route to anonymous callers (instance-staging-mode REQ-STG-003).
+		$context->registerMiddleware(\OCA\OpenCatalogi\Middleware\StagingMiddleware::class);
 
 		// ONB-009: tells an administrator when OpenRegister is too old for the
 		// AppHost bindings below. Registering the class probes nothing.

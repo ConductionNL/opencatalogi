@@ -87,3 +87,11 @@ Klik daarna op **Bestand toevoegen** om het venster **Bijlage toevoegen** te ope
 In het venster `Bijlage toevoegen` kies of maak je eerst een of meer `Labels`, of kies je `Geen label`. Tot je een keuze maakt, blijft het uploadvak uitgeschakeld. De labelkeuze is bij elke opening van het venster leeg, ook als je eerder bij dezelfde of een andere publicatie labels hebt gekozen; de lijst met beschikbare labels blijft wel staan. Zet `Automatisch publiceren` aan als de bestanden meteen openbaar moeten worden.
 
 Sleep daarna een of meer bestanden naar het venster, of klik op `Voeg een of meer bestanden toe` om ze van je computer te kiezen. De bestandsnaam wordt meegegeven. De nieuwe bestanden verschijnen daarna op het tabblad Bestanden.
+
+### Het hoofddocument aanwijzen
+
+Heeft een publicatie meer dan één bestand, zoals een besluit met bijlagen, dan vertelt de Woo-sitemap de Woo-index dat die bestanden bij elkaar horen. Wijs het hoofddocument aan door dat ene bestand het label `main-document` te geven. Het hoofddocument noemt dan de andere bestanden als zijn onderdelen, en elk ander bestand verwijst naar het hoofddocument.
+
+Geef het label aan precies één bestand per publicatie. Zonder label, of met het label op meer dan één bestand, verwijzen alle bestanden naar de publicatie zelf. Staat het label op meer dan één bestand, dan noemt het DIWOO-validatierapport van de catalogus die publicatie, zodat je het kunt herstellen.
+
+Wijzig je alleen de gegevens van een publicatie, zoals de titel, dan krijgen al haar bestanden in de sitemap een nieuwe wijzigingsdatum. De Woo-index haalt ze dan opnieuw op.
