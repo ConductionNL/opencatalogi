@@ -284,13 +284,43 @@ class DcatService implements DcatServiceInterface {
 		$searchQuery = CallerScope::writeScope(query: $searchQuery, registers: $scope['registers'], schemas: $scope['schemas']);
 		$searchQuery['_order']['updated'] = 'desc';
 
-		return $this->getObjectService()->searchObjectsPaginated(
-			query: $searchQuery,
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+		// Every translation of the translatable fields, so each language becomes its
+		// own tagged literal (publication-translations REQ-PTR-002); reset after.
+		$languageService = $this->languageService();
+		$languageService?->setReturnAllTranslations(true);
+		try {
+			return $this->getObjectService()->searchObjectsPaginated(
+				query: $searchQuery,
+				_rbac: true,
+				_multitenancy: false,
+				deleted: false
+			);
+		} finally {
+			$languageService?->setReturnAllTranslations(false);
+		}
 	}//end searchCatalogPage()
+
+	/**
+	 * OpenRegister's request-scoped language service, or null when OpenRegister
+	 * is absent or predates translations (the feed then stays in the source language).
+	 *
+	 * @return object|null The service.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function languageService(): ?object {
+		try {
+			$service = $this->openRegister->installedService('OCA\OpenRegister\Service\LanguageService', 'OpenRegister is not available.');
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if (is_object($service) === false || method_exists($service, 'setReturnAllTranslations') === false) {
+			return null;
+		}
+
+		return $service;
+	}//end languageService()
 
 	/**
 	 * Map a page of publications to DCAT datasets, skipping schemas that opted out.

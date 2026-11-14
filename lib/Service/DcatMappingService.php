@@ -57,6 +57,23 @@ class DcatMappingService {
 	];
 
 	/**
+	 * The DCAT properties whose value may be language-keyed (`{nl: ..., en: ...}`,
+	 * as OpenRegister returns a translatable field with all its translations).
+	 * Each language present becomes its own language-tagged literal
+	 * (publication-translations REQ-PTR-002).
+	 *
+	 * @var array<int, string>
+	 */
+	public const LANGUAGE_TAGGED = ['dct:title', 'dct:description'];
+
+	/**
+	 * Basic BCP 47 shape of a language key.
+	 *
+	 * @var string
+	 */
+	private const LANGUAGE_KEY = '/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/';
+
+	/**
 	 * Constructor.
 	 *
 	 * @param DcatVocabularyService $vocabulary The HVD-category / data-theme resolver.
@@ -207,8 +224,56 @@ class DcatMappingService {
 			$properties['dcat:theme'] = $this->themeNode(source: $source, value: $values['dcat:theme']);
 		}
 
+		foreach (self::LANGUAGE_TAGGED as $dcatProperty) {
+			if (isset($properties[$dcatProperty]) === true && is_array($properties[$dcatProperty]) === true) {
+				$properties[$dcatProperty] = $this->languageTaggedLiterals(value: $properties[$dcatProperty]);
+			}
+		}
+
 		return array_filter($properties, static fn ($value) => $value !== null);
 	}//end mapProperties()
+
+	/**
+	 * One language-tagged literal per language of a language-keyed value, the
+	 * source language (Dutch) first; null when no language has text.
+	 *
+	 * A value that is not keyed by language is left as it is.
+	 *
+	 * @param array<mixed> $value The mapped value.
+	 *
+	 * @return array<mixed>|null The literals, the value unchanged, or null.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function languageTaggedLiterals(array $value): ?array {
+		if ($value === [] || array_is_list($value) === true) {
+			return $value;
+		}
+
+		foreach (array_keys($value) as $key) {
+			if (preg_match(self::LANGUAGE_KEY, (string)$key) !== 1) {
+				return $value;
+			}
+		}
+
+		$ordered = $value;
+		if (array_key_exists('nl', $ordered) === true) {
+			$ordered = (['nl' => $ordered['nl']] + $ordered);
+		}
+
+		$literals = [];
+		foreach ($ordered as $language => $text) {
+			if (is_scalar($text) === true && (string)$text !== '') {
+				$literals[] = ['@value' => (string)$text, '@language' => (string)$language];
+			}
+		}
+
+		if ($literals === []) {
+			return null;
+		}
+
+		return $literals;
+	}//end languageTaggedLiterals()
 
 	/**
 	 * The publication value at each mapped path, leaving out empty values.
