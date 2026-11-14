@@ -41,6 +41,14 @@ use Psr\Log\LoggerInterface;
 /**
  * One sweep over the publications whose dates passed in a window.
  *
+ * @phpstan-type SweepScope array{
+ *     objects: object,
+ *     register: string,
+ *     schema: string,
+ *     since: DateTimeInterface,
+ *     now: DateTimeInterface
+ * }
+ *
  * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
  */
 class CompletenessSweepService {
@@ -102,16 +110,22 @@ class CompletenessSweepService {
 			return $counts;
 		}
 
-		$objects = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$scope = [
+			'objects'  => $this->container->get('OCA\OpenRegister\Service\ObjectService'),
+			'register' => $register,
+			'schema'   => $schema,
+			'since'    => $since,
+			'now'      => $now,
+		];
 		for ($page = 1; $page <= self::MAX_PAGES; $page++) {
-			$rows = $this->page(objects: $objects, register: $register, schema: $schema, page: $page);
+			$rows = $this->page(scope: $scope, page: $page);
 			foreach ($rows as $row) {
-				if (is_array($row) === false || $this->datePassed(publication: $row, since: $since, now: $now) === false) {
+				if (is_array($row) === false || $this->datePassed(publication: $row, scope: $scope) === false) {
 					continue;
 				}
 
 				$counts['checked']++;
-				$outcome = $this->refresh(objects: $objects, id: $this->idOf(row: $row), register: $register, schema: $schema, now: $now);
+				$outcome = $this->refresh(scope: $scope, id: $this->idOf(row: $row));
 				if ($outcome !== 'unchanged') {
 					$counts[$outcome]++;
 				}
@@ -128,17 +142,15 @@ class CompletenessSweepService {
 	/**
 	 * One page of publications.
 	 *
-	 * @param object $objects  OpenRegister's object service.
-	 * @param string $register The publication register.
-	 * @param string $schema   The publication schema.
-	 * @param int    $page     The page, from 1.
+	 * @param SweepScope $scope The sweep's object service, register, schema and window.
+	 * @param int $page The page, from 1.
 	 *
 	 * @return array<int, mixed> The rows.
 	 */
-	private function page(object $objects, string $register, string $schema, int $page): array {
-		$result = $objects->searchObjectsPaginated(
+	private function page(array $scope, int $page): array {
+		$result = $scope['objects']->searchObjectsPaginated(
 			query: [
-				'@self'  => ['register' => $register, 'schema' => $schema],
+				'@self'  => ['register' => $scope['register'], 'schema' => $scope['schema']],
 				'_limit' => self::PAGE,
 				'_page'  => $page,
 			],
@@ -152,15 +164,13 @@ class CompletenessSweepService {
 	/**
 	 * Evaluate one publication and save it when its completeness changed.
 	 *
-	 * @param object            $objects  OpenRegister's object service.
-	 * @param string            $id       The publication's uuid.
-	 * @param string            $register The publication register.
-	 * @param string            $schema   The publication schema.
-	 * @param DateTimeInterface $now      This pass.
+	 * @param SweepScope $scope The sweep's object service, register, schema and window.
+	 * @param string $id The publication's uuid.
 	 *
 	 * @return string `changed`, `unchanged` or `failed`.
 	 */
-	private function refresh(object $objects, string $id, string $register, string $schema, DateTimeInterface $now): string {
+	private function refresh(array $scope, string $id): string {
+		['objects' => $objects, 'register' => $register, 'schema' => $schema, 'now' => $now] = $scope;
 		try {
 			$entity = $objects->find(id: $id, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
 			if ($entity instanceof ObjectEntity === false) {
@@ -192,12 +202,11 @@ class CompletenessSweepService {
 	 * Whether the publication's publication or depublication date lies in (since, now].
 	 *
 	 * @param array<string, mixed> $publication The publication.
-	 * @param DateTimeInterface    $since       The previous pass.
-	 * @param DateTimeInterface    $now         This pass.
+	 * @param SweepScope $scope The sweep's window: `since` the previous pass, `now` this pass.
 	 *
 	 * @return bool
 	 */
-	private function datePassed(array $publication, DateTimeInterface $since, DateTimeInterface $now): bool {
+	private function datePassed(array $publication, array $scope): bool {
 		foreach (self::DATES as $field) {
 			$value = $publication[$field] ?? null;
 			if (is_string($value) === false || trim($value) === '') {
@@ -210,7 +219,7 @@ class CompletenessSweepService {
 				continue;
 			}
 
-			if ($at > $since && $at <= $now) {
+			if ($at > $scope['since'] && $at <= $scope['now']) {
 				return true;
 			}
 		}
