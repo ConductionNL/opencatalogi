@@ -2,7 +2,7 @@
     "category by name, owner from the publication": {
         "document": {
             "loc": "",
-            "lastmod": "2024-04-04T04:04:04+00:00",
+            "lastmod": "2024-06-20T14:30:00+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
@@ -59,7 +59,7 @@
     "every axis binds": {
         "document": {
             "loc": "https://example.com/files/doc.pdf",
-            "lastmod": "2024-05-10T12:00:00+00:00",
+            "lastmod": "2024-06-20T14:30:00+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
@@ -219,7 +219,7 @@
     "only the category, handling defaults": {
         "document": {
             "loc": "https://example.com/b.pdf",
-            "lastmod": "2024-04-04T04:04:04+00:00",
+            "lastmod": "2024-06-20T14:30:00+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
@@ -276,7 +276,7 @@
     "only the organisation": {
         "document": {
             "loc": "",
-            "lastmod": "2024-03-03T03:03:03+00:00",
+            "lastmod": "2024-06-20T14:30:00+00:00",
             "diwoo:Document": {
                 "diwoo:DiWoo": {
                     "diwoo:creatiedatum": "2024-01-15",
