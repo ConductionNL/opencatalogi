@@ -66,7 +66,7 @@
 - [ ] ~~Add `x-openregister-aggregations.countBySchema`~~ — NOT POSSIBLE with
       OR's current aggregation feature; see the note above. Not implemented.
 - [ ] ~~Add `x-openregister-aggregations.countByStatus` to the `attachment`
-      schema~~ — NO SUCH SCHEMA EXISTS; see the note above. Not implemented.
+      schema~~ — NO SUCH SCHEMA EXISTS; see the note above. Not implemented. SUPERSEDED by `publications-unpublished-overview`.
 - [ ] Confirm the register import picks up the new annotation on a clean
       install / `reload-settings` — DEFERRED, needs a live instance
       (`SettingsService::loadSettings()` round-trip); not verifiable from an
@@ -122,11 +122,18 @@
 - [ ] NOT DONE — depends on the `attachment` schema existing (see note above).
       Left commented out exactly as at HEAD; the `// Do NOT remove this code`
       TODO still stands until that design decision is made.
+      SUPERSEDED for the Nextcloud dashboard widget by
+      `publications-unpublished-overview`; the in-app dashboard card can read
+      the same `kind=documents` list when it is restored.
 
 ## 4. Frontend: UnpublishedAttachmentsWidget / UnpublishedPublicationsWidget
 
 - [ ] NOT DONE — same blocker; `objectStore.fetchCollection('attachment')`
       has no real backing schema to aggregate against. Left as-is.
+      SUPERSEDED by `publications-unpublished-overview` (REQ-PUO-002): both
+      widgets now read `GET /api/dashboard/unpublished`, which lists
+      unpublished publications and the not yet public files on them, so no
+      `attachment` schema is needed.
 
 ## 5. Spec + verification
 
