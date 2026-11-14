@@ -721,7 +721,12 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Adjon hozzá egy nyilvántartást és egy sémát a katalógushoz, hogy itt megjelenjenek a közzétételei.",
         "Open catalog": "Katalógus megnyitása",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Hozza létre az első katalógusát. Ez az a tároló, amelyben a közzétételei lesznek. Válassza a Publication nyilvántartást és a Publication sémát, hogy a katalógus megjelenítse a hozzáadott közzétételeket.",
-        "Manage your publications and their status": "Kezelje a publikációit és azok állapotát"
+        "Manage your publications and their status": "Kezelje a publikációit és azok állapotát",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister-verzió",
+        "OpenRegister carries the engine OpenCatalogi needs.": "Az OpenRegister tartalmazza az OpenCatalogi által igényelt motort.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "Az OpenCatalogi az OpenRegister %1$s vagy újabb verzióját igényli. A telepített OpenRegisterből hiányzik a(z) %2$s, ezért az OpenCatalogi az oldalai helyett értesítést jelenít meg. Frissítse az OpenRegistert.",
+        "OpenCatalogi cannot start": "Az OpenCatalogi nem tud elindulni",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "Az OpenCatalogi az OpenRegister %1$s vagy újabb verzióját igényli. Kérje meg a rendszergazdát az OpenRegister frissítésére."
     },
     "nplurals=2; plural=(n != 1);"
 )

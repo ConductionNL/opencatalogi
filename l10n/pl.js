@@ -721,7 +721,12 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Dodaj rejestr i schemat do katalogu, aby jego publikacje były tu wyświetlane.",
         "Open catalog": "Otwórz katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Utwórz swój pierwszy katalog. To kontener, w którym będą twoje publikacje. Wybierz rejestr Publication i schemat Publication, aby katalog wyświetlał dodawane przez ciebie publikacje.",
-        "Manage your publications and their status": "Zarządzaj swoimi publikacjami i ich statusem"
+        "Manage your publications and their status": "Zarządzaj swoimi publikacjami i ich statusem",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: wersja OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister zawiera silnik, którego potrzebuje OpenCatalogi.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. W zainstalowanym OpenRegister brakuje %2$s, dlatego OpenCatalogi zamiast swoich stron pokazuje komunikat. Zaktualizuj OpenRegister.",
+        "OpenCatalogi cannot start": "Nie można uruchomić OpenCatalogi",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi wymaga OpenRegister %1$s lub nowszego. Poproś administratora o aktualizację OpenRegister."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -721,7 +721,12 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Yayınlarının burada listelenmesi için kataloğa bir kayıt ve bir şema ekleyin.",
         "Open catalog": "Kataloğu aç",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "İlk kataloğunuzu oluşturun. Yayınlarınızın yer alacağı kapsayıcıdır. Kataloğun eklediğiniz yayınları listelemesi için Publication kaydını ve Publication şemasını seçin.",
-        "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin"
+        "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegister sürümü",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister, OpenCatalogi'nin ihtiyaç duyduğu motoru içeriyor.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi, OpenRegister %1$s veya daha yeni bir sürüm gerektirir. Kurulu OpenRegister'da %2$s eksik, bu yüzden OpenCatalogi sayfaları yerine bir uyarı gösteriyor. OpenRegister'ı güncelleyin.",
+        "OpenCatalogi cannot start": "OpenCatalogi başlatılamıyor",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi, OpenRegister %1$s veya daha yeni bir sürüm gerektirir. Yöneticinizden OpenRegister'ı güncellemesini isteyin."
     },
     "nplurals=2; plural=(n != 1);"
 )

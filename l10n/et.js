@@ -721,7 +721,12 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Lisa kataloogile register ja skeem, et selle väljaanded siin kuvataks.",
         "Open catalog": "Ava kataloog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Loo oma esimene kataloog. See on konteiner, kus sinu väljaanded asuvad. Vali register Publication ja skeem Publication, et kataloog näitaks väljaandeid, mida sa lisad.",
-        "Manage your publications and their status": "Hallake oma väljaandeid ja nende olekut"
+        "Manage your publications and their status": "Hallake oma väljaandeid ja nende olekut",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: OpenRegisteri versioon",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister sisaldab mootorit, mida OpenCatalogi vajab.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi vajab OpenRegisteri versiooni %1$s või uuemat. Paigaldatud OpenRegisterist puudub %2$s, seega näitab OpenCatalogi oma lehtede asemel teadet. Uuenda OpenRegisterit.",
+        "OpenCatalogi cannot start": "OpenCatalogi ei saa käivituda",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi vajab OpenRegisteri versiooni %1$s või uuemat. Palu administraatoril OpenRegister uuendada."
     },
     "nplurals=2; plural=(n != 1);"
 )

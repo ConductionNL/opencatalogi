@@ -721,7 +721,12 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Agiunta in register ed in schema al catalog per mussar qua sias publicaziuns.",
         "Open catalog": "Avrir il catalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creescha tes emprim catalog. El è il container, en il qual vegnan a star tias publicaziuns. Tscherna il register Publication ed il schema Publication, uschia ch'il catalog mussa las publicaziuns che ti agiuntas.",
-        "Manage your publications and their status": "Administrai Vossas publicaziuns e lur status"
+        "Manage your publications and their status": "Administrai Vossas publicaziuns e lur status",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: versiun dad OpenRegister",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister cuntegna il motor che OpenCatalogi dovra.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi dovra OpenRegister %1$s u pli nov. A l'OpenRegister installà manca %2$s, perquai mussa OpenCatalogi in avis empè da sias paginas. Actualisai OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi na po betg cumenzar",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi dovra OpenRegister %1$s u pli nov. Dumandai Voss administratur d'actualisar OpenRegister."
     },
     "nplurals=2; plural=(n != 1);"
 )

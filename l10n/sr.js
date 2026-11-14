@@ -721,7 +721,12 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Додајте регистар и схему каталогу да би се овде приказале његове објаве.",
         "Open catalog": "Отвори каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Направите свој први каталог. То је контејнер у којем ће бити ваше објаве. Изаберите регистар Publication и схему Publication како би каталог приказивао објаве које додате.",
-        "Manage your publications and their status": "Управљајте својим публикацијама и њиховим статусом"
+        "Manage your publications and their status": "Управљајте својим публикацијама и њиховим статусом",
+        "OpenCatalogi: OpenRegister version": "OpenCatalogi: верзија OpenRegister-а",
+        "OpenRegister carries the engine OpenCatalogi needs.": "OpenRegister садржи погон који је потребан OpenCatalogi-ју.",
+        "OpenCatalogi requires OpenRegister %1$s or newer. The installed OpenRegister lacks %2$s, so OpenCatalogi shows a notice instead of its pages. Update OpenRegister.": "OpenCatalogi захтева OpenRegister %1$s или новији. У инсталираном OpenRegister-у недостаје %2$s, па OpenCatalogi уместо својих страница приказује обавештење. Ажурирајте OpenRegister.",
+        "OpenCatalogi cannot start": "OpenCatalogi не може да се покрене",
+        "OpenCatalogi requires OpenRegister %1$s or newer. Ask your administrator to update OpenRegister.": "OpenCatalogi захтева OpenRegister %1$s или новији. Замолите администратора да ажурира OpenRegister."
     },
     "nplurals=2; plural=(n != 1);"
 )
