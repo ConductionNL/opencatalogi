@@ -137,20 +137,32 @@ class WooController extends Controller {
 
 		$rows = [];
 		foreach ($this->categories->all() as $code => $category) {
-			$rows[] = [
-				'code' => $code,
-				'nl' => $category['label'],
-				'en' => $category['labelEn'],
-				'label' => $this->l10n->t($category['labelEn']),
-				'uri' => $category['tooiUri'],
-				'mapsTo' => $category['mapsTo'],
-				'origin' => $category['origin'],
-				'sitemap' => $category['sitemapFile'],
-			];
+			$rows[] = $this->categoryRow(code: $code, category: $category);
 		}
 
 		return new JSONResponse(['results' => $rows, 'total' => count($rows)]);
 	}//end categories()
+
+	/**
+	 * One information category as the list shows it, with its label in the user's language.
+	 *
+	 * @param int|string $code The category code.
+	 * @param array<string, mixed> $category The category.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function categoryRow(int|string $code, array $category): array {
+		return [
+			'code' => $code,
+			'nl' => $category['label'],
+			'en' => $category['labelEn'],
+			'label' => $this->l10n->t($category['labelEn']),
+			'uri' => $category['tooiUri'],
+			'mapsTo' => $category['mapsTo'],
+			'origin' => $category['origin'],
+			'sitemap' => $category['sitemapFile'],
+		];
+	}//end categoryRow()
 
 	/**
 	 * Create a WOO disclosure batch and provision its Deck board + cards.
@@ -169,13 +181,9 @@ class WooController extends Controller {
 		try {
 			$caseReference = (string)$this->request->getParam('caseReference', '');
 			$documents = (array)$this->request->getParam('documents', []);
-			$boardId = $this->request->getParam('boardId', null);
+			$boardId = $this->boardIdParam();
 			if ($caseReference === '') {
 				return new JSONResponse(data: ['error' => $this->l10n->t('caseReference is required')], statusCode: Http::STATUS_BAD_REQUEST);
-			}
-
-			if ($boardId !== null) {
-				$boardId = (int)$boardId;
 			}
 
 			$batch = $this->wooService->createBatch(
@@ -189,6 +197,20 @@ class WooController extends Controller {
 		}//end try
 
 	}//end createBatch()
+
+	/**
+	 * The posted board id as a number, or null when none is posted.
+	 *
+	 * @return int|null
+	 */
+	private function boardIdParam(): ?int {
+		$boardId = $this->request->getParam('boardId', null);
+		if ($boardId === null) {
+			return null;
+		}
+
+		return (int)$boardId;
+	}//end boardIdParam()
 
 	/**
 	 * Get a WOO batch with its derived per-status document summary (progress).
@@ -275,11 +297,11 @@ class WooController extends Controller {
 	}//end markReadyForReview()
 
 	/**
-	 * Generate the inventarislijst for a batch and return it as a CSV download.
+	 * Generate the inventarislijst for a batch and return it as a download.
 	 *
-	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). CSV is
-	 * UTF-8 with BOM; HTML (archival PDF/A source) is available via the `format`
-	 * query parameter.
+	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). A read-only
+	 * GET reached through a plain link, so it carries no CSRF token. CSV (UTF-8
+	 * with BOM) by default; `format=pdf` returns PDF/A and `format=html` its source.
 	 *
 	 * @param string $batchId The batch uuid.
 	 *
@@ -294,6 +316,11 @@ class WooController extends Controller {
 		try {
 			$rows = $this->wooService->buildInventarislijst($batchId);
 			$format = (string)$this->request->getParam('format', 'csv');
+			if ($format === 'pdf') {
+				$pdf = $this->wooService->renderInventarislijstPdf($batchId, $rows);
+				return new DataDownloadResponse($pdf, 'inventarislijst.pdf', 'application/pdf');
+			}
+
 			if ($format === 'html') {
 				$html = $this->wooService->renderInventarislijstHtml($batchId, $rows);
 				return new DataDownloadResponse($html, 'inventarislijst.html', 'text/html');

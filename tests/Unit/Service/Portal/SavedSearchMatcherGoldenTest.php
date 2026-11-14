@@ -42,6 +42,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Service\Portal\SearchWindow
  * @uses \OCA\OpenCatalogi\Service\PublicationQueryService
  * @uses \OCA\OpenCatalogi\Service\SearchQueryTranslator
+ * @uses   \OCA\OpenCatalogi\Service\Portal\SavedSearchMatchRun
  */
 class SavedSearchMatcherGoldenTest extends TestCase {
 
@@ -223,6 +224,38 @@ class SavedSearchMatcherGoldenTest extends TestCase {
 		$this->assertArrayHasKey($name, $recorded, 'No recording for ' . $name);
 		$this->assertSame($recorded[$name], json_decode((string)json_encode($actual), true));
 	}
+
+	/**
+	 * One run handles at most 200 due saved searches; the rest wait for the
+	 * next run, untouched. Baselined and skipped ones do not count.
+	 *
+	 * @return void
+	 */
+	public function testAtMostTheDueLimitIsHandledPerRun(): void {
+		$this->log = ['searches' => [], 'notices' => []];
+		$store = new FakePortalObjectStore();
+		$store->objects['savedSearch']['new'] = self::saved('new', 'daily', null);
+		$store->objects['savedSearch']['off'] = array_merge(self::saved('off', 'immediate', '2026-09-29T07:05:00+02:00'), ['active' => false]);
+		for ($i = 1; $i <= 202; $i++) {
+			$store->objects['savedSearch']['k' . $i] = self::saved('s' . $i, 'immediate', '2026-09-29T07:05:00+02:00');
+		}
+
+		$matcher = new SavedSearchMatcher(
+			store: $store,
+			search: $this->search([]),
+			linker: $this->linker(),
+			publications: new PublicationQueryService(container: $this->createMock(ContainerInterface::class)),
+			notices: $this->notices(false),
+			logger: new NullLogger()
+		);
+
+		$stats = $matcher->run(new DateTimeImmutable('2026-09-30T07:30:00+02:00'));
+
+		$this->assertSame(['handled' => 200, 'notices' => 0, 'baselined' => 1, 'failed' => 0], $stats);
+		$this->assertCount(201, $store->saves);
+		$this->assertSame('2026-09-29T07:05:00+02:00', $store->objects['savedSearch']['k201']['lastRunAt']);
+
+	}//end testAtMostTheDueLimitIsHandledPerRun()
 
 	/**
 	 * Two notices of one run never share a stamp, and stamps only grow.

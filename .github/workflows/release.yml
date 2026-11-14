@@ -44,9 +44,15 @@ on:
 # Keep this in step with quality.yml's node-version. If the shared workflow's
 # default moves to 24, these three lines become redundant rather than wrong.
 
+permissions:
+  contents: read
+
 jobs:
   unstable:
     if: github.ref == 'refs/heads/development'
+    permissions:
+      contents: write
+      pull-requests: write
     uses: ConductionNL/.github/.github/workflows/release.yml@main
     with:
       release-type: unstable
@@ -56,6 +62,9 @@ jobs:
 
   beta:
     if: github.ref == 'refs/heads/beta'
+    permissions:
+      contents: write
+      pull-requests: write
     uses: ConductionNL/.github/.github/workflows/release.yml@main
     with:
       release-type: beta
@@ -65,6 +74,9 @@ jobs:
 
   stable:
     if: github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+      pull-requests: write
     uses: ConductionNL/.github/.github/workflows/release.yml@main
     with:
       release-type: stable

@@ -3,6 +3,9 @@
 /**
  * Service for handling file operations in OpenCatalogi.
  *
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Provides functionalities for managing files and folders in NextCloud, handling
  * uploaded files, generating PDF and ZIP files, managing temporary files, and
  * requesting public share links via the OpenRegister shares leaf (ADR-022).

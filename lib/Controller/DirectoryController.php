@@ -177,26 +177,41 @@ class DirectoryController extends Controller {
 		// Get the directory URL from the request parameters.
 		$directoryUrl = $this->request->getParam('directory');
 
-		// Validate that directory URL is provided.
+		// Add CORS headers for public API access (#735 — never reflect Origin).
 		if (empty($directoryUrl) === true) {
-			$response = new JSONResponse(
-				data: [
-					'message' => $this->l10n->t('Property "directory" is required'),
-					'error' => $this->l10n->t('Missing directory URL parameter'),
-				],
-				statusCode: 400
-			);
+			return $this->withListCorsHeaders(response: $this->missingDirectoryAnswer());
+		}
 
-			// Add CORS headers for public API access (#735 — never reflect Origin).
-			return $this->withListCorsHeaders(response: $response);
-		}//end if
+		return $this->withListCorsHeaders(response: $this->syncAnswer(directoryUrl: $directoryUrl));
+	}//end update()
 
-		// Sync the directory with the provided URL.
+	/**
+	 * The 400 for a sync request without a directory URL.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function missingDirectoryAnswer(): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'message' => $this->l10n->t('Property "directory" is required'),
+				'error' => $this->l10n->t('Missing directory URL parameter'),
+			],
+			statusCode: 400
+		);
+	}//end missingDirectoryAnswer()
+
+	/**
+	 * Sync the directory and answer with the result, or with why it failed.
+	 *
+	 * @param mixed $directoryUrl The directory URL the peer posted.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function syncAnswer(mixed $directoryUrl): JSONResponse {
 		try {
 			$data = $this->directoryService->syncDirectory($directoryUrl);
 
-			// Return success response with sync results.
-			$response = new JSONResponse(
+			return new JSONResponse(
 				[
 					'message' => $this->l10n->t('Directory synchronized successfully'),
 					'data' => $data,
@@ -205,7 +220,7 @@ class DirectoryController extends Controller {
 		} catch (\InvalidArgumentException $e) {
 			// Handle validation errors (invalid URL, etc.). The raw message here is
 			// safe because it's the caller's own input being echoed back.
-			$response = new JSONResponse(
+			return new JSONResponse(
 				data: [
 					'message' => $this->l10n->t('Invalid directory URL'),
 					'error' => $e->getMessage(),
@@ -213,37 +228,56 @@ class DirectoryController extends Controller {
 				statusCode: 400
 			);
 		} catch (GuzzleException $e) {
-			// Handle HTTP/network errors. Do NOT reflect the upstream response body
-			// (it may contain internal content from an SSRF-style probe). Log details
-			// server-side instead and return a generic message to the caller.
-			$this->logger?->warning(
-				'[DirectoryController::update] Upstream fetch failed',
-				['error' => $e->getMessage()]
-			);
-			$response = new JSONResponse(
-				data: [
-					'message' => $this->l10n->t('Failed to fetch directory data'),
-					'error' => $this->l10n->t('Unable to reach the requested directory'),
-				],
-				statusCode: 502
-			);
+			return $this->upstreamFailedAnswer(exception: $e);
 		} catch (\Exception $e) {
-			// Handle other unexpected errors. Public endpoint — log server-side, return
-			// a generic body so internal details (paths, SQL fragments) do not leak (#735).
-			$this->logger?->error(
-				'[DirectoryController::update] Directory synchronization failed',
-				[
-					'error' => $e->getMessage(),
-					'trace' => $e->getTraceAsString(),
-				]
-			);
-			$response = new JSONResponse(
-				data: ['error' => $this->l10n->t('Internal server error')],
-				statusCode: 500
-			);
+			return $this->syncFailedAnswer(exception: $e);
 		}//end try
+	}//end syncAnswer()
 
-		// Add CORS headers for public API access (#735 — never reflect Origin).
-		return $this->withListCorsHeaders(response: $response);
-	}//end update()
+	/**
+	 * The 502 when the directory cannot be fetched. Do NOT reflect the upstream
+	 * response body (it may contain internal content from an SSRF-style probe):
+	 * log the details server-side and give the caller a generic message.
+	 *
+	 * @param GuzzleException $exception The fetch failure.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function upstreamFailedAnswer(GuzzleException $exception): JSONResponse {
+		$this->logger?->warning(
+			'[DirectoryController::update] Upstream fetch failed',
+			['error' => $exception->getMessage()]
+		);
+
+		return new JSONResponse(
+			data: [
+				'message' => $this->l10n->t('Failed to fetch directory data'),
+				'error' => $this->l10n->t('Unable to reach the requested directory'),
+			],
+			statusCode: 502
+		);
+	}//end upstreamFailedAnswer()
+
+	/**
+	 * The 500 for any other failure. Public endpoint — log server-side, return
+	 * a generic body so internal details (paths, SQL fragments) do not leak (#735).
+	 *
+	 * @param \Exception $exception The failure.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function syncFailedAnswer(\Exception $exception): JSONResponse {
+		$this->logger?->error(
+			'[DirectoryController::update] Directory synchronization failed',
+			[
+				'error' => $exception->getMessage(),
+				'trace' => $exception->getTraceAsString(),
+			]
+		);
+
+		return new JSONResponse(
+			data: ['error' => $this->l10n->t('Internal server error')],
+			statusCode: 500
+		);
+	}//end syncFailedAnswer()
 }//end class

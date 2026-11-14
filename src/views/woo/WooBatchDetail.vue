@@ -100,17 +100,26 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const { data } = await axios.get(
-					generateUrl(
-						`/apps/opencatalogi/api/woo/batches/${this.batchId}`,
-					),
-				)
-				this.batch = data
+				this.batch = await this.requestBatch()
 			} catch (err) {
 				this.error = err.response?.data?.error || err.message
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Fetch this batch with its derived document summary.
+		 *
+		 * @return {Promise<object>} The batch.
+		 */
+		async requestBatch() {
+			const { data } = await axios.get(
+				generateUrl(
+					`/apps/opencatalogi/api/woo/batches/${this.batchId}`,
+				),
+			)
+			return data
 		},
 
 		/**
@@ -154,7 +163,7 @@ export default {
 		/**
 		 * Build the inventarislijst download URL (CSV by default).
 		 *
-		 * @param {string} format The export format (csv|html).
+		 * @param {string} format The export format (csv|pdf).
 		 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
 		 * @return {string} The download URL.
 		 */
@@ -245,7 +254,7 @@ export default {
 				<NcButton :href="inventarislijstUrl('csv')">
 					{{ t('opencatalogi', 'Download inventarislijst (CSV)') }}
 				</NcButton>
-				<NcButton :href="inventarislijstUrl('html')">
+				<NcButton :href="inventarislijstUrl('pdf')">
 					{{ t('opencatalogi', 'Download inventarislijst (PDF/A)') }}
 				</NcButton>
 				<NcButton

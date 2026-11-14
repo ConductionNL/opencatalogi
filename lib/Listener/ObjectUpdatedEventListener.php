@@ -257,10 +257,14 @@ class ObjectUpdatedEventListener implements IEventListener {
 	 * @return array The object data in array format.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
+	 * @spec openspec/changes/auto-publishing/specs/auto-publishing/spec.md#requirement-apb-017-safe-file-retrieval-on-update-events-replaces-the-selffiles-placeholder
 	 */
 	private function convertObjectEntityToArray(\OCA\OpenRegister\Db\ObjectEntity $objectEntity): array {
 		$objectData = $this->eventObjectData(objectEntity: $objectEntity);
-		// Don't fetch files to avoid infinite recursion.
+		// The listener carries no file list. Attachment publishing reads the
+		// object's real files in EventService through FileMapper, straight from
+		// the database, so sharing them dispatches no new ObjectUpdatedEvent
+		// (APB-010, APB-017).
 		$objectData['@self']['files'] = [];
 
 		return $objectData;

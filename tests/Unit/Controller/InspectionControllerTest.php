@@ -26,6 +26,8 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+require_once __DIR__ . '/../Service/Publication/TermRollFixture.php';
+
 use OCA\OpenCatalogi\Controller\InspectionController;
 use OCA\OpenCatalogi\Controller\InspectionRecords;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
@@ -47,6 +49,7 @@ use Psr\Container\ContainerInterface;
  * Unit tests for InspectionController.
  */
 class InspectionControllerTest extends TestCase {
+	use \Unit\Service\Publication\TermRollFixture;
 
 	private IRequest|MockObject $request;
 	private IAppConfig|MockObject $config;
@@ -112,7 +115,7 @@ class InspectionControllerTest extends TestCase {
 			$this->l10n,
 			$this->userSession,
 			new InspectionRecords(
-				new InspectionService(),
+				new InspectionService($this->termRoll()),
 				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
 			)
 		);
@@ -275,6 +278,29 @@ class InspectionControllerTest extends TestCase {
 		$this->assertSame([['id' => 'inspection-1', 'register' => '42', 'schema' => '42', 'rbac' => false]], $this->store->reads);
 
 	}//end testTheLinkIsReadWithoutRbac()
+
+	/**
+	 * An object found in another schema is not an inspection, even with the right token.
+	 */
+	public function testAnObjectOfAnotherSchemaIsNotAnInspection(): void {
+		$this->storedInspection(
+			[
+				'@self' => ['register' => '42', 'schema' => '7'],
+				'record' => 'besluit-1',
+				'documents' => ['doc-1'],
+				'startDate' => '2026-09-01T00:00:00+00:00',
+				'endDate' => '2099-01-01T00:00:00+00:00',
+				'token' => 'the-token',
+			]
+		);
+		$this->withToken('the-token');
+
+		$response = $this->controller->follow('inspection-1');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertArrayNotHasKey('documents', $response->getData());
+
+	}//end testAnObjectOfAnotherSchemaIsNotAnInspection()
 
 	/**
 	 * A request without a token reads nothing, even when the register is down.
@@ -489,6 +515,73 @@ class InspectionControllerTest extends TestCase {
 	}//end testAnInspectionIsStoredForTheDeclaredTerm()
 
 	/**
+	 * Opening an inspection stores the rolled end: a term chosen to land on a
+	 * Saturday is stored ending on the next working day, with where it landed
+	 * before the roll and why.
+	 */
+	public function testOpenStoresTheRolledEndDate(): void {
+		$now = new \DateTimeImmutable('now', new \DateTimeZone('UTC'));
+		$days = (6 - (int)$now->format('N') + 7) % 7 + 7;
+
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => $days],
+				'documents' => ['doc-a'],
+			]
+		);
+
+		$response = $this->controller->open();
+
+		$this->assertSame(Http::STATUS_CREATED, $response->getStatus());
+		$saved = $store->saved[0];
+		$unrolled = new \DateTimeImmutable($saved['unrolledEndDate']);
+		$end = new \DateTimeImmutable($saved['endDate']);
+		$this->assertSame('6', $unrolled->format('N'), 'The term must land on a Saturday.');
+		$this->assertGreaterThan($unrolled, $end);
+		$this->assertLessThan(6, (int)$end->format('N'), 'The stored end must be a working day.');
+		$this->assertNotNull($saved['rolledBy']);
+		$this->assertSame($unrolled->format('H:i:s'), $end->format('H:i:s'));
+
+	}//end testOpenStoresTheRolledEndDate()
+
+	/**
+	 * With no term engine, opening an inspection answers 503 with the reason and stores nothing.
+	 */
+	public function testAnUnreachableTermEngineOpensNothingAndStoresNothing(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(
+			[
+				'record' => ['id' => 'besluit-1'],
+				'recordType' => ['slug' => 'omgevingsvergunning', 'inspectionTermDays' => 42],
+				'documents' => ['doc-a'],
+			]
+		);
+		$controller = new InspectionController(
+			'opencatalogi',
+			$this->request,
+			$this->config,
+			$this->l10n,
+			$this->userSession,
+			new InspectionRecords(
+				new InspectionService($this->termRoll(engineAvailable: false)),
+				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
+			)
+		);
+
+		$response = $controller->open();
+
+		$this->assertSame(Http::STATUS_SERVICE_UNAVAILABLE, $response->getStatus());
+		$this->assertSame('term-engine-unavailable', $response->getData()['error']);
+		$this->assertStringStartsWith('The term engine is unavailable', $response->getData()['message']);
+		$this->assertSame([], $store->saved);
+
+	}//end testAnUnreachableTermEngineOpensNothingAndStoresNothing()
+
+	/**
 	 * A record type with no term opens no inspection, and stores nothing.
 	 *
 	 * The term is the statutory period. Defaulting it would put documents on
@@ -550,6 +643,27 @@ class InspectionControllerTest extends TestCase {
 		$this->assertSame([], $store->saved);
 
 	}//end testParametersOfTheWrongShapeAreRefused()
+
+	/**
+	 * Documents that are not a list are refused like any other parameter, and
+	 * a refused inspection names why.
+	 */
+	public function testTheRefusalsNameWhy(): void {
+		$store = $this->recordingStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(['record' => ['id' => 'b'], 'recordType' => ['inspectionTermDays' => 4], 'documents' => 'doc-a']);
+		$this->assertSame(['error' => 'missing-parameters'], $this->controller->open()->getData());
+
+		$this->setUp();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withOpenParams(['record' => ['id' => 'b'], 'recordType' => ['slug' => 'x', 'inspectionTermDays' => 4], 'documents' => []]);
+		$this->assertSame(
+			['error' => 'inspection-refused', 'message' => 'An inspection needs the documents chosen for it. An inspection over nothing is not an inspection.'],
+			$this->controller->open()->getData()
+		);
+		$this->assertSame([], $store->saved);
+
+	}//end testTheRefusalsNameWhy()
 
 	/**
 	 * An inspection that cannot be stored answers 503, never a quiet success.

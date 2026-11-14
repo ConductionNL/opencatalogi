@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -107,35 +108,74 @@ class InspectionController extends Controller {
 	 * @return JSONResponse The inspection, or the refusal.
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function open(): JSONResponse {
-		$record = $this->request->getParam('record', []);
-		$recordType = $this->request->getParam('recordType', []);
-		$documents = $this->request->getParam('documents', []);
-
-		if (is_array($record) === false || is_array($recordType) === false || is_array($documents) === false) {
+		$parameters = $this->openParameters();
+		if ($parameters === null) {
 			return new JSONResponse(data: ['error' => 'missing-parameters'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
-		$user = $this->userSession->getUser();
-		$openedBy = '';
-		if ($user !== null) {
-			$openedBy = $user->getUID();
-		}
-
 		try {
-			$inspection = $this->registers->open(
-				parameters: ['record' => $record, 'recordType' => $recordType, 'documents' => $documents],
-				openedBy: $openedBy
-			);
+			$inspection = $this->registers->open(parameters: $parameters, openedBy: $this->openerId());
 		} catch (\DomainException $e) {
 			return new JSONResponse(
 				data: ['error' => 'inspection-refused', 'message' => $e->getMessage()],
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
+		} catch (TermRollUnavailableException $e) {
+			// A statutory end is never stored unrolled because the engine was down.
+			return new JSONResponse(
+				data: ['error' => 'term-engine-unavailable', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
 		}
 
+		return $this->storedAnswer(inspection: $inspection);
+	}//end open()
+
+	/**
+	 * The record, its type and the chosen documents the request posts, or
+	 * null when any of them is not an array.
+	 *
+	 * @return array{record: array<string, mixed>, recordType: array<string, mixed>, documents: array<int, string>}|null
+	 */
+	private function openParameters(): ?array {
+		$record = $this->request->getParam('record', []);
+		$recordType = $this->request->getParam('recordType', []);
+		$documents = $this->request->getParam('documents', []);
+
+		if (is_array($record) === false || is_array($recordType) === false || is_array($documents) === false) {
+			return null;
+		}
+
+		return ['record' => $record, 'recordType' => $recordType, 'documents' => $documents];
+	}//end openParameters()
+
+	/**
+	 * Who opens the inspection: the session user, or '' without a session.
+	 *
+	 * @return string The user id.
+	 */
+	private function openerId(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return '';
+		}
+
+		return $user->getUID();
+	}//end openerId()
+
+	/**
+	 * Store an opened inspection and answer with it, or with why it could not
+	 * be stored.
+	 *
+	 * @param array<string, mixed> $inspection The opened inspection.
+	 *
+	 * @return JSONResponse The stored inspection (201), or the refusal.
+	 */
+	private function storedAnswer(array $inspection): JSONResponse {
 		try {
 			$saved = $this->registers->store(inspection: $inspection);
 		} catch (CatalogueUnreadableException $e) {
@@ -148,7 +188,7 @@ class InspectionController extends Controller {
 		}
 
 		return new JSONResponse($this->registers->toArray(object: $saved), Http::STATUS_CREATED);
-	}//end open()
+	}//end storedAnswer()
 
 	/**
 	 * Follow an inspection link.

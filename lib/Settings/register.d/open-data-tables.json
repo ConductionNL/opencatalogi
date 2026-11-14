@@ -1,0 +1,117 @@
+{
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"publishedTable"
+				],
+				"configuration": {
+					"schemas": {
+						"publishedTable": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "A CSV attachment of a publication published as a queryable table"
+						}
+					}
+				}
+			},
+			"open-data-tables": {
+				"slug": "open-data-tables",
+				"title": "Open data tables",
+				"version": "0.1.0",
+				"description": "The rows of every CSV published as a table, one schema per table. The schemas are made by the app when an editor publishes a table, not declared here.",
+				"published": "2026-11-13T00:00:00+00:00",
+				"schemas": [],
+				"folder": "Open Registers/Open Data Tables"
+			}
+		},
+		"schemas": {
+			"publishedTable": {
+				"slug": "publishedTable",
+				"title": "Published table",
+				"version": "0.1.0",
+				"published": "2026-11-13T00:00:00+00:00",
+				"summary": "A CSV attachment whose rows can be queried",
+				"description": "A CSV attachment of a publication whose rows were imported into the open-data-tables register, so anyone who may read the publication can query them and read their data dictionary.",
+				"icon": "Table",
+				"type": "object",
+				"required": [
+					"publication",
+					"file",
+					"schema",
+					"status"
+				],
+				"authorization": {
+					"read": [
+						"authenticated"
+					],
+					"create": [
+						"admin"
+					],
+					"update": [
+						"admin"
+					],
+					"delete": [
+						"admin"
+					]
+				},
+				"properties": {
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"description": "The publication the CSV is an attachment of.",
+						"$ref": "#/components/schemas/publication",
+						"facetable": true
+					},
+					"file": {
+						"type": "string",
+						"title": "File",
+						"description": "The file id of the CSV attachment.",
+						"maxLength": 64
+					},
+					"title": {
+						"type": "string",
+						"title": "Title",
+						"description": "The name of the table, by default the file name.",
+						"maxLength": 255
+					},
+					"schema": {
+						"type": "string",
+						"title": "Schema",
+						"description": "The OpenRegister schema that holds the table's rows; its properties are the data dictionary.",
+						"maxLength": 64
+					},
+					"rowCount": {
+						"type": "integer",
+						"title": "Row count",
+						"description": "How many rows were imported.",
+						"minimum": 0
+					},
+					"importedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Imported at",
+						"description": "When the rows were imported."
+					},
+					"status": {
+						"type": "string",
+						"title": "Status",
+						"description": "importing while the rows are imported, ready once they are, failed when the import refused a row.",
+						"enum": [
+							"importing",
+							"ready",
+							"failed"
+						],
+						"facetable": true
+					},
+					"lastError": {
+						"type": "string",
+						"title": "Last error",
+						"description": "The first row the import refused, and why.",
+						"maxLength": 2000
+					}
+				}
+			}
+		}
+	}
+}

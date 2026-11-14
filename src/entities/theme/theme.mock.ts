@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 import type { TTheme } from './theme.types'
 
 import { Theme } from './theme'

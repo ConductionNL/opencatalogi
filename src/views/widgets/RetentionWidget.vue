@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 </script>
@@ -37,6 +41,13 @@ import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 // Icons
 import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
 
+/** The widget rows in order: row id and the summary count it shows. */
+const RETENTION_ROWS = [
+	['expiring', 'expiringSoon'],
+	['review', 'reviewRequired'],
+	['archived', 'archived'],
+]
+
 /**
  * RetentionWidget — dashboard widget showing retention review-queue counts.
  *
@@ -75,29 +86,16 @@ export default {
 	computed: {
 		/** @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007 */
 		entries() {
-			const rows = []
-			if (this.summary.expiringSoon > 0) {
-				rows.push({
-					id: 'expiring',
-					label: t('opencatalogi', 'Expiring soon'),
-					count: this.summary.expiringSoon,
-				})
+			const labels = {
+				expiring: t('opencatalogi', 'Expiring soon'),
+				review: t('opencatalogi', 'Retention review required'),
+				archived: t('opencatalogi', 'Archived'),
 			}
-			if (this.summary.reviewRequired > 0) {
-				rows.push({
-					id: 'review',
-					label: t('opencatalogi', 'Retention review required'),
-					count: this.summary.reviewRequired,
-				})
-			}
-			if (this.summary.archived > 0) {
-				rows.push({
-					id: 'archived',
-					label: t('opencatalogi', 'Archived'),
-					count: this.summary.archived,
-				})
-			}
-			return rows
+			return RETENTION_ROWS.map(([id, key]) => ({
+				id,
+				label: labels[id],
+				count: this.summary[key],
+			})).filter((row) => row.count > 0)
 		},
 	},
 

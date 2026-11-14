@@ -3,6 +3,9 @@
 /**
  * Service for the WOO (Wet open overheid) transparency workflow.
  *
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Implements the WOO-specific domain logic described in
  * openspec/changes/woo-transparency. Per hydra ADR-022 this service builds NO
  * bespoke queue/board, NO bespoke state machine and NO bespoke audit store:
@@ -28,9 +31,6 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
- *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -43,6 +43,8 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
@@ -762,9 +764,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	}//end renderInventarislijstCsv()
 
 	/**
-	 * Render the inventarislijst as a minimal, archival-oriented HTML document
-	 * (the print/PDF source). Conversion to PDF/A is delegated to Docudesk;
-	 * OpenCatalogi owns only the WOO-standard layout + header/footer.
+	 * Render the inventarislijst as a minimal, archival-oriented HTML document,
+	 * the source of the PDF/A export.
 	 *
 	 * @param string $batchId The batch uuid (for the header).
 	 * @param array<int, array<string, string>> $rows The inventory rows.
@@ -799,6 +800,26 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			. '</body></html>';
 
 	}//end renderInventarislijstHtml()
+
+	/**
+	 * Render the inventarislijst as a PDF/A document.
+	 *
+	 * @param string $batchId The batch uuid (for the header).
+	 * @param array<int, array<string, string>> $rows The inventory rows.
+	 *
+	 * @return string The PDF bytes.
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+	 */
+	public function renderInventarislijstPdf(string $batchId, array $rows): string {
+		$mpdf = new Mpdf(config: ['tempDir' => sys_get_temp_dir() . '/mpdf']);
+		$mpdf->PDFA = true;
+		$mpdf->PDFAauto = true;
+		$mpdf->WriteHTML(html: $this->renderInventarislijstHtml(batchId: $batchId, rows: $rows));
+
+		return $mpdf->Output(name: '', dest: Destination::STRING_RETURN);
+
+	}//end renderInventarislijstPdf()
 
 	/**
 	 * Whether a batch is eligible to move to "ready_for_review": every document

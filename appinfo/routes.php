@@ -1,6 +1,12 @@
 <?php
 
-return [
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases([
 	'routes' => [
 		/**
 		 * Here we have the private endpoints, the part of the API that is used by the backend and not publicly accessible
@@ -62,7 +68,7 @@ return [
 		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
 		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],
 		['name' => 'woo#markReadyForReview', 'url' => '/api/woo/batches/{batchId}/ready-for-review', 'verb' => 'POST'],
-		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'POST'],
+		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'GET'],
 		['name' => 'woo#publishBatch', 'url' => '/api/woo/batches/{batchId}/publish', 'verb' => 'POST'],
 		// Woo request intake and the statutory term (woo-request-intake). The
 		// citizen-facing form is portaliq's; this is the API it calls.
@@ -124,6 +130,8 @@ return [
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-dictionary', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
@@ -173,7 +181,7 @@ return [
 		 * IMPORTANT: Routes are matched in order from top to bottom.
 		 * Specific routes MUST come BEFORE wildcard routes to avoid incorrect matching.
 		 */
-		// OpenAPI 3.1 self-documentation (public-api-openapi-document)
+		// OpenAPI 3.0 self-documentation (public-api-openapi-document)
 		['name' => 'apiDocumentation#index', 'url' => '/api/openapi.json', 'verb' => 'GET'],
 		// DCAT-AP-NL harvest endpoints (specific routes - MUST be before wildcard catalog routes)
 		['name' => 'dcat#instance', 'url' => '/api/dcat', 'verb' => 'GET'],
@@ -282,6 +290,9 @@ return [
 		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		// Published tables: rows and data dictionary of a CSV published as a table (REQ-ODT-002, REQ-ODT-003).
+		['name' => 'publishedTable#rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publishedTable#dictionary', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
@@ -303,4 +314,4 @@ return [
 		// (aliased in Application::register); a distinct name keeps it from shadowing the / index route.
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
 	]
-];
+]);

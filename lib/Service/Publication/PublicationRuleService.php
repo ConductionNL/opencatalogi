@@ -66,8 +66,28 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function validateRule(array $rule): array {
-		$errors = [];
+		$errors = array_merge(
+			$this->ruleErrors(rule: $rule),
+			$this->conditionsErrors(conditions: ($rule['conditions'] ?? []))
+		);
 
+		return [
+			'valid' => ($errors === []),
+			'errors' => $errors,
+		];
+
+	}//end validateRule()
+
+	/**
+	 * What a rule lacks: the record type it governs, the properties an
+	 * anonymous reader may read.
+	 *
+	 * @param array<string, mixed> $rule The publication rule.
+	 *
+	 * @return array<int, string> The errors.
+	 */
+	private function ruleErrors(array $rule): array {
+		$errors = [];
 		if (trim((string)($rule['recordType'] ?? '')) === '') {
 			$errors[] = 'A publication rule must name the record type it governs.';
 		}
@@ -77,28 +97,51 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 			$errors[] = 'A publication rule must name the properties an anonymous reader may read, even if that is none.';
 		}
 
-		foreach (($rule['conditions'] ?? []) as $index => $condition) {
-			if (is_array($condition) === false) {
-				$errors[] = 'Condition ' . $index . ' cannot be read.';
-				continue;
-			}
+		return $errors;
+	}//end ruleErrors()
 
-			if (trim((string)($condition['property'] ?? '')) === '') {
-				$errors[] = 'Condition ' . $index . ' names no property.';
-			}
-
-			$operator = (string)($condition['operator'] ?? '');
-			if (in_array($operator, self::OPERATORS, true) === false) {
-				$errors[] = 'Condition ' . $index . ' uses an operator this app does not know: "' . $operator . '".';
-			}
+	/**
+	 * The errors of every condition, in order.
+	 *
+	 * @param mixed $conditions The rule's conditions.
+	 *
+	 * @return array<int, string> The errors.
+	 */
+	private function conditionsErrors(mixed $conditions): array {
+		$errors = [];
+		foreach ($conditions as $index => $condition) {
+			array_push($errors, ...$this->conditionErrors(index: $index, condition: $condition));
 		}
 
-		return [
-			'valid' => ($errors === []),
-			'errors' => $errors,
-		];
+		return $errors;
+	}//end conditionsErrors()
 
-	}//end validateRule()
+	/**
+	 * The errors of one condition: unreadable, or naming no property or an
+	 * unknown operator.
+	 *
+	 * @param int|string $index The condition's position.
+	 * @param mixed $condition The condition.
+	 *
+	 * @return array<int, string> The errors.
+	 */
+	private function conditionErrors(int|string $index, mixed $condition): array {
+		if (is_array($condition) === false) {
+			return ['Condition ' . $index . ' cannot be read.'];
+		}
+
+		$errors = [];
+		if (trim((string)($condition['property'] ?? '')) === '') {
+			$errors[] = 'Condition ' . $index . ' names no property.';
+		}
+
+		$operator = (string)($condition['operator'] ?? '');
+		if (in_array($operator, self::OPERATORS, true) === false) {
+			$errors[] = 'Condition ' . $index . ' uses an operator this app does not know: "' . $operator . '".';
+		}
+
+		return $errors;
+	}//end conditionErrors()
 
 	/**
 	 * Whether one record meets one condition.
@@ -277,34 +320,62 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 		$asSaved = $rule;
 		$asSaved['enabled'] = true;
 
+		return ['valid' => true, 'errors' => []] + $this->sampleOutcome(rule: $asSaved, sample: $sample);
+
+	}//end preview()
+
+	/**
+	 * What a rule publishes of a sample: the anonymous view of each record it
+	 * publishes, how many it does not, and every property it exposes.
+	 *
+	 * @param array<string, mixed> $rule The rule, as it would be saved.
+	 * @param array<int, array<string, mixed>> $sample A sample of existing records.
+	 *
+	 * @return array{
+	 *     wouldPublish: array<int, array<string, mixed>>,
+	 *     wouldNotPublish: integer,
+	 *     exposedProperties: array<int, string>,
+	 *     sampleSize: integer
+	 * }
+	 */
+	private function sampleOutcome(array $rule, array $sample): array {
 		$wouldPublish = [];
 		$wouldNot = 0;
-		$exposed = [];
-
 		foreach ($sample as $record) {
-			if ($this->publishes(record: $record, rule: $asSaved) === false) {
+			if ($this->publishes(record: $record, rule: $rule) === false) {
 				$wouldNot++;
 				continue;
 			}
 
-			$projected = $this->projectForAnonymous(record: $record, rule: $asSaved);
-			$wouldPublish[] = $projected;
+			$wouldPublish[] = $this->projectForAnonymous(record: $record, rule: $rule);
+		}
+
+		return [
+			'wouldPublish' => $wouldPublish,
+			'wouldNotPublish' => $wouldNot,
+			'exposedProperties' => $this->exposedProperties(projections: $wouldPublish),
+			'sampleSize' => count($sample),
+		];
+	}//end sampleOutcome()
+
+	/**
+	 * Every property the anonymous views expose, once, sorted.
+	 *
+	 * @param array<int, array<string, mixed>> $projections The anonymous views.
+	 *
+	 * @return array<int, string> The properties.
+	 */
+	private function exposedProperties(array $projections): array {
+		$exposed = [];
+		foreach ($projections as $projected) {
 			$exposed = array_merge($exposed, array_keys($projected));
 		}
 
 		$exposed = array_values(array_unique($exposed));
 		sort($exposed);
 
-		return [
-			'valid' => true,
-			'errors' => [],
-			'wouldPublish' => $wouldPublish,
-			'wouldNotPublish' => $wouldNot,
-			'exposedProperties' => $exposed,
-			'sampleSize' => count($sample),
-		];
-
-	}//end preview()
+		return $exposed;
+	}//end exposedProperties()
 
 	/**
 	 * The anonymous view of a list of records, with anything unpublished removed.

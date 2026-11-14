@@ -2,6 +2,9 @@
 /**
  * Script to set up menus and pages for local OpenCatalogi environment
  * Based on the accept environment structure
+ *
+ * SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 require_once __DIR__ . '/../../openregister/lib/Service/ObjectService.php';

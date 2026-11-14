@@ -1,5 +1,13 @@
+/**
+ * SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 import { createPinia, setActivePinia } from 'pinia'
 import { useObjectStore } from './object.js'
+
+// @nextcloud/auth ships ESM that Jest does not transform; the store only
+// reads the request token from it, so stub that boundary.
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'tok' }))
 
 /**
  * Mock settings response
@@ -183,6 +191,95 @@ describe('ObjectStore', () => {
 				'Failed to fetch character collection',
 			)
 		})
+
+		it('adds the default _extend and keeps a caller extend', async () => {
+			fetch.mockResolvedValue({
+				ok: true,
+				json: () => Promise.resolve(mockCollection),
+			})
+
+			await store.fetchCollection('character')
+			await store.fetchCollection('character', { extend: 'owner' })
+			await store.fetchCollection('character', { _extend: 'files' })
+
+			const urls = fetch.mock.calls.slice(-3).map(([url]) => decodeURIComponent(url))
+			expect(urls[0]).toContain('_extend=@self.schema')
+			expect(urls[1]).toContain('_extend=owner')
+			expect(urls[2]).toContain('_extend=files')
+			expect(urls.some((url) => url.includes('_source='))).toBe(false)
+		})
+
+		it('reads non-indexed types from the database unless a source is given', async () => {
+			store.settings = {
+				...mockSettings,
+				configuration: {
+					...mockSettings.configuration,
+					glossary_source: 'openregister',
+					glossary_schema: '111',
+					glossary_register: '20',
+				},
+			}
+			fetch.mockResolvedValue({
+				ok: true,
+				json: () => Promise.resolve(mockCollection),
+			})
+
+			await store.fetchCollection('glossary')
+			await store.fetchCollection('glossary', { _source: 'index' })
+			await store.fetchCollection('glossary', { source: 'index' })
+
+			const urls = fetch.mock.calls.slice(-3).map(([url]) => url)
+			expect(urls[0]).toContain('_source=database')
+			expect(urls[1]).not.toContain('_source=database')
+			expect(urls[2]).not.toContain('_source=database')
+		})
+
+		it('derives pagination with legacy defaults', async () => {
+			fetch.mockResolvedValueOnce({
+				ok: true,
+				json: () => Promise.resolve({ results: [], total: 45, next: 'n', limit: 10 }),
+			})
+			await store.fetchCollection('character')
+			expect(store.pagination.character).toEqual({
+				total: 45, page: 1, pages: 5, limit: 10, next: 'n', prev: null,
+			})
+
+			fetch.mockResolvedValueOnce({
+				ok: true,
+				json: () => Promise.resolve({ results: [] }),
+			})
+			await store.fetchCollection('item')
+			expect(store.pagination.item).toEqual({
+				total: 0, page: 1, pages: 1, limit: 20, next: null, prev: null,
+			})
+		})
+
+		it('mirrors results, pagination and facets into the inner store', async () => {
+			fetch.mockResolvedValueOnce({
+				ok: true,
+				json: () => Promise.resolve({
+					...mockCollection,
+					pages: 1,
+					facets: {
+						status: { buckets: [{ key: 'open', count: 2 }, { value: 'shut' }] },
+						kind: { data: { buckets: [{ key: 'a', count: 1 }] } },
+						flat: { values: ['ignored'] },
+					},
+				}),
+			})
+
+			await store.fetchCollection('character')
+
+			const expectedFacets = {
+				status: { values: [{ value: 'open', count: 2 }, { value: 'shut', count: 0 }] },
+				kind: { values: [{ value: 'a', count: 1 }] },
+			}
+			const inner = store._inner()
+			expect(inner.collections.character).toEqual(mockCollection.results)
+			expect(inner.pagination.character).toEqual({ total: 2, page: 1, pages: 1, limit: 20 })
+			expect(inner.facets.character).toEqual(expectedFacets)
+			expect(store.facets.character).toEqual(expectedFacets)
+		})
 	})
 
 	describe('Single Object Operations', () => {
@@ -287,7 +384,7 @@ describe('ObjectStore', () => {
 
 			expect(fetch).toHaveBeenCalledWith(
 				'/index.php/apps/openregister/api/objects/20/105/1',
-				{ method: 'DELETE' },
+				{ method: 'DELETE', headers: { requesttoken: 'tok' } },
 			)
 			// Deleting an object drops it from the selection.
 			expect(store.selectedObjects).toEqual([])
@@ -413,7 +510,7 @@ describe('ObjectStore', () => {
 
 			expect(fetch).toHaveBeenCalledWith(
 				'/index.php/apps/openregister/api/objects/20/105/1',
-				{ method: 'DELETE' },
+				{ method: 'DELETE', headers: { requesttoken: 'tok' } },
 			)
 		})
 
@@ -428,7 +525,7 @@ describe('ObjectStore', () => {
 			fetch.mockRejectedValueOnce(new Error('Network error'))
 
 			await expect(
-				store.fetchRelatedData('character', '1', 'logs'),
+				store.fetchRelatedData({ type: 'character', id: '1', dataType: 'logs' }),
 			).rejects.toThrow()
 			// The failure is recorded against the TYPE, not a per-request composite
 			// key: the catch does `setState(type, { error })`. Asserting on

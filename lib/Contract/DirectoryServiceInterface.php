@@ -228,6 +228,20 @@ interface DirectoryServiceInterface {
 	public function getPublication(string $publicationId, array $guzzleConfig = []): ?array;
 
 	/**
+	 * The attachments of a publication another instance holds, read from that
+	 * instance's federation endpoint at the time of the call.
+	 *
+	 * @param string $publicationId The ID of the publication
+	 * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+	 *
+	 * @return array|null The attachments (`results`) and the instance that answered (`source`),
+	 *                    or null when no reachable instance holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getRemoteAttachments(string $publicationId, array $guzzleConfig = []): ?array;
+
+	/**
 	 * Get directory entries (listings and catalogs formatted as listings)
 	 *
 	 * Retrieves both discovered listings and local catalogs, formatting catalogs

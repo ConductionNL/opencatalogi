@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
 
@@ -486,57 +490,8 @@ import '../../css/json-highlight.css'
 				<div class="report-section">
 					<h4>{{ t('opencatalogi', 'Statistics') }}</h4>
 					<ul>
-						<li>
-							{{
-								t('opencatalogi', 'Properties changed: {count}', {
-									count:
-										mergeResult.statistics?.propertiesChanged
-										|| 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'Files transferred: {count}', {
-									count:
-										mergeResult.statistics?.filesTransferred
-										|| 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'Files deleted: {count}', {
-									count: mergeResult.statistics?.filesDeleted || 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'Relations transferred: {count}', {
-									count:
-										mergeResult.statistics?.relationsTransferred
-										|| 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'Relations dropped: {count}', {
-									count:
-										mergeResult.statistics?.relationsDropped
-										|| 0,
-								})
-							}}
-						</li>
-						<li>
-							{{
-								t('opencatalogi', 'References updated: {count}', {
-									count:
-										mergeResult.statistics?.referencesUpdated
-										|| 0,
-								})
-							}}
+						<li v-for="(line, index) in mergeStatisticLines" :key="index">
+							{{ line }}
 						</li>
 					</ul>
 				</div>
@@ -678,6 +633,7 @@ import '../../css/json-highlight.css'
 
 <script>
 import axios from '@nextcloud/axios'
+import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
 	NcButton,
@@ -697,6 +653,41 @@ import ChevronDown from 'vue-material-design-icons/ChevronDown.vue'
 import ChevronUp from 'vue-material-design-icons/ChevronUp.vue'
 import Eye from 'vue-material-design-icons/Eye.vue'
 import Merge from 'vue-material-design-icons/Merge.vue'
+
+/**
+ * Whether a merge side holds a value: not undefined, null or empty.
+ *
+ * @param {*} value - The value
+ * @return {boolean} True when it holds a value
+ */
+function hasMergeValue(value) {
+	return value !== undefined && value !== null && value !== ''
+}
+
+/**
+ * Whether a chosen value is a dropdown option object with a value.
+ *
+ * @param {*} value - The chosen value
+ * @return {boolean} True for an option object
+ */
+function isOptionObject(value) {
+	return Boolean(value && typeof value === 'object' && value.value !== undefined)
+}
+
+/**
+ * The default merge value of a property: the target's value when it has
+ * one, else the source's, else undefined (the caller picks 'custom').
+ *
+ * @param {*} targetValue - The target's value
+ * @param {*} sourceValue - The source's value
+ * @return {*} The default value
+ */
+function defaultMergeValue(targetValue, sourceValue) {
+	// Always store the actual value, never the option object
+	if (hasMergeValue(targetValue)) return targetValue
+	if (hasMergeValue(sourceValue)) return sourceValue
+	return undefined
+}
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -747,6 +738,24 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
 		sourceObject() {
 			return this.mergeSource ?? objectStore.objectItem ?? null
+		},
+
+		/**
+		 * The Statistics lines of the merge report; a counter the result
+		 * leaves out counts as 0.
+		 *
+		 * @return {Array<string>} The lines.
+		 */
+		mergeStatisticLines() {
+			const count = (key) => this.mergeResult.statistics?.[key] || 0
+			return [
+				t('opencatalogi', 'Properties changed: {count}', { count: count('propertiesChanged') }),
+				t('opencatalogi', 'Files transferred: {count}', { count: count('filesTransferred') }),
+				t('opencatalogi', 'Files deleted: {count}', { count: count('filesDeleted') }),
+				t('opencatalogi', 'Relations transferred: {count}', { count: count('relationsTransferred') }),
+				t('opencatalogi', 'Relations dropped: {count}', { count: count('relationsDropped') }),
+				t('opencatalogi', 'References updated: {count}', { count: count('referencesUpdated') }),
+			]
 		},
 
 		/**
@@ -821,13 +830,24 @@ export default {
 			}
 			this.loadSourceData()
 			if (transfer.mergeTarget) {
-				this.selectedTargetObject = transfer.mergeTarget
-				if (transfer.startStep === 2) {
-					this.step = 2
-					this.initializeMergeData()
-				}
+				this.takeHandedOverTarget(transfer)
 			}
 			this.searchObjects()
+		},
+
+		/**
+		 * Select the handed-over target, and go straight to "Configure merge"
+		 * when the list asked for step 2.
+		 *
+		 * @param {{mergeTarget: object, startStep?: number}} transfer What the list handed over.
+		 * @return {void}
+		 */
+		takeHandedOverTarget(transfer) {
+			this.selectedTargetObject = transfer.mergeTarget
+			if (transfer.startStep === 2) {
+				this.step = 2
+				this.initializeMergeData()
+			}
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
@@ -839,27 +859,32 @@ export default {
 
 			this.loading = true
 			try {
-				const { data } = await axios.get(
-					generateUrl(
-						'/apps/openregister/api/objects/{register}/{schema}',
-						{
-							register,
-							schema,
-						},
-					),
-					{ params: { _search: this.searchTerm } },
-				)
-
-				// Filter out the source object
-				this.availableObjects = data.results.filter(
-					(obj) => obj['@self'].id !== this.sourceObject['@self'].id,
-				)
+				this.availableObjects = await this.fetchMergeCandidates({ register, schema })
 			} catch (error) {
 				console.error('Error searching objects:', error)
 				this.availableObjects = []
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The objects of the source's register and schema that match the search
+		 * term, the source itself left out.
+		 *
+		 * @param {{register: string|number, schema: string|number}} pair The register and schema.
+		 * @return {Promise<Array<object>>} The candidate targets.
+		 */
+		async fetchMergeCandidates(pair) {
+			const { data } = await axios.get(
+				generateUrl('/apps/openregister/api/objects/{register}/{schema}', pair),
+				{ params: { _search: this.searchTerm } },
+			)
+
+			// Filter out the source object
+			return data.results.filter(
+				(obj) => obj['@self'].id !== this.sourceObject['@self'].id,
+			)
 		},
 
 		/**
@@ -893,43 +918,7 @@ export default {
 			this.propertySelections = {}
 
 			this.mergeableProperties.forEach((property) => {
-				if (property === 'id') {
-					// ID always uses target value
-					this.mergedData[property] = this.selectedTargetObject[property]
-				} else {
-					// Default selection logic:
-					// 1. Target value if it exists
-					// 2. Source value if target doesn't exist but source does
-					// 3. 'custom' if neither exists
-					const targetValue = this.selectedTargetObject[property]
-					const sourceValue = this.sourceObject[property]
-
-					let selectedValue
-					// Always store the actual value, never the option object
-					if (
-						targetValue !== undefined
-						&& targetValue !== null
-						&& targetValue !== ''
-					) {
-						selectedValue = targetValue
-					} else if (
-						sourceValue !== undefined
-						&& sourceValue !== null
-						&& sourceValue !== ''
-					) {
-						selectedValue = sourceValue
-					} else {
-						selectedValue = 'custom'
-						this.customValues[property] = ''
-					}
-
-					this.mergedData[property] = selectedValue
-
-					// Set up the selection object for the dropdown
-					const options = this.getMergeOptions(property)
-					this.propertySelections[property] =
-						options.find((opt) => opt.value === selectedValue) || null
-				}
+				this.initializeMergeProperty(property)
 			})
 
 			// eslint-disable-next-line no-console
@@ -942,31 +931,56 @@ export default {
 		},
 
 		/**
+		 * Set one property's default merge value and dropdown selection. The
+		 * id always takes the target's value.
+		 *
+		 * @param {string} property - The property
+		 * @return {void}
+		 */
+		initializeMergeProperty(property) {
+			if (property === 'id') {
+				// ID always uses target value
+				this.mergedData[property] = this.selectedTargetObject[property]
+				return
+			}
+
+			let selectedValue = defaultMergeValue(
+				this.selectedTargetObject[property],
+				this.sourceObject[property],
+			)
+			if (selectedValue === undefined) {
+				selectedValue = 'custom'
+				this.customValues[property] = ''
+			}
+
+			this.mergedData[property] = selectedValue
+
+			// Set up the selection object for the dropdown
+			const options = this.getMergeOptions(property)
+			this.propertySelections[property] =
+				options.find((opt) => opt.value === selectedValue) || null
+		},
+
+		/**
 		 * @param property
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6
 		 */
 		getMergeOptions(property) {
 			const options = []
+			const sourceValue = this.sourceObject[property]
+			const targetValue = this.selectedTargetObject[property]
 
-			if (
-				this.sourceObject[property] !== undefined
-				&& this.sourceObject[property] !== null
-				&& this.sourceObject[property] !== ''
-			) {
+			if (hasMergeValue(sourceValue)) {
 				options.push({
-					label: `From Source: ${this.displayValue(this.sourceObject[property])}`,
-					value: this.sourceObject[property],
+					label: `From Source: ${this.displayValue(sourceValue)}`,
+					value: sourceValue,
 				})
 			}
 
-			if (
-				this.selectedTargetObject[property] !== undefined
-				&& this.selectedTargetObject[property] !== null
-				&& this.selectedTargetObject[property] !== ''
-			) {
+			if (hasMergeValue(targetValue)) {
 				options.push({
-					label: `From Target: ${this.displayValue(this.selectedTargetObject[property])}`,
-					value: this.selectedTargetObject[property],
+					label: `From Target: ${this.displayValue(targetValue)}`,
+					value: targetValue,
 				})
 			}
 
@@ -1014,12 +1028,7 @@ export default {
 				return 'N/A'
 			}
 
-			let displayText = ''
-			if (typeof value === 'object') {
-				displayText = JSON.stringify(value, null, 2)
-			} else {
-				displayText = String(value)
-			}
+			const displayText = this.toDisplayText(value)
 
 			// Truncate if too long
 			if (displayText.length > maxLength) {
@@ -1027,6 +1036,19 @@ export default {
 			}
 
 			return displayText
+		},
+
+		/**
+		 * A merge value as text: objects as indented JSON, anything else as a string.
+		 *
+		 * @param {unknown} value The value, not null or undefined.
+		 * @return {string} The text.
+		 */
+		toDisplayText(value) {
+			if (typeof value === 'object') {
+				return JSON.stringify(value, null, 2)
+			}
+			return String(value)
 		},
 
 		/**
@@ -1048,57 +1070,8 @@ export default {
 
 			this.loading = true
 			try {
-				// Prepare merged data with custom values resolved - ensure no ID is included
-				const finalMergedData = {}
-				// eslint-disable-next-line no-console
-				console.log('Raw mergedData before processing:', this.mergedData)
-
-				Object.keys(this.mergedData).forEach((property) => {
-					// Skip any ID-related properties
-					if (property === 'id' || property === '@self') {
-						return
-					}
-
-					if (this.mergedData[property] === 'custom') {
-						finalMergedData[property] = this.customValues[property] || ''
-					} else {
-						// Ensure we extract the actual value if it's an object with label/value structure
-						const value = this.mergedData[property]
-						if (
-							value
-							&& typeof value === 'object'
-							&& value.value !== undefined
-						) {
-							// eslint-disable-next-line no-console
-							console.log(
-								'Extracting value from object for',
-								property,
-								':',
-								value.value,
-							)
-							finalMergedData[property] = value.value
-						} else {
-							finalMergedData[property] = value
-						}
-					}
-				})
-
-				// eslint-disable-next-line no-console
-				console.log('Final merged data to send:', finalMergedData)
-
-				const { register, schema } = this.sourcePair
-				const result = await axios.post(
-					generateUrl(
-						'/apps/openregister/api/objects/{register}/{schema}/{id}/merge',
-						{ register, schema, id: this.sourceObject['@self'].id },
-					),
-					{
-						target: this.selectedTargetObject['@self'].id,
-						object: finalMergedData,
-						fileAction: this.fileAction,
-						relationAction: this.relationAction,
-					},
-				)
+				const finalMergedData = this.resolvedMergedData()
+				const result = await this.postMerge(finalMergedData)
 
 				this.mergeResult = result.data
 				this.step = 3
@@ -1112,6 +1085,74 @@ export default {
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * The merged data to send: every chosen value with custom values
+		 * filled in and option objects unwrapped, without any id.
+		 *
+		 * @return {object} The merged data
+		 */
+		resolvedMergedData() {
+			const finalMergedData = {}
+			// eslint-disable-next-line no-console
+			console.log('Raw mergedData before processing:', this.mergedData)
+
+			Object.keys(this.mergedData).forEach((property) => {
+				// Skip any ID-related properties
+				if (property === 'id' || property === '@self') {
+					return
+				}
+				finalMergedData[property] = this.resolvedMergeValue(property)
+			})
+
+			// eslint-disable-next-line no-console
+			console.log('Final merged data to send:', finalMergedData)
+			return finalMergedData
+		},
+
+		/**
+		 * One property's value to send: the custom value, the value of an
+		 * option object, or the chosen value itself.
+		 *
+		 * @param {string} property - The property
+		 * @return {*} The value
+		 */
+		resolvedMergeValue(property) {
+			if (this.mergedData[property] === 'custom') {
+				return this.customValues[property] || ''
+			}
+
+			// Ensure we extract the actual value if it's an object with label/value structure
+			const value = this.mergedData[property]
+			if (isOptionObject(value)) {
+				// eslint-disable-next-line no-console
+				console.log('Extracting value from object for', property, ':', value.value)
+				return value.value
+			}
+			return value
+		},
+
+		/**
+		 * POST the merge of the source into the selected target.
+		 *
+		 * @param {object} finalMergedData - The merged data
+		 * @return {Promise<object>} The response
+		 */
+		postMerge(finalMergedData) {
+			const { register, schema } = this.sourcePair
+			return axios.post(
+				generateUrl(
+					'/apps/openregister/api/objects/{register}/{schema}/{id}/merge',
+					{ register, schema, id: this.sourceObject['@self'].id },
+				),
+				{
+					target: this.selectedTargetObject['@self'].id,
+					object: finalMergedData,
+					fileAction: this.fileAction,
+					relationAction: this.relationAction,
+				},
+			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
@@ -1153,23 +1194,7 @@ export default {
 		getFileType(filename) {
 			if (!filename) return 'Unknown'
 			const ext = filename.split('.').pop()?.toLowerCase()
-			const types = {
-				pdf: 'PDF',
-				doc: 'Word',
-				docx: 'Word',
-				xls: 'Excel',
-				xlsx: 'Excel',
-				ppt: 'PowerPoint',
-				pptx: 'PowerPoint',
-				txt: 'Text',
-				jpg: 'Image',
-				jpeg: 'Image',
-				png: 'Image',
-				gif: 'Image',
-				zip: 'Archive',
-				rar: 'Archive',
-			}
-			return types[ext] || ext?.toUpperCase() || 'Unknown'
+			return knownFileType(ext) || ext?.toUpperCase() || 'Unknown'
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-6 */
@@ -1179,14 +1204,7 @@ export default {
 
 			try {
 				// Load files - check if sourceObject has attachments property
-				if (
-					this.sourceObject.attachments
-					&& Array.isArray(this.sourceObject.attachments)
-				) {
-					this.sourceFiles = this.sourceObject.attachments
-				} else {
-					this.sourceFiles = []
-				}
+				this.sourceFiles = attachmentsOf(this.sourceObject)
 
 				// Load relations - this would need to be implemented based on your API
 				// For now, we'll use a placeholder
@@ -1203,6 +1221,43 @@ export default {
 			navigationStore.setModal(false)
 		},
 	},
+}
+
+/**
+ * The label of a known file extension.
+ *
+ * @param {string|undefined} ext The lower-case extension.
+ * @return {string|undefined} The label, when the extension is known.
+ */
+function knownFileType(ext) {
+	return {
+		pdf: 'PDF',
+		doc: 'Word',
+		docx: 'Word',
+		xls: 'Excel',
+		xlsx: 'Excel',
+		ppt: 'PowerPoint',
+		pptx: 'PowerPoint',
+		txt: 'Text',
+		jpg: 'Image',
+		jpeg: 'Image',
+		png: 'Image',
+		gif: 'Image',
+		zip: 'Archive',
+		rar: 'Archive',
+	}[ext]
+}
+
+/**
+ * An object's attachments when it has a list of them, else none.
+ *
+ * @param {object} object The object.
+ * @return {Array<object>} The attachments.
+ */
+function attachmentsOf(object) {
+	return object.attachments && Array.isArray(object.attachments)
+		? object.attachments
+		: []
 }
 </script>
 

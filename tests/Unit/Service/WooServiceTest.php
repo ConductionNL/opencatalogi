@@ -22,6 +22,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -550,6 +553,13 @@ class WooServiceTest extends TestCase {
 
 	}//end testGetBatchProducesDocumentSummary()
 
+	/**
+	 * A document still to be assessed keeps the batch out of review.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
 	public function testCanMarkReadyForReviewFalseWhenUnassessed(): void {
 		$this->seedBatchWithAssessments();
 		$this->assertFalse($this->service->canMarkReadyForReview('batch-1'));
@@ -558,6 +568,38 @@ class WooServiceTest extends TestCase {
 
 	}//end testCanMarkReadyForReviewFalseWhenUnassessed()
 
+	/**
+	 * A batch without documents is refused and stays in progress.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
+	public function testAnEmptyBatchIsRefusedForReview(): void {
+		$this->objects->objects = [
+			['id' => 'batch-1', 'status' => 'in_progress', 'caseReference' => 'WOO-2026-010', 'documents' => [], 'createdBy' => 'alice'],
+		];
+
+		$this->assertFalse($this->service->canMarkReadyForReview('batch-1'));
+
+		try {
+			$this->service->markReadyForReview('batch-1');
+			$this->fail('An empty batch was marked ready for review.');
+		} catch (\RuntimeException $e) {
+			$this->assertSame('All documents must be assessed before review', $e->getMessage());
+		}
+
+		$this->assertSame('in_progress', $this->service->getBatch('batch-1')['status']);
+
+	}//end testAnEmptyBatchIsRefusedForReview()
+
+	/**
+	 * Once every document is assessed the batch moves to review.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
 	public function testMarkReadyForReviewWhenAllAssessed(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->assertTrue($this->service->canMarkReadyForReview('batch-1'));
@@ -582,6 +624,22 @@ class WooServiceTest extends TestCase {
 		$this->assertStringContainsString('4 documenten', $html);
 
 	}//end testInventarislijstRowsAndCsv()
+
+	/**
+	 * The PDF export is a real PDF that declares PDF/A conformance.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstPdfIsAPdfA(): void {
+		$this->seedBatchWithAssessments(leaveUnassessed: false);
+		$rows = $this->service->buildInventarislijst('batch-1');
+
+		$pdf = $this->service->renderInventarislijstPdf('batch-1', $rows);
+
+		$this->assertStringStartsWith(prefix: '%PDF-', string: $pdf);
+		$this->assertStringContainsString(needle: 'pdfaid:part', haystack: $pdf);
+
+	}//end testInventarislijstPdfIsAPdfA()
 
 	public function testPublishRequiresReadyForReview(): void {
 		$this->seedBatchWithAssessments(false);

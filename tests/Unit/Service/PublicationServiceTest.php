@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -927,6 +932,104 @@ class PublicationServiceTest extends TestCase {
 
 		$data = json_decode($response->render(), true);
 		$this->assertArrayHasKey('results', $data);
+	}
+
+	/**
+	 * A publication held here answers with its own attachments and no peer is asked.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsOfALocalPublicationStayLocal(): void {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$objectService->method('searchObjects')->willReturn([$this->createSerializableObject(['registers' => [1], 'schemas' => [1]])]);
+		$this->container->method('get')
+			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+				return match ($class) {
+					'OCA\OpenRegister\Service\ObjectService' => $objectService,
+					'OCA\OpenRegister\Service\FileService' => $fileService,
+					\OCA\OpenCatalogi\Service\PublicationQueryService::class => $queryService,
+					default => null,
+				};
+			});
+		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+		$fileService->method('getFiles')->willReturn([['raw-file']]);
+		$fileService->method('formatFiles')->willReturn(['results' => [['name' => 'local.pdf']], 'total' => 1]);
+		$this->request->method('getParams')->willReturn([]);
+
+		$this->directoryService->expects($this->never())->method('getRemoteAttachments');
+
+		$response = $this->service->getFederatedAttachments('pub-1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [['name' => 'local.pdf']], 'total' => 1], $response->getData());
+	}
+
+	/**
+	 * A publication not held here is read from the instance that holds it.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsOfARemotePublicationComeFromItsSource(): void {
+		$files = [
+			['id' => 'f1', 'downloadUrl' => 'https://peer.example.org/dav/f1', 'source' => ['instance' => 'https://peer.example.org']],
+			['id' => 'f2', 'downloadUrl' => 'https://peer.example.org/dav/f2', 'source' => ['instance' => 'https://peer.example.org']],
+		];
+		$this->directoryService->expects($this->once())
+			->method('getRemoteAttachments')
+			->with('remote-1', ['timeout' => 10, 'query_params' => ['timeout' => '10']])
+			->willReturn(['results' => $files, 'source' => ['peer.example.org' => 'https://peer.example.org/x']]);
+
+		$response = $this->service->getFederatedAttachments('remote-1', ['timeout' => '10']);
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(
+			['results' => $files, 'total' => 2, 'page' => 1, 'pages' => 1, 'sources' => ['peer.example.org' => 'https://peer.example.org/x']],
+			$response->getData()
+		);
+	}
+
+	/**
+	 * Without a reachable source the answer is a 404 that says so.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsWithoutAReachableSourceAre404(): void {
+		$this->directoryService->method('getRemoteAttachments')->willReturn(null);
+
+		$response = $this->service->getFederatedAttachments('remote-1');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['error' => 'Not Found: no reachable source holds this publication'], $response->getData());
+	}
+
+	/**
+	 * A failing peer lookup is a 404 too, not an error page.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsTreatAFailingLookupAsUnreachable(): void {
+		$this->directoryService->method('getRemoteAttachments')->willThrowException(new RuntimeException('directory down'));
+
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1')->getStatus());
+	}
+
+	/**
+	 * A peer asking with _aggregate=false gets the local answer and no fan-out.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsWithoutAggregationNeverAskPeers(): void {
+		$this->directoryService->expects($this->never())->method('getRemoteAttachments');
+
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1', ['_aggregate' => 'false'])->getStatus());
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1', ['_aggregate' => '0'])->getStatus());
 	}
 
 	public function testAttachmentsReturns404OnDoesNotExist(): void {
@@ -4039,6 +4142,10 @@ class PublicationServiceTest extends TestCase {
 		$fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
 		$fixture->close();
 
+		$sharedNode = $this->createMock(\OCP\Files\File::class);
+		$sharedNode->method('getName')->willReturn('attachment1.txt');
+		$fileService->method('getFiles')->willReturn([$sharedNode]);
+
 		$fileService->method('createObjectFilesZip')
 			->willReturn([
 				'path' => $tmpFile,
@@ -4124,6 +4231,103 @@ class PublicationServiceTest extends TestCase {
 		$this->assertInstanceOf(\OCP\AppFramework\Http\JSONResponse::class, $response);
 		$this->assertSame(500, $response->getStatus());
 		$this->assertFileDoesNotExist($tmpFile, 'The ZIP temp file must be cleaned up on the error path.');
+	}
+
+	// =======================================================================
+	// download — shared files only for anonymous callers
+	// =======================================================================
+
+	public function testDownloadGivesAnAnonymousCallerOnlySharedFiles(): void {
+		$entries = $this->downloadEntriesFor($this->service, ['shared.pdf']);
+
+		$this->assertContains('shared.pdf', $entries);
+		$this->assertContains('pub-1.pdf', $entries, 'The metadata PDF must stay in the download ZIP.');
+		$this->assertNotContains('unshared.pdf', $entries, 'An anonymous caller must not receive unshared files.');
+	}
+
+	public function testDownloadGivesASignedInCallerEveryReadableFile(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$entries = $this->downloadEntriesFor($this->serviceWithSession($session), ['shared.pdf']);
+
+		$this->assertContains('shared.pdf', $entries);
+		$this->assertContains('unshared.pdf', $entries);
+		$this->assertContains('pub-1.pdf', $entries);
+	}
+
+	public function testDownloadGivesAnAnonymousCallerOnlyTheMetadataWhenNoFileIsShared(): void {
+		$entries = $this->downloadEntriesFor($this->service, []);
+
+		$this->assertSame(['pub-1.pdf'], $entries);
+	}
+
+	/**
+	 * Run download() on an object whose files folder holds `shared.pdf` and
+	 * `unshared.pdf`, and return the entry names of the ZIP it hands back.
+	 *
+	 * @param PublicationService $service     The service under test.
+	 * @param list<string>       $sharedNames Names of the files that carry a share.
+	 *
+	 * @return list<string> Entry names of the returned archive.
+	 */
+	private function downloadEntriesFor(PublicationService $service, array $sharedNames): array {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$objectService->method('searchObjects')->willReturn([$this->createSerializableObject(['registers' => [1], 'schemas' => [1]])]);
+		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+		$this->container->method('get')
+			->willReturnCallback(fn (string $class) => match ($class) {
+				\OCA\OpenCatalogi\Service\PublicationQueryService::class => $queryService,
+				'OCA\OpenRegister\Service\ObjectService' => $objectService,
+				default => $fileService,
+			});
+
+		$sharedNodes = [];
+		foreach ($sharedNames as $sharedName) {
+			$node = $this->createMock(\OCP\Files\File::class);
+			$node->method('getName')->willReturn($sharedName);
+			$sharedNodes[] = $node;
+		}
+
+		$fileService->method('getFiles')
+			->willReturnCallback(fn ($object, ?bool $sharedFilesOnly = false): array => ($sharedFilesOnly === true) ? $sharedNodes : []);
+
+		$tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
+		$fixture = new \ZipArchive();
+		$fixture->open($tmpFile, \ZipArchive::OVERWRITE);
+		$fixture->addFromString('shared.pdf', 'shared content');
+		$fixture->addFromString('unshared.pdf', 'unshared content');
+		$fixture->close();
+
+		$fileService->method('createObjectFilesZip')
+			->willReturn(['path' => $tmpFile, 'filename' => 'pub-1.zip', 'mimeType' => 'application/zip']);
+		$this->downloadService->method('createPublicationFile')
+			->willReturn(['filename' => 'pub-1.pdf', 'content' => '%PDF-1.4 metadata']);
+
+		$response = $service->download('pub-1');
+		$this->assertInstanceOf(DataDownloadResponse::class, $response);
+
+		$returnedPath = tempnam(sys_get_temp_dir(), 'returned_zip_');
+		file_put_contents($returnedPath, $response->render());
+		$returned = new \ZipArchive();
+		$this->assertTrue($returned->open($returnedPath) === true);
+		$entries = [];
+		for ($i = 0; $i < $returned->numFiles; $i++) {
+			$entries[] = $returned->getNameIndex($i);
+		}
+
+		$returned->close();
+		unlink($returnedPath);
+
+		return $entries;
 	}
 
 	// =======================================================================

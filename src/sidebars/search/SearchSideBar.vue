@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { t } from '@nextcloud/l10n'
 import {
@@ -306,41 +310,83 @@ function buildQueryFromState() {
 	return q
 }
 
+const VIEW_MODES = new Set(['cards', 'table'])
+
 /**
+ * Apply a route query to the search store: term, sort, view mode, filters.
  *
- * @param routeQuery
+ * @param {object} routeQuery The route query.
+ * @return {void}
  */
 function applyQueryToState(routeQuery) {
 	const q = routeQuery || {}
-	searchStore.setSearchTerm(typeof q.q === 'string' ? q.q : '')
-	if (q.sort) {
-		const [f, d] = String(q.sort).split(':')
-		searchStore.clearOrdering()
-		if (f && d) searchStore.setOrdering(f, d === 'DESC' ? 'DESC' : 'ASC')
-	}
-	if (q.view === 'cards' || q.view === 'table') searchStore.setViewMode(q.view)
-	const filters = {}
-	Object.entries(q).forEach(([k, v]) => {
-		if (!RESERVED.has(k) && typeof v !== 'undefined' && v !== null && v !== '')
-			filters[k] = String(v)
-	})
+	searchStore.setSearchTerm(termFromQuery(q))
+	if (q.sort) applySortFromQuery(q.sort)
+	if (VIEW_MODES.has(q.view)) searchStore.setViewMode(q.view)
+	const filters = filtersFromQuery(q)
 	searchStore.clearAllFilters()
 	if (Object.keys(filters).length) searchStore.setFilters(filters)
 }
 
 /**
+ * The search term a route query carries, or '' when `q` is not a string.
  *
- * @param a
- * @param b
+ * @param {object} q The route query.
+ * @return {string} The term.
+ */
+function termFromQuery(q) {
+	return typeof q.q === 'string' ? q.q : ''
+}
+
+/**
+ * Replace the store's ordering with a `field:direction` sort value; only
+ * `DESC` sorts descending.
+ *
+ * @param {string} sort The sort value.
+ * @return {void}
+ */
+function applySortFromQuery(sort) {
+	const [f, d] = String(sort).split(':')
+	searchStore.clearOrdering()
+	if (f && d) searchStore.setOrdering(f, d === 'DESC' ? 'DESC' : 'ASC')
+}
+
+/**
+ * The filters of a route query: every non-reserved key with a value, as text.
+ *
+ * @param {object} q The route query.
+ * @return {object} The filters.
+ */
+function filtersFromQuery(q) {
+	const filters = {}
+	Object.entries(q).forEach(([k, v]) => {
+		if (isFilterEntry(k, v)) filters[k] = String(v)
+	})
+	return filters
+}
+
+/**
+ * Whether a route query entry is a filter: not a reserved key, and set.
+ *
+ * @param {string} k The key.
+ * @param {*} v The value.
+ * @return {boolean} True for a filter.
+ */
+function isFilterEntry(k, v) {
+	return !RESERVED.has(k) && typeof v !== 'undefined' && v !== null && v !== ''
+}
+
+/**
+ * Whether two queries have the same keys with the same values as text.
+ *
+ * @param {object} a One query.
+ * @param {object} b The other query.
+ * @return {boolean} True when equal.
  */
 function shallowEqualQuery(a, b) {
 	const ak = Object.keys(a || {})
-	const bk = Object.keys(b || {})
-	if (ak.length !== bk.length) return false
-	for (const k of ak) {
-		if (String(a[k]) !== String(b[k])) return false
-	}
-	return true
+	if (ak.length !== Object.keys(b || {}).length) return false
+	return ak.every((k) => String(a[k]) === String(b[k]))
 }
 
 /**

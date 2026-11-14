@@ -25,6 +25,45 @@ import { useIsAdmin } from '../../composables/useIsAdmin.js'
 import { listingSyncStatus } from '../../services/listingSyncStatus.js'
 import { navigationStore } from '../../store/store.js'
 
+/**
+ * The status of a listing's last HTTP status code: up for 2xx, down for
+ * 5xx, degraded otherwise.
+ *
+ * @param {number} statusCode - The status code
+ * @return {string} The status
+ */
+function statusOfCode(statusCode) {
+	if (statusCode >= 200 && statusCode < 300) return 'up'
+	if (statusCode >= 500) return 'down'
+	return 'degraded'
+}
+
+/** The label of each known integration level, translated when shown. */
+const INTEGRATION_LEVEL_LABELS = {
+	search: () => t('opencatalogi', 'Federated search'),
+	sync: () => t('opencatalogi', 'Full sync'),
+	none: () => t('opencatalogi', 'Disabled'),
+}
+
+/**
+ * Fetch one page of peer listings.
+ *
+ * @param {{page: number, limit: number}} pageRef - The page and its size
+ * @return {Promise<object>} The answer
+ * @throws {Error} With the HTTP status when the answer is not ok
+ */
+async function fetchListingsPage({ page, limit }) {
+	const base = generateUrl('/apps/opencatalogi/api/listings')
+	const url = `${base}?_page=${page}&_limit=${limit}`
+	const res = await fetch(url, {
+		headers: { Accept: 'application/json' },
+	})
+	if (!res.ok) {
+		throw new Error(`HTTP ${res.status}`)
+	}
+	return res.json()
+}
+
 export default {
 	name: 'FederationDirectory',
 	components: {
@@ -120,29 +159,34 @@ export default {
 			this.loading = true
 			this.error = null
 			try {
-				const base = generateUrl('/apps/opencatalogi/api/listings')
-				const url = `${base}?_page=${this.page}&_limit=${this.limit}`
-				const res = await fetch(url, {
-					headers: { Accept: 'application/json' },
+				const data = await fetchListingsPage({
+					page: this.page,
+					limit: this.limit,
 				})
-				if (!res.ok) {
-					throw new Error(`HTTP ${res.status}`)
-				}
-				const data = await res.json()
-				this.listings = data.results || []
-				// The API already returns page/pages/total/limit; keep them
-				// in sync so CnPagination reflects the server-side reality
-				// (and so a stale page number after a delete doesn't linger).
-				this.page = data.page || 1
-				this.pages = data.pages || 1
-				this.total = data.total || 0
-				this.limit = data.limit || 20
+				this.applyListingsPage(data)
 			} catch (e) {
 				this.error = e.message || String(e)
 				this.listings = []
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Take a listings page answer: its listings and its pagination. The
+		 * API already returns page/pages/total/limit; keep them in sync so
+		 * CnPagination reflects the server-side reality (and so a stale page
+		 * number after a delete doesn't linger).
+		 *
+		 * @param {object} data - The answer
+		 * @return {void}
+		 */
+		applyListingsPage(data) {
+			this.listings = data.results || []
+			this.page = data.page || 1
+			this.pages = data.pages || 1
+			this.total = data.total || 0
+			this.limit = data.limit || 20
 		},
 
 		/**
@@ -168,20 +212,7 @@ export default {
 		statusTextFor(listing) {
 			const status = this.syncStatusFor(listing)
 			const label = this.statusLabelFor(listing)
-			if (status.neverSucceeded) {
-				return (
-					label
-					+ ', '
-					+ t('opencatalogi', 'never synchronised successfully')
-				)
-			}
-			return (
-				label
-				+ ', '
-				+ t('opencatalogi', 'last successful sync {time}', {
-					time: new Date(status.lastSuccessAt).toLocaleString(),
-				})
-			)
+			return label + ', ' + lastSyncPhrase(status)
 		},
 
 		/**
@@ -196,19 +227,14 @@ export default {
 			if (!this.isAdmin || this.syncingId !== null) return
 			this.syncingId = listing.id
 			try {
-				await axios.post(
-					generateUrl('/apps/opencatalogi/api/listings/sync'),
-					{ id: listing.id },
-				)
+				await requestListingSync(listing)
 				showSuccess(
-					t('opencatalogi', 'Synchronised {name}', {
-						name: listing.title || listing.directory,
-					}),
+					t('opencatalogi', 'Synchronised {name}', { name: listingName(listing) }),
 				)
 			} catch {
 				showError(
 					t('opencatalogi', 'Could not synchronise {name}', {
-						name: listing.title || listing.directory,
+						name: listingName(listing),
 					}),
 				)
 			} finally {
@@ -237,10 +263,7 @@ export default {
 		statusFor(listing) {
 			if (listing.available === false) return 'down'
 			if (typeof listing.statusCode === 'number') {
-				if (listing.statusCode >= 200 && listing.statusCode < 300)
-					return 'up'
-				if (listing.statusCode >= 500) return 'down'
-				return 'degraded'
+				return statusOfCode(listing.statusCode)
 			}
 			return 'unknown'
 		},
@@ -306,12 +329,49 @@ export default {
 			const raw = listing.integrationLevel
 			if (raw === undefined || raw === null || raw === '')
 				return t('opencatalogi', 'not set')
-			if (raw === 'search') return t('opencatalogi', 'Federated search')
-			if (raw === 'sync') return t('opencatalogi', 'Full sync')
-			if (raw === 'none') return t('opencatalogi', 'Disabled')
-			return raw
+			return Object.hasOwn(INTEGRATION_LEVEL_LABELS, raw)
+				? INTEGRATION_LEVEL_LABELS[raw]()
+				: raw
 		},
 	},
+}
+
+/**
+ * When a listing last synchronised: never, or the last successful sync in
+ * the viewer's locale.
+ *
+ * @param {{neverSucceeded: boolean, lastSuccessAt?: string}} status The listing's sync status.
+ * @return {string} The phrase.
+ */
+function lastSyncPhrase(status) {
+	if (status.neverSucceeded) {
+		return t('opencatalogi', 'never synchronised successfully')
+	}
+	return t('opencatalogi', 'last successful sync {time}', {
+		time: new Date(status.lastSuccessAt).toLocaleString(),
+	})
+}
+
+/**
+ * Ask the server to synchronise one listing.
+ *
+ * @param {object} listing The listing.
+ * @return {Promise<object>} The response.
+ */
+function requestListingSync(listing) {
+	return axios.post(generateUrl('/apps/opencatalogi/api/listings/sync'), {
+		id: listing.id,
+	})
+}
+
+/**
+ * The name a sync message uses for a listing: its title, else its directory.
+ *
+ * @param {object} listing The listing.
+ * @return {string} The name.
+ */
+function listingName(listing) {
+	return listing.title || listing.directory
 }
 </script>
 

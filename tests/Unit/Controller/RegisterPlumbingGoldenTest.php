@@ -90,6 +90,7 @@ use RuntimeException;
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses   \OCA\OpenCatalogi\Service\CallerScope
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\ObjectInPair
  */
 class RegisterPlumbingGoldenTest extends TestCase {
 
@@ -737,6 +738,11 @@ class RegisterPlumbingGoldenTest extends TestCase {
 		if (is_object($value) === true) {
 			if ($value instanceof \JsonSerializable) {
 				return $this->normalise(value: $value->jsonSerialize());
+			}
+
+			if ($value instanceof \OCA\OpenCatalogi\Contract\StatusChange) {
+				// An operation object: the fields it carries are what the call sent.
+				return $this->normalise(value: get_object_vars($value));
 			}
 
 			return 'object:' . ((new ReflectionClass($value))->isAnonymous() === true ? 'anonymous' : get_class($value));

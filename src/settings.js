@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 import VueMarkdownEditor from '@kangc/v-md-editor'
 import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
 import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'

@@ -12,6 +12,8 @@ import { reactive } from 'vue'
 import CatalogPublicationsIndex from './CatalogPublicationsIndex.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'token-1' }))
+
 /**
  * A menu entry as the store keeps it.
  *

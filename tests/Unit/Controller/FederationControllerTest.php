@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
@@ -181,16 +186,23 @@ class FederationControllerTest extends TestCase {
 		$this->assertEquals(500, $response->getStatus());
 	}
 
-	public function testPublicationAttachmentsDelegatesToService(): void {
-		$expectedResponse = new JSONResponse(['files' => []]);
+	/**
+	 * The attachments come from the federated lookup with the request's parameters,
+	 * so a remote publication's attachments are read from its source.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testPublicationAttachmentsDelegatesToTheFederatedLookup(): void {
+		$expectedResponse = new JSONResponse(['results' => []]);
+		$this->request->method('getParams')->willReturn(['_aggregate' => 'false']);
 
-		$this->publicationService->method('attachments')
-			->with('pub-123')
+		$this->publicationService->expects($this->never())->method('attachments');
+		$this->publicationService->expects($this->once())
+			->method('getFederatedAttachments')
+			->with('pub-123', ['_aggregate' => 'false'])
 			->willReturn($expectedResponse);
 
-		$response = $this->controller->publicationAttachments('pub-123');
-
-		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertSame($expectedResponse, $this->controller->publicationAttachments('pub-123'));
 	}
 
 	public function testPublicationDownloadDelegatesToService(): void {

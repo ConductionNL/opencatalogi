@@ -16,6 +16,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -182,6 +185,7 @@ class NationalIndexServiceTest extends TestCase {
 		$this->dispatcher->method('dispatchTyped');
 
 		$this->expectException(IndexUnreachableException::class);
+		$this->expectExceptionMessage('No integriq gateway took the notice, so the channel "' . NationalIndexService::CHANNEL_NATIONAL . '" could not be reached.');
 		$this->service([NationalIndexService::CHANNEL_NATIONAL => 'officielebekendmakingen'])
 			->deliver(notice: ['channel' => NationalIndexService::CHANNEL_NATIONAL, 'reference' => 'dec-1']);
 	}

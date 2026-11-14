@@ -4,6 +4,9 @@
  * The public `withheld` list of a publication: generic (decision 182), for
  * any publication a catalogue holds; the Woo decision is the first user.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A catalogue that opted in (`showWithheld`, REQ-PDP-004) shows on a public
  * publication which of its documents were withheld from publication and on
  * which grounds: one entry per withheld assessment of the publication batch
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-the-public-read-of-a-woo-decision-names-what-was-withheld-and-why-req-wdw-003
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -93,31 +93,61 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 	public function addForPublication(array $response): array {
 		$self = (array)($response['@self'] ?? []);
 		$publicationId = (string)($response['id'] ?? ($self['id'] ?? ''));
-		$register = $this->referenceId(value: ($self['register'] ?? ''));
-		$schema = $this->referenceId(value: ($self['schema'] ?? ''));
-		if ($publicationId === '' || $register === '' || $schema === '') {
-			return $response;
+		$catalogs = [];
+		if ($publicationId !== '') {
+			$catalogs = $this->holdingCatalogs(self: $self);
 		}
 
-		try {
-			$catalogs = $this->store->catalogsHolding(register: $register, schema: $schema);
-		} catch (Throwable $e) {
-			$this->logger->warning('WithheldFromPublication: the catalogues could not be read', ['exception' => $e->getMessage()]);
+		if ($this->allOptedIn(catalogs: $catalogs) === false) {
 			return $response;
-		}
-
-		if ($catalogs === []) {
-			return $response;
-		}
-
-		foreach ($catalogs as $catalog) {
-			if ($this->optedIn(catalog: $catalog) === false) {
-				return $response;
-			}
 		}
 
 		return $this->withList(response: $response, publicationId: $publicationId);
 	}//end addForPublication()
+
+	/**
+	 * The catalogues holding a publication's register and schema; none when
+	 * either is missing or the catalogues cannot be read.
+	 *
+	 * @param array<string, mixed> $self The publication's `@self`.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function holdingCatalogs(array $self): array {
+		$register = $this->referenceId(value: ($self['register'] ?? ''));
+		$schema = $this->referenceId(value: ($self['schema'] ?? ''));
+		if ($register === '' || $schema === '') {
+			return [];
+		}
+
+		try {
+			return $this->store->catalogsHolding(register: $register, schema: $schema);
+		} catch (Throwable $e) {
+			$this->logger->warning('WithheldFromPublication: the catalogues could not be read', ['exception' => $e->getMessage()]);
+			return [];
+		}
+	}//end holdingCatalogs()
+
+	/**
+	 * Whether there is a holding catalogue and every one of them opted in.
+	 *
+	 * @param array<int, array<string, mixed>> $catalogs The holding catalogues.
+	 *
+	 * @return bool
+	 */
+	private function allOptedIn(array $catalogs): bool {
+		if ($catalogs === []) {
+			return false;
+		}
+
+		foreach ($catalogs as $catalog) {
+			if ($this->optedIn(catalog: $catalog) === false) {
+				return false;
+			}
+		}
+
+		return true;
+	}//end allOptedIn()
 
 	/**
 	 * The merged list, ordered by position.
@@ -214,21 +244,34 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 				continue;
 			}
 
-			$codes = array_values(array_map('strval', (array)($assessment['weigeringsgronden'] ?? [])));
-			$entry = [
-				'position' => ($index + 1),
-				'grounds' => $codes,
-				'groundDetails' => array_map(static fn (string $code): array => ['code' => $code, 'article' => '', 'label' => ''], $codes),
-			];
-			if (($assessment['titlePublic'] ?? false) === true && (string)($assessment['fileName'] ?? '') !== '') {
-				$entry['title'] = (string)$assessment['fileName'];
-			}
-
-			$entries[] = $entry;
+			$entries[] = $this->batchEntry(position: ($index + 1), assessment: $assessment);
 		}
 
 		return $entries;
 	}//end batchEntries()
+
+	/**
+	 * One withheld assessment's entry, with its title only when the title is
+	 * public (a literal true) and there is a file name.
+	 *
+	 * @param int $position The document's place in the batch, from 1.
+	 * @param array<string, mixed> $assessment The assessment.
+	 *
+	 * @return array<string, mixed>
+	 */
+	private function batchEntry(int $position, array $assessment): array {
+		$codes = array_values(array_map('strval', (array)($assessment['weigeringsgronden'] ?? [])));
+		$entry = [
+			'position' => $position,
+			'grounds' => $codes,
+			'groundDetails' => array_map(static fn (string $code): array => ['code' => $code, 'article' => '', 'label' => ''], $codes),
+		];
+		if (($assessment['titlePublic'] ?? false) === true && (string)($assessment['fileName'] ?? '') !== '') {
+			$entry['title'] = (string)$assessment['fileName'];
+		}
+
+		return $entry;
+	}//end batchEntry()
 
 	/**
 	 * One entry per stored row, with the details stored at recording time and no title.
@@ -240,15 +283,7 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 	private function storedEntries(array $rows): array {
 		$entries = [];
 		foreach ($rows as $row) {
-			$details = [];
-			foreach ((array)($row['grounds'] ?? []) as $ground) {
-				$details[] = [
-					'code' => (string)($ground['code'] ?? ''),
-					'article' => (string)($ground['article'] ?? ''),
-					'label' => (string)($ground['label'] ?? ''),
-				];
-			}
-
+			$details = $this->groundDetails(grounds: ($row['grounds'] ?? []));
 			$entries[] = [
 				'position' => (int)($row['position'] ?? 0),
 				'grounds' => array_column($details, 'code'),
@@ -258,4 +293,24 @@ class WithheldFromPublication implements WithheldFromPublicationInterface {
 
 		return $entries;
 	}//end storedEntries()
+
+	/**
+	 * The code, article and label of every ground stored on a row.
+	 *
+	 * @param mixed $grounds The row's grounds.
+	 *
+	 * @return list<array{code: string, article: string, label: string}>
+	 */
+	private function groundDetails(mixed $grounds): array {
+		$details = [];
+		foreach ((array)$grounds as $ground) {
+			$details[] = [
+				'code' => (string)($ground['code'] ?? ''),
+				'article' => (string)($ground['article'] ?? ''),
+				'label' => (string)($ground['label'] ?? ''),
+			];
+		}
+
+		return $details;
+	}//end groundDetails()
 }//end class

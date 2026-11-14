@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { EventBus } from '../../eventBus.js'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
@@ -915,6 +919,7 @@ import {
 	dispatchObjectsChanged,
 	validateValue,
 } from '@conduction/nextcloud-vue'
+import { getRequestToken } from '@nextcloud/auth'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -950,8 +955,27 @@ import PropertiesPanel from '../../components/PropertiesPanel.vue'
 import PublishedIcon from '../../components/PublishedIcon.vue'
 import AppTab from '../../components/tabs/AppTab.vue'
 import AppTabs from '../../components/tabs/AppTabs.vue'
+import { fileSizeLabel } from '../../services/fileSizeLabel.js'
 import { formValue } from '../../services/formValue.js'
+import { registerSchemaIdsOf } from '../../services/registerSchemaIds.js'
 import { sortOptionsByLabel } from '../../services/sortOptionsByLabel.js'
+import { editableFormData, initialCatalog } from './objectFormCopy.js'
+import {
+	findSchemaByAnyId,
+	metadataRows,
+	objectDisplayName,
+	objectSchemaName,
+	referencedSchema,
+	referencedSchemaProperties,
+} from './objectMetadata.js'
+import {
+	buildObjectPayload,
+	cleanFormValues,
+	isEmptyValue,
+	offersPublishAction,
+	propertyErrors,
+	withSchemaFillValues,
+} from './objectPayload.js'
 
 import '@toast-ui/editor/dist/toastui-editor.css'
 
@@ -1028,6 +1052,97 @@ function firstPerId() {
 		seenIds.add(key)
 		return true
 	}
+}
+
+/**
+ * Whether a property name marks it as immutable, readonly or constant
+ * (case insensitive).
+ *
+ * @param {string} key - The property key
+ * @return {boolean} True when the name says so
+ */
+function hasImmutableName(key) {
+	const immutablePatterns = ['immutable', 'readonly', 'constant']
+	return immutablePatterns.some((pattern) => key.toLowerCase().includes(pattern))
+}
+
+/**
+ * Whether a schema property is flagged read-only or immutable.
+ *
+ * @param {object} schemaProperty - The schema property
+ * @return {boolean} True when flagged
+ */
+function isReadOnlyProperty(schemaProperty) {
+	return schemaProperty.readOnly === true || schemaProperty.immutable === true
+}
+
+/**
+ * Whether a schema title can be shown: a non-blank string that is not the
+ * "new" placeholder.
+ *
+ * @param {unknown} title - The title
+ * @return {boolean} True when usable
+ */
+function isUsableTitle(title) {
+	return Boolean(
+		title
+		&& typeof title === 'string'
+		&& title.trim() !== ''
+		&& title.trim().toLowerCase() !== 'new',
+	)
+}
+
+/**
+ * Whether an editor instance offers a method.
+ *
+ * @param {object|null|undefined} editorInstance - The editor
+ * @param {string} name - The method name
+ * @return {boolean} True when it does
+ */
+function hasEditorMethod(editorInstance, name) {
+	return Boolean(editorInstance) && typeof editorInstance[name] === 'function'
+}
+
+/**
+ * The content of a markdown editor: its markdown, else its HTML, else the
+ * value itself when it is text.
+ *
+ * @param {object|string|null|undefined} editorInstance - The editor or a text value
+ * @return {string} The content
+ */
+function editorContent(editorInstance) {
+	if (hasEditorMethod(editorInstance, 'getMarkdown')) {
+		return editorInstance.getMarkdown()
+	}
+	if (hasEditorMethod(editorInstance, 'getHTML')) {
+		return editorInstance.getHTML()
+	}
+	return typeof editorInstance === 'string' ? editorInstance : ''
+}
+
+/**
+ * A date value as a Date, or null when there is none.
+ *
+ * @param {string|null|undefined} value - The date
+ * @return {Date|null} The date
+ */
+function optionalDate(value) {
+	return value ? new Date(value) : null
+}
+
+/**
+ * Whether an object is live: published by now and not depublished yet.
+ *
+ * @param {object} object - The object
+ * @param {Date} now - The current time
+ * @return {boolean} True when live
+ */
+function isLiveNow(object, now) {
+	const published = optionalDate(object.publicationDate)
+	const depublished = optionalDate(object.depublicationDate)
+
+	// Currently live: published in the past and not yet depublished
+	return !!(published && published <= now && (!depublished || depublished > now))
 }
 
 /**
@@ -1147,33 +1262,7 @@ export default {
 				)
 			}
 			const schemaRef = this.currentObject?.['@self']?.schema
-			if (!schemaRef) return null
-
-			// `@self.schema` is the full embedded schema object when the API
-			// extends it; prefer it directly so we keep `properties`.
-			if (typeof schemaRef === 'object' && schemaRef.properties) {
-				return schemaRef
-			}
-
-			// Fall back to looking up by id/uuid in availableSchemas. The id
-			// in @self.schema arrives as a string (e.g. "1") while
-			// availableSchemas[i].id is a number — match on both id and uuid
-			// using loose comparison, plus slug as a last resort.
-			const schemaId =
-				typeof schemaRef === 'object'
-					? (schemaRef.id ?? schemaRef.uuid ?? schemaRef.slug)
-					: schemaRef
-			if (schemaId === null || schemaId === undefined || schemaId === '')
-				return null
-			const idStr = String(schemaId)
-			return (
-				objectStore.availableSchemas.find(
-					(schema) =>
-						String(schema.id) === idStr
-						|| String(schema.uuid) === idStr
-						|| String(schema.slug) === idStr,
-				) || null
-			)
+			return referencedSchema(schemaRef, objectStore.availableSchemas)
 		},
 
 		/**
@@ -1198,68 +1287,10 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		metadataExtraRows() {
 			if (!this.currentObject) return []
-			const obj = this.currentObject
-
-			const register = obj['@self']?.register
-			let registerDisplay = 'Not set'
-			if (register) {
-				if (typeof register === 'object') {
-					registerDisplay =
-						register.title || register.name || register.id || register
-				} else {
-					const availableRegister = objectStore.availableRegisters.find(
-						(r) => r.id === register,
-					)
-					registerDisplay = availableRegister?.title || register
-				}
-			}
-
-			const schema = obj['@self']?.schema
-			let schemaDisplay = 'Not set'
-			if (schema) {
-				if (typeof schema === 'object') {
-					schemaDisplay =
-						schema.title || schema.name || schema.id || schema
-				} else {
-					const availableSchema = objectStore.availableSchemas.find(
-						(s) => s.id === schema,
-					)
-					schemaDisplay = availableSchema?.title || schema
-				}
-			}
-
-			const locked = obj['@self']?.locked
-			let lockedDisplay = 'Not locked'
-			if (locked) {
-				if (typeof locked === 'object') {
-					const lockedBy = locked.lockedBy || 'Unknown user'
-					const lockedAt = locked.lockedAt
-						? new Date(locked.lockedAt).toLocaleString()
-						: 'Unknown time'
-					const proc = locked.process ? ` (${locked.process})` : ''
-					lockedDisplay = `Locked by ${lockedBy} at ${lockedAt}${proc}`
-				} else {
-					lockedDisplay = 'Locked'
-				}
-			}
-
-			const fmtDate = (v, fallback) =>
-				v ? new Date(v).toLocaleString() : fallback
-
-			return [
-				['ID', obj.id || 'Not set'],
-				['Version', obj['@self']?.version || 'Not set'],
-				['Register', registerDisplay],
-				['Schema', schemaDisplay],
-				['Locked', lockedDisplay],
-				['Created', fmtDate(obj['@self']?.created, 'Not set')],
-				['Updated', fmtDate(obj['@self']?.updated, 'Not set')],
-				['Published', fmtDate(obj['@self']?.published, 'Not published')],
-				[
-					'Depublished',
-					fmtDate(obj['@self']?.depublished, 'Not depublished'),
-				],
-			]
+			return metadataRows(this.currentObject, {
+				registers: objectStore.availableRegisters,
+				schemas: objectStore.availableSchemas,
+			})
 		},
 
 		// Files tab computed properties
@@ -1333,32 +1364,18 @@ export default {
 				return []
 			}
 
-			const fullCatalog = objectStore
-				.getCollection('catalog')
-				.results.find(
-					(catalog) =>
-						String(catalog.id) === String(this.selectedCatalog.id),
-				)
+			const fullCatalog = findCatalog(this.selectedCatalog.id)
 			if (!fullCatalog) {
 				return []
 			}
 
-			// Catalog.registers arrives as a string array (`["1"]`) while
-			// `register.id` from OpenRegister is numeric — `.includes` uses
-			// strict equality so the raw check would drop every match and
-			// leave the modal stalled on the empty-state (WOO-527 followup).
-			const selectedCatalogRegisterIds = (fullCatalog.registers || []).map(
-				String,
-			)
+			const selectedCatalogRegisterIds = registerIdsOf(fullCatalog)
 
 			return objectStore.availableRegisters
 				.filter((register) =>
 					selectedCatalogRegisterIds.includes(String(register.id)),
 				)
-				.map((register) => ({
-					id: register.id,
-					label: register.title,
-				}))
+				.map(toRegisterOption)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -1576,23 +1593,10 @@ export default {
 		fieldErrors() {
 			const schema = this.resolvedSchema
 			if (!schema) return []
-			const props = schema.properties || {}
-			const errors = []
-			for (const [key, prop] of Object.entries(props)) {
-				if (!prop || prop.hideOnForm === true) continue
-				if (key === '@self' || key === 'id') continue
-				const value = formValue(this.formData, this.currentObject, key)
-				if (value === null || value === undefined || value === '') continue
-				const err = validateValue(value, prop)
-				if (err) {
-					errors.push({
-						key,
-						label: prop.title || key,
-						error: err,
-					})
-				}
-			}
-			return errors
+			return propertyErrors(schema.properties || {}, {
+				valueOf: (key) => formValue(this.formData, this.currentObject, key),
+				validate: validateValue,
+			})
 		},
 
 		hasFieldErrors() {
@@ -1864,31 +1868,11 @@ export default {
 
 			if (!this.currentObject) return t('opencatalogi', 'View Object')
 
-			const name =
-				this.currentObject['@self']?.name
-				|| this.currentObject.name
-				|| this.currentObject.title
-				|| this.currentObject.id
-				|| 'Untitled'
-
-			// Try to get schema name from the object itself
-			let schemaName = 'Publication'
-			const rawSchema =
-				this.currentObject.schema ?? this.currentObject['@self']?.schema
-
-			if (rawSchema && typeof rawSchema === 'object') {
-				schemaName =
-					rawSchema.title
-					|| rawSchema.name
-					|| rawSchema.id
-					|| 'Publication'
-			} else if (rawSchema != null && rawSchema !== '') {
-				const match = objectStore.availableSchemas.find(
-					(s) => Number(s.id) === Number(rawSchema),
-				)
-				schemaName = match?.title || match?.name || String(rawSchema)
-			}
-
+			const name = objectDisplayName(this.currentObject)
+			const schemaName = objectSchemaName(
+				this.currentObject,
+				objectStore.availableSchemas,
+			)
 			return `${name} (${schemaName})`
 		},
 
@@ -1945,12 +1929,7 @@ export default {
 			}
 			const auth = schema.authorization
 			// No authorization rules means everyone has access
-			if (
-				!auth
-				|| !auth.read
-				|| !Array.isArray(auth.read)
-				|| auth.read.length === 0
-			) {
+			if (!hasReadRules(auth)) {
 				return true
 			}
 			// Admin group always has full access
@@ -1958,16 +1937,9 @@ export default {
 				return true
 			}
 			// Check if user belongs to any group that has read permission
-			return auth.read.some((entry) => {
-				if (typeof entry === 'string') {
-					return this.currentUserGroups.includes(entry)
-				}
-				// Complex entry with match conditions — check group membership only
-				if (entry && typeof entry === 'object' && entry.group) {
-					return this.currentUserGroups.includes(entry.group)
-				}
-				return true
-			})
+			return auth.read.some((entry) =>
+				readEntryAllows(entry, this.currentUserGroups),
+			)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
@@ -1985,83 +1957,49 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		async initializeData() {
 			if (!this.currentObject) {
-				// For new objects, initialize with empty form data and auto-select if possible
-				this.formData = {}
-
-				const catalogs = objectStore.getCollection('catalog').results
-
-				// Check if we have a catalogSlug route param
-				const catalogSlug = this.$route.params.catalogSlug
-				if (catalogSlug) {
-					// Find catalog by slug
-					const matchingCatalog = catalogs.find(
-						(catalog) => catalog.slug === catalogSlug,
-					)
-					if (matchingCatalog) {
-						this.selectedCatalog = {
-							id: matchingCatalog.id,
-							label: matchingCatalog.title,
-						}
-					}
-				} else if (catalogs.length === 1) {
-					// If no catalog found by slug and only one catalog exists, auto-select it
-					this.selectedCatalog = {
-						id: catalogs[0].id,
-						label: catalogs[0].title,
-					}
-				}
-
-				// Auto-select register and schema if only one option exists.
-				// Existing watchers on selectedCatalog/selectedRegister handle
-				// the cascading updates, so a single tick is sufficient.
-				await this.$nextTick()
-				if (this.registerOptions.length === 1) {
-					this.selectedRegister = this.registerOptions[0]
-					await this.$nextTick()
-					if (this.schemaOptions.length === 1) {
-						this.selectedSchema = this.schemaOptions[0]
-					}
-				}
-
+				await this.initializeNewObject()
 				return
-			}
-
-			const initial = this.currentObject
-			const filtered = {}
-			for (const key in initial) {
-				if (key !== '@self' && key !== 'id') {
-					// Ensure we have a safe copy of the value
-					try {
-						filtered[key] = JSON.parse(JSON.stringify(initial[key]))
-					} catch (e) {
-						// If JSON serialization fails, use the original value
-						filtered[key] = initial[key]
-					}
-				}
 			}
 
 			// Ensure formData is always an object, never an array
 			this.formData = {}
-			// Create a safe copy for formData
-			try {
-				const parsedData = JSON.parse(JSON.stringify(filtered))
-				// Explicitly ensure it's an object
-				if (typeof parsedData === 'object' && !Array.isArray(parsedData)) {
-					this.formData = parsedData
-				} else {
-					this.formData = { ...filtered }
-				}
-			} catch (e) {
-				// Fallback if JSON serialization fails
-				this.formData = { ...filtered }
+			this.formData = editableFormData(this.currentObject)
+		},
+
+		/**
+		 * Start a new object with an empty form, in the catalog of the route
+		 * (or the only catalog), with the register and schema picked when
+		 * there is only one of each.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async initializeNewObject() {
+			this.formData = {}
+
+			const catalogs = objectStore.getCollection('catalog').results
+			const catalog = initialCatalog(catalogs, this.$route.params.catalogSlug)
+			if (catalog) {
+				this.selectedCatalog = { id: catalog.id, label: catalog.title }
 			}
 
-			// Ensure themes are properly initialized as an array of IDs
-			if (this.formData.themes && Array.isArray(this.formData.themes)) {
-				// Convert any theme objects back to IDs if needed
-				this.formData.themes = this.formData.themes.map((theme) =>
-					typeof theme === 'object' ? theme.id : theme,
-				)
+			await this.autoSelectSingleOptions()
+		},
+
+		/**
+		 * Pick the register and then the schema when only one option exists.
+		 * Existing watchers on selectedCatalog/selectedRegister handle the
+		 * cascading updates, so a single tick is sufficient.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async autoSelectSingleOptions() {
+			await this.$nextTick()
+			if (this.registerOptions.length !== 1) return
+
+			this.selectedRegister = this.registerOptions[0]
+			await this.$nextTick()
+			if (this.schemaOptions.length === 1) {
+				this.selectedSchema = this.schemaOptions[0]
 			}
 		},
 
@@ -2077,89 +2015,128 @@ export default {
 			this.isSaving = true
 
 			try {
-				const isCreating = this.isNewObject
-
-				// For new objects, validate we have the required selections
-				if (
-					isCreating
-					&& (!this.selectedSchema
-						|| !this.selectedRegister
-						|| !this.selectedCatalog)
-				) {
-					return
-				}
-
-				let objectData
-				let endpoint
-				let method
-
-				if (isCreating) {
-					// Create a new object using openregister API
-					// For new objects, build complete object with all schema properties
-					objectData = this.buildCompleteObjectData()
-					endpoint = `/index.php/apps/openregister/api/objects/${this.selectedRegister.id}/${this.selectedSchema.id}`
-					method = 'POST'
-				} else {
-					// Update existing object using openregister API
-					// For existing objects, merge current object with all schema properties
-					objectData = this.buildCompleteObjectData()
-					// Get register and schema info from the current object
-					const { registerId, schemaId } = this.getRegisterSchemaIds(
-						this.currentObject,
-					)
-					const objectId =
-						this.currentObject['@self']?.id || this.currentObject.id
-					endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
-					method = 'PUT'
-				}
-
-				const response = await fetch(endpoint, {
-					method,
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(objectData),
-				})
-
-				if (!response.ok) {
-					const errorText = await response.text()
-					throw new Error(
-						`Failed to ${isCreating ? 'create' : 'update'} publication: ${response.status} ${response.statusText} - ${errorText}`,
-					)
-				}
-
-				const result = await response.json()
-				const schema = objectStore.availableSchemas.find(
-					(schema) => schema.id === Number(result['@self'].schema),
-				)
-				// Set the newly created/updated object as active in the object store
-				objectStore.setActiveObject('publication', {
-					...result,
-					'@self': { ...result['@self'], schema },
-				})
-
-				// Clear form data since we now have the saved object
-				this.formData = {}
-
-				// Refresh the publications list
-				catalogStore.fetchPublications()
-				dispatchObjectsChanged({
-					register: result['@self'].register,
-					schema: result['@self'].schema,
-					id: result['@self'].id,
-				})
-
-				// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
-				if (!isCreating) {
-					setTimeout(() => {
-						this.closeModal()
-					}, 1000)
-				}
+				await this.saveCurrentForm()
 			} catch (e) {
 				console.error('Save error:', e)
 			} finally {
 				this.isSaving = false
 			}
+		},
+
+		/**
+		 * Save the form: create the new object once its selections are made,
+		 * or update the current one and close the modal a second later.
+		 *
+		 * @return {Promise<void>}
+		 */
+		async saveCurrentForm() {
+			const isCreating = this.isNewObject
+
+			// For new objects, validate we have the required selections
+			if (isCreating && !this.hasCreateSelections()) {
+				return
+			}
+
+			const result = await this.sendSave(this.saveRequest(isCreating))
+			this.applySavedObject(result)
+
+			// Close modal for edit mode, keep open for create mode (which transitions to edit mode)
+			if (!isCreating) {
+				setTimeout(() => {
+					this.closeModal()
+				}, 1000)
+			}
+		},
+
+		/**
+		 * Whether a new object has its schema, register and catalog chosen.
+		 *
+		 * @return {boolean} True when all three are chosen
+		 */
+		hasCreateSelections() {
+			return Boolean(
+				this.selectedSchema && this.selectedRegister && this.selectedCatalog,
+			)
+		},
+
+		/**
+		 * The save request: the complete object data with the endpoint and
+		 * method that create a new object or update the current one.
+		 *
+		 * @param {boolean} isCreating - Whether a new object is created
+		 * @return {{isCreating: boolean, objectData: object, endpoint: string, method: string}} The request
+		 */
+		saveRequest(isCreating) {
+			// Build the complete object with all schema properties
+			const objectData = this.buildCompleteObjectData()
+			if (isCreating) {
+				const endpoint = `/index.php/apps/openregister/api/objects/${this.selectedRegister.id}/${this.selectedSchema.id}`
+				return { isCreating, objectData, endpoint, method: 'POST' }
+			}
+
+			// Get register and schema info from the current object
+			const { registerId, schemaId } = this.getRegisterSchemaIds(
+				this.currentObject,
+			)
+			const objectId = this.currentObject['@self']?.id || this.currentObject.id
+			const endpoint = `/index.php/apps/openregister/api/objects/${registerId}/${schemaId}/${objectId}`
+			return { isCreating, objectData, endpoint, method: 'PUT' }
+		},
+
+		/**
+		 * Send a save request to the openregister API.
+		 *
+		 * @param {{isCreating: boolean, objectData: object, endpoint: string, method: string}} request - The request
+		 * @return {Promise<object>} The saved object
+		 * @throws {Error} When the answer is not ok
+		 */
+		async sendSave({ isCreating, objectData, endpoint, method }) {
+			const response = await fetch(endpoint, {
+				method,
+				headers: {
+					'Content-Type': 'application/json',
+					requesttoken: getRequestToken(),
+				},
+				body: JSON.stringify(objectData),
+			})
+
+			if (!response.ok) {
+				const errorText = await response.text()
+				throw new Error(
+					`Failed to ${isCreating ? 'create' : 'update'} publication: ${response.status} ${response.statusText} - ${errorText}`,
+				)
+			}
+
+			return response.json()
+		},
+
+		/**
+		 * Make a saved object the active publication with its full schema,
+		 * clear the form, and tell the lists that it changed.
+		 *
+		 * @param {object} result - The saved object
+		 * @return {void}
+		 */
+		applySavedObject(result) {
+			const schema = objectStore.availableSchemas.find(
+				(schema) => schema.id === Number(result['@self'].schema),
+			)
+			// Set the newly created/updated object as active in the object store
+			objectStore.setActiveObject('publication', {
+				...result,
+				'@self': { ...result['@self'], schema },
+			})
+
+			// Clear form data since we now have the saved object
+			this.formData = {}
+
+			// Refresh the publications list
+			catalogStore.fetchPublications()
+			dispatchObjectsChanged({
+				register: result['@self'].register,
+				schema: result['@self'].schema,
+				id: result['@self'].id,
+			})
 		},
 
 		// Property validation and editing methods
@@ -2179,16 +2156,7 @@ export default {
 
 			// Return the title if it exists and is not empty or just "new" (placeholder)
 			const title = schemaProperty?.title
-			if (
-				title
-				&& typeof title === 'string'
-				&& title.trim() !== ''
-				&& title.trim().toLowerCase() !== 'new'
-			) {
-				return title
-			}
-
-			return key
+			return isUsableTitle(title) ? title : key
 		},
 
 		/**
@@ -2245,22 +2213,10 @@ export default {
 				if (editorEl) {
 					// Remove borders from all nested elements
 					const allElements = editorEl.querySelectorAll('*')
-					allElements.forEach((el) => {
-						el.style.border = 'none'
-						el.style.borderWidth = '0'
-						el.style.borderStyle = 'none'
-						el.style.borderColor = 'transparent'
-						el.style.outline = 'none'
-						el.style.boxShadow = 'none'
-					})
+					allElements.forEach(clearBorders)
 
 					// Also remove from the container itself
-					editorEl.style.border = 'none'
-					editorEl.style.borderWidth = '0'
-					editorEl.style.borderStyle = 'none'
-					editorEl.style.borderColor = 'transparent'
-					editorEl.style.outline = 'none'
-					editorEl.style.boxShadow = 'none'
+					clearBorders(editorEl)
 				}
 			} catch (error) {
 				console.warn('Could not remove borders from editor:', error)
@@ -2295,12 +2251,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		formatFileSize(bytes) {
-			const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-			if (bytes === 0) return 'n/a'
-			const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)))
-			if (i === 0 && sizes[i] === 'Bytes') return '< 1 KB'
-			if (i === 0) return bytes + ' ' + sizes[i]
-			return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + sizes[i]
+			return fileSizeLabel(bytes)
 		},
 
 		/**
@@ -2370,17 +2321,17 @@ export default {
 			const { registerId, schemaId } = this.getRegisterSchemaIds(
 				this.currentObject,
 			)
-			await objectStore.fetchRelatedData(
-				'publication',
-				this.currentObject.id,
-				'files',
+			await objectStore.fetchRelatedData({
+				type: 'publication',
+				id: this.currentObject.id,
+				dataType: 'files',
 				params,
-				{
+				publicationData: {
 					source: 'openregister',
 					schema: schemaId,
 					register: registerId,
 				},
-			)
+			})
 		},
 
 		/**
@@ -2415,39 +2366,10 @@ export default {
 		async deleteSelectedFiles() {
 			if (objectStore.selectedAttachments.length === 0) return
 
-			let changed = null
+			const run = { changed: null }
 			try {
 				this.fileIdsLoading = [...objectStore.selectedAttachments]
-
-				const selectedFiles = this.paginatedFiles.filter((item) =>
-					objectStore.selectedAttachments.includes(item.id),
-				)
-				const { registerId, schemaId } = this.getRegisterSchemaIds(
-					this.currentObject,
-				)
-
-				for (const file of selectedFiles) {
-					const endpoint = generateUrl(
-						'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files/{fileId}',
-						{
-							registerId,
-							schemaId,
-							objectId: this.currentObject.id,
-							fileId: file.id,
-						},
-					)
-					const response = await fetch(endpoint, { method: 'DELETE' })
-					if (!response.ok) {
-						throw new Error(
-							`Failed to delete file ${file.title || file.name}: ${response.statusText}`,
-						)
-					}
-					changed = {
-						register: registerId,
-						schema: schemaId,
-						id: this.currentObject.id,
-					}
-				}
+				await this.deleteFilesInTurn(run)
 
 				await this.refreshFiles()
 				catalogStore.fetchPublications()
@@ -2457,10 +2379,74 @@ export default {
 			} finally {
 				this.fileIdsLoading = []
 				// A partial delete still changes the file count.
-				if (changed) {
-					dispatchObjectsChanged(changed)
+				if (run.changed) {
+					dispatchObjectsChanged(run.changed)
 				}
 			}
+		},
+
+		/**
+		 * Delete the selected files one after another, noting the object
+		 * change after each delete; stops at the first failure.
+		 *
+		 * @param {{changed: object|null}} run - The delete run, its change set after each delete
+		 * @return {Promise<void>}
+		 * @throws {Error} When a delete fails
+		 */
+		async deleteFilesInTurn(run) {
+			const selectedFiles = this.paginatedFiles.filter((item) =>
+				objectStore.selectedAttachments.includes(item.id),
+			)
+			const ids = this.getRegisterSchemaIds(this.currentObject)
+
+			for (const file of selectedFiles) {
+				const response = await this.sendFileAction(file, { ids, action: 'delete' })
+				if (!response.ok) {
+					throw new Error(
+						`Failed to delete file ${file.title || file.name}: ${response.statusText}`,
+					)
+				}
+				run.changed = this.currentObjectChange(ids)
+			}
+		},
+
+		/**
+		 * The change notice for the current object.
+		 *
+		 * @param {{registerId: string, schemaId: string}} ids - The register and schema ids
+		 * @return {{register: string, schema: string, id: string}} The change
+		 */
+		currentObjectChange({ registerId, schemaId }) {
+			return {
+				register: registerId,
+				schema: schemaId,
+				id: this.currentObject.id,
+			}
+		},
+
+		/**
+		 * Send one file action of the current object: DELETE for a delete,
+		 * POST to the action's path otherwise.
+		 *
+		 * @param {object} file - The file
+		 * @param {{ids: object, action: string}} request - The register and schema ids and the action
+		 * @return {Promise<Response>} The response
+		 */
+		sendFileAction(file, { ids, action }) {
+			const base = generateUrl(
+				'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files/{fileId}',
+				{
+					registerId: ids.registerId,
+					schemaId: ids.schemaId,
+					objectId: this.currentObject.id,
+					fileId: file.id,
+				},
+			)
+			const endpoint = action === 'delete' ? base : `${base}/${action}`
+			return fetch(endpoint, {
+				method: action === 'delete' ? 'DELETE' : 'POST',
+				headers: { requesttoken: getRequestToken() },
+			})
 		},
 
 		// action: 'publish' | 'depublish' | 'delete'
@@ -2474,41 +2460,35 @@ export default {
 				action === 'delete' ? 'fileIdsLoading' : `${action}Loading`
 			try {
 				this[loadingList].push(file.id)
-				const { registerId, schemaId } = this.getRegisterSchemaIds(
-					this.currentObject,
-				)
-				const base = generateUrl(
-					'/apps/openregister/api/objects/{registerId}/{schemaId}/{objectId}/files/{fileId}',
-					{
-						registerId,
-						schemaId,
-						objectId: this.currentObject.id,
-						fileId: file.id,
-					},
-				)
-				const endpoint = action === 'delete' ? base : `${base}/${action}`
-				const response = await fetch(endpoint, {
-					method: action === 'delete' ? 'DELETE' : 'POST',
-				})
+				const ids = this.getRegisterSchemaIds(this.currentObject)
+				const response = await this.sendFileAction(file, { ids, action })
 				if (!response.ok) {
 					throw new Error(
 						`Failed to ${action} file: ${response.statusText}`,
 					)
 				}
-				if (action === 'delete') {
-					dispatchObjectsChanged({
-						register: registerId,
-						schema: schemaId,
-						id: this.currentObject.id,
-					})
-				}
-				await this.refreshFiles()
-				catalogStore.fetchPublications()
+				await this.afterFileAction(ids, action)
 			} catch (error) {
 				console.error(`Failed to ${action} file:`, error)
 			} finally {
 				this[loadingList] = this[loadingList].filter((id) => id !== file.id)
 			}
+		},
+
+		/**
+		 * After a file action: report a delete, then refresh the files and
+		 * the publications list.
+		 *
+		 * @param {{registerId: string, schemaId: string}} ids - The register and schema ids
+		 * @param {string} action - The action that ran
+		 * @return {Promise<void>}
+		 */
+		async afterFileAction(ids, action) {
+			if (action === 'delete') {
+				dispatchObjectsChanged(this.currentObjectChange(ids))
+			}
+			await this.refreshFiles()
+			catalogStore.fetchPublications()
 		},
 
 		/**
@@ -2603,6 +2583,7 @@ export default {
 					method: 'PUT',
 					headers: {
 						'Content-Type': 'application/json',
+						requesttoken: getRequestToken(),
 					},
 					body: JSON.stringify({
 						tags: editedTags,
@@ -2621,13 +2602,13 @@ export default {
 					schema: schemaId,
 					register: registerId,
 				}
-				await objectStore.fetchRelatedData(
-					'publication',
-					this.currentObject.id,
-					'files',
-					{},
+				await objectStore.fetchRelatedData({
+					type: 'publication',
+					id: this.currentObject.id,
+					dataType: 'files',
+					params: {},
 					publicationData,
-				)
+				})
 
 				this.editingTags = null
 				this.editedTags = []
@@ -2642,17 +2623,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		getRegisterSchemaIds(publication) {
-			const registerId =
-				typeof publication['@self'].register === 'object'
-					? publication['@self'].register?.id
-						|| publication['@self'].register?.uuid
-					: publication['@self'].register
-			const schemaId =
-				typeof publication['@self'].schema === 'object'
-					? publication['@self'].schema?.id
-						|| publication['@self'].schema?.uuid
-					: publication['@self'].schema
-			return { registerId, schemaId }
+			return registerSchemaIdsOf(publication)
 		},
 
 		// Action button methods
@@ -2667,19 +2638,7 @@ export default {
 		 * @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1
 		 */
 		shouldShowPublishAction(object) {
-			if (!object) return false
-			const now = new Date()
-			const published = object.publicationDate
-				? new Date(object.publicationDate)
-				: null
-			const depublished = object.depublicationDate
-				? new Date(object.depublicationDate)
-				: null
-
-			if (depublished && depublished < now) return true // currently depublished
-			if (!published && !depublished) return true // never published
-			if (!depublished && published && published > now) return true // scheduled but not yet live
-			return false
+			return offersPublishAction(object, new Date())
 		},
 
 		/**
@@ -2688,20 +2647,7 @@ export default {
 		 */
 		shouldShowDepublishAction(object) {
 			if (!object) return false
-			const now = new Date()
-			const published = object.publicationDate
-				? new Date(object.publicationDate)
-				: null
-			const depublished = object.depublicationDate
-				? new Date(object.depublicationDate)
-				: null
-
-			// Currently live: published in the past and not yet depublished
-			return !!(
-				published
-				&& published <= now
-				&& (!depublished || depublished > now)
-			)
+			return isLiveNow(object, new Date())
 		},
 
 		/**
@@ -2737,49 +2683,16 @@ export default {
 		// Schema handling methods
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		getSchemaProperties() {
-			let properties = {}
-
-			const findSchema = (schemaId) =>
-				objectStore.availableSchemas.find(
-					(schema) =>
-						String(schema.id) === String(schemaId)
-						|| schema.uuid === schemaId
-						|| schema.slug === schemaId,
-				)
-
 			// For new objects, use the selected schema
 			if (this.isNewObject && this.selectedSchema) {
-				const fullSchema = findSchema(this.selectedSchema.id)
-				properties = fullSchema?.properties || {}
-			} else if (this.currentObject && this.currentObject['@self']?.schema) {
-				// For existing objects, try to get schema from the object's schema reference
-				const schemaRef = this.currentObject['@self'].schema
-
-				// If schema is already an extended object, use its properties directly
-				if (
-					typeof schemaRef === 'object'
-					&& schemaRef !== null
-					&& schemaRef.properties
-				) {
-					return schemaRef.properties
-				}
-
-				// Handle both object and string schema references
-				// @self.schema can be a UUID string, numeric ID, or slug — match against all
-				const schemaId =
-					typeof schemaRef === 'object' && schemaRef !== null
-						? schemaRef.id || schemaRef.uuid
-						: schemaRef
-
-				if (schemaId) {
-					const fullSchema = findSchema(schemaId)
-					if (fullSchema?.properties) {
-						properties = fullSchema.properties
-					}
-				}
+				const fullSchema = findSchemaByAnyId(
+					objectStore.availableSchemas,
+					this.selectedSchema.id,
+				)
+				return fullSchema?.properties || {}
 			}
-
-			return properties
+			const schemaRef = this.currentObject?.['@self']?.schema
+			return referencedSchemaProperties(schemaRef, objectStore.availableSchemas)
 		},
 
 		// Helper method to rebuild object with schema properties after API operations
@@ -2798,39 +2711,8 @@ export default {
 				},
 			}
 
-			// Get schema properties to ensure we don't lose any
-			const schemaProperties = this.getSchemaProperties()
-
-			// Add missing schema properties with default values
-			for (const [key, schemaProperty] of Object.entries(schemaProperties)) {
-				if (!Object.hasOwn(mergedObject, key)) {
-					// Add with appropriate default value based on type
-					let defaultValue = ''
-					switch (schemaProperty.type) {
-						case 'string':
-							defaultValue = schemaProperty.const || ''
-							break
-						case 'number':
-						case 'integer':
-							defaultValue = 0
-							break
-						case 'boolean':
-							defaultValue = false
-							break
-						case 'array':
-							defaultValue = []
-							break
-						case 'object':
-							defaultValue = {}
-							break
-						default:
-							defaultValue = ''
-					}
-					mergedObject[key] = defaultValue
-				}
-			}
-
-			return mergedObject
+			// Add the schema properties the result lacks, so none get lost
+			return withSchemaFillValues(mergedObject, this.getSchemaProperties())
 		},
 
 		/**
@@ -2840,33 +2722,7 @@ export default {
 		 */
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		cleanFormData() {
-			const cleaned = {}
-
-			// If formData is somehow an array, convert it properly
-			if (Array.isArray(this.formData)) {
-				// This should never happen, but just in case
-				return {}
-			}
-
-			// Copy all valid properties from formData
-			for (const [key, value] of Object.entries(this.formData || {})) {
-				// Only include valid property names:
-				// - Must be a string
-				// - Must not be empty
-				// - Must not be purely numeric (array indices)
-				// - Must not be special Vue/internal keys
-				if (
-					typeof key === 'string'
-					&& key.length > 0
-					&& !/^\d+$/.test(key)
-					&& !key.startsWith('_')
-					&& !key.startsWith('$')
-				) {
-					cleaned[key] = value
-				}
-			}
-
-			return cleaned
+			return cleanFormValues(this.formData)
 		},
 
 		/**
@@ -2877,100 +2733,8 @@ export default {
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-1 */
 		buildCompleteObjectData() {
 			const schemaProperties = this.getSchemaProperties()
-			const cleanedFormData = this.cleanFormData()
-			const currentObjectData = this.currentObject || {}
-
-			// Start with current object data (excluding id but keeping @self for updates)
-			const objectData = {}
-			for (const [key, value] of Object.entries(currentObjectData)) {
-				if (key !== 'id') {
-					objectData[key] = value
-				}
-			}
-
-			// Add all schema properties with appropriate values
-			for (const [propertyKey, schemaProperty] of Object.entries(
-				schemaProperties,
-			)) {
-				if (Object.hasOwn(cleanedFormData, propertyKey)) {
-					// Check if property was marked for deletion (undefined)
-					if (cleanedFormData[propertyKey] === undefined) {
-						// For schema properties, don't include undefined values - let backend handle defaults
-						// This effectively removes the property from the payload
-						delete objectData[propertyKey]
-					} else {
-						// Use edited value from formData; normalize arrays if schema type is array
-						const formValue = cleanedFormData[propertyKey]
-						if (schemaProperty.type === 'array') {
-							let normalized
-							if (Array.isArray(formValue)) {
-								normalized = formValue
-							} else if (typeof formValue === 'string') {
-								normalized = formValue
-									.split(/ *, */g)
-									.filter(Boolean)
-							} else if (formValue === null) {
-								normalized = null
-							} else if (formValue === false) {
-								// Edge case: some inputs may pass boolean false; treat as empty array
-								normalized = []
-							} else {
-								normalized = [String(formValue)].filter(Boolean)
-							}
-							objectData[propertyKey] = normalized
-						} else {
-							objectData[propertyKey] = formValue
-						}
-					}
-				} else if (Object.hasOwn(currentObjectData, propertyKey)) {
-					// Keep existing value from current object
-					objectData[propertyKey] = currentObjectData[propertyKey]
-				} else {
-					// Property doesn't exist, set appropriate default or null
-					let defaultValue = null
-
-					// Only set non-null defaults for specific cases
-					switch (schemaProperty.type) {
-						case 'string':
-							defaultValue = schemaProperty.const || null
-							break
-						case 'number':
-						case 'integer':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'boolean':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'array':
-							defaultValue = null // Let backend handle defaults
-							break
-						case 'object':
-							defaultValue = null // Let backend handle defaults
-							break
-						default:
-							defaultValue = null
-					}
-
-					objectData[propertyKey] = defaultValue
-				}
-			}
-
-			// Also include any edited properties that might not be in the schema
-			// But only include valid property names (not numeric indices) and not undefined values
-			for (const [key, value] of Object.entries(cleanedFormData)) {
-				if (
-					!Object.hasOwn(schemaProperties, key)
-					&& typeof key === 'string'
-					&& key.length > 0
-					&& !/^\d+$/.test(key)
-					&& value !== undefined
-				) {
-					// Don't include properties marked for deletion
-					objectData[key] = value
-				}
-			}
-
-			return objectData
+			const form = this.cleanFormData()
+			return buildObjectPayload(this.currentObject, { schemaProperties, form })
 		},
 
 		// Property dropping methods
@@ -2993,13 +2757,7 @@ export default {
 			// Hide the X when there's effectively nothing to clear. Use the
 			// resolved value (formData override falls back to the persisted
 			// object value) so a property cleared in the form drops the X.
-			const resolved = formValue(this.formData, this.currentObject, key)
-			if (resolved === null || resolved === undefined || resolved === '')
-				return false
-			if (Array.isArray(resolved) && resolved.length === 0) return false
-			if (typeof resolved === 'object' && Object.keys(resolved).length === 0)
-				return false
-			return true
+			return !isEmptyValue(formValue(this.formData, this.currentObject, key))
 		},
 
 		/**
@@ -3017,32 +2775,37 @@ export default {
 			const schemaProperty = schemaProperties[key]
 
 			// Check by property name patterns (case insensitive)
-			const immutablePatterns = ['immutable', 'readonly', 'constant']
-			const isImmutableByName = immutablePatterns.some((pattern) =>
-				key.toLowerCase().includes(pattern),
-			)
+			const isImmutableByName = hasImmutableName(key)
 
-			if (schemaProperty) {
-				const isConstant = schemaProperty.const !== undefined
-				const isImmutable =
-					schemaProperty.readOnly === true
-					|| schemaProperty.immutable === true
-
-				// Debug: Log all detection methods
-				if (process.env.NODE_ENV === 'development') {
-					// eslint-disable-next-line no-console
-					console.log(`Property ${key} detection:`, {
-						isConstant,
-						isImmutable,
-						isImmutableByName,
-						schemaProperty,
-					})
-				}
-
-				return isConstant || isImmutable || isImmutableByName
+			if (!schemaProperty) {
+				return isImmutableByName
 			}
 
-			return isImmutableByName
+			const isConstant = schemaProperty.const !== undefined
+			const isImmutable = isReadOnlyProperty(schemaProperty)
+			this.logImmutability(key, {
+				isConstant,
+				isImmutable,
+				isImmutableByName,
+				schemaProperty,
+			})
+
+			return isConstant || isImmutable || isImmutableByName
+		},
+
+		/**
+		 * Debug: log how a property's immutability was detected, in
+		 * development only.
+		 *
+		 * @param {string} key - The property key
+		 * @param {object} detection - The detection results
+		 * @return {void}
+		 */
+		logImmutability(key, detection) {
+			if (process.env.NODE_ENV === 'development') {
+				// eslint-disable-next-line no-console
+				console.log(`Property ${key} detection:`, detection)
+			}
 		},
 
 		/**
@@ -3207,22 +2970,100 @@ export default {
 		 */
 		getMarkdownContent(editorInstance) {
 			try {
-				if (
-					editorInstance
-					&& typeof editorInstance.getMarkdown === 'function'
-				) {
-					return editorInstance.getMarkdown()
-				}
-				if (editorInstance && typeof editorInstance.getHTML === 'function') {
-					return editorInstance.getHTML()
-				}
-				return typeof editorInstance === 'string' ? editorInstance : ''
+				return editorContent(editorInstance)
 			} catch (error) {
 				console.warn('Error getting content from markdown editor:', error)
 				return ''
 			}
 		},
 	},
+}
+
+/**
+ * Whether a schema's authorization has read rules: a non-empty `read` list.
+ *
+ * @param {object|undefined} auth The schema's authorization.
+ * @return {boolean} True when there are read rules.
+ */
+function hasReadRules(auth) {
+	return Boolean(
+		auth && auth.read && Array.isArray(auth.read) && auth.read.length !== 0,
+	)
+}
+
+/**
+ * Whether one read rule lets a user in `groups` read: a group name the user
+ * is in, an entry with match conditions whose group the user is in (only the
+ * group membership is checked), and any other entry.
+ *
+ * @param {string|object|null} entry The read rule.
+ * @param {Array<string>} groups The user's groups.
+ * @return {boolean} True when the rule allows reading.
+ */
+function readEntryAllows(entry, groups) {
+	if (typeof entry === 'string') {
+		return groups.includes(entry)
+	}
+	// Complex entry with match conditions — check group membership only
+	if (entry && typeof entry === 'object' && entry.group) {
+		return groups.includes(entry.group)
+	}
+	return true
+}
+
+/**
+ * Take every border, outline and shadow off an element.
+ *
+ * @param {HTMLElement} el The element.
+ * @return {void}
+ */
+function clearBorders(el) {
+	el.style.border = 'none'
+	el.style.borderWidth = '0'
+	el.style.borderStyle = 'none'
+	el.style.borderColor = 'transparent'
+	el.style.outline = 'none'
+	el.style.boxShadow = 'none'
+}
+
+/**
+ * A catalog's register ids as text.
+ *
+ * Catalog.registers arrives as a string array (`["1"]`) while `register.id`
+ * from OpenRegister is numeric — `.includes` uses strict equality so the raw
+ * check would drop every match and leave the modal stalled on the
+ * empty-state (WOO-527 followup).
+ *
+ * @param {object} catalog The catalog.
+ * @return {Array<string>} The register ids.
+ */
+function registerIdsOf(catalog) {
+	return (catalog.registers || []).map(String)
+}
+
+/**
+ * A register as an option of the register dropdown.
+ *
+ * @param {object} register The register.
+ * @return {{id: (string|number), label: string}} The option.
+ */
+function toRegisterOption(register) {
+	return {
+		id: register.id,
+		label: register.title,
+	}
+}
+
+/**
+ * The catalog with `catalogId` from the store's catalogs, matched as text.
+ *
+ * @param {string|number} catalogId The catalog id.
+ * @return {object|undefined} The catalog.
+ */
+function findCatalog(catalogId) {
+	return objectStore
+		.getCollection('catalog')
+		.results.find((catalog) => String(catalog.id) === String(catalogId))
 }
 </script>
 

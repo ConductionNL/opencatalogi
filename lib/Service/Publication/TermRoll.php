@@ -101,6 +101,53 @@ class TermRoll {
 		$landed = $calculator->add($start, (float)$days, 'calendarDays', $calendar);
 		$rolled = $calculator->roll(moment: $landed, rule: new RollRule(roll: SlaCalculatorInterface::ROLL_NEXT, calendar: $calendar));
 
+		return $this->landing(landed: $landed, rolled: $rolled);
+
+	}//end endDate()
+
+	/**
+	 * A date that is already given, rolled to the next working day.
+	 *
+	 * An end date written through an API was not computed here, but it is the
+	 * end of a statutory term all the same, so it lands where the Algemene
+	 * termijnenwet puts it: never earlier, only on the next working day.
+	 *
+	 * @param DateTimeInterface $at The given date.
+	 * @param string|null $calendarSlug The working calendar, or null for the resolved default.
+	 * @param string|null $organisation The organisation the calendar belongs to.
+	 *
+	 * @return array{at: DateTimeImmutable, unrolledAt: DateTimeImmutable|null, rolledBy: string|null} Where it lands, and why it moved.
+	 *
+	 * @throws TermRollUnavailableException When the term engine cannot be reached.
+	 *
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-end-date-written-through-the-api-is-rolled-req-ipr-002
+	 */
+	public function roll(
+		DateTimeInterface $at,
+		?string $calendarSlug = null,
+		?string $organisation = null,
+	): array {
+		$calculator = $this->calculator();
+		$calendar = $this->calendars()->resolve($calendarSlug, $organisation);
+
+		$rolled = $calculator->roll(moment: $at, rule: new RollRule(roll: SlaCalculatorInterface::ROLL_NEXT, calendar: $calendar));
+
+		return $this->landing(landed: $at, rolled: $rolled);
+
+	}//end roll()
+
+	/**
+	 * Where the term lands: the rolled moment, else the added one; where it
+	 * was rolled from; and why, when the engine said.
+	 *
+	 * @param mixed $landed The moment the days were added to.
+	 * @param array<string, mixed> $rolled The engine's roll answer.
+	 *
+	 * @return array{at: DateTimeImmutable, unrolledAt: DateTimeImmutable|null, rolledBy: string|null}
+	 *
+	 * @throws TermRollUnavailableException When the engine answered no end date.
+	 */
+	private function landing(mixed $landed, array $rolled): array {
 		$endsAt = ($rolled['at'] ?? $landed);
 		if (($endsAt instanceof DateTimeInterface) === false) {
 			throw new TermRollUnavailableException(
@@ -108,18 +155,27 @@ class TermRoll {
 			);
 		}
 
-		$rolledBy = ($rolled['rolledBy'] ?? null);
-		if (is_string($rolledBy) === false || trim($rolledBy) === '') {
-			$rolledBy = null;
-		}
-
 		return [
 			'at' => $this->immutable(moment: $endsAt),
 			'unrolledAt' => $this->immutable(moment: ($rolled['unrolledAt'] ?? null)),
-			'rolledBy' => $rolledBy,
+			'rolledBy' => $this->rollReason(rolledBy: ($rolled['rolledBy'] ?? null)),
 		];
+	}//end landing()
 
-	}//end endDate()
+	/**
+	 * Why the end moved, or null when the engine gave no readable reason.
+	 *
+	 * @param mixed $rolledBy The engine's reason.
+	 *
+	 * @return string|null The reason.
+	 */
+	private function rollReason(mixed $rolledBy): ?string {
+		if (is_string($rolledBy) === false || trim($rolledBy) === '') {
+			return null;
+		}
+
+		return $rolledBy;
+	}//end rollReason()
 
 	/**
 	 * Normalise a moment the engine answered with, or null when it answered none.

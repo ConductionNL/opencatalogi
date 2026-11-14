@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -31,6 +36,7 @@ use RuntimeException;
  * phpunit-unit.xml). Run them with the network group in an environment that has DNS.
  *
  * @covers \OCA\OpenCatalogi\Service\DirectoryService
+ * @uses \OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard
  */
 class DirectoryServiceTest extends TestCase {
 	private DirectoryService $service;
@@ -4396,6 +4402,112 @@ class DirectoryServiceTest extends TestCase {
 
 	}//end testIpv6LoopbackIsRefusedEvenWithTheAllowanceOn()
 
+
+	/**
+	 * Internal addresses written in another notation.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function internalUrlsInOtherNotations(): array {
+		return [
+			'ipv4-mapped loopback'        => ['http://[::ffff:127.0.0.1]/apps/opencatalogi/api/directory'],
+			'ipv4-mapped loopback in hex' => ['http://[::ffff:7f00:1]/apps/opencatalogi/api/directory'],
+			'ipv4-mapped private'         => ['http://[::ffff:10.0.0.1]/apps/opencatalogi/api/directory'],
+			'ipv4-mapped metadata'        => ['http://[::ffff:169.254.169.254]/latest/meta-data/'],
+			'ipv4-compatible loopback'    => ['http://[::127.0.0.1]/apps/opencatalogi/api/directory'],
+			'shared address space'        => ['http://100.64.0.1/apps/opencatalogi/api/directory'],
+		];
+
+	}//end internalUrlsInOtherNotations()
+
+
+	/**
+	 * An internal address is refused by default in any notation.
+	 *
+	 * @dataProvider internalUrlsInOtherNotations
+	 *
+	 * @param string $url The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testInternalAddressInOtherNotationIsRefusedByDefault(string $url): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => $default
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->service->validateOutboundUrl($url);
+
+	}//end testInternalAddressInOtherNotationIsRefusedByDefault()
+
+
+	/**
+	 * Addresses that stay refused with the allowance on, in any notation.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function neverAllowedUrls(): array {
+		return [
+			'ipv4-mapped metadata' => ['http://[::ffff:169.254.169.254]/latest/meta-data/'],
+			'this-network ipv4'    => ['http://0.1.2.3/apps/opencatalogi/api/directory'],
+			'ipv4-mapped zero'     => ['http://[::ffff:0.0.0.0]/apps/opencatalogi/api/directory'],
+		];
+
+	}//end neverAllowedUrls()
+
+
+	/**
+	 * The never-allowed set holds with the allowance on, in any notation.
+	 *
+	 * @dataProvider neverAllowedUrls
+	 *
+	 * @param string $url The directory URL.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testNeverAllowedAddressIsRefusedWithTheAllowanceOn(string $url): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				return ($key === 'allow_internal_directories' ? 'yes' : $default);
+			}
+		);
+
+		$this->expectException(\InvalidArgumentException::class);
+		$this->expectExceptionMessage('disallowed (internal) address');
+
+		$this->service->validateOutboundUrl($url);
+
+	}//end testNeverAllowedAddressIsRefusedWithTheAllowanceOn()
+
+
+	/**
+	 * A mapped private address follows the allowance like its plain form.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/federation/spec.md
+	 */
+	public function testMappedPrivateAddressIsAllowedWhenExplicitlyEnabled(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static function (string $app, string $key, string $default = ''): string {
+				return ($key === 'allow_internal_directories' ? 'yes' : $default);
+			}
+		);
+
+		$this->service->validateOutboundUrl('http://[::ffff:10.0.0.5]/apps/opencatalogi/api/directory');
+
+		$this->addToAssertionCount(1);
+
+	}//end testMappedPrivateAddressIsAllowedWhenExplicitlyEnabled()
+
+
+
 	// =========================================================================
 	// Last success apart from last attempt (REQ-FLS-001, issue #1647)
 	// =========================================================================
@@ -4625,5 +4737,92 @@ class DirectoryServiceTest extends TestCase {
 		$this->assertSame('/index.php/apps/opencatalogi/api/federation/publications/pub-1/used', $uri->getPath());
 		parse_str($uri->getQuery(), $query);
 		$this->assertSame('false', $query['_aggregate'] ?? null);
+	}
+
+	/**
+	 * The attachments of a remote publication come from the peer's federation
+	 * endpoint, without further aggregation, keep the peer's download URL and
+	 * say which instance they came from; the loopback entry is never called.
+	 *
+	 * @dataProvider peerListingUrlShapes
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testGetRemoteAttachmentsAsksThePeersFederationEndpoint(string $publicationsUrl): void {
+		$this->urlGenerator->method('getAbsoluteURL')
+			->willReturn('https://myserver.example.com/index.php/apps/opencatalogi/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/index.php/apps/opencatalogi/api/directory');
+		$this->setPrivateProperty('cachedUniqueDirs', [$publicationsUrl, 'https://127.0.0.1/index.php/apps/opencatalogi/api/federation/publications']);
+		$this->setPrivateProperty('cacheTimestamp', time());
+
+		$files = [
+			['id' => 'f1', 'title' => 'besluit.pdf', 'downloadUrl' => 'https://93.184.216.34/remote.php/dav/f1'],
+			['id' => 'f2', 'title' => 'bijlage.pdf', 'downloadUrl' => 'https://93.184.216.34/remote.php/dav/f2'],
+		];
+		$history = [];
+		$stack = \GuzzleHttp\HandlerStack::create(new \GuzzleHttp\Handler\MockHandler([
+			new Response(200, [], json_encode(['results' => $files, 'total' => 2])),
+		]));
+		$stack->push(\GuzzleHttp\Middleware::history($history));
+
+		$result = $this->service->getRemoteAttachments('pub-1', ['handler' => $stack]);
+
+		$this->assertCount(1, $history, 'only the safe peer is asked; the loopback entry is refused');
+		$uri = $history[0]['request']->getUri();
+		$this->assertSame('93.184.216.34', $uri->getHost());
+		$this->assertSame('/index.php/apps/opencatalogi/api/federation/publications/pub-1/attachments', $uri->getPath());
+		parse_str($uri->getQuery(), $query);
+		$this->assertSame('false', $query['_aggregate'] ?? null);
+
+		$this->assertSame(
+			[
+				$files[0] + ['source' => ['instance' => 'https://93.184.216.34']],
+				$files[1] + ['source' => ['instance' => 'https://93.184.216.34']],
+			],
+			$result['results']
+		);
+		$this->assertSame(['93.184.216.34'], array_keys($result['source']));
+	}
+
+	/**
+	 * A peer that does not hold the publication is passed over, and with no
+	 * other peer there is no answer.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testGetRemoteAttachmentsIsNullWhenNoPeerHoldsThePublication(): void {
+		$this->urlGenerator->method('getAbsoluteURL')
+			->willReturn('https://myserver.example.com/index.php/apps/opencatalogi/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/index.php/apps/opencatalogi/api/directory');
+		$this->setPrivateProperty('cachedUniqueDirs', ['https://93.184.216.34/index.php/apps/opencatalogi/api/federation/publications']);
+		$this->setPrivateProperty('cacheTimestamp', time());
+
+		$stack = \GuzzleHttp\HandlerStack::create(new \GuzzleHttp\Handler\MockHandler([
+			new Response(404, [], json_encode(['error' => 'Not Found'])),
+		]));
+
+		$this->assertNull($this->service->getRemoteAttachments('pub-1', ['handler' => $stack]));
+	}
+
+	/**
+	 * A directory on a private address is never called.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testGetRemoteAttachmentsNeverCallsAPrivateAddress(): void {
+		$this->urlGenerator->method('getAbsoluteURL')
+			->willReturn('https://myserver.example.com/index.php/apps/opencatalogi/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/index.php/apps/opencatalogi/api/directory');
+		$this->setPrivateProperty('cachedUniqueDirs', ['https://10.0.0.5/index.php/apps/opencatalogi/api/federation/publications']);
+		$this->setPrivateProperty('cacheTimestamp', time());
+
+		$history = [];
+		$stack = \GuzzleHttp\HandlerStack::create(new \GuzzleHttp\Handler\MockHandler([
+			new Response(200, [], json_encode(['results' => [['id' => 'f1']]])),
+		]));
+		$stack->push(\GuzzleHttp\Middleware::history($history));
+
+		$this->assertNull($this->service->getRemoteAttachments('pub-1', ['handler' => $stack]));
+		$this->assertSame([], $history);
 	}
 }
