@@ -61,4 +61,17 @@ describe('Navigation Store', () => {
 		store.setDialog('deletePublicationType')
 		expect(store.dialog).toBe('deletePublicationType')
 	})
+
+	it('keeps dialog properties and hands transfer data over once', () => {
+		const store = useNavigationStore()
+
+		store.setDialog('deletePublication', { objectType: 'publication', isMultiple: true })
+		expect(store.dialogProperties).toEqual({ objectType: 'publication', isMultiple: true })
+		store.setDialog('deleteCatalogi')
+		expect(store.dialogProperties).toBeNull()
+
+		store.setTransferData({ id: 'x' } as never)
+		expect(store.getTransferData()).toEqual({ id: 'x' })
+		expect(store.getTransferData()).toBeNull()
+	})
 })

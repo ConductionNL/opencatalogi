@@ -243,6 +243,19 @@ interface PublicationServiceInterface {
 	public function getFederatedPublication(string $id, array $queryParams = []): array;
 
 	/**
+	 * The attachments of a publication, local first and otherwise read from the
+	 * instance that holds it, unless `_aggregate` is false.
+	 *
+	 * @param string $id The ID of the publication
+	 * @param array $queryParams Query parameters including aggregation settings
+	 *
+	 * @return JSONResponse The attachments, or a 404 when no reachable source holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getFederatedAttachments(string $id, array $queryParams = []): JSONResponse;
+
+	/**
 	 * Get publications that use this publication with federation support
 	 *
 	 * This method returns all objects that reference (use) this

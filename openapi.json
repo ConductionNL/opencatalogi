@@ -3,7 +3,7 @@
   "info": {
     "title": "OpenCatalogi",
     "version": "2.1.16-unstable.20261010175130",
-    "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` — admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, robots.txt, Atom feeds, federation) keep their own URLs and formats; openapi.standards.json describes them.",
+    "description": "OpenCatalogi's public, anonymously-reachable API surface: full-text search, catalog and publication read access, DCAT-AP-NL and schema.org harvest feeds, DIWOO sitemaps/robots.txt, the federation read surface, the federated-directory sync endpoint, and the CMS read APIs (pages/menus/themes/glossary/listings). Every path in this document corresponds to a route in `appinfo/routes.php` whose controller method carries `@PublicPage` / `#[PublicPage]` \u2014 admin-gated and authenticated-only endpoints (settings, retention, Woo batches, setup, OOAPI 5.0 resource reads, DCAT/DIWOO/OOAPI validation reports) are out of scope; see the `public-api-openapi-document` OpenSpec change.\n\nEvery path is served under `/api/v1/`, the version this document describes. The unversioned `/api/` paths keep working, are deprecated, and name their `/api/v1/` successor in a `Link` header next to a `Deprecation` header. Paths that implement an external standard (DCAT-AP, OOAPI, schema.org, sitemaps, robots.txt, Atom feeds, federation) keep their own URLs and formats; openapi.standards.json describes them.",
     "license": {
       "name": "EUPL-1.2",
       "url": "https://eupl.eu/1.2/en/"
@@ -81,7 +81,7 @@
     "schemas": {
       "SelfMeta": {
         "type": "object",
-        "description": "OpenRegister object metadata. The exact property set is register/schema dependent and MUST NOT be frozen here — additionalProperties covers it.",
+        "description": "OpenRegister object metadata. The exact property set is register/schema dependent and MUST NOT be frozen here \u2014 additionalProperties covers it.",
         "properties": {
           "id": {
             "type": "string"
@@ -119,7 +119,7 @@
       },
       "ObjectRecord": {
         "type": "object",
-        "description": "A single register-defined object (publication, document, catalog, page, menu, theme, glossary term, listing, …). Properties beyond `@self` are defined by the instance's configured schema and are intentionally NOT frozen in this document (design decision D3) — additionalProperties: true.",
+        "description": "A single register-defined object (publication, document, catalog, page, menu, theme, glossary term, listing, \u2026). Properties beyond `@self` are defined by the instance's configured schema and are intentionally NOT frozen in this document (design decision D3) \u2014 additionalProperties: true.",
         "properties": {
           "@self": {
             "$ref": "#/components/schemas/SelfMeta"
@@ -182,7 +182,7 @@
         }
       },
       "CatalogPublicationsEnvelope": {
-        "description": "PaginatedEnvelope plus catalog-scoping metadata added by PublicationsController::index — `@catalog` (slug/title/schemas/registers) and resolved schema/register objects merged into `@self`.",
+        "description": "PaginatedEnvelope plus catalog-scoping metadata added by PublicationsController::index \u2014 `@catalog` (slug/title/schemas/registers) and resolved schema/register objects merged into `@self`.",
         "allOf": [
           {
             "$ref": "#/components/schemas/PaginatedEnvelope"
@@ -428,7 +428,7 @@
       "ExtendParam": {
         "name": "_extend",
         "in": "query",
-        "description": "Comma-separated list (or repeated param) of relations to expand inline. Sanitised server-side on the public surface — anonymous callers cannot traverse to unrelated objects via arbitrary extend targets.",
+        "description": "Comma-separated list (or repeated param) of relations to expand inline. Sanitised server-side on the public surface \u2014 anonymous callers cannot traverse to unrelated objects via arbitrary extend targets.",
         "schema": {
           "oneOf": [
             {
@@ -707,7 +707,7 @@
       "post": {
         "operationId": "directory-update",
         "summary": "Sync a federated directory",
-        "description": "Peer broadcast-receive endpoint — federated instances POST here (via BroadcastService) to announce themselves. Not for admin UI use; admin-initiated syncs go through `POST /api/listings/add`.",
+        "description": "Peer broadcast-receive endpoint \u2014 federated instances POST here (via BroadcastService) to announce themselves. Not for admin UI use; admin-initiated syncs go through `POST /api/listings/add`.",
         "tags": [
           "Directory"
         ],
@@ -884,7 +884,7 @@
       "options": {
         "operationId": "listings-index-preflight",
         "summary": "CORS preflight",
-        "description": "CORS preflight for `/api/listings`. `GET`/`POST` on this exact path require an authenticated (non-admin) session — out of scope for this anonymous-public document.",
+        "description": "CORS preflight for `/api/listings`. `GET`/`POST` on this exact path require an authenticated (non-admin) session \u2014 out of scope for this anonymous-public document.",
         "tags": [
           "Listings"
         ],
@@ -899,7 +899,7 @@
       "options": {
         "operationId": "listings-add-preflight",
         "summary": "CORS preflight",
-        "description": "CORS preflight for `/api/listings/add`. The `POST` action is admin-authenticated — out of scope here.",
+        "description": "CORS preflight for `/api/listings/add`. The `POST` action is admin-authenticated \u2014 out of scope here.",
         "tags": [
           "Listings"
         ],
@@ -914,7 +914,7 @@
       "options": {
         "operationId": "listings-sync-preflight",
         "summary": "CORS preflight",
-        "description": "CORS preflight for `/api/listings/sync`. The `POST` action is admin-authenticated — out of scope here.",
+        "description": "CORS preflight for `/api/listings/sync`. The `POST` action is admin-authenticated \u2014 out of scope here.",
         "tags": [
           "Listings"
         ],
@@ -1566,7 +1566,7 @@
       "get": {
         "operationId": "publications-used",
         "summary": "Publication relations (used by)",
-        "description": "Objects that reference (use) this publication (B → A).",
+        "description": "Objects that reference (use) this publication (B \u2192 A).",
         "tags": [
           "Publications"
         ],
@@ -1625,7 +1625,7 @@
       "get": {
         "operationId": "publications-uses",
         "summary": "Publication relations (uses)",
-        "description": "Objects this publication references (A → B).",
+        "description": "Objects this publication references (A \u2192 B).",
         "tags": [
           "Publications"
         ],
@@ -2815,6 +2815,241 @@
           },
           "500": {
             "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{publicationId}/tables/{tableId}/rows": {
+      "get": {
+        "operationId": "published-table-rows",
+        "summary": "Rows of a published table",
+        "description": "One page of the rows of a CSV published as a table, for anyone who may read the publication. Filter with column=value on declared columns, search with _search, sort with _order[column]=asc|desc, page with _limit (at most 1000) and _page. A filter on a column the table does not declare answers 400.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          },
+          {
+            "$ref": "#/components/parameters/SearchParam"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    },
+                    "page": {
+                      "type": "integer"
+                    },
+                    "pages": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "A filter names a column the table does not have."
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "published-table-rows-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary": {
+      "get": {
+        "operationId": "published-table-dictionary",
+        "summary": "Data dictionary of a published table",
+        "description": "Each column's name, title, description and type.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "table": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "columns": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "published-table-dictionary-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight.",
+        "tags": [
+          "Publications"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/CatalogSlugPath"
+          },
+          {
+            "name": "publicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The publication the table belongs to."
+          },
+          {
+            "name": "tableId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The published table."
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
           }
         }
       }

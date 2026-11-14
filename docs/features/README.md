@@ -33,6 +33,8 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Public API: cache headers](./public-api-cache.md) | Anonymous public answers carry `Cache-Control: public` and an `ETag` for a CDN; signed-in answers stay private; the administrator sets the time | [public-api-cache.md](./public-api-cache.md) |
 | [Publication slugs](./publication-slugs.md) | `GET /api/{catalogSlug}/{id}` resolves a publication by its OpenRegister slug as well as its UUID, within the catalogue; a stable public URL that survives a re-import | [publication-slugs.md](./publication-slugs.md) |
 | [What changed since](./changes-since.md) | `GET /api/{catalogSlug}/changes?since=` lists the public publications changed since a moment as DCAT nodes, and the withdrawn ones by id and date only | [changes-since.md](./changes-since.md) |
+| [Dashboard](./dashboard.md) | The app shell: deep-link routes to every page, the Nextcloud dashboard widgets, and what the app registers on start | [dashboard.md](./dashboard.md) |
+| [Directory](./directory.md) | Listings of federated catalogues, their endpoints, directory synchronisation and the scheduled sync and broadcast jobs | [directory.md](./directory.md) |
 | Publiek zoeken | Unauthenticated full-text search with filters and facets | — |
 | [Publieke fulltext search — publicaties + documenten](./public-fulltext-search.md) | Public `GET /apps/opencatalogi/api/search` — RBAC-filtered mixed envelope of publications and documents, `@self.schema` as row discriminator, embedded `publication: {id, slug, title}` on document rows | [public-fulltext-search.md](./public-fulltext-search.md) |
 | DCAT-AP export | Dataset metadata export in DCAT-AP NL and EU DCAT-AP format | — |
