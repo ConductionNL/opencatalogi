@@ -77,6 +77,30 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	public const PUBLIC_LIMIT_MAX = 100;
 
 	/**
+	 * The language publications are written in, and the one a visitor gets when
+	 * they ask for none or for one that is not a valid tag (publication-translations
+	 * REQ-PTR-002).
+	 *
+	 * @var string
+	 */
+	public const SOURCE_LANGUAGE = 'nl';
+
+	/**
+	 * Basic BCP 47 shape, the same check OpenRegister's own negotiation applies.
+	 *
+	 * @var string
+	 */
+	private const LANGUAGE_TAG = '/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/';
+
+	/**
+	 * OpenRegister's request-scoped language service, which its object reads
+	 * consult when they pick a translation.
+	 *
+	 * @var string
+	 */
+	private const OR_LANGUAGE_SERVICE = 'OCA\OpenRegister\Service\LanguageService';
+
+	/**
 	 * Whether the missing-runAsAnonymous() warning has been logged this request.
 	 *
 	 * @var bool
@@ -1333,6 +1357,154 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		}
 
 	}//end isCatalogPubliclyAvailable()
+
+	/**
+	 * The language a public visitor asks for: `_lang`, then `language`, then the
+	 * first tag of `Accept-Language`, else Dutch.
+	 *
+	 * A value that is not a language tag is skipped, never refused, so a
+	 * nonsense `?_lang=` is read in the next language asked for or in Dutch.
+	 *
+	 * @param array<string, mixed> $queryParams The request query parameters.
+	 * @param string $acceptLanguage The Accept-Language header, or ''.
+	 *
+	 * @return array{language: string, source: string, accepted: list<string>} The language,
+	 *         where it came from (query, header or default) and the header's tags in order.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function visitorLanguage(array $queryParams, string $acceptLanguage): array {
+		$accepted = $this->acceptedLanguageTags(header: $acceptLanguage);
+
+		foreach (['_lang', 'language'] as $name) {
+			$value = $queryParams[$name] ?? null;
+			if (is_string($value) === true && preg_match(self::LANGUAGE_TAG, trim($value)) === 1) {
+				return ['language' => trim($value), 'source' => 'query', 'accepted' => $accepted];
+			}
+		}
+
+		if ($accepted !== []) {
+			return ['language' => $accepted[0], 'source' => 'header', 'accepted' => $accepted];
+		}
+
+		return ['language' => self::SOURCE_LANGUAGE, 'source' => 'default', 'accepted' => []];
+	}//end visitorLanguage()
+
+	/**
+	 * Hand the visitor's language to OpenRegister before a public read, so the
+	 * translatable fields come back in that language and fall back to Dutch per
+	 * field where no translation exists.
+	 *
+	 * Without OpenRegister's language service (an OpenRegister that predates
+	 * translations) nothing is set and the read stays in the source language.
+	 *
+	 * @param array<string, mixed> $queryParams The request query parameters.
+	 * @param string $acceptLanguage The Accept-Language header, or ''.
+	 *
+	 * @return string The language asked of OpenRegister, or Dutch when it could not be passed.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function applyVisitorLanguage(array $queryParams, string $acceptLanguage): string {
+		$languageService = $this->orLanguageService();
+		if ($languageService === null) {
+			return self::SOURCE_LANGUAGE;
+		}
+
+		$visitor = $this->visitorLanguage(queryParams: $queryParams, acceptLanguage: $acceptLanguage);
+		$languageService->setAcceptedLanguages($visitor['accepted']);
+		$languageService->setPreferredLanguage($visitor['language']);
+		$languageService->setRequestedLanguageSource($visitor['source']);
+
+		return $visitor['language'];
+	}//end applyVisitorLanguage()
+
+	/**
+	 * The language headers of a public answer, read back from OpenRegister after
+	 * the read: `Content-Language` (the language served), `X-Source-Language`
+	 * (the language the text is written in) and, when a field fell back to the
+	 * source, `X-Content-Language-Fallback: true`.
+	 *
+	 * @return array<string, string> Header name to value.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function languageHeaders(): array {
+		$languageService = $this->orLanguageService();
+		if ($languageService === null) {
+			return ['Content-Language' => self::SOURCE_LANGUAGE, 'X-Source-Language' => self::SOURCE_LANGUAGE];
+		}
+
+		$headers = [
+			'Content-Language' => (string)$languageService->getPreferredLanguage(),
+			'X-Source-Language' => self::SOURCE_LANGUAGE,
+		];
+		if ($languageService->isFallbackUsed() === true) {
+			$headers['X-Content-Language-Fallback'] = 'true';
+		}
+
+		return $headers;
+	}//end languageHeaders()
+
+	/**
+	 * The valid language tags of an Accept-Language header, by descending q-value.
+	 *
+	 * @param string $header The header value.
+	 *
+	 * @return list<string> The tags, lower-cased primary subtag first; `*` and malformed ranges dropped.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function acceptedLanguageTags(string $header): array {
+		$ranges = [];
+		foreach (explode(',', $header) as $position => $part) {
+			$pieces = array_map('trim', explode(';', $part));
+			$tag = $pieces[0];
+			if ($tag === '' || $tag === '*' || preg_match(self::LANGUAGE_TAG, $tag) !== 1) {
+				continue;
+			}
+
+			$quality = 1.0;
+			foreach (array_slice($pieces, 1) as $parameter) {
+				if (str_starts_with($parameter, 'q=') === true) {
+					$quality = (float)substr($parameter, 2);
+				}
+			}
+
+			if ($quality > 0.0) {
+				$ranges[] = ['tag' => $tag, 'quality' => $quality, 'position' => $position];
+			}
+		}
+
+		usort(
+			$ranges,
+			static fn (array $left, array $right): int => [$right['quality'], $left['position']] <=> [$left['quality'], $right['position']]
+		);
+
+		return array_values(array_column($ranges, 'tag'));
+	}//end acceptedLanguageTags()
+
+	/**
+	 * OpenRegister's request-scoped language service, or null when OpenRegister
+	 * is absent or predates translations.
+	 *
+	 * @return object|null The service.
+	 *
+	 * @spec exclude Lazy dependency-injection accessor for the OR LanguageService; framework plumbing.
+	 */
+	private function orLanguageService(): ?object {
+		try {
+			$service = $this->container->get(self::OR_LANGUAGE_SERVICE);
+		} catch (\Throwable) {
+			return null;
+		}
+
+		if (is_object($service) === false || method_exists($service, 'setPreferredLanguage') === false) {
+			return null;
+		}
+
+		return $service;
+	}//end orLanguageService()
 
 	/**
 	 * Whether the current caller is anonymous (no logged-in user).

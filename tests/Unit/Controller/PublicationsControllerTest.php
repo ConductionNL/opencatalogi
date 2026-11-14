@@ -2335,4 +2335,45 @@ class PublicationsControllerTest extends TestCase {
 
 		$this->assertSame(200, $response->getStatus());
 	}
+
+	/**
+	 * The list read hands the visitor's language to OpenRegister before it
+	 * searches, and the answer carries the language headers OpenRegister
+	 * reports (publication-translations REQ-PTR-002).
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function testIndexPassesTheVisitorsLanguageAndAnswersInIt(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->catalogiService->method('getCatalogBySlug')
+			->willReturn(['title' => 'T', 'schemas' => [1], 'registers' => [1]]);
+		$this->request->method('getParams')->willReturn(['_lang' => 'en']);
+		$this->request->server = ['HTTP_ACCEPT_LANGUAGE' => 'de, en;q=0.5'];
+
+		$order = [];
+		$this->queryService->expects($this->once())
+			->method('applyVisitorLanguage')
+			->with(['_lang' => 'en'], 'de, en;q=0.5')
+			->willReturnCallback(function () use (&$order): string {
+				$order[] = 'language';
+				return 'en';
+			});
+		$mockObjService->method('searchObjectsPaginated')
+			->willReturnCallback(function () use (&$order): array {
+				$order[] = 'search';
+				return ['results' => [], 'total' => 0];
+			});
+		$this->queryService->method('languageHeaders')->willReturn(
+			['Content-Language' => 'en', 'X-Source-Language' => 'nl', 'X-Content-Language-Fallback' => 'true']
+		);
+
+		$response = $this->controller->index('test');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['language', 'search'], $order);
+		$headers = $response->getHeaders();
+		$this->assertSame('en', $headers['Content-Language']);
+		$this->assertSame('nl', $headers['X-Source-Language']);
+		$this->assertSame('true', $headers['X-Content-Language-Fallback']);
+	}
 }

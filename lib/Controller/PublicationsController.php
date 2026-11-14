@@ -286,6 +286,39 @@ class PublicationsController extends Controller {
 	}//end addCorsHeaders()
 
 	/**
+	 * Hand the visitor's language (`_lang`, `language` or `Accept-Language`) to
+	 * OpenRegister before a public read (publication-translations REQ-PTR-002).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function negotiateLanguage(): void {
+		$this->queryService->applyVisitorLanguage(
+			queryParams: $this->request->getParams(),
+			acceptLanguage: (string)($this->request->server['HTTP_ACCEPT_LANGUAGE'] ?? '')
+		);
+
+	}//end negotiateLanguage()
+
+	/**
+	 * Add the language headers of the read: Content-Language, X-Source-Language
+	 * and, when a field fell back to Dutch, X-Content-Language-Fallback.
+	 *
+	 * @param JSONResponse $response The response to add headers to.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	private function addLanguageHeaders(JSONResponse $response): void {
+		foreach ($this->queryService->languageHeaders() as $name => $value) {
+			$response->addHeader($name, $value);
+		}
+
+	}//end addLanguageHeaders()
+
+	/**
 	 * Sanitise a public extend list to the '@self.'-prefix allowlist with a max breadth.
 	 *
 	 * Public read endpoints accept extend/_extend, but allowing arbitrary extend targets
@@ -561,6 +594,7 @@ class PublicationsController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(string $catalogSlug): JSONResponse {
 		try {
+			$this->negotiateLanguage();
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
@@ -672,6 +706,7 @@ class PublicationsController extends Controller {
 
 		$response = new JSONResponse($result, 200);
 		$this->addCorsHeaders(response: $response);
+		$this->addLanguageHeaders(response: $response);
 
 		return $this->cacheableForCaller(response: $response);
 	}//end catalogPublications()
@@ -769,6 +804,7 @@ class PublicationsController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function show(string $catalogSlug, string $id): JSONResponse {
 		try {
+			$this->negotiateLanguage();
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
 			if ($catalog === null) {
 				return $this->catalogNotFound(catalogSlug: $catalogSlug);
@@ -1175,6 +1211,7 @@ class PublicationsController extends Controller {
 		}
 
 		$this->addCorsHeaders(response: $response);
+		$this->addLanguageHeaders(response: $response);
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()

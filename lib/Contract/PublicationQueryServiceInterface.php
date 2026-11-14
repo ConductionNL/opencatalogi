@@ -316,4 +316,27 @@ interface PublicationQueryServiceInterface {
 	 *       prunes empty values to slim the payload, no domain behavior.
 	 */
 	public function stripEmptyValues(array $data): array;
+
+	/**
+	 * Hand the visitor's language (`_lang`, `language`, then `Accept-Language`;
+	 * Dutch when none is valid) to OpenRegister before a public read.
+	 *
+	 * @param array<string, mixed> $queryParams The request query parameters.
+	 * @param string $acceptLanguage The Accept-Language header, or ''.
+	 *
+	 * @return string The language asked of OpenRegister.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function applyVisitorLanguage(array $queryParams, string $acceptLanguage): string;
+
+	/**
+	 * The language headers of a public answer: Content-Language,
+	 * X-Source-Language and, when a field fell back, X-Content-Language-Fallback.
+	 *
+	 * @return array<string, string> Header name to value.
+	 *
+	 * @spec openspec/changes/publication-translations/specs/publications/spec.md#requirement-the-public-api-answers-in-the-visitor-s-language-req-ptr-002
+	 */
+	public function languageHeaders(): array;
 }//end interface
