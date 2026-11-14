@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Označi za pregled",
         "The retention defaults could not be loaded": "Zadane rokove čuvanja nije moguće učitati",
         "The retention defaults could not be saved": "Zadane rokove čuvanja nije moguće sačuvati",
-        "Any other category": "Bilo koja druga kategorija"
+        "Any other category": "Bilo koja druga kategorija",
+        "Retention Decision Log": "Zapisnik odluka o čuvanju",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Svaka odluka o čuvanju ove objave, najstarija prva: šta je odlučeno, ko, kada, napomena i pravni osnov."
     },
     "nplurals=2; plural=(n != 1);"
 )

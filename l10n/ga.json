@@ -735,7 +735,9 @@
         "Flag for review": "Marcáil le haghaidh athbhreithnithe",
         "The retention defaults could not be loaded": "Níorbh fhéidir na tréimhsí coinneála réamhshocraithe a lódáil",
         "The retention defaults could not be saved": "Níorbh fhéidir na tréimhsí coinneála réamhshocraithe a shábháil",
-        "Any other category": "Aon chatagóir eile"
+        "Any other category": "Aon chatagóir eile",
+        "Retention Decision Log": "Loga na gcinntí coinneála",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Gach cinneadh coinneála faoin bhfoilseachán seo, an ceann is sine ar dtús: cad a cinneadh, cé, cathain, an nóta agus an bunús dlíthiúil."
     },
     "plurals": {}
 }

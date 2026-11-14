@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Oznacz do przeglądu",
         "The retention defaults could not be loaded": "Nie udało się wczytać domyślnych okresów przechowywania",
         "The retention defaults could not be saved": "Nie udało się zapisać domyślnych okresów przechowywania",
-        "Any other category": "Dowolna inna kategoria"
+        "Any other category": "Dowolna inna kategoria",
+        "Retention Decision Log": "Dziennik decyzji o przechowywaniu",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Każda decyzja o przechowywaniu tej publikacji, od najstarszej: co postanowiono, kto, kiedy, notatka i podstawa prawna."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -735,7 +735,9 @@
         "Flag for review": "Fir d'Iwwerpréiwung markéieren",
         "The retention defaults could not be loaded": "D'Standard-Opbewahrungsfriste konnten net geluede ginn",
         "The retention defaults could not be saved": "D'Standard-Opbewahrungsfriste konnten net gespäichert ginn",
-        "Any other category": "All aner Kategorie"
+        "Any other category": "All aner Kategorie",
+        "Retention Decision Log": "Protokoll vun den Opbewahrungsentscheedungen",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "All Opbewahrungsentscheedung iwwer dës Publikatioun, déi eelst als éischt: wat decidéiert gouf, vu wiem, wéini, d'Notiz an d'Rechtsgrondlag."
     },
     "plurals": {}
 }

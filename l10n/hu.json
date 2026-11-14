@@ -735,7 +735,9 @@
         "Flag for review": "Megjelölés felülvizsgálatra",
         "The retention defaults could not be loaded": "Az alapértelmezett megőrzési időket nem sikerült betölteni",
         "The retention defaults could not be saved": "Az alapértelmezett megőrzési időket nem sikerült menteni",
-        "Any other category": "Bármely más kategória"
+        "Any other category": "Bármely más kategória",
+        "Retention Decision Log": "Megőrzési döntések naplója",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "A kiadványra vonatkozó minden megőrzési döntés, a legrégebbivel kezdve: mit döntöttek, ki, mikor, a megjegyzés és a jogalap."
     },
     "plurals": {}
 }

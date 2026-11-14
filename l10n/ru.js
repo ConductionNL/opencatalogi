@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Отметить для проверки",
         "The retention defaults could not be loaded": "Не удалось загрузить сроки хранения по умолчанию",
         "The retention defaults could not be saved": "Не удалось сохранить сроки хранения по умолчанию",
-        "Any other category": "Любая другая категория"
+        "Any other category": "Любая другая категория",
+        "Retention Decision Log": "Журнал решений о хранении",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Каждое решение о хранении этой публикации, начиная с самого раннего: что решено, кем, когда, примечание и правовое основание."
     },
     "nplurals=2; plural=(n != 1);"
 )

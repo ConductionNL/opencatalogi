@@ -735,7 +735,9 @@
         "Flag for review": "Assinalar para revisão",
         "The retention defaults could not be loaded": "Não foi possível carregar os prazos de conservação predefinidos",
         "The retention defaults could not be saved": "Não foi possível guardar os prazos de conservação predefinidos",
-        "Any other category": "Qualquer outra categoria"
+        "Any other category": "Qualquer outra categoria",
+        "Retention Decision Log": "Registo de decisões de conservação",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Cada decisão de conservação sobre esta publicação, a mais antiga primeiro: o que foi decidido, por quem, quando, a nota e a base legal."
     },
     "plurals": {}
 }

@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "İnceleme için işaretle",
         "The retention defaults could not be loaded": "Varsayılan saklama süreleri yüklenemedi",
         "The retention defaults could not be saved": "Varsayılan saklama süreleri kaydedilemedi",
-        "Any other category": "Diğer herhangi bir kategori"
+        "Any other category": "Diğer herhangi bir kategori",
+        "Retention Decision Log": "Saklama kararları günlüğü",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Bu yayınla ilgili her saklama kararı, en eskisi önce: ne karar verildi, kim tarafından, ne zaman, not ve yasal dayanak."
     },
     "nplurals=2; plural=(n != 1);"
 )

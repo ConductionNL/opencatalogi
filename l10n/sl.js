@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Označi za pregled",
         "The retention defaults could not be loaded": "Privzetih rokov hrambe ni bilo mogoče naložiti",
         "The retention defaults could not be saved": "Privzetih rokov hrambe ni bilo mogoče shraniti",
-        "Any other category": "Katera koli druga kategorija"
+        "Any other category": "Katera koli druga kategorija",
+        "Retention Decision Log": "Dnevnik odločitev o hrambi",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Vsaka odločitev o hrambi te objave, najstarejša najprej: kaj je bilo odločeno, kdo, kdaj, opomba in pravna podlaga."
     },
     "nplurals=2; plural=(n != 1);"
 )

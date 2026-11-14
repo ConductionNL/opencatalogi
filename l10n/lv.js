@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Atzīmēt pārskatīšanai",
         "The retention defaults could not be loaded": "Noklusējuma glabāšanas termiņus neizdevās ielādēt",
         "The retention defaults could not be saved": "Noklusējuma glabāšanas termiņus neizdevās saglabāt",
-        "Any other category": "Jebkura cita kategorija"
+        "Any other category": "Jebkura cita kategorija",
+        "Retention Decision Log": "Glabāšanas lēmumu žurnāls",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Katrs šīs publikācijas glabāšanas lēmums, vecākais vispirms: kas tika nolemts, kas, kad, piezīme un juridiskais pamats."
     },
     "nplurals=2; plural=(n != 1);"
 )

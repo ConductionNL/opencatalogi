@@ -735,7 +735,9 @@
         "Flag for review": "Označit ke kontrole",
         "The retention defaults could not be loaded": "Výchozí skartační lhůty se nepodařilo načíst",
         "The retention defaults could not be saved": "Výchozí skartační lhůty se nepodařilo uložit",
-        "Any other category": "Jakákoli jiná kategorie"
+        "Any other category": "Jakákoli jiná kategorie",
+        "Retention Decision Log": "Záznam rozhodnutí o uchovávání",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Každé rozhodnutí o uchovávání této publikace, od nejstaršího: co bylo rozhodnuto, kým, kdy, poznámka a právní základ."
     },
     "plurals": {}
 }

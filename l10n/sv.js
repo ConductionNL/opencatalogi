@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Flagga för granskning",
         "The retention defaults could not be loaded": "Standardgallringsfristerna kunde inte läsas in",
         "The retention defaults could not be saved": "Standardgallringsfristerna kunde inte sparas",
-        "Any other category": "Vilken annan kategori som helst"
+        "Any other category": "Vilken annan kategori som helst",
+        "Retention Decision Log": "Logg över gallringsbeslut",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Varje gallringsbeslut om denna publikation, äldsta först: vad som beslutades, av vem, när, anteckningen och den rättsliga grunden."
     },
     "nplurals=2; plural=(n != 1);"
 )

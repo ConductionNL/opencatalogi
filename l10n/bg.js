@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Отбележи за преглед",
         "The retention defaults could not be loaded": "Сроковете за съхранение по подразбиране не можаха да бъдат заредени",
         "The retention defaults could not be saved": "Сроковете за съхранение по подразбиране не можаха да бъдат запазени",
-        "Any other category": "Всяка друга категория"
+        "Any other category": "Всяка друга категория",
+        "Retention Decision Log": "Дневник на решенията за съхранение",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Всяко решение за съхранение на тази публикация, най-старото първо: какво е решено, от кого, кога, бележката и правното основание."
     },
     "nplurals=2; plural=(n != 1);"
 )

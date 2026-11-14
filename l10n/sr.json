@@ -735,7 +735,9 @@
         "Flag for review": "Означи за преглед",
         "The retention defaults could not be loaded": "Подразумеване рокове чувања није могуће учитати",
         "The retention defaults could not be saved": "Подразумеване рокове чувања није могуће сачувати",
-        "Any other category": "Било која друга категорија"
+        "Any other category": "Било која друга категорија",
+        "Retention Decision Log": "Записник одлука о чувању",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Свака одлука о чувању ове објаве, најстарија прва: шта је одлучено, ко, када, напомена и правни основ."
     },
     "plurals": {}
 }

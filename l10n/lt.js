@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Pažymėti peržiūrai",
         "The retention defaults could not be loaded": "Nepavyko įkelti numatytųjų saugojimo terminų",
         "The retention defaults could not be saved": "Nepavyko įrašyti numatytųjų saugojimo terminų",
-        "Any other category": "Bet kuri kita kategorija"
+        "Any other category": "Bet kuri kita kategorija",
+        "Retention Decision Log": "Saugojimo sprendimų žurnalas",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Kiekvienas šio leidinio saugojimo sprendimas, seniausias pirmas: kas nuspręsta, kas, kada, pastaba ir teisinis pagrindas."
     },
     "nplurals=2; plural=(n != 1);"
 )

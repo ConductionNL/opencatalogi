@@ -735,7 +735,9 @@
         "Flag for review": "Επισήμανση για έλεγχο",
         "The retention defaults could not be loaded": "Δεν ήταν δυνατή η φόρτωση των προεπιλεγμένων προθεσμιών διατήρησης",
         "The retention defaults could not be saved": "Δεν ήταν δυνατή η αποθήκευση των προεπιλεγμένων προθεσμιών διατήρησης",
-        "Any other category": "Οποιαδήποτε άλλη κατηγορία"
+        "Any other category": "Οποιαδήποτε άλλη κατηγορία",
+        "Retention Decision Log": "Αρχείο αποφάσεων διατήρησης",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Κάθε απόφαση διατήρησης για αυτή τη δημοσίευση, η παλαιότερη πρώτη: τι αποφασίστηκε, από ποιον, πότε, η σημείωση και η νομική βάση."
     },
     "plurals": {}
 }

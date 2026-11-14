@@ -735,7 +735,9 @@
         "Flag for review": "Zur Prüfung markieren",
         "The retention defaults could not be loaded": "Die Standard-Aufbewahrungsfristen konnten nicht geladen werden",
         "The retention defaults could not be saved": "Die Standard-Aufbewahrungsfristen konnten nicht gespeichert werden",
-        "Any other category": "Jede andere Kategorie"
+        "Any other category": "Jede andere Kategorie",
+        "Retention Decision Log": "Protokoll der Aufbewahrungsentscheidungen",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Jede Aufbewahrungsentscheidung zu dieser Veröffentlichung, älteste zuerst: was entschieden wurde, von wem, wann, die Notiz und die Rechtsgrundlage."
     },
     "plurals": {}
 }

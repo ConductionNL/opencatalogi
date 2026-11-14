@@ -5986,9 +5986,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/AppInfo/Application.php:114 registers the RetentionWidget; src/views/widgets/RetentionWidget.vue:137 fetches /api/retention/queue (counts only); :120 opens /apps/opencatalogi/?retention=<status>, but nothing in src/ reads that query Not built: the counts are real but there is no queue to work through; the deep link goes nowhere and src/services/retentionStatus.js is imported by nothing. Task 2.6 of capability-rows-close-gaps.",
+				"evidence": "src/manifest.d/retention-review-queue.json RetentionReview index page (/retention) lists the publications expiring within 30 days or expired, with quick filters, per-item and bulk extend, depublish and archive (RetentionDecisionDialog -> POST /api/retention/publications/{id}/decision) and the report; each row opens RetentionPublication (/retention/:id) with the retention fields and decision log; src/views/widgets/RetentionWidget.vue opens /retention; the unused src/services/retentionStatus.js is removed (validate-manifest, retentionActions.spec.js)",
 				"change": "publication-retention-lifecycle",
 				"requirement": "openspec/specs/publication-retention-lifecycle :: Retention review queue and dashboard widget (RET-007)",
 				"plan": "openspec/changes/capability-rows-close-gaps"

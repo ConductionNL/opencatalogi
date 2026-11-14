@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Merk for gjennomgang",
         "The retention defaults could not be loaded": "Standard oppbevaringsfrister kunne ikke lastes inn",
         "The retention defaults could not be saved": "Standard oppbevaringsfrister kunne ikke lagres",
-        "Any other category": "Enhver annen kategori"
+        "Any other category": "Enhver annen kategori",
+        "Retention Decision Log": "Logg over oppbevaringsvedtak",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Hvert oppbevaringsvedtak om denne publikasjonen, eldste først: hva som ble besluttet, av hvem, når, notatet og rettsgrunnlaget."
     },
     "nplurals=2; plural=(n != 1);"
 )

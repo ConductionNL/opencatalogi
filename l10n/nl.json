@@ -1522,7 +1522,9 @@
         "Flag for review": "Markeren voor beoordeling",
         "The retention defaults could not be loaded": "De standaard bewaartermijnen konden niet worden geladen",
         "The retention defaults could not be saved": "De standaard bewaartermijnen konden niet worden opgeslagen",
-        "Any other category": "Elke andere categorie"
+        "Any other category": "Elke andere categorie",
+        "Retention Decision Log": "Logboek bewaarbesluiten",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Elk bewaarbesluit over deze publicatie, oudste eerst: wat is besloten, door wie, wanneer, de toelichting en de wettelijke grondslag."
     },
     "plurals": {}
 }

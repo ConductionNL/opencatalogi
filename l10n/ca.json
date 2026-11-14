@@ -735,7 +735,9 @@
         "Flag for review": "Marca per a revisió",
         "The retention defaults could not be loaded": "No s'han pogut carregar els terminis de conservació per defecte",
         "The retention defaults could not be saved": "No s'han pogut desar els terminis de conservació per defecte",
-        "Any other category": "Qualsevol altra categoria"
+        "Any other category": "Qualsevol altra categoria",
+        "Retention Decision Log": "Registre de decisions de conservació",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Cada decisió de conservació sobre aquesta publicació, la més antiga primer: què es va decidir, qui, quan, la nota i la base legal."
     },
     "plurals": {}
 }

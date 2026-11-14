@@ -250,15 +250,15 @@
           },
           "retentionDecisionLog": {
             "type": "array",
-            "description": "Every human or automated retention decision on this publication, oldest first: the decision, who took it, when, the note and the legal basis from retentionCategory. Saved before a disposal removes the publication, so OpenRegister's audit trail keeps it (RET-006, RET-007).",
+            "description": "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.",
             "items": {
               "type": "object",
               "properties": {
-                "decision": {"type": "string", "title": "Decision"},
-                "by": {"type": "string", "title": "By"},
-                "at": {"type": "string", "format": "date-time", "title": "At"},
-                "note": {"type": "string", "title": "Note"},
-                "basis": {"type": "string", "title": "Legal basis"}
+                "decision": {"type": "string"},
+                "by": {"type": "string"},
+                "at": {"type": "string", "format": "date-time"},
+                "note": {"type": "string"},
+                "basis": {"type": "string"}
               }
             },
             "facetable": false,

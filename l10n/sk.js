@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Označiť na kontrolu",
         "The retention defaults could not be loaded": "Predvolené lehoty uchovávania sa nepodarilo načítať",
         "The retention defaults could not be saved": "Predvolené lehoty uchovávania sa nepodarilo uložiť",
-        "Any other category": "Akákoľvek iná kategória"
+        "Any other category": "Akákoľvek iná kategória",
+        "Retention Decision Log": "Záznam rozhodnutí o uchovávaní",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Každé rozhodnutie o uchovávaní tejto publikácie, od najstaršieho: čo sa rozhodlo, kto, kedy, poznámka a právny základ."
     },
     "nplurals=2; plural=(n != 1);"
 )

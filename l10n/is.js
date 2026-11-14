@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Merkja til yfirferðar",
         "The retention defaults could not be loaded": "Ekki tókst að hlaða sjálfgefnum varðveislufrestum",
         "The retention defaults could not be saved": "Ekki tókst að vista sjálfgefna varðveislufresti",
-        "Any other category": "Hver annar flokkur"
+        "Any other category": "Hver annar flokkur",
+        "Retention Decision Log": "Skrá yfir varðveisluákvarðanir",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Hver varðveisluákvörðun um þessa útgáfu, elsta fyrst: hvað var ákveðið, af hverjum, hvenær, athugasemdin og lagagrundvöllurinn."
     },
     "nplurals=2; plural=(n != 1);"
 )

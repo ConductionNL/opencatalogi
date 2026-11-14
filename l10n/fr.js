@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Signaler pour examen",
         "The retention defaults could not be loaded": "Les durées de conservation par défaut n'ont pas pu être chargées",
         "The retention defaults could not be saved": "Les durées de conservation par défaut n'ont pas pu être enregistrées",
-        "Any other category": "Toute autre catégorie"
+        "Any other category": "Toute autre catégorie",
+        "Retention Decision Log": "Journal des décisions de conservation",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Chaque décision de conservation sur cette publication, la plus ancienne en premier : ce qui a été décidé, par qui, quand, la note et la base légale."
     },
     "nplurals=2; plural=(n != 1);"
 )

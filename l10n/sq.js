@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Shëno për shqyrtim",
         "The retention defaults could not be loaded": "Afatet e parazgjedhura të ruajtjes nuk mund të ngarkoheshin",
         "The retention defaults could not be saved": "Afatet e parazgjedhura të ruajtjes nuk mund të ruheshin",
-        "Any other category": "Çdo kategori tjetër"
+        "Any other category": "Çdo kategori tjetër",
+        "Retention Decision Log": "Regjistri i vendimeve të ruajtjes",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Çdo vendim ruajtjeje për këtë botim, më i vjetri i pari: çfarë u vendos, nga kush, kur, shënimi dhe baza ligjore."
     },
     "nplurals=2; plural=(n != 1);"
 )

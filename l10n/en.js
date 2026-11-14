@@ -1568,7 +1568,9 @@ OC.L10N.register(
         "Flag for review": "Flag for review",
         "The retention defaults could not be loaded": "The retention defaults could not be loaded",
         "The retention defaults could not be saved": "The retention defaults could not be saved",
-        "Any other category": "Any other category"
+        "Any other category": "Any other category",
+        "Retention Decision Log": "Retention Decision Log",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis."
     },
     "nplurals=2; plural=(n != 1);"
 )

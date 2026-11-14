@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Märgi ülevaatamiseks",
         "The retention defaults could not be loaded": "Vaikimisi säilitustähtaegu ei õnnestunud laadida",
         "The retention defaults could not be saved": "Vaikimisi säilitustähtaegu ei õnnestunud salvestada",
-        "Any other category": "Mis tahes muu kategooria"
+        "Any other category": "Mis tahes muu kategooria",
+        "Retention Decision Log": "Säilitusotsuste logi",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Iga selle väljaande säilitusotsus, vanim esimesena: mida otsustati, kes, millal, märkus ja õiguslik alus."
     },
     "nplurals=2; plural=(n != 1);"
 )

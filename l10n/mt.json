@@ -735,7 +735,9 @@
         "Flag for review": "Immarka għal reviżjoni",
         "The retention defaults could not be loaded": "Il-perjodi ta' żamma awtomatiċi ma setgħux jitgħabbew",
         "The retention defaults could not be saved": "Il-perjodi ta' żamma awtomatiċi ma setgħux jiġu ssejvjati",
-        "Any other category": "Kwalunkwe kategorija oħra"
+        "Any other category": "Kwalunkwe kategorija oħra",
+        "Retention Decision Log": "Reġistru tad-deċiżjonijiet taż-żamma",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Kull deċiżjoni taż-żamma dwar din il-pubblikazzjoni, l-eqdem l-ewwel: x'ġie deċiż, minn min, meta, in-nota u l-bażi legali."
     },
     "plurals": {}
 }

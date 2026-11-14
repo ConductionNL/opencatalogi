@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Пазначыць для праверкі",
         "The retention defaults could not be loaded": "Не ўдалося загрузіць тэрміны захоўвання па змаўчанні",
         "The retention defaults could not be saved": "Не ўдалося захаваць тэрміны захоўвання па змаўчанні",
-        "Any other category": "Любая іншая катэгорыя"
+        "Any other category": "Любая іншая катэгорыя",
+        "Retention Decision Log": "Журнал рашэнняў аб захоўванні",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Кожнае рашэнне аб захоўванні гэтай публікацыі, пачынаючы з самага ранняга: што вырашана, кім, калі, заўвага і прававая падстава."
     },
     "nplurals=2; plural=(n != 1);"
 )

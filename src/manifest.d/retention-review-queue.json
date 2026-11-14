@@ -1,6 +1,6 @@
 {
 	"$schema": "https://raw.githubusercontent.com/ConductionNL/nextcloud-vue/main/src/schemas/app-manifest-v2.schema.json",
-	"_note": "retention-review-queue (RET-007; boards OcBewaartermijnen and OcTermijnVerlengen). The publications whose retention term ends within 30 days or has ended, with the per-item and bulk decisions extend term, depublish now and archive. Each opens RetentionDecisionDialog, which posts to /api/retention/publications/{id}/decision; the decision is the action id. The report downloads /api/retention/report.",
+	"_note": "retention-review-queue (RET-007; boards OcBewaartermijnen and OcTermijnVerlengen). The publications whose retention term ends within 30 days or has ended, with the per-item and bulk decisions extend term, depublish now and archive. Each opens RetentionDecisionDialog, which posts to /api/retention/publications/{id}/decision; the decision is the action id. The report downloads /api/retention/report. A row opens RetentionPublication, the publication's retention fields and decision log.",
 	"menu": [
 		{
 			"id": "RetentionReviewMenu",
@@ -23,7 +23,6 @@
 				"register": "@resolve:publication_register",
 				"schema": "@resolve:publication_schema",
 				"description": "Publications whose retention term ends within 30 days or has ended",
-				"rowClickToView": false,
 				"quickFilters": [
 					{
 						"label": "Expiring soon",
@@ -86,6 +85,7 @@
 				],
 				"sortKey": "retentionExpiresAt",
 				"sortOrder": "asc",
+				"rowRoute": "RetentionPublication",
 				"actions": [
 					{
 						"id": "extend",
@@ -150,6 +150,134 @@
 				"footerNote": "Extending a term asks for a note, which stays in the history.",
 				"emptyText": "No publication needs a retention decision",
 				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
+		},
+		{
+			"id": "RetentionPublication",
+			"route": "/retention/:id",
+			"type": "detail",
+			"title": "Retention review",
+			"permission": "admin",
+			"_note": "capability-rows-close-gaps task 2.6: where a queue row opens. The publication's identity and its retention fields with the decision log, read-only: a decision is taken from the queue's actions, which ask for a note. History is the audit trail in the sidebar.",
+			"config": {
+				"register": "@resolve:publication_register",
+				"schema": "@resolve:publication_schema",
+				"idParam": "@route.id",
+				"notFoundRoute": {
+					"name": "RetentionReview"
+				},
+				"notFoundRouteLabel": "Retention review",
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "retention-publication",
+						"type": "data",
+						"title": "Publication",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"include": [
+								"title",
+								"summary",
+								"publicationDate",
+								"depublicationDate",
+								"status"
+							],
+							"overrides": {
+								"title": {
+									"editable": false
+								},
+								"summary": {
+									"editable": false
+								},
+								"publicationDate": {
+									"editable": false
+								},
+								"depublicationDate": {
+									"editable": false
+								},
+								"status": {
+									"editable": false
+								}
+							}
+						}
+					},
+					{
+						"id": "retention-fields",
+						"type": "data",
+						"title": "Retention",
+						"icon": "History",
+						"content": {
+							"columns": 2,
+							"include": [
+								"retentionCategory",
+								"retentionTermMonths",
+								"retentionAction",
+								"retentionExpiresAt",
+								"retentionNote",
+								"retentionLastEvaluatedAt",
+								"retentionDecisionLog"
+							],
+							"overrides": {
+								"retentionCategory": {
+									"editable": false
+								},
+								"retentionTermMonths": {
+									"editable": false
+								},
+								"retentionAction": {
+									"editable": false
+								},
+								"retentionExpiresAt": {
+									"editable": false
+								},
+								"retentionNote": {
+									"editable": false
+								},
+								"retentionLastEvaluatedAt": {
+									"editable": false
+								},
+								"retentionDecisionLog": {
+									"editable": false
+								}
+							}
+						}
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "retention-publication",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 3
+					},
+					{
+						"id": "2",
+						"widgetId": "retention-fields",
+						"gridX": 0,
+						"gridY": 3,
+						"gridWidth": 12,
+						"gridHeight": 5
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
 			}
 		}
 	]

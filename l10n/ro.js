@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Marchează pentru revizuire",
         "The retention defaults could not be loaded": "Termenele implicite de păstrare nu au putut fi încărcate",
         "The retention defaults could not be saved": "Termenele implicite de păstrare nu au putut fi salvate",
-        "Any other category": "Orice altă categorie"
+        "Any other category": "Orice altă categorie",
+        "Retention Decision Log": "Jurnalul deciziilor de păstrare",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Fiecare decizie de păstrare privind această publicație, cea mai veche prima: ce s-a decis, de către cine, când, nota și temeiul legal."
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

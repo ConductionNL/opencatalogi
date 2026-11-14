@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Segnala per revisione",
         "The retention defaults could not be loaded": "Impossibile caricare i termini di conservazione predefiniti",
         "The retention defaults could not be saved": "Impossibile salvare i termini di conservazione predefiniti",
-        "Any other category": "Qualsiasi altra categoria"
+        "Any other category": "Qualsiasi altra categoria",
+        "Retention Decision Log": "Registro delle decisioni di conservazione",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Ogni decisione di conservazione su questa pubblicazione, dalla più vecchia: cosa è stato deciso, da chi, quando, la nota e la base giuridica."
     },
     "nplurals=2; plural=(n != 1);"
 )

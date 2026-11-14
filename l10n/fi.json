@@ -735,7 +735,9 @@
         "Flag for review": "Merkitse tarkastettavaksi",
         "The retention defaults could not be loaded": "Oletussäilytysaikoja ei voitu ladata",
         "The retention defaults could not be saved": "Oletussäilytysaikoja ei voitu tallentaa",
-        "Any other category": "Mikä tahansa muu luokka"
+        "Any other category": "Mikä tahansa muu luokka",
+        "Retention Decision Log": "Säilytyspäätösten loki",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Jokainen tätä julkaisua koskeva säilytyspäätös, vanhin ensin: mitä päätettiin, kuka, milloin, huomautus ja oikeusperusta."
     },
     "plurals": {}
 }

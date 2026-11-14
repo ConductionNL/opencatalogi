@@ -736,7 +736,9 @@ OC.L10N.register(
         "Flag for review": "Marcar para revisión",
         "The retention defaults could not be loaded": "No se pudieron cargar los plazos de conservación predeterminados",
         "The retention defaults could not be saved": "No se pudieron guardar los plazos de conservación predeterminados",
-        "Any other category": "Cualquier otra categoría"
+        "Any other category": "Cualquier otra categoría",
+        "Retention Decision Log": "Registro de decisiones de conservación",
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Cada decisión de conservación sobre esta publicación, la más antigua primero: qué se decidió, quién, cuándo, la nota y la base legal."
     },
     "nplurals=2; plural=(n != 1);"
 )
