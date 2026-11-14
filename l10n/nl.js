@@ -38,6 +38,7 @@ OC.L10N.register(
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -275,6 +276,7 @@ OC.L10N.register(
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1511,7 +1513,8 @@ OC.L10N.register(
         "Websites that may call the public API": "Websites die de openbare API mogen aanroepen",
         "One website per line, as scheme and host with an optional port and no path, for example https://www.example.nl. A browser on one of these websites may call the search and the other public endpoints. * allows every website.": "Eén website per regel, als schema en host met eventueel een poort en zonder pad, bijvoorbeeld https://www.example.nl. Een browser op een van deze websites mag de zoekfunctie en de andere openbare endpoints aanroepen. * staat elke website toe.",
         "Save websites": "Websites opslaan",
-        "The websites could not be saved. Try again.": "De websites konden niet worden opgeslagen. Probeer het opnieuw."
+        "The websites could not be saved. Try again.": "De websites konden niet worden opgeslagen. Probeer het opnieuw.",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "nplurals=2; plural=(n != 1);"
 )
