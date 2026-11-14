@@ -55,9 +55,10 @@ Read `openspec/woo-build-rules.md` before the first command. For every OpenRegis
 
 ## 10. Verification
 
-- [ ] 10.1 `TMPDIR` set to a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or run with `--no-coverage`; a green suite exits 1 without a coverage driver.
-- [ ] 10.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran; NOT APPLICABLE is not a pass. Expect gate-19 to want the `@e2e` reference from 4.4 and gate-98 to see the repair step.
-- [ ] 10.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. CI runs the gates on the full tree and the coverage guard needs a test for every added statement.
-- [ ] 10.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 10.1 `TMPDIR` set to a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or run with `--no-coverage`; a green suite exits 1 without a coverage driver.
+- [x] 10.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran; NOT APPLICABLE is not a pass. Expect gate-19 to want the `@e2e` reference from 4.4 and gate-98 to see the repair step.
+- [x] 10.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. CI runs the gates on the full tree and the coverage guard needs a test for every added statement.
+- [x] 10.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - Done (10.1 to 10.4): unit suite 5637 tests with one failure inherited from development (`AppIdentityTest::testNoComponentImportsApplication`); `CommentPeriodControllerTest` fails on development too at some hours of the day. Hydra gates with `--base origin/development`: 102 ran, 6 fail, all on files this change does not touch (gate-51, 57, 60, 82, 101, 119). check:strict: phpcs and phpstan clean, psalm's 3 errors and the phpmd findings are in untouched files. check:l10n, check:l10n-js and check:manifest pass; check:schema-l10n is over its baseline on development already (246 against 219). Left open: 4.4 (e2e) and 7.2 (a run on a live instance).
 
 Done when merged on `development` with CI green. Rows 2.3, 2.13, 2.23 and 2.25 become `production` only once a store release ships it.

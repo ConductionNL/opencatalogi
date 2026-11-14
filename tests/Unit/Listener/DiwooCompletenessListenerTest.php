@@ -43,6 +43,8 @@ use Psr\Log\LoggerInterface;
 /**
  * @covers \OCA\OpenCatalogi\Listener\DiwooCompletenessListener
  * @covers \OCA\OpenCatalogi\Service\SitemapDocumentMapper::mandatoryGaps
+ * @uses \OCA\OpenCatalogi\Service\SitemapDocumentFields
+ * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\SitemapDocumentMapper
  * @uses \OCA\OpenCatalogi\Service\TooiVocabularyService
  * @uses \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry

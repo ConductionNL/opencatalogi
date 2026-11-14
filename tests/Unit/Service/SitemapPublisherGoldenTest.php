@@ -40,6 +40,7 @@ use Psr\Log\LoggerInterface;
  *
  * @covers \OCA\OpenCatalogi\Service\SitemapService
  * @covers \OCA\OpenCatalogi\Service\SitemapDocumentMapper
+ * @uses \OCA\OpenCatalogi\Service\SitemapDocumentFields
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses \OCA\OpenCatalogi\Service\TooiVocabularyService
  * @uses \OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry

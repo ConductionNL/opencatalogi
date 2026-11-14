@@ -27,6 +27,7 @@
  *
  * @covers \OCA\OpenCatalogi\Service\SitemapService
  * @uses \OCA\OpenCatalogi\Service\SitemapDocumentMapper
+ * @uses \OCA\OpenCatalogi\Service\SitemapDocumentFields
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\SitemapIndexBuilder
