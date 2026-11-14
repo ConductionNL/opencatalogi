@@ -1,0 +1,90 @@
+{
+  "components": {
+    "registers": {
+      "publication": {
+        "schemas": [
+          "attachmentReading"
+        ],
+        "configuration": {
+          "schemas": {
+            "attachmentReading": {
+              "magicMapping": true,
+              "autoCreateTable": true,
+              "comment": "Whether search can read each published attachment. Written by the reading job, read by editors, never public."
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "attachmentReading": {
+        "slug": "attachmentReading",
+        "title": "Attachment reading",
+        "version": "0.1.0",
+        "summary": "Whether search can read a published attachment",
+        "description": "One object per published attachment, upserted by the attachment reading job: whether OpenRegister found typed text in the file, whether OCR read it, or why neither happened. It holds no text of the file.",
+        "icon": "FileDocument",
+        "type": "object",
+        "required": [
+          "fileId",
+          "publication",
+          "state",
+          "updatedAt"
+        ],
+        "authorization": {
+          "read": [
+            "authenticated"
+          ],
+          "create": [
+            "admin"
+          ],
+          "update": [
+            "admin"
+          ],
+          "delete": [
+            "admin"
+          ]
+        },
+        "properties": {
+          "fileId": {
+            "type": "integer",
+            "title": "File",
+            "description": "The Nextcloud file id of the published attachment."
+          },
+          "publication": {
+            "type": "string",
+            "format": "uuid",
+            "$ref": "publication",
+            "title": "Publication",
+            "description": "The publication the attachment belongs to."
+          },
+          "state": {
+            "type": "string",
+            "title": "Reading state",
+            "description": "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.",
+            "enum": [
+              "typed",
+              "ocr",
+              "waiting",
+              "none",
+              "unavailable",
+              "failed"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Why the attachment has this state, when the state alone does not say it.",
+            "maxLength": 500
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated at",
+            "description": "When the reading job last recorded the state."
+          }
+        }
+      }
+    }
+  }
+}

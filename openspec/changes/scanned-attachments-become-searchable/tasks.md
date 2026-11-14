@@ -4,14 +4,14 @@ Search only finds OCR text once `add-document-content-search` is merged; tasks 1
 
 ## 1. The reading job
 
-- [ ] 1.1 Add `lib/Settings/register.d/attachment-reading.json` with the `attachmentReading` schema of design D2, a `slug`, titles and descriptions on every property, and no public read rule (REQ-SOCR-001). Verify: `tests/Unit/Settings/AttachmentReadingSchemaTest.php`.
-- [ ] 1.2 Add `lib/BackgroundJob/AttachmentReadingJob.php` with the steps of design D1 (REQ-SOCR-001, REQ-SOCR-002). Verify: `tests/Unit/BackgroundJob/AttachmentReadingJobTest.php::testATypedPdfIsRecordedAsTypedWithoutOcr`, `::testAScanWithoutTextIsSentToTheOcrFallback`, `::testWithoutFilinqTheStateIsUnavailable`, `::testAnOcrSkippedAnswerIsRecordedAsFailed`.
-- [ ] 1.3 Add a test that the class `OCA\Filinq\Service\Ocr\OcrExtractionFallback` and its `afterExtraction` method are the names the job looks up, read from a pinned list in the test with the filinq commit it was checked at (REQ-SOCR-002). Verify: `tests/Unit/BackgroundJob/FilinqOcrContractTest.php`.
+- [x] 1.1 Add `lib/Settings/register.d/attachment-reading.json` with the `attachmentReading` schema of design D2, a `slug`, titles and descriptions on every property, and no public read rule (REQ-SOCR-001). Verify: `tests/Unit/Settings/AttachmentReadingSchemaTest.php`.
+- [x] 1.2 Add `lib/BackgroundJob/AttachmentReadingJob.php` with the steps of design D1 (REQ-SOCR-001, REQ-SOCR-002). Verify: `tests/Unit/BackgroundJob/AttachmentReadingJobTest.php::testATypedPdfIsRecordedAsTypedWithoutOcr`, `::testAScanWithoutTextIsSentToTheOcrFallback`, `::testWithoutFilinqTheStateIsUnavailable`, `::testAnOcrSkippedAnswerIsRecordedAsFailed`.
+- [x] 1.3 Add a test that the class `OCA\Filinq\Service\Ocr\OcrExtractionFallback` and its `afterExtraction` method are the names the job looks up, read from a pinned list in the test with the filinq commit it was checked at (REQ-SOCR-002). Verify: `tests/Unit/BackgroundJob/FilinqOcrContractTest.php`.
 - [ ] 1.4 Refuse the original of a redacted document as design D3 (REQ-SOCR-003). Find the marker the Woo redaction path sets with `git grep -n "redact" lib/Service/Woo lib/Service/DocumentRedactor.php`; if there is none, stop and name it in the PR body. Verify: `AttachmentReadingJobTest::testTheOriginalOfARedactedDocumentIsNeverRead`.
 
 ## 2. The caller
 
-- [ ] 2.1 Queue the job from every attachment publish path: `EventService::publishObjectAttachments()` and the file publish in `PublicationStateController`. List the paths with `git grep -n "createShareLink\|publishFile" lib` and name each in the PR body (REQ-SOCR-001). Verify: one test per path asserting the job is queued, so the job has a caller.
+- [x] 2.1 Queue the job from every attachment publish path: `EventService::publishObjectAttachments()` and the file publish in `PublicationStateController`. List the paths with `git grep -n "createShareLink\|publishFile" lib` and name each in the PR body (REQ-SOCR-001). Verify: one test per path asserting the job is queued, so the job has a caller.
 
 ## 3. The file list
 

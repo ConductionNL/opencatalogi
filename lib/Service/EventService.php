@@ -31,6 +31,7 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
+use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingQueue;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -81,12 +82,14 @@ class EventService implements EventServiceInterface {
 	 * @param IAppManager $appManager App manager interface.
 	 * @param SettingsService $settingsService Settings service for configuration access.
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param AttachmentReadingQueue|null $readingQueue Queues the reading of each attachment this shares.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly SettingsService $settingsService,
 		private readonly LoggerInterface $logger,
+		private readonly ?AttachmentReadingQueue $readingQueue=null,
 	) {
 
 	}//end __construct()
@@ -526,7 +529,7 @@ class EventService implements EventServiceInterface {
 				continue;
 			}
 
-			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file]);
+			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file, 'publication' => (string)$objectId]);
 		}
 
 		return $result;
@@ -613,6 +616,7 @@ class EventService implements EventServiceInterface {
 		$error = $this->shareFileError(fileService: $share['fileService'], file: $share['file']);
 		if ($error === null) {
 			$result['published']++;
+			$this->readingQueue?->queue(fileId: (int)($share['file']['fileid'] ?? 0), publicationId: (string)($share['publication'] ?? ''));
 			return $result;
 		}
 
