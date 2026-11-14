@@ -6333,9 +6333,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "PublicationsController.php:205-217 countReach -> UsageCounterService.php:221 increment stores only publication/date/kind/count, crawler UA discarded; called only from PublicationsController.php:831,842,1045; UsageCounterService.php:66 key usageCounter_register is never written by import (SettingsService.php:1185-1191 omits usageCounter), so increment skips (:241) Not built: the import never writes usageCounter_register or usageCounter_schema (SettingsService.php KEYED_SCHEMA_GROUPS has no usageCounter group, and WRITABLE_OBJECT_TYPES leaves it out), so UsageCounterService finds no schema and counts nothing on a default install; FederationController counts no reads. Task 2.1 of capability-rows-close-gaps.",
+				"evidence": "lib/Service/SettingsService.php KEYED_SCHEMA_GROUPS usageCounter group writes usageCounter_register and usageCounter_schema on import and repair (SettingsObjectTypeConfigurationTest); PublicationsController countReach and FederationController countReach -> UsageCounterService increment stores only publication/date/kind/count, crawler UA discarded (FederationUsageCountTest)",
 				"change": "publication-usage-analytics",
 				"requirement": [
 					"openspec/specs/publication-usage-analytics :: Count public publication views and file downloads (ANA-001)",

@@ -32,6 +32,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationUsage;
+use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
@@ -59,6 +61,7 @@ class FederationController extends Controller {
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
+	 * @param UsageCounterServiceInterface|null $usageCounter Counts a served local publication and download (ANA-001).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -67,6 +70,7 @@ class FederationController extends Controller {
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?WithheldFromPublicationInterface $withheld = null,
 		private readonly ?AppliedFilters $appliedFilters = null,
+		private readonly ?UsageCounterServiceInterface $usageCounter = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
@@ -176,6 +180,10 @@ class FederationController extends Controller {
 				&& array_key_exists('sources', $result['data']) === false);
 			if ($this->withheld !== null && $result['status'] === 200 && $isLocal === true) {
 				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
+			}
+
+			if ($result['status'] === 200 && $isLocal === true) {
+				$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_VIEW);
 			}
 
 			return new JSONResponse($result['data'], $result['status']);
@@ -327,6 +335,40 @@ class FederationController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicationDownload(string $id): DataDownloadResponse|JSONResponse {
-		return $this->publicationService->download(id: $id);
+		$response = $this->publicationService->download(id: $id);
+		if ($response instanceof DataDownloadResponse) {
+			$this->countReach(publicationId: $id, kind: UsageCounterServiceInterface::KIND_DOWNLOAD);
+		}
+
+		return $response;
 	}//end publicationDownload()
+
+	/**
+	 * Count one public read of a publication of this instance, never failing the read.
+	 *
+	 * The federation endpoint is a public read path like publications#show, so a
+	 * successful detail answer is a view and a served file a download (ANA-001).
+	 * HEAD requests are not counted, and a counter failure is logged and swallowed.
+	 *
+	 * @param string $publicationId The publication id the caller asked for.
+	 * @param string $kind          UsageCounterServiceInterface::KIND_VIEW or KIND_DOWNLOAD.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-21
+	 */
+	private function countReach(string $publicationId, string $kind): void {
+		if ($this->usageCounter === null || strtoupper((string)$this->request->getMethod()) === 'HEAD') {
+			return;
+		}
+
+		try {
+			$this->usageCounter->increment(
+				usage: new PublicationUsage(publicationId: $publicationId, kind: $kind),
+				userAgent: $this->request->getHeader('User-Agent')
+			);
+		} catch (\Throwable $e) {
+			$this->logger?->warning('[FederationController] usage count failed (swallowed)', ['error' => $e->getMessage()]);
+		}
+	}//end countReach()
 }//end class

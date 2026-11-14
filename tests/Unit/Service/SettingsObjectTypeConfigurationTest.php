@@ -143,6 +143,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 			'publicationRule', 'inspection', 'publicationProcess', 'zienswijzeAsk', 'depublication', 'obligationSource',
 			'wooRequest', 'commentPeriod',
 			'serviceStatus', 'statusSubscription', 'instanceBanner', 'noticeBoard', 'notice', 'recordVote',
+			'usageCounter',
 		];
 		foreach ($slugs as $index => $slug) {
 			$schemas[] = ['slug' => $slug, 'id' => (100 + $index)];
@@ -177,6 +178,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 				'woo_request_schema=117', 'comment_period_schema=118',
 				'service_status_schema=119', 'status_subscription_schema=120', 'instance_banner_schema=121',
 				'notice_board_schema=122', 'notice_schema=123', 'record_vote_schema=124',
+				'usageCounter_register=reg-uuid', 'usageCounter_schema=125',
 			],
 			$this->writes
 		);
@@ -217,7 +219,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 
 		$this->update(['schemas' => [['slug' => 'catalog', 'id' => 3]]]);
 
-		$this->assertCount(29, $looked);
+		$this->assertCount(30, $looked);
 		$this->assertSame('listing@opencatalogi', $looked[0]);
 		$this->assertSame(
 			[
@@ -232,6 +234,7 @@ class SettingsObjectTypeConfigurationTest extends TestCase {
 				'woo_register=77',
 				'service_catalogue_register=77',
 				'notice_schema=42',
+				'usageCounter_register=77',
 				'organization_source=openregister', 'organization_register=9', 'organization_schema=8',
 			],
 			$this->writes
