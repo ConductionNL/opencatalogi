@@ -8,8 +8,10 @@
 
 ## 2. Widgets
 
-- [ ] 2.1 Point `UnpublishedPublicationsWidget.vue` at the endpoint and fix the row link with `catalogSlug` (REQ-PUO-002). Verify: `tests/e2e/unpublished-widgets.spec.ts` on the Nextcloud dashboard opens the publication from a row.
-- [ ] 2.2 Point `UnpublishedAttachmentsWidget.vue` at the endpoint with `kind=documents`, retitle it Unpublished documents (REQ-PUO-002). Verify: same e2e spec.
+- [x] 2.1 Point `UnpublishedPublicationsWidget.vue` at the endpoint and fix the row link with `catalogSlug` (REQ-PUO-002). Verify: `tests/e2e/unpublished-widgets.spec.ts` on the Nextcloud dashboard opens the publication from a row.
+- [x] 2.2 Point `UnpublishedAttachmentsWidget.vue` at the endpoint with `kind=documents`, retitle it Unpublished documents (REQ-PUO-002). Verify: same e2e spec.
+
+  - Built: both widgets read `GET /api/dashboard/unpublished` through `src/views/widgets/unpublishedOverview.js` (`kind=publications` / `kind=documents`); a row opens `/publications/{catalogSlug}/{publicationId}` with the slug the server resolved, and does nothing without one. The documents widget is titled "Unpublished documents" and its rows open their publication. Tests: `unpublishedOverview.spec.js`, `PublicationRowLinks.spec.js` (now loads and covers the new row link), `ListWidgetOptions.spec.js`, `UnpublishedAttachmentsWidgetTest`. The Playwright `tests/e2e/unpublished-widgets.spec.ts` needs a live dashboard and is not written here.
 
 ## 3. Specs, seed data, docs and strings
 
