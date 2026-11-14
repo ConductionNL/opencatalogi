@@ -12,8 +12,8 @@ written, the code does not do it yet. Set each row back to `built` when its task
 is done and its test is green.
 
 - [x] 2.1 `ops-usage`: write `usageCounter_register` and `usageCounter_schema` on import and repair, the way `KEYED_SCHEMA_GROUPS` in `lib/Service/SettingsService.php` writes the other keyed schemas, so counting is on for a default install; count reads of the federation endpoint in `FederationController` too (ANA-001, ANA-002).
-- [ ] 2.2 `ops-usage-series`: show the dashboard usage card with counted data on a default install once 2.1 is done (ANA-009).
-- [ ] 2.3 `ops-most-viewed`: list the most viewed publications across every catalogue the officer can see, by title, with a row link that opens the publication (ANA-005).
+- [x] 2.2 `ops-usage-series`: show the dashboard usage card with counted data on a default install once 2.1 is done (ANA-009).
+- [x] 2.3 `ops-most-viewed`: list the most viewed publications across every catalogue the officer can see, by title, with a row link that opens the publication (ANA-005).
 - [ ] 2.4 `pub-versions`: on the publication detail page in `src/manifest.json`, list the publication's versions from OpenRegister's content versioning and compare two of them field by field (openregister `content-versioning`).
 - [ ] 2.5 `pub-quality`: show a publication's metadata-quality score and the missing fields on its detail page before it is published (PQM-001).
 - [ ] 2.6 `lc-queue`: add the retention review queue page that lists the publications flagged expiring or expired and opens each one, using `src/services/retentionStatus.js` or removing it (RET-007).

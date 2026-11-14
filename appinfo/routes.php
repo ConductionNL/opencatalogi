@@ -224,6 +224,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'stats#quality', 'url' => '/api/catalogs/{slug}/quality', 'verb' => 'GET', 'requirements' => ['slug' => '[A-Za-z0-9-]+']],
 		['name' => 'stats#export', 'url' => '/api/catalogs/{slug}/stats/export', 'verb' => 'GET', 'requirements' => ['slug' => '[A-Za-z0-9-]+']],
 		['name' => 'stats#series', 'url' => '/api/stats/series', 'verb' => 'GET'],
+		['name' => 'stats#top', 'url' => '/api/stats/top', 'verb' => 'GET'],
 		// Health check endpoint — served by the AppHost engine from the
 		// `observability.health` block (ADR-040 / ADR-006). The engine adds
 		// #[PublicPage] (anonymous health — an intentional improvement over the

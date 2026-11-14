@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Service\MostViewedPublications;
 use OCA\OpenCatalogi\Service\UsageCsvRollUp;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -62,6 +63,7 @@ class StatsController extends Controller {
 	 * @param IL10N $l10n Localization service.
 	 * @param IUserSession $userSession Current-user session for the auth guard.
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param MostViewedPublications|null $mostViewed The most viewed readable publications (ANA-005).
 	 */
 	public function __construct(
 		$appName,
@@ -73,6 +75,7 @@ class StatsController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
+		private readonly ?MostViewedPublications $mostViewed = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -197,6 +200,38 @@ class StatsController extends Controller {
 		}
 
 	}//end series()
+
+	/**
+	 * Return the most viewed publications across every catalogue the caller may read.
+	 *
+	 * Authenticated officer surface for the dashboard's most viewed widget: each
+	 * entry has the publication's title, the catalogue it was counted in (for its
+	 * link) and its views and downloads in the window (ANA-005).
+	 *
+	 * @return JSONResponse `{ results: [{ id, title, catalog, views, downloads }] }`.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-23
+	 */
+	#[NoAdminRequired]
+	public function top(): JSONResponse {
+		if ($this->requireAuthenticatedUser() === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Authentication required.')], Http::STATUS_FORBIDDEN);
+		}
+
+		[$from, $to] = $this->readRange();
+		$top = (int)($this->request->getParam('top', 10));
+		if ($top < 1) {
+			$top = 10;
+		}
+
+		try {
+			$results = ($this->mostViewed?->top(from: $from, to: $to, top: $top) ?? []);
+			return new JSONResponse(['results' => $results], 200);
+		} catch (\Throwable $e) {
+			$this->logger->error('[StatsController::top] failed', ['error' => $e->getMessage()]);
+			return new JSONResponse(['error' => $this->l10n->t('Could not compute usage statistics.')], 500);
+		}
+	}//end top()
 
 	/**
 	 * Return the per-catalog metadata-quality roll-up (MQA/FAIR).

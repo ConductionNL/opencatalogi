@@ -6376,9 +6376,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/views/dashboard/Dashboard.vue:185 usage area chart <- fetchUsageChart -> services/usageStats.js:56 GET /api/stats/series (routes.php:207, StatsController.php:185) Not built: the chart reads counters that a default install never writes (see ops-usage). Task 2.2 of capability-rows-close-gaps.",
+				"evidence": "src/views/dashboard/Dashboard.vue usage card \"Publication views\" <- fetchUsageChart -> services/usageStats.js GET /api/stats/series -> StatsController::series -> UsageCounterService::aggregateInstanceSeries over the usage counters, which a default install now writes (ops-usage, SettingsObjectTypeConfigurationTest); requests-not-visitors and counting-start notes on the card",
 				"change": "publication-usage-analytics",
 				"requirement": "openspec/specs/publication-usage-analytics :: Dashboard usage card shows publication views and downloads (ANA-009)",
 				"plan": "openspec/changes/capability-rows-close-gaps"
@@ -6413,9 +6413,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "lib/AppInfo/Application.php:113 registers MostViewedPublicationsWidget; src/views/widgets/MostViewedPublicationsWidget.vue:66-69 catalogSlug hard-coded 'publications'; :95 shows the publication UUID as the title; :138 row link /publications/{id} lands on the catalogSlug route Not built: the list covers one catalogue slug, shows UUIDs instead of titles, its row link is broken, and it reads counters a default install never writes. Task 2.3 of capability-rows-close-gaps.",
+				"evidence": "lib/Dashboard/MostViewedPublicationsWidget.php -> src/views/widgets/MostViewedPublicationsWidget.vue -> services/usageStats.js fetchMostViewed GET /api/stats/top -> StatsController::top -> lib/Service/MostViewedPublications.php ranks the counted views of every catalogue the caller may read, keeps only publications the caller may read under RBAC and names them by title; the row opens /publications/{catalog}/{id} (MostViewedPublicationsTest, StatsTopTest, tests/vitest/mostViewedRows.spec.js)",
 				"change": "publication-usage-analytics",
 				"requirement": "openspec/specs/publication-usage-analytics :: Catalog roll-ups and top-N (ANA-005)",
 				"plan": "openspec/changes/capability-rows-close-gaps"

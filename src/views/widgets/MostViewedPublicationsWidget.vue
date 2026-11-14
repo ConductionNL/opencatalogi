@@ -34,10 +34,9 @@
 
 <script>
 import { CnDataTable } from '@conduction/nextcloud-vue'
-import { generateUrl } from '@nextcloud/router'
 import { NcEmptyContent, NcSelect } from '@nextcloud/vue'
 import ChartLine from 'vue-material-design-icons/ChartLine.vue'
-import { fetchCatalogStats, formatCount } from '../../services/usageStats.js'
+import { fetchMostViewed, mostViewedRows, publicationPageUrl } from '../../services/usageStats.js'
 import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
 
 /**
@@ -45,9 +44,11 @@ import { LIST_COLUMNS, navigateTo } from './widgetTable.js'
  *
  * The NcSelect period picker (7/30/90 days) sits above the list and drives
  * the fetch; the list itself renders the universal CnDataTable list-widget
- * pattern (ADR-049). Clicking an entry deep links to that publication.
+ * pattern (ADR-049). It covers every catalogue the officer can see, lists each
+ * publication by title, and clicking an entry opens that publication.
  *
  * @spec openspec/specs/publication-usage-analytics/spec.md
+ * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-23
  */
 export default {
 	name: 'MostViewedPublicationsWidget',
@@ -62,11 +63,6 @@ export default {
 		title: {
 			type: String,
 			default: '',
-		},
-
-		catalogSlug: {
-			type: String,
-			default: 'publications',
 		},
 	},
 
@@ -91,13 +87,7 @@ export default {
 
 		/** @spec openspec/specs/publication-usage-analytics/spec.md */
 		items() {
-			return this.topViewed.map((entry) => ({
-				id: entry.publication,
-				mainText: entry.publication,
-				subText: this.t('opencatalogi', '{count} views', {
-					count: formatCount(entry.views),
-				}),
-			}))
+			return mostViewedRows(this.topViewed, this.t)
 		},
 	},
 
@@ -117,12 +107,7 @@ export default {
 		async load() {
 			this.loading = true
 			try {
-				const stats = await fetchCatalogStats(this.catalogSlug, {
-					from: this.rangeFrom(),
-				})
-				this.topViewed = Array.isArray(stats.topViewed)
-					? stats.topViewed
-					: []
+				this.topViewed = await fetchMostViewed({ from: this.rangeFrom(), top: 10 })
 			} catch (e) {
 				this.topViewed = []
 			} finally {
@@ -135,7 +120,7 @@ export default {
 		 * @spec openspec/specs/publication-usage-analytics/spec.md
 		 */
 		onRowClick(row) {
-			navigateTo(generateUrl(`/apps/opencatalogi/publications/${row.id}`))
+			navigateTo(publicationPageUrl(row))
 		},
 	},
 }
