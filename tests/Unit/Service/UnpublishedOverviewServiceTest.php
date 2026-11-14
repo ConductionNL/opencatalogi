@@ -22,11 +22,12 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Service\InstanceSettings;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\UnpublishedOverviewService;
 use PHPUnit\Framework\TestCase;
+use Psr\Container\ContainerInterface;
 
 /**
  * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
@@ -151,9 +152,11 @@ class UnpublishedOverviewServiceTest extends TestCase {
 			}
 		};
 
-		$lookup = $this->createMock(OpenRegisterLookup::class);
+		$lookup = $this->createMock(OpenRegisterLookupInterface::class);
 		$lookup->method('installedObjectService')->willReturn($objectService);
-		$lookup->method('installedService')->willReturn($fileMapper);
+
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->with('OCA\OpenRegister\Files\Db\FileMapper')->willReturn($fileMapper);
 
 		$instance = $this->createMock(InstanceSettings::class);
 		$instance->method('stringValue')->willReturnMap(
@@ -172,7 +175,7 @@ class UnpublishedOverviewServiceTest extends TestCase {
 			}
 		);
 
-		return new UnpublishedOverviewService(openRegister: $lookup, instance: $instance, publications: $rule);
+		return new UnpublishedOverviewService(openRegister: $lookup, instance: $instance, publications: $rule, container: $container);
 	}//end service()
 
 	/**

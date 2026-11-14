@@ -22,7 +22,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use Psr\Container\ContainerInterface;
 
 /**
  * Lists unpublished publications and documents across the catalogues a user can read.
@@ -57,16 +59,23 @@ class UnpublishedOverviewService {
 	public const MAX_LIMIT = 50;
 
 	/**
+	 * The container id of OpenRegister's file mapper.
+	 */
+	private const FILE_MAPPER = 'OCA\OpenRegister\Files\Db\FileMapper';
+
+	/**
 	 * Constructor.
 	 *
-	 * @param OpenRegisterLookup $openRegister The guarded OpenRegister services.
+	 * @param OpenRegisterLookupInterface $openRegister The guarded OpenRegister services.
 	 * @param InstanceSettings $instance The app configuration (catalogue register and schema).
 	 * @param PublicationQueryServiceInterface $publications The rule for "public".
+	 * @param ContainerInterface $container Resolves OpenRegister's file mapper.
 	 */
 	public function __construct(
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 		private readonly InstanceSettings $instance,
 		private readonly PublicationQueryServiceInterface $publications,
+		private readonly ContainerInterface $container,
 	) {
 	}//end __construct()
 
@@ -125,29 +134,58 @@ class UnpublishedOverviewService {
 	public function documents(?int $limit): array {
 		$read = $this->readRecentPublications();
 
+		$byUuid = $this->byUuid(publications: $read['publications']);
+		if ($byUuid === []) {
+			return $this->page(items: [], limit: $limit, scope: $read['scope']);
+		}
+
+		$items = $this->unpublishedFileRows(byUuid: $byUuid, catalogs: $read['catalogs']);
+		usort($items, static fn (array $left, array $right): int => strcmp((string)$right['updated'], (string)$left['updated']));
+
+		return $this->page(items: $items, limit: $limit, scope: $read['scope']);
+	}//end documents()
+
+	/**
+	 * The publications keyed by uuid; a publication without one is left out.
+	 *
+	 * @param list<array<string, mixed>> $publications The publications.
+	 *
+	 * @return array<string, array<string, mixed>> The publications by uuid.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function byUuid(array $publications): array {
 		$byUuid = [];
-		foreach ($read['publications'] as $publication) {
+		foreach ($publications as $publication) {
 			$uuid = (string)($publication['@self']['uuid'] ?? ($publication['id'] ?? ''));
 			if ($uuid !== '') {
 				$byUuid[$uuid] = $publication;
 			}
 		}
 
-		if ($byUuid === []) {
-			return $this->page(items: [], limit: $limit, scope: $read['scope']);
-		}
+		return $byUuid;
+	}//end byUuid()
 
+	/**
+	 * The rows of the files of these publications whose published time is empty or in the future.
+	 *
+	 * @param array<string, array<string, mixed>> $byUuid The publications by uuid.
+	 * @param list<array<string, mixed>> $catalogs The catalogues read.
+	 *
+	 * @return list<array<string, mixed>> The rows, unsorted.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function unpublishedFileRows(array $byUuid, array $catalogs): array {
 		$items = [];
 		foreach ($this->filesOf(uuids: array_keys($byUuid)) as $found) {
 			if ($this->isLive(moment: ($found['file']['published'] ?? null)) === false) {
-				$items[] = $this->documentRow(file: $found['file'], publication: $byUuid[$found['uuid']], catalogs: $read['catalogs']);
+				$items[] = $this->documentRow(file: $found['file'], publication: $byUuid[$found['uuid']], catalogs: $catalogs);
 			}
 		}
 
-		usort($items, static fn (array $left, array $right): int => strcmp((string)$right['updated'], (string)$left['updated']));
-
-		return $this->page(items: $items, limit: $limit, scope: $read['scope']);
-	}//end documents()
+		return $items;
+	}//end unpublishedFileRows()
 
 	/**
 	 * The files of the given publications, each with the uuid of its publication.
@@ -159,24 +197,52 @@ class UnpublishedOverviewService {
 	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
 	 */
 	private function filesOf(array $uuids): array {
-		$fileMapper = $this->openRegister->installedService(
-			'OCA\OpenRegister\Files\Db\FileMapper',
-			'OpenRegister FileMapper is not available.'
-		);
+		// Only reached after readRecentPublications() resolved the ObjectService,
+		// which refuses when OpenRegister is not installed.
+		$fileMapper = $this->container->get(self::FILE_MAPPER);
 
+		$owners = $this->ownersOf(fileIdsByUuid: $fileMapper->getFileIdsForObjects($uuids));
+		if ($owners === []) {
+			return [];
+		}
+
+		return $this->ownedFiles(files: $fileMapper->getFilesByIds(array_keys($owners)), owners: $owners, uuids: $uuids);
+	}//end filesOf()
+
+	/**
+	 * The uuid of the publication owning each file id.
+	 *
+	 * @param iterable<string, iterable<int|string>> $fileIdsByUuid The file ids per publication uuid.
+	 *
+	 * @return array<string, string> The owner uuid by file id.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function ownersOf(iterable $fileIdsByUuid): array {
 		$owners = [];
-		foreach ($fileMapper->getFileIdsForObjects($uuids) as $uuid => $fileIds) {
+		foreach ($fileIdsByUuid as $uuid => $fileIds) {
 			foreach ($fileIds as $fileId) {
 				$owners[(string)$fileId] = (string)$uuid;
 			}
 		}
 
-		if ($owners === []) {
-			return [];
-		}
+		return $owners;
+	}//end ownersOf()
 
+	/**
+	 * The files owned by one of the given publications, each with its owner's uuid.
+	 *
+	 * @param iterable<int|string, array<string, mixed>> $files The files by id.
+	 * @param array<string, string> $owners The owner uuid by file id.
+	 * @param list<string> $uuids The publication uuids asked for.
+	 *
+	 * @return list<array{uuid: string, file: array<string, mixed>}> The files.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function ownedFiles(iterable $files, array $owners, array $uuids): array {
 		$found = [];
-		foreach ($fileMapper->getFilesByIds(array_keys($owners)) as $fileId => $file) {
+		foreach ($files as $fileId => $file) {
 			$uuid = ($owners[(string)$fileId] ?? null);
 			if ($uuid !== null && in_array($uuid, $uuids, true) === true) {
 				$found[] = ['uuid' => $uuid, 'file' => $file];
@@ -184,7 +250,7 @@ class UnpublishedOverviewService {
 		}
 
 		return $found;
-	}//end filesOf()
+	}//end ownedFiles()
 
 	/**
 	 * Read the catalogues and the most recently updated publications in their scope.
@@ -196,48 +262,83 @@ class UnpublishedOverviewService {
 	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
 	 */
 	private function readRecentPublications(): array {
-		$empty = ['catalogs' => [], 'publications' => [], 'scope' => null];
-
 		$register = $this->instance->stringValue('catalog_register', '');
 		$schema = $this->instance->stringValue('catalog_schema', '');
 		if ($register === '' || $schema === '') {
-			return $empty;
+			return ['catalogs' => [], 'publications' => [], 'scope' => null];
 		}
 
 		$objectService = $this->openRegister->installedObjectService();
-		$found = $objectService->searchObjectsPaginated(
-			query: ['@self' => ['register' => $register, 'schema' => $schema], '_limit' => self::WINDOW],
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
-		$catalogs = array_map(fn (mixed $row): array => $this->toArray(item: $row), ($found['results'] ?? []));
+		$catalogs = $this->search(
+			objectService: $objectService,
+			query: ['@self' => ['register' => $register, 'schema' => $schema], '_limit' => self::WINDOW]
+		)['rows'];
 
-		$registers = [];
-		$schemas = [];
-		foreach ($catalogs as $catalog) {
-			$registers = array_merge($registers, array_map('strval', (array)($catalog['registers'] ?? [])));
-			$schemas = array_merge($schemas, array_map('strval', (array)($catalog['schemas'] ?? [])));
-		}
-
-		$registers = array_values(array_unique($registers));
-		$schemas = array_values(array_unique($schemas));
+		$registers = $this->collect(catalogs: $catalogs, key: 'registers');
+		$schemas = $this->collect(catalogs: $catalogs, key: 'schemas');
 		if ($registers === [] || $schemas === []) {
 			return ['catalogs' => $catalogs, 'publications' => [], 'scope' => null];
 		}
 
 		$query = CallerScope::writeScope(query: ['_limit' => self::WINDOW, '_page' => 1], registers: $registers, schemas: $schemas);
 		$query['_order']['updated'] = 'desc';
-		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$result = $this->search(objectService: $objectService, query: $query);
 
-		$publications = array_map(fn (mixed $row): array => $this->toArray(item: $row), ($result['results'] ?? []));
-		$scope = null;
-		if ((int)($result['total'] ?? count($publications)) > self::WINDOW) {
-			$scope = self::SCOPE_RECENT;
+		return ['catalogs' => $catalogs, 'publications' => $result['rows'], 'scope' => $this->windowScope(total: $result['total'])];
+	}//end readRecentPublications()
+
+	/**
+	 * One RBAC-on, tenant-free search of live objects, its rows as arrays.
+	 *
+	 * @param mixed $objectService The OpenRegister ObjectService.
+	 * @param array<string, mixed> $query The search query.
+	 *
+	 * @return array{rows: list<array<string, mixed>>, total: int} The rows and the total the search reports.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function search(mixed $objectService, array $query): array {
+		$found = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$rows = array_map(fn (mixed $row): array => $this->toArray(item: $row), ($found['results'] ?? []));
+
+		return ['rows' => $rows, 'total' => (int)($found['total'] ?? count($rows))];
+	}//end search()
+
+	/**
+	 * The distinct values of one list property across the catalogues, as strings.
+	 *
+	 * @param list<array<string, mixed>> $catalogs The catalogues.
+	 * @param string $key The property, `registers` or `schemas`.
+	 *
+	 * @return list<string> The distinct values.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function collect(array $catalogs, string $key): array {
+		$values = [];
+		foreach ($catalogs as $catalog) {
+			$values = array_merge($values, array_map('strval', (array)($catalog[$key] ?? [])));
 		}
 
-		return ['catalogs' => $catalogs, 'publications' => $publications, 'scope' => $scope];
-	}//end readRecentPublications()
+		return array_values(array_unique($values));
+	}//end collect()
+
+	/**
+	 * The scope marker for a read of this many matches: set when the window cut it.
+	 *
+	 * @param int $total The number of matches the search reports.
+	 *
+	 * @return string|null The marker, or null when the window held every match.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function windowScope(int $total): ?string {
+		if ($total > self::WINDOW) {
+			return self::SCOPE_RECENT;
+		}
+
+		return null;
+	}//end windowScope()
 
 	/**
 	 * Whether a moment is set and not in the future.
@@ -272,20 +373,49 @@ class UnpublishedOverviewService {
 		$schema = (string)($publication['@self']['schema'] ?? '');
 
 		foreach ($catalogs as $catalog) {
-			$registers = array_map('strval', (array)($catalog['registers'] ?? []));
-			$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
-			if (in_array($register, $registers, true) === true && in_array($schema, $schemas, true) === true) {
-				$slug = ($catalog['slug'] ?? null);
-				if (is_string($slug) === false || $slug === '') {
-					return null;
-				}
-
-				return $slug;
+			if ($this->holds(catalog: $catalog, register: $register, schema: $schema) === true) {
+				return $this->slugOf(catalog: $catalog);
 			}
 		}
 
 		return null;
 	}//end catalogSlugOf()
+
+	/**
+	 * Whether a catalogue covers a register and schema.
+	 *
+	 * @param array<string, mixed> $catalog The catalogue.
+	 * @param string $register The register id.
+	 * @param string $schema The schema id.
+	 *
+	 * @return bool True when both are in its scope.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function holds(array $catalog, string $register, string $schema): bool {
+		$registers = array_map('strval', (array)($catalog['registers'] ?? []));
+		$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
+
+		return in_array($register, $registers, true) === true && in_array($schema, $schemas, true) === true;
+	}//end holds()
+
+	/**
+	 * A catalogue's slug, or null when it has none.
+	 *
+	 * @param array<string, mixed> $catalog The catalogue.
+	 *
+	 * @return string|null The slug.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function slugOf(array $catalog): ?string {
+		$slug = ($catalog['slug'] ?? null);
+		if (is_string($slug) === false || $slug === '') {
+			return null;
+		}
+
+		return $slug;
+	}//end slugOf()
 
 	/**
 	 * One row of the publications list.

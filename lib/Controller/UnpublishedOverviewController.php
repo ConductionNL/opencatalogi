@@ -86,7 +86,7 @@ class UnpublishedOverviewController extends Controller {
 			return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		if ($kind !== 'publications' && $kind !== 'documents') {
+		if (in_array($kind, ['publications', 'documents'], true) === false) {
 			return new JSONResponse(
 				data: ['error' => $this->l10n->t('Unknown list: choose publications or documents.')],
 				statusCode: Http::STATUS_BAD_REQUEST
@@ -94,11 +94,7 @@ class UnpublishedOverviewController extends Controller {
 		}
 
 		try {
-			if ($kind === 'documents') {
-				return new JSONResponse($this->overview->documents(limit: $limit));
-			}
-
-			return new JSONResponse($this->overview->publications(limit: $limit));
+			return new JSONResponse($this->overviewOf(kind: $kind, limit: $limit));
 		} catch (\Throwable $e) {
 			$this->logger->error('[UnpublishedOverviewController] The overview could not be read', ['exception' => $e]);
 			return new JSONResponse(
@@ -107,4 +103,22 @@ class UnpublishedOverviewController extends Controller {
 			);
 		}
 	}//end unpublished()
+
+	/**
+	 * The list a known kind names.
+	 *
+	 * @param string $kind `publications` or `documents`.
+	 * @param int|null $limit The list length.
+	 *
+	 * @return array{items: list<array<string, mixed>>, total: int, scope: string|null} The list.
+	 *
+	 * @spec openspec/changes/publications-unpublished-overview/specs/dashboard/spec.md#requirement-unpublished-content-dashboard-widgets-dsh-011
+	 */
+	private function overviewOf(string $kind, ?int $limit): array {
+		if ($kind === 'documents') {
+			return $this->overview->documents(limit: $limit);
+		}
+
+		return $this->overview->publications(limit: $limit);
+	}//end overviewOf()
 }//end class
