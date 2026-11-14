@@ -14,6 +14,13 @@ import CaseTypeResyncDialog from './caseType/CaseTypeResyncDialog.vue'
 import RetentionDecisionDialog from './retention/RetentionDecisionDialog.vue'
 import { navigationStore } from '../store/store.js'
 
+// @nextcloud/auth ships ESM that Jest does not transform; the stores only
+// read the request token and current user from it, so stub that boundary.
+jest.mock('@nextcloud/auth', () => ({
+	getRequestToken: () => 'tok',
+	getCurrentUser: () => ({ uid: 'admin', displayName: 'Admin' }),
+}))
+
 jest.mock('@nextcloud/axios', () => ({ get: jest.fn(), post: jest.fn() }))
 jest.mock('@nextcloud/initial-state', () => ({
 	loadState: (app, key, fallback) => ({ service_catalogue_register: 'sc-reg', case_type_definition_schema: 'ctd', publication_register: 'pub-reg' })[key] ?? fallback,

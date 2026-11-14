@@ -17,6 +17,13 @@ import DeleteMultipleCategoriesDialog from './category/DeleteMultipleCategoriesD
 import DeleteMultipleThemesDialog from './theme/DeleteMultipleThemesDialog.vue'
 import { navigationStore, objectStore } from '../store/store.js'
 
+// @nextcloud/auth ships ESM that Jest does not transform; the stores only
+// read the request token and current user from it, so stub that boundary.
+jest.mock('@nextcloud/auth', () => ({
+	getRequestToken: () => 'tok',
+	getCurrentUser: () => ({ uid: 'admin', displayName: 'Admin' }),
+}))
+
 jest.mock('@nextcloud/l10n', () => ({
 	translate: (app, text, vars = {}) => text.replace(/{(\w+)}/g, (_, key) => vars[key]),
 }))
