@@ -110,6 +110,12 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
+		// A plain language summary an officer writes, or drafts with a text assistant and accepts
+		// (publication-plain-language-and-translation, REQ-PPL-002).
+		['name' => 'plainSummary#assistant', 'url' => '/api/plain-summary/assistant', 'verb' => 'GET'],
+		['name' => 'plainSummary#draft', 'url' => '/api/publications/{id}/plain-summary-draft', 'verb' => 'POST'],
+		['name' => 'plainSummary#poll', 'url' => '/api/publications/{id}/plain-summary-draft/{taskId}', 'verb' => 'GET', 'requirements' => ['taskId' => '\d+']],
+		['name' => 'plainSummary#accept', 'url' => '/api/publications/{id}/plain-summary', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],

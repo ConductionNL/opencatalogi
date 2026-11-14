@@ -181,6 +181,7 @@ class DcatMappingService {
 			],
 			$this->mapProperties(source: $source, mapping: $profile->mapping),
 			$this->hvdProperties(publication: $source->publication, profile: $profile),
+			$this->plainSummaryProperties(publication: $source->publication),
 			$this->mandatoryProperties(source: $source),
 			$this->completionProperties(source: $source, profile: $profile)
 		);
@@ -345,6 +346,32 @@ class DcatMappingService {
 
 		return $properties;
 	}//end mandatoryProperties()
+
+	/**
+	 * The plain language summary as `dct:abstract`, tagged with the publication's language.
+	 *
+	 * The language is the publication's own `language` when it carries one, and
+	 * `nl` otherwise.
+	 *
+	 * @param array<string, mixed> $publication The publication object.
+	 *
+	 * @return array<string, mixed> The abstract, or nothing without a plain summary.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 */
+	private function plainSummaryProperties(array $publication): array {
+		$text = ($publication['plainSummary'] ?? null);
+		if (is_string($text) === false || trim($text) === '') {
+			return [];
+		}
+
+		$language = ($publication['language'] ?? null);
+		if (is_string($language) === false || preg_match('/^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8})*$/', $language) !== 1) {
+			$language = 'nl';
+		}
+
+		return ['dct:abstract' => ['@value' => trim($text), '@language' => strtolower($language)]];
+	}//end plainSummaryProperties()
 
 	/**
 	 * Publisher, contact point and distributions, each only when it resolves.
