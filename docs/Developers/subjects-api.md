@@ -61,6 +61,38 @@ These routes are public. They answer with the same CORS headers as the other the
 - The list is read as an anonymous caller, so it equals what the public sees.
 - `_limit` is at most 100.
 
+## Subjects in the public search
+
+`GET /index.php/apps/opencatalogi/api/search?_search=sportaccommodatie`
+
+The search also matches subjects on the term. Every result carries `resultType`:
+
+- `publication`: a publication, in the shape the search has always answered.
+- `document`: a document hit, with its linked publication.
+- `subject`: a subject, in this shape:
+
+```json
+{
+  "resultType": "subject",
+  "id": "uuid",
+  "slug": "sporthal",
+  "title": "Sporthal",
+  "summary": "string",
+  "image": "string",
+  "publicationCount": 2,
+  "url": "/index.php/apps/opencatalogi/api/themes/uuid"
+}
+```
+
+- Subjects come after the publications and documents of the page, at most 20 of them. `total` includes them.
+- `facets.resultType` counts the results of this answer per type: `{"publication": 1, "document": 0, "subject": 1}`.
+- `resultType=publication` answers exactly what the search answered before subjects existed, with `resultType` on each row. No subject is read.
+- `resultType=subject` answers the subjects alone.
+- Without a `_search` term no subject is listed.
+- The subjects are read as an anonymous caller, like the rest of the search.
+
+A portal that reads these keys tests against them in its own suite.
+
 ## Saving a featured subject
 
 A subject saved with `featured: true` and no `title` is refused.
