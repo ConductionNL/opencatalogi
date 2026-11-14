@@ -29,6 +29,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\DepublicationController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
@@ -108,14 +109,20 @@ class DepublicationControllerTest extends TestCase {
 			new \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException('No integriq source is set for the channel.')
 		);
 
+		$service = new DepublicationService($indexService, $this->createMock(LoggerInterface::class));
+
 		$this->controller = new DepublicationController(
 			'opencatalogi',
 			$this->request,
 			$l10n,
 			$userSession,
-			new DepublicationService($indexService, $this->createMock(LoggerInterface::class)),
-			new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects),
-			new PublicationStateService()
+			$service,
+			new PublicationTransitions(
+				new PublicationStateService(),
+				$service,
+				$this->container,
+				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
+			)
 		);
 
 	}//end setUp()

@@ -38,6 +38,7 @@ use OCA\OpenCatalogi\Controller\DepublicationController;
 use OCA\OpenCatalogi\Controller\InspectionController;
 use OCA\OpenCatalogi\Controller\InspectionRecords;
 use OCA\OpenCatalogi\Controller\NoticeBoardController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
@@ -82,6 +83,7 @@ use ReflectionMethod;
  * @uses \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses \OCA\OpenCatalogi\Controller\ForwardsRegisterAccess
  * @uses \OCA\OpenCatalogi\Controller\ReadsOpenRegisterResults
+ * @uses \OCA\OpenCatalogi\Controller\PublicationTransitions
  * @uses \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
  * @uses \OCA\OpenCatalogi\Controller\RegisterAccess
  * @uses \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
@@ -280,14 +282,15 @@ class DelegatedAdminSavesTest extends TestCase {
 			->getMock();
 		$index->method('withdraw')->willThrowException(new IndexUnreachableException('No source.'));
 
+		$service = new DepublicationService($index, $this->createMock(LoggerInterface::class));
+
 		return new DepublicationController(
 			'opencatalogi',
 			$request,
 			$this->l10n(),
 			$this->session(),
-			new DepublicationService($index, $this->createMock(LoggerInterface::class)),
-			$this->registers(),
-			new PublicationStateService()
+			$service,
+			new PublicationTransitions(new PublicationStateService(), $service, $this->createMock(ContainerInterface::class), $this->registers())
 		);
 	}//end depublication()
 

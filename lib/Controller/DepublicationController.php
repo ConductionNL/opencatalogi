@@ -75,8 +75,8 @@ class DepublicationController extends Controller {
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
 	 * @param DepublicationServiceInterface $depublicationService Taking a publication back.
-	 * @param RegisterAccess $registers Resolves the configured register pairs and reaches the ObjectService, refusing rather than defaulting.
-	 * @param PublicationStateServiceInterface $states The publication's state and its withdrawn record.
+	 * @param PublicationTransitions $registers The configured register pairs and the ObjectService, refusing rather
+	 *                                          than defaulting, and the publication's state and its withdrawn record.
 	 */
 	public function __construct(
 		$appName,
@@ -84,8 +84,7 @@ class DepublicationController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly DepublicationServiceInterface $depublicationService,
-		private readonly RegisterAccess $registers,
-		private readonly PublicationStateServiceInterface $states,
+		private readonly PublicationTransitions $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -195,9 +194,9 @@ class DepublicationController extends Controller {
 		}
 
 		$record = $found['publication'];
-		$state = $this->states->stateOf(publication: $record);
+		$state = $this->registers->stateOf(publication: $record);
 		if ($state !== PublicationStateServiceInterface::STATE_WITHDRAWN) {
-			$record = $this->states->withdrawnRecord(publication: $record);
+			$record = $this->registers->withdrawnRecord(publication: $record);
 			$saved = $this->saveWithdrawnPublication(found: $found, record: $record);
 			if ($saved instanceof JSONResponse) {
 				return $saved;
