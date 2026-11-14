@@ -59,4 +59,27 @@ class FileMapper {
 		return [];
 	}//end getFilesForObject()
 
+	/**
+	 * Stub for findByFileIds: the metadata rows of the files, keyed by file id.
+	 *
+	 * @param array<int> $fileIds The file ids.
+	 *
+	 * @return array<int, mixed>
+	 */
+	public function findByFileIds(array $fileIds): array {
+		return [];
+	}//end findByFileIds()
+
+	/**
+	 * Stub for setPublicationWindowForFile.
+	 *
+	 * @param integer           $fileId The file id.
+	 * @param PublicationWindow $window The window.
+	 *
+	 * @return mixed
+	 */
+	public function setPublicationWindowForFile(int $fileId, PublicationWindow $window): mixed {
+		return null;
+	}//end setPublicationWindowForFile()
+
 }//end class

@@ -270,11 +270,23 @@ class PublicationStateController extends Controller {
 			return $this->reasonMissing();
 		}
 
+		// The share removal resolves the file on THIS publication, so it runs
+		// first: only a file it found has its window ended.
 		$notWithdrawn = $this->registers->unpublishFile(publication: $publication, fileId: (int)$fileId);
 		if ($notWithdrawn !== null) {
 			return new JSONResponse(
 				data: ['error' => 'file-not-withdrawn', 'message' => $notWithdrawn],
 				statusCode: Http::STATUS_NOT_FOUND
+			);
+		}
+
+		// The withdrawal is kept on the file's own window, so no automatic
+		// path shares it again (REQ-ATT-103, REQ-ATT-104).
+		$windowNotEnded = $this->registers->endFileWindow(fileId: (int)$fileId);
+		if ($windowNotEnded !== null) {
+			return new JSONResponse(
+				data: ['error' => 'file-window-not-ended', 'message' => $windowNotEnded],
+				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
 			);
 		}
 

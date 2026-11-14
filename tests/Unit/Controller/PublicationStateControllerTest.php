@@ -59,6 +59,9 @@ class PublicationStateControllerTest extends TestCase {
 
 	private object $fileService;
 
+	/** A FileMapper double recording the publication windows set. */
+	private object $fileMapper;
+
 	/** @var array<string, mixed> The publication find() answers. */
 	private array $publication = [];
 
@@ -99,6 +102,29 @@ class PublicationStateControllerTest extends TestCase {
 			}
 		};
 
+		$this->fileMapper = new class {
+			/** @var array<int, array{0: int, 1: object}> */
+			public array $windows = [];
+
+			/** @var array<int, object> */
+			public array $records = [];
+
+			public ?\Throwable $failure = null;
+
+			public function findByFileIds(array $fileIds): array {
+				return array_intersect_key($this->records, array_flip($fileIds));
+			}
+
+			public function setPublicationWindowForFile(int $fileId, object $window): object {
+				if ($this->failure !== null) {
+					throw $this->failure;
+				}
+
+				$this->windows[] = [$fileId, $window];
+				return new \stdClass();
+			}
+		};
+
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			function (string $id) use ($config) {
@@ -108,6 +134,10 @@ class PublicationStateControllerTest extends TestCase {
 
 				if ($id === 'OCA\OpenRegister\Service\FileService') {
 					return $this->fileService;
+				}
+
+				if ($id === 'OCA\OpenRegister\Files\Db\FileMapper') {
+					return $this->fileMapper;
 				}
 
 				throw new \RuntimeException('not available: ' . $id);
@@ -535,6 +565,78 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertSame('4711', $this->saves[0]['object']['file']);
 		$this->assertSame('Contains a home address', $this->saves[0]['object']['reason']);
 		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
+	}
+
+	/** REQ-ATT-103: the withdrawal ends the file's own window now and keeps when it became public. */
+	public function testWithdrawFileSetsTheFilesDepublicationAndReason(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$start = new \DateTime('2026-09-01T09:00:00+00:00');
+		$this->fileMapper->records[4711] = new class($start) {
+			public function __construct(private \DateTime $start) {
+			}
+
+			public function getPublished(): \DateTime {
+				return $this->start;
+			}
+		};
+
+		$before = new \DateTime();
+		$response = $this->controller->withdrawFile('p1', '4711');
+		$after = new \DateTime();
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus(), json_encode($response->getData()));
+		$this->assertCount(1, $this->fileMapper->windows);
+		[$fileId, $window] = $this->fileMapper->windows[0];
+		$this->assertSame(4711, $fileId);
+		$this->assertSame($start, $window->published);
+		$this->assertGreaterThanOrEqual($before, $window->depublished);
+		$this->assertLessThanOrEqual($after, $window->depublished);
+		$this->assertSame('Bevat een woonadres', $this->saves[0]['object']['reason']);
+		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
+	}
+
+	/** REQ-ATT-103: a file that never had a window gets one that only ends. */
+	public function testWithdrawingAFileWithoutAWindowEndsANewOne(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertNull($this->fileMapper->windows[0][1]->published);
+		$this->assertNotNull($this->fileMapper->windows[0][1]->depublished);
+	}
+
+	/** REQ-ATT-103: a file the share removal cannot find on this publication keeps its window. */
+	public function testAFileNotOnThePublicationKeepsItsWindow(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->fileService = new class {
+			public function unpublishFile(object $object, string|int $filePath): object {
+				throw new \RuntimeException('File not found on this object');
+			}
+		};
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->withdrawFile('p1', '9999')->getStatus());
+		$this->assertSame([], $this->fileMapper->windows);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-ATT-103: when the window cannot be ended the withdrawal is reported as failed and not recorded. */
+	public function testAWindowThatCannotEndIsReported(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Bevat een woonadres']);
+		$this->fileMapper->failure = new \RuntimeException('database is down');
+
+		$response = $this->controller->withdrawFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$this->assertSame(['error' => 'file-window-not-ended', 'message' => 'database is down'], $response->getData());
+		$this->assertSame([4711], $this->fileService->unpublished);
+		$this->assertSame([], $this->saves);
 	}
 
 	/** REQ-PPW-004: without the update right the file keeps its share. */

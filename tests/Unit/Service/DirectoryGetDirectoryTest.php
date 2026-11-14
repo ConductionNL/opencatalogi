@@ -206,6 +206,44 @@ class DirectoryGetDirectoryTest extends TestCase {
 		);
 	}
 
+	/**
+	 * Each public catalogue of this installation is served as a directory entry
+	 * with its title, summary, organisation and the address of its publications.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/federation/spec.md#requirement-the-installation-publishes-a-directory-of-its-own-catalogues-req-cvs-005
+	 */
+	public function testTheDirectoryCarriesEveryOwnCatalogueWithItsPublicationsAddress(): void {
+		$this->objects->answers['catalog'] = [
+			['id' => 'c-woo', 'title' => 'Woo-verzoeken', 'summary' => 'Besluiten op Woo-verzoeken', 'organization' => 'org-1', 'slug' => 'woo'],
+			['id' => 'c-raad', 'title' => 'Raadsstukken', 'description' => 'Stukken van de gemeenteraad', 'organization' => 'org-1', 'slug' => 'raad'],
+		];
+
+		$result = $this->service->getDirectory();
+
+		$this->assertSame(2, $result['total']);
+		$entries = array_map(
+			static fn (array $entry): array => [
+				$entry['id'],
+				$entry['title'],
+				$entry['summary'],
+				$entry['organization'],
+				$entry['publications'],
+				$entry['directory'],
+			],
+			$result['results']
+		);
+		$this->assertSame(
+			[
+				['c-woo', 'Woo-verzoeken', 'Besluiten op Woo-verzoeken', 'org-1', 'https://me.example.org/opencatalogi.federation.publications', self::OWN],
+				['c-raad', 'Raadsstukken', 'Stukken van de gemeenteraad', 'org-1', 'https://me.example.org/opencatalogi.federation.publications', self::OWN],
+			],
+			$entries
+		);
+		$this->assertSame(['schema' => 'catalog', 'register' => 'cr'], end($this->objects->queries)['@self']);
+	}
+
 	public function testAFailingQueryLeavesOutOnlyItsOwnPart(): void {
 		$this->objects->answers['ls'] = new RuntimeException('down');
 		$this->objects->answers['catalog'] = [['id' => 'c1', 'published' => 'p']];

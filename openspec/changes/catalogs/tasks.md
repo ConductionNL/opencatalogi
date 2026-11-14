@@ -12,9 +12,9 @@
 - **Status**: done
 - **Files**: `lib/Settings/publication_register.json`
 - **Acceptance criteria**:
-  - [ ] The `catalog` schema is declared under `components.schemas` in `publication_register.json`.
+  - [x] The `catalog` schema is declared under `components.schemas` in `publication_register.json`.
   - [ ] Schema fields match the data model table in `specs/catalogs/spec.md` exactly: `title` (required), `summary`, `description`, `image`, `listed`, `organization`, `registers`, `schemas`, `filters`, `status`, `view`, `slug` (pattern `^[a-z0-9-]+$`), `hasWooSitemap`.
-  - [ ] The `catalog` schema is associated with the `publication` register in the register definition.
+  - [x] The `catalog` schema is associated with the `publication` register in the register definition.
   - [ ] Schema is idempotent on re-import (`force: false` MUST NOT create duplicates, matched by slug).
 
 ## Task 2: IAppConfig configuration keys
@@ -23,7 +23,7 @@
 - **Status**: done
 - **Files**: `lib/Service/CatalogiService.php`, `lib/Settings/SettingsController.php` (or equivalent)
 - **Acceptance criteria**:
-  - [ ] `catalog_schema` and `catalog_register` are read from `IAppConfig` at runtime, not hardcoded.
+  - [x] `catalog_schema` and `catalog_register` are read from `IAppConfig` at runtime, not hardcoded.
   - [ ] Missing keys result in a `null` return from `getCatalogBySlug()` without throwing an unhandled exception.
   - [ ] Keys are listed in the admin settings UI so operators can configure them after install.
 
@@ -60,7 +60,7 @@
 - **Status**: done
 - **Files**: `appinfo/routes.php`, `lib/Controller/CatalogiController.php`
 - **Acceptance criteria**:
-  - [ ] `OPTIONS /api/catalogi` and `OPTIONS /api/catalogi/{id}` are registered in `appinfo/routes.php` BEFORE any wildcard `{slug}` routes.
+  - [x] `OPTIONS /api/catalogi` and `OPTIONS /api/catalogi/{id}` are registered in `appinfo/routes.php` BEFORE any wildcard `{slug}` routes.
   - [ ] Both OPTIONS handlers return `200 OK` with `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, `Access-Control-Allow-Headers`.
   - [ ] Verified with a real browser preflight (or curl `--request OPTIONS`) against a running Nextcloud instance.
 
@@ -70,13 +70,13 @@
 - **Status**: done
 - **Files**: `lib/Service/CatalogiService.php`
 - **Acceptance criteria**:
-  - [ ] `CatalogiService` creates a distributed cache via `ICacheFactory::createDistributed('opencatalogi_catalogs')` in its constructor.
+  - [x] `CatalogiService` creates a distributed cache via `ICacheFactory::createDistributed('opencatalogi_catalogs')` in its constructor.
   - [ ] `getCatalogBySlug(string $slug)`: checks `cache->get("catalog_slug_{$slug}")` first; on miss, queries `ObjectService::searchObjects()`, stores with TTL `3600`, returns array or `null`.
-  - [ ] Null (slug not found) is NOT stored in cache.
-  - [ ] `invalidateCatalogCache(string $slug)`: calls `cache->remove("catalog_slug_{$slug}")`.
-  - [ ] `invalidateCatalogCacheById(int|string $id)`: resolves slug by ID via `ObjectService`, then calls `invalidateCatalogCache($slug)`.
-  - [ ] `warmupCatalogCache(string $slug)`: calls `invalidateCatalogCache($slug)` then re-fetches (forces a fresh entry).
-  - [ ] `warmupCatalogCacheById(int|string $id)`: resolves slug by ID, then calls `warmupCatalogCache($slug)`.
+  - [x] Null (slug not found) is NOT stored in cache.
+  - [x] `invalidateCatalogCache(string $slug)`: calls `cache->remove("catalog_slug_{$slug}")`.
+  - [x] `invalidateCatalogCacheById(int|string $id)`: resolves slug by ID via `ObjectService`, then calls `invalidateCatalogCache($slug)`.
+  - [x] `warmupCatalogCache(string $slug)`: calls `invalidateCatalogCache($slug)` then re-fetches (forces a fresh entry).
+  - [x] `warmupCatalogCacheById(int|string $id)`: resolves slug by ID, then calls `warmupCatalogCache($slug)`.
 
 ## Task 7: Automatic cache lifecycle via CatalogCacheEventListener (CAT-011)
 
@@ -85,11 +85,11 @@
 - **Files**: `lib/Listener/CatalogCacheEventListener.php`, `lib/AppInfo/Application.php`
 - **Acceptance criteria**:
   - [ ] `CatalogCacheEventListener` is registered in `Application.php` for `ObjectCreatedEvent`, `ObjectUpdatedEvent`, and `ObjectDeletedEvent`.
-  - [ ] On each event, the listener checks whether `object->getSchema() === catalog_schema && object->getRegister() === catalog_register` from `IAppConfig`. Non-catalog events are silently ignored (no log entry, no exception).
-  - [ ] `ObjectCreatedEvent` → `warmupCatalogCache($slug)`.
-  - [ ] `ObjectUpdatedEvent` → `warmupCatalogCache($slug)`.
-  - [ ] `ObjectDeletedEvent` → `invalidateCatalogCache($slug)`.
-  - [ ] The listener MUST NOT call `saveObject()` or any persistence method on the originating object (see CAT-012 in the `fix-catalog-update-infinite-loop` change).
+  - [x] On each event, the listener checks whether `object->getSchema() === catalog_schema && object->getRegister() === catalog_register` from `IAppConfig`. Non-catalog events are silently ignored (no log entry, no exception).
+  - [x] `ObjectCreatedEvent` → `warmupCatalogCache($slug)`.
+  - [x] `ObjectUpdatedEvent` → `warmupCatalogCache($slug)`.
+  - [x] `ObjectDeletedEvent` → `invalidateCatalogCache($slug)`.
+  - [x] The listener MUST NOT call `saveObject()` or any persistence method on the originating object (see CAT-012 in the `fix-catalog-update-infinite-loop` change).
   - [ ] `@spec openspec/changes/catalogs/tasks.md#task-7` PHPDoc tag on the listener class.
 
 ## Task 8: Multi-schema and multi-register publication scoping (CAT-010)
@@ -132,9 +132,9 @@
 
 - **Status**: todo
 - **Acceptance criteria**:
-  - [ ] `grep -rL 'SPDX-License-Identifier' lib/Controller/CatalogiController.php lib/Service/CatalogiService.php lib/Listener/CatalogCacheEventListener.php` returns no output.
+  - [x] `grep -rL 'SPDX-License-Identifier' lib/Controller/CatalogiController.php lib/Service/CatalogiService.php lib/Listener/CatalogCacheEventListener.php` returns no output.
   - [ ] `grep -rn 'findObject\|saveObject\|findObjects' lib/Service/CatalogiService.php` — every call has 3 positional args.
-  - [ ] `grep -rn 'getMessage()' lib/Controller/CatalogiController.php` returns no output (static error strings only).
+  - [x] `grep -rn 'getMessage()' lib/Controller/CatalogiController.php` returns no output (static error strings only).
   - [ ] `npm run check:l10n` reports zero MISSING and zero UNWRAPPED.
   - [ ] `npm run find:unwrapped` — no prose-shaped literals remain outside `t()` in the catalog Vue components.
   - [ ] Catalog list and detail endpoints tested with a real browser `GET` and `OPTIONS` (curl or browser DevTools) against a running dev instance.
