@@ -379,7 +379,7 @@
 			"depublication": {
 				"slug": "depublication",
 				"title": "Depublication",
-				"version": "0.2.1",
+				"version": "0.2.2",
 				"authorization": {
 					"read": ["admin"],
 					"create": ["admin"],
@@ -455,6 +455,12 @@
 						"type": "string",
 						"title": "Document",
 						"description": "The one document that was taken down, when the depublication is about a single document rather than the whole publication."
+					},
+					"republished": {
+						"type": "boolean",
+						"title": "Put back",
+						"description": "This record puts the document back on purpose rather than taking it down; the reason says why.",
+						"default": false
 					}
 				}
 			},
