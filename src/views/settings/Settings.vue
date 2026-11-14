@@ -251,6 +251,8 @@
 
 				<WooIndexConnection />
 
+				<DonlHarvestStatus />
+
 				<h3 class="woo-registration-heading">
 					{{ t('opencatalogi', 'National delivery channels') }}
 				</h3>
@@ -541,6 +543,7 @@ import InformationOutline from 'vue-material-design-icons/InformationOutline.vue
 import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
+import DonlHarvestStatus from './DonlHarvestStatus.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
@@ -648,6 +651,7 @@ export default defineComponent({
 		MinusCircle,
 		InformationOutline,
 		WooIndexConnection,
+		DonlHarvestStatus,
 		PubliccodeHarvest,
 	},
 

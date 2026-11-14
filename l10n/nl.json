@@ -1508,7 +1508,26 @@
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
         "Has DCAT feed": "Heeft DCAT-feed",
-        "Publish this catalog's datasets as a DCAT-AP-NL feed that data.overheid.nl can harvest": "Publiceer de datasets van deze catalogus als DCAT-AP-NL-feed die data.overheid.nl kan oogsten"
+        "Publish this catalog's datasets as a DCAT-AP-NL feed that data.overheid.nl can harvest": "Publiceer de datasets van deze catalogus als DCAT-AP-NL-feed die data.overheid.nl kan oogsten",
+        "A regular expression. A feed request whose user agent matches it counts as a harvest.": "Een reguliere expressie. Een verzoek om de feed met een user agent die hierop past, telt als een harvest.",
+        "Harvested.": "Geharvest.",
+        "Harvested. Last harvested on {date}.": "Geharvest. Laatst geharvest op {date}.",
+        "Mark as requested": "Markeren als aangevraagd",
+        "Not harvested yet: no harvester visit and no datasets on data.overheid.nl.": "Nog niet geharvest: geen bezoek van de harvester en geen datasets op data.overheid.nl.",
+        "Registered on {date}.": "Geregistreerd op {date}.",
+        "Registration not requested yet.": "Registratie nog niet aangevraagd.",
+        "Requested on {date}.": "Aangevraagd op {date}.",
+        "Source catalogue on data.overheid.nl": "Broncatalogus op data.overheid.nl",
+        "The CKAN API root, ending in /api/3.": "De basis van de CKAN API, eindigend op /api/3.",
+        "The data.overheid.nl registration could not be loaded.": "De registratie bij data.overheid.nl kon niet worden geladen.",
+        "The last check of data.overheid.nl failed: {error}": "De laatste controle bij data.overheid.nl is mislukt: {error}",
+        "The source_catalog value data.overheid.nl gives the datasets of this feed.": "De source_catalog-waarde die data.overheid.nl aan de datasets van deze feed geeft.",
+        "User agent of the data.overheid.nl harvester": "User agent van de harvester van data.overheid.nl",
+        "data.overheid.nl API address": "API-adres van data.overheid.nl",
+        "data.overheid.nl registration": "Registratie bij data.overheid.nl",
+        "{donl} of {feed} datasets on data.overheid.nl, checked on {date}.": "{donl} van {feed} datasets op data.overheid.nl, gecontroleerd op {date}.",
+        "The data.overheid.nl registration could not be saved: %s": "De registratie bij data.overheid.nl kon niet worden opgeslagen: %s",
+        "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on.": "Of deze catalogus zijn datasets publiceert als DCAT-AP-NL-feed (GET /api/catalogs/{slug}/dcat) en in het instantiedocument staat (GET /api/dcat). Gelezen door DcatService en door DirectoryService om dcatEndpoint te adverteren. Zonder deze declaratie verwijdert de hardValidation van het catalogusschema de sleutel en kan de feed niet worden aangezet."
     },
     "plurals": {}
 }
