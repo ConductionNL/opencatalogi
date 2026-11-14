@@ -357,7 +357,29 @@
           }
         },
         "configuration": {
-          "autoPublish": false
+          "autoPublish": false,
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search the publications (WOO/DIWOO besluiten and other published records) of this instance by title, organization, status, publication date or retention category. Returns only what the caller may read: published records for the public, more for signed-in staff. To search inside one catalog, use opencatalogi.searchCatalogPublications.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": [
+                  "title",
+                  "organization",
+                  "status",
+                  "publicationDate",
+                  "retentionCategory"
+                ]
+              },
+              "get": {
+                "description": "Get one publication by id, with its metadata. For its attached Nextcloud files, use opencatalogi.listPublicationFiles.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
         },
         "hardValidation": false,
         "searchable": true,
@@ -605,7 +627,29 @@
         },
         "configuration": {
           "autoPublish": false,
-          "x-openregister-shareable": true
+          "x-openregister-shareable": true,
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search the catalogs of this instance (the top-level collections a catalog website is built from) by title, organization, status, listing or slug.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": [
+                  "title",
+                  "organization",
+                  "status",
+                  "listed",
+                  "slug"
+                ]
+              },
+              "get": {
+                "description": "Get one catalog by id, with the registers and schemas it spans.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
         },
         "hardValidation": true,
         "searchable": true,
@@ -939,7 +983,26 @@
           }
         },
         "configuration": {
-          "autoPublish": false
+          "autoPublish": false,
+          "x-openregister-mcp": {
+            "enabled": true,
+            "tools": {
+              "search": {
+                "description": "Search the themes publications are tagged with, by title or sort order.",
+                "scope": "read",
+                "readOnlyHint": true,
+                "filters": [
+                  "title",
+                  "sort"
+                ]
+              },
+              "get": {
+                "description": "Get one theme by id, to turn a theme reference on a publication into its title and description.",
+                "scope": "read",
+                "readOnlyHint": true
+              }
+            }
+          }
         },
         "hardValidation": true,
         "searchable": true,

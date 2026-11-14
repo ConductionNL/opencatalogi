@@ -45,6 +45,7 @@ use Exception;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
+use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -1227,6 +1228,148 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end attachments()
+
+	/**
+	 * The most publications one catalog search returns to an agent.
+	 *
+	 * @var int
+	 */
+	private const MCP_SEARCH_LIMIT_MAX = 50;
+
+	/**
+	 * Search publications inside one catalog, for an agent (opencatalogi-mcp-adoption).
+	 *
+	 * A catalog spans a set of registers, schemas and filters, so this searches
+	 * across all of them through the same path as the catalog's own search
+	 * endpoint: `searchPublications()` scopes to the catalog and OpenRegister
+	 * filters every row with `_rbac: true`. The catalog is required, so this
+	 * tool never duplicates the derived `opencatalogi.publication.search`.
+	 *
+	 * @param string $catalog The catalog id, uuid or slug to search inside.
+	 * @param string $query   The search term (keywords or free text).
+	 * @param int    $limit   Maximum number of publications to return (1 to 50).
+	 *
+	 * @return array<string, mixed> `results` and `total`, or an `error` with `code` and `message`.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
+	 */
+	#[McpTool(
+		name: 'searchCatalogPublications',
+		description: 'Search publications inside one catalog. A catalog spans a set of registers and schemas, so this searches'
+			.' across all of them; use it when the question names a catalog. The catalog is required: for a plain'
+			.' publication search, use opencatalogi.publication.search.',
+		readOnlyHint: true,
+		destructiveHint: false,
+		idempotentHint: true,
+		scope: 'read',
+		subject: 'publication',
+		action: 'search',
+		reach: 'user',
+	)]
+	public function searchCatalogPublications(string $catalog, string $query, int $limit=20): array {
+		if (trim($catalog) === '') {
+			return $this->mcpError(
+				code: 'invalid_arguments',
+				message: 'Required argument "catalog" is missing or empty. For a search without a catalog, use opencatalogi.publication.search.'
+			);
+		}
+
+		if (trim($query) === '') {
+			return $this->mcpError(code: 'invalid_arguments', message: 'Required argument "query" is missing or empty.');
+		}
+
+		if ($limit < 1 || $limit > self::MCP_SEARCH_LIMIT_MAX) {
+			return $this->mcpError(
+				code: 'invalid_arguments',
+				message: 'Invalid limit '.$limit.'. Must be between 1 and '.self::MCP_SEARCH_LIMIT_MAX.'.'
+			);
+		}
+
+		try {
+			$found = $this->searchPublications(
+				catalogId: trim($catalog),
+				ids: null,
+				customParams: ['_search' => trim($query), '_limit' => $limit, '_page' => 1]
+			);
+		} catch (InvalidArgumentException $exception) {
+			return $this->mcpError(code: 'invalid_arguments', message: $exception->getMessage());
+		}
+
+		$results = array_slice(array_values($found['results'] ?? []), 0, $limit);
+
+		return [
+			'results' => $results,
+			'total'   => (int) ($found['total'] ?? count($results)),
+		];
+
+	}//end searchCatalogPublications()
+
+	/**
+	 * List the Nextcloud files attached to a publication, for an agent
+	 * (opencatalogi-mcp-adoption).
+	 *
+	 * Delegates to `attachments()`, so the catalog-scope gate and the RBAC
+	 * read check on the publication both run before any file is listed.
+	 *
+	 * @param string $id The publication id or uuid.
+	 *
+	 * @return array<string, mixed> The formatted file list, or an `error` with `code` and `message`.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-the-publication-file-attachment-list-survives-as-a-curated-service-tool-req-005
+	 */
+	#[McpTool(
+		name: 'listPublicationFiles',
+		description: 'List the Nextcloud files attached to one publication: the uploaded PDFs and other files shared with it,'
+			.' which are not register objects. For the publication\'s own metadata, use opencatalogi.publication.get.',
+		readOnlyHint: true,
+		destructiveHint: false,
+		idempotentHint: true,
+		scope: 'read',
+		subject: 'publication',
+		action: 'list-files',
+		reach: 'user',
+	)]
+	public function listPublicationFiles(string $id): array {
+		if (trim($id) === '') {
+			return $this->mcpError(code: 'invalid_arguments', message: 'Required argument "id" is missing or empty.');
+		}
+
+		$response = $this->attachments(id: trim($id));
+		$data     = $response->getData();
+		if ($response->getStatus() >= 400) {
+			$code = 'error';
+			if ($response->getStatus() === 404) {
+				$code = 'not_found';
+			}
+
+			$message = 'The files of this publication could not be listed.';
+			if (is_array($data) === true && is_string($data['error'] ?? null) === true) {
+				$message = $data['error'];
+			}
+
+			return $this->mcpError(code: $code, message: $message);
+		}
+
+		if (is_array($data) === false) {
+			return ['results' => []];
+		}
+
+		return $data;
+
+	}//end listPublicationFiles()
+
+	/**
+	 * The structured error answer of an agent tool.
+	 *
+	 * @param string $code    A machine-readable error code.
+	 * @param string $message A human-readable explanation.
+	 *
+	 * @return array{error: array{code: string, message: string}}
+	 */
+	private function mcpError(string $code, string $message): array {
+		return ['error' => ['code' => $code, 'message' => $message]];
+
+	}//end mcpError()
 
 	/**
 	 * Download all files of an object as a ZIP archive
