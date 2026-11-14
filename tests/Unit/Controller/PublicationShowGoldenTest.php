@@ -299,7 +299,12 @@ class PublicationShowGoldenTest extends TestCase {
 			}
 		);
 
+		// REQ-PDP-003: the comment period is looked up for every JSON answer; none is held here.
+		$commentPeriods = $this->createMock(\OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod::class);
+		$commentPeriods->method('addTo')->willReturnArgument(0);
+
 		$services = [
+			\OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod::class => $commentPeriods,
 			IUserSession::class => $session,
 			IAppConfig::class => $config,
 			WithheldFromPublicationInterface::class => $withheld,

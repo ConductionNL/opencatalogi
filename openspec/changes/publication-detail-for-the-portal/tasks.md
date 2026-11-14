@@ -4,7 +4,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 1. Order
 
-- [ ] 1.1 Add `attachmentOrder` to `#publication` in a fragment with `slug` and version, and apply it in `PublicationService::attachments()` and `FederationController::publicationAttachments()` (REQ-PDP-001). Verify: `tests/Unit/Service/AttachmentOrderTest.php::testTheListFollowsTheStoredOrder` (fails today), `::testAFileNotInTheOrderComesLast`, `::testADetachedIdIsSkipped`; controller tests through both routes.
+- [x] 1.1 (`lib/Settings/register.d/woo-publication-detail-for-the-portal.json`, publication 0.0.8; `AttachmentOrder` sorts the files before OpenRegister pages them and numbers `position` after; `PublicationServiceTest::testAttachmentsFollowTheStoredOrderOnBothRoutes` reads `attachments()` and `getFederatedAttachments()`, which `FederationController::publicationAttachments()` calls) Add `attachmentOrder` to `#publication` in a fragment with `slug` and version, and apply it in `PublicationService::attachments()` and `FederationController::publicationAttachments()` (REQ-PDP-001). Verify: `tests/Unit/Service/AttachmentOrderTest.php::testTheListFollowsTheStoredOrder` (fails today), `::testAFileNotInTheOrderComesLast`, `::testADetachedIdIsSkipped`; controller tests through both routes.
 - [ ] 1.2 Add Move up and Move down to the attachments on the publication page, keyboard operable with live-region announcements (REQ-PDP-001). Verify: `tests/e2e/publication-detail-for-the-portal.spec.ts` "an officer orders the documents by keyboard and the portal gets that order", carrying `@e2e` REQ-PDP-001, which then reads the public attachments endpoint.
 
 ## 2. Documents
@@ -13,7 +13,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 3. Comment period
 
-- [ ] 3.1 Add `commentPeriod` and `commentPeriodError` to the public and federation publication responses (REQ-PDP-003). Verify: `tests/Unit/Controller/FederationControllerTest.php::testThePublicationCarriesItsOpenCommentPeriod` (fails today) and `::testUnreadableDatesGiveAnErrorNotAState`.
+- [x] 3.1 (`PublicationCommentPeriod::addTo()` from `FederationController::publication()` and `PublicationsController` show; `tests/Unit/Service/Publication/PublicationCommentPeriodTest.php` for the id, other-publication and read-failure cases) Add `commentPeriod` and `commentPeriodError` to the public and federation publication responses (REQ-PDP-003). Verify: `tests/Unit/Controller/FederationControllerTest.php::testThePublicationCarriesItsOpenCommentPeriod` (fails today) and `::testUnreadableDatesGiveAnErrorNotAState`.
 
 ## 4. Withheld
 

@@ -143,6 +143,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -277,6 +280,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -398,6 +404,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -604,6 +613,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -813,6 +825,9 @@
                     "woo",
                     "uuid-of-p2"
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -1309,6 +1324,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -1422,6 +1440,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -1521,6 +1542,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -1862,6 +1886,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -1959,6 +1986,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
             },
             {
                 "get": "OCP\\IUserSession"
@@ -2059,6 +2089,9 @@
                 ]
             },
             {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
+            },
+            {
                 "get": "OCP\\IUserSession"
             },
             {
@@ -2151,6 +2184,9 @@
                     true,
                     false
                 ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Service\\Publication\\PublicationCommentPeriod"
             },
             {
                 "get": "OCP\\IUserSession"
