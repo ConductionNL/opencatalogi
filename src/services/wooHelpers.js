@@ -150,3 +150,75 @@ export function formatSize(bytes) {
 	}
 	return `${unit === 0 ? value : value.toFixed(1)} ${units[unit]}`
 }
+
+/**
+ * The findings of a redacted file as rows for the redaction page, in the
+ * order they appear, with the counts of kept and rejected findings.
+ *
+ * Kept is a finding that is redacted, rejected one a person chose to skip. A
+ * finding whose decision the caller may not see (OpenRegister masks it to
+ * `null`) is listed but counted as neither.
+ *
+ * @param {Array<object>} relations The entity relations OpenRegister answers for the file.
+ * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-partly-public-document-has-a-redaction-page-req-wda-003
+ * @return {{rows: Array<object>, kept: number, rejected: number}} The rows and counts.
+ */
+export function redactionRows(relations) {
+	const sorted = [...(relations || [])].sort(
+		(a, b) =>
+			(Number(a?.page) || 0) - (Number(b?.page) || 0)
+			|| (Number(a?.positionStart) || 0) - (Number(b?.positionStart) || 0),
+	)
+	const rows = sorted.map((relation, index) => ({
+		number: index + 1,
+		id: relation?.id ?? null,
+		entityId: relation?.entityId ?? null,
+		what: String(relation?.anonymizedValue || relation?.role || ''),
+		page: relation?.page ?? null,
+		grounds: Array.isArray(relation?.bases) ? relation.bases : [],
+		state:
+			relation?.skipAnonymization === true
+				? 'rejected'
+				: relation?.skipAnonymization === false
+					? 'kept'
+					: 'hidden',
+	}))
+	return {
+		rows,
+		kept: rows.filter((row) => row.state === 'kept').length,
+		rejected: rows.filter((row) => row.state === 'rejected').length,
+	}
+}
+
+/**
+ * The three steps of a partly public document's redaction, each done or not:
+ * the original kept, the redacted version generated, and verified by a person.
+ *
+ * @param {object} item The assessment.
+ * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-partly-public-document-has-a-redaction-page-req-wda-003
+ * @return {Array<{key: string, done: boolean, by: string, at: string}>} The steps, in order.
+ */
+export function redactionSteps(item) {
+	const generated =
+		item?.redactionStatus === 'verified' && Boolean(item?.anonymizedDocument)
+	return [
+		{
+			key: 'original',
+			done: Boolean(item?.documentReference),
+			by: '',
+			at: '',
+		},
+		{
+			key: 'generated',
+			done: generated,
+			by: '',
+			at: generated ? String(item?.assessedAt || '') : '',
+		},
+		{
+			key: 'verified',
+			done: Boolean(item?.redactionVerifiedBy),
+			by: String(item?.redactionVerifiedBy || ''),
+			at: String(item?.redactionVerifiedAt || ''),
+		},
+	]
+}

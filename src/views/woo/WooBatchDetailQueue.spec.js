@@ -169,6 +169,18 @@ describe('the queue', () => {
 		expect(s.dragged).toBeNull()
 	})
 
+	it('opens the redaction page of a partly public card', () => {
+		const push = jest.fn()
+		const s = state({ $router: { push } })
+
+		s.openRedaction({ id: 'a2', assessment: 'deels_openbaar' })
+
+		expect(push).toHaveBeenCalledWith({
+			name: 'WooRedaction',
+			params: { id: 'batch-1', docId: 'a2' },
+		})
+	})
+
 	it('links a numeric document reference to its file', () => {
 		const s = state()
 

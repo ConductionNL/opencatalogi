@@ -350,6 +350,20 @@ export default {
 		},
 
 		/**
+		 * Open the redaction page of a partly public card.
+		 *
+		 * @param {object} item The assessment.
+		 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-partly-public-document-has-a-redaction-page-req-wda-003
+		 * @return {void}
+		 */
+		openRedaction(item) {
+			this.$router.push({
+				name: 'WooRedaction',
+				params: { id: this.batchId, docId: item.id },
+			})
+		},
+
+		/**
 		 * Mark the batch ready for review (opens the approval gate).
 		 *
 		 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
@@ -504,6 +518,11 @@ export default {
 											target="_blank">
 											{{ t('opencatalogi', 'Preview') }}
 										</NcActionLink>
+										<NcActionButton
+											v-if="column.key === 'deels_openbaar'"
+											@click="openRedaction(item)">
+											{{ t('opencatalogi', 'Redact') }}
+										</NcActionButton>
 									</NcActions>
 								</div>
 								<p class="woo-batch__card-meta">

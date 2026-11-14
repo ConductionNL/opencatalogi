@@ -11,7 +11,7 @@ Read `design.md` first (D1 lists what each board shows) and `openspec/woo-build-
 
 - [x] 2.1 Load the batch's assessments in `src/views/woo/WooBatchDetail.vue` through `useObjectStore` on the `wooAssessment` schema, filtered on `caseReference`; render the four columns with counts and cards (title, type, size, ground chip) as board `OcWooBatch`; remove the Deck note and its warning card (REQ-WDA-002).
 - [x] 2.2 Add `src/dialogs/WooAssessmentDialog.vue` (ADR-004): grounds from `GET /api/woo/weigeringsgronden` in an `NcSelect` with `inputLabel`, at least one required (REQ-WDA-002).
-- [ ] 2.3 Save a move with `PUT /api/woo/batches/{batchId}/documents/{docId}`; on refusal put the card back and show the message; show `redactionStatus` and `redactionMessage` on partly public cards; card action menu with Move to, Preview and Redact; a live region announcing moves (REQ-WDA-002). Verify: 5.1.
+- [x] 2.3 Save a move with `PUT /api/woo/batches/{batchId}/documents/{docId}`; on refusal put the card back and show the message; show `redactionStatus` and `redactionMessage` on partly public cards; card action menu with Move to, Preview and Redact; a live region announcing moves (REQ-WDA-002). Verify: 5.1.
 
 ## 3. Human verification
 
@@ -21,7 +21,7 @@ Read `design.md` first (D1 lists what each board shows) and `openspec/woo-build-
 
 ## 4. Redaction page
 
-- [ ] 4.1 Page `WooRedaction` at `/woo/:id/documents/:docId` in `src/manifest.json`, component `src/views/woo/WooRedaction.vue` as board `OcLakken`: header chips, meta line, three steps, Redacted version / Original in the Nextcloud viewer, redactions list from OpenRegister's entity relations with kept and rejected counts and links to OpenRegister, the not-verified notice, Mark redaction verified (REQ-WDA-003, REQ-WDA-004).
+- [x] 4.1 Page `WooRedaction` at `/woo/:id/documents/:docId` in `src/manifest.json`, component `src/views/woo/WooRedaction.vue` as board `OcLakken`: header chips, meta line, three steps, Redacted version / Original in the Nextcloud viewer, redactions list from OpenRegister's entity relations with kept and rejected counts and links to OpenRegister, the not-verified notice, Mark redaction verified (REQ-WDA-003, REQ-WDA-004).
 
 ## 5. Tests, strings, verification
 
