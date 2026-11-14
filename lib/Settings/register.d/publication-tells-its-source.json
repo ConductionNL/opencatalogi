@@ -1,0 +1,53 @@
+{
+  "_note": "Register fragment for publication-tells-its-source (REQ-PTS-001, REQ-PTS-002). Adds to the publication the two pages a source system is told (publicUrl, officerUrl) and whether it is complete and public (completeness, completeAt), with the number of documents the source said it would send (expectedDocuments). OpenCatalogi writes publicUrl, officerUrl, completeness and completeAt itself; a value a caller sends is ignored. The version is the publication schema's merged version, so the last fragment in name order (woo-information-categories-as-data.json) carries the same bump.",
+  "components": {
+    "schemas": {
+      "publication": {
+        "slug": "publication",
+        "version": "0.0.8",
+        "properties": {
+          "publicUrl": {
+            "type": "string",
+            "format": "uri",
+            "readOnly": true,
+            "title": "Public page",
+            "description": "Where the public reads this publication. Empty when no public page can be built."
+          },
+          "officerUrl": {
+            "type": "string",
+            "format": "uri",
+            "readOnly": true,
+            "title": "Officer page",
+            "description": "Where an officer opens this publication in OpenCatalogi."
+          },
+          "completeness": {
+            "type": "string",
+            "enum": ["incomplete", "complete"],
+            "x-enum-labels": {
+              "incomplete": "Incomplete",
+              "complete": "Complete"
+            },
+            "default": "incomplete",
+            "readOnly": true,
+            "facetable": true,
+            "title": "Completeness",
+            "description": "Complete when the publication is public and every document on it is public. A source system can subscribe to the move from incomplete to complete."
+          },
+          "completeAt": {
+            "type": "string",
+            "format": "date-time",
+            "readOnly": true,
+            "title": "Complete since",
+            "description": "When the publication last became complete."
+          },
+          "expectedDocuments": {
+            "type": "integer",
+            "minimum": 1,
+            "title": "Expected documents",
+            "description": "How many documents the source will attach. The publication is not complete before that many are public."
+          }
+        }
+      }
+    }
+  }
+}

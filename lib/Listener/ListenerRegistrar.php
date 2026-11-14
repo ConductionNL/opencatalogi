@@ -127,6 +127,11 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
 
+		// A publication records whether it is complete and public; a source
+		// system subscribes to the move to complete (publication-tells-its-source, REQ-PTS-002).
+		$context->registerEventListener(ObjectCreatingEvent::class, CompletenessListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, CompletenessListener::class);
+
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
 		// installed after OpenCatalogi, its register event completes the scope
