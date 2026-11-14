@@ -723,7 +723,16 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Pridajte do katalógu register a schému, aby sa tu zobrazovali jeho publikácie.",
         "Open catalog": "Otvoriť katalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvorte svoj prvý katalóg. Je to kontajner, v ktorom budú vaše publikácie. Vyberte register Publication a schému Publication, aby katalóg zobrazoval publikácie, ktoré pridáte.",
-        "Manage your publications and their status": "Spravujte svoje publikácie a ich stav"
+        "Manage your publications and their status": "Spravujte svoje publikácie a ich stav",
+        "Feed consumers": "Odberatelia kanála",
+        "Contact": "Kontakt",
+        "Generate key": "Vygenerovať kľúč",
+        "Revoke": "Odvolať",
+        "Disable": "Zakázať",
+        "Last used": "Naposledy použité",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Tento kľúč sa zobrazí iba raz. Skopírujte si ho teraz: znova ho zobraziť nemožno.",
+        "No feed consumers yet.": "Zatiaľ žiadni odberatelia kanála.",
+        "Accounts that read every catalogue's feed": "Účty, ktoré čítajú kanál každého katalógu"
     },
     "nplurals=2; plural=(n != 1);"
 )

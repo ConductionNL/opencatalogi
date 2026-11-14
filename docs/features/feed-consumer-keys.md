@@ -27,3 +27,12 @@ All of these endpoints are for administrators only.
 ## Accounts on the instance-wide list
 
 Reading with a Nextcloud account and app password keeps working. Those accounts are governed by the instance-wide setting `ooapi_consumers` (a comma-separated list of account ids; empty means every account), which covers every catalogue. The consumer listing returns that list read-only under `instanceAccounts`.
+
+## On the catalogue page
+
+Administrators see a **Feed consumers** section on a catalogue's page (Catalogs, open a
+catalogue). It lists the catalogue's consumers with their keys (label, created, last used),
+and the accounts that read every catalogue's feed through the instance-wide list,
+read-only. From there an administrator adds a consumer (name and contact), generates a key,
+revokes a key and disables a consumer. A generated key is shown once, above the list, and
+cannot be shown again: copy it before leaving the page. Other users do not see the section.

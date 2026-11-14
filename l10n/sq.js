@@ -723,7 +723,16 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Shtoni një regjistër dhe një skemë në katalog që botimet e tij të shfaqen këtu.",
         "Open catalog": "Hap katalogun",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Krijoni katalogun tuaj të parë. Është kontejneri ku do të jenë botimet tuaja. Zgjidhni regjistrin Publication dhe skemën Publication, që katalogu të shfaqë botimet që shtoni.",
-        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre"
+        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre",
+        "Feed consumers": "Konsumatorët e furnizimit",
+        "Contact": "Kontakti",
+        "Generate key": "Krijo çelës",
+        "Revoke": "Revoko",
+        "Disable": "Çaktivizo",
+        "Last used": "Përdorur së fundi",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ky çelës shfaqet vetëm një herë. Kopjojeni tani: nuk mund të shfaqet përsëri.",
+        "No feed consumers yet.": "Ende nuk ka konsumatorë të furnizimit.",
+        "Accounts that read every catalogue's feed": "Llogaritë që lexojnë furnizimin e çdo katalogu"
     },
     "nplurals=2; plural=(n != 1);"
 )

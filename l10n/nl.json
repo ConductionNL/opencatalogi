@@ -1509,7 +1509,16 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
-        "Planning (does not publish)": "Planning (publiceert niet)"
+        "Planning (does not publish)": "Planning (publiceert niet)",
+        "Feed consumers": "Feedafnemers",
+        "Contact": "Contact",
+        "Generate key": "Sleutel aanmaken",
+        "Revoke": "Intrekken",
+        "Disable": "Uitschakelen",
+        "Last used": "Laatst gebruikt",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Deze sleutel wordt één keer getoond. Kopieer hem nu: hij kan niet opnieuw worden getoond.",
+        "No feed consumers yet.": "Nog geen feedafnemers.",
+        "Accounts that read every catalogue's feed": "Accounts die de feed van elke catalogus lezen"
     },
     "plurals": {}
 }

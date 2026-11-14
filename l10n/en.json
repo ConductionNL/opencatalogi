@@ -1554,7 +1554,16 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "Feed consumers": "Feed consumers",
+        "Contact": "Contact",
+        "Generate key": "Generate key",
+        "Revoke": "Revoke",
+        "Disable": "Disable",
+        "Last used": "Last used",
+        "This key is shown once. Copy it now: it cannot be shown again.": "This key is shown once. Copy it now: it cannot be shown again.",
+        "No feed consumers yet.": "No feed consumers yet.",
+        "Accounts that read every catalogue's feed": "Accounts that read every catalogue's feed"
     },
     "plurals": {}
 }

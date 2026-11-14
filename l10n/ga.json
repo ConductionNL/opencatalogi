@@ -722,7 +722,16 @@
         "Add a register and a schema to the catalog to list its publications here.": "Cuir clár agus scéimre leis an gcatalóg chun a foilseacháin a liostú anseo.",
         "Open catalog": "Oscail an catalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cruthaigh do chéad chatalóg. Is é an coimeádán ina mbeidh do chuid foilseachán. Roghnaigh an clár Publication agus an scéimre Publication, ionas go liostóidh an catalóg na foilseacháin a chuireann tú leis.",
-        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas"
+        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas",
+        "Feed consumers": "Tomhaltóirí fotha",
+        "Contact": "Teagmháil",
+        "Generate key": "Gin eochair",
+        "Revoke": "Cúlghair",
+        "Disable": "Díchumasaigh",
+        "Last used": "Úsáidte go deireanach",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ní thaispeántar an eochair seo ach uair amháin. Cóipeáil anois í: ní féidir í a thaispeáint arís.",
+        "No feed consumers yet.": "Níl aon tomhaltóirí fotha fós.",
+        "Accounts that read every catalogue's feed": "Cuntais a léann fotha gach catalóige"
     },
     "plurals": {}
 }

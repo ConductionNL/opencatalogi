@@ -723,7 +723,16 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Adăugați un registru și o schemă la catalog pentru a-i afișa aici publicațiile.",
         "Open catalog": "Deschide catalogul",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creați primul dumneavoastră catalog. Este containerul în care vor sta publicațiile dumneavoastră. Alegeți registrul Publication și schema Publication, astfel încât catalogul să afișeze publicațiile pe care le adăugați.",
-        "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora"
+        "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora",
+        "Feed consumers": "Consumatori ai fluxului",
+        "Contact": "Contact",
+        "Generate key": "Generează cheie",
+        "Revoke": "Revocă",
+        "Disable": "Dezactivează",
+        "Last used": "Ultima utilizare",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Această cheie este afișată o singură dată. Copiați-o acum: nu mai poate fi afișată.",
+        "No feed consumers yet.": "Încă nu există consumatori ai fluxului.",
+        "Accounts that read every catalogue's feed": "Conturi care citesc fluxul fiecărui catalog"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

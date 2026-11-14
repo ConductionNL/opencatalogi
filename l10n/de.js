@@ -723,7 +723,16 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Fügen Sie dem Katalog ein Register und ein Schema hinzu, um seine Veröffentlichungen hier anzuzeigen.",
         "Open catalog": "Katalog öffnen",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Erstellen Sie Ihren ersten Katalog. Er ist der Behälter, in dem Ihre Veröffentlichungen liegen. Wählen Sie das Register Publication und das Schema Publication, damit der Katalog die Veröffentlichungen anzeigt, die Sie hinzufügen.",
-        "Manage your publications and their status": "Verwalten Sie Ihre Veröffentlichungen und deren Status"
+        "Manage your publications and their status": "Verwalten Sie Ihre Veröffentlichungen und deren Status",
+        "Feed consumers": "Feed-Abnehmer",
+        "Contact": "Kontakt",
+        "Generate key": "Schlüssel erzeugen",
+        "Revoke": "Widerrufen",
+        "Disable": "Deaktivieren",
+        "Last used": "Zuletzt verwendet",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Dieser Schlüssel wird nur einmal angezeigt. Kopieren Sie ihn jetzt: Er kann nicht erneut angezeigt werden.",
+        "No feed consumers yet.": "Noch keine Feed-Abnehmer.",
+        "Accounts that read every catalogue's feed": "Konten, die den Feed jedes Katalogs lesen"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -722,7 +722,16 @@
         "Add a register and a schema to the catalog to list its publications here.": "Dodajte registar i shemu katalogu da bi se ovdje prikazale njegove objave.",
         "Open catalog": "Otvori katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Napravite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate.",
-        "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom"
+        "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom",
+        "Feed consumers": "Korisnici feeda",
+        "Contact": "Kontakt",
+        "Generate key": "Generiši ključ",
+        "Revoke": "Opozovi",
+        "Disable": "Onemogući",
+        "Last used": "Zadnje korišteno",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Ovaj ključ se prikazuje samo jednom. Kopirajte ga sada: ne može se ponovo prikazati.",
+        "No feed consumers yet.": "Još nema korisnika feeda.",
+        "Accounts that read every catalogue's feed": "Računi koji čitaju feed svakog kataloga"
     },
     "plurals": {}
 }

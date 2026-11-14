@@ -15,11 +15,13 @@
 ## 3. Read rule and screen
 
 - [ ] 3.1 Change the OOAPI schemas' read rule to the catalogue's consumer group plus the instance list (REQ-FCC-002, REQ-FCC-004). Verify: an API test reads as a group member and is refused as another signed-in user not on the list.
-- [ ] 3.2 Add the Feed consumers section to the catalogue page, admin only (REQ-FCC-001, REQ-FCC-004). Verify: `tests/e2e/feed-consumers.spec.ts` adds a consumer, copies a key, calls the feed with it, revokes it.
+- [x] 3.2 Add the Feed consumers section to the catalogue page, admin only (REQ-FCC-001, REQ-FCC-004). Verify: `tests/e2e/feed-consumers.spec.ts` adds a consumer, copies a key, calls the feed with it, revokes it.
+      (Built: `src/components/catalogi/FeedConsumersPanel.vue` as the `feed-consumers` widget of `CatalogDetailPage.vue`, defined and laid out for administrators only; list with keys and the instance-wide accounts, add, generate (key shown once), revoke, disable, over `src/services/feedConsumers.js`. Unit-tested in `FeedConsumersPanel.spec.js`. Left: the e2e spec, which needs a live instance.)
 
 ## 4. Docs and strings
 
-- [ ] 4.1 Document issuing, rotating and revoking keys in `docs/`, and add the strings to `l10n/` in English and Dutch. Verify: `npm run lint` and the l10n check.
+- [x] 4.1 Document issuing, rotating and revoking keys in `docs/`, and add the strings to `l10n/` in English and Dutch. Verify: `npm run lint` and the l10n check.
+      (Built: `docs/features/feed-consumer-keys.md` gains "On the catalogue page"; the 9 new strings are in every shipped locale (`l10n/*.json`, `.js` rebuilt); `check:l10n` reports nothing missing or unused.)
 
 ## Notes from the build
 

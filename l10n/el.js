@@ -723,7 +723,16 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Προσθέστε ένα μητρώο και ένα σχήμα στον κατάλογο για να εμφανίζονται εδώ οι δημοσιεύσεις του.",
         "Open catalog": "Άνοιγμα καταλόγου",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Δημιουργήστε τον πρώτο σας κατάλογο. Είναι ο χώρος όπου θα βρίσκονται οι δημοσιεύσεις σας. Επιλέξτε το μητρώο Publication και το σχήμα Publication, ώστε ο κατάλογος να εμφανίζει τις δημοσιεύσεις που προσθέτετε.",
-        "Manage your publications and their status": "Διαχειριστείτε τις δημοσιεύσεις σας και την κατάστασή τους"
+        "Manage your publications and their status": "Διαχειριστείτε τις δημοσιεύσεις σας και την κατάστασή τους",
+        "Feed consumers": "Καταναλωτές ροής",
+        "Contact": "Επικοινωνία",
+        "Generate key": "Δημιουργία κλειδιού",
+        "Revoke": "Ανάκληση",
+        "Disable": "Απενεργοποίηση",
+        "Last used": "Τελευταία χρήση",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Αυτό το κλειδί εμφανίζεται μία φορά. Αντιγράψτε το τώρα: δεν μπορεί να εμφανιστεί ξανά.",
+        "No feed consumers yet.": "Δεν υπάρχουν ακόμη καταναλωτές ροής.",
+        "Accounts that read every catalogue's feed": "Λογαριασμοί που διαβάζουν τη ροή κάθε καταλόγου"
     },
     "nplurals=2; plural=(n != 1);"
 )

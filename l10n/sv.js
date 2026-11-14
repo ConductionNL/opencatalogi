@@ -723,7 +723,16 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Lägg till ett register och ett schema i katalogen för att visa dess publikationer här.",
         "Open catalog": "Öppna katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Skapa din första katalog. Den är behållaren som dina publikationer ska ligga i. Välj registret Publication och schemat Publication, så att katalogen visar publikationerna du lägger till.",
-        "Manage your publications and their status": "Hantera dina publikationer och deras status"
+        "Manage your publications and their status": "Hantera dina publikationer och deras status",
+        "Feed consumers": "Flödesmottagare",
+        "Contact": "Kontakt",
+        "Generate key": "Skapa nyckel",
+        "Revoke": "Återkalla",
+        "Disable": "Inaktivera",
+        "Last used": "Senast använd",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Den här nyckeln visas bara en gång. Kopiera den nu: den kan inte visas igen.",
+        "No feed consumers yet.": "Inga flödesmottagare ännu.",
+        "Accounts that read every catalogue's feed": "Konton som läser flödet för varje katalog"
     },
     "nplurals=2; plural=(n != 1);"
 )

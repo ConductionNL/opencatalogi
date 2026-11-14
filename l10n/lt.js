@@ -723,7 +723,16 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Pridėkite registrą ir schemą prie katalogo, kad čia būtų rodomos jo publikacijos.",
         "Open catalog": "Atverti katalogą",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Sukurkite pirmąjį katalogą. Tai talpykla, kurioje bus jūsų publikacijos. Pasirinkite registrą Publication ir schemą Publication, kad katalogas rodytų jūsų pridedamas publikacijas.",
-        "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną"
+        "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną",
+        "Feed consumers": "Srauto naudotojai",
+        "Contact": "Kontaktai",
+        "Generate key": "Sukurti raktą",
+        "Revoke": "Atšaukti",
+        "Disable": "Išjungti",
+        "Last used": "Paskutinį kartą naudota",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Šis raktas rodomas tik vieną kartą. Nukopijuokite jį dabar: jo nebebus galima parodyti.",
+        "No feed consumers yet.": "Srauto naudotojų dar nėra.",
+        "Accounts that read every catalogue's feed": "Paskyros, skaitančios kiekvieno katalogo srautą"
     },
     "nplurals=2; plural=(n != 1);"
 )

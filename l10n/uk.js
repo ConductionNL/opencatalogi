@@ -723,7 +723,16 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Додайте до каталогу реєстр і схему, щоб тут відображалися його публікації.",
         "Open catalog": "Відкрити каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Створіть свій перший каталог. Це контейнер, у якому будуть ваші публікації. Виберіть реєстр Publication і схему Publication, щоб каталог показував публікації, які ви додаєте.",
-        "Manage your publications and their status": "Керуйте своїми публікаціями та їхнім статусом"
+        "Manage your publications and their status": "Керуйте своїми публікаціями та їхнім статусом",
+        "Feed consumers": "Споживачі стрічки",
+        "Contact": "Контакт",
+        "Generate key": "Створити ключ",
+        "Revoke": "Відкликати",
+        "Disable": "Вимкнути",
+        "Last used": "Востаннє використано",
+        "This key is shown once. Copy it now: it cannot be shown again.": "Цей ключ показується лише один раз. Скопіюйте його зараз: його не можна буде показати знову.",
+        "No feed consumers yet.": "Споживачів стрічки ще немає.",
+        "Accounts that read every catalogue's feed": "Облікові записи, що читають стрічку кожного каталогу"
     },
     "nplurals=2; plural=(n != 1);"
 )
