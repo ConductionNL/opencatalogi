@@ -90,6 +90,9 @@ class WooRegisterSchemasTest extends TestCase {
 		'anonymizedDocumentHash',
 		'redactionStatus',
 		'redactionMessage',
+		// Set by verifyRedaction() when a person checked the redaction (REQ-WDA-004).
+		'redactionVerifiedBy',
+		'redactionVerifiedAt',
 		'caseReference',
 		'assessedBy',
 		'assessedAt',

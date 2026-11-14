@@ -1,0 +1,26 @@
+{
+  "_note": "Register fragment for woo-document-assessment-screen (REQ-WDA-004). A person marks the redacted version of a partly public document verified before the batch can be published. The two fields are set by WooService::verifyRedaction() and cleared when a later assessment changes the redaction. Admin-only, as the rest of wooAssessment.",
+  "components": {
+    "schemas": {
+      "wooAssessment": {
+        "version": "0.4.0",
+        "properties": {
+          "redactionVerifiedBy": {
+            "type": "string",
+            "description": "The user id of the officer who checked the redacted version and marked it verified. Empty until a person did.",
+            "maxLength": 255,
+            "facetable": true,
+            "title": "Redaction verified by"
+          },
+          "redactionVerifiedAt": {
+            "type": "string",
+            "description": "When the officer marked the redacted version verified.",
+            "format": "date-time",
+            "facetable": false,
+            "title": "Redaction verified at"
+          }
+        }
+      }
+    }
+  }
+}
