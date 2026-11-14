@@ -12,6 +12,7 @@
   - GIVEN each edit WHEN `python3 -m json.tool lib/Settings/publication_register.json` runs THEN it exits 0 and no pre-existing key is dropped
 - [ ] Implement
 - [ ] Test
+- Built for `publication` only, in the fragment `lib/Settings/register.d/leaf-integrations.json` (ADR-037) rather than the monolith; asserted by `tests/Unit/Settings/LeafIntegrationsDeclarationTest.php`. The `organization` half is open: the organization schema is now OpenRegister's shared one, not part of this register, so `forms`/`contacts` cannot be declared here.
 
 ### Task 2: Add the three manifest widgets (must / MVP)
 - **spec_ref**: `openspec/specs/integration-leaves/spec.md#requirement-the-calendar-leaf-on-publications-is-planning-only-and-never-the-gate-req-003`
@@ -22,6 +23,7 @@
   - GIVEN the widgets and the register template WHEN reviewed THEN no leaf has a write path to `publicationDate`/`depublicationDate`/`status` (REQ-003/REQ-004 review criterion)
 - [ ] Implement
 - [ ] Test
+- `pub-calendar` added (layout row at the bottom of PublicationDetail). Today there are 3 integration widgets before it, not 4 (`pub-files` became a `publication-attachments` widget), so the count is 4. `org-intake-form` and `org-contacts` wait on the organization half of Task 1: a widget for a linked type the schema does not declare renders nothing.
 
 ### Task 3: e2e spec-coverage for mail intake and the new widgets (must / MVP)
 - **spec_ref**: `openspec/specs/integration-leaves/spec.md#requirement-a-publication-created-from-email-is-unpublished-by-construction-req-002`
@@ -38,8 +40,8 @@
 - **acceptance_criteria**:
   - GIVEN `docs/` WHEN read THEN it records the mail-intake flow for desk employees (with the "arrives as draft, publish is the normal editorial act" framing), the planning-vs-gate distinction, and the OFF list with reasons
   - GIVEN `CHANGELOG.md` WHEN read THEN it records the four new leaves
-- [ ] Implement
-- [ ] Test
+- [x] Implement
+- [x] Test
 
 ## Verification
 - [ ] All tasks checked off
@@ -54,8 +56,9 @@
 - Newman/Postman: N/A — no HTTP endpoint is added; the mail-intake write goes through OpenRegister's existing object API.
 
 ## Documentation (company-wide ADR-010)
-- [ ] `docs/` records the intake flow and the leaf matrix (Task 4)
+- [x] `docs/` records the intake flow and the leaf matrix (Task 4)
 - [ ] Screenshot of the Mail-sidebar create-publication button and the PublicationDetail planning widget committed to `docs/images/`
 
 ## i18n (company-wide ADR-005)
 - [ ] Widget titles ("Planning (does not publish)", "Intake form", "Contacts") are new user-facing strings: `nl_NL` and `en_US` entries added via the mechanism the existing widget titles use. The `mailObjectTemplate` provenance string is stored object data, not UI copy — it ships in English per the all-code-is-English rule.
+- "Planning (does not publish)" added in en and nl (`l10n/*.json`, rebuilt `.js`); "Intake form" and "Contacts" wait on the organization widgets.

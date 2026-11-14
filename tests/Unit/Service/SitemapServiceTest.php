@@ -300,6 +300,102 @@ class SitemapServiceTest extends TestCase {
 		$this->assertEquals('reg-woo', $registerId);
 	}
 
+	/**
+	 * Every one of the 18 category codes resolves, given a catalogue whose
+	 * register holds the schema titled after that category (woo-compliance
+	 * task 7.2, REQ-WOO-003).
+	 *
+	 * @param int $number The category number, 1 to 18.
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('everyCategoryNumber')]
+	public function testEveryCategoryCodeResolvesForAConfiguredCatalogue(int $number): void {
+		$code = sprintf('sitemapindex-diwoo-infocat%03d.xml', $number);
+		$schemas = [];
+		foreach (array_values($this->wooCategories->sitemapFiles()) as $index => $title) {
+			$schemas[] = ['id' => 'sch-' . ($index + 1), 'title' => $title];
+		}
+
+		$this->settingsService->method('getSettings')->willReturn(
+			[
+				'availableRegisters' => [['title' => 'Woo', 'id' => 'reg-woo', 'schemas' => $schemas]],
+				'configuration' => ['catalog_register' => 'cat-reg', 'catalog_schema' => 'cat-sch'],
+			]
+		);
+		$catalogue = new class {
+			public function getObject(): array {
+				return ['schemas' => array_map(static fn (int $n): string => 'sch-' . $n, range(1, 18)), 'hasWooSitemap' => true];
+			}
+
+			public function getSlug(): string {
+				return 'woo-catalogus';
+			}
+
+			public function jsonSerialize(): array {
+				return ['slug' => 'woo-catalogus'];
+			}
+		};
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(['results' => [$catalogue]]);
+
+		$request = new SitemapRequest('woo-catalogus', $code);
+		$result = $this->getPrivateMethod('resolveSitemapRequest')->invoke($this->service, $request, $objectService);
+
+		$this->assertNull($result, $code . ' must resolve');
+		$this->assertSame('sch-' . $number, $request->schemaId);
+		$this->assertSame('reg-woo', $request->registerId);
+	}
+
+	/**
+	 * The category numbers 1 to 18.
+	 *
+	 * @return array<string, array{0: int}>
+	 */
+	public static function everyCategoryNumber(): array {
+		$cases = [];
+		for ($number = 1; $number <= 18; $number++) {
+			$cases['infocat' . sprintf('%03d', $number)] = [$number];
+		}
+
+		return $cases;
+	}
+
+	/**
+	 * A code outside 1 to 18 is refused with a 400, before any catalogue is read
+	 * (woo-compliance task 7.3, REQ-WOO-007).
+	 *
+	 * @param string $code The out-of-range file name.
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('outOfRangeCodes')]
+	public function testAnOutOfRangeCategoryCodeIsRefused(string $code): void {
+		$this->settingsService->method('getSettings')->willReturn(
+			['availableRegisters' => [['title' => 'Woo', 'id' => 'reg-woo', 'schemas' => []]], 'configuration' => []]
+		);
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$result = $this->getPrivateMethod('resolveSitemapRequest')->invoke($this->service, new SitemapRequest('woo-catalogus', $code), $objectService);
+
+		$this->assertInstanceOf(XMLResponse::class, $result);
+		$this->assertSame(400, $result->getStatus());
+	}
+
+	/**
+	 * File names next to the 18 that are served.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function outOfRangeCodes(): array {
+		return [
+			'zero' => ['sitemapindex-diwoo-infocat000.xml'],
+			'nineteen' => ['sitemapindex-diwoo-infocat019.xml'],
+			'unpadded' => ['sitemapindex-diwoo-infocat1.xml'],
+		];
+	}
+
 	public function testIsValidSitemapRequestEmptyCatalog(): void {
 		$this->settingsService->method('getSettings')
 			->willReturn([
@@ -443,7 +539,9 @@ class SitemapServiceTest extends TestCase {
 
 		$this->assertSame(['loc', 'lastmod', 'diwoo:Document'], array_keys($result));
 		$this->assertSame('https://example.com/files/doc.pdf', $result['loc']);
-		$this->assertSame('2024-05-10T12:00:00+00:00', $result['lastmod']);
+		// REQ-WSD-001: the publication was updated after the file was published,
+		// so the document's lastmod is the publication's update.
+		$this->assertSame('2024-06-20T14:30:00+00:00', $result['lastmod']);
 
 		$doc = $result['diwoo:Document']['diwoo:DiWoo'];
 
@@ -821,10 +919,11 @@ class SitemapServiceTest extends TestCase {
 	 * The documents XML of one page with three files, the organisation looked up by uuid.
 	 *
 	 * @param array<int, mixed> $calls The organisation lookups, recorded by parameter name.
+	 * @param array<int, array<string, mixed>> $extra Extra fields per file position, such as labels.
 	 *
 	 * @return string
 	 */
-	private function documentsPage(array &$calls): string {
+	private function documentsPage(array &$calls, array $extra = []): string {
 		$this->setupValidSitemapContext('reg-woo', 'sch-1');
 		$catalogObj = $this->createCatalogObj(['sch-1']);
 		$pubObject = $this->createSerializableObject([
@@ -840,6 +939,9 @@ class SitemapServiceTest extends TestCase {
 			['extension' => 'txt'],
 			['downloadUrl' => 'https://example.com/b.odt', 'extension' => 'odt', 'owner' => 'file-owner'],
 		]];
+		foreach ($extra as $position => $fields) {
+			$files['results'][$position] = array_merge($files['results'][$position], $fields);
+		}
 		$fileService = $this->createMock(\OCA\OpenRegister\Service\FileService::class);
 		$fileService->method('getFiles')->willReturn(['some-file-data']);
 		$fileService->method('formatFiles')->willReturn($files);
@@ -1020,7 +1122,7 @@ class SitemapServiceTest extends TestCase {
 		$sitemap = StandardsVersionService::SITEMAP_NAMESPACE;
 		$diwoo = StandardsVersionService::DIWOO_NAMESPACE;
 		$this->assertSame([
-			[$sitemap, 'url', [[$sitemap, 'loc', 'https://example.com/a.pdf'], [$sitemap, 'lastmod', '2024-03-01T00:00:00+00:00'], [$diwoo, 'Document', '']]],
+			[$sitemap, 'url', [[$sitemap, 'loc', 'https://example.com/a.pdf'], [$sitemap, 'lastmod', '2024-06-01T00:00:00+00:00'], [$diwoo, 'Document', '']]],
 			[$sitemap, 'url', [[$sitemap, 'loc', 'https://example.com/b.odt'], [$sitemap, 'lastmod', '2024-06-01T00:00:00+00:00'], [$diwoo, 'Document', '']]],
 		], $urls);
 		$this->assertSame(0, $dom->getElementsByTagNameNS($diwoo, 'DiWoo')->item(0)->getElementsByTagNameNS($sitemap, '*')->length, 'diwoo:DiWoo holds no sitemap element');
@@ -1053,6 +1155,76 @@ class SitemapServiceTest extends TestCase {
 		} finally {
 			date_default_timezone_set($zone);
 		}
+	}
+
+	/**
+	 * REQ-WSD-001: a document's lastmod is the latest of the file's modified and
+	 * published times and the publication's update.
+	 *
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-documents-lastmod-follows-its-metadata-as-well-as-its-file-req-wsd-001
+	 */
+	public function testADocumentsLastmodFollowsItsMetadataAndItsFile(): void {
+		$method = $this->getPrivateMethod('mapDiwooDocument');
+		$file = ['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf', 'published' => '2026-03-01T09:00:00+00:00', 'modified' => '2026-03-01T08:00:00+00:00'];
+
+		// An editor corrects the title on 20 March: the document moves with it.
+		$edited = ['id' => 'p', 'title' => 'Besluit', '@self' => ['updated' => '2026-03-20T10:00:00+00:00']];
+		$this->assertSame('2026-03-20T10:00:00+00:00', $method->invoke($this->service, $edited, $file)['lastmod']);
+
+		// A new file version on 5 March, the publication last edited on 1 March.
+		$replaced = array_merge($file, ['modified' => '2026-03-05T11:00:00+00:00']);
+		$untouched = ['id' => 'p', 'title' => 'Besluit', '@self' => ['updated' => '2026-03-01T07:00:00+00:00']];
+		$this->assertSame('2026-03-05T11:00:00+00:00', $method->invoke($this->service, $untouched, $replaced)['lastmod']);
+	}
+
+	/**
+	 * REQ-WSD-003: with the decision labelled main-document, it lists the annex as
+	 * its part and the annex points at it, and the page still validates against
+	 * the official DiWoo XSD.
+	 *
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 */
+	public function testAMainDocumentListsItsPartsAndThePageValidates(): void {
+		$calls = [];
+		$xml = $this->documentsPage(calls: $calls, extra: [0 => ['labels' => ['main-document'], 'title' => 'Besluit.pdf'], 2 => ['title' => 'Bijlage.odt']]);
+
+		$dom = new \DOMDocument();
+		$dom->loadXML($xml);
+		$xpath = new \DOMXPath($dom);
+		$xpath->registerNamespace('s', StandardsVersionService::SITEMAP_NAMESPACE);
+		$xpath->registerNamespace('d', StandardsVersionService::DIWOO_NAMESPACE);
+
+		$parts = $xpath->query('//s:url[s:loc="https://example.com/a.pdf"]//d:hasParts/d:hasPart');
+		$this->assertSame(1, $parts->length);
+		$this->assertSame('https://example.com/b.odt', $parts->item(0)->getAttribute('resource'));
+		$this->assertSame('Bijlage.odt', $parts->item(0)->textContent);
+		$this->assertSame(0, $xpath->query('//s:url[s:loc="https://example.com/a.pdf"]//d:isPartOf')->length);
+
+		$partOf = $xpath->query('//s:url[s:loc="https://example.com/b.odt"]//d:isPartOf');
+		$this->assertSame(1, $partOf->length);
+		$this->assertSame('https://example.com/a.pdf', $partOf->item(0)->getAttribute('resource'));
+
+		$this->assertSame([[], []], self::diwooXsdErrors($xml));
+	}
+
+	/**
+	 * REQ-WSD-003: two files marked as the main document are reported once, naming the publication.
+	 *
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-main-document-lists-its-parts-req-wsd-003
+	 */
+	public function testValidatorReportsTwoMainDocuments(): void {
+		$main = ['labels' => ['main-document']];
+		$publication = ['id' => 'p', 'title' => 'Besluit', 'category' => 'infocat014', '@self' => ['files' => [
+			array_merge(['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf'], $main),
+			array_merge(['downloadUrl' => 'https://example.com/b.pdf', 'extension' => 'pdf'], $main),
+			['downloadUrl' => 'https://example.com/c.pdf', 'extension' => 'pdf'],
+		]]];
+
+		$reported = array_values(array_filter($this->service->collectDiwooViolations([$publication]), static fn (array $v): bool => $v['axis'] === 'hasParts'));
+		$this->assertSame([['documentLoc' => 'https://example.com/a.pdf', 'axis' => 'hasParts', 'reason' => 'publication Besluit has two or more files marked as the main document']], $reported);
+
+		$publication['@self']['files'][1]['labels'] = [];
+		$this->assertNotContains('hasParts', array_column($this->service->collectDiwooViolations([$publication]), 'axis'));
 	}
 
 	/**

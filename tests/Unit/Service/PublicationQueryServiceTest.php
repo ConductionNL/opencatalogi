@@ -36,6 +36,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
@@ -2286,5 +2287,161 @@ class PublicationQueryServiceTest extends TestCase {
 		$m = $ref->getMethod($method);
 		$m->setAccessible(true);
 		return $m->invokeArgs($this->service, $args);
+	}
+	// -------------------------------------------------------------------------
+	// api-says-what-it-filtered — each filter records itself where it applies.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * The service over this test's container, with a collector.
+	 *
+	 * @param AppliedFilters $filters The collector.
+	 *
+	 * @return PublicationQueryService The service.
+	 */
+	private function serviceWithFilters(AppliedFilters $filters): PublicationQueryService {
+		return new PublicationQueryService(
+			container: $this->container,
+			config: $this->config,
+			logger: $this->logger,
+			appliedFilters: $filters,
+		);
+	}
+
+	/**
+	 * The names recorded, in order.
+	 *
+	 * @param AppliedFilters $filters The collector.
+	 *
+	 * @return array<int, string> The names.
+	 */
+	private static function recordedNames(AppliedFilters $filters): array {
+		return array_column($filters->all(), 'name');
+	}
+
+	/**
+	 * Two archived publications dropped from the page are counted as archivedExcluded (REQ-ASF-001).
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testTheArchivedDropIsRecorded(): void {
+		$filters = new AppliedFilters();
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			[
+				'results' => [
+					['@self' => ['id' => 'a1', 'schema' => 1], 'status' => 'archived'],
+					['@self' => ['id' => 'live', 'schema' => 1], 'status' => 'published'],
+					['@self' => ['id' => 'a2', 'schema' => 1], 'status' => 'archived'],
+				],
+				'total' => 3,
+				'facets' => [],
+				'facetable' => [],
+			],
+		];
+
+		$out = $this->serviceWithFilters($filters)->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertSame(['live'], array_map(static fn (array $row): string => $row['@self']['id'], $out['results']));
+		$entries = array_column($filters->all(), null, 'name');
+		$this->assertSame(2, $entries['archivedExcluded']['value']);
+		$this->assertSame('Archived publications are never shown on a public list.', $entries['archivedExcluded']['reason']);
+	}
+
+	/**
+	 * A search with no archived rows and no caller scope keys claims only the
+	 * anonymous evaluation and the catalogue scope.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testAFilterThatDidNotApplyIsNotListed(): void {
+		$filters = new AppliedFilters();
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [['@self' => ['id' => 'live', 'schema' => 1], 'status' => 'published']], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->serviceWithFilters($filters)->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+
+		$this->assertSame(['publicOnly', 'catalogScope'], self::recordedNames($filters));
+		$entries = array_column($filters->all(), null, 'name');
+		$this->assertTrue($entries['publicOnly']['value']);
+		// Without a RegisterMapper the scope falls back to the ids.
+		$this->assertSame(['schemas' => ['1', '2'], 'registers' => ['1']], $entries['catalogScope']['value']);
+	}
+
+	/**
+	 * A caller's scope keys on the search are named as callerScopeIgnored.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testTheSearchReportsTheStrippedCallerScope(): void {
+		$filters = new AppliedFilters();
+		$fake = $this->wireHappyPath();
+
+		$this->serviceWithFilters($filters)->assemblePublicSearchResults($this->withDefaultCatalog($this->callerScopeOverride()), $fake);
+
+		$entries = array_column($filters->all(), null, 'name');
+		$this->assertSame(
+			['register', 'schema', '_register', '_schemas', '@self.register', '@self.registers', '@self.schema', '@self.schemas'],
+			$entries['callerScopeIgnored']['value']
+		);
+	}
+
+	/**
+	 * On an OpenRegister without the anonymous scope, publicOnly is claimed only
+	 * for an anonymous caller, because a signed-in read is not public-only.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testWithoutTheAnonymousScopePublicOnlyFollowsTheCaller(): void {
+		$fake = new FakeLegacySearchObjectService();
+		$this->wireHappyPath();
+
+		$signedIn = $this->createMock(\OCP\IUserSession::class);
+		$signedIn->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$filters = new AppliedFilters();
+		(new PublicationQueryService(container: $this->container, userSession: $signedIn, config: $this->config, logger: $this->logger, appliedFilters: $filters))
+			->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+		$this->assertNotContains('publicOnly', self::recordedNames($filters));
+
+		$anonymous = $this->createMock(\OCP\IUserSession::class);
+		$anonymous->method('getUser')->willReturn(null);
+		$filters = new AppliedFilters();
+		(new PublicationQueryService(container: $this->container, userSession: $anonymous, config: $this->config, logger: $this->logger, appliedFilters: $filters))
+			->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+		$this->assertContains('publicOnly', self::recordedNames($filters));
+	}
+
+	/**
+	 * The catalogue index query records its scope and the stripped caller keys,
+	 * and the anonymous read-rule guard records publicOnly; a signed-in guard does not.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testTheCatalogueQueryAndTheGuardRecordTheirFilters(): void {
+		$filters = new AppliedFilters();
+		$this->container->method('get')->willThrowException(new \RuntimeException('no mappers'));
+		$service = $this->serviceWithFilters($filters);
+
+		$service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [28, 29], 'registers' => [20]],
+			queryParams: ['_schemas' => [56], 'q' => 'x'],
+			objectService: new FakeSearchObjectService()
+		);
+		$this->assertSame(['callerScopeIgnored', 'catalogScope'], self::recordedNames($filters));
+		$this->assertSame(['schemas' => ['28', '29'], 'registers' => ['20']], $filters->all()[1]['value']);
+
+		$signedIn = $this->createMock(\OCP\IUserSession::class);
+		$signedIn->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$signedInFilters = new AppliedFilters();
+		(new PublicationQueryService(container: $this->container, userSession: $signedIn, appliedFilters: $signedInFilters))
+			->applySchemaScopeReadRuleGuard(schemaIds: [28]);
+		$this->assertSame([], $signedInFilters->all());
+
+		$anonymousFilters = new AppliedFilters();
+		(new PublicationQueryService(container: $this->container, appliedFilters: $anonymousFilters))
+			->applySchemaScopeReadRuleGuard(schemaIds: []);
+		$this->assertSame(['publicOnly'], self::recordedNames($anonymousFilters));
 	}
 }

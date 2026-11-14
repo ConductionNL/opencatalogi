@@ -46,6 +46,7 @@ OC.L10N.register(
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -267,6 +268,7 @@ OC.L10N.register(
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1556,7 +1558,8 @@ OC.L10N.register(
         "Keep this install out of search engines": "Keep this install out of search engines",
         "For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.": "For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.",
         "Save search indexing": "Save search indexing",
-        "The search indexing setting could not be saved. Try again.": "The search indexing setting could not be saved. Try again."
+        "The search indexing setting could not be saved. Try again.": "The search indexing setting could not be saved. Try again.",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
 )
