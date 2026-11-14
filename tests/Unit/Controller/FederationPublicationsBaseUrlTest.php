@@ -130,6 +130,6 @@ class FederationPublicationsBaseUrlTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
-		return new FederationController('opencatalogi', $request, $service, $l10n, $logger);
+		return new FederationController($request, $service, $l10n, $logger);
 	}//end controller()
 }//end class

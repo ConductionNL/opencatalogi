@@ -388,7 +388,7 @@ class AppliedFiltersResponseTest extends TestCase {
 		$request = $this->createMock(IRequest::class);
 		$request->method('getParams')->willReturn([]);
 
-		return new FederationController('opencatalogi', $request, $publications, $this->l10n(), appliedFilters: $filters);
+		return new FederationController($request, $publications, $this->l10n(), appliedFilters: $filters);
 	}//end federationController()
 
 	/**

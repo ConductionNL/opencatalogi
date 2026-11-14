@@ -30,6 +30,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
@@ -52,7 +53,6 @@ class FederationController extends Controller {
 	/**
 	 * FederationController constructor.
 	 *
-	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
 	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
@@ -61,7 +61,6 @@ class FederationController extends Controller {
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
-		$appName,
 		IRequest $request,
 		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
@@ -69,7 +68,7 @@ class FederationController extends Controller {
 		private readonly ?WithheldFromPublicationInterface $withheld = null,
 		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
-		parent::__construct(appName: $appName, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
