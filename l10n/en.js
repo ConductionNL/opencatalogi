@@ -1,10 +1,6 @@
 OC.L10N.register(
     "opencatalogi",
     {
-        "Put back": "Put back",
-        "This record puts the document back on purpose rather than taking it down; the reason says why.": "This record puts the document back on purpose rather than taking it down; the reason says why.",
-        "Say why it is being put back.": "Say why it is being put back.",
-        "It was put back, but the record of why could not be stored.": "It was put back, but the record of why could not be stored.",
         "Show which documents of a publication were withheld, and on which grounds": "Show which documents of a publication were withheld, and on which grounds",
         "Show withheld documents": "Show withheld documents",
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",
@@ -784,6 +780,10 @@ OC.L10N.register(
         "Unpublished": "Unpublished",
         "unreachable": "unreachable",
         "Untitled": "Untitled",
+        "Put back": "Put back",
+        "This record puts the document back on purpose rather than taking it down; the reason says why.": "This record puts the document back on purpose rather than taking it down; the reason says why.",
+        "Say why it is being put back.": "Say why it is being put back.",
+        "It was put back, but the record of why could not be stored.": "It was put back, but the record of why could not be stored.",
         "Untitled publication": "Untitled publication",
         "Updated listings:": "Updated listings:",
         "Upload Object": "Upload Object",

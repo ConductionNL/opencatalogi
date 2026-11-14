@@ -1,10 +1,6 @@
 OC.L10N.register(
     "opencatalogi",
     {
-        "Put back": "Teruggezet",
-        "This record puts the document back on purpose rather than taking it down; the reason says why.": "Deze vastlegging zet het document bewust terug in plaats van het offline te halen; de reden zegt waarom.",
-        "Say why it is being put back.": "Geef aan waarom het wordt teruggezet.",
-        "It was put back, but the record of why could not be stored.": "Het is teruggezet, maar de reden kon niet worden vastgelegd.",
         "Show which documents of a publication were withheld, and on which grounds": "Toon welke documenten van een publicatie zijn geweigerd, en op welke gronden",
         "Show withheld documents": "Geweigerde documenten tonen",
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Toon bij een openbaar Woo-besluit welke documenten zijn geweigerd en op welke weigeringsgronden, zonder hun inhoud.",
@@ -761,6 +757,10 @@ OC.L10N.register(
         "View the documentation about publications": "Documentatie over publicaties bekijken",
         "Warnings": "Waarschuwingen",
         "When an object is published, automatically publish all its attachments as Nextcloud shares": "Wanneer een object wordt gepubliceerd, publiceer dan automatisch alle bijlagen als Nextcloud-shares",
+        "Put back": "Teruggezet",
+        "This record puts the document back on purpose rather than taking it down; the reason says why.": "Deze vastlegging zet het document bewust terug in plaats van het offline te halen; de reden zegt waarom.",
+        "Say why it is being put back.": "Geef aan waarom het wordt teruggezet.",
+        "It was put back, but the record of why could not be stored.": "Het is teruggezet, maar de reden kon niet worden vastgelegd.",
         "When an object matching a catalog schema is created, automatically apply public read access via RBAC rules": "Wanneer een object dat overeenkomt met een catalogusschema wordt aangemaakt, pas dan automatisch openbare leestoegang toe via RBAC-regels",
         "When to use mass validation:": "Wanneer bulkvalidatie gebruiken:",
         "Which attachments require your attention?": "Welke bijlagen vereisen uw aandacht?",
