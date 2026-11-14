@@ -1,0 +1,158 @@
+{
+	"components": {
+		"registers": {
+			"publication": {
+				"schemas": [
+					"metadataSuggestion"
+				],
+				"configuration": {
+					"schemas": {
+						"metadataSuggestion": {
+							"magicMapping": true,
+							"autoCreateTable": true,
+							"comment": "A proposed value for a missing Woo field of a publication, waiting for a person to accept or reject it"
+						}
+					}
+				}
+			}
+		},
+		"schemas": {
+			"metadataSuggestion": {
+				"slug": "metadataSuggestion",
+				"title": "Metadata suggestion",
+				"version": "0.1.0",
+				"published": "2026-11-14T00:00:00+00:00",
+				"summary": "A proposed value for a missing Woo field, for a person to accept or reject",
+				"description": "When a publication lacks its information category, publisher organisation or handling type, OpenCatalogi proposes a value from data the instance already holds (source rules) or, on request, from Hermiq (source hermiq). Nothing is written to the publication until a person who may update it accepts the suggestion (woo-metadata-suggestions REQ-WMS-001, REQ-WMS-003).",
+				"icon": "LightbulbOnOutline",
+				"type": "object",
+				"required": [
+					"publication",
+					"field",
+					"value",
+					"source",
+					"status"
+				],
+				"authorization": {
+					"read": [
+						"authenticated"
+					]
+				},
+				"properties": {
+					"publication": {
+						"type": "string",
+						"title": "Publication",
+						"description": "The publication the value is proposed for.",
+						"$ref": "#/components/schemas/publication",
+						"facetable": true
+					},
+					"field": {
+						"type": "string",
+						"title": "Field",
+						"description": "The publication field the value is proposed for.",
+						"enum": [
+							"wooCategory",
+							"soortHandeling",
+							"organization",
+							"title",
+							"summary"
+						],
+						"facetable": true
+					},
+					"value": {
+						"type": "string",
+						"title": "Value",
+						"description": "The proposed value, as the publication field stores it.",
+						"minLength": 1
+					},
+					"valueLabel": {
+						"type": "string",
+						"title": "Value label",
+						"description": "The proposed value as an editor reads it."
+					},
+					"source": {
+						"type": "string",
+						"title": "Source",
+						"description": "Where the proposal came from: the rules floor, or Hermiq on an editor's request.",
+						"enum": [
+							"rules",
+							"hermiq"
+						],
+						"facetable": true
+					},
+					"reason": {
+						"type": "string",
+						"title": "Reason",
+						"description": "Why this value is proposed, in a sentence an editor can check."
+					},
+					"status": {
+						"type": "string",
+						"title": "Status",
+						"description": "Pending until a person accepts or rejects it.",
+						"enum": [
+							"pending",
+							"accepted",
+							"rejected"
+						],
+						"default": "pending",
+						"facetable": true
+					},
+					"decidedBy": {
+						"type": "string",
+						"title": "Decided by",
+						"description": "The user who accepted or rejected the suggestion."
+					},
+					"decidedAt": {
+						"type": "string",
+						"format": "date-time",
+						"title": "Decided at",
+						"description": "When the suggestion was accepted or rejected."
+					}
+				},
+				"x-openregister-lifecycle": {
+					"field": "status",
+					"initial": "pending",
+					"final": [
+						"accepted",
+						"rejected"
+					],
+					"transitions": {
+						"accept": {
+							"from": [
+								"pending"
+							],
+							"to": "accepted",
+							"label": "Accept",
+							"description": "Write the value to the publication."
+						},
+						"reject": {
+							"from": [
+								"pending"
+							],
+							"to": "rejected",
+							"label": "Reject",
+							"description": "Leave the publication unchanged."
+						}
+					}
+				},
+				"x-openregister-aggregations": {
+					"pendingByPublication": {
+						"metric": "count",
+						"filter": {
+							"status": "pending"
+						},
+						"groupBy": {
+							"field": "publication"
+						},
+						"description": "Pending suggestions per publication, read by the suggestions widget header."
+					}
+				},
+				"configuration": {
+					"autoPublish": false
+				},
+				"hardValidation": false,
+				"searchable": false
+			}
+		}
+	}
+}

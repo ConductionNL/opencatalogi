@@ -2,7 +2,7 @@
 
 ## 1. Schema
 
-- [ ] 1.1 Add `metadataSuggestion` with its lifecycle and pending-count aggregation in `lib/Settings/register.d/woo-metadata-suggestions.json`, plus the seed suggestion (REQ-WMS-001). Verify: a clean `occ app:enable` imports the schema; `tests/Unit/Settings/RegisterFragmentTest.php` reads the fragment.
+- [x] 1.1 Add `metadataSuggestion` with its lifecycle and pending-count aggregation in `lib/Settings/register.d/woo-metadata-suggestions.json`, plus the seed suggestion (REQ-WMS-001). Verify: a clean `occ app:enable` imports the schema; `tests/Unit/Settings/RegisterFragmentTest.php` reads the fragment.
 
 ## 2. Rules floor
 
