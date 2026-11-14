@@ -338,6 +338,7 @@ import {
 	isDepublished,
 	isPublished,
 } from '../../services/publicationStatus.js'
+import { fetchPublicationStatusCounts } from '../../services/publicationStatusCounts.js'
 import { countingStartNote, fetchInstanceSeries } from '../../services/usageStats.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
@@ -630,6 +631,8 @@ export default {
 			usageCountingStart: null,
 			popularSearchTerms: [],
 			publicationTotal: 0,
+			// Per-status totals from OR's ad-hoc aggregation; null until they load.
+			statusCounts: null,
 			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 			// attachmentsList: [],
 		}
@@ -711,9 +714,14 @@ export default {
 				publicationCount:
 					this.publicationTotal || this.allPublications.length,
 
-				conceptPublicationCount: this.conceptPublications.length,
-				publishedPublicationCount: this.publishedPublications.length,
-				depublishedPublicationCount: this.depublishedPublications.length,
+				conceptPublicationCount:
+					this.statusCounts?.concept ?? this.conceptPublications.length,
+
+				publishedPublicationCount:
+					this.statusCounts?.published ?? this.publishedPublications.length,
+
+				depublishedPublicationCount:
+					this.statusCounts?.depublished ?? this.depublishedPublications.length,
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
@@ -834,61 +842,45 @@ export default {
 		},
 
 		/**
-		 * Source the total publication count from OR's generic ad-hoc aggregation
-		 * endpoint (`GET /api/objects/aggregations/{register}/{schema}/value`) instead
-		 * of the `_limit=1000`-capped `fetchAllPublications()` response (DSH-010 /
-		 * dashboard-consume-or-aggregations). This endpoint requires no schema-level
-		 * `x-openregister-aggregations` declaration — it is OR's always-available
-		 * ad-hoc count/sum/avg entry point — so it is correct for any catalog size,
-		 * unlike the previous truncated-at-1000 total.
+		 * Source the publication KPI counts from OR's generic ad-hoc aggregation
+		 * endpoint (`GET /api/objects/aggregations/{register}/{schema}/value`)
+		 * instead of the `_limit=1000`-capped `fetchAllPublications()` response
+		 * (DSH-010 / DSH-OR-001). The endpoint needs no schema-level
+		 * `x-openregister-aggregations` declaration and has no row cap.
 		 *
-		 * `conceptPublicationCount` / `publishedPublicationCount` /
-		 * `depublishedPublicationCount` remain client-computed from
-		 * `fetchAllPublications()`'s (bounded, not 1000-capped-as-a-total-source)
-		 * result: those three states are DERIVED from a date comparison against "now"
-		 * (`publicationDate` / `depublicationDate` — see `publicationStatus.js`), not a
-		 * stored field, so grouping by them via OR's field-based `groupBy` aggregation
-		 * is not possible without either (a) a materialized status field written on
-		 * save, or (b) confirmed null-safe date-range filter support in OR's ad-hoc
-		 * aggregation filter DSL (unconfirmed at authoring time — see
-		 * openspec/changes/dashboard-consume-or-aggregations/tasks.md). Tracked as a
-		 * follow-up; not silently guessed here to avoid shipping confidently-wrong
-		 * counts.
+		 * The concept / published / depublished states are derived from
+		 * `publicationDate` / `depublicationDate` against "now", not stored, so
+		 * they are counted with date filters: total, live (published on or before
+		 * now) and ended (also depublished on or before now) — see
+		 * `services/publicationStatusCounts.js`. When the register or schema is
+		 * not configured or a count fails, the KPIs keep the list-derived counts.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
+		 * @spec openspec/changes/dashboard-consume-or-aggregations/tasks.md
 		 */
 		async fetchPublicationAggregations() {
-			if (!PUBLICATION_REGISTER || !PUBLICATION_SCHEMA) {
+			const counts = await fetchPublicationStatusCounts({
+				register: PUBLICATION_REGISTER,
+				schema: PUBLICATION_SCHEMA,
+				prefix: window.location.pathname.includes('/index.php')
+					? '/index.php'
+					: '',
+				headers: buildHeaders(),
+			})
+			if (counts === null) {
+				console.warn('Failed to load publication count aggregations')
 				return
 			}
-
-			try {
-				const prefix = window.location.pathname.includes('/index.php')
-					? '/index.php'
-					: ''
-				const response = await fetch(
-					`${prefix}/apps/openregister/api/objects/aggregations/${PUBLICATION_REGISTER}/${PUBLICATION_SCHEMA}/value?metric=count`,
-					{ method: 'GET', headers: buildHeaders() },
-				)
-				if (response.ok) {
-					const data = await response.json()
-					if (typeof data.value === 'number') {
-						this.publicationTotal = data.value
-					}
-				}
-			} catch (err) {
-				console.warn('Failed to load publication count aggregation:', err)
-			}
+			this.statusCounts = counts
+			this.publicationTotal = counts.total
 		},
 
 		/**
 		 * Fetch a bounded page of publication objects to power the concept /
-		 * published / depublished side-panel lists and their (client-computed)
-		 * counts. `publicationTotal` (the headline KPI) is sourced separately by
-		 * `fetchPublicationAggregations()`, so this fetch no longer needs to
-		 * masquerade as the count source — see that method's docblock for why the
-		 * three sub-status counts remain list-derived rather than aggregation-derived.
+		 * published / depublished side-panel lists and the category chart. The KPI
+		 * counts are sourced separately by `fetchPublicationAggregations()`; this
+		 * page only stands in for them when that aggregation is unavailable.
 		 *
 		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
 		 */
