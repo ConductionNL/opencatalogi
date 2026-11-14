@@ -11,6 +11,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 - [x] 2.1 Add `OutboundGate` and the `dryRunDelivery` schema fragment with `slug` and version (REQ-STG-002). Verify: `tests/Unit/Service/OutboundGateTest.php::testStagingDoesNotAllow`, `::testAnUnreadableModeDoesNotAllow`, `::testProductionAllows`.
 - [ ] 2.2 Put the gate first in the six named methods; a dry run stores the record and sets no delivery field (REQ-STG-002). Verify: `tests/Unit/Service/OutboundGateWiringTest.php::testEveryChannelRecordsADryRunInStaging` (fails today: each sends), `::testADryRunSetsNoDeliveryField`.
+  - Built: `DryRunRecorder::hold()` (asks `OutboundGate`, stores the `dryRunDelivery` with channel, payload, at, user and reason, answers the dry run) and the broadcast channel (`BroadcastService::sendBroadcastRequest()` holds and goes on as accepted); `OutboundGateWiringTest` covers staging, production, an unreadable mode and a failed store. Left: the national index, PLOOI (two), Woo registration and directory announce sites, so the task stays open.
 - [ ] 2.3 Add a test that greps `lib/` for `new Client(`, `IClientService` and the gateway delivery event names, and fails on a site outside the six gated methods and the inbound readers it lists by name (REQ-STG-002). Verify: `tests/Unit/Service/OutboundGateCoverageTest.php::testNoUngatedOutboundSiteExists`.
 - [ ] 2.4 Add a Dry runs page listing `dryRunDelivery` records (REQ-STG-002). Verify: `tests/e2e/instance-staging-mode.spec.ts` "the officer reviews what would have gone out".
 
