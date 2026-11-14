@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
@@ -78,6 +79,7 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
+use OCA\OpenCatalogi\Service\Table\PublishedTableService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
@@ -147,6 +149,7 @@ class ServiceRegistrar {
 		CitizenCollectionServiceInterface::class => CitizenCollectionService::class,
 		PublicationRuleServiceInterface::class => PublicationRuleService::class,
 		CommentPeriodServiceInterface::class => CommentPeriodService::class,
+		PublishedTableServiceInterface::class => PublishedTableService::class,
 		CatalogAccessServiceInterface::class => CatalogAccessService::class,
 		ConnectionReporterInterface::class => ConnectionReporter::class,
 		CommentPeriodWithdrawalServiceInterface::class => CommentPeriodWithdrawalService::class,
