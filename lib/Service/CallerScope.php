@@ -75,19 +75,64 @@ final class CallerScope {
 	 * function over the query array, with no state and no collaborators, so every
 	 * reader calls the same code without a constructor change.
 	 *
+	 * With a collector, the names of the keys it removed are recorded as
+	 * `callerScopeIgnored` (REQ-ASF-002); their values are never echoed. Nothing is
+	 * recorded when no key was removed.
+	 *
 	 * @param array $query A search query built from request parameters.
+	 * @param AppliedFilters|null $appliedFilters The request's collector, to report the removed keys.
 	 *
 	 * @return array The query without any caller-supplied register/schema scope.
 	 *
 	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 */
-	public static function strip(array $query): array {
+	public static function strip(array $query, ?AppliedFilters $appliedFilters = null): array {
+		$removed = self::removedKeys(query: $query);
 		foreach (self::CALLER_SCOPE_KEYS as $key) {
 			unset($query[$key]);
 		}
 
+		if ($appliedFilters !== null && $removed !== []) {
+			$appliedFilters->record(
+				name: AppliedFilters::CALLER_SCOPE_IGNORED,
+				value: $removed,
+				reason: 'A public list sets its own register and schema scope; these query keys were ignored.'
+			);
+		}
+
 		return self::withoutSelfScope(query: $query);
 	}//end strip()
+
+	/**
+	 * The names of the scope keys {@see strip()} removes from a query, `@self`
+	 * sub-keys as `@self.<key>` and a non-array `@self` as `@self`.
+	 *
+	 * @param array $query A search query built from request parameters.
+	 *
+	 * @return array<int, string> The key names, in the order strip() checks them.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public static function removedKeys(array $query): array {
+		$removed = array_values(array_filter(self::CALLER_SCOPE_KEYS, static fn (string $key): bool => array_key_exists($key, $query)));
+		if (array_key_exists('@self', $query) === false) {
+			return $removed;
+		}
+
+		if (is_array($query['@self']) === false) {
+			$removed[] = '@self';
+			return $removed;
+		}
+
+		foreach (self::CALLER_SELF_SCOPE_KEYS as $key) {
+			if (array_key_exists($key, $query['@self']) === true) {
+				$removed[] = '@self.' . $key;
+			}
+		}
+
+		return $removed;
+	}//end removedKeys()
 
 	/**
 	 * Remove the scope sub-keys of `@self`, and an `@self` that is not an array.
