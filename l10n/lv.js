@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Pievienojiet katalogam reģistru un shēmu, lai šeit tiktu parādītas tā publikācijas.",
         "Open catalog": "Atvērt katalogu",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Izveidojiet savu pirmo katalogu. Tas ir konteiners, kurā būs jūsu publikācijas. Izvēlieties reģistru Publication un shēmu Publication, lai katalogs rādītu jūsu pievienotās publikācijas.",
-        "Manage your publications and their status": "Pārvaldiet savas publikācijas un to statusu"
+        "Manage your publications and their status": "Pārvaldiet savas publikācijas un to statusu",
+        "Retention defaults": "Noklusējuma glabāšanas termiņi",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Šī kataloga publikācija tos saņem pirmajā publicēšanas reizē, ja tās glabāšanas lauki ir tukši. Vēlākas izmaiņas esošās publikācijas nemaina.",
+        "Term in months": "Termiņš mēnešos",
+        "When the term ends": "Kad termiņš beidzas",
+        "Term in months for {category}": "Termiņš mēnešos: {category}",
+        "A whole number of months, 1 or more": "Vesels mēnešu skaits, 1 vai vairāk",
+        "When the term of {category} ends": "Kad beidzas kategorijas {category} termiņš",
+        "Retention defaults saved": "Noklusējuma glabāšanas termiņi saglabāti",
+        "Save retention defaults": "Saglabāt noklusējuma glabāšanas termiņus",
+        "Flag for review": "Atzīmēt pārskatīšanai",
+        "The retention defaults could not be loaded": "Noklusējuma glabāšanas termiņus neizdevās ielādēt",
+        "The retention defaults could not be saved": "Noklusējuma glabāšanas termiņus neizdevās saglabāt",
+        "Any other category": "Jebkura cita kategorija"
     },
     "nplurals=2; plural=(n != 1);"
 )

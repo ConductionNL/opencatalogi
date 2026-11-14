@@ -722,7 +722,20 @@
         "Add a register and a schema to the catalog to list its publications here.": "Додајте регистар и шема во каталогот за да се прикажуваат неговите објави тука.",
         "Open catalog": "Отвори каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Создадете го вашиот прв каталог. Тоа е контејнерот во кој ќе бидат вашите објави. Изберете го регистарот Publication и шемата Publication, за каталогот да ги прикажува објавите што ги додавате.",
-        "Manage your publications and their status": "Управувајте со вашите публикации и нивниот статус"
+        "Manage your publications and their status": "Управувајте со вашите публикации и нивниот статус",
+        "Retention defaults": "Стандардни рокови на чување",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Објава во овој каталог ги добива при првото објавување ако нејзините полиња за чување се празни. Подоцнежна промена не ги менува постојните објави.",
+        "Term in months": "Рок во месеци",
+        "When the term ends": "Кога рокот ќе истече",
+        "Term in months for {category}": "Рок во месеци за {category}",
+        "A whole number of months, 1 or more": "Цел број месеци, 1 или повеќе",
+        "When the term of {category} ends": "Кога ќе истече рокот за {category}",
+        "Retention defaults saved": "Стандардните рокови на чување се зачувани",
+        "Save retention defaults": "Зачувај стандардни рокови на чување",
+        "Flag for review": "Означи за преглед",
+        "The retention defaults could not be loaded": "Стандардните рокови на чување не можеа да се вчитаат",
+        "The retention defaults could not be saved": "Стандардните рокови на чување не можеа да се зачуваат",
+        "Any other category": "Која било друга категорија"
     },
     "plurals": {}
 }

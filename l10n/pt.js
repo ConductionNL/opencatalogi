@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Adicione um registo e um esquema ao catálogo para listar aqui as suas publicações.",
         "Open catalog": "Abrir catálogo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Crie o seu primeiro catálogo. É o contentor onde ficarão as suas publicações. Escolha o registo Publication e o esquema Publication, para que o catálogo liste as publicações que adicionar.",
-        "Manage your publications and their status": "Faça a gestão das suas publicações e do respetivo estado"
+        "Manage your publications and their status": "Faça a gestão das suas publicações e do respetivo estado",
+        "Retention defaults": "Prazos de conservação predefinidos",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Uma publicação deste catálogo recebe-os na primeira publicação se os seus próprios campos de conservação estiverem vazios. Alterá-los depois não altera as publicações existentes.",
+        "Term in months": "Prazo em meses",
+        "When the term ends": "Quando o prazo termina",
+        "Term in months for {category}": "Prazo em meses para {category}",
+        "A whole number of months, 1 or more": "Um número inteiro de meses, 1 ou mais",
+        "When the term of {category} ends": "Quando o prazo de {category} termina",
+        "Retention defaults saved": "Prazos de conservação predefinidos guardados",
+        "Save retention defaults": "Guardar prazos de conservação predefinidos",
+        "Flag for review": "Assinalar para revisão",
+        "The retention defaults could not be loaded": "Não foi possível carregar os prazos de conservação predefinidos",
+        "The retention defaults could not be saved": "Não foi possível guardar os prazos de conservação predefinidos",
+        "Any other category": "Qualquer outra categoria"
     },
     "nplurals=2; plural=(n != 1);"
 )

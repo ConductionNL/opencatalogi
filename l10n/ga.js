@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Cuir clár agus scéimre leis an gcatalóg chun a foilseacháin a liostú anseo.",
         "Open catalog": "Oscail an catalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cruthaigh do chéad chatalóg. Is é an coimeádán ina mbeidh do chuid foilseachán. Roghnaigh an clár Publication agus an scéimre Publication, ionas go liostóidh an catalóg na foilseacháin a chuireann tú leis.",
-        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas"
+        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas",
+        "Retention defaults": "Tréimhsí coinneála réamhshocraithe",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Faigheann foilseachán sa chatalóg seo iad nuair a fhoilsítear é den chéad uair má tá a réimsí coinneála féin folamh. Ní athraíonn athrú níos déanaí foilseacháin atá ann cheana.",
+        "Term in months": "Tréimhse i míonna",
+        "When the term ends": "Nuair a chríochnaíonn an tréimhse",
+        "Term in months for {category}": "Tréimhse i míonna do {category}",
+        "A whole number of months, 1 or more": "Slánuimhir míonna, 1 nó níos mó",
+        "When the term of {category} ends": "Nuair a chríochnaíonn tréimhse {category}",
+        "Retention defaults saved": "Sábháladh na tréimhsí coinneála réamhshocraithe",
+        "Save retention defaults": "Sábháil na tréimhsí coinneála réamhshocraithe",
+        "Flag for review": "Marcáil le haghaidh athbhreithnithe",
+        "The retention defaults could not be loaded": "Níorbh fhéidir na tréimhsí coinneála réamhshocraithe a lódáil",
+        "The retention defaults could not be saved": "Níorbh fhéidir na tréimhsí coinneála réamhshocraithe a shábháil",
+        "Any other category": "Aon chatagóir eile"
     },
     "nplurals=2; plural=(n != 1);"
 )

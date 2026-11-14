@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Pridajte do katalógu register a schému, aby sa tu zobrazovali jeho publikácie.",
         "Open catalog": "Otvoriť katalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvorte svoj prvý katalóg. Je to kontajner, v ktorom budú vaše publikácie. Vyberte register Publication a schému Publication, aby katalóg zobrazoval publikácie, ktoré pridáte.",
-        "Manage your publications and their status": "Spravujte svoje publikácie a ich stav"
+        "Manage your publications and their status": "Spravujte svoje publikácie a ich stav",
+        "Retention defaults": "Predvolené lehoty uchovávania",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Publikácia v tomto katalógu ich dostane pri prvom zverejnení, ak sú jej vlastné polia uchovávania prázdne. Neskoršia zmena nemení existujúce publikácie.",
+        "Term in months": "Lehota v mesiacoch",
+        "When the term ends": "Keď lehota uplynie",
+        "Term in months for {category}": "Lehota v mesiacoch pre {category}",
+        "A whole number of months, 1 or more": "Celý počet mesiacov, 1 alebo viac",
+        "When the term of {category} ends": "Keď uplynie lehota pre {category}",
+        "Retention defaults saved": "Predvolené lehoty uchovávania uložené",
+        "Save retention defaults": "Uložiť predvolené lehoty uchovávania",
+        "Flag for review": "Označiť na kontrolu",
+        "The retention defaults could not be loaded": "Predvolené lehoty uchovávania sa nepodarilo načítať",
+        "The retention defaults could not be saved": "Predvolené lehoty uchovávania sa nepodarilo uložiť",
+        "Any other category": "Akákoľvek iná kategória"
     },
     "nplurals=2; plural=(n != 1);"
 )

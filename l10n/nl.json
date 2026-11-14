@@ -1509,7 +1509,20 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
-        "Planning (does not publish)": "Planning (publiceert niet)"
+        "Planning (does not publish)": "Planning (publiceert niet)",
+        "Retention defaults": "Standaard bewaartermijnen",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Een publicatie in deze catalogus krijgt deze bij de eerste publicatie als haar eigen bewaarvelden leeg zijn. Later wijzigen verandert bestaande publicaties niet.",
+        "Term in months": "Termijn in maanden",
+        "When the term ends": "Als de termijn afloopt",
+        "Term in months for {category}": "Termijn in maanden voor {category}",
+        "A whole number of months, 1 or more": "Een heel aantal maanden, 1 of meer",
+        "When the term of {category} ends": "Als de termijn van {category} afloopt",
+        "Retention defaults saved": "Standaard bewaartermijnen opgeslagen",
+        "Save retention defaults": "Standaard bewaartermijnen opslaan",
+        "Flag for review": "Markeren voor beoordeling",
+        "The retention defaults could not be loaded": "De standaard bewaartermijnen konden niet worden geladen",
+        "The retention defaults could not be saved": "De standaard bewaartermijnen konden niet worden opgeslagen",
+        "Any other category": "Elke andere categorie"
     },
     "plurals": {}
 }

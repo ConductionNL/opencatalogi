@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Додайте до каталогу реєстр і схему, щоб тут відображалися його публікації.",
         "Open catalog": "Відкрити каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Створіть свій перший каталог. Це контейнер, у якому будуть ваші публікації. Виберіть реєстр Publication і схему Publication, щоб каталог показував публікації, які ви додаєте.",
-        "Manage your publications and their status": "Керуйте своїми публікаціями та їхнім статусом"
+        "Manage your publications and their status": "Керуйте своїми публікаціями та їхнім статусом",
+        "Retention defaults": "Типові строки зберігання",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Публікація цього каталогу отримує їх під час першої публікації, якщо її власні поля зберігання порожні. Пізніші зміни не впливають на наявні публікації.",
+        "Term in months": "Строк у місяцях",
+        "When the term ends": "Коли строк спливає",
+        "Term in months for {category}": "Строк у місяцях для {category}",
+        "A whole number of months, 1 or more": "Ціле число місяців, 1 або більше",
+        "When the term of {category} ends": "Коли спливає строк для {category}",
+        "Retention defaults saved": "Типові строки зберігання збережено",
+        "Save retention defaults": "Зберегти типові строки зберігання",
+        "Flag for review": "Позначити для перевірки",
+        "The retention defaults could not be loaded": "Не вдалося завантажити типові строки зберігання",
+        "The retention defaults could not be saved": "Не вдалося зберегти типові строки зберігання",
+        "Any other category": "Будь-яка інша категорія"
     },
     "nplurals=2; plural=(n != 1);"
 )

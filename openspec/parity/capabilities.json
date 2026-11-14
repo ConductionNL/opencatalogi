@@ -6066,9 +6066,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:54-55 GET/POST /api/retention/defaults; lib/Service/RetentionService.php:220/243 per-catalog, per-Woo-category term and action in app config; applied at publication by lib/Listener/ObjectCreatedEventListener.php:175 and ObjectUpdatedEventListener.php:195 Missing (spec-coverage pass 2026-11-12, development bba37fc7): no screen sets the retention defaults (no src caller of /api/retention/defaults), only the API does.",
+				"evidence": "appinfo/routes.php GET/POST /api/retention/defaults; lib/Service/RetentionService.php per-catalog, per-Woo-category term and action in app config, applied at publication by ObjectCreatedEventListener and ObjectUpdatedEventListener; src/components/CatalogRetentionDefaultsFields.vue on the catalogue edit page (CatalogModal, admins) reads and saves them per Woo information category with a catalogue-wide fallback (CatalogRetentionDefaultsFields.spec.js, tests/vitest/retentionDefaults.spec.js)",
 				"change": [
 					"publication-retention-lifecycle",
 					"retention-defaults-on-shared-decision-tables"

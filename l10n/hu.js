@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Adjon hozzá egy nyilvántartást és egy sémát a katalógushoz, hogy itt megjelenjenek a közzétételei.",
         "Open catalog": "Katalógus megnyitása",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Hozza létre az első katalógusát. Ez az a tároló, amelyben a közzétételei lesznek. Válassza a Publication nyilvántartást és a Publication sémát, hogy a katalógus megjelenítse a hozzáadott közzétételeket.",
-        "Manage your publications and their status": "Kezelje a publikációit és azok állapotát"
+        "Manage your publications and their status": "Kezelje a publikációit és azok állapotát",
+        "Retention defaults": "Alapértelmezett megőrzési idők",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "A katalógus egy kiadványa ezeket kapja az első közzétételkor, ha saját megőrzési mezői üresek. A későbbi módosítás nem változtatja meg a meglévő kiadványokat.",
+        "Term in months": "Időtartam hónapban",
+        "When the term ends": "Amikor az időtartam lejár",
+        "Term in months for {category}": "Időtartam hónapban: {category}",
+        "A whole number of months, 1 or more": "Egész számú hónap, legalább 1",
+        "When the term of {category} ends": "Amikor a(z) {category} időtartama lejár",
+        "Retention defaults saved": "Az alapértelmezett megőrzési idők mentve",
+        "Save retention defaults": "Alapértelmezett megőrzési idők mentése",
+        "Flag for review": "Megjelölés felülvizsgálatra",
+        "The retention defaults could not be loaded": "Az alapértelmezett megőrzési időket nem sikerült betölteni",
+        "The retention defaults could not be saved": "Az alapértelmezett megőrzési időket nem sikerült menteni",
+        "Any other category": "Bármely más kategória"
     },
     "nplurals=2; plural=(n != 1);"
 )

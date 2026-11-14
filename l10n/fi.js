@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Lisää luetteloon rekisteri ja skeema, jotta sen julkaisut näkyvät tässä.",
         "Open catalog": "Avaa luettelo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Luo ensimmäinen luettelosi. Se on säiliö, johon julkaisusi tallentuvat. Valitse rekisteri Publication ja skeema Publication, jotta luettelo näyttää lisäämäsi julkaisut.",
-        "Manage your publications and their status": "Hallitse julkaisujasi ja niiden tilaa"
+        "Manage your publications and their status": "Hallitse julkaisujasi ja niiden tilaa",
+        "Retention defaults": "Oletussäilytysajat",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Tämän luettelon julkaisu saa nämä ensimmäisellä julkaisukerralla, jos sen omat säilytyskentät ovat tyhjiä. Myöhemmät muutokset eivät muuta olemassa olevia julkaisuja.",
+        "Term in months": "Aika kuukausina",
+        "When the term ends": "Kun aika päättyy",
+        "Term in months for {category}": "Aika kuukausina: {category}",
+        "A whole number of months, 1 or more": "Kokonainen määrä kuukausia, vähintään 1",
+        "When the term of {category} ends": "Kun luokan {category} aika päättyy",
+        "Retention defaults saved": "Oletussäilytysajat tallennettu",
+        "Save retention defaults": "Tallenna oletussäilytysajat",
+        "Flag for review": "Merkitse tarkastettavaksi",
+        "The retention defaults could not be loaded": "Oletussäilytysaikoja ei voitu ladata",
+        "The retention defaults could not be saved": "Oletussäilytysaikoja ei voitu tallentaa",
+        "Any other category": "Mikä tahansa muu luokka"
     },
     "nplurals=2; plural=(n != 1);"
 )

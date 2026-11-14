@@ -722,7 +722,20 @@
         "Add a register and a schema to the catalog to list its publications here.": "Dodajte registar i shemu katalogu kako bi se ovdje prikazale njegove objave.",
         "Open catalog": "Otvori katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Izradite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate.",
-        "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom"
+        "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom",
+        "Retention defaults": "Zadani rokovi čuvanja",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Objava u ovom katalogu dobiva ih pri prvoj objavi ako su njezina polja čuvanja prazna. Kasnija promjena ne mijenja postojeće objave.",
+        "Term in months": "Rok u mjesecima",
+        "When the term ends": "Kada rok istekne",
+        "Term in months for {category}": "Rok u mjesecima za {category}",
+        "A whole number of months, 1 or more": "Cijeli broj mjeseci, 1 ili više",
+        "When the term of {category} ends": "Kada istekne rok za {category}",
+        "Retention defaults saved": "Zadani rokovi čuvanja spremljeni",
+        "Save retention defaults": "Spremi zadane rokove čuvanja",
+        "Flag for review": "Označi za pregled",
+        "The retention defaults could not be loaded": "Zadane rokove čuvanja nije moguće učitati",
+        "The retention defaults could not be saved": "Zadane rokove čuvanja nije moguće spremiti",
+        "Any other category": "Bilo koja druga kategorija"
     },
     "plurals": {}
 }

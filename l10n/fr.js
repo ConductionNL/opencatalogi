@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Ajoutez un registre et un schéma au catalogue pour afficher ses publications ici.",
         "Open catalog": "Ouvrir le catalogue",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Créez votre premier catalogue. C'est le conteneur dans lequel vivront vos publications. Choisissez le registre Publication et le schéma Publication, afin que le catalogue affiche les publications que vous ajoutez.",
-        "Manage your publications and their status": "Gérez vos publications et leur statut"
+        "Manage your publications and their status": "Gérez vos publications et leur statut",
+        "Retention defaults": "Durées de conservation par défaut",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Une publication de ce catalogue les reçoit lors de sa première publication si ses propres champs de conservation sont vides. Les modifier ensuite ne change pas les publications existantes.",
+        "Term in months": "Durée en mois",
+        "When the term ends": "À la fin de la durée",
+        "Term in months for {category}": "Durée en mois pour {category}",
+        "A whole number of months, 1 or more": "Un nombre entier de mois, 1 ou plus",
+        "When the term of {category} ends": "À la fin de la durée de {category}",
+        "Retention defaults saved": "Durées de conservation par défaut enregistrées",
+        "Save retention defaults": "Enregistrer les durées de conservation par défaut",
+        "Flag for review": "Signaler pour examen",
+        "The retention defaults could not be loaded": "Les durées de conservation par défaut n'ont pas pu être chargées",
+        "The retention defaults could not be saved": "Les durées de conservation par défaut n'ont pas pu être enregistrées",
+        "Any other category": "Toute autre catégorie"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Agiunta in register ed in schema al catalog per mussar qua sias publicaziuns.",
         "Open catalog": "Avrir il catalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creescha tes emprim catalog. El è il container, en il qual vegnan a star tias publicaziuns. Tscherna il register Publication ed il schema Publication, uschia ch'il catalog mussa las publicaziuns che ti agiuntas.",
-        "Manage your publications and their status": "Administrai Vossas publicaziuns e lur status"
+        "Manage your publications and their status": "Administrai Vossas publicaziuns e lur status",
+        "Retention defaults": "Termins da conservaziun predefinids",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Ina publicaziun da quest catalog als survegn cura ch'ella vegn publitgada l'emprima giada e ses agens champs da conservaziun èn vids. Als midar pli tard na mida betg las publicaziuns existentas.",
+        "Term in months": "Termin en mais",
+        "When the term ends": "Cura ch'il termin scada",
+        "Term in months for {category}": "Termin en mais per {category}",
+        "A whole number of months, 1 or more": "In dumber entir da mais, 1 u dapli",
+        "When the term of {category} ends": "Cura ch'il termin da {category} scada",
+        "Retention defaults saved": "Termins da conservaziun predefinids memorisads",
+        "Save retention defaults": "Memorisar ils termins da conservaziun predefinids",
+        "Flag for review": "Marcar per examinaziun",
+        "The retention defaults could not be loaded": "Ils termins da conservaziun predefinids n'han betg pudì vegnir chargiads",
+        "The retention defaults could not be saved": "Ils termins da conservaziun predefinids n'han betg pudì vegnir memorisads",
+        "Any other category": "Mintga autra categoria"
     },
     "nplurals=2; plural=(n != 1);"
 )

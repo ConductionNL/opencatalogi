@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Дадайце ў каталог рэестр і схему, каб тут паказваліся яго публікацыі.",
         "Open catalog": "Адкрыць каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Стварыце свой першы каталог. Гэта кантэйнер, у якім будуць вашы публікацыі. Выберыце рэестр Publication і схему Publication, каб каталог паказваў публікацыі, якія вы дадаеце.",
-        "Manage your publications and their status": "Кіруйце сваімі публікацыямі і іх статусам"
+        "Manage your publications and their status": "Кіруйце сваімі публікацыямі і іх статусам",
+        "Retention defaults": "Тэрміны захоўвання па змаўчанні",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Публікацыя гэтага каталога атрымлівае іх пры першай публікацыі, калі яе ўласныя палі захоўвання пустыя. Пазнейшыя змены не закранаюць існуючыя публікацыі.",
+        "Term in months": "Тэрмін у месяцах",
+        "When the term ends": "Калі тэрмін сканчаецца",
+        "Term in months for {category}": "Тэрмін у месяцах для {category}",
+        "A whole number of months, 1 or more": "Цэлая колькасць месяцаў, 1 або больш",
+        "When the term of {category} ends": "Калі сканчаецца тэрмін для {category}",
+        "Retention defaults saved": "Тэрміны захоўвання па змаўчанні захаваны",
+        "Save retention defaults": "Захаваць тэрміны захоўвання па змаўчанні",
+        "Flag for review": "Пазначыць для праверкі",
+        "The retention defaults could not be loaded": "Не ўдалося загрузіць тэрміны захоўвання па змаўчанні",
+        "The retention defaults could not be saved": "Не ўдалося захаваць тэрміны захоўвання па змаўчанні",
+        "Any other category": "Любая іншая катэгорыя"
     },
     "nplurals=2; plural=(n != 1);"
 )

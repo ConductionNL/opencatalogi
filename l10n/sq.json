@@ -722,7 +722,20 @@
         "Add a register and a schema to the catalog to list its publications here.": "Shtoni një regjistër dhe një skemë në katalog që botimet e tij të shfaqen këtu.",
         "Open catalog": "Hap katalogun",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Krijoni katalogun tuaj të parë. Është kontejneri ku do të jenë botimet tuaja. Zgjidhni regjistrin Publication dhe skemën Publication, që katalogu të shfaqë botimet që shtoni.",
-        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre"
+        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre",
+        "Retention defaults": "Afatet e parazgjedhura të ruajtjes",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Një botim i këtij katalogu i merr këto kur botohet për herë të parë, nëse fushat e veta të ruajtjes janë bosh. Ndryshimi i tyre më vonë nuk ndryshon botimet ekzistuese.",
+        "Term in months": "Afati në muaj",
+        "When the term ends": "Kur afati mbaron",
+        "Term in months for {category}": "Afati në muaj për {category}",
+        "A whole number of months, 1 or more": "Një numër i plotë muajsh, 1 ose më shumë",
+        "When the term of {category} ends": "Kur mbaron afati i {category}",
+        "Retention defaults saved": "Afatet e parazgjedhura të ruajtjes u ruajtën",
+        "Save retention defaults": "Ruaj afatet e parazgjedhura të ruajtjes",
+        "Flag for review": "Shëno për shqyrtim",
+        "The retention defaults could not be loaded": "Afatet e parazgjedhura të ruajtjes nuk mund të ngarkoheshin",
+        "The retention defaults could not be saved": "Afatet e parazgjedhura të ruajtjes nuk mund të ruheshin",
+        "Any other category": "Çdo kategori tjetër"
     },
     "plurals": {}
 }

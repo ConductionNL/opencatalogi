@@ -1554,7 +1554,20 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "Retention defaults": "Retention defaults",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.",
+        "Term in months": "Term in months",
+        "When the term ends": "When the term ends",
+        "Term in months for {category}": "Term in months for {category}",
+        "A whole number of months, 1 or more": "A whole number of months, 1 or more",
+        "When the term of {category} ends": "When the term of {category} ends",
+        "Retention defaults saved": "Retention defaults saved",
+        "Save retention defaults": "Save retention defaults",
+        "Flag for review": "Flag for review",
+        "The retention defaults could not be loaded": "The retention defaults could not be loaded",
+        "The retention defaults could not be saved": "The retention defaults could not be saved",
+        "Any other category": "Any other category"
     },
     "plurals": {}
 }

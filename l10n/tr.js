@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Yayınlarının burada listelenmesi için kataloğa bir kayıt ve bir şema ekleyin.",
         "Open catalog": "Kataloğu aç",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "İlk kataloğunuzu oluşturun. Yayınlarınızın yer alacağı kapsayıcıdır. Kataloğun eklediğiniz yayınları listelemesi için Publication kaydını ve Publication şemasını seçin.",
-        "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin"
+        "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin",
+        "Retention defaults": "Varsayılan saklama süreleri",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Bu katalogdaki bir yayın, kendi saklama alanları boşsa ilk yayımlandığında bunları alır. Sonradan değiştirmek mevcut yayınları değiştirmez.",
+        "Term in months": "Ay olarak süre",
+        "When the term ends": "Süre dolduğunda",
+        "Term in months for {category}": "{category} için ay olarak süre",
+        "A whole number of months, 1 or more": "Tam sayı olarak ay, 1 veya daha fazla",
+        "When the term of {category} ends": "{category} süresi dolduğunda",
+        "Retention defaults saved": "Varsayılan saklama süreleri kaydedildi",
+        "Save retention defaults": "Varsayılan saklama sürelerini kaydet",
+        "Flag for review": "İnceleme için işaretle",
+        "The retention defaults could not be loaded": "Varsayılan saklama süreleri yüklenemedi",
+        "The retention defaults could not be saved": "Varsayılan saklama süreleri kaydedilemedi",
+        "Any other category": "Diğer herhangi bir kategori"
     },
     "nplurals=2; plural=(n != 1);"
 )

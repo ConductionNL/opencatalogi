@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Adăugați un registru și o schemă la catalog pentru a-i afișa aici publicațiile.",
         "Open catalog": "Deschide catalogul",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creați primul dumneavoastră catalog. Este containerul în care vor sta publicațiile dumneavoastră. Alegeți registrul Publication și schema Publication, astfel încât catalogul să afișeze publicațiile pe care le adăugați.",
-        "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora"
+        "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora",
+        "Retention defaults": "Termene implicite de păstrare",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "O publicație din acest catalog le primește la prima publicare dacă propriile câmpuri de păstrare sunt goale. Modificarea lor ulterioară nu schimbă publicațiile existente.",
+        "Term in months": "Termen în luni",
+        "When the term ends": "Când expiră termenul",
+        "Term in months for {category}": "Termen în luni pentru {category}",
+        "A whole number of months, 1 or more": "Un număr întreg de luni, 1 sau mai mult",
+        "When the term of {category} ends": "Când expiră termenul pentru {category}",
+        "Retention defaults saved": "Termenele implicite de păstrare au fost salvate",
+        "Save retention defaults": "Salvează termenele implicite de păstrare",
+        "Flag for review": "Marchează pentru revizuire",
+        "The retention defaults could not be loaded": "Termenele implicite de păstrare nu au putut fi încărcate",
+        "The retention defaults could not be saved": "Termenele implicite de păstrare nu au putut fi salvate",
+        "Any other category": "Orice altă categorie"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

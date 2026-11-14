@@ -722,7 +722,20 @@
         "Add a register and a schema to the catalog to list its publications here.": "Dodaj rejestr i schemat do katalogu, aby jego publikacje były tu wyświetlane.",
         "Open catalog": "Otwórz katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Utwórz swój pierwszy katalog. To kontener, w którym będą twoje publikacje. Wybierz rejestr Publication i schemat Publication, aby katalog wyświetlał dodawane przez ciebie publikacje.",
-        "Manage your publications and their status": "Zarządzaj swoimi publikacjami i ich statusem"
+        "Manage your publications and their status": "Zarządzaj swoimi publikacjami i ich statusem",
+        "Retention defaults": "Domyślne okresy przechowywania",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Publikacja w tym katalogu otrzymuje je przy pierwszej publikacji, jeśli jej własne pola przechowywania są puste. Późniejsza zmiana nie wpływa na istniejące publikacje.",
+        "Term in months": "Okres w miesiącach",
+        "When the term ends": "Gdy okres się kończy",
+        "Term in months for {category}": "Okres w miesiącach dla {category}",
+        "A whole number of months, 1 or more": "Całkowita liczba miesięcy, 1 lub więcej",
+        "When the term of {category} ends": "Gdy kończy się okres dla {category}",
+        "Retention defaults saved": "Zapisano domyślne okresy przechowywania",
+        "Save retention defaults": "Zapisz domyślne okresy przechowywania",
+        "Flag for review": "Oznacz do przeglądu",
+        "The retention defaults could not be loaded": "Nie udało się wczytać domyślnych okresów przechowywania",
+        "The retention defaults could not be saved": "Nie udało się zapisać domyślnych okresów przechowywania",
+        "Any other category": "Dowolna inna kategoria"
     },
     "plurals": {}
 }

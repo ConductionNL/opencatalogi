@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Додајте регистар и схему каталогу да би се овде приказале његове објаве.",
         "Open catalog": "Отвори каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Направите свој први каталог. То је контејнер у којем ће бити ваше објаве. Изаберите регистар Publication и схему Publication како би каталог приказивао објаве које додате.",
-        "Manage your publications and their status": "Управљајте својим публикацијама и њиховим статусом"
+        "Manage your publications and their status": "Управљајте својим публикацијама и њиховим статусом",
+        "Retention defaults": "Подразумевани рокови чувања",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Објава у овом каталогу добија их при првом објављивању ако су њена поља чувања празна. Каснија промена не мења постојеће објаве.",
+        "Term in months": "Рок у месецима",
+        "When the term ends": "Када рок истекне",
+        "Term in months for {category}": "Рок у месецима за {category}",
+        "A whole number of months, 1 or more": "Цео број месеци, 1 или више",
+        "When the term of {category} ends": "Када истекне рок за {category}",
+        "Retention defaults saved": "Подразумевани рокови чувања сачувани",
+        "Save retention defaults": "Сачувај подразумеване рокове чувања",
+        "Flag for review": "Означи за преглед",
+        "The retention defaults could not be loaded": "Подразумеване рокове чувања није могуће учитати",
+        "The retention defaults could not be saved": "Подразумеване рокове чувања није могуће сачувати",
+        "Any other category": "Било која друга категорија"
     },
     "nplurals=2; plural=(n != 1);"
 )

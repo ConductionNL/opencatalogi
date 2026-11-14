@@ -722,7 +722,20 @@
         "Add a register and a schema to the catalog to list its publications here.": "Tilføj et register og et skema til kataloget for at vise dets publikationer her.",
         "Open catalog": "Åbn katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Opret dit første katalog. Det er beholderen, som dine publikationer skal ligge i. Vælg registret Publication og skemaet Publication, så kataloget viser de publikationer, du tilføjer.",
-        "Manage your publications and their status": "Administrer dine publikationer og deres status"
+        "Manage your publications and their status": "Administrer dine publikationer og deres status",
+        "Retention defaults": "Standardopbevaringsfrister",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "En publikation i dette katalog får disse ved første publicering, hvis dens egne opbevaringsfelter er tomme. Ændringer senere påvirker ikke eksisterende publikationer.",
+        "Term in months": "Frist i måneder",
+        "When the term ends": "Når fristen udløber",
+        "Term in months for {category}": "Frist i måneder for {category}",
+        "A whole number of months, 1 or more": "Et helt antal måneder, 1 eller flere",
+        "When the term of {category} ends": "Når fristen for {category} udløber",
+        "Retention defaults saved": "Standardopbevaringsfrister gemt",
+        "Save retention defaults": "Gem standardopbevaringsfrister",
+        "Flag for review": "Markér til gennemgang",
+        "The retention defaults could not be loaded": "Standardopbevaringsfristerne kunne ikke indlæses",
+        "The retention defaults could not be saved": "Standardopbevaringsfristerne kunne ikke gemmes",
+        "Any other category": "Enhver anden kategori"
     },
     "plurals": {}
 }

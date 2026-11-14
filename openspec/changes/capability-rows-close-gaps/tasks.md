@@ -22,6 +22,6 @@ is done and its test is green.
 
 ## 3. Not-built rows that had no plan
 
-- [ ] 3.1 `lc-defaults`: add a retention defaults section to the catalogue edit page that reads and saves `GET`/`POST /api/retention/defaults` per Woo category (RET-004).
+- [x] 3.1 `lc-defaults`: add a retention defaults section to the catalogue edit page that reads and saves `GET`/`POST /api/retention/defaults` per Woo category (RET-004).
 - [ ] 3.2 `ops-reports`: point the report widgets in `src/manifest.json` (Reports, PublicationsReport, UsageReport, FederationReport) at the register the app ships (slug `publication`) instead of `opencatalogi`, and show each report with data on a default install (REP-001).
 

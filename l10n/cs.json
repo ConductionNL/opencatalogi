@@ -722,7 +722,20 @@
         "Add a register and a schema to the catalog to list its publications here.": "Přidejte do katalogu registr a schéma, aby se zde zobrazovaly jeho publikace.",
         "Open catalog": "Otevřít katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvořte svůj první katalog. Je to kontejner, ve kterém budou vaše publikace. Vyberte registr Publication a schéma Publication, aby katalog zobrazoval publikace, které přidáte.",
-        "Manage your publications and their status": "Spravujte své publikace a jejich stav"
+        "Manage your publications and their status": "Spravujte své publikace a jejich stav",
+        "Retention defaults": "Výchozí skartační lhůty",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Publikace v tomto katalogu je získá při prvním zveřejnění, pokud jsou její vlastní pole uchovávání prázdná. Pozdější změna nemění stávající publikace.",
+        "Term in months": "Lhůta v měsících",
+        "When the term ends": "Když lhůta skončí",
+        "Term in months for {category}": "Lhůta v měsících pro {category}",
+        "A whole number of months, 1 or more": "Celý počet měsíců, 1 nebo více",
+        "When the term of {category} ends": "Když skončí lhůta pro {category}",
+        "Retention defaults saved": "Výchozí skartační lhůty uloženy",
+        "Save retention defaults": "Uložit výchozí skartační lhůty",
+        "Flag for review": "Označit ke kontrole",
+        "The retention defaults could not be loaded": "Výchozí skartační lhůty se nepodařilo načíst",
+        "The retention defaults could not be saved": "Výchozí skartační lhůty se nepodařilo uložit",
+        "Any other category": "Jakákoli jiná kategorie"
     },
     "plurals": {}
 }

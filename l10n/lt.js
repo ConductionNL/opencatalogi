@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Pridėkite registrą ir schemą prie katalogo, kad čia būtų rodomos jo publikacijos.",
         "Open catalog": "Atverti katalogą",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Sukurkite pirmąjį katalogą. Tai talpykla, kurioje bus jūsų publikacijos. Pasirinkite registrą Publication ir schemą Publication, kad katalogas rodytų jūsų pridedamas publikacijas.",
-        "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną"
+        "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną",
+        "Retention defaults": "Numatytieji saugojimo terminai",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Šio katalogo leidinys juos gauna pirmą kartą paskelbtas, jei jo saugojimo laukai tušti. Vėlesni pakeitimai esamų leidinių nekeičia.",
+        "Term in months": "Terminas mėnesiais",
+        "When the term ends": "Kai terminas baigiasi",
+        "Term in months for {category}": "Terminas mėnesiais: {category}",
+        "A whole number of months, 1 or more": "Sveikas mėnesių skaičius, 1 ar daugiau",
+        "When the term of {category} ends": "Kai baigiasi kategorijos {category} terminas",
+        "Retention defaults saved": "Numatytieji saugojimo terminai įrašyti",
+        "Save retention defaults": "Įrašyti numatytuosius saugojimo terminus",
+        "Flag for review": "Pažymėti peržiūrai",
+        "The retention defaults could not be loaded": "Nepavyko įkelti numatytųjų saugojimo terminų",
+        "The retention defaults could not be saved": "Nepavyko įrašyti numatytųjų saugojimo terminų",
+        "Any other category": "Bet kuri kita kategorija"
     },
     "nplurals=2; plural=(n != 1);"
 )

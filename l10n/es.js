@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Añada un registro y un esquema al catálogo para mostrar aquí sus publicaciones.",
         "Open catalog": "Abrir catálogo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cree su primer catálogo. Es el contenedor donde estarán sus publicaciones. Elija el registro Publication y el esquema Publication para que el catálogo muestre las publicaciones que añada.",
-        "Manage your publications and their status": "Gestione sus publicaciones y su estado"
+        "Manage your publications and their status": "Gestione sus publicaciones y su estado",
+        "Retention defaults": "Plazos de conservación predeterminados",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Una publicación de este catálogo los recibe al publicarse por primera vez si sus propios campos de conservación están vacíos. Cambiarlos después no modifica las publicaciones existentes.",
+        "Term in months": "Plazo en meses",
+        "When the term ends": "Cuando termina el plazo",
+        "Term in months for {category}": "Plazo en meses para {category}",
+        "A whole number of months, 1 or more": "Un número entero de meses, 1 o más",
+        "When the term of {category} ends": "Cuando termina el plazo de {category}",
+        "Retention defaults saved": "Plazos de conservación predeterminados guardados",
+        "Save retention defaults": "Guardar plazos de conservación predeterminados",
+        "Flag for review": "Marcar para revisión",
+        "The retention defaults could not be loaded": "No se pudieron cargar los plazos de conservación predeterminados",
+        "The retention defaults could not be saved": "No se pudieron guardar los plazos de conservación predeterminados",
+        "Any other category": "Cualquier otra categoría"
     },
     "nplurals=2; plural=(n != 1);"
 )

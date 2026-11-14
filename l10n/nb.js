@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Legg til et register og et skjema i katalogen for å vise publikasjonene her.",
         "Open catalog": "Åpne katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Opprett din første katalog. Den er beholderen publikasjonene dine skal ligge i. Velg registeret Publication og skjemaet Publication, slik at katalogen viser publikasjonene du legger til.",
-        "Manage your publications and their status": "Administrer publikasjonene dine og statusen deres"
+        "Manage your publications and their status": "Administrer publikasjonene dine og statusen deres",
+        "Retention defaults": "Standard oppbevaringsfrister",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "En publikasjon i denne katalogen får disse ved første publisering hvis dens egne oppbevaringsfelt er tomme. Senere endringer påvirker ikke eksisterende publikasjoner.",
+        "Term in months": "Frist i måneder",
+        "When the term ends": "Når fristen utløper",
+        "Term in months for {category}": "Frist i måneder for {category}",
+        "A whole number of months, 1 or more": "Et helt antall måneder, 1 eller flere",
+        "When the term of {category} ends": "Når fristen for {category} utløper",
+        "Retention defaults saved": "Standard oppbevaringsfrister lagret",
+        "Save retention defaults": "Lagre standard oppbevaringsfrister",
+        "Flag for review": "Merk for gjennomgang",
+        "The retention defaults could not be loaded": "Standard oppbevaringsfrister kunne ikke lastes inn",
+        "The retention defaults could not be saved": "Standard oppbevaringsfrister kunne ikke lagres",
+        "Any other category": "Enhver annen kategori"
     },
     "nplurals=2; plural=(n != 1);"
 )

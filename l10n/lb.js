@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Setzt dem Katalog e Register an e Schema bäi, fir seng Verëffentlechungen hei unzeweisen.",
         "Open catalog": "Katalog opmaachen",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Maacht Ären éischte Katalog. Et ass de Container, an deem Är Verëffentlechunge stinn. Wielt de Register Publication an d'Schema Publication, sou datt de Katalog d'Verëffentlechungen weist, déi Dir bäisetzt.",
-        "Manage your publications and their status": "Verwalt Är Publikatiounen an hire Status"
+        "Manage your publications and their status": "Verwalt Är Publikatiounen an hire Status",
+        "Retention defaults": "Standard-Opbewahrungsfristen",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Eng Publikatioun vun dësem Katalog kritt dës bei der éischter Verëffentlechung, wann hir eege Opbewahrungsfelder eidel sinn. Spéider Ännerungen änneren existent Publikatiounen net.",
+        "Term in months": "Frist a Méint",
+        "When the term ends": "Wann d'Frist ofleeft",
+        "Term in months for {category}": "Frist a Méint fir {category}",
+        "A whole number of months, 1 or more": "Eng ganz Zuel vu Méint, 1 oder méi",
+        "When the term of {category} ends": "Wann d'Frist vu {category} ofleeft",
+        "Retention defaults saved": "Standard-Opbewahrungsfriste gespäichert",
+        "Save retention defaults": "Standard-Opbewahrungsfriste späicheren",
+        "Flag for review": "Fir d'Iwwerpréiwung markéieren",
+        "The retention defaults could not be loaded": "D'Standard-Opbewahrungsfriste konnten net geluede ginn",
+        "The retention defaults could not be saved": "D'Standard-Opbewahrungsfriste konnten net gespäichert ginn",
+        "Any other category": "All aner Kategorie"
     },
     "nplurals=2; plural=(n != 1);"
 )

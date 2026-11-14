@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Προσθέστε ένα μητρώο και ένα σχήμα στον κατάλογο για να εμφανίζονται εδώ οι δημοσιεύσεις του.",
         "Open catalog": "Άνοιγμα καταλόγου",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Δημιουργήστε τον πρώτο σας κατάλογο. Είναι ο χώρος όπου θα βρίσκονται οι δημοσιεύσεις σας. Επιλέξτε το μητρώο Publication και το σχήμα Publication, ώστε ο κατάλογος να εμφανίζει τις δημοσιεύσεις που προσθέτετε.",
-        "Manage your publications and their status": "Διαχειριστείτε τις δημοσιεύσεις σας και την κατάστασή τους"
+        "Manage your publications and their status": "Διαχειριστείτε τις δημοσιεύσεις σας και την κατάστασή τους",
+        "Retention defaults": "Προεπιλεγμένες προθεσμίες διατήρησης",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Μια δημοσίευση αυτού του καταλόγου τις λαμβάνει κατά την πρώτη δημοσίευση, αν τα δικά της πεδία διατήρησης είναι κενά. Μεταγενέστερες αλλαγές δεν επηρεάζουν τις υπάρχουσες δημοσιεύσεις.",
+        "Term in months": "Προθεσμία σε μήνες",
+        "When the term ends": "Όταν λήξει η προθεσμία",
+        "Term in months for {category}": "Προθεσμία σε μήνες για {category}",
+        "A whole number of months, 1 or more": "Ακέραιος αριθμός μηνών, 1 ή περισσότεροι",
+        "When the term of {category} ends": "Όταν λήξει η προθεσμία για {category}",
+        "Retention defaults saved": "Οι προεπιλεγμένες προθεσμίες διατήρησης αποθηκεύτηκαν",
+        "Save retention defaults": "Αποθήκευση προεπιλεγμένων προθεσμιών διατήρησης",
+        "Flag for review": "Επισήμανση για έλεγχο",
+        "The retention defaults could not be loaded": "Δεν ήταν δυνατή η φόρτωση των προεπιλεγμένων προθεσμιών διατήρησης",
+        "The retention defaults could not be saved": "Δεν ήταν δυνατή η αποθήκευση των προεπιλεγμένων προθεσμιών διατήρησης",
+        "Any other category": "Οποιαδήποτε άλλη κατηγορία"
     },
     "nplurals=2; plural=(n != 1);"
 )

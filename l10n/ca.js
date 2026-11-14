@@ -723,7 +723,20 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Afegiu un registre i un esquema al catàleg per mostrar-ne aquí les publicacions.",
         "Open catalog": "Obre el catàleg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creeu el vostre primer catàleg. És el contenidor on viuran les vostres publicacions. Trieu el registre Publication i l'esquema Publication perquè el catàleg mostri les publicacions que afegiu.",
-        "Manage your publications and their status": "Gestioneu les vostres publicacions i el seu estat"
+        "Manage your publications and their status": "Gestioneu les vostres publicacions i el seu estat",
+        "Retention defaults": "Terminis de conservació per defecte",
+        "A publication of this catalogue gets these when it is first published and its own retention fields are empty. Changing them later does not change existing publications.": "Una publicació d'aquest catàleg els rep quan es publica per primera vegada si els seus propis camps de conservació són buits. Canviar-los després no modifica les publicacions existents.",
+        "Term in months": "Termini en mesos",
+        "When the term ends": "Quan acaba el termini",
+        "Term in months for {category}": "Termini en mesos per a {category}",
+        "A whole number of months, 1 or more": "Un nombre enter de mesos, 1 o més",
+        "When the term of {category} ends": "Quan acaba el termini de {category}",
+        "Retention defaults saved": "Terminis de conservació per defecte desats",
+        "Save retention defaults": "Desa els terminis de conservació per defecte",
+        "Flag for review": "Marca per a revisió",
+        "The retention defaults could not be loaded": "No s'han pogut carregar els terminis de conservació per defecte",
+        "The retention defaults could not be saved": "No s'han pogut desar els terminis de conservació per defecte",
+        "Any other category": "Qualsevol altra categoria"
     },
     "nplurals=2; plural=(n != 1);"
 )
