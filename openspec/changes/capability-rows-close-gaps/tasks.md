@@ -17,7 +17,7 @@ is done and its test is green.
 - [ ] 2.4 `pub-versions`: on the publication detail page in `src/manifest.json`, list the publication's versions from OpenRegister's content versioning and compare two of them field by field (openregister `content-versioning`).
 - [ ] 2.5 `pub-quality`: show a publication's metadata-quality score and the missing fields on its detail page before it is published (PQM-001).
 - [ ] 2.6 `lc-queue`: add the retention review queue page that lists the publications flagged expiring or expired and opens each one, using `src/services/retentionStatus.js` or removing it (RET-007).
-- [ ] 2.7 `lc-decide`: declare `retentionDecisionLog` on the `publication` schema in `lib/Settings/publication_register.json`, and make `dispose` in `RetentionService::recordHumanDecision()` remove the publication as the disposal decision says, not archive it (RET-006, RET-007).
+- [x] 2.7 `lc-decide`: declare `retentionDecisionLog` on the `publication` schema in `lib/Settings/publication_register.json`, and make `dispose` in `RetentionService::recordHumanDecision()` remove the publication as the disposal decision says, not archive it (RET-006, RET-007).
 - [ ] 2.8 `fed-harvest-removed`: when integriq's disappearance policy for a harvested record says unpublish, depublish the opencatalogi publication made from it; when it says keep, flag the publication for an editor (integriq `source-owned-records` REQ-SOR-002).
 
 ## 3. Not-built rows that had no plan

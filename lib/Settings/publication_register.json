@@ -248,6 +248,22 @@
             "facetable": false,
             "title": "Retention Last Evaluated At"
           },
+          "retentionDecisionLog": {
+            "type": "array",
+            "description": "Every human or automated retention decision on this publication, oldest first: the decision, who took it, when, the note and the legal basis from retentionCategory. Saved before a disposal removes the publication, so OpenRegister's audit trail keeps it (RET-006, RET-007).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "decision": {"type": "string", "title": "Decision"},
+                "by": {"type": "string", "title": "By"},
+                "at": {"type": "string", "format": "date-time", "title": "At"},
+                "note": {"type": "string", "title": "Note"},
+                "basis": {"type": "string", "title": "Legal basis"}
+              }
+            },
+            "facetable": false,
+            "title": "Retention Decision Log"
+          },
           "status": {
             "type": "string",
             "description": "Lifecycle status of the publication; the archived state retains the object internally while removing it from every public surface (RET-006).",

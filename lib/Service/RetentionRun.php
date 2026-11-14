@@ -88,6 +88,25 @@ final class RetentionRun {
 	}//end save()
 
 	/**
+	 * Remove a publication from the run's register and schema, outside RBAC and multitenancy.
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return bool Whether OpenRegister removed it.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-27
+	 */
+	public function remove(string $id): bool {
+		return (bool)$this->objectService->deleteObject(
+			uuid: $id,
+			register: $this->register,
+			schema: $this->schema,
+			_rbac: false,
+			_multitenancy: false,
+		);
+	}//end remove()
+
+	/**
 	 * Mark a publication evaluated at this run's moment and save it.
 	 *
 	 * @param array<string, mixed> $data The publication.

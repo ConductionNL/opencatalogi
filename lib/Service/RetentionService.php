@@ -922,7 +922,8 @@ class RetentionService implements RetentionServiceInterface {
 	 *
 	 * The decision is appended to the publication and persisted via saveObject, so
 	 * OpenRegister's immutable audit trail captures it (RET-006/RET-007); no
-	 * bespoke audit store. A non-empty rationale is mandatory.
+	 * bespoke audit store. A non-empty rationale is mandatory. A dispose decision
+	 * then removes the publication.
 	 *
 	 * @param string $publicationId The publication uuid.
 	 * @param string $decision The decision verb (extend|depublish|archive|dispose).
@@ -954,8 +955,41 @@ class RetentionService implements RetentionServiceInterface {
 			$data['edepotTransfer'] = $this->edepot->request(publication: $publication, now: $run->now);
 		}
 
-		return $this->plainArray(object: $run->save(data: $this->recordDecision(data: $data, decision: $decision, note: $rationale)));
+		$saved = $this->plainArray(object: $run->save(data: $this->recordDecision(data: $data, decision: $decision, note: $rationale)));
+		if ($decision === 'dispose') {
+			$this->dispose(run: $run, id: (string)($saved['id'] ?? $publicationId));
+		}
+
+		return $saved;
 	}//end recordHumanDecision()
+
+	/**
+	 * Remove a publication whose disposal decision is saved.
+	 *
+	 * The decision was saved first, so OpenRegister's audit trail holds who, when,
+	 * the basis and the rationale before anything is removed (RET-006).
+	 *
+	 * @param RetentionRun $run The run over the publication register and schema.
+	 * @param string $id The publication id.
+	 *
+	 * @return void
+	 *
+	 * @throws RuntimeException When OpenRegister does not remove it; the decision stays recorded.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-27
+	 */
+	private function dispose(RetentionRun $run, string $id): void {
+		try {
+			$removed = $run->remove(id: $id);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[RetentionService] disposal of ' . $id . ' failed: ' . $e->getMessage());
+			$removed = false;
+		}
+
+		if ($removed === false) {
+			throw new RuntimeException('The disposal decision is recorded, but the publication could not be removed');
+		}
+	}//end dispose()
 
 	/**
 	 * Bring every archived publication's pending e-depot transfer up to date with OpenRegister.

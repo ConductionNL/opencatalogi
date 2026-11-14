@@ -6023,9 +6023,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:56 POST /api/retention/publications/{id}/decision; lib/Controller/RetentionController.php:166 -> RetentionService.php:720 recordHumanDecision (extend|depublish|archive|dispose, rationale mandatory) -> recordDecision writes retentionDecisionLog Not built: 'dispose' only sets status archived and removes nothing, and retentionDecisionLog is not declared on the publication schema (lib/Settings/publication_register.json), so the recorded decision is not shown to survive the save. Task 2.7 of capability-rows-close-gaps.",
+				"evidence": "appinfo/routes.php POST /api/retention/publications/{id}/decision; RetentionController::decide -> RetentionService::recordHumanDecision (extend|depublish|archive|dispose, rationale mandatory) saves the decision in retentionDecisionLog (declared on the publication schema in lib/Settings/publication_register.json) first, then dispose removes the publication through RetentionRun::remove (RetentionDecisionGoldenTest, RetentionRulesTest)",
 				"change": "publication-retention-lifecycle",
 				"requirement": [
 					"openspec/specs/publication-retention-lifecycle :: Retention review queue and dashboard widget (RET-007)",

@@ -75,6 +75,7 @@ class RetentionDecisionGoldenTest extends TestCase {
 			'archive' => [['decision' => 'archive', 'object' => $pub]],
 			'dispose with a decision log' => [['decision' => 'dispose', 'object' => array_merge($pub, ['retentionDecisionLog' => [['decision' => 'extend']]])]],
 			'dispose with a broken decision log' => [['decision' => 'dispose', 'object' => array_merge($pub, ['retentionDecisionLog' => 'x'])]],
+			'dispose that OpenRegister does not remove' => [['decision' => 'dispose', 'removed' => false, 'object' => $pub]],
 			'unknown decision' => [['decision' => 'shred', 'object' => $pub]],
 			'blank rationale' => [['decision' => 'archive', 'rationale' => " \t", 'object' => $pub]],
 			'no register configured' => [['decision' => 'archive', 'register' => '', 'object' => $pub]],
@@ -167,11 +168,17 @@ class RetentionDecisionGoldenTest extends TestCase {
 		);
 
 		$log = &$this->log;
-		$objects = new class($log, $case['object']) {
+		$objects = new class($log, $case['object'], ($case['removed'] ?? true)) {
 			public function __construct(
 				private array &$log,
 				private ?array $object,
+				private bool $removed,
 			) {
+			}
+
+			public function deleteObject(string $uuid, ?string $register = null, ?string $schema = null, bool $_rbac = true, bool $_multitenancy = true): bool {
+				$this->log[] = ['delete' => $uuid, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
+				return $this->removed;
 			}
 
 			public function find(string $id): array {
