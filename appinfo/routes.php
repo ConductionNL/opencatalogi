@@ -175,6 +175,37 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'listings#preflightedCors', 'postfix' => '-listings-id', 'url' => '/api/listings/{id}', 'verb' => 'OPTIONS'],
 		['name' => 'listings#preflightedCors', 'postfix' => '-listings-sync', 'url' => '/api/listings/sync', 'verb' => 'OPTIONS'],
 		['name' => 'listings#preflightedCors', 'postfix' => '-listings-add', 'url' => '/api/listings/add', 'verb' => 'OPTIONS'],
+		// Search and federation CORS (REQ-SCO-001), one preflight per GET route.
+		['name' => 'search#preflightedCors', 'postfix' => '-search', 'url' => '/api/search', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id', 'url' => '/api/search/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id-attachments', 'url' => '/api/search/{id}/attachments', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id-download', 'url' => '/api/search/{id}/download', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id-uses', 'url' => '/api/search/{id}/uses', 'verb' => 'OPTIONS'],
+		['name' => 'search#preflightedCors', 'postfix' => '-search-id-used', 'url' => '/api/search/{id}/used', 'verb' => 'OPTIONS'],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed',
+			'url' => '/api/federation/publications', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id',
+			'url' => '/api/federation/publications/{id}', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id-attachments',
+			'url' => '/api/federation/publications/{id}/attachments', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id-download',
+			'url' => '/api/federation/publications/{id}/download', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id-uses',
+			'url' => '/api/federation/publications/{id}/uses', 'verb' => 'OPTIONS',
+		],
+		[
+			'name' => 'federation#preflightedCors', 'postfix' => '-fed-id-used',
+			'url' => '/api/federation/publications/{id}/used', 'verb' => 'OPTIONS',
+		],
 		/**
 		 * And here we have the public endpoints, the part of the API that is used by the frontend and publicly accessible
 		 * 

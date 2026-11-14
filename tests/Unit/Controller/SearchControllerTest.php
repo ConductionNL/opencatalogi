@@ -431,4 +431,100 @@ class SearchControllerTest extends TestCase {
 		$this->assertArrayNotHasKey('ETag', $headers);
 
 	}//end testASignedInSearchAnswerStaysPrivate()
+
+	/**
+	 * A search controller whose allowlist is $allowlist, called from $origin.
+	 *
+	 * @param string $allowlist The `cors_allowed_origins` setting.
+	 * @param string $origin    The caller's Origin header.
+	 *
+	 * @return SearchController The controller.
+	 */
+	private function controllerCalledFrom(string $allowlist, string $origin): SearchController {
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default): string => ($key === 'cors_allowed_origins' ? $allowlist : $default)
+		);
+		$this->request->method('getHeader')->willReturnCallback(
+			static fn (string $name): string => ($name === 'Origin' ? $origin : '')
+		);
+
+		return new SearchController(
+			appName: 'opencatalogi',
+			request: $this->request,
+			publicationService: $this->publicationService,
+			userSession: $this->userSession,
+			l10n: $this->l10n,
+			queryService: $this->queryService,
+			container: $this->container,
+			appManager: $this->appManager,
+			logger: $this->logger,
+			appConfig: $config
+		);
+	}//end controllerCalledFrom()
+
+	/**
+	 * A website on the allowlist is named back on the search answer, with Vary and no credentials.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 *
+	 * @return void
+	 */
+	public function testAnAllowedWebsiteIsNamedOnTheSearchAnswer(): void {
+		$this->container->method('get')->willReturn(new \stdClass());
+		$this->request->method('getParams')->willReturn(['_search' => 'begroting']);
+		$this->queryService->method('assemblePublicSearchResults')->willReturn(['results' => [], 'total' => 0]);
+		$controller = $this->controllerCalledFrom(allowlist: 'https://www.voorbeeldgemeente.nl,https://andere.example', origin: 'https://andere.example');
+
+		$headers = $controller->index()->getHeaders();
+
+		$this->assertSame('https://andere.example', $headers['Access-Control-Allow-Origin']);
+		$this->assertSame('GET, OPTIONS', $headers['Access-Control-Allow-Methods']);
+		$this->assertSame('false', $headers['Access-Control-Allow-Credentials']);
+		$this->assertStringContainsString('Origin', $headers['Vary']);
+
+	}//end testAnAllowedWebsiteIsNamedOnTheSearchAnswer()
+
+	/**
+	 * A website that is not on the allowlist is never named, on an answer or a preflight.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 *
+	 * @return void
+	 */
+	public function testARefusedWebsiteIsNotNamed(): void {
+		$this->publicationService->method('show')->willReturn(new JSONResponse(['id' => 'pub-1']));
+		$controller = $this->controllerCalledFrom(allowlist: 'https://www.voorbeeldgemeente.nl', origin: 'https://elders.example');
+
+		$answer = $controller->show('pub-1')->getHeaders();
+		$preflight = $controller->preflightedCors()->getHeaders();
+
+		$this->assertSame('https://www.voorbeeldgemeente.nl', $answer['Access-Control-Allow-Origin']);
+		$this->assertSame('https://www.voorbeeldgemeente.nl', $preflight['Access-Control-Allow-Origin']);
+		$this->assertSame('false', $preflight['Access-Control-Allow-Credentials']);
+		$this->assertSame('1728000', $preflight['Access-Control-Max-Age']);
+		$this->assertSame('Origin', $preflight['Vary']);
+
+	}//end testARefusedWebsiteIsNotNamed()
+
+	/**
+	 * Every search action carries the CORS headers, including the refusals.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 *
+	 * @return void
+	 */
+	public function testEverySearchActionCarriesTheHeaders(): void {
+		$session = $this->createMock(IUserSession::class);
+		$this->userSession = $session;
+		$controller = $this->controllerCalledFrom(allowlist: '*', origin: 'https://www.voorbeeldgemeente.nl');
+
+		foreach (['show', 'attachments', 'download', 'uses', 'used'] as $action) {
+			$response = $controller->$action('pub-1');
+			$this->assertSame(Http::STATUS_UNAUTHORIZED, $response->getStatus(), $action);
+			$this->assertSame('*', $response->getHeaders()['Access-Control-Allow-Origin'], $action);
+			$this->assertSame('Origin', $response->getHeaders()['Vary'], $action);
+		}
+
+	}//end testEverySearchActionCarriesTheHeaders()
 }//end class

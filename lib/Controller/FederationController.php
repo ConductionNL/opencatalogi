@@ -36,6 +36,8 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
+use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
@@ -48,6 +50,8 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
+	use AnswersCrossOriginSearchRequests;
+
 	/**
 	 * FederationController constructor.
 	 *
@@ -57,6 +61,7 @@ class FederationController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
+	 * @param IAppConfig|null $appConfig App config holding the CORS allowlist (without it every origin is allowed).
 	 */
 	public function __construct(
 		$appName,
@@ -65,6 +70,7 @@ class FederationController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?WithheldFromPublicationInterface $withheld = null,
+		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -94,9 +100,9 @@ class FederationController extends Controller {
 				baseUrl: $baseUrl
 			);
 
-			return new JSONResponse($responseData);
+			return $this->withSearchCorsHeaders(response: new JSONResponse($responseData));
 		} catch (\Exception $e) {
-			return $this->publicationsFailed(exception: $e);
+			return $this->withSearchCorsHeaders(response: $this->publicationsFailed(exception: $e));
 		}
 
 	}//end publications()
@@ -172,7 +178,7 @@ class FederationController extends Controller {
 				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
 			}
 
-			return new JSONResponse($result['data'], $result['status']);
+			return $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status']));
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publication] Failed to retrieve publication',
@@ -182,10 +188,10 @@ class FederationController extends Controller {
 					'trace' => $e->getTraceAsString(),
 				]
 			);
-			return new JSONResponse(
+			return $this->withSearchCorsHeaders(response: new JSONResponse(
 				data: ['error' => $this->l10n->t('Failed to retrieve publication')],
 				statusCode: 500
-			);
+			));
 		}
 
 	}//end publication()
@@ -213,7 +219,7 @@ class FederationController extends Controller {
 			// Use the service method to get the publication uses with federation support.
 			$result = $this->publicationService->getFederatedUses($id, $this->request->getParams());
 
-			return new JSONResponse($result['data'], $result['status']);
+			return $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status']));
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publicationUses] Failed to retrieve publication uses',
@@ -223,10 +229,10 @@ class FederationController extends Controller {
 					'trace' => $e->getTraceAsString(),
 				]
 			);
-			return new JSONResponse(
+			return $this->withSearchCorsHeaders(response: new JSONResponse(
 				data: ['error' => $this->l10n->t('Failed to retrieve publication uses')],
 				statusCode: 500
-			);
+			));
 		}
 
 	}//end publicationUses()
@@ -254,7 +260,7 @@ class FederationController extends Controller {
 			// Use the service method to get the publication used with federation support.
 			$result = $this->publicationService->getFederatedUsed($id, $this->request->getParams());
 
-			return new JSONResponse($result['data'], $result['status']);
+			return $this->withSearchCorsHeaders(response: new JSONResponse($result['data'], $result['status']));
 		} catch (\Exception $e) {
 			$this->logger?->error(
 				'[FederationController::publicationUsed] Failed to retrieve publication used',
@@ -264,10 +270,10 @@ class FederationController extends Controller {
 					'trace' => $e->getTraceAsString(),
 				]
 			);
-			return new JSONResponse(
+			return $this->withSearchCorsHeaders(response: new JSONResponse(
 				data: ['error' => $this->l10n->t('Failed to retrieve publication used')],
 				statusCode: 500
-			);
+			));
 		}
 
 	}//end publicationUsed()
@@ -295,7 +301,9 @@ class FederationController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
-		return $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams());
+		return $this->withSearchCorsHeaders(
+			response: $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams())
+		);
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of
@@ -321,6 +329,24 @@ class FederationController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicationDownload(string $id): DataDownloadResponse|JSONResponse {
-		return $this->publicationService->download(id: $id);
+		return $this->withSearchCorsHeaders(response: $this->publicationService->download(id: $id));
 	}//end publicationDownload()
+
+	/**
+	 * Answer a CORS preflight on the federation routes.
+	 *
+	 * The preflight carries no resource data; the allowed origin comes from the
+	 * shared allowlist rule.
+	 *
+	 * @return Response The preflight answer.
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 */
+	#[AnonRateLimit(limit: 240, period: 60)]
+	public function preflightedCors(): Response {
+		return $this->searchPreflight();
+	}//end preflightedCors()
 }//end class

@@ -413,6 +413,38 @@
 						</NcButton>
 					</div>
 				</div>
+
+				<!-- Websites that may call the public API from a browser (REQ-SCO-003) -->
+				<div class="option-section" data-testid="cors-allowed-origins">
+					<NcTextArea
+						v-model="corsOrigins"
+						:label="t('opencatalogi', 'Websites that may call the public API')"
+						:disabled="savingCors"
+						rows="4" />
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'One website per line, as scheme and host with an optional port and no path, for example https://www.example.nl. A browser on one of these websites may call the search and the other public endpoints. * allows every website.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="corsError" type="error">
+						{{ corsError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingCors"
+							@click="saveCorsOrigins">
+							<template #icon>
+								<NcLoadingIcon v-if="savingCors" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save websites') }}
+						</NcButton>
+					</div>
+				</div>
 			</div>
 
 			<!-- Loading State -->
@@ -531,6 +563,7 @@ import {
 	NcNoteCard,
 	NcSelect,
 	NcSettingsSection,
+	NcTextArea,
 	NcTextField,
 } from '@nextcloud/vue'
 import { defineComponent } from 'vue'
@@ -545,6 +578,8 @@ import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
+	corsOriginLines,
+	corsSaveRefusal,
 	directorySyncCounts,
 	directorySyncFailed,
 	directorySyncFailure,
@@ -635,6 +670,7 @@ export default defineComponent({
 		NcSettingsSection,
 		NcNoteCard,
 		NcSelect,
+		NcTextArea,
 		NcTextField,
 		NcButton,
 		NcLoadingIcon,
@@ -705,6 +741,10 @@ export default defineComponent({
 			publicCacheSeconds: '60',
 			savingPublicCache: false,
 			publicCacheError: '',
+			// Websites that may call the public API, one per line (REQ-SCO-003).
+			corsOrigins: '*',
+			savingCors: false,
+			corsError: '',
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
@@ -868,6 +908,10 @@ export default defineComponent({
 				this.publicCacheSeconds = String(
 					configuration.public_api_cache_seconds,
 				)
+			}
+
+			if (configuration && configuration.cors_allowed_origins !== undefined) {
+				this.corsOrigins = corsOriginLines(configuration.cors_allowed_origins)
 			}
 		},
 
@@ -1437,6 +1481,32 @@ export default defineComponent({
 				)
 			} finally {
 				this.savingPublicCache = false
+			}
+		},
+
+		/**
+		 * Saves the websites that may call the public API from a browser. The
+		 * server refuses a line that is not a bare origin and names it; what it
+		 * stored is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-administrator-edits-the-list-of-allowed-websites-req-sco-003
+		 */
+		async saveCorsOrigins() {
+			this.savingCors = true
+			this.corsError = ''
+
+			try {
+				const response = await putSettings({ cors_allowed_origins: this.corsOrigins })
+				const stored = response && response.data && response.data.cors_allowed_origins
+				if (stored !== undefined) {
+					this.corsOrigins = corsOriginLines(stored)
+				}
+			} catch (error) {
+				this.corsError = corsSaveRefusal(error)
+					|| this.t('opencatalogi', 'The websites could not be saved. Try again.')
+			} finally {
+				this.savingCors = false
 			}
 		},
 
