@@ -11,8 +11,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 2. DONL registration
 
-- [ ] 2.1 Read the data.overheid.nl API documentation and record in the PR body the call that counts datasets from one harvest source; use it, do not guess (REQ-DCC-002). Verify: the cited documentation URL in the PR body.
-- [ ] 2.2 Add `DonlRegistrationService`, the fetch recorder in `DcatController::instance()` and `catalog()`, and `DonlHarvestCheck` registered in `appinfo/info.xml` (REQ-DCC-002). Verify: `tests/Unit/Service/DonlRegistrationServiceTest.php::testRegisteredWithoutEvidenceIsNotHarvested`, `::testAHarvesterFetchIsRecorded` (through the controller), `tests/Unit/BackgroundJob/DonlHarvestCheckTest.php::testAnUnreachableApiKeepsTheLastCountAndSaysSo` (fails today), `::testTheJobIsRegistered`.
+- [x] 2.1 Read the data.overheid.nl API documentation and record in the PR body the call that counts datasets from one harvest source; use it, do not guess (REQ-DCC-002). Verify: the cited documentation URL in the PR body.
+- [x] 2.2 Add `DonlRegistrationService`, the fetch recorder in `DcatController::instance()` and `catalog()`, and `DonlHarvestCheck` registered in `appinfo/info.xml` (REQ-DCC-002). Verify: `tests/Unit/Service/DonlRegistrationServiceTest.php::testRegisteredWithoutEvidenceIsNotHarvested`, `::testAHarvesterFetchIsRecorded` (through the controller), `tests/Unit/BackgroundJob/DonlHarvestCheckTest.php::testAnUnreachableApiKeepsTheLastCountAndSaysSo` (fails today), `::testTheJobIsRegistered`.
 - [ ] 2.3 Show the status block in the admin DCAT settings with the operator's requested and registered actions (REQ-DCC-002). Verify: `tests/e2e/dcat-catalogue-completion.spec.ts` "the admin sees whether data.overheid.nl harvests us", with the job's stored values seeded.
 
 ## 3. Linked data and SPARQL
