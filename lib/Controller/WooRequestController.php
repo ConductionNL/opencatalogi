@@ -74,9 +74,9 @@ class WooRequestController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param RequestRecords $records Builds the request records and reads and writes the stored requests.
+	 * @param RequestRecords $records Builds the request records, reads and writes the stored requests,
+	 *                                and hands new requests to dossiq while it is installed.
 	 * @param StatutoryTermInterface $terms Arms, extends, pauses and reads the statutory term.
-	 * @param DossiqWooForward|null $dossiqForward Hands new requests to dossiq while it is installed.
 	 */
 	public function __construct(
 		$appName,
@@ -85,7 +85,6 @@ class WooRequestController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly RequestRecords $records,
 		private readonly StatutoryTermInterface $terms,
-		private readonly ?DossiqWooForward $dossiqForward = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -160,9 +159,10 @@ class WooRequestController extends Controller {
 
 		// While dossiq is installed it mints the reference and arms the term;
 		// OpenCatalogi stores nothing and arms nothing (REQ-WHD-002).
-		if ($this->dossiqForward !== null && $this->dossiqForward->isAvailable() === true) {
+		$dossiqForward = $this->records->dossiqForward();
+		if ($dossiqForward !== null) {
 			return $this->forwardedResponse(
-				answer: $this->dossiqForward->forward(answers: $this->intakeInput(), receivedAt: '', origin: DossiqWooForward::ORIGIN_OPENCATALOGI)
+				answer: $dossiqForward->forward(answers: $this->intakeInput(), receivedAt: '', origin: DossiqWooForward::ORIGIN_OPENCATALOGI)
 			);
 		}
 

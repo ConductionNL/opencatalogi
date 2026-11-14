@@ -919,9 +919,8 @@ class WooRequestControllerTest extends TestCase {
 				$this->request,
 				$this->createMock(IL10N::class),
 				$this->signedInSession(),
-				new RequestRecords(new WooRequestService(), $store),
-				$this->terms,
-				$forward
+				new RequestRecords(new WooRequestService(), $store, $forward),
+				$this->terms
 			);
 			$response = $controller->receive();
 
