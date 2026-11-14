@@ -1499,6 +1499,224 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame([1, 2], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
 	}//end testSchemaScopeGuardKeepsEverySchemaThatCarriesReadRules()
 
+	// -------------------------------------------------------------------------
+	// add-document-content-search (WOO-517) — the `_content` opt-in.
+	// SCH-PFTS-CONTENT-001 / -002 / -003 and the MODIFIED SCH-PFTS-002.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * SCH-PFTS-CONTENT-001 "default omits content search": without `_content`
+	 * the forwarded query carries no chunk-search flag and keeps the catalog's
+	 * publication-scoped schemas.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsOmitsContentSearchFlagByDefault(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+
+		$this->assertCount(1, $fake->capturedCalls);
+		$query = $fake->capturedCalls[0]['query'];
+		$this->assertArrayNotHasKey('_content_search', $query, 'no chunk-search fan-out without the opt-in');
+		$this->assertArrayNotHasKey('_content', $query);
+		$this->assertSame([1, 2], $query['_schemas']);
+		$this->assertSame('x', $query['_search']);
+	}//end testAssemblePublicSearchResultsOmitsContentSearchFlagByDefault()
+
+	/**
+	 * An explicit `_content=false` forwards exactly the query the default does.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsOmitsContentSearchFlagWhenExplicitlyFalse(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x', '_content' => 'false']), $fake);
+
+		$this->assertCount(2, $fake->capturedCalls);
+		$this->assertArrayNotHasKey('_content_search', $fake->capturedCalls[1]['query']);
+		$this->assertSame($fake->capturedCalls[0]['query'], $fake->capturedCalls[1]['query'], '_content=false must equal the baseline query');
+	}//end testAssemblePublicSearchResultsOmitsContentSearchFlagWhenExplicitlyFalse()
+
+	/**
+	 * A `_content` value that is not a boolean word reads as off.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsTreatsANonBooleanContentValueAsOff(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x', '_content' => 'maybe']), $fake);
+
+		$this->assertArrayNotHasKey('_content_search', $fake->capturedCalls[0]['query']);
+		$this->assertArrayNotHasKey('_content', $fake->capturedCalls[0]['query']);
+	}//end testAssemblePublicSearchResultsTreatsANonBooleanContentValueAsOff()
+
+	/**
+	 * The `_content` spellings the request can carry for "on".
+	 *
+	 * @return array<string, array{0: mixed}>
+	 */
+	public static function contentOptInValues(): array {
+		return [
+			'string true' => ['true'],
+			'string 1' => ['1'],
+			'string on' => ['on'],
+			'string yes' => ['yes'],
+			'boolean true' => [true],
+		];
+	}//end contentOptInValues()
+
+	/**
+	 * SCH-PFTS-CONTENT-001 "opt-in cost is opt-in": `_content=true` forwards OR's
+	 * `_content_search` flag, strips OC's own `_content` key, and the read still
+	 * runs with schema RBAC on, multitenancy off and inside the anonymous scope —
+	 * the gate that keeps depublished documents out (SCH-PFTS-CONTENT-003).
+	 *
+	 * @param mixed $value The `_content` value.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider contentOptInValues
+	 */
+	public function testAssemblePublicSearchResultsForwardsContentSearchFlagWhenTrue(mixed $value): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x', '_content' => $value]), $fake);
+
+		$this->assertCount(1, $fake->capturedCalls);
+		$call = $fake->capturedCalls[0];
+		$this->assertTrue($call['query']['_content_search']);
+		$this->assertArrayNotHasKey('_content', $call['query'], 'OC\'s own flag name must not reach OR');
+		$this->assertSame('x', $call['query']['_search']);
+		$this->assertTrue($call['_rbac']);
+		$this->assertFalse($call['_multitenancy']);
+		$this->assertSame([], $fake->readsOutsideScope);
+	}//end testAssemblePublicSearchResultsForwardsContentSearchFlagWhenTrue()
+
+	/**
+	 * MODIFIED SCH-PFTS-002 / SCH-PFTS-CONTENT-002: a document OR surfaced through
+	 * its body text ships in exactly the shape of the same document surfaced
+	 * through its metadata — chunk fields OR might attach are not exposed.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsContentMatchedDocumentRowShapeMatchesMetadataMatch(): void {
+		$metadataRow = [
+			'@self' => ['id' => 'doc-1', 'schema' => 2, 'relations' => ['publication' => 'pub-1']],
+			'title' => 'Evaluatie.pdf',
+		];
+		$contentRow = $metadataRow + [
+			'_snippet' => '…lorem-ipsum-woo517-marker…',
+			'snippet' => 'marker',
+			'chunk' => ['id' => 9],
+			'chunk_id' => 9,
+			'chunkId' => 9,
+			'score' => 0.8,
+			'_score' => 0.8,
+		];
+		$fake = $this->wireHappyPath();
+		$fake->findResponses['pub-1'] = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'evaluatie', 'schema' => 1],
+			'title' => 'Evaluatie',
+		];
+		$fake->queuedResponses = [
+			['results' => [$metadataRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			['results' => [$contentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$metadataOut = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'Evaluatie']), $fake);
+		$contentOut = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'marker', '_content' => 'true']), $fake);
+
+		$this->assertCount(1, $contentOut['results']);
+		$this->assertSame($metadataOut, $contentOut, 'a content match must be indistinguishable from a metadata match');
+		$row = $contentOut['results'][0];
+		$this->assertSame('document', $row['@self']['schema']);
+		$this->assertSame(['id' => 'pub-1', 'slug' => 'evaluatie', 'title' => 'Evaluatie'], $row['publication']);
+		foreach (['_snippet', 'snippet', 'chunk', 'chunk_id', 'chunkId', 'score', '_score'] as $chunkField) {
+			$this->assertArrayNotHasKey($chunkField, $row, "chunk field {$chunkField} must not reach the public envelope");
+		}
+	}//end testAssemblePublicSearchResultsContentMatchedDocumentRowShapeMatchesMetadataMatch()
+
+	/**
+	 * MODIFIED SCH-PFTS-002 "document matching both surfaces appears once".
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsDedupesDocumentMatchingBothSurfaces(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-both', 'schema' => 2, 'relations' => ['publication' => 'pub-1']],
+			'title' => 'lorem-ipsum-woo517-marker.pdf',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->findResponses['pub-1'] = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'evaluatie', 'schema' => 1],
+			'title' => 'Evaluatie',
+		];
+		$fake->queuedResponses = [
+			['results' => [$documentRow, $documentRow + ['_snippet' => 'marker']], 'total' => 2, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'marker', '_content' => 'true']), $fake);
+
+		$this->assertSame(['doc-both'], array_column(array_column($out['results'], '@self'), 'id'));
+		$this->assertSame(2, $out['total'], 'a dedup drop is not subtracted from OR\'s total');
+	}//end testAssemblePublicSearchResultsDedupesDocumentMatchingBothSurfaces()
+
+	/**
+	 * SCH-PFTS-CONTENT-003 "content match with depublished parent publication is
+	 * dropped": OR's RBAC hides the depublished publication, so neither the UUID
+	 * lookup nor the refinement finds it, and the content-matched document goes.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsDropsContentMatchedDocumentWithDepublishedParent(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-orphaned', 'schema' => 2, 'relations' => ['publication' => 'pub-depublished']],
+			'title' => 'Body text match',
+		];
+		$fake = $this->wireHappyPath();
+		// No findResponses entry: the anonymous read of the depublished publication finds nothing.
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'marker', '_content' => 'true']), $fake);
+
+		$this->assertSame([], $out['results']);
+		$this->assertSame(0, $out['total']);
+		$this->assertSame([], $fake->readsOutsideScope);
+	}//end testAssemblePublicSearchResultsDropsContentMatchedDocumentWithDepublishedParent()
+
+	/**
+	 * SCH-PFTS-CONTENT-003 for an archived document: a content match on a row in
+	 * the terminal-hidden `archived` state is dropped like a metadata match.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsDropsContentMatchedArchivedDocument(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-archived', 'schema' => 2, 'relations' => ['publication' => 'pub-1']],
+			'title' => 'Body text match',
+			'status' => 'archived',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->findResponses['pub-1'] = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'evaluatie', 'schema' => 1],
+			'title' => 'Evaluatie',
+		];
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'marker', '_content' => 'true']), $fake);
+
+		$this->assertSame([], $out['results']);
+		$this->assertSame(0, $out['total']);
+	}//end testAssemblePublicSearchResultsDropsContentMatchedArchivedDocument()
+
 	private function wireHappyPath(array $authorizationById = [], array $registerSchemas = [], array $slugById = []): FakeSearchObjectService {
 		$fakeObjectService = new FakeSearchObjectService();
 
