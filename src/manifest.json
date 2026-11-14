@@ -1047,8 +1047,8 @@
 			"title": "Organizations",
 			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
 			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "organization",
+				"register": "@resolve:organization_register",
+				"schema": "@resolve:organization_schema",
 				"rowClickToView": false,
 				"actionToggles": {
 					"showAdd": true,
@@ -1072,8 +1072,8 @@
 			"title": "Organization",
 			"_note": "Publisher-organization archetype — the legal entity behind catalogs/publications (name, summary, description, the government identifiers OIN/TOOI/RSIN/PKI, and a single logo `image`). A user lands here to answer 'who is this publisher and what do they publish?'. The body leads with the identity block (8-wide, 2-column so the four registration codes read cleanly, `image` excluded because the Logo leaf renders it). The right column stacks the in-grid `stats-block` (top: Publications + Catalogs counts, formerly header summaryAggregates) over the Images leaf (4-wide) carrying the logo/branding (the schema's `image` is a single logo, so Images is the right surface, not Files). The 'what do they publish' half is answered with two INBOUND object-lists on the row below: the publications whose `organization` FK points at this record, and the catalogs whose `organization` FK points at it — both FKs now carry $ref:organization so their name display + org picker resolve. A `related` (outbound) widget stays intentionally ABSENT — the organization schema has ZERO outbound refs (every field is a scalar), so a related panel would render empty; the meaningful relations are inbound, which object-list expresses (the petstore parent→children pattern). org-catalogs gets viewAllRoute:'Catalogs' (that index takes no route param, so the deep-link resolves) + rowRoute:'CatalogDetail'; org-publications gets NO viewAllRoute/rowRoute — the Publications index/detail routes both require a :catalogSlug this page can't supply, so a broken deep-link is deliberately omitted. Both lists keep create ON (default): an organization OWNS its publications/catalogs, so creating from the list pre-links the org FK. schema-verified absences: NO contacts/comms leaves — the organization schema declares NO linkedTypes and no contactpersoon relation (HARD RULE 1); no status lifecycle field, so no lifecycleActions. The change-history audit trail (federation syncs matter) lives in the sidebar widgets:[{type:'audit'}] per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu.",
 			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "organization",
+				"register": "@resolve:organization_register",
+				"schema": "@resolve:organization_schema",
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
@@ -1084,8 +1084,13 @@
 						"icon": "OfficeBuilding",
 						"content": {
 							"columns": 2,
-							"exclude": [
-								"image"
+							"include": [
+								"name",
+								"summary",
+								"oin",
+								"tooi",
+								"rsin",
+								"pki"
 							]
 						}
 					},
