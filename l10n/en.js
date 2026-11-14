@@ -46,6 +46,7 @@ OC.L10N.register(
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -267,6 +268,7 @@ OC.L10N.register(
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1570,7 +1572,8 @@ OC.L10N.register(
         "Redaction verified by": "Redaction verified by",
         "Redaction verified at": "Redaction verified at",
         "The user id of the officer who checked the redacted version and marked it verified. Empty until a person did.": "The user id of the officer who checked the redacted version and marked it verified. Empty until a person did.",
-        "When the officer marked the redacted version verified.": "When the officer marked the redacted version verified."
+        "When the officer marked the redacted version verified.": "When the officer marked the redacted version verified.",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
 )

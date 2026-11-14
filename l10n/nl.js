@@ -38,6 +38,7 @@ OC.L10N.register(
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -268,6 +269,7 @@ OC.L10N.register(
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1525,7 +1527,8 @@ OC.L10N.register(
         "Redaction verified by": "Lakken gecontroleerd door",
         "Redaction verified at": "Lakken gecontroleerd op",
         "The user id of the officer who checked the redacted version and marked it verified. Empty until a person did.": "De gebruikers-id van de medewerker die de gelakte versie heeft gecontroleerd en als gecontroleerd heeft gemarkeerd. Leeg zolang niemand dat deed.",
-        "When the officer marked the redacted version verified.": "Wanneer de medewerker de gelakte versie als gecontroleerd markeerde."
+        "When the officer marked the redacted version verified.": "Wanneer de medewerker de gelakte versie als gecontroleerd markeerde.",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "nplurals=2; plural=(n != 1);"
 )
