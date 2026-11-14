@@ -7,4 +7,6 @@
 - [x] **T05**: Show the two bulk actions only when the user may edit publications (design D4, REQ-PMM-003). Verify: Vitest with a read-only user.
 - [x] **T06**: Strings in `l10n/en.json` and `l10n/nl.json`: "Merge" / "Samenvoegen", "Migrate" / "Migreren", "Select exactly two publications to merge" / "Selecteer precies twee publicaties om samen te voegen". Run `npm run test:l10n`.
 - [ ] **T07**: Write `tests/e2e/publications-merge-and-migrate.spec.ts` for the scenarios of REQ-PMM-001 to REQ-PMM-003.
-- [ ] **T08**: Replace the `@spec` tags on the touched methods with `openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md`, and set rows `pub-merge` and `pub-migrate` to `building` in `openspec/parity/capabilities.json` when T01 to T05 are merged.
+- [x] **T08**: Replace the `@spec` tags on the touched methods with `openspec/changes/publications-merge-and-migrate/specs/publication-merge-and-migration/spec.md`, and set rows `pub-merge` and `pub-migrate` to `building` in `openspec/parity/capabilities.json` when T01 to T05 are merged.
+
+T08 done: `performMerge()` now carries this change's REQ-PMM-001 tag (the other touched methods already did), and rows `pub-merge` and `pub-migrate` are `building` with current evidence. T07 (Playwright) is open: it needs a running instance.

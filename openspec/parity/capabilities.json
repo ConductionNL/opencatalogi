@@ -7592,9 +7592,9 @@
 			"source": "spec-round-2026-10-08",
 			"opencatalogi": "no",
 			"built": {
-				"state": "specified",
+				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/modals/object/MergeObject.vue (steps 40/116/417, file and relation choices 243-329) is mounted by src/modals/Modals.vue:26 when navigationStore.modal is mergeObject, and nothing in src/ sets that value; the Publications page (src/manifest.json:506) has no merge bulk action. If opened it would fail: MergeObject.vue:1039 calls objectStore.mergeObjects({register, schema, ...}) while nextcloud-vue lifecycle.js:172 takes mergeObjects(type, sourceId, options).",
+				"evidence": "The Publications page (src/manifest.json, publicationPairConfig bulkActions) offers merge for two selected publications through openPublicationMerge in src/services/publicationActions.js, which opens src/modals/object/MergeObject.vue at step 2 with the target set; performMerge() calls objectStore.mergeObjects(type, sourceId, options) as nextcloud-vue lifecycle.js takes it, and the list reloads after. Covered by publicationActions.spec.js and MergeObject.spec.js; the e2e spec (T07) is open.",
 				"change": "publications-merge-and-migrate",
 				"note": "Added by decision 99 (8 Oct): board without a row. OpenRegister owns the endpoints (objects#merge POST /api/objects/{register}/{schema}/{id}/merge, objects#migrate POST /api/migrate) and ships the same dialogs; its specs do not cover offering them from an app list: openregister/mdm-merge and mdm-merge-ui are the reversible master-data merge on x-openregister-merge schemas launched from a duplicate pair (source kept as merged-into-other), openregister/entity-management-modals names MigrationObject.vue among the bulk modals, and no OR spec owns objects#merge or objects#migrate beyond api-test-coverage.",
 				"readOn": "2026-10-08",
@@ -7618,9 +7618,9 @@
 			"source": "spec-round-2026-10-08",
 			"opencatalogi": "no",
 			"built": {
-				"state": "specified",
+				"state": "building",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/modals/object/MigrationObject.vue (mapping step, POST /index.php/apps/openregister/api/migrate at 794-795) is mounted by src/modals/Modals.vue:30 when navigationStore.modal is migrationObject, and nothing in src/ sets that value; it reads objectStore.selectedObjects (MigrationObject.vue:624), which the CnIndexPage selection on the Publications page does not fill.",
+				"evidence": "The Publications page offers migrate for the selected publications through openPublicationMigration in src/services/publicationActions.js, which fills objectStore.selectedObjects and opens src/modals/object/MigrationObject.vue; the list reloads after. Covered by publicationActions.spec.js; the e2e spec (T07) is open.",
 				"change": "publications-merge-and-migrate",
 				"note": "Added by decision 99 (8 Oct): board without a row. OpenRegister owns the endpoints (objects#merge POST /api/objects/{register}/{schema}/{id}/merge, objects#migrate POST /api/migrate) and ships the same dialogs; its specs do not cover offering them from an app list: openregister/mdm-merge and mdm-merge-ui are the reversible master-data merge on x-openregister-merge schemas launched from a duplicate pair (source kept as merged-into-other), openregister/entity-management-modals names MigrationObject.vue among the bulk modals, and no OR spec owns objects#merge or objects#migrate beyond api-test-coverage.",
 				"readOn": "2026-10-08",
