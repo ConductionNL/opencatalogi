@@ -6,7 +6,7 @@
 
 ## 2. Rules floor
 
-- [ ] 2.1 Add `WooMetadataSuggestionService::suggestFromRules()` for category, organisation and handling type, checked against `TooiVocabularyService` (REQ-WMS-001). Verify: `tests/Unit/Service/WooMetadataSuggestionServiceTest.php`, one case per field and one for an unresolvable value.
+- [x] 2.1 Add `WooMetadataSuggestionService::suggestFromRules()` for category, organisation and handling type, checked against `TooiVocabularyService` (REQ-WMS-001). Verify: `tests/Unit/Service/WooMetadataSuggestionServiceTest.php`, one case per field and one for an unresolvable value.
 - [ ] 2.2 Queue the rules floor when a publication is created (REQ-WMS-001). Verify: listener test on a real `ObjectCreatedEvent`.
 
 ## 3. Hermiq
