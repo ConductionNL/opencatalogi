@@ -124,6 +124,28 @@
 					@click="navigateToPublications()" />
 			</template>
 
+			<!-- Catalogues count widget -->
+			<template #widget-count-catalogs>
+				<CnStatsBlock
+					:title="t('opencatalogi', 'Catalogs')"
+					:count="kpis.catalogCount"
+					:countLabel="t('opencatalogi', 'catalogs')"
+					:icon="Bookshelf"
+					variant="default"
+					horizontal />
+			</template>
+
+			<!-- Attachments count widget -->
+			<template #widget-count-attachments>
+				<CnStatsBlock
+					:title="t('opencatalogi', 'Attachments')"
+					:count="kpis.attachmentCount"
+					:countLabel="t('opencatalogi', 'attachments')"
+					:icon="Paperclip"
+					variant="default"
+					horizontal />
+			</template>
+
 			<!-- Concept Attachments count widget -->
 			<!-- TODO: Re-add concept attachments widget once a scalable fetch strategy is in place.
 			     Fetching files per-publication does not scale for large catalogs.
@@ -324,10 +346,12 @@ import {
 import { loadState } from '@nextcloud/initial-state'
 import { NcButton } from '@nextcloud/vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
 import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
 import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
+import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import {
 	useAccentChartColor,
@@ -363,7 +387,7 @@ const DEFAULT_LAYOUT = [
 		gridX: 0,
 		gridY: 0,
 		gridWidth: 3,
-		gridHeight: 3,
+		gridHeight: 2,
 		showTitle: false,
 	},
 	{
@@ -372,25 +396,43 @@ const DEFAULT_LAYOUT = [
 		gridX: 3,
 		gridY: 0,
 		gridWidth: 3,
-		gridHeight: 3,
+		gridHeight: 2,
 		showTitle: false,
 	},
 	{
 		id: 3,
 		widgetId: 'count-published-publications',
 		gridX: 0,
-		gridY: 3,
+		gridY: 2,
 		gridWidth: 3,
-		gridHeight: 3,
+		gridHeight: 2,
 		showTitle: false,
 	},
 	{
 		id: 9,
 		widgetId: 'count-depublished-publications',
 		gridX: 3,
-		gridY: 3,
+		gridY: 2,
 		gridWidth: 3,
-		gridHeight: 3,
+		gridHeight: 2,
+		showTitle: false,
+	},
+	{
+		id: 13,
+		widgetId: 'count-catalogs',
+		gridX: 0,
+		gridY: 4,
+		gridWidth: 3,
+		gridHeight: 2,
+		showTitle: false,
+	},
+	{
+		id: 14,
+		widgetId: 'count-attachments',
+		gridX: 3,
+		gridY: 4,
+		gridWidth: 3,
+		gridHeight: 2,
 		showTitle: false,
 	},
 	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
@@ -508,6 +550,26 @@ function customWidget(id, title) {
 }
 
 /**
+ * How many attachments the publications carry, read from each one's
+ * `@self.files`: a count, or the list of its files. Counts what the
+ * publications list holds, so no request per publication is made.
+ *
+ * @param {Array<object>} publications The publications
+ * @return {number} The number of attachments
+ * @spec openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-the-dashboard-counts-catalogues-publications-and-attachments-req-crr-005
+ */
+export function attachmentCount(publications) {
+	return publications.reduce((total, publication) => {
+		const files = publication?.['@self']?.files
+		if (Array.isArray(files)) {
+			return total + files.length
+		}
+		const count = Number(files)
+		return total + (Number.isFinite(count) && count > 0 ? count : 0)
+	}, 0)
+}
+
+/**
  * A publication list widget whose title icon shows the status colour.
  *
  * @param {string} id - The widget id
@@ -542,6 +604,8 @@ function countWidgetDefs() {
 			'count-depublished-publications',
 			t('opencatalogi', 'Depublished Publications'),
 		),
+		customWidget('count-catalogs', t('opencatalogi', 'Catalogs')),
+		customWidget('count-attachments', t('opencatalogi', 'Attachments')),
 		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 		// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 	]
@@ -620,6 +684,8 @@ export default {
 			FileDocumentEditOutline,
 			FileDocumentCheckOutline,
 			AlertOutline,
+			Bookshelf,
+			Paperclip,
 			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 			// PaperclipOff,
 			globalLoading: false,
@@ -722,6 +788,8 @@ export default {
 
 				depublishedPublicationCount:
 					this.statusCounts?.depublished ?? this.depublishedPublications.length,
+
+				attachmentCount: attachmentCount(this.allPublications),
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}

@@ -6179,15 +6179,15 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "planned",
-				"owner": "ConductionNL/openregister",
-				"evidence": "openregister lib/Controller/TransferController.php handles e-Depot transfer lists and dispatches TransferExecutionJob, routes.php:2041; opencatalogi lib/Service/RetentionService.php:763-765 'archive' only sets status=archived Missing (spec-coverage pass 2026-11-12, development bba37fc7): the archive decision only sets status archived (RetentionService), nothing hands the publication to OpenRegister's e-Depot transfer; task 2.1 of capability-rows-get-requirements.",
+				"state": "built",
+				"owner": "ConductionNL/opencatalogi",
+				"evidence": "lib/Service/RetentionService.php recordHumanDecision(): an archive decision asks OpenRegister's TransferListService (lib/Service/EdepotHandover.php request()) for a transfer list of the publication and stores edepotTransfer {reference, status requested}; the daily RetentionEvaluation job calls refreshEdepotTransfers(), which records transferred, or failed with the e-depot's reason, while the publication stays archived. Tests: tests/Unit/Service/EdepotHandoverTest.php, tests/Unit/Service/RetentionEdepotTransferTest.php.",
 				"change": "publication-retention-lifecycle",
 				"requirement": "openspec/changes/capability-rows-get-requirements/specs/publication-retention-lifecycle :: An archive decision hands the publication to the e-depot (REQ-CRR-003)",
 				"plan": "openspec/changes/capability-rows-get-requirements"
 			},
 			"reachedOn": "openregister e-Depot transfer API (/apps/openregister/api/transfers). opencatalogi never triggers it",
-			"note": "OpenRegister can transfer objects to an e-depot, but opencatalogi's archive decision does not hand anything over.",
+			"note": "An archive decision hands the publication to OpenRegister's e-Depot transfer and shows the transfer reference and status on the publication.",
 			"provider": "openregister",
 			"providerHow": "read-from-code",
 			"feature": "retention-and-lifecycle",
@@ -6453,9 +6453,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "planned",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "src/manifest.json:482 Dashboard -> Dashboard.vue:72-115 publication, concept, published, depublished counts; Dashboard.vue:688 catalogCount computed but never rendered; Dashboard.vue:124 attachments count widget commented out (TODO) Missing (spec-coverage pass 2026-11-12, development bba37fc7): Dashboard.vue shows publication counts only, no catalogue count, and the attachment count is commented out (TODO); task 2.2 of capability-rows-get-requirements.",
+				"evidence": "src/views/dashboard/Dashboard.vue count widgets: publications (concept, published, depublished), count-catalogs (kpis.catalogCount) and count-attachments (kpis.attachmentCount, summed from each publication's @self.files, no request per publication). Tests: src/views/dashboard/DashboardWidgetDefs.spec.js 'Dashboard counts'.",
 				"change": [
 					"retrofit-2026-05-26-dashboard-widgets",
 					"dashboard-consume-or-aggregations",
@@ -6465,7 +6465,7 @@
 				"plan": "openspec/changes/capability-rows-get-requirements"
 			},
 			"reachedOn": "/ (DashboardView)",
-			"note": "Only publication counts show. The catalogue count is not rendered and the attachment count was removed.",
+			"note": "The dashboard counts catalogues, publications (split into concept, published and depublished) and attachments.",
 			"provider": "opencatalogi",
 			"providerHow": "read-from-code",
 			"feature": "usage-analytics",
