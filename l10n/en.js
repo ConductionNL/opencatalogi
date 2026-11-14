@@ -634,6 +634,10 @@ OC.L10N.register(
         "Save labels for {name}": "Save labels for {name}",
         "Save Publishing Options": "Save Publishing Options",
         "Save sync options": "Save sync options",
+        "Websites that may call the public API": "Websites that may call the public API",
+        "One website per line, as scheme and host with an optional port and no path, for example https://www.example.nl. A browser on one of these websites may call the search and the other public endpoints. * allows every website.": "One website per line, as scheme and host with an optional port and no path, for example https://www.example.nl. A browser on one of these websites may call the search and the other public endpoints. * allows every website.",
+        "Save websites": "Save websites",
+        "The websites could not be saved. Try again.": "The websites could not be saved. Try again.",
         "Save tags for {name}": "Save tags for {name}",
         "Save tags for {title}": "Save tags for {title}",
         "Save the publication first, then you'll be able to upload and manage files.": "Save the publication first, then you'll be able to upload and manage files.",
@@ -1555,10 +1559,6 @@ OC.L10N.register(
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Websites that may call the public API": "Websites that may call the public API",
-        "One website per line, as scheme and host with an optional port and no path, for example https://www.example.nl. A browser on one of these websites may call the search and the other public endpoints. * allows every website.": "One website per line, as scheme and host with an optional port and no path, for example https://www.example.nl. A browser on one of these websites may call the search and the other public endpoints. * allows every website.",
-        "Save websites": "Save websites",
-        "The websites could not be saved. Try again.": "The websites could not be saved. Try again.",
         "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
