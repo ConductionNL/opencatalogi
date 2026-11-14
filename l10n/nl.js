@@ -758,6 +758,10 @@ OC.L10N.register(
         "Warnings": "Waarschuwingen",
         "When an object is published, automatically publish all its attachments as Nextcloud shares": "Wanneer een object wordt gepubliceerd, publiceer dan automatisch alle bijlagen als Nextcloud-shares",
         "When an object matching a catalog schema is created, automatically apply public read access via RBAC rules": "Wanneer een object dat overeenkomt met een catalogusschema wordt aangemaakt, pas dan automatisch openbare leestoegang toe via RBAC-regels",
+        "Keep this install out of search engines": "Deze installatie buiten zoekmachines houden",
+        "For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.": "Voor een acceptatie- of testinstallatie. Elke pagina antwoordt met noindex en robots.txt sluit alles uit. De publieke kant blijft bereikbaar.",
+        "Save search indexing": "Zoekmachine-instelling opslaan",
+        "The search indexing setting could not be saved. Try again.": "De zoekmachine-instelling kon niet worden opgeslagen. Probeer het opnieuw.",
         "When to use mass validation:": "Wanneer bulkvalidatie gebruiken:",
         "Which attachments require your attention?": "Welke bijlagen vereisen uw aandacht?",
         "Which publication type would you like to take from this catalog?": "Welk publicatietype wilt u uit deze catalogus overnemen?",
@@ -1510,10 +1514,6 @@ OC.L10N.register(
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
-        "Keep this install out of search engines": "Deze installatie buiten zoekmachines houden",
-        "For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.": "Voor een acceptatie- of testinstallatie. Elke pagina antwoordt met noindex en robots.txt sluit alles uit. De publieke kant blijft bereikbaar.",
-        "Save search indexing": "Zoekmachine-instelling opslaan",
-        "The search indexing setting could not be saved. Try again.": "De zoekmachine-instelling kon niet worden opgeslagen. Probeer het opnieuw.",
         "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "nplurals=2; plural=(n != 1);"
