@@ -95,6 +95,9 @@ class Application extends App implements IBootstrap {
 		// API-Version header and problem details on the JSON API (spec api-documentation).
 		$context->registerMiddleware(ApiContractMiddleware::class);
 
+		// Staging closes every public route to anonymous callers (instance-staging-mode REQ-STG-003).
+		$context->registerMiddleware(\OCA\OpenCatalogi\Middleware\StagingMiddleware::class);
+
 		// AppHost observability adoption (ADR-040). The /api/health and
 		// /api/metrics routes resolve to leaf-namespaced controller class names
 		// (OCA\OpenCatalogi\AppHost\Controller\Generic{Health,Metrics}Controller)
