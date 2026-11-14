@@ -45,6 +45,18 @@ use Psr\Container\NotFoundExceptionInterface;
 class RobotsController extends Controller {
 
 	/**
+	 * The officer paths robots.txt disallows: the app pages and its settings pages.
+	 *
+	 * @var list<string>
+	 */
+	public const OFFICER_PATHS = [
+		'/apps/opencatalogi/',
+		'/index.php/apps/opencatalogi/',
+		'/settings/admin/opencatalogi',
+		'/index.php/settings/admin/opencatalogi',
+	];
+
+	/**
 	 * RobotsController constructor.
 	 *
 	 * @param string $appName The name of the app.
@@ -82,6 +94,11 @@ class RobotsController extends Controller {
 	public function index(): TextResponse {
 		$settings = $this->settingsService->getSettings();
 
+		// An acceptance or test install keeps every crawler out (REQ-WAB-003).
+		if (($settings['configuration']['search_indexing'] ?? null) === 'blocked') {
+			return new TextResponse(text: "User-agent: *\nDisallow: /\n");
+		}
+
 		if (isset($settings['configuration']['catalog_register']) === false
 			|| isset($settings['configuration']['catalog_schema']) === false
 		) {
@@ -96,7 +113,9 @@ class RobotsController extends Controller {
 
 		// A crawler that honours robots may fetch the sitemaps and the documents
 		// they list; every line ends in a real line break (REQ-WIH-001).
+		// The officer side and the settings pages stay out; the longer API allow wins (REQ-WAB-003).
 		$text = "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n";
+		$text .= implode('', array_map(static fn (string $path): string => 'Disallow: '.$path."\n", self::OFFICER_PATHS));
 		foreach ($catalogs as $catalog) {
 			$text .= $this->directives->sitemapLines(catalog: $catalog, baseUrl: $baseUrl);
 		}

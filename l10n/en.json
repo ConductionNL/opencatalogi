@@ -1551,7 +1551,11 @@
         "Only the groups below see and edit this catalogue's publications.": "Only the groups below see and edit this catalogue's publications.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
+        "Keep this install out of search engines": "Keep this install out of search engines",
+        "For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.": "For an acceptance or test install. Every page answers with noindex and robots.txt disallows everything. The public side is still served.",
+        "Save search indexing": "Save search indexing",
+        "The search indexing setting could not be saved. Try again.": "The search indexing setting could not be saved. Try again."
     },
     "plurals": {}
 }

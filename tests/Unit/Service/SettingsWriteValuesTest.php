@@ -122,6 +122,7 @@ class SettingsWriteValuesTest extends TestCase {
 				'woo_index_registration_answer',
 				'channel_sources',
 				'public_api_cache_seconds',
+				'search_indexing',
 			],
 			$writable
 		);

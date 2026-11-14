@@ -166,6 +166,27 @@ describe('Settings savePublicCacheSeconds and saveChannelSources', () => {
 		expect(state).toMatchObject({ publicCacheError: 'The cache time could not be saved. Try again.', savingPublicCache: false })
 	})
 
+	it.each([
+		[true, { data: { search_indexing: 'blocked' } }, 'blocked', true],
+		[false, { data: { search_indexing: 'allowed' } }, 'allowed', false],
+		[true, { data: { search_indexing: 'allowed' } }, 'blocked', false],
+	])('saves search indexing %s and shows what the server stored', async (blocked, response, sent, shown) => {
+		axios.put.mockResolvedValue(response)
+		const state = page({ searchIndexingBlocked: blocked })
+		await Settings.methods.saveSearchIndexing.call(state)
+
+		expect(axios.put).toHaveBeenCalledWith('/apps/opencatalogi/api/settings', { search_indexing: sent })
+		expect(state).toMatchObject({ searchIndexingBlocked: shown, searchIndexingError: '', savingSearchIndexing: false })
+	})
+
+	it('reports a failed search indexing save', async () => {
+		axios.put.mockRejectedValue(new Error('down'))
+		const state = page({ searchIndexingBlocked: true })
+		await Settings.methods.saveSearchIndexing.call(state)
+
+		expect(state).toMatchObject({ searchIndexingError: 'The search indexing setting could not be saved. Try again.', savingSearchIndexing: false })
+	})
+
 	it('saves a copy of the channel sources', async () => {
 		axios.put.mockResolvedValue({})
 		const channelSources = { plooi: 'src' }
