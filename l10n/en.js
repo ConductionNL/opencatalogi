@@ -1,6 +1,15 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Attachment reading": "Attachment reading",
+        "File": "File",
+        "Reading state": "Reading state",
+        "The Nextcloud file id of the published attachment.": "The Nextcloud file id of the published attachment.",
+        "The publication the attachment belongs to.": "The publication the attachment belongs to.",
+        "Updated at": "Updated at",
+        "When the reading job last recorded the state.": "When the reading job last recorded the state.",
+        "Why the attachment has this state, when the state alone does not say it.": "Why the attachment has this state, when the state alone does not say it.",
+        "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.": "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.",
         "Show which documents of a publication were withheld, and on which grounds": "Show which documents of a publication were withheld, and on which grounds",
         "Show withheld documents": "Show withheld documents",
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",
@@ -1555,15 +1564,6 @@ OC.L10N.register(
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Attachment reading": "Attachment reading",
-        "File": "File",
-        "Reading state": "Reading state",
-        "The Nextcloud file id of the published attachment.": "The Nextcloud file id of the published attachment.",
-        "The publication the attachment belongs to.": "The publication the attachment belongs to.",
-        "Updated at": "Updated at",
-        "When the reading job last recorded the state.": "When the reading job last recorded the state.",
-        "Why the attachment has this state, when the state alone does not say it.": "Why the attachment has this state, when the state alone does not say it.",
-        "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.": "typed: OpenRegister extracted text; ocr: OCR read the file; waiting: OCR ran and its text is not indexed yet; none: no text was found; unavailable: no OCR is installed; failed: reading failed, see the reason.",
         "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
