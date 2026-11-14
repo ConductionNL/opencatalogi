@@ -1506,7 +1506,18 @@
         "Only the groups below see and edit this catalogue's publications.": "Alleen de groepen hieronder zien en bewerken de publicaties van deze catalogus.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
+        "App": "App",
+        "Information category label": "Label van de informatiecategorie",
+        "Notes": "Notities",
+        "Object type": "Objecttype",
+        "The TOOI URI of the informatiecategorie, a member of the official waardelijst.": "De TOOI-URI van de informatiecategorie, een waarde uit de officiële waardelijst.",
+        "The app that owns the object type, for example opencatalogi or decidesk.": "De app waar het objecttype bij hoort, bijvoorbeeld opencatalogi of decidesk.",
+        "The canonical label of that informatiecategorie, shown beside the URI for review.": "Het vaste label van die informatiecategorie, naast de URI getoond om te controleren.",
+        "The owning app's schema slug or payload kind the default applies to.": "De schema-slug of het soort bericht van die app waarvoor de standaardwaarde geldt.",
+        "Whether the default applies. An inactive row is kept but never used.": "Of de standaardwaarde geldt. Een inactieve regel blijft bewaard maar wordt nooit gebruikt.",
+        "Why this default was chosen, and where it came from.": "Waarom voor deze standaardwaarde is gekozen en waar die vandaan komt.",
+        "Woo category mapping": "Woo-categoriekoppeling"
     },
     "plurals": {}
 }

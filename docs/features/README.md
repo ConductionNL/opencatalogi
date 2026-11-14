@@ -23,6 +23,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Catalogus & Publicatiebeheer](./org-archimate-export.md) | Create and manage publications, catalogs, listings with full lifecycle (draft → published) | — |
 | [Federatie & Synchronisatie](./register-i18n.md) | Cross-organization catalogue synchronization with source configuration and directory sync | — |
 | [WOO Transparantie](./woo-transparency.md) | WOO/FOIA document queue, redaction workflow, weigeringsgronden, inventarislijst | [woo-transparency.md](./woo-transparency.md) |
+| [Woo default information categories](./woo-compliance.md) | A default informatiecategorie per (app, kind of object), used when a publication names none; read by any app through an OpenRegister query | [woo-compliance.md](./woo-compliance.md) |
 | [Meertalige content](./register-i18n.md) | Multi-language publications and catalogs (NL + EN minimum), EU SDG-compliant | [register-i18n.md](./register-i18n.md) |
 | [GEMMA ArchiMate Export](./org-archimate-export.md) | Export organization-enriched AMEFF XML for Archi/BiZZdesign/ADOIT with modules, gebruik, deelnames | [org-archimate-export.md](./org-archimate-export.md) |
 | [View Enrichment API](./view-enrichment-api.md) | Unified API aggregating base GEMMA view data with organization-specific module mappings | [view-enrichment-api.md](./view-enrichment-api.md) |
