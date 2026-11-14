@@ -34,6 +34,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [Publication slugs](./publication-slugs.md) | `GET /api/{catalogSlug}/{id}` resolves a publication by its OpenRegister slug as well as its UUID, within the catalogue; a stable public URL that survives a re-import | [publication-slugs.md](./publication-slugs.md) |
 | [Dashboard](./dashboard.md) | The app shell: deep-link routes to every page, the Nextcloud dashboard widgets, and what the app registers on start | [dashboard.md](./dashboard.md) |
 | [Directory](./directory.md) | Listings of federated catalogues, their endpoints, directory synchronisation and the scheduled sync and broadcast jobs | [directory.md](./directory.md) |
+| [Document references](./document-references.md) | Publish a document that stays in its source system by its public URL: listed in the DiWoo sitemap, the DCAT feed and the attachments list, checked daily for broken links | [document-references.md](./document-references.md) |
 | Publiek zoeken | Unauthenticated full-text search with filters and facets | — |
 | [Publieke fulltext search — publicaties + documenten](./public-fulltext-search.md) | Public `GET /apps/opencatalogi/api/search` — RBAC-filtered mixed envelope of publications and documents, `@self.schema` as row discriminator, embedded `publication: {id, slug, title}` on document rows | [public-fulltext-search.md](./public-fulltext-search.md) |
 | DCAT-AP export | Dataset metadata export in DCAT-AP NL and EU DCAT-AP format | — |

@@ -1217,7 +1217,7 @@ class PublicationService implements PublicationServiceInterface {
 			// Format the files with pagination using request parameters.
 			$formattedFiles = $fileService->formatFiles($files, $this->request->getParams());
 
-			return new JSONResponse($formattedFiles);
+			return new JSONResponse($this->withReferences(formatted: $formattedFiles, publicationId: $id));
 		} catch (DoesNotExistException $e) {
 			return new JSONResponse(['error' => 'Object not found'], 404);
 		} catch (NotFoundException $e) {
@@ -1227,6 +1227,43 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end attachments()
+
+	/**
+	 * The formatted files with the publication's public document references after them (REQ-PBR-002).
+	 *
+	 * Each reference carries `kind: reference` and its source URL. The
+	 * references are listed once, after the files on the first page, and
+	 * counted in `total`.
+	 *
+	 * @param array<string, mixed> $formatted The formatFiles result.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return array<string, mixed> The result with the references.
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
+	 */
+	public function withReferences(array $formatted, string $publicationId): array {
+		if ((int)($formatted['page'] ?? 1) > 1) {
+			return $formatted;
+		}
+
+		try {
+			$references = $this->container->get(DocumentReferences::class)->publishedFileEntries(publicationId: $publicationId);
+		} catch (\Throwable $e) {
+			return $formatted;
+		}
+
+		if ($references === []) {
+			return $formatted;
+		}
+
+		$formatted['results'] = array_merge(array_values((array)($formatted['results'] ?? [])), $references);
+		if (isset($formatted['total']) === true) {
+			$formatted['total'] = ((int)$formatted['total'] + count($references));
+		}
+
+		return $formatted;
+	}//end withReferences()
 
 	/**
 	 * Download all files of an object as a ZIP archive

@@ -851,6 +851,52 @@
 						}
 					},
 					{
+						"id": "pub-references",
+						"type": "object-list",
+						"title": "Document references",
+						"icon": "LinkVariant",
+						"content": {
+							"register": "publication",
+							"schema": "documentReference",
+							"filter": {
+								"publication": "@objectId"
+							},
+							"sort": {
+								"field": "title",
+								"dir": "asc"
+							},
+							"columns": [
+								{
+									"key": "title",
+									"label": "Title"
+								},
+								{
+									"key": "format",
+									"label": "Format"
+								},
+								{
+									"key": "url",
+									"label": "URL"
+								},
+								{
+									"key": "reachable",
+									"label": "Reachable"
+								},
+								{
+									"key": "lastStatus",
+									"label": "Last status"
+								},
+								{
+									"key": "lastCheckedAt",
+									"label": "Last checked"
+								}
+							],
+							"limit": 25,
+							"allowCreate": true,
+							"emptyText": "This publication has no document references yet."
+						}
+					},
+					{
 						"id": "pub-photos",
 						"type": "integration",
 						"integrationId": "photos",
@@ -959,7 +1005,7 @@
 						"id": "6",
 						"widgetId": "pub-photos",
 						"gridX": 0,
-						"gridY": 15,
+						"gridY": 19,
 						"gridWidth": 6,
 						"gridHeight": 4
 					},
@@ -967,7 +1013,7 @@
 						"id": "7",
 						"widgetId": "pub-links",
 						"gridX": 6,
-						"gridY": 15,
+						"gridY": 19,
 						"gridWidth": 6,
 						"gridHeight": 4
 					},
@@ -975,7 +1021,7 @@
 						"id": "10",
 						"widgetId": "pub-announce",
 						"gridX": 0,
-						"gridY": 19,
+						"gridY": 23,
 						"gridWidth": 12,
 						"gridHeight": 4
 					},
@@ -983,7 +1029,7 @@
 						"id": "11",
 						"widgetId": "pub-plooi",
 						"gridX": 0,
-						"gridY": 23,
+						"gridY": 27,
 						"gridWidth": 12,
 						"gridHeight": 3
 					},
@@ -991,9 +1037,17 @@
 						"id": "12",
 						"widgetId": "pub-visibility",
 						"gridX": 0,
-						"gridY": 26,
+						"gridY": 30,
 						"gridWidth": 12,
 						"gridHeight": 3
+					},
+					{
+						"id": "13",
+						"widgetId": "pub-references",
+						"gridX": 0,
+						"gridY": 15,
+						"gridWidth": 12,
+						"gridHeight": 4
 					}
 				],
 				"lifecycleActions": {

@@ -1027,6 +1027,71 @@ class SitemapServiceTest extends TestCase {
 	}
 
 	/**
+	 * Spec scenario "The Woo-index reads a referenced document": a publication with one
+	 * file and one reference inside its window lists both, the reference with its source
+	 * URL as `loc` (REQ-PBR-002).
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-a-reference-is-published-like-a-file-pointing-at-its-source-req-pbr-002
+	 */
+	public function testAReferenceIsADocumentWithItsSourceUrlAsLoc(): void {
+		$source = 'https://documenten.voorbeeldgemeente.nl/besluit-2026-001.pdf';
+		$references = $this->createMock(\OCA\OpenCatalogi\Service\DocumentReferences::class);
+		$references->expects($this->once())->method('appendTo')->willReturnCallback(
+			static fn (array $files, string $publicationId): array => array_merge(
+				$files,
+				$publicationId === 'pub-1' ? [(new \OCA\OpenCatalogi\Service\DocumentReferenceMapper())->asFileEntry(reference: ['url' => $source, 'title' => 'Besluit', 'format' => 'pdf', 'publicationDate' => '2024-04-01'])] : []
+			)
+		);
+		$this->service = new SitemapService(
+			new OpenRegisterLookup($this->container, $this->appManager),
+			$this->settingsService,
+			new InstanceSettings($this->urlGenerator, $this->config),
+			new \OCA\OpenCatalogi\Service\TooiVocabularyService(),
+			$this->queryService,
+			$this->wooCategories,
+			$references
+		);
+
+		$calls = [];
+		$dom = new \DOMDocument();
+		$dom->loadXML($this->documentsPage(calls: $calls));
+		$locs = [];
+		foreach ($dom->getElementsByTagNameNS(StandardsVersionService::SITEMAP_NAMESPACE, 'loc') as $loc) {
+			$locs[] = $loc->textContent;
+		}
+
+		$this->assertSame(['https://example.com/a.pdf', 'https://example.com/b.odt', $source], $locs);
+	}//end testAReferenceIsADocumentWithItsSourceUrlAsLoc()
+
+	/**
+	 * The validator report lists the references whose last check found no answer;
+	 * files and answering references are not listed (REQ-PBR-003).
+	 *
+	 * @spec openspec/changes/integration-publish-by-reference/specs/publication-document-references/spec.md#requirement-broken-references-are-shown-before-readers-find-them-req-pbr-003
+	 */
+	public function testTheUnreachableReferencesAreListed(): void {
+		$mapper = new \OCA\OpenCatalogi\Service\DocumentReferenceMapper();
+		$publications = [
+			[
+				'id' => 'pub-1',
+				'@self' => [
+					'files' => [
+						['downloadUrl' => 'https://example.com/a.pdf', 'extension' => 'pdf', 'reachable' => false],
+						$mapper->asFileEntry(reference: ['url' => 'https://dms.example/ok.pdf', 'format' => 'pdf', 'reachable' => true, 'lastStatus' => 200]),
+						$mapper->asFileEntry(reference: ['url' => 'https://dms.example/new.pdf', 'format' => 'pdf']),
+						$mapper->asFileEntry(reference: ['url' => 'https://dms.example/gone.pdf', 'title' => 'Gone', 'format' => 'pdf', 'reachable' => false, 'lastStatus' => 404, 'lastCheckedAt' => '2026-11-13T03:00:00+00:00']),
+					],
+				],
+			],
+		];
+
+		$this->assertSame(
+			[['publication' => 'pub-1', 'title' => 'Gone', 'url' => 'https://dms.example/gone.pdf', 'lastStatus' => 404, 'lastCheckedAt' => '2026-11-13T03:00:00+00:00']],
+			SitemapService::unreachableReferences(publications: $publications)
+		);
+	}//end testTheUnreachableReferencesAreListed()
+
+	/**
 	 * lastmod and atTime are xs:dateTime values in UTC, the same in every server time zone.
 	 *
 	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md

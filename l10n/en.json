@@ -1,5 +1,11 @@
 {
     "translations": {
+        "Document references": "Document references",
+        "This publication has no document references yet.": "This publication has no document references yet.",
+        "Format": "Format",
+        "URL": "URL",
+        "Reachable": "Reachable",
+        "Last status": "Last status",
         "Show which documents of a publication were withheld, and on which grounds": "Show which documents of a publication were withheld, and on which grounds",
         "Show withheld documents": "Show withheld documents",
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.",

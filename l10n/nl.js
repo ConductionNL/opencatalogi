@@ -1,6 +1,12 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Document references": "Documentverwijzingen",
+        "This publication has no document references yet.": "Deze publicatie heeft nog geen documentverwijzingen.",
+        "Format": "Formaat",
+        "URL": "URL",
+        "Reachable": "Bereikbaar",
+        "Last status": "Laatste status",
         "Show which documents of a publication were withheld, and on which grounds": "Toon welke documenten van een publicatie zijn geweigerd, en op welke gronden",
         "Show withheld documents": "Geweigerde documenten tonen",
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Toon bij een openbaar Woo-besluit welke documenten zijn geweigerd en op welke weigeringsgronden, zonder hun inhoud.",

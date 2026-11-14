@@ -2071,6 +2071,19 @@
       {
         "@self": {
           "register": "publication",
+          "schema": "documentReference",
+          "slug": "documentreference-1"
+        },
+        "publication": "@ref:publication:example-municipality-annual-report",
+        "url": "https://documenten.voorbeeldgemeente.nl/besluit-2026-001.pdf",
+        "title": "Besluit 2026-001",
+        "format": "pdf",
+        "sourceSystem": "Documentsysteem Voorbeeldgemeente",
+        "publicationDate": "2026-01-01T00:00:00+00:00"
+      },
+      {
+        "@self": {
+          "register": "publication",
           "schema": "publication",
           "slug": "example-municipality-annual-report"
         },
