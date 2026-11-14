@@ -284,4 +284,19 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		}
 
 	}//end testRegisterCallsEveryComponentRegistrar()
+	/**
+	 * The no-index middleware is registered, so officer responses carry noindex (REQ-WAB-003).
+	 *
+	 * @return void
+	 */
+	public function testRegisterRegistersTheNoIndexMiddleware(): void {
+		$body = $this->methodBody($this->source(), 'public function register(');
+
+		$this->assertStringContainsString(
+			'$context->registerMiddleware(NoIndexMiddleware::class);',
+			$body,
+			'Application::register() does not register NoIndexMiddleware, so officer responses are not marked noindex'
+		);
+
+	}//end testRegisterRegistersTheNoIndexMiddleware()
 }//end class
