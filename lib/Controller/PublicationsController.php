@@ -41,6 +41,7 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CatalogScopeIds;
+use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
@@ -1193,6 +1194,10 @@ class PublicationsController extends Controller {
 				);
 			}
 
+			if (is_array($result) === true) {
+				$result = $this->withFreshLinks(result: $result, object: $found->object);
+			}
+
 			$response = new JSONResponse($result, 200);
 		}
 
@@ -1200,6 +1205,37 @@ class PublicationsController extends Controller {
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
+
+	/**
+	 * A rendered publication with its public and officer pages computed now.
+	 *
+	 * The stored values were computed when it was created; a setting changed
+	 * since then shows here at once (REQ-PTS-001). Only an object of the
+	 * publication schema carries them. When they cannot be computed the stored
+	 * values are answered.
+	 *
+	 * @param array<string, mixed> $result The rendered publication.
+	 * @param object               $object The publication entity.
+	 *
+	 * @return array<string, mixed> The publication.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	private function withFreshLinks(array $result, object $object): array {
+		$schema = (string)($this->appConfig?->getValueString('opencatalogi', 'publication_schema', '') ?? '');
+		if ($schema === '' || (string)$object->getSchema() !== $schema) {
+			return $result;
+		}
+
+		try {
+			$links = $this->container->get(PublicationLinks::class)->for(uuid: (string)$object->getUuid(), schema: $schema);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[PublicationsController::show] The publication pages could not be computed: ' . $e->getMessage());
+			return $result;
+		}
+
+		return array_merge($result, $links);
+	}//end withFreshLinks()
 
 	/**
 	 * The schema.org JSON-LD answer for a rendered publication (SDD-001/SDD-003).
