@@ -156,6 +156,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// Themes CORS
 		['name' => 'themes#preflightedCors', 'postfix' => '-themes', 'url' => '/api/themes', 'verb' => 'OPTIONS'],
 		['name' => 'themes#preflightedCors', 'postfix' => '-themes-id', 'url' => '/api/themes/{id}', 'verb' => 'OPTIONS'],
+		['name' => 'themes#preflightedCors', 'postfix' => '-themes-id-publications', 'url' => '/api/themes/{id}/publications', 'verb' => 'OPTIONS'],
 		// Menus CORS
 		// Pages CORS
 		// Directory CORS
@@ -206,6 +207,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		// Themes (specific route - must be before wildcard catalog routes)
 		['name' => 'themes#index', 'url' => '/api/themes', 'verb' => 'GET'],
 		['name' => 'themes#show', 'url' => '/api/themes/{id}', 'verb' => 'GET'],
+		['name' => 'themes#publications', 'url' => '/api/themes/{id}/publications', 'verb' => 'GET'],
 		// Menus (specific route - must be before wildcard catalog routes)
 		// Pages (specific route - must be before wildcard catalog routes)
 		// Directory (specific route - must be before wildcard catalog routes)

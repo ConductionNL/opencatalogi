@@ -1157,6 +1157,65 @@
         }
       }
     },
+    "/themes/{id}/publications": {
+      "get": {
+        "operationId": "themes-publications",
+        "summary": "List what is filed under a theme",
+        "description": "The publications filed under a theme, newest first, as an anonymous reader sees them. `{id}` is the theme's id, uuid or slug.",
+        "tags": [
+          "Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          },
+          {
+            "$ref": "#/components/parameters/LimitParam"
+          },
+          {
+            "$ref": "#/components/parameters/PageParam"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaginatedEnvelope"
+                }
+              }
+            },
+            "headers": {
+              "API-Version": {
+                "$ref": "#/components/headers/APIVersion"
+              }
+            }
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          }
+        }
+      },
+      "options": {
+        "operationId": "themes-publications-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/themes/{id}/publications`.",
+        "tags": [
+          "Themes"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
     "/{catalogSlug}": {
       "get": {
         "operationId": "publications-index",

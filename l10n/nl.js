@@ -1,6 +1,11 @@
 OC.L10N.register(
     "opencatalogi",
     {
+        "Featured": "Uitgelicht",
+        "Featured order": "Volgorde uitgelicht",
+        "Position among the featured subjects, lowest first": "Positie tussen de uitgelichte onderwerpen, laagste eerst",
+        "Show this subject on the portal's home page": "Toon dit onderwerp op de startpagina van het portaal",
+        "Web address name of the subject, lowercase letters, digits and hyphens": "Naam van het onderwerp in het webadres, kleine letters, cijfers en koppeltekens",
         "Show which documents of a publication were withheld, and on which grounds": "Toon welke documenten van een publicatie zijn geweigerd, en op welke gronden",
         "Show withheld documents": "Geweigerde documenten tonen",
         "Show on a public Woo decision which documents were withheld and on which refusal grounds, without their content.": "Toon bij een openbaar Woo-besluit welke documenten zijn geweigerd en op welke weigeringsgronden, zonder hun inhoud.",

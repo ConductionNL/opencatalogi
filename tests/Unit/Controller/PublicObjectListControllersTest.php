@@ -175,7 +175,15 @@ class PublicObjectListControllersTest extends TestCase {
 
 		$response = $controller->show('one');
 
-		$this->assertSame(['id' => 'one'], $response->getData());
+		$expected = ['id' => 'one'];
+		if ($prefix === 'theme') {
+			// A subject links what is filed under it (REQ-SUB-003); without OpenRegister's
+			// anonymous scope the count fails closed at 0.
+			$expected['publicationsUrl'] = '/index.php/apps/opencatalogi/api/themes/one/publications';
+			$expected['publicationCount'] = 0;
+		}
+
+		$this->assertSame($expected, $response->getData());
 		$headers = $response->getHeaders();
 		$this->assertSame('*', $headers['Access-Control-Allow-Origin']);
 		$this->assertSame('PUT, POST, GET, DELETE, PATCH', $headers['Access-Control-Allow-Methods']);

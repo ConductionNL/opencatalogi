@@ -13625,6 +13625,337 @@
             }
         ]
     },
+    "ThemesController::publications / absent": {
+        "answer": {
+            "thrown": "RuntimeException: OpenRegister service is not available."
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "resolver.lookupId": [
+                    "opencatalogi",
+                    "theme_register"
+                ]
+            },
+            {
+                "resolver.lookupId": [
+                    "opencatalogi",
+                    "theme_schema"
+                ]
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            }
+        ]
+    },
+    "ThemesController::publications / anonymous": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 404,
+            "data": {
+                "error": "Not Found"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "resolver.lookupId": [
+                    "opencatalogi",
+                    "theme_register"
+                ]
+            },
+            {
+                "resolver.lookupId": [
+                    "opencatalogi",
+                    "theme_schema"
+                ]
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.find": {
+                    "id": "id-1",
+                    "register": "res-reg",
+                    "schema": "res-sch",
+                    "_multitenancy": false
+                }
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.searchObjectsPaginated": {
+                    "query": {
+                        "@self": {
+                            "register": "res-reg",
+                            "schema": "res-sch"
+                        },
+                        "slug": "id-1",
+                        "_limit": 1
+                    },
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "ThemesController::publications / fallback": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 404,
+            "data": {
+                "error": "Not Found"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_schema",
+                    ""
+                ]
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.find": {
+                    "id": "id-1",
+                    "register": "cfg-theme_register",
+                    "schema": "cfg-theme_schema",
+                    "_multitenancy": false
+                }
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.searchObjectsPaginated": {
+                    "query": {
+                        "@self": {
+                            "register": "cfg-theme_register",
+                            "schema": "cfg-theme_schema"
+                        },
+                        "slug": "id-1",
+                        "_limit": 1
+                    },
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "ThemesController::publications / halfset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Resolver config key \"theme_schema\" is not set for app \"opencatalogi\" and no default was provided."
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_schema",
+                    ""
+                ]
+            }
+        ]
+    },
+    "ThemesController::publications / noconfig": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Cannot resolve register configuration for theme_register: IAppConfig unavailable"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "ThemesController::publications / resolver": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 404,
+            "data": {
+                "error": "Not Found"
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "resolver.lookupId": [
+                    "opencatalogi",
+                    "theme_register"
+                ]
+            },
+            {
+                "resolver.lookupId": [
+                    "opencatalogi",
+                    "theme_schema"
+                ]
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.find": {
+                    "id": "id-1",
+                    "register": "res-reg",
+                    "schema": "res-sch",
+                    "_multitenancy": false
+                }
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.searchObjectsPaginated": {
+                    "query": {
+                        "@self": {
+                            "register": "res-reg",
+                            "schema": "res-sch"
+                        },
+                        "slug": "id-1",
+                        "_limit": 1
+                    },
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "ThemesController::publications / unset": {
+        "answer": {
+            "response": "JSONResponse",
+            "status": 503,
+            "data": {
+                "error": "register_not_configured",
+                "detail": "Resolver config key \"theme_register\" is not set for app \"opencatalogi\" and no default was provided."
+            },
+            "headers": {
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Content-Security-Policy": "default-src 'none';base-uri 'none';manifest-src 'self';frame-ancestors 'none'",
+                "Content-Type": "application/json; charset=utf-8",
+                "Feature-Policy": "autoplay 'none';camera 'none';fullscreen 'none';geolocation 'none';microphone 'none';payment 'none'",
+                "X-Robots-Tag": "noindex, nofollow"
+            }
+        },
+        "log": [
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "container.get": "OCP\\IAppConfig"
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_register",
+                    ""
+                ]
+            },
+            {
+                "IAppConfig.getValueString": [
+                    "opencatalogi",
+                    "theme_schema",
+                    ""
+                ]
+            }
+        ]
+    },
     "ThemesController::show / absent": {
         "answer": {
             "thrown": "RuntimeException: OpenRegister service is not available."
@@ -13694,6 +14025,25 @@
                     "schema": "res-sch",
                     "_multitenancy": false
                 }
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.searchObjectsPaginated": {
+                    "query": {
+                        "@self": {
+                            "register": "res-reg",
+                            "schema": "res-sch"
+                        },
+                        "slug": "id-1",
+                        "_limit": 1
+                    },
+                    "_multitenancy": false
+                }
             }
         ]
     },
@@ -13744,6 +14094,25 @@
                     "id": "id-1",
                     "register": "cfg-theme_register",
                     "schema": "cfg-theme_schema",
+                    "_multitenancy": false
+                }
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.searchObjectsPaginated": {
+                    "query": {
+                        "@self": {
+                            "register": "cfg-theme_register",
+                            "schema": "cfg-theme_schema"
+                        },
+                        "slug": "id-1",
+                        "_limit": 1
+                    },
                     "_multitenancy": false
                 }
             }
@@ -13855,6 +14224,25 @@
                     "id": "id-1",
                     "register": "res-reg",
                     "schema": "res-sch",
+                    "_multitenancy": false
+                }
+            },
+            {
+                "IAppManager.getInstalledApps": []
+            },
+            {
+                "container.get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "ObjectService.searchObjectsPaginated": {
+                    "query": {
+                        "@self": {
+                            "register": "res-reg",
+                            "schema": "res-sch"
+                        },
+                        "slug": "id-1",
+                        "_limit": 1
+                    },
                     "_multitenancy": false
                 }
             }

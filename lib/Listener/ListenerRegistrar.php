@@ -127,6 +127,11 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
 
+		// A featured subject is shown by its title, so a featured save without one is
+		// refused through any API (subjects-as-first-class-records, REQ-SUB-001).
+		$context->registerEventListener(ObjectCreatingEvent::class, ThemeFeaturedCheckListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, ThemeFeaturedCheckListener::class);
+
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
 		// installed after OpenCatalogi, its register event completes the scope
