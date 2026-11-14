@@ -36,6 +36,7 @@ use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -262,8 +263,7 @@ class CommentPeriodController extends Controller {
 			return $this->asArray(
 				object: $objectService->find(
 					id: $lookup['id'],
-					register: $lookup['register'],
-					schema: $lookup['schema']
+					options: new ObjectFindOptions(register: $lookup['register'], schema: $lookup['schema'])
 				)
 			);
 		} catch (\Throwable $e) {

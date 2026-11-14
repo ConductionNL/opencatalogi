@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Controller\DepublicationController;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -230,8 +231,8 @@ class DepublicationGoldenTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, mixed $register = null, mixed $schema = null, bool $_rbac = true): array {
-				$this->log[] = ['find' => [$id, $register, $schema, $_rbac]];
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->log[] = ['find' => [$id, $options?->register, $options?->schema, $_rbac]];
 				if (($this->case['fail'] ?? null) === 'find') {
 					throw new RuntimeException('no such object');
 				}

@@ -40,6 +40,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -201,7 +202,7 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
 				if ($_rbac === true) {
 					throw new \LogicException('The resynchronisation reads without RBAC');
 				}

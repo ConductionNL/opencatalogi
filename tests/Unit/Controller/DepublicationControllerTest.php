@@ -34,6 +34,7 @@ use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -166,7 +167,7 @@ class DepublicationControllerTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
 				if (array_key_exists($id, $this->stored) === false) {
 					throw new \RuntimeException('no such object: ' . $id);
 				}

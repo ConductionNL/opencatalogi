@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Service\Portal;
 
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -104,8 +105,7 @@ class PortalObjectStore {
 		try {
 			$entity = $this->objectService()->find(
 				id: $id,
-				register: self::REGISTER,
-				schema: $schema,
+				options: new ObjectFindOptions(register: self::REGISTER, schema: $schema),
 				_rbac: false,
 				_multitenancy: false
 			);
@@ -271,8 +271,7 @@ class PortalObjectStore {
 			try {
 				return $service->find(
 					id: $id,
-					register: self::REGISTER,
-					schema: self::PUBLICATION_SCHEMA,
+					options: new ObjectFindOptions(register: self::REGISTER, schema: self::PUBLICATION_SCHEMA),
 					_rbac: true,
 					_multitenancy: false
 				);

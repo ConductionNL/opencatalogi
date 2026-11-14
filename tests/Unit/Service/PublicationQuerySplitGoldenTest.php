@@ -22,6 +22,7 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
@@ -83,8 +84,11 @@ class PublicationQuerySplitGoldenTest extends TestCase {
 			 *
 			 * @return object|null
 			 */
-			public function find(string $id, array $_extend = [], bool $files = false, int|string|null $register = null, int|string|null $schema = null, bool $_rbac = true, bool $_multitenancy = true): ?object {
-				$this->log[] = ['find' => [$id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy]];
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): ?object {
+				$options ??= new ObjectFindOptions();
+				$register = $options->register;
+				$schema = $options->schema;
+				$this->log[] = ['find' => [$id, $options->extend, $options->files, $register, $schema, $_rbac, $_multitenancy]];
 				$answer = ($this->world['find'][$register . '/' . $schema] ?? null);
 				if ($answer === 'missing') {
 					throw new DoesNotExistException('missing');

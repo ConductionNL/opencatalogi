@@ -26,6 +26,7 @@ use DateTimeImmutable;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenCatalogi\Service\SchemaObjects;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use Psr\Log\LoggerInterface;
@@ -186,7 +187,12 @@ class WithheldDocumentStore {
 
 		try {
 			[$register, $schema] = $this->target(key: 'publication_schema');
-			$found = $objects->find(id: $publicationId, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+			$found = $objects->find(
+				id: $publicationId,
+				options: new ObjectFindOptions(register: $register, schema: $schema),
+				_rbac: false,
+				_multitenancy: false
+			);
 		} catch (DoesNotExistException $e) {
 			return false;
 		} catch (Throwable $e) {

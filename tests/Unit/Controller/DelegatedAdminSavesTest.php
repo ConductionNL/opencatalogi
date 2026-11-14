@@ -52,6 +52,7 @@ use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -634,16 +635,15 @@ final class BlockEnforcingStore {
 	 * Find a stored object, refusing a caller the schema's block does not name unless RBAC is off.
 	 *
 	 * @param string $id The id.
-	 * @param string|null $register The register.
-	 * @param string|null $schema The schema.
+	 * @param ObjectFindOptions|null $options The register and schema.
 	 * @param bool $_rbac Whether to apply the block.
 	 *
 	 * @return array<string, mixed> The object with its id.
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
-	public function find(string $id, ?string $register = null, ?string $schema = null, bool $_rbac = true): array {
-		$this->refuseUnlessGranted(schema: (string)$schema, action: 'read', rbac: $_rbac);
+	public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		$this->refuseUnlessGranted(schema: (string)$options?->schema, action: 'read', rbac: $_rbac);
 
 		return $this->seed[$id]['object'] + ['id' => $id];
 	}//end find()

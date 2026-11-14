@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -233,7 +234,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
 				return $this->definition;
 			}
 		};
@@ -305,7 +306,7 @@ class ServiceCatalogueControllerTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
 				if ($this->stored === []) {
 					throw new \RuntimeException('no such object: ' . $id);
 				}

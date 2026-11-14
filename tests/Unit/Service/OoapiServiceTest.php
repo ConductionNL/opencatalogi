@@ -28,6 +28,7 @@ use OCA\OpenCatalogi\Contract\OoapiPage;
 use OCA\OpenCatalogi\Contract\OoapiScope;
 use OCA\OpenCatalogi\Service\OoapiMappingService;
 use OCA\OpenCatalogi\Service\OoapiService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -35,6 +36,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use Unit\Support\FindCallShape;
 
 /**
  * Unit tests for OoapiService.
@@ -311,7 +313,7 @@ class OoapiServiceTest extends TestCase {
 		$schemaMapper->method('find')->willReturn($schema);
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-		$objectService->method('find')->with('org-1', [])->willReturn(
+		$objectService->method('find')->with('org-1', $this->callback(static fn (?ObjectFindOptions $options): bool => ($options ?? new ObjectFindOptions())->extend === []))->willReturn(
 			$this->makeObjectEntity(['@self' => ['uuid' => 'org-1'], 'name' => 'Universiteit van Amsterdam'])
 		);
 
@@ -345,25 +347,28 @@ class OoapiServiceTest extends TestCase {
 	 */
 	public function testTheSingleReadPassesOnlyTheIdAndNoExtension(): void {
 		$calls = [];
+		$extends = [];
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$objectService->method('find')->willReturnCallback(
-			function (...$arguments) use (&$calls): \OCA\OpenRegister\Db\ObjectEntity {
+			function (...$arguments) use (&$calls, &$extends): \OCA\OpenRegister\Db\ObjectEntity {
 				$named = [];
 				foreach ((new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'find'))->getParameters() as $index => $parameter) {
 					$passed = array_key_exists($index, $arguments);
-					if ($passed === true && ($parameter->isDefaultValueAvailable() === false || $arguments[$index] !== $parameter->getDefaultValue() || $parameter->getName() === '_extend')) {
+					if ($passed === true && ($parameter->isDefaultValueAvailable() === false || $arguments[$index] !== $parameter->getDefaultValue())) {
 						$named[$parameter->getName()] = $arguments[$index];
 					}
 				}
 
-				$calls[] = $named;
+				$calls[] = FindCallShape::named(args: $named);
+				$extends[] = (($arguments[1] ?? null) ?? new ObjectFindOptions())->extend;
 				return $this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'register' => 'reg-1', 'schema' => 'schema-1'], 'catalog' => 'catalog-1', 'code' => 'INF101']);
 			}
 		);
 		$this->wireOpenRegister($objectService, $this->courseSchemaMapper());
 
 		$this->assertNotNull($this->service->getResource(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'), 'course-1', 'courseId'));
-		$this->assertSame([['id' => 'course-1', '_extend' => []]], $calls);
+		$this->assertSame([['id' => 'course-1']], $calls);
+		$this->assertSame([[]], $extends);
 	}
 
 	/**

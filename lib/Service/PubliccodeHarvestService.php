@@ -41,6 +41,7 @@ use OCA\OpenRegister\Db\FlowRunFilter;
 use OCA\OpenRegister\Db\FlowRunListing;
 use OCA\OpenRegister\Db\FlowRunMapper;
 use OCA\OpenRegister\Db\FlowRunViewer;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -406,7 +407,11 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function findIntegriqEntity(string $schema, string $slug): ?object {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$object = $objectService->find(id: $slug, register: self::INTEGRIQ_REGISTER, schema: $schema, _multitenancy: false);
+			$object = $objectService->find(
+				id: $slug,
+				options: new ObjectFindOptions(register: self::INTEGRIQ_REGISTER, schema: $schema),
+				_multitenancy: false
+			);
 		} catch (Throwable) {
 			return null;
 		}

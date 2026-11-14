@@ -11,6 +11,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ThemesController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
@@ -77,6 +78,22 @@ class ThemesControllerTest extends TestCase {
 				return $value;
 			}
 		};
+	}
+
+	/**
+	 * The options find() must receive: scoped to the theme register (2) and schema (10),
+	 * with no extension and no files.
+	 *
+	 * @return \PHPUnit\Framework\Constraint\Callback<mixed> The constraint.
+	 */
+	private function themeScope(): \PHPUnit\Framework\Constraint\Callback {
+		return $this->callback(
+			static fn (mixed $options): bool => $options instanceof ObjectFindOptions
+				&& $options->extend === []
+				&& $options->files === false
+				&& $options->register === '2'
+				&& $options->schema === '10'
+		);
 	}
 
 	private function mockObjectService(): MockObject {
@@ -355,7 +372,7 @@ class ThemesControllerTest extends TestCase {
 		// the identifier in any register on the instance, and this route is @PublicPage.
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('theme-1', [], false, '2', '10', true, false)
+			->with('theme-1', $this->themeScope(), true, false)
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -382,7 +399,7 @@ class ThemesControllerTest extends TestCase {
 
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with(5, [], false, '2', '10', true, false)
+			->with(5, $this->themeScope(), true, false)
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -409,7 +426,7 @@ class ThemesControllerTest extends TestCase {
 
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('uuid-abc-123', [], false, '2', '10', true, false)
+			->with('uuid-abc-123', $this->themeScope(), true, false)
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -441,7 +458,7 @@ class ThemesControllerTest extends TestCase {
 		// lives in another register and raises DoesNotExistException.
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('an-object-in-another-register', [], false, '2', '10', true, false)
+			->with('an-object-in-another-register', $this->themeScope(), true, false)
 			->willThrowException(new DoesNotExistException('not found'));
 
 		$this->request->server = [];

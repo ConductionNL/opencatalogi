@@ -35,6 +35,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
@@ -155,8 +156,8 @@ class InspectionControllerTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
-				$this->reads[] = ['id' => $id, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac];
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->reads[] = ['id' => $id, 'register' => $options?->register, 'schema' => $options?->schema, 'rbac' => $_rbac];
 				if ($this->inspection === null) {
 					throw new \RuntimeException('Object not found');
 				}

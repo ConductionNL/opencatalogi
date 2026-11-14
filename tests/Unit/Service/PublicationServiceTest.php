@@ -12,6 +12,7 @@ namespace Unit\Service;
 use OCA\OpenCatalogi\Service\DirectoryService;
 use OCA\OpenCatalogi\Service\DownloadService;
 use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -375,7 +376,7 @@ class PublicationServiceTest extends TestCase {
 		// searchObjects returns all, but find returns the specific one
 		$objectService->method('searchObjects')->willReturn([]);
 		$objectService->expects($this->once())->method('find')
-			->with('catalog-42', [], false, 'register-1', 'schema-1')
+			->with('catalog-42', $this->findOptions(extend: [], files: false, register: 'register-1', schema: 'schema-1'))
 			->willReturn($catalog);
 
 		$result = $this->service->getCatalogFilters('catalog-42');
@@ -707,7 +708,7 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1', 'title' => 'Found Publication']);
 		$objectService->method('find')
-			->with('pub-1', [])
+			->with('pub-1', $this->findOptions(extend: []))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([]);
@@ -755,7 +756,7 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.files'])
+			->with('pub-1', $this->findOptions(extend: ['@self.files']))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -780,7 +781,7 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.metadata'])
+			->with('pub-1', $this->findOptions(extend: ['@self.metadata']))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -803,7 +804,7 @@ class PublicationServiceTest extends TestCase {
 		// After filtering, only @self.files should remain; 'other.field' is stripped
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.files'])
+			->with('pub-1', $this->findOptions(extend: ['@self.files']))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -2975,7 +2976,7 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.attachments'])
+			->with('pub-1', $this->findOptions(extend: ['@self.attachments']))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -4907,4 +4908,30 @@ class PublicationServiceTest extends TestCase {
 		$result = $this->service->getAggregatedPublications(queryParams: $pathParams + ['_aggregate' => 'false', '_limit' => 10]);
 		$this->assertSame(0, $result['total']);
 	}//end testFederationListFailsClosedWithoutARegisterScope()
+
+	/**
+	 * A constraint on find()'s options: each given property must hold exactly the given value.
+	 *
+	 * @param mixed ...$expected The expected ObjectFindOptions properties by name.
+	 *
+	 * @return \PHPUnit\Framework\Constraint\Callback<mixed> The constraint.
+	 */
+	private function findOptions(mixed ...$expected): \PHPUnit\Framework\Constraint\Callback {
+		return $this->callback(
+			static function (mixed $options) use ($expected): bool {
+				$options ??= new ObjectFindOptions();
+				if (($options instanceof ObjectFindOptions) === false) {
+					return false;
+				}
+
+				foreach ($expected as $name => $value) {
+					if ($options->$name !== $value) {
+						return false;
+					}
+				}
+
+				return true;
+			}
+		);
+	}
 }

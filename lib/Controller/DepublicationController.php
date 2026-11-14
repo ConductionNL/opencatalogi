@@ -42,6 +42,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
+use OCA\OpenCatalogi\Service\BuildsFindOptions;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -63,6 +64,8 @@ use OCP\IUserSession;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-something-published-in-error-is-depublished-with-one-action-req-pin-106
  */
 class DepublicationController extends Controller {
+
+	use BuildsFindOptions;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
 
@@ -299,7 +302,7 @@ class DepublicationController extends Controller {
 			$objectService = $this->registers->getObjectService();
 			$depublication = $this->asArray(
 				object: ObjectInPair::require(
-					found: $objectService->find(id: $id, register: $config['register'], schema: $config['schema'], _rbac: false),
+					found: $objectService->find(id: $id, options: $this->findOptions(register: $config['register'], schema: $config['schema']), _rbac: false),
 					config: $config
 				)
 			);

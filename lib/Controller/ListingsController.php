@@ -34,6 +34,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -259,7 +260,7 @@ class ListingsController extends Controller {
 		$listingSchema = $listingConfig['schema'];
 
 		// Fetch the listing object by its ID with register/schema context.
-		$object = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+		$object = $this->getObjectService()->find($id, options: new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
 
 		// Convert to array if it is an Entity.
 		$data = $object;
@@ -428,7 +429,7 @@ class ListingsController extends Controller {
 		// only the fields they want to change without losing the rest of the
 		// listing. The merge order is (existing, allowed) so allow-listed
 		// fields win over stored values.
-		$existing = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+		$existing = $this->getObjectService()->find($id, options: new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
 		if ($existing instanceof \OCP\AppFramework\Db\Entity) {
 			$existingData = $existing->jsonSerialize();
 		} else {
@@ -568,7 +569,7 @@ class ListingsController extends Controller {
 
 				$listingRegister = $listingConfig['register'];
 				$listingSchema = $listingConfig['schema'];
-				$object = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+				$object = $this->getObjectService()->find($id, options: new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
 				$objectData = $object;
 				if ($object instanceof \OCP\AppFramework\Db\Entity) {
 					$objectData = $object->jsonSerialize();

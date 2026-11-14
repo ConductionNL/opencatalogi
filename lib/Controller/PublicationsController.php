@@ -1462,7 +1462,7 @@ class PublicationsController extends Controller {
 			// this older per-catalog route. An anonymous caller must not be able to enumerate
 			// the relation graph of an unpublished object by guessing its UUID.
 			// Return 404 (not 401) to avoid leaking object existence.
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 			if ($rootObject === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
 			}
@@ -1581,7 +1581,7 @@ class PublicationsController extends Controller {
 			// this older per-catalog route. An anonymous caller must not be able to enumerate
 			// the incoming-relation graph of an unpublished object by guessing its UUID.
 			// Return 404 (not 401) to avoid leaking object existence.
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 			if ($rootObject === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
 			}

@@ -41,6 +41,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
 use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
@@ -266,8 +267,7 @@ class ServiceCatalogueController extends Controller {
 			$objectService = $this->catalogueService->getObjectService();
 			$found = $objectService->find(
 				id: $id,
-				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				options: new ObjectFindOptions(register: $caseTypeConfig['register'], schema: $caseTypeConfig['schema'])
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
@@ -446,8 +446,7 @@ class ServiceCatalogueController extends Controller {
 				object: ObjectInPair::require(
 					found: $objectService->find(
 						id: $id,
-						register: $caseTypeConfig['register'],
-						schema: $caseTypeConfig['schema'],
+						options: new ObjectFindOptions(register: $caseTypeConfig['register'], schema: $caseTypeConfig['schema']),
 						_rbac: false
 					),
 					config: $caseTypeConfig
