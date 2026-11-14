@@ -25,6 +25,7 @@ OpenCatalogi maps to the **Catalogus** / **Data-catalogus** component within the
 | [WOO Transparantie](./woo-transparency.md) | WOO/FOIA document queue, redaction workflow, weigeringsgronden, inventarislijst | [woo-transparency.md](./woo-transparency.md) |
 | [Meertalige content](./register-i18n.md) | Multi-language publications and catalogs (NL + EN minimum), EU SDG-compliant | [register-i18n.md](./register-i18n.md) |
 | [GEMMA ArchiMate Export](./org-archimate-export.md) | Export organization-enriched AMEFF XML for Archi/BiZZdesign/ADOIT with modules, gebruik, deelnames | [org-archimate-export.md](./org-archimate-export.md) |
+| [DCAT linked data and data.overheid.nl](./dcat-linked-data-and-donl.md) | Dataset IRIs answer Turtle and RDF/XML; the admin settings track whether data.overheid.nl harvests the feed | [dcat-linked-data-and-donl.md](./dcat-linked-data-and-donl.md) |
 | [View Enrichment API](./view-enrichment-api.md) | Unified API aggregating base GEMMA view data with organization-specific module mappings | [view-enrichment-api.md](./view-enrichment-api.md) |
 | [Module Overlay Rendering](./module-overlay-rendering.md) | Renders organization application nodes on top of GEMMA ArchiMate views with visual distinction | [module-overlay-rendering.md](./module-overlay-rendering.md) |
 | [Deelnames Gebruik](./deelnames-gebruik.md) | Query and display shared usage (inter-organizational cooperation) alongside owned modules | [deelnames-gebruik.md](./deelnames-gebruik.md) |
