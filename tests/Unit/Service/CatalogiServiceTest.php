@@ -128,6 +128,34 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertSame([], $this->service->getCatalogSlugs());
 	}//end testGetCatalogSlugsIsEmptyWhenUnconfigured()
 
+	/**
+	 * The slug of the first catalogue whose schemas include the schema, read outside RBAC.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function testGetCatalogSlugForSchemaFindsTheFirstListingCatalogue(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'catalog_schema' => '5',
+				'catalog_register' => '2',
+				default => $default,
+			}
+		);
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['slug' => 'woo', 'schemas' => ['12', 7]]);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->with(['@self' => ['register' => '2', 'schema' => '5']], false, false)
+			->willReturn([['slug' => 'open-data', 'schemas' => [3]], ['slug' => '', 'schemas' => [12]], $entity, ['slug' => 'later', 'schemas' => [12]]]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->assertSame('woo', $this->service->getCatalogSlugForSchema(schemaId: '12'));
+		$this->assertSame('woo', $this->service->getCatalogSlugForSchema(schemaId: '7'));
+		$this->assertNull($this->service->getCatalogSlugForSchema(schemaId: '99'));
+		$this->assertNull($this->service->getCatalogSlugForSchema(schemaId: ''));
+	}//end testGetCatalogSlugForSchemaFindsTheFirstListingCatalogue()
+
 	// ──────────────────────────────────────────────────────────
 	// getObjectService
 	// ──────────────────────────────────────────────────────────

@@ -673,6 +673,39 @@ class CatalogiService implements CatalogiServiceInterface {
 	}//end intParam()
 
 	/**
+	 * The slug of the first catalogue whose `schemas` include this schema, read outside RBAC.
+	 *
+	 * @param string $schemaId The schema id.
+	 *
+	 * @return string|null The slug, or null when no catalogue lists the schema.
+	 *
+	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
+	 */
+	public function getCatalogSlugForSchema(string $schemaId): ?string {
+		if ($schemaId === '') {
+			return null;
+		}
+
+		foreach ($this->allCatalogs() as $catalog) {
+			if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+				$catalog = $catalog->jsonSerialize();
+			}
+
+			$schemas = [];
+			if (is_array($catalog) === true && is_array($catalog['schemas'] ?? null) === true) {
+				$schemas = array_map('strval', array_filter($catalog['schemas'], 'is_scalar'));
+			}
+
+			$slug = self::catalogSlugOf(catalog: $catalog);
+			if ($slug !== null && in_array($schemaId, $schemas, true) === true) {
+				return $slug;
+			}
+		}
+
+		return null;
+	}//end getCatalogSlugForSchema()
+
+	/**
 	 * The slugs of every catalogue in the configured catalogue register and schema.
 	 *
 	 * Read outside RBAC: the maintenance command that asks acts for the operator on
