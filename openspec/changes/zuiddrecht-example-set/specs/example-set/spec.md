@@ -9,7 +9,7 @@ OpenCatalogi SHALL ship `lib/Settings/example-sets/zuiddrecht.json` in the forma
 - **WHEN** every placeholder of the fragment is resolved and every object is validated against its schema
 - **THEN** every object SHALL satisfy its schema and no object SHALL carry a key its schema does not declare
 
-@e2e exclude Example data, not behaviour. The loader that installs it (openregister#4603, #4605) is on OpenRegister `development` since 2026-10-13, not yet on `beta`. The fragment was checked once by hand against the merged register (no test repeats it, see task 3.1); the loader's `--check` and read-back proof run it against a live instance.
+@e2e exclude Example data, not behaviour. The loader that installs it (openregister#4603, #4605) is on OpenRegister `development` since 2026-10-13, not yet on `beta`. `tests/Unit/Settings/ZuiddrechtExampleSetTest.php` resolves every placeholder and validates every object against the merged register on each run; the loader's `--check` and read-back proof run it against a live instance.
 
 #### Scenario: A visitor finds the Lindelaan publications
 - **GIVEN** the set is installed

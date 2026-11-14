@@ -37,6 +37,7 @@
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -274,6 +275,7 @@
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1519,7 +1521,8 @@
         "Value label": "Weergavewaarde",
         "When the suggestion was accepted or rejected.": "Wanneer het voorstel is geaccepteerd of afgewezen.",
         "Where the proposal came from: the rules floor, or Hermiq on an editor's request.": "Waar het voorstel vandaan komt: de vaste regels, of Hermiq op verzoek van een redacteur.",
-        "Why this value is proposed, in a sentence an editor can check.": "Waarom deze waarde wordt voorgesteld, in een zin die een redacteur kan controleren."
+        "Why this value is proposed, in a sentence an editor can check.": "Waarom deze waarde wordt voorgesteld, in een zin die een redacteur kan controleren.",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "plurals": {}
 }

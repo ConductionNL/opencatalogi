@@ -46,6 +46,7 @@ OC.L10N.register(
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -267,6 +268,7 @@ OC.L10N.register(
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1565,7 +1567,8 @@ OC.L10N.register(
         "Value label": "Value label",
         "When the suggestion was accepted or rejected.": "When the suggestion was accepted or rejected.",
         "Where the proposal came from: the rules floor, or Hermiq on an editor's request.": "Where the proposal came from: the rules floor, or Hermiq on an editor's request.",
-        "Why this value is proposed, in a sentence an editor can check.": "Why this value is proposed, in a sentence an editor can check."
+        "Why this value is proposed, in a sentence an editor can check.": "Why this value is proposed, in a sentence an editor can check.",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
 )
