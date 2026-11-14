@@ -1530,7 +1530,16 @@
         "The text assistant returned no text.": "De tekstassistent gaf geen tekst terug.",
         "A plain language summary has between 1 and 1500 characters.": "Een samenvatting in eenvoudige taal heeft tussen 1 en 1500 tekens.",
         "A plain language summary needs its reading level (plainSummaryLevel): A2, B1 or B2.": "Een samenvatting in eenvoudige taal heeft een taalniveau nodig (plainSummaryLevel): A2, B1 of B2.",
-        "The plain language summary could not be stored.": "De samenvatting in eenvoudige taal kon niet worden opgeslagen."
+        "The plain language summary could not be stored.": "De samenvatting in eenvoudige taal kon niet worden opgeslagen.",
+        "Accept": "Accepteren",
+        "Discard": "Verwerpen",
+        "Draft plain summary": "Eenvoudige samenvatting laten opstellen",
+        "Suggested plain language summary": "Voorgestelde samenvatting in eenvoudige taal",
+        "The plain language summary is saved.": "De samenvatting in eenvoudige taal is opgeslagen.",
+        "The text assistant could not write a suggestion.": "De tekstassistent kon geen voorstel schrijven.",
+        "The text assistant is taking too long. Try again later.": "De tekstassistent doet er te lang over. Probeer het later opnieuw.",
+        "The text assistant is writing a suggestion.": "De tekstassistent schrijft een voorstel.",
+        "This is a suggestion. It is saved only when you accept it.": "Dit is een voorstel. Het wordt pas opgeslagen als u het accepteert."
     },
     "plurals": {}
 }

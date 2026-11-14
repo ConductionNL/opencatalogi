@@ -913,6 +913,12 @@
 						"type": "publication-visibility",
 						"title": "Publication status",
 						"icon": "EyeOutline"
+					},
+					{
+						"id": "pub-plain-summary",
+						"type": "plain-summary-draft",
+						"title": "Plain language summary",
+						"icon": "FileDocument"
 					}
 				],
 				"layout": [
@@ -1005,10 +1011,18 @@
 						"gridHeight": 3
 					},
 					{
+						"id": "14",
+						"widgetId": "pub-plain-summary",
+						"gridX": 0,
+						"gridY": 29,
+						"gridWidth": 12,
+						"gridHeight": 4
+					},
+					{
 						"id": "13",
 						"widgetId": "pub-calendar",
 						"gridX": 0,
-						"gridY": 29,
+						"gridY": 33,
 						"gridWidth": 12,
 						"gridHeight": 4
 					}

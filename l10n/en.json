@@ -1575,7 +1575,16 @@
         "The text assistant returned no text.": "The text assistant returned no text.",
         "A plain language summary has between 1 and 1500 characters.": "A plain language summary has between 1 and 1500 characters.",
         "A plain language summary needs its reading level (plainSummaryLevel): A2, B1 or B2.": "A plain language summary needs its reading level (plainSummaryLevel): A2, B1 or B2.",
-        "The plain language summary could not be stored.": "The plain language summary could not be stored."
+        "The plain language summary could not be stored.": "The plain language summary could not be stored.",
+        "Accept": "Accept",
+        "Discard": "Discard",
+        "Draft plain summary": "Draft plain summary",
+        "Suggested plain language summary": "Suggested plain language summary",
+        "The plain language summary is saved.": "The plain language summary is saved.",
+        "The text assistant could not write a suggestion.": "The text assistant could not write a suggestion.",
+        "The text assistant is taking too long. Try again later.": "The text assistant is taking too long. Try again later.",
+        "The text assistant is writing a suggestion.": "The text assistant is writing a suggestion.",
+        "This is a suggestion. It is saved only when you accept it.": "This is a suggestion. It is saved only when you accept it."
     },
     "plurals": {}
 }
