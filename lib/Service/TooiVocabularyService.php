@@ -53,6 +53,13 @@ class TooiVocabularyService {
 	public const ORG_ID_BASE = 'https://identifier.overheid.nl/tooi/id/';
 
 	/**
+	 * The bundled value lists.
+	 *
+	 * @var string
+	 */
+	private const BUNDLE_PATH = __DIR__ . '/../Settings/tooi_waardelijsten.json';
+
+	/**
 	 * The 18 Woo informatiecategorieën → official TOOI kern identifier + canonical
 	 * label, keyed by the sitemap route code (WOO-003). Sourced from version 4 of
 	 * the `scw_woo_informatiecategorieen` waardelijst, which is the version DiWoo
@@ -139,6 +146,16 @@ class TooiVocabularyService {
 	 * @var string
 	 */
 	public const DEFAULT_SOORTHANDELING = 'ontvangst';
+
+	/**
+	 * The bundled value lists, read from `lib/Settings/tooi_waardelijsten.json`
+	 * once per request. The documentsoorten and the languages live there and not
+	 * in a constant: they are copied from the DiWoo value-list XSD with their
+	 * codes, labels and URIs, so the file is the one place they change.
+	 *
+	 * @var array<string, mixed>|null
+	 */
+	private ?array $bundle = null;
 
 	/**
 	 * Resolve a category value to an official TOOI informatiecategorie member.
@@ -266,6 +283,136 @@ class TooiVocabularyService {
 
 		return $out;
 	}//end informatiecategorieList()
+
+	/**
+	 * Resolve a document type to a member of the DiWoo documentsoorten list.
+	 *
+	 * Accepts the member's resource URI, its code (`c_…`) or its exact Dutch
+	 * label, case-insensitive. Returns null for anything else, so a caller
+	 * refuses the value rather than storing or emitting free text.
+	 *
+	 * @param string|null $value The document type as given.
+	 *
+	 * @return array{code: string, label: string, uri: string}|null The member, or null.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 */
+	public function resolveDocumentsoort(?string $value): ?array {
+		return $this->resolveMember(list: $this->documentsoortList(), value: $value);
+	}//end resolveDocumentsoort()
+
+	/**
+	 * The bundled DiWoo documentsoorten list, in the order of the XSD.
+	 *
+	 * @return array<int, array{code: string, label: string, uri: string}> The members.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 */
+	public function documentsoortList(): array {
+		return $this->bundledMembers(key: 'documentsoorten');
+	}//end documentsoortList()
+
+	/**
+	 * Resolve a language to a member of the DiWoo language list.
+	 *
+	 * Accepts the member's resource URI, its code (`NLD`) or its exact Dutch
+	 * label, case-insensitive. Returns null for anything else.
+	 *
+	 * @param string|null $value The language as given.
+	 *
+	 * @return array{code: string, label: string, uri: string}|null The member, or null.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 */
+	public function resolveLanguage(?string $value): ?array {
+		return $this->resolveMember(list: $this->languageList(), value: $value);
+	}//end resolveLanguage()
+
+	/**
+	 * The bundled DiWoo language list, in the order of the XSD.
+	 *
+	 * @return array<int, array{code: string, label: string, uri: string}> The members.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-a-document-type-comes-from-the-national-documentsoorten-list-req-dwp-002
+	 */
+	public function languageList(): array {
+		return $this->bundledMembers(key: 'talen');
+	}//end languageList()
+
+	/**
+	 * The member of a list a value names by URI, code or label, case-insensitive.
+	 *
+	 * @param array<int, array{code: string, label: string, uri: string}> $list The members.
+	 * @param string|null $value The value as given.
+	 *
+	 * @return array{code: string, label: string, uri: string}|null The member, or null.
+	 */
+	private function resolveMember(array $list, ?string $value): ?array {
+		$needle = mb_strtolower(trim((string)$value));
+		if ($needle === '') {
+			return null;
+		}
+
+		foreach ($list as $member) {
+			$names = [mb_strtolower($member['uri']), mb_strtolower($member['code']), mb_strtolower($member['label'])];
+			if (in_array($needle, $names, true) === true) {
+				return $member;
+			}
+		}
+
+		return null;
+	}//end resolveMember()
+
+	/**
+	 * The well-formed members of one bundled list: none when the file or the
+	 * list cannot be read, so every lookup fails closed.
+	 *
+	 * @param string $key The list's key in the bundle.
+	 *
+	 * @return array<int, array{code: string, label: string, uri: string}> The members.
+	 */
+	private function bundledMembers(string $key): array {
+		$members = ($this->bundle()[$key]['members'] ?? []);
+		if (is_array($members) === false) {
+			return [];
+		}
+
+		$out = [];
+		foreach ($members as $member) {
+			if (is_array($member) === true
+				&& is_string($member['code'] ?? null) === true
+				&& is_string($member['label'] ?? null) === true
+				&& is_string($member['uri'] ?? null) === true
+			) {
+				$out[] = ['code' => $member['code'], 'label' => $member['label'], 'uri' => $member['uri']];
+			}
+		}
+
+		return $out;
+	}//end bundledMembers()
+
+	/**
+	 * The bundled value lists, read once.
+	 *
+	 * @return array<string, mixed> The decoded file, empty when it cannot be read.
+	 */
+	private function bundle(): array {
+		if ($this->bundle !== null) {
+			return $this->bundle;
+		}
+
+		$this->bundle = [];
+		if (is_readable(self::BUNDLE_PATH) === false) {
+			return $this->bundle;
+		}
+
+		$decoded = json_decode((string)file_get_contents(self::BUNDLE_PATH), true);
+		if (is_array($decoded) === true) {
+			$this->bundle = $decoded;
+		}
+
+		return $this->bundle;
+	}//end bundle()
 
 	/**
 	 * The bundled soortHandeling value list (label → uri).

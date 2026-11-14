@@ -1,0 +1,13 @@
+{
+	"$comment": "The elements the DiWoo metadata XSD requires under diwoo:DiWoo (minOccurs not 0), read from the byte-for-byte copy of the XSD in tests/Unit/Service/fixtures/diwoo-0.9.8. Paths are relative to diwoo:DiWoo; a path ends at a leaf or at an organisation element.",
+	"xsdVersion": "0.9.8",
+	"source": "https://standaarden.overheid.nl/diwoo/metadata/0.9.8/xsd/diwoo/diwoo-metadata.xsd",
+	"sha256": "0a332f65c98f5bb2b4fb64c52c2f72867966a6e5bf1a5a5ea3870716fc6ea212",
+	"mandatory": [
+		"publisher",
+		"titelcollectie/officieleTitel",
+		"classificatiecollectie/informatiecategorieen/informatiecategorie",
+		"documenthandelingen/documenthandeling/soortHandeling",
+		"documenthandelingen/documenthandeling/atTime"
+	]
+}

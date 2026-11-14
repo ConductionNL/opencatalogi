@@ -1552,7 +1552,19 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Only the groups below see and edit this catalogue's publications.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
+        "Document type": "Document type",
+        "The kind of document, from the national list of document types. The national Woo index reads it. Stored as the resource address of the list member.": "The kind of document, from the national list of document types. The national Woo index reads it. Stored as the resource address of the list member.",
+        "Document type per file": "Document type per file",
+        "A different document type for one attached file, for example an annex to a decision. Keyed by the file id; each value is a member of the national list of document types.": "A different document type for one attached file, for example an annex to a decision. Keyed by the file id; each value is a member of the national list of document types.",
+        "Language": "Language",
+        "The language the document is written in.": "The language the document is written in.",
+        "Creation date": "Creation date",
+        "The day the document was made. This is not the day it was published.": "The day the document was made. This is not the day it was published.",
+        "Valid from": "Valid from",
+        "The day the content takes legal effect. This can differ from the publication date.": "The day the content takes legal effect. This can differ from the publication date.",
+        "Valid until": "Valid until",
+        "The day the content loses legal effect. Leave it empty when it has no end.": "The day the content loses legal effect. Leave it empty when it has no end."
     },
     "nplurals=2; plural=(n != 1);"
 )
