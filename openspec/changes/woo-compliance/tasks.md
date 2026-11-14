@@ -12,9 +12,9 @@
 
 ## Task 2: Fix RobotsController hasWooSitemap gate (WOO-008)
 
-- [ ] 2.1 Open `lib/Controller/RobotsController.php` and locate the catalog iteration loop in `getRobots()`
+- [x] 2.1 Open `lib/Controller/RobotsController.php` and locate the catalog iteration loop in `getRobots()`
   - **Spec ref**: `specs/woo-compliance/spec.md` REQ-WOO-004, REQ-WOO-008
-- [ ] 2.2 Add a filter that skips any catalog where `hasWooSitemap !== true` (or where the field is absent/falsy)
+- [x] 2.2 Add a filter that skips any catalog where `hasWooSitemap !== true` (or where the field is absent/falsy)
   - **Acceptance criteria**: Only catalogs with `hasWooSitemap: true` AND a non-empty `slug` contribute `Sitemap:` lines to the output
   - The existing slug check MUST be preserved alongside the new `hasWooSitemap` check
 - [ ] 2.3 Add `@spec openspec/changes/woo-compliance/tasks.md#task-2` PHPDoc tag to the modified method (per ADR-003 spec traceability requirement)
@@ -23,14 +23,14 @@
 
 ## Task 3: Unit test — robots.txt hasWooSitemap gate
 
-- [ ] 3.1 Create or extend `tests/Unit/Controller/RobotsControllerTest.php`
+- [x] 3.1 Create or extend `tests/Unit/Controller/RobotsControllerTest.php`
   - **Spec ref**: REQ-WOO-004-A, REQ-WOO-004-B, REQ-WOO-004-C, REQ-WOO-008-A
-- [ ] 3.2 Write test: catalog with `hasWooSitemap: true` AND valid slug → 17 `Sitemap:` lines in output
-- [ ] 3.3 Write test: catalog with `hasWooSitemap: false` AND valid slug → zero `Sitemap:` lines (bug fix regression guard)
-- [ ] 3.4 Write test: catalog with `hasWooSitemap: true` but NO slug → zero `Sitemap:` lines
-- [ ] 3.5 Write test: mixed list (one true, one false, one missing slug) → only 17 lines for the qualifying catalog
-- [ ] 3.6 Write test: no qualifying catalogs → empty body or only `User-agent: *`
-- [ ] 3.7 Confirm all new tests pass: `composer test -- --filter RobotsControllerTest`
+- [x] 3.2 Write test: catalog with `hasWooSitemap: true` AND valid slug → 17 `Sitemap:` lines in output
+- [x] 3.3 Write test: catalog with `hasWooSitemap: false` AND valid slug → zero `Sitemap:` lines (bug fix regression guard)
+- [x] 3.4 Write test: catalog with `hasWooSitemap: true` but NO slug → zero `Sitemap:` lines
+- [x] 3.5 Write test: mixed list (one true, one false, one missing slug) → only 17 lines for the qualifying catalog
+- [x] 3.6 Write test: no qualifying catalogs → empty body or only `User-agent: *`
+- [x] 3.7 Confirm all new tests pass: `composer test -- --filter RobotsControllerTest`
 
 ---
 
@@ -65,7 +65,7 @@
 
 ## Task 6: Unit test — isValidSitemapRequest validation
 
-- [ ] 6.1 Write test in `SitemapServiceTest.php`:
+- [x] 6.1 Write test in `SitemapServiceTest.php`:
   - **Spec ref**: REQ-WOO-007-A, REQ-WOO-007-B, REQ-WOO-007-C, REQ-WOO-008-B
   - Invalid category code → returns false / triggers 400 response
   - Valid code but schema absent from catalog.schemas → returns false / triggers 400 response
@@ -76,10 +76,10 @@
 
 ## Task 7: Verify all 17 WOO category codes are handled
 
-- [ ] 7.1 Confirm the INFO_CAT lookup map in `SitemapService` contains all 17 entries as listed in `specs/woo-compliance/spec.md` and `design.md`
+- [x] 7.1 Confirm the INFO_CAT lookup map in `SitemapService` contains all 17 entries as listed in `specs/woo-compliance/spec.md` and `design.md`
   - **Spec ref**: REQ-WOO-003-A, REQ-WOO-003-B
-- [ ] 7.2 Write a parameterised test (data provider) that calls `isValidSitemapRequest()` with each of the 17 category codes and a correctly configured catalog → each MUST pass
-- [ ] 7.3 Write test: category code `sitemapindex-diwoo-infocat000.xml` (out of range) → must fail
+- [x] 7.2 Write a parameterised test (data provider) that calls `isValidSitemapRequest()` with each of the 17 category codes and a correctly configured catalog → each MUST pass
+- [x] 7.3 Write test: category code `sitemapindex-diwoo-infocat000.xml` (out of range) → must fail
 
 ---
 

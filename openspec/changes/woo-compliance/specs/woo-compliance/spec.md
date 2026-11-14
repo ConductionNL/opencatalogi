@@ -103,7 +103,7 @@ The system MUST generate a valid DIWOO Document XML page for a given catalog, WO
 - WHEN the publications sitemap page is generated
 - THEN the `<diwoo:Document>` for this file MUST contain:
   - `<loc>https://nextcloud.example.nl/s/abc123/download/besluit.pdf</loc>`
-  - `<lastmod>2025-01-10T10:00:00+01:00</lastmod>` (file.published)
+  - `<lastmod>2025-01-15T14:30:00+01:00</lastmod>` (the latest of file.modified, file.published and publication.updated; here publication.updated, per woo-sitemap-document-signals REQ-WSD-001)
   - `<diwoo:creatiedatum>2024-11-01T08:00:00+01:00</diwoo:creatiedatum>`
   - `<diwoo:publisher resource="https://identifier.overheid.nl/tooi/id/gemeente/gm0363">Gemeente Amsterdam Juridische Zaken</diwoo:publisher>`
   - `<diwoo:format resource="{europa.eu PDF URI}">pdf</diwoo:format>`
