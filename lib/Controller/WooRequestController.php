@@ -35,6 +35,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
+use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -75,6 +76,7 @@ class WooRequestController extends Controller {
 	 * @param IUserSession $userSession The current session.
 	 * @param RequestRecords $records Builds the request records and reads and writes the stored requests.
 	 * @param StatutoryTermInterface $terms Arms, extends, pauses and reads the statutory term.
+	 * @param DossiqWooForward|null $dossiqForward Hands new requests to dossiq while it is installed.
 	 */
 	public function __construct(
 		$appName,
@@ -83,6 +85,7 @@ class WooRequestController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly RequestRecords $records,
 		private readonly StatutoryTermInterface $terms,
+		private readonly ?DossiqWooForward $dossiqForward = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -155,6 +158,14 @@ class WooRequestController extends Controller {
 			);
 		}
 
+		// While dossiq is installed it mints the reference and arms the term;
+		// OpenCatalogi stores nothing and arms nothing (REQ-WHD-002).
+		if ($this->dossiqForward !== null && $this->dossiqForward->isAvailable() === true) {
+			return $this->forwardedResponse(
+				answer: $this->dossiqForward->forward(answers: $this->intakeInput(), receivedAt: '', origin: DossiqWooForward::ORIGIN_OPENCATALOGI)
+			);
+		}
+
 		try {
 			$record = $this->records->receive(input: $this->intakeInput(), receivedBy: $this->actor());
 		} catch (\DomainException $e) {
@@ -172,6 +183,28 @@ class WooRequestController extends Controller {
 
 		return $this->armReceivedRequest(saved: $saved);
 	}//end receive()
+
+	/**
+	 * dossiq's answer to a forwarded request, with the HTTP status its outcome means.
+	 *
+	 * `armed` is 201, `not-armed` 202 (the case exists, no term runs), `refused`
+	 * 400 and anything else, `unavailable` included, 503.
+	 *
+	 * @param array<string, string> $answer dossiq's answer.
+	 *
+	 * @return JSONResponse The answer.
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-a-new-request-is-forwarded-to-dossiq-and-minted-only-there-req-whd-002
+	 */
+	private function forwardedResponse(array $answer): JSONResponse {
+		$status = ([
+			'armed' => Http::STATUS_CREATED,
+			'not-armed' => Http::STATUS_ACCEPTED,
+			'refused' => Http::STATUS_BAD_REQUEST,
+		][$answer['outcome']] ?? Http::STATUS_SERVICE_UNAVAILABLE);
+
+		return new JSONResponse(data: $answer, statusCode: $status);
+	}//end forwardedResponse()
 
 	/**
 	 * Arm the statutory term of a stored request and answer with its receipt.

@@ -26,6 +26,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
+use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
@@ -41,6 +42,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use Psr\Log\LoggerInterface;
 
 /**
  * A duck-typed fake of the consumed OpenRegister ObjectService.
@@ -865,4 +867,83 @@ class WooRequestControllerTest extends TestCase {
 		$this->assertSame('term-engine-unavailable', $response->getData()['error']);
 
 	}//end testAPauseWithoutAnEngineIs503()
+
+	/**
+	 * While dossiq is installed an officer's request goes there with origin
+	 * opencatalogi; nothing is stored or armed here, and the outcome sets the status.
+	 *
+	 * @return void
+	 */
+	public function testReceiveForwardsToDossiqAndMintsNothing(): void {
+		$this->params(['requestedInformation' => 'Alle adviezen', 'requesterName' => 'J. de Vries']);
+		$this->terms->expects(self::never())->method('arm');
+		$store = $this->storeDouble();
+		$store->expects(self::never())->method('save');
+
+		$cases = ['armed' => Http::STATUS_CREATED, 'not-armed' => Http::STATUS_ACCEPTED, 'refused' => Http::STATUS_BAD_REQUEST, 'unavailable' => Http::STATUS_SERVICE_UNAVAILABLE, 'odd' => Http::STATUS_SERVICE_UNAVAILABLE];
+		foreach ($cases as $outcome => $status) {
+			$seen = [];
+			$answer = ['outcome' => $outcome, 'requestId' => 'c1', 'reference' => 'WOO-1', 'dueAt' => '2026-12-28', 'message' => 'm', 'caseUrl' => 'u'];
+			$intake = new class($seen, $answer) {
+				/**
+				 * Constructor.
+				 *
+				 * @param array $seen   Receives the named arguments.
+				 * @param array $answer The answer.
+				 */
+				public function __construct(private array &$seen, private array $answer) {
+				}
+
+				/**
+				 * Records the named arguments.
+				 *
+				 * @param array  $answers    Answers.
+				 * @param string $receivedAt Moment.
+				 * @param string $origin     Origin.
+				 *
+				 * @return array
+				 */
+				public function receive(array $answers, string $receivedAt = '', string $origin = 'portal-form'): array {
+					$this->seen = ['answers' => $answers, 'receivedAt' => $receivedAt, 'origin' => $origin];
+					return $this->answer;
+				}
+			};
+			$apps = $this->createMock(IAppManager::class);
+			$apps->method('isEnabledForAnyone')->willReturn(true);
+			$container = $this->createMock(ContainerInterface::class);
+			$container->method('get')->willReturn($intake);
+			$forward = new DossiqWooForward(appManager: $apps, container: $container, logger: $this->createMock(LoggerInterface::class));
+
+			$controller = new WooRequestController(
+				'opencatalogi',
+				$this->request,
+				$this->createMock(IL10N::class),
+				$this->signedInSession(),
+				new RequestRecords(new WooRequestService(), $store),
+				$this->terms,
+				$forward
+			);
+			$response = $controller->receive();
+
+			$this->assertSame($status, $response->getStatus(), $outcome);
+			$this->assertSame($answer, $response->getData(), $outcome);
+			$this->assertSame('opencatalogi', $seen['origin'], $outcome);
+			$this->assertSame('', $seen['receivedAt'], $outcome);
+			$this->assertSame('Alle adviezen', $seen['answers']['requestedInformation'], $outcome);
+		}
+	}//end testReceiveForwardsToDossiqAndMintsNothing()
+
+	/**
+	 * A session as alice.
+	 *
+	 * @return IUserSession
+	 */
+	private function signedInSession(): IUserSession {
+		$user = $this->createMock(IUser::class);
+		$user->method('getUID')->willReturn('alice');
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($user);
+
+		return $session;
+	}//end signedInSession()
 }//end class
