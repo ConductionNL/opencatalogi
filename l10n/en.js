@@ -46,6 +46,7 @@ OC.L10N.register(
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -267,6 +268,7 @@ OC.L10N.register(
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1555,7 +1557,8 @@ OC.L10N.register(
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
         "Woo-index fields from integriq mapping woo-index-publication": "Woo-index fields from integriq mapping woo-index-publication",
         "Woo-index fields built in": "Woo-index fields built in",
-        "{line} (integriq refused: {code}, {reason})": "{line} (integriq refused: {code}, {reason})"
+        "{line} (integriq refused: {code}, {reason})": "{line} (integriq refused: {code}, {reason})",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
 )

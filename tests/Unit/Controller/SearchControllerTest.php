@@ -103,6 +103,8 @@ class SearchControllerTest extends TestCase {
 		$response = $this->controller->index();
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
+		// Built without a collector, the controller fails closed to the `unknown` entry.
+		$expected['appliedFilters'] = [['name' => 'unknown', 'value' => null, 'reason' => 'not recorded']];
 		$this->assertSame($expected, $response->getData());
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 	}//end testIndexReturnsAssembledSearchResultsForAnonymousCallers()
