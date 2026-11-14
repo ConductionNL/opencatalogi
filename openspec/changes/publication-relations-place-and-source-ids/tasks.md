@@ -21,7 +21,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 4. Docs
 
-- [ ] 4.1 Document relations and source identifiers in `docs/` (including the filter for integrators) and the strings in `l10n/` (en, nl). Verify: `npm run check:schema-l10n`, `npm run check:l10n`, and a grep for U+2014 on the changed docs.
+- [x] 4.1 Document relations and source identifiers in `docs/` (including the filter for integrators) and the strings in `l10n/` (en, nl). Verify: `npm run check:schema-l10n`, `npm run check:l10n`, and a grep for U+2014 on the changed docs.
 
 ## 5. Place (gated on D10; skip unless row 2.16 is kept)
 
