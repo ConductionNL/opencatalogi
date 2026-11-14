@@ -12,6 +12,10 @@ import { flushPromises, mount } from '@vue/test-utils'
 import DeleteObjectDialog from './DeleteObjectDialog.vue'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 
+// The object store imports @nextcloud/auth, whose ESM-only dependency Jest
+// cannot parse; the dialog never reaches it.
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'token' }))
+
 const UNCONFIGURED = new Error('Invalid configuration for object type: publication')
 
 let log

@@ -7,11 +7,11 @@
  * that follows a new publication.
  */
 
-import axios from 'axios'
+import axios from '@nextcloud/axios'
 import DashboardSideBar from './DashboardSideBar.vue'
 import { objectStore } from '../../store/store.js'
 
-jest.mock('axios', () => ({ __esModule: true, default: { post: jest.fn() } }))
+jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { post: jest.fn() } }))
 jest.mock('@nextcloud/vue', () => ({}))
 jest.mock('../../composables/UseFileSelection.js', () => {
 	const mockFiles = { value: [{ name: 'a.pdf' }] }

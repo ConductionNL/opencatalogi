@@ -1577,7 +1577,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"metric": "count",
 								"filter": {
@@ -1601,7 +1601,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"metric": "count",
 								"filter": {
@@ -1625,7 +1625,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"metric": "count",
 								"filter": {
@@ -1643,7 +1643,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing published yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"aggregate": {
 									"groupBy": "status",
@@ -1661,7 +1661,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing published yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"aggregate": {
 									"groupBy": "retentionAction",
@@ -1679,7 +1679,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing published yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"aggregate": {
 									"groupBy": "organization",
@@ -1699,7 +1699,7 @@
 						"title": "Most recent",
 						"type": "object-table",
 						"content": {
-							"register": "opencatalogi",
+							"register": "publication",
 							"schema": "publication",
 							"filter": {},
 							"sort": {
@@ -1820,7 +1820,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "usageCounter",
 								"metric": "sum",
 								"field": "count",
@@ -1845,7 +1845,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "usageCounter",
 								"metric": "sum",
 								"field": "count",
@@ -1864,7 +1864,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing has been read yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "usageCounter",
 								"aggregate": {
 									"groupBy": "kind",
@@ -1883,7 +1883,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing has been read yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "usageCounter",
 								"aggregate": {
 									"groupBy": "publication",
@@ -1904,7 +1904,7 @@
 						"title": "Most recent",
 						"type": "object-table",
 						"content": {
-							"register": "opencatalogi",
+							"register": "publication",
 							"schema": "usageCounter",
 							"filter": {},
 							"sort": {
@@ -2007,7 +2007,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "catalog",
 								"metric": "count",
 								"filter": {
@@ -2031,7 +2031,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "listing",
 								"metric": "count"
 							}
@@ -2052,7 +2052,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "listing",
 								"metric": "count",
 								"filter": {
@@ -2070,7 +2070,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "No catalogs yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "catalog",
 								"aggregate": {
 									"groupBy": "status",
@@ -2088,7 +2088,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "No listings yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "listing",
 								"aggregate": {
 									"groupBy": "status",
@@ -2106,7 +2106,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "No listings yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "listing",
 								"aggregate": {
 									"groupBy": "integrationLevel",
@@ -2120,7 +2120,7 @@
 						"title": "Most recently synced",
 						"type": "object-table",
 						"content": {
-							"register": "opencatalogi",
+							"register": "publication",
 							"schema": "listing",
 							"filter": {},
 							"sort": {
