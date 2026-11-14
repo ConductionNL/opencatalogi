@@ -103,7 +103,8 @@
                 <referencedClass name="OCA\OpenRegister\Files\Db\FileMapper"/>
                 <referencedClass name="OCA\OpenRegister\Mcp\Db\Agent"/>
                 <referencedClass name="OCA\OpenRegister\Mcp\Tool\ToolInterface"/>
-                <referencedClass name="OCA\OpenRegister\Mcp\IMcpToolProvider"/>
+                <referencedClass name="OCA\OpenRegister\Mcp\IMcpScannableServices"/>
+                <referencedClass name="OCA\OpenRegister\Mcp\Attribute\McpTool"/>
                 <referencedClass name="OCA\OpenRegister\Service\RegisterService"/>
                 <referencedClass name="OCA\OpenRegister\Service\FileService"/>
                 <referencedClass name="OCA\OpenRegister\Service\CalendarEventService"/>

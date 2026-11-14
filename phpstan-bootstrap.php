@@ -11,8 +11,13 @@ $autoloader = require __DIR__ . '/vendor/autoload.php';
 $autoloader->addPsr4('OCP\\', __DIR__ . '/vendor/nextcloud/ocp/OCP/');
 $autoloader->addPsr4('NCU\\', __DIR__ . '/vendor/nextcloud/ocp/NCU/');
 
-// IMcpToolProvider ships in openregister PR #1466; load the test stub so static
-// analysis can resolve the interface OpenCatalogiToolProvider implements.
-if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpToolProvider') === false) {
-    require_once __DIR__ . '/tests/Stubs/Mcp/IMcpToolProvider.php';
+// OpenRegister's MCP contracts: load the test stubs when OpenRegister is not
+// installed, so static analysis can resolve the interface
+// OpenCatalogiScannableServices implements and the #[McpTool] attribute.
+if (interface_exists('OCA\\OpenRegister\\Mcp\\IMcpScannableServices') === false) {
+    require_once __DIR__ . '/tests/Stubs/OpenRegister/Mcp/IMcpScannableServices.php';
+}
+
+if (class_exists('OCA\\OpenRegister\\Mcp\\Attribute\\McpTool') === false) {
+    require_once __DIR__ . '/tests/Stubs/OpenRegister/Mcp/Attribute/McpTool.php';
 }

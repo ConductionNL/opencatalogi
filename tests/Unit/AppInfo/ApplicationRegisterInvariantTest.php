@@ -256,9 +256,9 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		$body = $this->methodBody($this->source($this->registrars()['McpRegistrar']), 'public function register(');
 
 		$this->assertMatchesRegularExpression(
-			'/registerServiceAlias\(\s*\'OCA\\\\\\\\OpenRegister\\\\\\\\Mcp\\\\\\\\IMcpToolProvider::opencatalogi\'/',
+			'/registerServiceAlias\(\s*\'OCA\\\\\\\\OpenRegister\\\\\\\\Mcp\\\\\\\\IMcpScannableServices::opencatalogi\'/',
 			$body,
-			'the MCP tool-provider alias key must stay a quoted string: OpenRegister\'s McpToolsService '
+			'the MCP scannable-services alias key must stay a quoted string: OpenRegister '
 			. 'enumerates it by name, and it must not become a resolved class reference at register() time'
 		);
 

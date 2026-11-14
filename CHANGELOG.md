@@ -5,6 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **MCP tools are derived from the register (ADR-063, opencatalogi-mcp-adoption).** `publication`, `catalog` and `theme` declare `x-openregister-mcp` with a read-only `search` and `get` each; `PublicationService` carries two curated `#[McpTool]` methods, `searchCatalogPublications` and `listPublicationFiles`, registered through `OpenCatalogiScannableServices`. No schema declares a write verb, because publishing is a writable date.
+
+### Removed
+
+- **Breaking for MCP clients:** the hand-written `OpenCatalogiToolProvider` and its tools `opencatalogi.searchCatalog` and `opencatalogi.getPublication`. Use `opencatalogi.publication.search` (or `opencatalogi.searchCatalogPublications` inside one catalog, where `catalog` is now required), and `opencatalogi.publication.get` plus `opencatalogi.listPublicationFiles` for a publication and its files.
+
 ## [0.7.54] - 2026-07-16
 
 ### Added
