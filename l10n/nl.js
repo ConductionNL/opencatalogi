@@ -43,6 +43,7 @@ OC.L10N.register(
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -280,6 +281,7 @@ OC.L10N.register(
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1512,7 +1514,8 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Alleen de groepen hieronder zien en bewerken de publicaties van deze catalogus.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "nplurals=2; plural=(n != 1);"
 )
