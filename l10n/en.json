@@ -1554,7 +1554,11 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "Languages offered to editors": "Languages offered to editors",
+        "Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.": "Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.",
+        "Save languages": "Save languages",
+        "The languages could not be saved. Try again.": "The languages could not be saved. Try again."
     },
     "plurals": {}
 }

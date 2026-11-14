@@ -205,6 +205,7 @@ required keys before first use.
 | `auto_publish_attachments` | string (bool) | `"false"` | No | When `"true"`, auto-create public share links for attachments on published objects. See [auto-publishing spec](../auto-publishing/spec.md). |
 | `auto_publish_objects` | string (bool) | `"false"` | No | When `"true"`, auto-publish objects matching a catalog on creation. See [auto-publishing spec](../auto-publishing/spec.md). |
 | `use_old_style_publishing_view` | string (bool) | `"false"` | No | Use legacy publishing view layout. |
+| `publication_languages` | string (JSON list) | `["nl","en"]` | No | The languages editors can write a publication or catalogue in, as BCP 47 tags. Dutch is the source language and is always kept first. See [publication-translations](../../changes/publication-translations/design.md) (D6). |
 
 ### Broadcast Configuration (Phase 8 — promoted from class constants)
 

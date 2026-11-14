@@ -380,6 +380,39 @@
 					</NcButton>
 				</div>
 
+				<!-- Languages offered to editors (publication-translations D6) -->
+				<div class="option-section" data-testid="publication-languages">
+					<NcSelect
+						v-model="publicationLanguageSelection"
+						:options="publicationLanguageChoices"
+						:multiple="true"
+						:inputLabel="t('opencatalogi', 'Languages offered to editors')"
+						:disabled="savingPublicationLanguages" />
+					<p class="option-description">
+						{{
+							t(
+								'opencatalogi',
+								'Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.',
+							)
+						}}
+					</p>
+					<NcNoteCard v-if="publicationLanguagesError" type="error">
+						{{ publicationLanguagesError }}
+					</NcNoteCard>
+					<div class="button-container">
+						<NcButton
+							variant="secondary"
+							:disabled="savingPublicationLanguages"
+							@click="savePublicationLanguages">
+							<template #icon>
+								<NcLoadingIcon v-if="savingPublicationLanguages" :size="20" />
+								<Save v-else :size="20" />
+							</template>
+							{{ t('opencatalogi', 'Save languages') }}
+						</NcButton>
+					</div>
+				</div>
+
 				<!-- Public API cache time (REQ-PAC-003) -->
 				<div class="option-section" data-testid="public-api-cache">
 					<NcTextField
@@ -549,6 +582,9 @@ import {
 	directorySyncFailed,
 	directorySyncFailure,
 	postSyncInterval,
+	publicationLanguageOptions,
+	publicationLanguagesFrom,
+	publicationLanguagesPayload,
 	publishingOptionsFrom,
 	publishingOptionsPayload,
 	requestDirectorySync,
@@ -705,6 +741,10 @@ export default defineComponent({
 			publicCacheSeconds: '60',
 			savingPublicCache: false,
 			publicCacheError: '',
+			// Languages offered to editors (publication-translations D6).
+			publicationLanguages: ['nl', 'en'],
+			savingPublicationLanguages: false,
+			publicationLanguagesError: '',
 			syncingDirectories: false,
 			loadingSyncOptions: true,
 			savingSyncOptions: false,
@@ -718,6 +758,31 @@ export default defineComponent({
 	},
 
 	computed: {
+		/**
+		 * The language options of the editors' language select.
+		 *
+		 * @return {Array<{id: string, label: string, locked: boolean}>} The options
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		publicationLanguageChoices() {
+			return publicationLanguageOptions(this.publicationLanguages, document.documentElement.lang || 'en')
+		},
+
+		/**
+		 * The selected language options, read and written as tags.
+		 *
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		publicationLanguageSelection: {
+			get() {
+				return this.publicationLanguageChoices.filter((option) => this.publicationLanguages.includes(option.id))
+			},
+
+			set(options) {
+				this.publicationLanguages = publicationLanguagesPayload(options)
+			},
+		},
+
 		/**
 		 * The national channels a source can be set for, with their labels.
 		 *
@@ -869,6 +934,10 @@ export default defineComponent({
 					configuration.public_api_cache_seconds,
 				)
 			}
+
+			this.publicationLanguages = publicationLanguagesFrom(
+				configuration && configuration.publication_languages,
+			)
 		},
 
 		/**
@@ -1437,6 +1506,33 @@ export default defineComponent({
 				)
 			} finally {
 				this.savingPublicCache = false
+			}
+		},
+
+		/**
+		 * Saves the languages offered to editors. The server stores Dutch first
+		 * and drops what is not a language tag; what it stored is shown back.
+		 *
+		 * @return {Promise<void>}
+		 * @spec openspec/changes/publication-translations/design.md
+		 */
+		async savePublicationLanguages() {
+			this.savingPublicationLanguages = true
+			this.publicationLanguagesError = ''
+
+			try {
+				const response = await putSettings({ publication_languages: this.publicationLanguages })
+				const stored = response.data && response.data.publication_languages
+				if (stored !== undefined) {
+					this.publicationLanguages = publicationLanguagesFrom(stored)
+				}
+			} catch {
+				this.publicationLanguagesError = this.t(
+					'opencatalogi',
+					'The languages could not be saved. Try again.',
+				)
+			} finally {
+				this.savingPublicationLanguages = false
 			}
 		},
 

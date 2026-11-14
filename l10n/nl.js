@@ -1510,7 +1510,11 @@ OC.L10N.register(
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
-        "Planning (does not publish)": "Planning (publiceert niet)"
+        "Planning (does not publish)": "Planning (publiceert niet)",
+        "Languages offered to editors": "Talen voor redacteuren",
+        "Editors can write the title, summary and description of a publication or catalogue in these languages. Dutch is the source language and is always offered.": "Redacteuren kunnen de titel, samenvatting en beschrijving van een publicatie of catalogus in deze talen schrijven. Nederlands is de brontaal en wordt altijd aangeboden.",
+        "Save languages": "Talen opslaan",
+        "The languages could not be saved. Try again.": "De talen konden niet worden opgeslagen. Probeer het opnieuw."
     },
     "nplurals=2; plural=(n != 1);"
 )

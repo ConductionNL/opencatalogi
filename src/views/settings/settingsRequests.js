@@ -133,3 +133,83 @@ export function directorySyncCounts(data) {
 	const total = data.total_directories ?? synced + failed
 	return { synced, total, failed }
 }
+
+/**
+ * The languages an administrator can offer to editors, as BCP 47 tags.
+ * Dutch is the source language of every publication and always offered.
+ */
+export const PUBLICATION_LANGUAGE_TAGS = ['nl', 'en', 'de', 'fr', 'fy', 'es', 'it', 'pl', 'pt', 'tr', 'ar', 'uk']
+
+/**
+ * The stored publication languages: the JSON list the settings answer carries,
+ * Dutch first; Dutch and English when nothing usable is stored.
+ *
+ * @param {string|Array<string>|undefined} stored - The stored value
+ * @return {Array<string>} The language tags
+ * @spec openspec/changes/publication-translations/design.md
+ */
+export function publicationLanguagesFrom(stored) {
+	let tags = stored
+	if (typeof stored === 'string') {
+		try {
+			tags = JSON.parse(stored)
+		} catch {
+			tags = null
+		}
+	}
+	if (!Array.isArray(tags) || tags.length === 0) {
+		return ['nl', 'en']
+	}
+	const languages = ['nl']
+	for (const tag of tags) {
+		if (typeof tag === 'string' && tag !== '' && !languages.includes(tag)) {
+			languages.push(tag)
+		}
+	}
+	return languages
+}
+
+/**
+ * The name of a language in the reader's own language, else its tag.
+ *
+ * @param {string} tag - The BCP 47 tag
+ * @param {string} locale - The reader's locale
+ * @return {string} The name
+ */
+export function languageName(tag, locale) {
+	try {
+		return new Intl.DisplayNames([locale], { type: 'language' }).of(tag) || tag
+	} catch {
+		return tag
+	}
+}
+
+/**
+ * The select options of the publication languages: every offerable language
+ * and any stored one outside that list, Dutch locked as the source.
+ *
+ * @param {Array<string>} selected - The selected tags
+ * @param {string} locale - The reader's locale
+ * @return {Array<{id: string, label: string, locked: boolean}>} The options
+ * @spec openspec/changes/publication-translations/design.md
+ */
+export function publicationLanguageOptions(selected, locale) {
+	const tags = [...PUBLICATION_LANGUAGE_TAGS]
+	for (const tag of selected) {
+		if (!tags.includes(tag)) {
+			tags.push(tag)
+		}
+	}
+	return tags.map((tag) => ({ id: tag, label: languageName(tag, locale), locked: tag === 'nl' }))
+}
+
+/**
+ * The publication languages to save from the selected options, Dutch first.
+ *
+ * @param {Array<{id: string}>} options - The selected options
+ * @return {Array<string>} The tags
+ * @spec openspec/changes/publication-translations/design.md
+ */
+export function publicationLanguagesPayload(options) {
+	return publicationLanguagesFrom((options || []).map((option) => option.id))
+}

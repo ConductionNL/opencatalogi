@@ -259,6 +259,8 @@ class SettingsService implements SettingsServiceInterface {
 	 * - Woo-index registration status (WOO-HR-003, design D3): operational config, not a publication.
 	 * - National channel sources (REQ-WND-001): a JSON map from channel to integriq source slug.
 	 * - Public API cache time in seconds (REQ-PAC-003); 0 switches the public cache headers off.
+	 * - The languages offered to editors (publication-translations D6): a JSON list of
+	 *   BCP 47 tags, Dutch (the source language) always first.
 	 */
 	private const SETTING_DEFAULTS = [
 		'auto_publish_attachments' => 'false',
@@ -276,6 +278,7 @@ class SettingsService implements SettingsServiceInterface {
 		'woo_index_registration_answer' => '',
 		'channel_sources' => '{}',
 		'public_api_cache_seconds' => '60',
+		'publication_languages' => '["nl","en"]',
 	];
 
 	/**
@@ -300,6 +303,7 @@ class SettingsService implements SettingsServiceInterface {
 		'woo_index_registration_answer',
 		'channel_sources',
 		'public_api_cache_seconds',
+		'publication_languages',
 	];
 
 	/**
@@ -941,7 +945,7 @@ class SettingsService implements SettingsServiceInterface {
 	/**
 	 * Reject a payload that gives an accepted key a list or an object, which would be stored as the text "Array".
 	 *
-	 * The channel sources setting is the one map a caller may send.
+	 * The channel sources map and the publication languages list are the values a caller may send as such.
 	 *
 	 * @param array $data The settings data to update.
 	 * @param array<int,string> $keys The accepted keys.
@@ -953,7 +957,7 @@ class SettingsService implements SettingsServiceInterface {
 	 * @spec openspec/specs/admin-settings/spec.md
 	 */
 	private function assertSingleValues(array $data, array $keys): void {
-		foreach (array_intersect_key($data, array_flip(array_diff($keys, ['channel_sources']))) as $key => $value) {
+		foreach (array_intersect_key($data, array_flip(array_diff($keys, ['channel_sources', 'publication_languages']))) as $key => $value) {
 			if (is_array($value) === true || is_object($value) === true) {
 				throw new InvalidArgumentException('Setting ' . $key . ' takes a single value, not a list or an object');
 			}
@@ -997,8 +1001,51 @@ class SettingsService implements SettingsServiceInterface {
 			return $this->publicApiCacheSeconds(value: $value);
 		}
 
+		if ($key === 'publication_languages') {
+			return $this->normalisePublicationLanguages(value: $value);
+		}
+
 		return $value;
 	}//end storableSetting()
+
+	/**
+	 * The publication languages to store: a JSON list of BCP 47 tags, Dutch first.
+	 *
+	 * Accepts a list or its JSON text. Tags are trimmed and their primary subtag
+	 * lower-cased; a value that is not a language tag and a repeat are dropped.
+	 * Dutch is the source language of every publication, so it is always offered.
+	 *
+	 * @param mixed $value The languages the caller sent.
+	 *
+	 * @return string The JSON list to store.
+	 *
+	 * @spec openspec/changes/publication-translations/design.md
+	 */
+	private function normalisePublicationLanguages(mixed $value): string {
+		if (is_string($value) === true) {
+			$value = json_decode($value, true);
+		}
+
+		if (is_array($value) === false) {
+			$value = [];
+		}
+
+		$languages = ['nl'];
+		foreach ($value as $tag) {
+			if (is_string($tag) === false) {
+				continue;
+			}
+
+			$parts = explode('-', trim($tag));
+			$parts[0] = strtolower($parts[0]);
+			$tag = implode('-', $parts);
+			if (preg_match('/^[a-z]{2,3}(-[a-zA-Z0-9]{2,8})*$/', $tag) === 1 && in_array($tag, $languages, true) === false) {
+				$languages[] = $tag;
+			}
+		}
+
+		return (string)json_encode($languages);
+	}//end normalisePublicationLanguages()
 
 	/**
 	 * The public API cache time to store.

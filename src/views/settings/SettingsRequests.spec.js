@@ -9,6 +9,12 @@
 
 import axios from '@nextcloud/axios'
 import Settings from './Settings.vue'
+import {
+	languageName,
+	publicationLanguageOptions,
+	publicationLanguagesFrom,
+	publicationLanguagesPayload,
+} from './settingsRequests.js'
 
 jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { post: jest.fn(), put: jest.fn() } }))
 // @nextcloud/dialogs does not resolve under Jest in this tree.
@@ -208,5 +214,70 @@ describe('Settings hasSchemas', () => {
 		['schema objects without id', [{ id: 1, schemas: [{}, null, 'x'] }], { value: '1' }, false],
 	])('is right for %s', (label, registers, selected, expected) => {
 		expect(has(registers, selected)).toBe(expected)
+	})
+})
+
+describe('Settings publication languages (publication-translations D6)', () => {
+	it.each([
+		['["nl","en","de"]', ['nl', 'en', 'de']],
+		['["de","nl"]', ['nl', 'de']],
+		[['fy', 'fy', ''], ['nl', 'fy']],
+		['not json', ['nl', 'en']],
+		['[]', ['nl', 'en']],
+		[undefined, ['nl', 'en']],
+	])('reads %j as %j', (stored, expected) => {
+		expect(publicationLanguagesFrom(stored)).toEqual(expected)
+	})
+
+	it('names a language in the reader\'s language and falls back to the tag', () => {
+		expect(languageName('de', 'en')).toBe('German')
+		expect(languageName('!!', 'en')).toBe('!!')
+	})
+
+	it('offers every language, a stored unknown one too, with Dutch locked', () => {
+		const options = publicationLanguageOptions(['nl', 'sv'], 'en')
+
+		expect(options[0]).toEqual({ id: 'nl', label: 'Dutch', locked: true })
+		expect(options.find((option) => option.id === 'en')).toEqual({ id: 'en', label: 'English', locked: false })
+		expect(options[options.length - 1].id).toBe('sv')
+	})
+
+	it('saves the selected options with Dutch first', () => {
+		expect(publicationLanguagesPayload([{ id: 'en' }, { id: 'de' }])).toEqual(['nl', 'en', 'de'])
+		expect(publicationLanguagesPayload([])).toEqual(['nl', 'en'])
+	})
+
+	it('takes the languages from the stored configuration', () => {
+		const state = page({ channelSources: {}, parseChannelSources: () => ({}) })
+		Settings.methods.applyStoredConfiguration.call(state, { publication_languages: '["nl","fr"]' })
+
+		expect(state.publicationLanguages).toEqual(['nl', 'fr'])
+	})
+
+	it('saves the languages and shows what the server stored', async () => {
+		axios.put.mockResolvedValue({ data: { publication_languages: '["nl","de"]' } })
+		const state = page({ publicationLanguages: ['nl', 'de', 'xx'] })
+		await Settings.methods.savePublicationLanguages.call(state)
+
+		expect(axios.put).toHaveBeenCalledWith('/apps/opencatalogi/api/settings', { publication_languages: ['nl', 'de', 'xx'] })
+		expect(state).toMatchObject({ publicationLanguages: ['nl', 'de'], publicationLanguagesError: '', savingPublicationLanguages: false })
+	})
+
+	it('reports a failed languages save', async () => {
+		axios.put.mockRejectedValue(new Error('down'))
+		const state = page({ publicationLanguages: ['nl'] })
+		await Settings.methods.savePublicationLanguages.call(state)
+
+		expect(state).toMatchObject({ publicationLanguagesError: 'The languages could not be saved. Try again.', savingPublicationLanguages: false })
+	})
+
+	it('selects and writes the languages through the select', () => {
+		const state = { publicationLanguages: ['nl', 'en'] }
+		state.publicationLanguageChoices = Settings.computed.publicationLanguageChoices.call(state)
+		const selection = Settings.computed.publicationLanguageSelection
+
+		expect(selection.get.call(state).map((option) => option.id)).toEqual(['nl', 'en'])
+		selection.set.call(state, [{ id: 'de' }])
+		expect(state.publicationLanguages).toEqual(['nl', 'de'])
 	})
 })
