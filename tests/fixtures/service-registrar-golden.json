@@ -166,6 +166,16 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\DocumentTypeVocabularyInterface",
+        "OCA\\OpenCatalogi\\Service\\TooiVocabularyService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\DiwooCompletenessInterface",
+        "OCA\\OpenCatalogi\\Service\\SitemapDocumentMapper"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\CmsMigrationServiceInterface",
         "OCA\\OpenCatalogi\\Service\\CmsMigrationService"
     ],

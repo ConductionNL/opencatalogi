@@ -183,6 +183,9 @@ class NationalIndexService implements NationalIndexServiceInterface {
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
+		// The day it takes effect: the editor's, else the stored validFrom (REQ-DWP-001), else the publication date.
+		$given = array_filter([$decision['effectiveDate'] ?? null, $decision['validFrom'] ?? null, $decision['publicationDate'] ?? null], 'is_string');
+
 		return [
 			'channel' => $channel,
 			'subject' => trim((string)($decision['title'] ?? 'Bekendmaking')),
@@ -193,32 +196,11 @@ class NationalIndexService implements NationalIndexServiceInterface {
 			'organisation' => (string)($decision['organisation'] ?? ''),
 			'url' => (string)($decision['url'] ?? ''),
 			'publicationType' => (string)($decision['publicationType'] ?? ''),
-			'effectiveDate' => self::effectiveDate(decision: $decision),
+			'effectiveDate' => (string)(array_values(array_filter(array_map('trim', $given)))[0] ?? ''),
 			'composedAt' => $moment->format(DateTimeInterface::ATOM),
 		];
 
 	}//end composeNotice()
-
-	/**
-	 * The day the decision takes effect: the one the editor gave, else the stored
-	 * validFrom (REQ-DWP-001), else the publication date.
-	 *
-	 * @param array<string, mixed> $decision The decision.
-	 *
-	 * @return string The effective date, or '' when none is known.
-	 *
-	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-publication-stores-its-diwoo-metadata-req-dwp-001
-	 */
-	private static function effectiveDate(array $decision): string {
-		foreach (['effectiveDate', 'validFrom', 'publicationDate'] as $field) {
-			$value = $decision[$field] ?? null;
-			if (is_string($value) === true && trim($value) !== '') {
-				return $value;
-			}
-		}
-
-		return '';
-	}//end effectiveDate()
 
 	/**
 	 * Compose the notice for both channels at once.

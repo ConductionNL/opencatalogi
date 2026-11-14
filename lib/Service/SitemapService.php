@@ -83,11 +83,11 @@ class SitemapService implements SitemapServiceInterface {
 	private const CONFIG_MAX_PER_PAGE = 'sitemap_max_per_page';
 
 	/**
-	 * The DiWoo document mapper, made on first use; it caches TOOI lookups for the request.
+	 * The DiWoo document mapper; it caches organisation lookups for the request.
 	 *
-	 * @var SitemapDocumentMapper|null
+	 * @var SitemapDocumentMapper
 	 */
-	private ?SitemapDocumentMapper $documentMapper = null;
+	private readonly SitemapDocumentMapper $documentMapper;
 
 	/**
 	 * Constructor for SitemapService.
@@ -107,7 +107,12 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
 	) {
-
+		$this->documentMapper = new SitemapDocumentMapper(
+			tooiVocabulary: $this->tooiVocabulary,
+			categories: $this->categories,
+			openRegister: $this->openRegister,
+			instance: $this->instance
+		);
 	}//end __construct()
 
 	/**
@@ -237,7 +242,7 @@ class SitemapService implements SitemapServiceInterface {
 		foreach ($publications as $publication) {
 			foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file, $relations]) {
 				// A document the Woo-index would refuse is held back; validateDiwooOutput() reports it (REQ-DWP-004).
-				$document = $this->mapDiwooDocument(publication: $publication, file: $file, relations: $relations, omitIncomplete: true);
+				$document = $this->documentMapper->mapComplete(publication: $publication, file: $file, relations: $relations);
 				if ($document !== null) {
 					$documents[] = $document;
 				}
@@ -282,35 +287,13 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param array $file The file metadata belonging to that publication.
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference).
 	 * @param array<string, array<string, mixed>> $relations The document's `isPartOf` or `hasParts` element, if any.
-	 * @param bool $omitIncomplete Whether a document missing a mandatory element is left out (REQ-DWP-004).
 	 *
-	 * @return array|null A DIWOO metadata array ready for XMLResponse, or null when held back.
+	 * @return array A DIWOO metadata array ready for XMLResponse.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function mapDiwooDocument(
-		array $publication,
-		array $file,
-		array &$violations = [],
-		array $relations = [],
-		bool $omitIncomplete = false
-	): ?array {
-		if ($this->documentMapper === null) {
-			$this->documentMapper = new SitemapDocumentMapper(
-				tooiVocabulary: $this->tooiVocabulary,
-				categories: $this->categories,
-				openRegister: $this->openRegister,
-				instance: $this->instance
-			);
-		}
-
-		return $this->documentMapper->map(
-			publication: $publication,
-			file: $file,
-			violations: $violations,
-			relations: $relations,
-			omitIncomplete: $omitIncomplete
-		);
+	private function mapDiwooDocument(array $publication, array $file, array &$violations = [], array $relations = []): array {
+		return $this->documentMapper->map(publication: $publication, file: $file, violations: $violations, relations: $relations);
 	}//end mapDiwooDocument()
 
 	/**
