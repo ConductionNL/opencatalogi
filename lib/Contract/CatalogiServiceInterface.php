@@ -158,6 +158,15 @@ interface CatalogiServiceInterface {
 	public function getCatalogBySlug(string $slug): ?array;
 
 	/**
+	 * The slugs of every catalogue in the configured catalogue register and schema.
+	 *
+	 * @return array<int, string> The slugs, each once, in the order found; empty when unconfigured.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function getCatalogSlugs(): array;
+
+	/**
 	 * Invalidate the cache for a specific catalog.
 	 *
 	 * This method removes the catalog from cache, forcing the next request

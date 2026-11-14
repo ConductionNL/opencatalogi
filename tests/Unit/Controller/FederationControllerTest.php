@@ -36,7 +36,6 @@ class FederationControllerTest extends TestCase {
 			->willReturnCallback(fn (string $text, array $params = []) => $text);
 
 		$this->controller = new FederationController(
-			'opencatalogi',
 			$this->request,
 			$this->publicationService,
 			$this->l10n
@@ -272,7 +271,6 @@ class FederationControllerTest extends TestCase {
 		$this->request->method('getParams')->willReturn([]);
 
 		return new FederationController(
-			'opencatalogi',
 			$this->request,
 			$this->publicationService,
 			$this->l10n,
