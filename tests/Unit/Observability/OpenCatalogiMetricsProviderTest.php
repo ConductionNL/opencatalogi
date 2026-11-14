@@ -328,4 +328,60 @@ class OpenCatalogiMetricsProviderTest extends TestCase {
 
 	}//end testAggregatesPublicationsAndUsageFromOr()
 
+	/**
+	 * Without OpenRegister's RegisterMapper no register holds the schemas, so
+	 * no object is searched and every family answers its zero fallback.
+	 *
+	 * @return void
+	 */
+	public function testWithoutTheRegisterMapperNothingIsSearched(): void {
+		$this->registerService(
+			'OCA\OpenRegister\Db\SchemaMapper',
+			$this->schemaMapperReturning(
+				[
+					['id' => 11, 'title' => 'Publication'],
+					['id' => 12, 'title' => 'usageCounter'],
+				]
+			)
+		);
+		$searched = new class () {
+			/**
+			 * The queries asked.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $queries = [];
+
+			/**
+			 * Records the query and answers a publication.
+			 *
+			 * @param array<string, mixed> $query         The query.
+			 * @param bool                 $_rbac         Unused.
+			 * @param bool                 $_multitenancy Unused.
+			 *
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function searchObjects(array $query = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->queries[] = $query;
+				return [['status' => 'published', 'catalog' => 'woo']];
+			}
+		};
+		$this->registerService('OCA\OpenRegister\Service\ObjectService', $searched);
+
+		$byName = [];
+		foreach ($this->provider()->metrics() as $sample) {
+			$byName[$sample->name] = $sample;
+		}
+
+		$this->assertSame([], $searched->queries);
+		$this->assertSame(
+			[['labels' => ['catalog' => ''], 'value' => 0]],
+			$byName['publication_views_total']->samples
+		);
+		$this->assertSame(
+			[['labels' => ['catalog' => ''], 'value' => 0]],
+			$byName['file_downloads_total']->samples
+		);
+	}//end testWithoutTheRegisterMapperNothingIsSearched()
+
 }//end class
