@@ -172,6 +172,56 @@ class DcatCatalogDocumentTest extends TestCase {
 		);
 	}
 
+	/**
+	 * mapDatasets() renders the same dataset nodes the catalog feed renders for the same publications.
+	 *
+	 * @return void
+	 */
+	public function testMapDatasetsRendersTheFeedsDatasets(): void {
+		$catalog = [
+			'id' => 'c1',
+			'registers' => ['20'],
+			'schemas' => '[28, 29, 30, "x"]',
+			'dcatHvdCategory' => 'http://data.europa.eu/bna/c_dd313021',
+			'dqvExposure' => 'true',
+		];
+		$searched = [];
+		$service = $this->service($searched);
+		$document = $service->buildCatalogDocument(catalog: $catalog, catalogSlug: 'woo');
+		$feedDatasets = array_values(
+			array_filter(
+				$document['@graph'],
+				static fn (array $node): bool => in_array('dcat:Dataset', (array)($node['@type'] ?? []), true)
+			)
+		);
+
+		$mapped = $service->mapDatasets(
+			catalog: $catalog,
+			catalogSlug: 'woo',
+			publications: [
+				['@self' => ['uuid' => 'u1', 'schema' => 28, 'updated' => '2026-02-03T04:05:06+00:00'], 'id' => 'u1', 'title' => 'Besluit een', 'summary' => 'Kort'],
+				['@self' => ['uuid' => 'u2', 'schema' => 30], 'id' => 'u2', 'title' => 'Uitgezonderd'],
+				['@self' => ['uuid' => 'u3', 'schema' => 29], 'id' => 'u3', 'title' => 'Besluit drie', 'publicationDate' => '2025-12-01'],
+				['@self' => ['uuid' => 'u4', 'schema' => 99], 'title' => 'Zonder id'],
+			]
+		);
+
+		$this->assertCount(3, $mapped);
+		$this->assertNotEmpty($feedDatasets);
+		$this->assertSame($feedDatasets, $mapped);
+	}
+
+	/**
+	 * mapDatasets() of nothing maps nothing.
+	 *
+	 * @return void
+	 */
+	public function testMapDatasetsOfNothingIsEmpty(): void {
+		$searched = [];
+		$this->assertSame([], $this->service($searched)->mapDatasets(catalog: ['schemas' => [28]], catalogSlug: 'woo', publications: []));
+		$this->assertSame([], $searched);
+	}
+
 	public function testWithoutOpenRegisterTheDocumentIsRefused(): void {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn([]);

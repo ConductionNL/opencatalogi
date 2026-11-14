@@ -26,6 +26,8 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'catalogi#index', 'url' => '/api/catalogi', 'verb' => 'GET'], // Public endpoint for getting all catalogs
 		['name' => 'catalogi#show', 'url' => '/api/catalogi/{id}', 'verb' => 'GET'],
 		// Catalogi sitemap
+		// Changed-since read of a catalogue (oai-pmh-endpoint, OAI-006/OAI-007). Before the /api/{catalogSlug}/{id} wildcard.
+		['name' => 'changes#changes', 'url' => '/api/{catalogSlug}/changes', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'sitemap#index', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}', 'verb' => 'GET'],
 		['name' => 'sitemap#sitemap', 'url' => '/api/{catalogSlug}/sitemaps/{categoryCode}/publications', 'verb' => 'GET'],
 		// DIWOO output validation (admin-only — auditable via AuthorizedAdminSetting)
@@ -128,6 +130,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		
 		// Publications CORS (wildcard catalog-based endpoints)
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'changes#preflightedCors', 'postfix' => '-catalogslug-changes', 'url' => '/api/{catalogSlug}/changes', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
