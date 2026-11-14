@@ -2,8 +2,9 @@
 
 ## 1. Server
 
-- [ ] 1.1 Add `UnpublishedOverviewService` with the publications and documents lists, bounded as in D1 (REQ-PUO-001). Verify: `tests/Unit/Service/UnpublishedOverviewServiceTest.php` with a draft, a scheduled, a public and a withdrawn publication, and a file with a future published time.
-- [ ] 1.2 Add `GET /api/dashboard/unpublished` with `kind` and `limit`, RBAC on (REQ-PUO-001). Verify: controller test, including a user who reads only one catalogue.
+- [x] 1.1 Add `UnpublishedOverviewService` with the publications and documents lists, bounded as in D1 (REQ-PUO-001). Verify: `tests/Unit/Service/UnpublishedOverviewServiceTest.php` with a draft, a scheduled, a public and a withdrawn publication, and a file with a future published time.
+- [x] 1.2 Add `GET /api/dashboard/unpublished` with `kind` and `limit`, RBAC on (REQ-PUO-001). Verify: controller test, including a user who reads only one catalogue.
+  - Built: `lib/Service/UnpublishedOverviewService.php`, `lib/Controller/UnpublishedOverviewController.php`, route before the `/api/{catalogSlug}/{id}` catch-all. Both lists read the 200 most recently updated publications (RBAC on) and set `scope: recent-200` when more exist. RBAC is OpenRegister's: the service only sees rows the search returns, pinned by `testEveryReadHasRbacOnAndTheNewestFirst`.
 
 ## 2. Widgets
 
