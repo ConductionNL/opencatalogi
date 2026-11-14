@@ -175,6 +175,22 @@ interface TransparencyWorkflowServiceInterface {
 	public function updateAssessment(string $assessmentId, string $assessment, array $weigeringsgronden = [], ?string $batchId = null): array;
 
 	/**
+	 * Record that a person checked the redacted version of a partly public
+	 * document: stores `redactionVerifiedBy` and `redactionVerifiedAt`.
+	 *
+	 * @param string $batchId The batch the document belongs to.
+	 * @param string $assessmentId The document-assessment object uuid.
+	 *
+	 * @return array<string, mixed> The updated assessment object.
+	 *
+	 * @throws \OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException When the redaction is not mechanically verified or its file changed.
+	 * @throws RuntimeException When the batch or assessment is missing or OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function verifyRedaction(string $batchId, string $assessmentId): array;
+
+	/**
 	 * Return a batch with a derived per-status document summary (progress).
 	 *
 	 * @param string $batchId The batch object uuid.

@@ -460,7 +460,7 @@
 			"type": "custom",
 			"title": "WOO batch",
 			"component": "WooBatchDetailView",
-			"_note": "Surfaces the OpenRegister deck-board widget (queue/board — not bespoke) plus WOO-specific surfaces: progress summary, redaction review, inventarislijst download, ready-for-review/publish (approval-workflow gated)."
+			"_note": "The document queue in four columns read through the OpenRegister object store (woo-document-assessment-screen), with moves saved through the assessment PUT, plus the progress summary, redaction state, inventarislijst download and ready-for-review/publish (approval-workflow gated)."
 		},
 		{
 			"id": "Dashboard",
