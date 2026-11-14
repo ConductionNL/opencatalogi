@@ -31,7 +31,6 @@ namespace OCA\OpenCatalogi\Service;
 
 use DateTime;
 use OCA\OpenCatalogi\Contract\EventServiceInterface;
-use OCA\OpenCatalogi\Service\Publication\CompletenessSweepService;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -309,8 +308,10 @@ class EventService implements EventServiceInterface {
 	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-records-whether-it-is-complete-and-public-req-pts-002
 	 */
 	private function reevaluateCompleteness(string $id): void {
-		if ($this->container->has(CompletenessSweepService::class) === true) {
-			$this->container->get(CompletenessSweepService::class)->reevaluate(id: $id);
+		// Named by string, like the OpenRegister services this class resolves lazily.
+		$sweeps = 'OCA\OpenCatalogi\Service\Publication\CompletenessSweepService';
+		if ($this->container->has($sweeps) === true) {
+			$this->container->get($sweeps)->reevaluate(id: $id);
 		}
 	}//end reevaluateCompleteness()
 

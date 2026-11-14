@@ -500,7 +500,9 @@
             "woo_index_registration_at": "v73",
             "woo_index_registration_answer": "v72",
             "channel_sources": "{}",
-            "public_api_cache_seconds": "0"
+            "public_api_cache_seconds": "0",
+            "publication_url_template": "v55",
+            "publication_url_catalog": "v54"
         },
         "written": [
             [
@@ -697,6 +699,16 @@
                 "opencatalogi",
                 "public_api_cache_seconds",
                 "0"
+            ],
+            [
+                "opencatalogi",
+                "publication_url_template",
+                "v55"
+            ],
+            [
+                "opencatalogi",
+                "publication_url_catalog",
+                "v54"
             ]
         ]
     },

@@ -17,8 +17,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 3. Webhook contract
 
-- [ ] 3.1 Prove the recipe's filters match only the completing update (REQ-PTS-003). Verify: `tests/Unit/Service/Publication/CompletenessWebhookContractTest.php::testTheFilterMatchesOnlyTheCompletingUpdate`, which builds the three `ObjectUpdatedEvent` payloads (incomplete to incomplete, incomplete to complete, complete to complete) the way OpenRegister's `WebhookEventListener::extractPayload()` does and runs OpenRegister's filter over them when the class exists.
-- [ ] 3.2 Write the recipe in `docs/` (integrations), following the writing skill. Verify: `npm run lint`, and a grep for U+2014 on the doc returns nothing.
+- [x] 3.1 Prove the recipe's filters match only the completing update (REQ-PTS-003). Verify: `tests/Unit/Service/Publication/CompletenessWebhookContractTest.php::testTheFilterMatchesOnlyTheCompletingUpdate`, which builds the three `ObjectUpdatedEvent` payloads (incomplete to incomplete, incomplete to complete, complete to complete) the way OpenRegister's `WebhookEventListener::extractPayload()` does and runs OpenRegister's filter over them when the class exists.
+- [x] 3.2 Write the recipe in `docs/` (integrations), following the writing skill. Verify: `npm run lint`, and a grep for U+2014 on the doc returns nothing.
 
 ## 4. Live
 
@@ -27,9 +27,9 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 5. Verification
 
-- [ ] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
-- [ ] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
+- [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`.
+- [x] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
 - [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 
 Done when merged on `development` with CI green. Rows 1.17 and 1.20 become `production` only once a store release ships it.

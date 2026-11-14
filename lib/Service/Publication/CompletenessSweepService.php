@@ -106,7 +106,7 @@ class CompletenessSweepService {
 		$counts   = ['checked' => 0, 'changed' => 0, 'failed' => 0];
 		$register = $this->config->getValueString('opencatalogi', 'publication_register', '');
 		$schema   = $this->config->getValueString('opencatalogi', 'publication_schema', '');
-		if ($register === '' || $schema === '' || $this->container->has('OCA\OpenRegister\Service\ObjectService') === false) {
+		if ($register === '' || $schema === '' || $this->openRegisterAvailable() === false) {
 			return $counts;
 		}
 
@@ -156,7 +156,7 @@ class CompletenessSweepService {
 	public function reevaluate(string $id): string {
 		$register = $this->config->getValueString('opencatalogi', 'publication_register', '');
 		$schema   = $this->config->getValueString('opencatalogi', 'publication_schema', '');
-		if ($id === '' || $register === '' || $schema === '' || $this->container->has('OCA\OpenRegister\Service\ObjectService') === false) {
+		if ($id === '' || $register === '' || $schema === '' || $this->openRegisterAvailable() === false) {
 			return 'skipped';
 		}
 
@@ -272,4 +272,14 @@ class CompletenessSweepService {
 	private function idOf(array $row): string {
 		return (string)($row['@self']['id'] ?? ($row['id'] ?? ''));
 	}//end idOf()
+
+	/**
+	 * Whether OpenRegister's object service can be resolved (ADR-083: established before the lookup).
+	 *
+	 * @return bool
+	 */
+	private function openRegisterAvailable(): bool {
+		return class_exists('OCA\OpenRegister\Service\ObjectService') === true
+			&& $this->container->has('OCA\OpenRegister\Service\ObjectService') === true;
+	}//end openRegisterAvailable()
 }//end class

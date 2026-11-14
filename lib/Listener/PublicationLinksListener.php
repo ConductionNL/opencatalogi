@@ -30,6 +30,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Listener;
 
 use OCA\OpenCatalogi\Service\Publication\PublicationLinks;
+use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
 use OCP\EventDispatcher\Event;
@@ -72,15 +73,11 @@ class PublicationLinksListener implements IEventListener {
 	 * @spec openspec/changes/publication-tells-its-source/specs/publications/spec.md#requirement-a-publication-carries-its-public-page-and-its-officer-page-req-pts-001
 	 */
 	public function handle(Event $event): void {
-		if ($event instanceof ObjectCreatingEvent === true) {
-			$object = $event->getObject();
-		} else if ($event instanceof ObjectUpdatingEvent === true) {
-			// An update cannot set them either: they are computed again.
-			$object = $event->getNewObject();
-		} else {
+		if ($event instanceof ObjectCreatingEvent === false && $event instanceof ObjectUpdatingEvent === false) {
 			return;
 		}
 
+		$object = $this->objectOf(event: $event);
 		$schema = $this->config->getValueString('opencatalogi', 'publication_schema', '');
 		if ($schema === '' || (string)$object->getSchema() !== $schema) {
 			return;
@@ -89,4 +86,21 @@ class PublicationLinksListener implements IEventListener {
 		$links = $this->links->for(uuid: (string)$object->getUuid(), schema: $schema);
 		$event->setModifiedData(array_merge($event->getModifiedData(), $links));
 	}//end handle()
+
+	/**
+	 * The object a create or an update is about to store.
+	 *
+	 * An update cannot set the pages either: they are computed again from the new object.
+	 *
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The event.
+	 *
+	 * @return ObjectEntity The object.
+	 */
+	private function objectOf(ObjectCreatingEvent|ObjectUpdatingEvent $event): ObjectEntity {
+		if ($event instanceof ObjectCreatingEvent === true) {
+			return $event->getObject();
+		}
+
+		return $event->getNewObject();
+	}//end objectOf()
 }//end class
