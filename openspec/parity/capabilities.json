@@ -3858,7 +3858,7 @@
 				"requirement": [
 					"openspec/specs/dashboard :: Get combined directory data from all listings (DIR-001)",
 					"openspec/specs/federation :: The installation announces itself to the directories it knows (FED-013)",
-					"openspec/changes/capability-rows-verify-scenarios/specs/federation :: The installation publishes a directory of its own catalogues (REQ-CVS-005)"
+					"openspec/specs/federation :: The installation publishes a directory of its own catalogues (REQ-CVS-005)"
 				],
 				"change": [
 					"capability-rows-verify-scenarios"

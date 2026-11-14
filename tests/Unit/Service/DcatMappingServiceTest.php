@@ -126,6 +126,29 @@ class DcatMappingServiceTest extends TestCase {
 		$this->assertArrayHasKey('dcat:landingPage', $dataset);
 	}
 
+	/**
+	 * The UUID is the dataset's dct:identifier, and an edit of the title and
+	 * slug leaves the identifier and the landing page as they were.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/publications/spec.md#requirement-a-publication-keeps-one-identifier-for-life-req-cvs-006
+	 */
+	public function testTheIdentifierIsTheUuidAndSurvivesAnEdit(): void {
+		$uuid = '4f2c9a1e-7b3d-4e8a-9c51-2d6f0b8e3a17';
+		$iri = 'https://host/apps/opencatalogi/api/woo-requests/' . $uuid;
+		$before = ['id' => $uuid, 'title' => 'Besluit op Woo-verzoek', '@self' => ['uuid' => $uuid, 'slug' => 'besluit-op-woo-verzoek']];
+		$after = ['id' => $uuid, 'title' => 'Besluit op Woo-verzoek 2026-14', '@self' => ['uuid' => $uuid, 'slug' => 'besluit-2026-14']];
+
+		$first = $this->mapDataset(publication: $before, mapping: DcatMappingService::DEFAULT_MAPPING, files: [], datasetIri: $iri, defaults: []);
+		$second = $this->mapDataset(publication: $after, mapping: DcatMappingService::DEFAULT_MAPPING, files: [], datasetIri: $iri, defaults: []);
+
+		$this->assertSame($uuid, $first['dct:identifier']);
+		$this->assertSame($uuid, $second['dct:identifier']);
+		$this->assertSame(['@id' => $iri], $second['dcat:landingPage']);
+		$this->assertSame('Besluit op Woo-verzoek 2026-14', $second['dct:title']);
+	}
+
 	public function testThemeEmittedAsTooiUriWhenPresent(): void {
 		$publication = [
 			'id' => 'uuid-3',
