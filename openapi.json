@@ -1048,6 +1048,119 @@
             "$ref": "#/components/responses/InternalServerError"
           }
         }
+      },
+      "options": {
+        "operationId": "search-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/search`.",
+        "tags": [
+          "Search"
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/search/{id}": {
+      "options": {
+        "operationId": "search-show-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/search/{id}`.",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/search/{id}/attachments": {
+      "options": {
+        "operationId": "search-attachments-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/search/{id}/attachments`.",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/search/{id}/download": {
+      "options": {
+        "operationId": "search-download-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/search/{id}/download`.",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/search/{id}/uses": {
+      "options": {
+        "operationId": "search-uses-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/search/{id}/uses`.",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
+      }
+    },
+    "/search/{id}/used": {
+      "options": {
+        "operationId": "search-used-preflight",
+        "summary": "CORS preflight",
+        "description": "CORS preflight for `/api/search/{id}/used`.",
+        "tags": [
+          "Search"
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/IdPath"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/CorsPreflight"
+          }
+        }
       }
     },
     "/themes": {

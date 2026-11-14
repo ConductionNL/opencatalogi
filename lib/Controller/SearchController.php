@@ -37,6 +37,8 @@ use OCP\AppFramework\Http\Attribute\NoCSRFRequired;
 use OCP\AppFramework\Http\Attribute\PublicPage;
 use OCP\AppFramework\Http\DataDownloadResponse;
 use OCP\AppFramework\Http\JSONResponse;
+use OCP\AppFramework\Http\Response;
+use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
@@ -65,6 +67,7 @@ use RuntimeException;
  */
 class SearchController extends Controller {
 	use AnswersCacheably;
+	use AnswersCrossOriginSearchRequests;
 
 	/**
 	 * SearchController constructor.
@@ -78,6 +81,7 @@ class SearchController extends Controller {
 	 * @param ContainerInterface $container DI container, to resolve OpenRegister's ObjectService.
 	 * @param IAppManager $appManager The app manager.
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param IAppConfig|null $appConfig App config holding the CORS allowlist (without it every origin is allowed).
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -91,6 +95,7 @@ class SearchController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,
+		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -155,13 +160,13 @@ class SearchController extends Controller {
 			);
 
 			// REQ-PAC-001/002: public cache headers for an anonymous caller only.
-			return $this->cacheableForCaller(response: new JSONResponse(data: $result, statusCode: Http::STATUS_OK));
+			return $this->withSearchCorsHeaders(response: $this->cacheableForCaller(response: new JSONResponse(data: $result, statusCode: Http::STATUS_OK)));
 		} catch (MalformedSearchParameterException $e) {
-			return $this->malformedParameterAnswer(exception: $e);
+			return $this->withSearchCorsHeaders(response: $this->malformedParameterAnswer(exception: $e));
 		} catch (RuntimeException $e) {
-			return $this->backendUnavailableAnswer(exception: $e);
+			return $this->withSearchCorsHeaders(response: $this->backendUnavailableAnswer(exception: $e));
 		} catch (\Exception $e) {
-			return $this->searchFailedAnswer(exception: $e);
+			return $this->withSearchCorsHeaders(response: $this->searchFailedAnswer(exception: $e));
 		}//end try
 
 	}//end index()
@@ -251,10 +256,10 @@ class SearchController extends Controller {
 	#[NoCSRFRequired]
 	public function show(string $id): JSONResponse {
 		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+			return $this->notLoggedIn();
 		}
 
-		return $this->cacheableForCaller(response: $this->publicationService->show(id: $id));
+		return $this->withSearchCorsHeaders(response: $this->cacheableForCaller(response: $this->publicationService->show(id: $id)));
 	}//end show()
 
 	/**
@@ -279,10 +284,10 @@ class SearchController extends Controller {
 	#[NoCSRFRequired]
 	public function attachments(string $id): JSONResponse {
 		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+			return $this->notLoggedIn();
 		}
 
-		return $this->publicationService->attachments(id: $id);
+		return $this->withSearchCorsHeaders(response: $this->publicationService->attachments(id: $id));
 	}//end attachments()
 
 	/**
@@ -307,10 +312,10 @@ class SearchController extends Controller {
 	#[NoCSRFRequired]
 	public function download(string $id): DataDownloadResponse|JSONResponse {
 		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+			return $this->notLoggedIn();
 		}
 
-		return $this->publicationService->download(id: $id);
+		return $this->withSearchCorsHeaders(response: $this->publicationService->download(id: $id));
 	}//end download()
 
 	/**
@@ -336,10 +341,10 @@ class SearchController extends Controller {
 	#[NoCSRFRequired]
 	public function uses(string $id): JSONResponse {
 		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+			return $this->notLoggedIn();
 		}
 
-		return $this->publicationService->uses(id: $id);
+		return $this->withSearchCorsHeaders(response: $this->publicationService->uses(id: $id));
 	}//end uses()
 
 	/**
@@ -365,9 +370,42 @@ class SearchController extends Controller {
 	#[NoCSRFRequired]
 	public function used(string $id): JSONResponse {
 		if ($this->userSession->getUser() === null) {
-			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+			return $this->notLoggedIn();
 		}
 
-		return $this->publicationService->used(id: $id);
+		return $this->withSearchCorsHeaders(response: $this->publicationService->used(id: $id));
 	}//end used()
+
+	/**
+	 * The 401 answer of the session-only search actions, with the CORS headers.
+	 *
+	 * @return JSONResponse The answer.
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 */
+	private function notLoggedIn(): JSONResponse {
+		return $this->withSearchCorsHeaders(
+			response: new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED)
+		);
+	}//end notLoggedIn()
+
+	/**
+	 * Answer a CORS preflight on the search routes.
+	 *
+	 * The preflight carries no resource data; the allowed origin comes from the
+	 * shared allowlist rule.
+	 *
+	 * @return Response The preflight answer.
+	 *
+	 * @NoCSRFRequired
+	 * @PublicPage
+	 *
+	 * @spec openspec/changes/search-cors-on-every-public-endpoint/specs/cross-origin-api-access/spec.md#requirement-the-search-and-federation-endpoints-answer-cross-origin-calls-req-sco-001
+	 */
+	#[PublicPage]
+	#[NoCSRFRequired]
+	#[AnonRateLimit(limit: 240, period: 60)]
+	public function preflightedCors(): Response {
+		return $this->searchPreflight();
+	}//end preflightedCors()
 }//end class

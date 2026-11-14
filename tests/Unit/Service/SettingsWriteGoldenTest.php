@@ -69,6 +69,7 @@ class SettingsWriteGoldenTest extends TestCase {
 			'ooapi_consumers' => 'alice,bob',
 			'woo_index_registration_status' => 'registered', 'woo_index_registration_url' => 'https://u', 'woo_index_registration_at' => '2026', 'woo_index_registration_answer' => 'a',
 			'public_api_cache_seconds' => '120',
+			'cors_allowed_origins' => "https://www.voorbeeldgemeente.nl\nHTTPS://Andere.example:8443",
 		];
 
 		// Every config key the app reads or writes, plus near misses: a key added to an
@@ -78,6 +79,9 @@ class SettingsWriteGoldenTest extends TestCase {
 		foreach ($known as $index => $key) {
 			$knownValues[$key] = 'v' . $index;
 		}
+
+		// The allowlist refuses a value that is not an origin, which would refuse the whole payload.
+		$knownValues['cors_allowed_origins'] = 'https://v' . array_search('cors_allowed_origins', $known, true) . '.example';
 
 		return [
 			'every known config key' => ['updateSettings', $knownValues],
@@ -96,6 +100,9 @@ class SettingsWriteGoldenTest extends TestCase {
 			'channel sources map' => ['updateSettings', ['channel_sources' => ['plooi' => 'src-1', 'x' => 2]]],
 			'channel sources text' => ['updateSettings', ['channel_sources' => '{"plooi":"src-2"}']],
 			'channel sources rubbish' => ['updateSettings', ['channel_sources' => 'nope']],
+			'cors allowlist with a star' => ['updateSettings', ['cors_allowed_origins' => "https://a.example\n*"]],
+			'cors allowlist with a path' => ['updateSettings', ['dcat_instance_title' => 'T', 'cors_allowed_origins' => 'https://a.example/zoeken']],
+			'cors allowlist as a list' => ['updateSettings', ['cors_allowed_origins' => ['https://a.example']]],
 			'settings with a failing config' => ['updateSettings', ['catalog_schema' => '1'], 'throws'],
 			'publishing all true' => ['updatePublishingOptions', ['auto_publish_attachments' => true, 'auto_publish_objects' => 'true', 'use_old_style_publishing_view' => true]],
 			'publishing other truthy values' => ['updatePublishingOptions', ['auto_publish_attachments' => 1, 'auto_publish_objects' => 'yes', 'use_old_style_publishing_view' => 'TRUE']],
