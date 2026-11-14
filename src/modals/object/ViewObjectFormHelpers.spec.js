@@ -12,6 +12,7 @@
 import ViewObject from './ViewObject.vue'
 
 jest.mock('@toast-ui/editor/dist/toastui-editor.css', () => ({}))
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'test-request-token' }))
 
 jest.mock('../../store/store.js', () => ({
 	catalogStore: {},
@@ -53,7 +54,10 @@ function vm(state = {}) {
 function computed(name, ctx) {
 	for (const [other, fn] of Object.entries(ViewObject.computed)) {
 		if (!(other in ctx)) {
-			Object.defineProperty(ctx, other, { get: () => fn.call(ctx), configurable: true })
+			Object.defineProperty(ctx, other, {
+				get: () => fn.call(ctx),
+				configurable: true,
+			})
 		}
 	}
 	return ViewObject.computed[name].call(ctx)
@@ -74,16 +78,26 @@ describe('ViewObject tags from the upload dialog', () => {
 		const tags = ['a', 'b']
 		const ctx = vm({ labelOptionsEdit: null })
 		ctx.onUploadFilesTagsUpdated({ tags, newTags: ['b'] })
-		expect(ctx.labelOptionsEdit).toEqual({ inputLabel: 'Labels', multiple: true, options: ['a', 'b'] })
+		expect(ctx.labelOptionsEdit).toEqual({
+			inputLabel: 'Labels',
+			multiple: true,
+			options: ['a', 'b'],
+		})
 		expect(ctx.labelOptionsEdit.options).not.toBe(tags)
-		expect(console.info).toHaveBeenCalledWith('>>> [VIEWOBJECT] RECEIVED TAGS-UPDATED FROM UPLOADFILES', { total: 2, newTags: ['b'] })
+		expect(console.info).toHaveBeenCalledWith(
+			'>>> [VIEWOBJECT] RECEIVED TAGS-UPDATED FROM UPLOADFILES',
+			{ total: 2, newTags: ['b'] },
+		)
 	})
 
 	it('treats a payload without lists as empty and keeps existing options settings', () => {
 		const ctx = vm({ labelOptionsEdit: { inputLabel: 'X', options: ['old'] } })
 		ctx.onUploadFilesTagsUpdated(null)
 		expect(ctx.labelOptionsEdit).toEqual({ inputLabel: 'X', options: [] })
-		expect(console.info).toHaveBeenCalledWith(expect.any(String), { total: 0, newTags: [] })
+		expect(console.info).toHaveBeenCalledWith(expect.any(String), {
+			total: 0,
+			newTags: [],
+		})
 	})
 
 	it.each([
@@ -91,18 +105,25 @@ describe('ViewObject tags from the upload dialog', () => {
 		[{ tags: 'x' }, ['s'], ['s'], false],
 		[null, ['s'], ['s'], false],
 		[{}, undefined, 'unchanged', true],
-	])('on close with %j and stored %j shows %j', (payload, stored, options, refetch) => {
-		objectStore.tags = stored
-		const ctx = vm({ labelOptionsEdit: null })
-		ctx.getAllTags = jest.fn()
-		ctx.onUploadFilesClosed(payload)
-		if (options === 'unchanged') {
-			expect(ctx.labelOptionsEdit).toBe(null)
-		} else {
-			expect(ctx.labelOptionsEdit).toEqual({ inputLabel: 'Labels', multiple: true, options })
-		}
-		expect(ctx.getAllTags).toHaveBeenCalledTimes(refetch ? 1 : 0)
-	})
+	])(
+		'on close with %j and stored %j shows %j',
+		(payload, stored, options, refetch) => {
+			objectStore.tags = stored
+			const ctx = vm({ labelOptionsEdit: null })
+			ctx.getAllTags = jest.fn()
+			ctx.onUploadFilesClosed(payload)
+			if (options === 'unchanged') {
+				expect(ctx.labelOptionsEdit).toBe(null)
+			} else {
+				expect(ctx.labelOptionsEdit).toEqual({
+					inputLabel: 'Labels',
+					multiple: true,
+					options,
+				})
+			}
+			expect(ctx.getAllTags).toHaveBeenCalledTimes(refetch ? 1 : 0)
+		},
+	)
 
 	it.each([
 		[null, ['a'], ['a'], ['a'], ['a']],
@@ -125,14 +146,22 @@ describe('ViewObject dropProperty', () => {
 		['str', { str: 'x' }, null],
 	])('clears schema property %s', (key, formData, cleared) => {
 		const ctx = vm({ formData, selectedProperty: key })
-		ctx.getSchemaProperties = () => ({ arr: { type: 'array' }, obj: { type: 'object' }, str: { type: 'string' } })
+		ctx.getSchemaProperties = () => ({
+			arr: { type: 'array' },
+			obj: { type: 'object' },
+			str: { type: 'string' },
+		})
 		ctx.dropProperty(key)
 		expect(ctx.formData[key]).toEqual(cleared)
 		expect(ctx.selectedProperty).toBe(null)
 	})
 
 	it('removes an extra property, marking a persisted one for deletion', () => {
-		const ctx = vm({ formData: { a: 1, b: 2 }, currentObject: { b: 'kept' }, selectedProperty: 'other' })
+		const ctx = vm({
+			formData: { a: 1, b: 2 },
+			currentObject: { b: 'kept' },
+			selectedProperty: 'other',
+		})
 		ctx.getSchemaProperties = () => ({})
 		ctx.dropProperty('a')
 		expect(Object.hasOwn(ctx.formData, 'a')).toBe(false)
@@ -164,8 +193,18 @@ describe('ViewObject selectionStalled', () => {
 		[{ isLockedCatalog: true, selectedCatalog: {}, registerOptions: [] }, false],
 		[{ catalogOptions: [], selectedCatalog: {}, registerOptions: [] }, false],
 		[{ isNewObject: false, selectedCatalog: {}, registerOptions: [] }, false],
-		[{ hasSelectedSchema: true, selectedCatalog: {}, registerOptions: [] }, false],
-		[{ allSelectionsComplete: true, selectedCatalog: {}, registerOptions: [] }, false],
+		[
+			{ hasSelectedSchema: true, selectedCatalog: {}, registerOptions: [] },
+			false,
+		],
+		[
+			{
+				allSelectionsComplete: true,
+				selectedCatalog: {},
+				registerOptions: [],
+			},
+			false,
+		],
 		[{ selectedCatalog: {}, registerOptions: [] }, true],
 		[{ selectedCatalog: {} }, false],
 		[{ selectedRegister: {}, schemaOptions: [] }, true],
@@ -197,8 +236,14 @@ describe('ViewObject applySchemaDefaults', () => {
 
 describe('ViewObject schemaOptions', () => {
 	beforeEach(() => {
-		objectStore.availableRegisters = [{ id: 1, schemas: [{ id: 10 }, { id: 11 }, { id: 12 }] }, { id: 2 }]
-		objectStore.catalogs = [{ id: 'c1', schemas: ['10', '11', '13'] }, { id: 'c2' }]
+		objectStore.availableRegisters = [
+			{ id: 1, schemas: [{ id: 10 }, { id: 11 }, { id: 12 }] },
+			{ id: 2 },
+		]
+		objectStore.catalogs = [
+			{ id: 'c1', schemas: ['10', '11', '13'] },
+			{ id: 'c2' },
+		]
 		objectStore.availableSchemas = [
 			{ id: 11, title: 'beta' },
 			{ id: 10, title: 'Alpha' },
@@ -209,7 +254,11 @@ describe('ViewObject schemaOptions', () => {
 	})
 
 	it('lists the readable schemas in both register and catalog, once each, sorted', () => {
-		const ctx = { selectedRegister: { id: '1' }, selectedCatalog: { id: 'c1' }, hasSchemaReadRight: (s) => !s.private }
+		const ctx = {
+			selectedRegister: { id: '1' },
+			selectedCatalog: { id: 'c1' },
+			hasSchemaReadRight: (s) => !s.private,
+		}
 		expect(computed('schemaOptions', ctx)).toEqual([
 			{ id: 10, label: 'Alpha' },
 			{ id: 11, label: 'beta' },
@@ -224,7 +273,9 @@ describe('ViewObject schemaOptions', () => {
 		[{ selectedRegister: { id: 2 }, selectedCatalog: { id: 'c1' } }],
 		[{ selectedRegister: { id: 1 }, selectedCatalog: { id: 'c2' } }],
 	])('lists none for %j', (state) => {
-		expect(computed('schemaOptions', { hasSchemaReadRight: () => true, ...state })).toEqual([])
+		expect(
+			computed('schemaOptions', { hasSchemaReadRight: () => true, ...state }),
+		).toEqual([])
 	})
 })
 
@@ -233,11 +284,18 @@ describe('ViewObject required fields', () => {
 		const ctx = {
 			resolvedSchema: {
 				required: ['a', '@self', 'id'],
-				properties: { b: { required: true }, c: { required: 'yes' }, a: { required: true }, d: null },
+				properties: {
+					b: { required: true },
+					c: { required: 'yes' },
+					a: { required: true },
+					d: null,
+				},
 			},
 		}
 		expect(computed('requiredPropertyKeys', ctx)).toEqual(['a', 'b'])
-		expect(computed('requiredPropertyKeys', { resolvedSchema: null })).toEqual([])
+		expect(computed('requiredPropertyKeys', { resolvedSchema: null })).toEqual(
+			[],
+		)
 		expect(computed('requiredPropertyKeys', { resolvedSchema: {} })).toEqual([])
 	})
 
