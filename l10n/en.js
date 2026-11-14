@@ -46,6 +46,7 @@ OC.L10N.register(
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -267,6 +268,7 @@ OC.L10N.register(
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1563,7 +1565,8 @@ OC.L10N.register(
         "The owning app's schema slug or payload kind the default applies to.": "The owning app's schema slug or payload kind the default applies to.",
         "Whether the default applies. An inactive row is kept but never used.": "Whether the default applies. An inactive row is kept but never used.",
         "Why this default was chosen, and where it came from.": "Why this default was chosen, and where it came from.",
-        "Woo category mapping": "Woo category mapping"
+        "Woo category mapping": "Woo category mapping",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
 )

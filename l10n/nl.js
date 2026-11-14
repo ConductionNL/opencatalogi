@@ -38,6 +38,7 @@ OC.L10N.register(
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -275,6 +276,7 @@ OC.L10N.register(
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1518,7 +1520,8 @@ OC.L10N.register(
         "The owning app's schema slug or payload kind the default applies to.": "De schema-slug of het soort bericht van die app waarvoor de standaardwaarde geldt.",
         "Whether the default applies. An inactive row is kept but never used.": "Of de standaardwaarde geldt. Een inactieve regel blijft bewaard maar wordt nooit gebruikt.",
         "Why this default was chosen, and where it came from.": "Waarom voor deze standaardwaarde is gekozen en waar die vandaan komt.",
-        "Woo category mapping": "Woo-categoriekoppeling"
+        "Woo category mapping": "Woo-categoriekoppeling",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "nplurals=2; plural=(n != 1);"
 )
