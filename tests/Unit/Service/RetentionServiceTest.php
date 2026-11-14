@@ -236,6 +236,55 @@ class RetentionServiceTest extends TestCase {
 
 	}//end testApplyDefaultsWithoutMatchingRuleLeavesPublicationUnchanged()
 
+	/**
+	 * A category whose name holds a double quote is escaped into its rule's
+	 * cell and unescaped by the evaluator, so it still matches exactly and
+	 * does not fall through to `_fallback` (retention-defaults-on-shared-decision-tables 3.5).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/retention-defaults-on-shared-decision-tables/tasks.md
+	 */
+	public function testACategoryWithADoubleQuoteStillMatchesThroughTheEvaluator(): void {
+		$this->store['retention_defaults'] = json_encode(
+			[
+				'vergunningen' => [
+					'zeg "nee"' => ['termMonths' => 18, 'action' => 'archive'],
+					'x", "y' => ['termMonths' => 30, 'action' => 'archive'],
+					'_fallback' => ['termMonths' => 6, 'action' => 'review'],
+				],
+			]
+		);
+
+		$applied = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'zeg "nee"'],
+			'vergunningen'
+		);
+		$this->assertSame(18, $applied['retentionTermMonths']);
+		$this->assertSame('archive', $applied['retentionAction']);
+
+		// The same words without the quotes are another category.
+		$other = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'zeg nee'],
+			'vergunningen'
+		);
+		$this->assertSame(6, $other['retentionTermMonths']);
+
+		// A quote cannot turn a category into a list of categories: `x", "y`
+		// matches only itself, and `x` falls through to the fallback.
+		$exact = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'x", "y'],
+			'vergunningen'
+		);
+		$this->assertSame(30, $exact['retentionTermMonths']);
+		$partial = $this->service->applyDefaults(
+			['publicationDate' => '2026-06-11T00:00:00+00:00', 'retentionCategory' => 'x'],
+			'vergunningen'
+		);
+		$this->assertSame(6, $partial['retentionTermMonths']);
+
+	}//end testACategoryWithADoubleQuoteStillMatchesThroughTheEvaluator()
+
 	public function testApplyDefaultsMatchesACategoryContainingAQuote(): void {
 		$this->store['retention_defaults'] = json_encode(
 			[
