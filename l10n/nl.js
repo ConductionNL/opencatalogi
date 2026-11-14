@@ -38,6 +38,7 @@ OC.L10N.register(
         "Cards": "Kaarten",
         "Catalog not found": "Catalogus niet gevonden",
         "Catalogs": "Catalogi",
+        "catalogs": "catalogi",
         "Check server logs for more details.": "Controleer serverlogboeken voor meer informatie.",
         "Choose sorting": "Kies sortering",
         "Clear": "Wissen",
@@ -275,6 +276,7 @@ OC.L10N.register(
         "Attachment successfully published": "Bijlage succesvol gepubliceerd",
         "Attachment successfully updated": "Bijlage succesvol bijgewerkt",
         "Attachments": "Bijlagen",
+        "attachments": "bijlagen",
         "Attachments are loading": "Bijlagen worden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bijlagen worden gepubliceerd met de huidige datum en tijd. Als bijlagen een depublicatiedatum hebben ingesteld, wordt deze verwijderd om ze volledig te publiceren.",
         "Auto publish attachments": "Bijlagen automatisch publiceren",
@@ -1521,7 +1523,8 @@ OC.L10N.register(
         "The publications this one implements. Each of them reads that it is implemented by this one.": "De publicaties waaraan deze uitvoering geeft. Bij elk daarvan staat dat het door deze wordt uitgevoerd.",
         "The publications this one replaces. Each of them reads that it is replaced by this one.": "De publicaties die deze vervangt. Bij elk daarvan staat dat het door deze wordt vervangen.",
         "The source system, such as case or decos.": "Het bronsysteem, zoals case of decos.",
-        "Whether the identifier may be shown and searched on the public API.": "Of het kenmerk via de openbare API getoond en doorzocht mag worden."
+        "Whether the identifier may be shown and searched on the public API.": "Of het kenmerk via de openbare API getoond en doorzocht mag worden.",
+        "Planning (does not publish)": "Planning (publiceert niet)"
     },
     "nplurals=2; plural=(n != 1);"
 )

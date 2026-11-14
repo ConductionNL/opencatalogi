@@ -46,6 +46,7 @@ OC.L10N.register(
         "Cards": "Cards",
         "Catalog not found": "Catalog not found",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Check server logs for more details.",
         "Choose sorting": "Choose sorting",
         "Clear": "Clear",
@@ -267,6 +268,7 @@ OC.L10N.register(
         "Attachment successfully published": "Attachment successfully published",
         "Attachment successfully updated": "Attachment successfully updated",
         "Attachments": "Attachments",
+        "attachments": "attachments",
         "Attachments are loading": "Attachments are loading",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.",
         "Auto publish attachments": "Auto publish attachments",
@@ -1566,7 +1568,8 @@ OC.L10N.register(
         "The publications this one implements. Each of them reads that it is implemented by this one.": "The publications this one implements. Each of them reads that it is implemented by this one.",
         "The publications this one replaces. Each of them reads that it is replaced by this one.": "The publications this one replaces. Each of them reads that it is replaced by this one.",
         "The source system, such as case or decos.": "The source system, such as case or decos.",
-        "Whether the identifier may be shown and searched on the public API.": "Whether the identifier may be shown and searched on the public API."
+        "Whether the identifier may be shown and searched on the public API.": "Whether the identifier may be shown and searched on the public API.",
+        "Planning (does not publish)": "Planning (does not publish)"
     },
     "nplurals=2; plural=(n != 1);"
 )
