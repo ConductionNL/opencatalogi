@@ -81,7 +81,11 @@ class FederationPublicationsBaseUrlTest extends TestCase {
 		$response = $this->controller(service: $service, logger: null)->publications();
 
 		$this->assertSame(200, $response->getStatus());
-		$this->assertSame(['results' => []], $response->getData());
+		// Built without a collector, the controller fails closed to the `unknown` entry.
+		$this->assertSame(
+			['results' => [], 'appliedFilters' => [['name' => 'unknown', 'value' => null, 'reason' => 'not recorded']]],
+			$response->getData()
+		);
 		$this->assertSame([[['q' => 'woo'], ['q' => 'woo'], $expected]], $asked);
 	}//end testTheBaseUrlIsTheSchemeHostAndPath()
 
@@ -126,6 +130,6 @@ class FederationPublicationsBaseUrlTest extends TestCase {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => $text);
 
-		return new FederationController('opencatalogi', $request, $service, $l10n, $logger);
+		return new FederationController($request, $service, $l10n, $logger);
 	}//end controller()
 }//end class

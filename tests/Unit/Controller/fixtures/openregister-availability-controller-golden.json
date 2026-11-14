@@ -75,7 +75,14 @@
             "status": 200,
             "body": {
                 "results": [],
-                "with": true
+                "with": true,
+                "appliedFilters": [
+                    {
+                        "name": "unknown",
+                        "value": null,
+                        "reason": "not recorded"
+                    }
+                ]
             }
         },
         "asked": [

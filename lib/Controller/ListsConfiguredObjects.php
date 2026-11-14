@@ -26,6 +26,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CallerScope;
 use OCP\AppFramework\Http\JSONResponse;
 
@@ -45,7 +46,11 @@ trait ListsConfiguredObjects {
 	 * The configured scope wins for the rows, but OpenRegister's facet path reads
 	 * `@self.schemas ?? _schemas` first, so every caller scope key is dropped (WOO-581).
 	 *
+	 * With a collector, the stripped caller keys and the configured scope are
+	 * recorded as applied filters (REQ-ASF-002).
+	 *
 	 * @param array<string, string> $objectConfig The configured `register` and `schema`.
+	 * @param AppliedFilters|null $appliedFilters The request's collector.
 	 *
 	 * @return array<string, mixed> The search query.
 	 *
@@ -53,11 +58,19 @@ trait ListsConfiguredObjects {
 	 *
 	 * @spec openspec/specs/content-management/spec.md
 	 */
-	private function scopedSearchQuery(array $objectConfig): array {
+	private function scopedSearchQuery(array $objectConfig, ?AppliedFilters $appliedFilters = null): array {
 		$searchQuery = $this->request->getParams();
 		unset($searchQuery['id'], $searchQuery['_route']);
 
-		$searchQuery = CallerScope::strip(query: $searchQuery);
+		$searchQuery = CallerScope::strip(query: $searchQuery, appliedFilters: $appliedFilters);
+		$appliedFilters?->record(
+			name: AppliedFilters::CATALOG_SCOPE,
+			value: [
+				'schemas' => array_values(array_filter([($objectConfig['schema'] ?? null)])),
+				'registers' => array_values(array_filter([($objectConfig['register'] ?? null)])),
+			],
+			reason: 'The list is limited to the configured schema and register.'
+		);
 
 		if (empty($objectConfig['schema']) === false) {
 			$searchQuery['@self']['schema'] = $objectConfig['schema'];

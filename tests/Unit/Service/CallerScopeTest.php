@@ -9,6 +9,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\CallerScope;
 use PHPUnit\Framework\TestCase;
 
@@ -16,6 +17,7 @@ use PHPUnit\Framework\TestCase;
  * Unit tests for CallerScope::writeScope().
  *
  * @covers \OCA\OpenCatalogi\Service\CallerScope
+ * @uses \OCA\OpenCatalogi\Service\AppliedFilters
  */
 class CallerScopeTest extends TestCase {
 
@@ -100,4 +102,40 @@ class CallerScopeTest extends TestCase {
 	public function testWriteScopeCreatesTheSelfBlock(): void {
 		$this->assertSame(['register' => 20, 'schema' => 28], CallerScope::writeScope(query: ['@self' => 'x'], registers: [20], schemas: [28])['@self']);
 	}//end testWriteScopeCreatesTheSelfBlock()
+	/**
+	 * strip() names every scope key it removes, in check order, with `@self`
+	 * sub-keys prefixed; the values the caller sent are not echoed (REQ-ASF-002).
+	 *
+	 * @return void
+	 */
+	public function testStripReportsTheRemovedKeys(): void {
+		$filters = new AppliedFilters();
+
+		$query = CallerScope::strip(
+			query: ['q' => 'x', '_schemas' => ['secret'], 'register' => 7, '@self' => ['schema' => 9, 'owner' => 'me']],
+			appliedFilters: $filters
+		);
+
+		$this->assertSame(['q' => 'x', '@self' => ['owner' => 'me']], $query);
+		$entries = $filters->all();
+		$this->assertCount(1, $entries);
+		$this->assertSame('callerScopeIgnored', $entries[0]['name']);
+		$this->assertSame(['register', '_schemas', '@self.schema'], $entries[0]['value']);
+		$this->assertStringNotContainsString('secret', (string)json_encode($entries));
+	}//end testStripReportsTheRemovedKeys()
+
+	/**
+	 * A query without scope keys records nothing, and a non-array `@self` is named as `@self`.
+	 *
+	 * @return void
+	 */
+	public function testStripRecordsNothingWithoutScopeKeysAndNamesAScalarSelf(): void {
+		$filters = new AppliedFilters();
+		CallerScope::strip(query: ['q' => 'x', '@self' => ['owner' => 'me']], appliedFilters: $filters);
+		$this->assertSame([], $filters->all());
+
+		$this->assertSame(['@self'], CallerScope::removedKeys(query: ['@self' => 'x']));
+		$this->assertSame([], CallerScope::removedKeys(query: ['q' => 'x']));
+	}//end testStripRecordsNothingWithoutScopeKeysAndNamesAScalarSelf()
+
 }//end class

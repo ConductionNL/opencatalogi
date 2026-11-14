@@ -27,6 +27,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -78,6 +79,7 @@ class SearchController extends Controller {
 	 * @param ContainerInterface $container DI container, to resolve OpenRegister's ObjectService.
 	 * @param IAppManager $appManager The app manager.
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -91,6 +93,7 @@ class SearchController extends Controller {
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,
+		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -140,6 +143,8 @@ class SearchController extends Controller {
 	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
 	 * @spec openspec/changes/woo-dossier-publication/specs/publications/spec.md#requirement-public-search-takes-the-portals-filter-names-req-wdp-002
 	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) SearchQueryTranslator is a pure function over the query.
 	 */
 	#[PublicPage]
@@ -153,6 +158,7 @@ class SearchController extends Controller {
 				queryParams: SearchQueryTranslator::translateSearchParams(params: $this->request->getParams()),
 				objectService: $objectService
 			);
+			$result['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
 			// REQ-PAC-001/002: public cache headers for an anonymous caller only.
 			return $this->cacheableForCaller(response: new JSONResponse(data: $result, statusCode: Http::STATUS_OK));
