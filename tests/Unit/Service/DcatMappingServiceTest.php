@@ -345,4 +345,37 @@ class DcatMappingServiceTest extends TestCase {
 		$this->assertSame('http://www.w3.org/ns/dcat#', $context['dcat']);
 		$this->assertArrayHasKey('profile', $context);
 	}
+	public function testThePlainSummaryIsEmittedAsAbstractWithItsLanguage(): void {
+		$publication = [
+			'id' => 'uuid-p',
+			'title' => 'Besluit op bezwaar parkeervergunning',
+			'plainSummary' => 'U kreeg geen parkeervergunning. De gemeente blijft bij het besluit.',
+			'plainSummaryLevel' => 'B1',
+			'language' => 'nl',
+			'@self' => ['uuid' => 'uuid-p', 'updated' => '2026-11-14T10:00:00+00:00'],
+		];
+
+		$dataset = $this->mapDataset($publication, DcatMappingService::DEFAULT_MAPPING, [], 'https://host/api/cat/uuid-p', []);
+
+		$this->assertSame(
+			['@value' => 'U kreeg geen parkeervergunning. De gemeente blijft bij het besluit.', '@language' => 'nl'],
+			$dataset['dct:abstract'] ?? null
+		);
+	}
+
+	public function testTheAbstractTakesThePublicationsLanguageAndDefaultsToDutch(): void {
+		$english = $this->mapDataset(['id' => 'e', 'plainSummary' => 'You got no permit.', 'language' => 'EN'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/e', []);
+		$this->assertSame('en', $english['dct:abstract']['@language']);
+
+		$unset = $this->mapDataset(['id' => 'u', 'plainSummary' => 'Kort.'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/u', []);
+		$this->assertSame('nl', $unset['dct:abstract']['@language']);
+
+		$garbage = $this->mapDataset(['id' => 'g', 'plainSummary' => 'Kort.', 'language' => 'not a tag'], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/g', []);
+		$this->assertSame('nl', $garbage['dct:abstract']['@language']);
+	}
+
+	public function testNoAbstractWithoutAPlainSummary(): void {
+		$dataset = $this->mapDataset(['id' => 'x', 'title' => 'T', 'plainSummary' => '  '], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/x', []);
+		$this->assertArrayNotHasKey('dct:abstract', $dataset);
+	}
 }//end class

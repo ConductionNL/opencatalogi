@@ -1,0 +1,71 @@
+{
+  "_note": "Register fragment for publication-plain-language-and-translation (REQ-PPL-001). Adds a plain language summary with its reading level and its provenance to the publication. The provenance is written by the server only: PlainSummaryCheck stamps it on every save that changes the summary and restores it on a save that tries to write it. The provenance names a user, so anonymous readers of a public publication do not see it.",
+  "components": {
+    "schemas": {
+      "publication": {
+        "slug": "publication",
+        "version": "0.0.8",
+        "properties": {
+          "plainSummary": {
+            "type": "string",
+            "title": "Plain language summary",
+            "description": "What this publication is about, in plain words for every reader.",
+            "maxLength": 1500,
+            "facetable": false
+          },
+          "plainSummaryLevel": {
+            "type": "string",
+            "title": "Reading level",
+            "description": "The reading level the plain language summary is written at.",
+            "enum": [
+              "A2",
+              "B1",
+              "B2"
+            ],
+            "default": "B1",
+            "facetable": true
+          },
+          "plainSummaryProvenance": {
+            "type": "object",
+            "title": "Origin of the plain language summary",
+            "description": "Who wrote the plain language summary, with which text assistant, and who accepted it.",
+            "readOnly": true,
+            "authorization": {
+              "read": [
+                "authenticated"
+              ]
+            },
+            "facetable": false,
+            "properties": {
+              "generatedBy": {
+                "type": "string",
+                "enum": [
+                  "person",
+                  "ai"
+                ],
+                "title": "Written by",
+                "description": "A person, or a text assistant whose draft a person accepted."
+              },
+              "provider": {
+                "type": "string",
+                "title": "Text assistant",
+                "description": "The text assistant that wrote the draft. Absent for a text a person wrote."
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time",
+                "title": "Accepted at",
+                "description": "When the summary was accepted."
+              },
+              "acceptedBy": {
+                "type": "string",
+                "title": "Accepted by",
+                "description": "The person who accepted the summary."
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -755,6 +755,8 @@
 							"include": [
 								"title",
 								"summary",
+								"plainSummary",
+								"plainSummaryLevel",
 								"description",
 								"publicationDate",
 								"depublicationDate",
