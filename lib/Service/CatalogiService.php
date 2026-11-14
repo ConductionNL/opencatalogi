@@ -683,36 +683,64 @@ class CatalogiService implements CatalogiServiceInterface {
 	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
 	 */
 	public function getCatalogSlugs(): array {
-		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
-		if ($schema === '' || $register === '') {
-			return [];
-		}
-
-		$objectService = $this->getObjectService();
-		if ($objectService === null) {
-			return [];
-		}
-
 		$slugs = [];
-		$catalogs = $objectService->searchObjects(query: ['@self' => ['register' => $register, 'schema' => $schema]], _rbac: false, _multitenancy: false);
-		foreach ($catalogs as $catalog) {
-			if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
-				$catalog = $catalog->jsonSerialize();
-			}
-
-			$slug = null;
-			if (is_array($catalog) === true) {
-				$slug = ($catalog['slug'] ?? null);
-			}
-
-			if (is_string($slug) === true && $slug !== '') {
+		foreach ($this->allCatalogs() as $catalog) {
+			$slug = self::catalogSlugOf(catalog: $catalog);
+			if ($slug !== null) {
 				$slugs[$slug] = $slug;
 			}
 		}
 
 		return array_values($slugs);
 	}//end getCatalogSlugs()
+
+	/**
+	 * Every catalogue in the configured register and schema; none when unconfigured.
+	 *
+	 * @return iterable<mixed>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private function allCatalogs(): iterable {
+		$schema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$register = $this->config->getValueString($this->appName, 'catalog_register', '');
+		$objectService = null;
+		if ($schema !== '' && $register !== '') {
+			$objectService = $this->getObjectService();
+		}
+
+		if ($objectService === null) {
+			return [];
+		}
+
+		return $objectService->searchObjects(query: ['@self' => ['register' => $register, 'schema' => $schema]], _rbac: false, _multitenancy: false);
+	}//end allCatalogs()
+
+	/**
+	 * A catalogue's slug, or null when it has none.
+	 *
+	 * @param mixed $catalog The catalogue object or array.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function catalogSlugOf(mixed $catalog): ?string {
+		if (is_object($catalog) === true && method_exists($catalog, 'jsonSerialize') === true) {
+			$catalog = $catalog->jsonSerialize();
+		}
+
+		$slug = null;
+		if (is_array($catalog) === true) {
+			$slug = ($catalog['slug'] ?? null);
+		}
+
+		if (is_string($slug) === true && $slug !== '') {
+			return $slug;
+		}
+
+		return null;
+	}//end catalogSlugOf()
 
 	/**
 	 * Get a catalog by its slug from cache or database.

@@ -83,7 +83,22 @@ class RetentionEvaluateCommand extends MaintenanceCommand {
 
 		$apply = ($input->getOption('apply') === true);
 		$result = $this->retentionService->evaluate(dryRun: ($apply === false));
+		$this->writeResult(input: $input, output: $output, lines: self::resultLines(result: $result, apply: $apply), data: $result + ['applied' => $apply]);
 
+		return self::SUCCESS;
+	}//end execute()
+
+	/**
+	 * One line per planned action, then the counts and whether anything changed.
+	 *
+	 * @param array<string, mixed> $result The evaluation's counts and planned actions.
+	 * @param bool                 $apply  Whether the actions were applied.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function resultLines(array $result, bool $apply): array {
 		$lines = [];
 		foreach (($result['planned'] ?? []) as $item) {
 			$lines[] = sprintf('%s %s (%s)', $item['action'], $item['id'], $item['title']);
@@ -102,9 +117,8 @@ class RetentionEvaluateCommand extends MaintenanceCommand {
 			($result['depublished'] ?? 0),
 			($result['archived'] ?? 0)
 		);
-		$this->writeResult(input: $input, output: $output, lines: $lines, data: $result + ['applied' => $apply]);
 
-		return self::SUCCESS;
-	}//end execute()
+		return $lines;
+	}//end resultLines()
 
 }//end class

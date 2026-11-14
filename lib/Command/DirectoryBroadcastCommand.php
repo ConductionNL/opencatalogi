@@ -79,20 +79,31 @@ class DirectoryBroadcastCommand extends MaintenanceCommand {
 		}
 
 		$results = $this->broadcastService->broadcast(url: null);
-		$lines = [];
-		$failed = 0;
-		foreach ($results as $url => $success) {
-			if ($success !== true) {
-				$failed++;
-			}
+		$failed = count(array_filter($results, static fn ($success): bool => $success !== true));
+		$this->writeResult(input: $input, output: $output, lines: self::broadcastLines(results: $results, failed: $failed), data: $results);
 
+		return self::exitCode(failed: ($failed > 0));
+	}//end execute()
+
+	/**
+	 * One line per target, then the totals.
+	 *
+	 * @param array<string, mixed> $results Whether each target URL accepted.
+	 * @param int                  $failed  How many did not.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function broadcastLines(array $results, int $failed): array {
+		$lines = [];
+		foreach ($results as $url => $success) {
 			$lines[] = self::outcomePrefix(success: ($success === true)) . $url;
 		}
 
 		$lines[] = sprintf('Broadcast to %d directories, %d failed.', count($results), $failed);
-		$this->writeResult(input: $input, output: $output, lines: $lines, data: $results);
 
-		return self::exitCode(failed: ($failed > 0));
-	}//end execute()
+		return $lines;
+	}//end broadcastLines()
 
 }//end class

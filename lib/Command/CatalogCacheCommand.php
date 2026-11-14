@@ -85,34 +85,68 @@ class CatalogCacheCommand extends MaintenanceCommand {
 		}
 
 		$action = (string)$input->getArgument('action');
-		if (in_array($action, ['rebuild', 'clear'], true) === false) {
-			return $this->wrongUsage(output: $output, message: 'The action must be rebuild or clear, not ' . $action . '.');
+		$refusal = self::usageRefusal(action: $action, slug: $input->getArgument('slug'), all: ($input->getOption('all') === true));
+		if ($refusal !== null) {
+			return $this->wrongUsage(output: $output, message: $refusal);
 		}
 
-		$slug = $input->getArgument('slug');
-		$all = ($input->getOption('all') === true);
-		if (($slug === null) === ($all === false)) {
-			return $this->wrongUsage(output: $output, message: 'Give one catalogue slug or --all, not both and not neither.');
-		}
-
-		$slugs = [(string)$slug];
-		if ($all === true) {
+		$slugs = [(string)$input->getArgument('slug')];
+		if ($input->getOption('all') === true) {
 			$slugs = $this->catalogiService->getCatalogSlugs();
 		}
 
 		$entries = array_map(fn (string $one): array => $this->handle(action: $action, slug: $one), $slugs);
-		$lines = array_map(static fn (array $entry): string => self::entryLine(entry: $entry), $entries);
 		$failed = count(array_filter($entries, static fn (array $entry): bool => $entry['success'] === false));
+		$this->writeResult(input: $input, output: $output, lines: self::entryLines(action: $action, entries: $entries, failed: $failed), data: $entries);
+
+		return self::exitCode(failed: ($failed > 0));
+	}//end execute()
+
+	/**
+	 * Why the arguments cannot run, or null when they can.
+	 *
+	 * @param string $action The action argument.
+	 * @param mixed  $slug   The slug argument, null when absent.
+	 * @param bool   $all    Whether --all was given.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function usageRefusal(string $action, mixed $slug, bool $all): ?string {
+		if (in_array($action, ['rebuild', 'clear'], true) === false) {
+			return 'The action must be rebuild or clear, not ' . $action . '.';
+		}
+
+		if (($slug === null) === ($all === false)) {
+			return 'Give one catalogue slug or --all, not both and not neither.';
+		}
+
+		return null;
+	}//end usageRefusal()
+
+	/**
+	 * One line per catalogue, then the totals.
+	 *
+	 * @param string                           $action  The action run.
+	 * @param array<int, array<string, mixed>> $entries One entry per catalogue.
+	 * @param int                              $failed  How many failed.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function entryLines(string $action, array $entries, int $failed): array {
+		$lines = array_map(static fn (array $entry): string => self::entryLine(entry: $entry), $entries);
 		$verb = 'Cleared';
 		if ($action === 'rebuild') {
 			$verb = 'Rebuilt';
 		}
 
 		$lines[] = sprintf('%s %d catalogues, %d failed.', $verb, count($entries), $failed);
-		$this->writeResult(input: $input, output: $output, lines: $lines, data: $entries);
 
-		return self::exitCode(failed: ($failed > 0));
-	}//end execute()
+		return $lines;
+	}//end entryLines()
 
 	/**
 	 * The plain line for one catalogue: its outcome, slug and any error.

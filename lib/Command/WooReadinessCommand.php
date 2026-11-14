@@ -80,8 +80,30 @@ class WooReadinessCommand extends MaintenanceCommand {
 			return $this->wrongUsage(output: $output, message: $e->getMessage());
 		}
 
-		// Like the settings button, refuse to run without a Woo-enabled catalogue:
-		// an empty check set would read as ready.
+		$report = $this->checkReport(input: $input, output: $output);
+		if ($report === null) {
+			return self::FAILED;
+		}
+
+		$this->writeResult(input: $input, output: $output, lines: self::reportLines(report: $report), data: $report);
+
+		return self::exitCode(failed: (($report['verdict'] ?? null) !== 'ready'));
+	}//end execute()
+
+	/**
+	 * The check's report, or null after reporting why there is none.
+	 *
+	 * Like the settings button, the check refuses to run without a
+	 * Woo-enabled catalogue: an empty check set would read as ready.
+	 *
+	 * @param InputInterface  $input  Console input.
+	 * @param OutputInterface $output Console output.
+	 *
+	 * @return array<string, mixed>|null The report, or null when not configured or stopped.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private function checkReport(InputInterface $input, OutputInterface $output): ?array {
 		if ($this->readiness->hasWooEnabledCatalogs() === false) {
 			$this->writeResult(
 				input: $input,
@@ -89,11 +111,11 @@ class WooReadinessCommand extends MaintenanceCommand {
 				lines: ['No catalogue is enabled for the Woo index, so there is nothing to check.'],
 				data: ['verdict' => 'not-configured']
 			);
-			return self::FAILED;
+			return null;
 		}
 
 		try {
-			$report = $this->readiness->runCheck();
+			return $this->readiness->runCheck();
 		} catch (Throwable $e) {
 			$this->writeResult(
 				input: $input,
@@ -101,27 +123,50 @@ class WooReadinessCommand extends MaintenanceCommand {
 				lines: ['The check stopped: ' . $e->getMessage()],
 				data: ['verdict' => 'stopped', 'error' => $e->getMessage()]
 			);
-			return self::FAILED;
+			return null;
 		}
+	}//end checkReport()
 
+	/**
+	 * One line per check, then the verdict.
+	 *
+	 * @param array<string, mixed> $report The check's report.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function reportLines(array $report): array {
 		$lines = [];
 		foreach (($report['checks'] ?? []) as $check) {
-			$line = strtoupper((string)($check['status'] ?? '')) . ' ' . (string)($check['id'] ?? '');
-			if (isset($check['catalogSlug']) === true) {
-				$line .= ' [' . $check['catalogSlug'] . ']';
-			}
-
-			if (isset($check['reason']) === true) {
-				$line .= ': ' . $check['reason'];
-			}
-
-			$lines[] = $line;
+			$lines[] = self::checkLine(check: $check);
 		}
 
 		$lines[] = 'Verdict: ' . (string)($report['verdict'] ?? 'unknown');
-		$this->writeResult(input: $input, output: $output, lines: $lines, data: $report);
 
-		return self::exitCode(failed: (($report['verdict'] ?? null) !== 'ready'));
-	}//end execute()
+		return $lines;
+	}//end reportLines()
+
+	/**
+	 * One check as a line: status, id, the catalogue and the reason when given.
+	 *
+	 * @param mixed $check One check as the report gives it.
+	 *
+	 * @return string
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function checkLine(mixed $check): string {
+		$line = strtoupper((string)($check['status'] ?? '')) . ' ' . (string)($check['id'] ?? '');
+		if (isset($check['catalogSlug']) === true) {
+			$line .= ' [' . $check['catalogSlug'] . ']';
+		}
+
+		if (isset($check['reason']) === true) {
+			$line .= ': ' . $check['reason'];
+		}
+
+		return $line;
+	}//end checkLine()
 
 }//end class

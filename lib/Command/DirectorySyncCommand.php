@@ -88,6 +88,21 @@ class DirectorySyncCommand extends MaintenanceCommand {
 		}
 
 		$results = $this->directoryService->doCronSync();
+		$this->writeResult(input: $input, output: $output, lines: self::allSyncedLines(results: $results), data: $results);
+
+		return self::exitCode(failed: ((int)($results['failed_directories'] ?? 0) > 0));
+	}//end execute()
+
+	/**
+	 * The lines of a sync of every directory: each failure, then the totals.
+	 *
+	 * @param array<string, mixed> $results The cron sync's results.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function allSyncedLines(array $results): array {
 		$lines = [];
 		foreach (($results['errors'] ?? []) as $error) {
 			$lines[] = 'FAILED ' . ($error['directory'] ?? '') . ': ' . ($error['error'] ?? '');
@@ -99,10 +114,9 @@ class DirectorySyncCommand extends MaintenanceCommand {
 			($results['total_directories'] ?? 0),
 			($results['failed_directories'] ?? 0)
 		);
-		$this->writeResult(input: $input, output: $output, lines: $lines, data: $results);
 
-		return self::exitCode(failed: ((int)($results['failed_directories'] ?? 0) > 0));
-	}//end execute()
+		return $lines;
+	}//end allSyncedLines()
 
 	/**
 	 * Sync one directory and report each listing added or updated.
@@ -134,6 +148,22 @@ class DirectorySyncCommand extends MaintenanceCommand {
 			$result['sync_time'] = $result['sync_time']->format(DateTimeInterface::ATOM);
 		}
 
+		$this->writeResult(input: $input, output: $output, lines: self::oneSyncedLines(url: $url, result: $result), data: $result);
+
+		return self::exitCode(failed: ((int)($result['listings_failed'] ?? 0) > 0));
+	}//end syncOne()
+
+	/**
+	 * The lines of a sync of one directory: each listing added or updated, then the totals.
+	 *
+	 * @param string               $url    The directory URL.
+	 * @param array<string, mixed> $result The sync's result.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function oneSyncedLines(string $url, array $result): array {
 		$lines = [];
 		foreach (($result['listing_details'] ?? []) as $detail) {
 			$action = (string)($detail['action'] ?? '');
@@ -151,9 +181,8 @@ class DirectorySyncCommand extends MaintenanceCommand {
 			($result['listings_skipped'] ?? 0),
 			($result['listings_failed'] ?? 0)
 		);
-		$this->writeResult(input: $input, output: $output, lines: $lines, data: $result);
 
-		return self::exitCode(failed: ((int)($result['listings_failed'] ?? 0) > 0));
-	}//end syncOne()
+		return $lines;
+	}//end oneSyncedLines()
 
 }//end class

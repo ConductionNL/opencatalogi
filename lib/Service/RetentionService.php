@@ -687,11 +687,7 @@ class RetentionService implements RetentionServiceInterface {
 
 			$counts[$outcome]++;
 			if ($dryRun === true) {
-				$planned[] = [
-					'id' => (string)($data['id'] ?? ($data['uuid'] ?? '')),
-					'title' => (string)($data['title'] ?? ''),
-					'action' => $outcome,
-				];
+				$planned[] = self::plannedEntry(data: $data, outcome: $outcome);
 				continue;
 			}
 
@@ -700,6 +696,24 @@ class RetentionService implements RetentionServiceInterface {
 
 		return $this->evaluationResult(counts: $counts, planned: $planned, dryRun: $dryRun);
 	}//end evaluate()
+
+	/**
+	 * A dry run's planned action for one publication.
+	 *
+	 * @param array<string, mixed> $data    The publication.
+	 * @param string               $outcome The action it would get.
+	 *
+	 * @return array{id: string, title: string, action: string}
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	private static function plannedEntry(array $data, string $outcome): array {
+		return [
+			'id' => (string)($data['id'] ?? ($data['uuid'] ?? '')),
+			'title' => (string)($data['title'] ?? ''),
+			'action' => $outcome,
+		];
+	}//end plannedEntry()
 
 	/**
 	 * The evaluation's answer: the counts, and on a dry run the planned actions.
