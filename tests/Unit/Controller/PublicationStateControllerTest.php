@@ -78,6 +78,9 @@ class PublicationStateControllerTest extends TestCase {
 
 	private ?IUser $user = null;
 
+	/** Whether the caller holds the publish right. */
+	private bool $mayPublish = true;
+
 	protected function setUp(): void {
 		parent::setUp();
 		$this->request = $this->createMock(IRequest::class);
@@ -173,8 +176,9 @@ class PublicationStateControllerTest extends TestCase {
 
 		$this->rights = $this->getMockBuilder(PublicationRights::class)
 			->disableOriginalConstructor()
-			->onlyMethods(['mayUpdate'])
+			->onlyMethods(['mayUpdate', 'mayPublish'])
 			->getMock();
+		$this->rights->method('mayPublish')->willReturnCallback(fn (): bool => $this->mayPublish);
 
 		$this->index = $this->getMockBuilder(NationalIndexService::class)
 			->disableOriginalConstructor()
@@ -239,7 +243,74 @@ class PublicationStateControllerTest extends TestCase {
 		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
 		$response = $this->controller->visibility('p1');
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
-		$this->assertSame(['state' => 'public'], $response->getData());
+		$this->assertSame(['state' => 'public', 'canPublish' => true], $response->getData());
+	}
+
+	/** REQ-OPR-002: an editor outside the publishers group is told it cannot publish. */
+	public function testVisibilityTellsAnEditorItCannotPublish(): void {
+		$this->publication = ['id' => 'p1'];
+		$this->mayPublish = false;
+		$response = $this->controller->visibility('p1');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(['state' => 'draft', 'canPublish' => false], $response->getData());
+	}
+
+	/** REQ-OPR-003: an editor who may edit but not publish gets 403 naming the group, and nothing is saved. */
+	public function testAnEditorOutsideThePublishersGroupCannotPublish(): void {
+		$this->publication = ['id' => 'p1'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->mayPublish = false;
+
+		$response = $this->controller->publish('p1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('not-a-publisher', $response->getData()['error']);
+		$this->assertSame('opencatalogi-publishers', $response->getData()['group']);
+		$this->assertSame('Only members of the group %s may publish or withdraw a publication.', $response->getData()['message']);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-OPR-003 "A direct call by an editor": withdraw answers 403 naming the group; nothing is saved or sent. */
+	public function testAnEditorOutsideThePublishersGroupCannotWithdraw(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'plooiStatus' => 'delivered'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->mayPublish = false;
+		$this->withParams(['reason' => 'Wrong annex attached']);
+
+		$response = $this->controller->withdraw('p1');
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $response->getStatus());
+		$this->assertSame('opencatalogi-publishers', $response->getData()['group']);
+		$this->assertSame([], $this->saves);
+		$this->assertSame([], $this->sent);
+	}
+
+	/** REQ-OPR-003: the update right is still asked first, so a reader without it gets the old 403, not the group message. */
+	public function testTheUpdateRightIsCheckedBeforeThePublishRight(): void {
+		$this->publication = ['id' => 'p1'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->mayPublish = false;
+
+		$this->assertSame('forbidden', $this->controller->publish('p1')->getData()['error']);
+	}
+
+	/** REQ-OPR-003: an unreadable publication stays 404 for a non-publisher, so its existence is not confirmed. */
+	public function testAnUnreadablePublicationStays404ForANonPublisher(): void {
+		$this->publication = [];
+		$this->mayPublish = false;
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $this->controller->withdraw('p1')->getStatus());
+	}
+
+	/** The single-document withdrawal is not one of the two gated endpoints. */
+	public function testAFileWithdrawalDoesNotAskThePublishRight(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->mayPublish = false;
+		$this->withParams(['reason' => 'Contains a home address']);
+
+		$this->assertSame(Http::STATUS_OK, $this->controller->withdrawFile('p1', '4711')->getStatus());
+		$this->assertSame([4711], $this->fileService->unpublished);
 	}
 
 	/** REQ-PPW-001: a publication the caller cannot read answers 404. */

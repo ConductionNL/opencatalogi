@@ -12,7 +12,7 @@
 
 		<div class="publication-visibility__actions">
 			<NcButton
-				v-if="state === 'draft' || state === 'scheduled'"
+				v-if="actions.publishNow"
 				variant="primary"
 				:disabled="busy"
 				data-testid="publication-publish-now"
@@ -20,7 +20,7 @@
 				{{ t('opencatalogi', 'Publish now') }}
 			</NcButton>
 			<NcButton
-				v-if="state === 'withdrawn'"
+				v-if="actions.publishAgain"
 				variant="primary"
 				:disabled="busy"
 				data-testid="publication-publish-again"
@@ -28,7 +28,7 @@
 				{{ t('opencatalogi', 'Publish again') }}
 			</NcButton>
 			<NcButton
-				v-if="state === 'public' || state === 'scheduled'"
+				v-if="actions.withdraw"
 				variant="error"
 				:disabled="busy"
 				data-testid="publication-withdraw"
@@ -61,6 +61,8 @@ import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublica
 import {
 	documentOptions,
 	filesRouteParams,
+	publishRefusalMessage,
+	visibilityActions,
 } from '../../services/publicationVisibility.js'
 import { injectedObjectContext } from './objectContext.js'
 
@@ -81,7 +83,8 @@ function withdrawPath(answer) {
  *
  * The state comes from the server, which reads the same dates OpenRegister's
  * published predicate reads, so the page never works it out from dates in the
- * browser. Each button shows only when its move applies.
+ * browser. Each button shows only when its move applies, and only to a caller
+ * the server says may publish (REQ-OPR-002).
  */
 export default {
 	name: 'PublicationVisibilityWidget',
@@ -101,6 +104,7 @@ export default {
 	data() {
 		return {
 			state: '',
+			canPublish: false,
 			documents: [],
 			busy: false,
 			dialogOpen: false,
@@ -110,6 +114,11 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002 */
+		actions() {
+			return visibilityActions(this.state, this.canPublish)
+		},
+
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
 		ctx() {
 			return injectedObjectContext(this)
@@ -185,8 +194,10 @@ export default {
 			try {
 				const { data } = await axios.get(this.url('visibility'))
 				this.state = data.state || ''
+				this.canPublish = data.canPublish === true
 			} catch {
 				this.state = ''
+				this.canPublish = false
 			}
 
 			try {
@@ -304,7 +315,7 @@ export default {
 			const status = error && error.response ? error.response.status : 0
 			this.messageType = 'error'
 			if (status === 403) {
-				this.message = this.t(
+				this.message = publishRefusalMessage(error) || this.t(
 					'opencatalogi',
 					'You may not change this publication.',
 				)

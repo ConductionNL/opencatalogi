@@ -1507,7 +1507,14 @@ OC.L10N.register(
         "Only the groups below see and edit this catalogue's publications.": "Alleen de groepen hieronder zien en bewerken de publicaties van deze catalogus.",
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
-        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen."
+        "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
+        "Only members of the group %s may publish or withdraw a publication.": "Alleen leden van de groep %s mogen een publicatie publiceren of intrekken.",
+        "Publish rights": "Publicatierechten",
+        "Only members of the group {group} and administrators may publish and withdraw publications.": "Alleen leden van de groep {group} en beheerders mogen publicaties publiceren en intrekken.",
+        "The group does not exist yet. Create it in user management, or run the app's repair step.": "De groep bestaat nog niet. Maak hem aan in het gebruikersbeheer, of voer de herstelstap van de app uit.",
+        "Members: {count}": "Leden: {count}",
+        "The group has no members yet, so only administrators can publish.": "De groep heeft nog geen leden, dus alleen beheerders kunnen publiceren.",
+        "The publish rights could not be read.": "De publicatierechten konden niet worden gelezen."
     },
     "nplurals=2; plural=(n != 1);"
 )

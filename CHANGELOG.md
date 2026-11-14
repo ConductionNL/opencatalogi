@@ -5,6 +5,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Separate publish right** (operations-publish-rights). Only members of the Nextcloud group `opencatalogi-publishers` and administrators may change a publication's `publicationDate` or `depublicationDate`. OpenRegister enforces this through a property-level update rule in the publication schema. The publish and withdraw endpoints answer 403 naming the group, `GET /api/publications/{id}/visibility` returns `canPublish`, and the Publish now, Withdraw and Publish again buttons only show to publishers. The group is created on install and upgrade, without members. **Behaviour change:** an editor outside the group can no longer publish or withdraw; until the group has a member, only administrators can. The Woo section of the admin settings shows the group and its member count. See `docs/features/publish-rights.md`.
+
 ## [0.7.54] - 2026-07-16
 
 ### Added
