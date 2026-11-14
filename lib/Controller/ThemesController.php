@@ -26,6 +26,7 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -59,6 +60,7 @@ class ThemesController extends Controller {
 	 * @param IAppConfig $config App configuration interface.
 	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
+	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
 		$appName,
@@ -66,6 +68,7 @@ class ThemesController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly OpenRegisterLookupInterface $registers,
 		private readonly CorsSettings $cors = new CorsSettings(),
+		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -125,7 +128,10 @@ class ThemesController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
+	 *
 	 * @spec openspec/specs/content-management/spec.md
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
@@ -137,14 +143,17 @@ class ThemesController extends Controller {
 		}
 
 		$result = $this->getObjectService()->searchObjectsPaginated(
-			$this->scopedSearchQuery(objectConfig: $themeConfig),
+			$this->scopedSearchQuery(objectConfig: $themeConfig, appliedFilters: $this->appliedFilters),
 			_rbac: true,
 			_multitenancy: false
 		);
 
 		// Visibility governed by RBAC on the search above (_rbac: true); rbac=true
 		// enforces schema authorization, multi=false allows public theme access.
-		return $this->publicJsonResponse(data: $this->paginatedResponseData(result: $result));
+		$responseData = $this->paginatedResponseData(result: $result);
+		$responseData['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
+
+		return $this->publicJsonResponse(data: $responseData);
 	}//end index()
 
 	/**
