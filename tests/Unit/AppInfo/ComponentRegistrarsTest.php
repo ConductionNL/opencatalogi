@@ -134,6 +134,7 @@ class ComponentRegistrarsTest extends TestCase {
 				[$e . 'ObjectCreatingEvent', CompletenessListener::class],
 				[$e . 'ObjectUpdatingEvent', CompletenessListener::class],
 				[$e . 'ObjectCreatingEvent', PublicationLinksListener::class],
+				[$e . 'ObjectUpdatingEvent', PublicationLinksListener::class],
 				[$e . 'RegisterCreatedEvent', CatalogScopePendingListener::class],
 				[$e . 'RegisterUpdatedEvent', CatalogScopePendingListener::class],
 				[$e . 'ToolRegistrationEvent', ToolRegistrationListener::class],

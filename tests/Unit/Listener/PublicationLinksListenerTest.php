@@ -106,7 +106,28 @@ final class PublicationLinksListenerTest extends TestCase {
 	}//end testACallerSuppliedValueIsIgnored()
 
 	/**
-	 * Another schema, an unconfigured publication schema and an update are left alone.
+	 * An update cannot set either page: both are computed again over what it sent.
+	 *
+	 * @return void
+	 */
+	public function testAnUpdateRecomputesBothPages(): void {
+		$stored = $this->entity(data: ['publicUrl' => 'https://old.example/pub-1']);
+		$update = new ObjectUpdatingEvent($this->entity(data: ['publicUrl' => 'https://evil.example/x']), $stored);
+		$update->setModifiedData(['officerUrl' => 'https://evil.example/y']);
+
+		$this->listener(config: [], portaliq: true, catalogue: 'woo')->handle($update);
+
+		self::assertSame(
+			[
+				'officerUrl' => 'https://gemeente.nl/index.php/apps/opencatalogi/publications/woo/pub-1',
+				'publicUrl'  => 'https://gemeente.nl/index.php/apps/portaliq/site?route=/publicatie/pub-1',
+			],
+			$update->getModifiedData()
+		);
+	}//end testAnUpdateRecomputesBothPages()
+
+	/**
+	 * Another schema, an unconfigured publication schema and another event are left alone.
 	 *
 	 * @return void
 	 */
@@ -119,9 +140,12 @@ final class PublicationLinksListenerTest extends TestCase {
 		$this->listener(config: ['publication_schema' => ''], portaliq: true, catalogue: 'woo')->handle($unconfigured);
 		self::assertSame([], $unconfigured->getModifiedData());
 
-		$update = new ObjectUpdatingEvent($this->entity(data: []), $this->entity(data: []));
-		$this->listener(config: [], portaliq: true, catalogue: 'woo')->handle($update);
-		self::assertSame([], $update->getModifiedData());
+		$otherUpdate = new ObjectUpdatingEvent($this->entity(data: [], schema: '99'), $this->entity(data: [], schema: '99'));
+		$this->listener(config: [], portaliq: true, catalogue: 'woo')->handle($otherUpdate);
+		self::assertSame([], $otherUpdate->getModifiedData());
+
+		$this->listener(config: [], portaliq: true, catalogue: 'woo')->handle(new \OCP\EventDispatcher\Event());
+		self::addToAssertionCount(1);
 	}//end testOtherObjectsAreLeftAlone()
 
 	/**

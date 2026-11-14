@@ -134,6 +134,7 @@ class ListenerRegistrar {
 
 		// A publication carries its public page and its officer page (REQ-PTS-001).
 		$context->registerEventListener(ObjectCreatingEvent::class, PublicationLinksListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, PublicationLinksListener::class);
 
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is

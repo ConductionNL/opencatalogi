@@ -300,6 +300,8 @@ class SettingsService implements SettingsServiceInterface {
 		'woo_index_registration_answer',
 		'channel_sources',
 		'public_api_cache_seconds',
+		'publication_url_template',
+		'publication_url_catalog',
 	];
 
 	/**
