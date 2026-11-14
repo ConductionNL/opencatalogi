@@ -359,7 +359,7 @@ class PublicationQueryServiceTest extends TestCase {
 		$fake = new FakeSearchObjectService();
 		$result = $this->service->assemblePublicSearchResults(['_search' => 'anything'], $fake);
 
-		$this->assertSame(['results' => [], 'total' => 0], $result);
+		$this->assertSame(['results' => [], 'total' => 0, 'facets' => ['resultType' => ['publication' => 0, 'document' => 0, 'subject' => 0]]], $result);
 		$this->assertEmpty($fake->capturedCalls, 'searchObjectsPaginated MUST NOT run without a resolved scope.');
 	}
 
@@ -1294,7 +1294,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$envelope = $this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
 
-		$this->assertSame(['results' => [], 'total' => 0], $envelope);
+		$this->assertSame(['results' => [], 'total' => 0, 'facets' => ['resultType' => ['publication' => 0, 'document' => 0, 'subject' => 0]]], $envelope);
 		$this->assertSame([], $fakeObjectService->capturedCalls, 'OR must not be queried at all when the anonymous scope is empty (fail-closed)');
 	}
 

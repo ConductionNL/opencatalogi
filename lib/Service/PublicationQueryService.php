@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
+use OCA\OpenCatalogi\Service\Subject\SubjectSearch;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -45,6 +46,20 @@ use Psr\Log\LoggerInterface;
  * @SuppressWarnings(PHPMD.TooManyMethods) Small private steps keep each unit short; they are not a public surface.
  */
 class PublicationQueryService implements PublicationQueryServiceInterface {
+
+	/**
+	 * The `resultType` of a publication result (REQ-SUB-004).
+	 *
+	 * @var string
+	 */
+	public const RESULT_TYPE_PUBLICATION = 'publication';
+
+	/**
+	 * The `resultType` of a document result (REQ-SUB-004).
+	 *
+	 * @var string
+	 */
+	public const RESULT_TYPE_DOCUMENT = 'document';
 
 	/**
 	 * Order fields that exist in every magic-mapper table.
@@ -96,6 +111,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 *                                     catalog-scope resolution failure is observable in production (WOO-536).
 	 * @param AppliedFilters|null $appliedFilters The request's collector; each filter this service applies
 	 *                                            records itself there (REQ-ASF-002).
+	 * @param SubjectSearch|null $subjects The subjects a search term matches (REQ-SUB-004).
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
@@ -103,6 +119,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		private readonly ?IAppConfig $config = null,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?AppliedFilters $appliedFilters = null,
+		private readonly ?SubjectSearch $subjects = null,
 	) {
 
 	}//end __construct()
@@ -202,12 +219,21 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 	 * @spec openspec/specs/search/spec.md
 	 */
 	private function assembleSearchResultsAsAnonymous(array $queryParams, object $objectService): array {
+		// REQ-SUB-004: `resultType=subject` asks for subjects only, `resultType=publication`
+		// for exactly today's results; anything else gets both.
+		$resultType = $this->requestedResultType(queryParams: $queryParams);
+		$subjects = [];
+		if ($resultType !== self::RESULT_TYPE_PUBLICATION) {
+			$subjects = $this->matchingSubjects(queryParams: $queryParams, objectService: $objectService);
+		}
+
+		if ($resultType === SubjectSearch::RESULT_TYPE) {
+			return $this->withSubjects(envelope: ['results' => [], 'total' => 0], subjects: $subjects);
+		}
+
 		$scope = $this->guardedCatalogScope(queryParams: $queryParams);
 		if ($scope === null) {
-			return [
-				'results' => [],
-				'total' => 0,
-			];
+			return $this->withSubjects(envelope: ['results' => [], 'total' => 0], subjects: $subjects);
 		}
 
 		$run = new PublicSearchAssembly(objectService: $objectService, scope: $scope);
@@ -248,8 +274,94 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 			$this->collectCandidateRow(candidate: $candidate, run: $run);
 		}
 
-		return $this->searchEnvelope(candidateResult: $candidateResult, run: $run);
+		return $this->withSubjects(
+			envelope: $this->searchEnvelope(candidateResult: $candidateResult, run: $run),
+			subjects: $subjects
+		);
 	}//end assembleSearchResultsAsAnonymous()
+
+	/**
+	 * The `resultType` the caller asked for, or null for every type.
+	 *
+	 * @param array $queryParams Raw request query parameters.
+	 *
+	 * @return string|null `publication`, `subject`, or null.
+	 *
+	 * @psalm-param   array<string, mixed> $queryParams
+	 * @phpstan-param array<string, mixed> $queryParams
+	 *
+	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 */
+	private function requestedResultType(array $queryParams): ?string {
+		$requested = ($queryParams['resultType'] ?? null);
+		if ($requested === self::RESULT_TYPE_PUBLICATION || $requested === SubjectSearch::RESULT_TYPE) {
+			return $requested;
+		}
+
+		return null;
+	}//end requestedResultType()
+
+	/**
+	 * The subjects the search term matches, read in the anonymous scope; none
+	 * without a term, without the subject search, or when the read fails.
+	 *
+	 * @param array  $queryParams   Raw request query parameters.
+	 * @param object $objectService OpenRegister ObjectService instance.
+	 *
+	 * @return array<int, array<string, mixed>> The subject results.
+	 *
+	 * @psalm-param   array<string, mixed> $queryParams
+	 * @phpstan-param array<string, mixed> $queryParams
+	 *
+	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 */
+	private function matchingSubjects(array $queryParams, object $objectService): array {
+		$term = ($queryParams['_search'] ?? '');
+		if ($this->subjects === null || is_string($term) === false || trim($term) === '') {
+			return [];
+		}
+
+		try {
+			return $this->evaluateAsAnonymous(
+				objectService: $objectService,
+				operation: fn (): array => $this->subjects->search(objectService: $objectService, term: $term)
+			);
+		} catch (\Throwable $e) {
+			// The publication results still answer; a failed subject read only drops the subjects.
+			$this->logger?->warning('Public search: the subject read failed', ['error' => $e->getMessage()]);
+			return [];
+		}
+	}//end matchingSubjects()
+
+	/**
+	 * The envelope with `resultType` on every row, the subjects appended, the
+	 * total raised by their count and a `resultType` facet counting this answer.
+	 *
+	 * @param array $envelope The publication and document envelope.
+	 * @param array $subjects The subject results.
+	 *
+	 * @return array<string, mixed> The envelope.
+	 *
+	 * @spec openspec/changes/subjects-as-first-class-records/specs/subjects/spec.md#requirement-public-search-returns-subjects-as-their-own-result-type-req-sub-004
+	 */
+	private function withSubjects(array $envelope, array $subjects): array {
+		$counts = [self::RESULT_TYPE_PUBLICATION => 0, self::RESULT_TYPE_DOCUMENT => 0, SubjectSearch::RESULT_TYPE => count($subjects)];
+		foreach ($envelope['results'] as $index => $row) {
+			$type = self::RESULT_TYPE_PUBLICATION;
+			if (($row['@self']['schema'] ?? null) === 'document') {
+				$type = self::RESULT_TYPE_DOCUMENT;
+			}
+
+			$envelope['results'][$index]['resultType'] = $type;
+			$counts[$type]++;
+		}
+
+		$envelope['results'] = array_merge($envelope['results'], $subjects);
+		$envelope['total'] += count($subjects);
+		$envelope['facets'] = (($envelope['facets'] ?? []) + ['resultType' => $counts]);
+
+		return $envelope;
+	}//end withSubjects()
 
 	/**
 	 * The catalogue scope of the search with the read-rule guard applied, or null
@@ -362,7 +474,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		// precedence chain and bypassed the SCH-PFTS-CAT-002 guard (WOO-581 review).
 		$searchQuery = CallerScope::strip(query: $searchQuery, appliedFilters: $this->appliedFilters);
 		unset($searchQuery['catalogSlug'], $searchQuery['fq']);
-		unset($searchQuery['_content']);
+		unset($searchQuery['_content'], $searchQuery['resultType']);
 		// OC-level params consumed by resolveCatalogScope — strip before forwarding to OR.
 		unset($searchQuery['_catalog'], $searchQuery['_catalogi']);
 
