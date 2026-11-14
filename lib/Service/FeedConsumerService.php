@@ -36,9 +36,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\FeedConsumerServiceInterface;
 use OCA\OpenCatalogi\Service\Portal\PortalObjectStore;
 use OCP\AppFramework\Utility\ITimeFactory;
-use OCP\IGroupManager;
 use OCP\IUser;
-use OCP\IUserManager;
 use OCP\Security\IHasher;
 use OCP\Security\ISecureRandom;
 use OutOfBoundsException;
@@ -76,12 +74,12 @@ class FeedConsumerService implements FeedConsumerServiceInterface {
 	/**
 	 * The prefix of the Nextcloud account a consumer acts as.
 	 */
-	public const ACCOUNT_PREFIX = 'feed-';
+	public const ACCOUNT_PREFIX = FeedConsumerAccounts::ACCOUNT_PREFIX;
 
 	/**
 	 * The prefix of a catalogue's consumer group.
 	 */
-	public const GROUP_PREFIX = 'opencatalogi-feed-';
+	public const GROUP_PREFIX = FeedConsumerAccounts::GROUP_PREFIX;
 
 	/**
 	 * The most consumers one catalogue lists.
@@ -91,18 +89,16 @@ class FeedConsumerService implements FeedConsumerServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param PortalObjectStore $store        Reads and writes publication-register objects as the system.
-	 * @param IUserManager      $userManager  Creates and finds the consumer accounts.
-	 * @param IGroupManager     $groupManager The catalogue consumer groups.
-	 * @param IHasher           $hasher       Hashes and verifies key secrets.
-	 * @param ISecureRandom     $random       Key ids, secrets and account passwords.
-	 * @param ITimeFactory      $time         The clock.
-	 * @param LoggerInterface   $logger       The logger.
+	 * @param PortalObjectStore    $store    Reads and writes publication-register objects as the system.
+	 * @param FeedConsumerAccounts $accounts Creates and finds the consumer accounts.
+	 * @param IHasher              $hasher   Hashes and verifies key secrets.
+	 * @param ISecureRandom        $random   Key ids and secrets.
+	 * @param ITimeFactory         $time     The clock.
+	 * @param LoggerInterface      $logger   The logger.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
-		private readonly IUserManager $userManager,
-		private readonly IGroupManager $groupManager,
+		private readonly FeedConsumerAccounts $accounts,
 		private readonly IHasher $hasher,
 		private readonly ISecureRandom $random,
 		private readonly ITimeFactory $time,
@@ -133,8 +129,7 @@ class FeedConsumerService implements FeedConsumerServiceInterface {
 			throw new InvalidArgumentException('The catalogue has no slug');
 		}
 
-		$user = $this->createAccount(name: $name);
-		$this->addToCatalogGroup(user: $user, catalogSlug: $catalogSlug);
+		$user = $this->accounts->create(name: $name, catalogSlug: $catalogSlug);
 
 		$consumer = $this->store->save(
 			schema: self::SCHEMA,
@@ -283,7 +278,7 @@ class FeedConsumerService implements FeedConsumerServiceInterface {
 	 */
 	public function disableConsumer(string $consumerId): array {
 		$consumer = $this->consumer(consumerId: $consumerId);
-		$user = $this->userManager->get((string)($consumer['account'] ?? ''));
+		$user = $this->accounts->find(uid: (string)($consumer['account'] ?? ''));
 		if ($user !== null) {
 			$user->setEnabled(false);
 		}
@@ -324,7 +319,7 @@ class FeedConsumerService implements FeedConsumerServiceInterface {
 			return null;
 		}
 
-		$user = $this->userManager->get((string)($consumer['account'] ?? ''));
+		$user = $this->accounts->find(uid: (string)($consumer['account'] ?? ''));
 		if ($user === null || $user->isEnabled() === false) {
 			return null;
 		}
@@ -332,6 +327,17 @@ class FeedConsumerService implements FeedConsumerServiceInterface {
 		$this->recordUse(consumer: $consumer, consumerId: $parts['consumerId'], index: $index);
 		return ['consumer' => $this->publicView(consumer: $consumer), 'user' => $user];
 	}//end authenticate()
+
+	/**
+	 * The instance-wide account list the OOAPI feed also accepts.
+	 *
+	 * @return array{accounts: list<string>, everyAccount: bool, setting: string}
+	 *
+	 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-account-based-access-keeps-working-and-is-visible-req-fcc-004
+	 */
+	public function instanceAccounts(): array {
+		return $this->accounts->instanceAccounts();
+	}//end instanceAccounts()
 
 	/**
 	 * Split a presented key into its consumer id, key id and secret.
@@ -396,51 +402,6 @@ class FeedConsumerService implements FeedConsumerServiceInterface {
 		$expires = $this->timestamp(value: ($key['expiresAt'] ?? null));
 		return $expires === null || $expires > $this->time->getTime();
 	}//end isActive()
-
-	/**
-	 * Create the consumer's account with a random password nobody sees.
-	 *
-	 * @param string $name The consumer name.
-	 *
-	 * @return IUser The account.
-	 *
-	 * @throws RuntimeException When the account cannot be created.
-	 */
-	private function createAccount(string $name): IUser {
-		$slug = trim((string)preg_replace('/[^a-z0-9]+/', '-', strtolower($name)), '-');
-		$suffix = $this->random->generate(6, ISecureRandom::CHAR_LOWER.ISecureRandom::CHAR_DIGITS);
-		$uid = self::ACCOUNT_PREFIX.substr($slug, 0, 40).'-'.$suffix;
-		if ($slug === '') {
-			$uid = self::ACCOUNT_PREFIX.$suffix;
-		}
-
-		$user = $this->userManager->createUser($uid, $this->random->generate(64, ISecureRandom::CHAR_ALPHANUMERIC.ISecureRandom::CHAR_SYMBOLS));
-		if ($user instanceof IUser === false) {
-			throw new RuntimeException('The consumer account could not be created');
-		}
-
-		return $user;
-	}//end createAccount()
-
-	/**
-	 * Put the account in the catalogue's consumer group, creating the group when needed.
-	 *
-	 * @param IUser  $user        The account.
-	 * @param string $catalogSlug The catalogue slug.
-	 *
-	 * @return void
-	 *
-	 * @throws RuntimeException When the group cannot be created.
-	 */
-	private function addToCatalogGroup(IUser $user, string $catalogSlug): void {
-		$groupId = self::GROUP_PREFIX.$catalogSlug;
-		$group = $this->groupManager->get($groupId) ?? $this->groupManager->createGroup($groupId);
-		if ($group === null) {
-			throw new RuntimeException('The catalogue consumer group could not be created');
-		}
-
-		$group->addUser($user);
-	}//end addToCatalogGroup()
 
 	/**
 	 * A consumer by id.

@@ -38,7 +38,6 @@ use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
-use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OutOfBoundsException;
@@ -59,7 +58,6 @@ class FeedConsumerController extends Controller {
 	 * @param IRequest                     $request   The request.
 	 * @param FeedConsumerServiceInterface $consumers The feed consumers.
 	 * @param CatalogiServiceInterface     $catalogs  Resolves a catalogue by slug.
-	 * @param IAppConfig                   $appConfig Reads the instance-wide consumer list.
 	 * @param IL10N                        $l10n      Translations.
 	 * @param LoggerInterface              $logger    The logger.
 	 */
@@ -68,7 +66,6 @@ class FeedConsumerController extends Controller {
 		IRequest $request,
 		private readonly FeedConsumerServiceInterface $consumers,
 		private readonly CatalogiServiceInterface $catalogs,
-		private readonly IAppConfig $appConfig,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 	) {
@@ -92,20 +89,10 @@ class FeedConsumerController extends Controller {
 		return $this->inCatalog(
 			catalogSlug: $catalogSlug,
 			action: function (array $catalog, string $catalogId): JSONResponse {
-				$configured = trim($this->appConfig->getValueString('opencatalogi', 'ooapi_consumers', ''));
-				$accounts = [];
-				if ($configured !== '') {
-					$accounts = array_values(array_filter(array_map('trim', explode(',', $configured)), static fn (string $uid): bool => $uid !== ''));
-				}
-
 				return new JSONResponse(
 					[
 						'results' => $this->consumers->consumersOf($catalogId),
-						'instanceAccounts' => [
-							'accounts' => $accounts,
-							'everyAccount' => $configured === '',
-							'setting' => 'ooapi_consumers',
-						],
+						'instanceAccounts' => $this->consumers->instanceAccounts(),
 					]
 				);
 			}

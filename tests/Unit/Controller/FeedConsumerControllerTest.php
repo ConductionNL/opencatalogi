@@ -28,7 +28,6 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\FeedConsumerServiceInterface;
 use OCA\OpenCatalogi\Controller\FeedConsumerController;
-use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use OutOfBoundsException;
@@ -49,7 +48,6 @@ class FeedConsumerControllerTest extends TestCase {
 	private IRequest|MockObject $request;
 	private FeedConsumerServiceInterface|MockObject $consumers;
 	private CatalogiServiceInterface|MockObject $catalogs;
-	private IAppConfig|MockObject $appConfig;
 	private FeedConsumerController $controller;
 
 	/**
@@ -69,7 +67,6 @@ class FeedConsumerControllerTest extends TestCase {
 		$this->catalogs->method('getCatalogBySlug')->willReturnCallback(
 			static fn (string $slug): ?array => $slug === 'hva-onderwijs' ? self::CATALOG : null
 		);
-		$this->appConfig = $this->createMock(IAppConfig::class);
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
 
@@ -78,14 +75,14 @@ class FeedConsumerControllerTest extends TestCase {
 			$this->request,
 			$this->consumers,
 			$this->catalogs,
-			$this->appConfig,
 			$l10n,
 			$this->createMock(LoggerInterface::class)
 		);
 	}
 
 	public function testIndexListsConsumersAndTheInstanceAccountList(): void {
-		$this->appConfig->method('getValueString')->with('opencatalogi', 'ooapi_consumers', '')->willReturn(' surf , ,edu ');
+		$instance = ['accounts' => ['surf', 'edu'], 'everyAccount' => false, 'setting' => 'ooapi_consumers'];
+		$this->consumers->expects($this->once())->method('instanceAccounts')->willReturn($instance);
 		$this->consumers->method('consumersOf')->with('cat-1')->willReturn([['id' => 'c1']]);
 
 		$response = $this->controller->index('hva-onderwijs');
@@ -94,19 +91,10 @@ class FeedConsumerControllerTest extends TestCase {
 		$this->assertSame(
 			[
 				'results' => [['id' => 'c1']],
-				'instanceAccounts' => ['accounts' => ['surf', 'edu'], 'everyAccount' => false, 'setting' => 'ooapi_consumers'],
+				'instanceAccounts' => $instance,
 			],
 			$response->getData()
 		);
-	}
-
-	public function testIndexSaysEveryAccountReadsWhenTheListIsEmpty(): void {
-		$this->appConfig->method('getValueString')->willReturn('');
-		$this->consumers->method('consumersOf')->willReturn([]);
-
-		$data = $this->controller->index('hva-onderwijs')->getData();
-
-		$this->assertSame(['accounts' => [], 'everyAccount' => true, 'setting' => 'ooapi_consumers'], $data['instanceAccounts']);
 	}
 
 	public function testAnUnknownCatalogueAnswers404(): void {

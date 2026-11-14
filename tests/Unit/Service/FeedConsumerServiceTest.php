@@ -28,9 +28,11 @@ declare(strict_types=1);
 namespace Unit\Service;
 
 use InvalidArgumentException;
+use OCA\OpenCatalogi\Service\FeedConsumerAccounts;
 use OCA\OpenCatalogi\Service\FeedConsumerService;
 use OCA\OpenCatalogi\Service\Portal\PortalObjectStore;
 use OCP\AppFramework\Utility\ITimeFactory;
+use OCP\IAppConfig;
 use OCP\IGroup;
 use OCP\IGroupManager;
 use OCP\IUser;
@@ -39,6 +41,7 @@ use OCP\Security\IHasher;
 use OCP\Security\ISecureRandom;
 use OutOfBoundsException;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
@@ -48,6 +51,7 @@ use RuntimeException;
  * Unit tests for FeedConsumerService.
  */
 #[CoversClass(FeedConsumerService::class)]
+#[UsesClass(FeedConsumerAccounts::class)]
 class FeedConsumerServiceTest extends TestCase {
 
 	private const NOW = 1_800_000_000;
@@ -58,6 +62,7 @@ class FeedConsumerServiceTest extends TestCase {
 	private IUserManager|MockObject $userManager;
 	private IGroupManager|MockObject $groupManager;
 	private ISecureRandom|MockObject $random;
+	private IAppConfig|MockObject $appConfig;
 	private FeedConsumerService $service;
 
 	/**
@@ -90,6 +95,7 @@ class FeedConsumerServiceTest extends TestCase {
 
 		$this->userManager = $this->createMock(IUserManager::class);
 		$this->groupManager = $this->createMock(IGroupManager::class);
+		$this->appConfig = $this->createMock(IAppConfig::class);
 
 		$hasher = $this->createMock(IHasher::class);
 		$hasher->method('hash')->willReturnCallback(static fn (string $secret): string => 'hash:'.hash('sha256', $secret));
@@ -112,8 +118,12 @@ class FeedConsumerServiceTest extends TestCase {
 
 		$this->service = new FeedConsumerService(
 			$this->store,
-			$this->userManager,
-			$this->groupManager,
+			new FeedConsumerAccounts(
+				$this->userManager,
+				$this->groupManager,
+				$this->random,
+				$this->appConfig
+			),
 			$hasher,
 			$this->random,
 			$time,
@@ -443,5 +453,14 @@ class FeedConsumerServiceTest extends TestCase {
 		$this->givenAccount(false);
 
 		$this->assertNull($this->service->authenticate('oc_'.self::CONSUMER_ID.'.k1.secret-k1'));
+	}
+
+	public function testInstanceAccountsReadsTheInstanceWideList(): void {
+		$this->appConfig->method('getValueString')->with('opencatalogi', 'ooapi_consumers', '')->willReturn('surf');
+
+		$this->assertSame(
+			['accounts' => ['surf'], 'everyAccount' => false, 'setting' => 'ooapi_consumers'],
+			$this->service->instanceAccounts()
+		);
 	}
 }

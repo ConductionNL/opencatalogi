@@ -109,4 +109,13 @@ interface FeedConsumerServiceInterface {
 	 * @return array{consumer: array<string, mixed>, user: IUser}|null
 	 */
 	public function authenticate(string $presented): ?array;
+
+	/**
+	 * The instance-wide account list the OOAPI feed also accepts.
+	 *
+	 * @return array{accounts: list<string>, everyAccount: bool, setting: string}
+	 *
+	 * @spec openspec/changes/integration-feed-consumer-credentials/specs/ooapi-catalog-publication/spec.md#requirement-account-based-access-keeps-working-and-is-visible-req-fcc-004
+	 */
+	public function instanceAccounts(): array;
 }//end interface
