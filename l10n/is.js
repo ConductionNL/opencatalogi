@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Ekki tókst að vista sjálfgefna varðveislufresti",
         "Any other category": "Hver annar flokkur",
         "Retention Decision Log": "Skrá yfir varðveisluákvarðanir",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Hver varðveisluákvörðun um þessa útgáfu, elsta fyrst: hvað var ákveðið, af hverjum, hvenær, athugasemdin og lagagrundvöllurinn."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Hver varðveisluákvörðun um þessa útgáfu, elsta fyrst: hvað var ákveðið, af hverjum, hvenær, athugasemdin og lagagrundvöllurinn.",
+        "A low score never stops publishing.": "Lág einkunn kemur aldrei í veg fyrir birtingu.",
+        "Access link": "Aðgangstengill",
+        "Download link": "Niðurhalstengill",
+        "File format": "Skráarsnið",
+        "Landing page": "Lendingarsíða",
+        "Last modified": "Síðast breytt",
+        "Metadata quality": "Gæði lýsigagna",
+        "Missing metadata": "Lýsigögn sem vantar",
+        "Nothing is missing": "Ekkert vantar",
+        "Publisher": "Útgefandi",
+        "The metadata quality could not be loaded": "Ekki tókst að hlaða gæðum lýsigagna",
+        "{score} of 100": "{score} af 100",
+        "Could not compute the metadata quality.": "Ekki tókst að reikna gæði lýsigagna."
     },
     "nplurals=2; plural=(n != 1);"
 )

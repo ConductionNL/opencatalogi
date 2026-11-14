@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Nie udało się zapisać domyślnych okresów przechowywania",
         "Any other category": "Dowolna inna kategoria",
         "Retention Decision Log": "Dziennik decyzji o przechowywaniu",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Każda decyzja o przechowywaniu tej publikacji, od najstarszej: co postanowiono, kto, kiedy, notatka i podstawa prawna."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Każda decyzja o przechowywaniu tej publikacji, od najstarszej: co postanowiono, kto, kiedy, notatka i podstawa prawna.",
+        "A low score never stops publishing.": "Niski wynik nigdy nie blokuje publikacji.",
+        "Access link": "Link dostępu",
+        "Download link": "Link do pobrania",
+        "File format": "Format pliku",
+        "Landing page": "Strona docelowa",
+        "Last modified": "Ostatnia zmiana",
+        "Metadata quality": "Jakość metadanych",
+        "Missing metadata": "Brakujące metadane",
+        "Nothing is missing": "Niczego nie brakuje",
+        "Publisher": "Wydawca",
+        "The metadata quality could not be loaded": "Nie udało się wczytać jakości metadanych",
+        "{score} of 100": "{score} na 100",
+        "Could not compute the metadata quality.": "Nie udało się obliczyć jakości metadanych."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "No s'han pogut desar els terminis de conservació per defecte",
         "Any other category": "Qualsevol altra categoria",
         "Retention Decision Log": "Registre de decisions de conservació",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Cada decisió de conservació sobre aquesta publicació, la més antiga primer: què es va decidir, qui, quan, la nota i la base legal."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Cada decisió de conservació sobre aquesta publicació, la més antiga primer: què es va decidir, qui, quan, la nota i la base legal.",
+        "A low score never stops publishing.": "Una puntuació baixa mai impedeix publicar.",
+        "Access link": "Enllaç d'accés",
+        "Download link": "Enllaç de baixada",
+        "File format": "Format de fitxer",
+        "Landing page": "Pàgina de destinació",
+        "Last modified": "Darrera modificació",
+        "Metadata quality": "Qualitat de les metadades",
+        "Missing metadata": "Metadades que falten",
+        "Nothing is missing": "No falta res",
+        "Publisher": "Editor",
+        "The metadata quality could not be loaded": "No s'ha pogut carregar la qualitat de les metadades",
+        "{score} of 100": "{score} de 100",
+        "Could not compute the metadata quality.": "No s'ha pogut calcular la qualitat de les metadades."
     },
     "plurals": {}
 }

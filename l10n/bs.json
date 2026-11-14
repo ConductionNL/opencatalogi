@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Zadane rokove čuvanja nije moguće sačuvati",
         "Any other category": "Bilo koja druga kategorija",
         "Retention Decision Log": "Zapisnik odluka o čuvanju",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Svaka odluka o čuvanju ove objave, najstarija prva: šta je odlučeno, ko, kada, napomena i pravni osnov."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Svaka odluka o čuvanju ove objave, najstarija prva: šta je odlučeno, ko, kada, napomena i pravni osnov.",
+        "A low score never stops publishing.": "Niska ocjena nikad ne sprečava objavu.",
+        "Access link": "Link za pristup",
+        "Download link": "Link za preuzimanje",
+        "File format": "Format datoteke",
+        "Landing page": "Odredišna stranica",
+        "Last modified": "Zadnja izmjena",
+        "Metadata quality": "Kvalitet metapodataka",
+        "Missing metadata": "Metapodaci koji nedostaju",
+        "Nothing is missing": "Ništa ne nedostaje",
+        "Publisher": "Izdavač",
+        "The metadata quality could not be loaded": "Kvalitet metapodataka nije moguće učitati",
+        "{score} of 100": "{score} od 100",
+        "Could not compute the metadata quality.": "Kvalitet metapodataka nije moguće izračunati."
     },
     "plurals": {}
 }

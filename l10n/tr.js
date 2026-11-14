@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Varsayılan saklama süreleri kaydedilemedi",
         "Any other category": "Diğer herhangi bir kategori",
         "Retention Decision Log": "Saklama kararları günlüğü",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Bu yayınla ilgili her saklama kararı, en eskisi önce: ne karar verildi, kim tarafından, ne zaman, not ve yasal dayanak."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Bu yayınla ilgili her saklama kararı, en eskisi önce: ne karar verildi, kim tarafından, ne zaman, not ve yasal dayanak.",
+        "A low score never stops publishing.": "Düşük puan yayımlamayı asla engellemez.",
+        "Access link": "Erişim bağlantısı",
+        "Download link": "İndirme bağlantısı",
+        "File format": "Dosya biçimi",
+        "Landing page": "Açılış sayfası",
+        "Last modified": "Son değişiklik",
+        "Metadata quality": "Üst veri kalitesi",
+        "Missing metadata": "Eksik üst veriler",
+        "Nothing is missing": "Eksik bir şey yok",
+        "Publisher": "Yayıncı",
+        "The metadata quality could not be loaded": "Üst veri kalitesi yüklenemedi",
+        "{score} of 100": "{score} / 100",
+        "Could not compute the metadata quality.": "Üst veri kalitesi hesaplanamadı."
     },
     "nplurals=2; plural=(n != 1);"
 )

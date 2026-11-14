@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Не удалось сохранить сроки хранения по умолчанию",
         "Any other category": "Любая другая категория",
         "Retention Decision Log": "Журнал решений о хранении",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Каждое решение о хранении этой публикации, начиная с самого раннего: что решено, кем, когда, примечание и правовое основание."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Каждое решение о хранении этой публикации, начиная с самого раннего: что решено, кем, когда, примечание и правовое основание.",
+        "A low score never stops publishing.": "Низкая оценка никогда не мешает публикации.",
+        "Access link": "Ссылка для доступа",
+        "Download link": "Ссылка для скачивания",
+        "File format": "Формат файла",
+        "Landing page": "Целевая страница",
+        "Last modified": "Последнее изменение",
+        "Metadata quality": "Качество метаданных",
+        "Missing metadata": "Недостающие метаданные",
+        "Nothing is missing": "Ничего не отсутствует",
+        "Publisher": "Издатель",
+        "The metadata quality could not be loaded": "Не удалось загрузить качество метаданных",
+        "{score} of 100": "{score} из 100",
+        "Could not compute the metadata quality.": "Не удалось рассчитать качество метаданных."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Noklusējuma glabāšanas termiņus neizdevās saglabāt",
         "Any other category": "Jebkura cita kategorija",
         "Retention Decision Log": "Glabāšanas lēmumu žurnāls",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Katrs šīs publikācijas glabāšanas lēmums, vecākais vispirms: kas tika nolemts, kas, kad, piezīme un juridiskais pamats."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Katrs šīs publikācijas glabāšanas lēmums, vecākais vispirms: kas tika nolemts, kas, kad, piezīme un juridiskais pamats.",
+        "A low score never stops publishing.": "Zems vērtējums nekad neaptur publicēšanu.",
+        "Access link": "Piekļuves saite",
+        "Download link": "Lejupielādes saite",
+        "File format": "Faila formāts",
+        "Landing page": "Galvenā lapa",
+        "Last modified": "Pēdējoreiz mainīts",
+        "Metadata quality": "Metadatu kvalitāte",
+        "Missing metadata": "Trūkstošie metadati",
+        "Nothing is missing": "Nekas netrūkst",
+        "Publisher": "Izdevējs",
+        "The metadata quality could not be loaded": "Metadatu kvalitāti neizdevās ielādēt",
+        "{score} of 100": "{score} no 100",
+        "Could not compute the metadata quality.": "Metadatu kvalitāti neizdevās aprēķināt."
     },
     "nplurals=2; plural=(n != 1);"
 )

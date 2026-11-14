@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Standardgallringsfristerna kunde inte sparas",
         "Any other category": "Vilken annan kategori som helst",
         "Retention Decision Log": "Logg över gallringsbeslut",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Varje gallringsbeslut om denna publikation, äldsta först: vad som beslutades, av vem, när, anteckningen och den rättsliga grunden."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Varje gallringsbeslut om denna publikation, äldsta först: vad som beslutades, av vem, när, anteckningen och den rättsliga grunden.",
+        "A low score never stops publishing.": "Ett lågt värde stoppar aldrig publicering.",
+        "Access link": "Åtkomstlänk",
+        "Download link": "Nedladdningslänk",
+        "File format": "Filformat",
+        "Landing page": "Landningssida",
+        "Last modified": "Senast ändrad",
+        "Metadata quality": "Metadatakvalitet",
+        "Missing metadata": "Saknade metadata",
+        "Nothing is missing": "Inget saknas",
+        "Publisher": "Utgivare",
+        "The metadata quality could not be loaded": "Metadatakvaliteten kunde inte läsas in",
+        "{score} of 100": "{score} av 100",
+        "Could not compute the metadata quality.": "Metadatakvaliteten kunde inte beräknas."
     },
     "plurals": {}
 }

@@ -29,6 +29,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Service\MostViewedPublications;
+use OCA\OpenCatalogi\Service\PublicationQuality;
 use OCA\OpenCatalogi\Service\UsageCsvRollUp;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -64,6 +65,7 @@ class StatsController extends Controller {
 	 * @param IUserSession $userSession Current-user session for the auth guard.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param MostViewedPublications|null $mostViewed The most viewed readable publications (ANA-005).
+	 * @param PublicationQuality|null $publicationQuality One publication's metadata-quality score (PQM-001).
 	 */
 	public function __construct(
 		$appName,
@@ -76,6 +78,7 @@ class StatsController extends Controller {
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly ?MostViewedPublications $mostViewed = null,
+		private readonly ?PublicationQuality $publicationQuality = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -232,6 +235,42 @@ class StatsController extends Controller {
 			return new JSONResponse(['error' => $this->l10n->t('Could not compute usage statistics.')], 500);
 		}
 	}//end top()
+
+	/**
+	 * Return one publication's metadata-quality score, for its staff detail page.
+	 *
+	 * Authenticated, only for a catalogue and a publication the caller may read.
+	 * The score is of the dataset the publication renders as in the catalogue's
+	 * DCAT feed, so it shows what is missing before the publication goes public.
+	 * Advisory: it never gates publishing (PQM-001, PQM-004).
+	 *
+	 * @param string $slug The catalog slug.
+	 * @param string $id   The publication uuid.
+	 *
+	 * @return JSONResponse `{ total, dimensions, missing }`.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+	 */
+	#[NoAdminRequired]
+	public function publicationQuality(string $slug, string $id): JSONResponse {
+		$catalog = $this->readableCatalog(slug: $slug);
+		if ($catalog instanceof JSONResponse) {
+			return $catalog;
+		}
+
+		try {
+			$score = $this->publicationQuality?->score(catalog: $catalog, catalogSlug: $slug, id: $id);
+		} catch (\Throwable $e) {
+			$this->logger->error('[StatsController::publicationQuality] failed', ['error' => $e->getMessage()]);
+			return new JSONResponse(['error' => $this->l10n->t('Could not compute the metadata quality.')], 500);
+		}
+
+		if ($score === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Publication not found')], Http::STATUS_NOT_FOUND);
+		}
+
+		return new JSONResponse($score, 200);
+	}//end publicationQuality()
 
 	/**
 	 * Return the per-catalog metadata-quality roll-up (MQA/FAIR).

@@ -1525,7 +1525,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "De standaard bewaartermijnen konden niet worden opgeslagen",
         "Any other category": "Elke andere categorie",
         "Retention Decision Log": "Logboek bewaarbesluiten",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Elk bewaarbesluit over deze publicatie, oudste eerst: wat is besloten, door wie, wanneer, de toelichting en de wettelijke grondslag."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Elk bewaarbesluit over deze publicatie, oudste eerst: wat is besloten, door wie, wanneer, de toelichting en de wettelijke grondslag.",
+        "A low score never stops publishing.": "Een lage score houdt publiceren nooit tegen.",
+        "Access link": "Toegangslink",
+        "Download link": "Downloadlink",
+        "File format": "Bestandsformaat",
+        "Landing page": "Landingspagina",
+        "Last modified": "Laatst gewijzigd",
+        "Metadata quality": "Kwaliteit van metadata",
+        "Missing metadata": "Ontbrekende metadata",
+        "Nothing is missing": "Er ontbreekt niets",
+        "Publisher": "Uitgever",
+        "The metadata quality could not be loaded": "De kwaliteit van de metadata kon niet worden geladen",
+        "{score} of 100": "{score} van 100",
+        "Could not compute the metadata quality.": "De kwaliteit van de metadata kon niet worden berekend."
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Vaikimisi säilitustähtaegu ei õnnestunud salvestada",
         "Any other category": "Mis tahes muu kategooria",
         "Retention Decision Log": "Säilitusotsuste logi",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Iga selle väljaande säilitusotsus, vanim esimesena: mida otsustati, kes, millal, märkus ja õiguslik alus."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Iga selle väljaande säilitusotsus, vanim esimesena: mida otsustati, kes, millal, märkus ja õiguslik alus.",
+        "A low score never stops publishing.": "Madal skoor ei takista kunagi avaldamist.",
+        "Access link": "Juurdepääsulink",
+        "Download link": "Allalaadimislink",
+        "File format": "Failivorming",
+        "Landing page": "Sihtleht",
+        "Last modified": "Viimati muudetud",
+        "Metadata quality": "Metaandmete kvaliteet",
+        "Missing metadata": "Puuduvad metaandmed",
+        "Nothing is missing": "Midagi ei puudu",
+        "Publisher": "Väljaandja",
+        "The metadata quality could not be loaded": "Metaandmete kvaliteeti ei õnnestunud laadida",
+        "{score} of 100": "{score} / 100",
+        "Could not compute the metadata quality.": "Metaandmete kvaliteeti ei õnnestunud arvutada."
     },
     "nplurals=2; plural=(n != 1);"
 )

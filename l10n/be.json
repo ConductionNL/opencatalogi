@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Не ўдалося захаваць тэрміны захоўвання па змаўчанні",
         "Any other category": "Любая іншая катэгорыя",
         "Retention Decision Log": "Журнал рашэнняў аб захоўванні",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Кожнае рашэнне аб захоўванні гэтай публікацыі, пачынаючы з самага ранняга: што вырашана, кім, калі, заўвага і прававая падстава."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Кожнае рашэнне аб захоўванні гэтай публікацыі, пачынаючы з самага ранняга: што вырашана, кім, калі, заўвага і прававая падстава.",
+        "A low score never stops publishing.": "Нізкая ацэнка ніколі не перашкаджае публікацыі.",
+        "Access link": "Спасылка для доступу",
+        "Download link": "Спасылка для спампоўвання",
+        "File format": "Фармат файла",
+        "Landing page": "Мэтавая старонка",
+        "Last modified": "Апошняя змена",
+        "Metadata quality": "Якасць метаданых",
+        "Missing metadata": "Адсутныя метаданыя",
+        "Nothing is missing": "Нічога не бракуе",
+        "Publisher": "Выдавец",
+        "The metadata quality could not be loaded": "Не ўдалося загрузіць якасць метаданых",
+        "{score} of 100": "{score} са 100",
+        "Could not compute the metadata quality.": "Не ўдалося вылічыць якасць метаданых."
     },
     "plurals": {}
 }

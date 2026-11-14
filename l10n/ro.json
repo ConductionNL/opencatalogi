@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Termenele implicite de păstrare nu au putut fi salvate",
         "Any other category": "Orice altă categorie",
         "Retention Decision Log": "Jurnalul deciziilor de păstrare",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Fiecare decizie de păstrare privind această publicație, cea mai veche prima: ce s-a decis, de către cine, când, nota și temeiul legal."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Fiecare decizie de păstrare privind această publicație, cea mai veche prima: ce s-a decis, de către cine, când, nota și temeiul legal.",
+        "A low score never stops publishing.": "Un scor scăzut nu împiedică niciodată publicarea.",
+        "Access link": "Link de acces",
+        "Download link": "Link de descărcare",
+        "File format": "Format fișier",
+        "Landing page": "Pagină de destinație",
+        "Last modified": "Ultima modificare",
+        "Metadata quality": "Calitatea metadatelor",
+        "Missing metadata": "Metadate lipsă",
+        "Nothing is missing": "Nu lipsește nimic",
+        "Publisher": "Editor",
+        "The metadata quality could not be loaded": "Calitatea metadatelor nu a putut fi încărcată",
+        "{score} of 100": "{score} din 100",
+        "Could not compute the metadata quality.": "Calitatea metadatelor nu a putut fi calculată."
     },
     "pluralForm": "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 }

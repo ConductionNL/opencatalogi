@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Il-perjodi ta' żamma awtomatiċi ma setgħux jiġu ssejvjati",
         "Any other category": "Kwalunkwe kategorija oħra",
         "Retention Decision Log": "Reġistru tad-deċiżjonijiet taż-żamma",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Kull deċiżjoni taż-żamma dwar din il-pubblikazzjoni, l-eqdem l-ewwel: x'ġie deċiż, minn min, meta, in-nota u l-bażi legali."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Kull deċiżjoni taż-żamma dwar din il-pubblikazzjoni, l-eqdem l-ewwel: x'ġie deċiż, minn min, meta, in-nota u l-bażi legali.",
+        "A low score never stops publishing.": "Punteġġ baxx qatt ma jwaqqaf il-pubblikazzjoni.",
+        "Access link": "Link ta' aċċess",
+        "Download link": "Link biex tniżżel",
+        "File format": "Format tal-fajl",
+        "Landing page": "Paġna tal-wasla",
+        "Last modified": "L-aħħar modifika",
+        "Metadata quality": "Kwalità tal-metadata",
+        "Missing metadata": "Metadata nieqsa",
+        "Nothing is missing": "Xejn ma hu nieqes",
+        "Publisher": "Pubblikatur",
+        "The metadata quality could not be loaded": "Il-kwalità tal-metadata ma setgħetx titgħabba",
+        "{score} of 100": "{score} minn 100",
+        "Could not compute the metadata quality.": "Il-kwalità tal-metadata ma setgħetx tiġi kkalkulata."
     },
     "nplurals=2; plural=(n != 1);"
 )

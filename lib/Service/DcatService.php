@@ -382,6 +382,28 @@ class DcatService implements DcatServiceInterface {
 	}//end datasetSource()
 
 	/**
+	 * The dcat:Dataset node one publication renders as in a catalogue's feed, published or not.
+	 *
+	 * The same mapping as {@see buildCatalogDocument()}, without DQV measurements, so a
+	 * quality score of the node reflects what a harvester will see once it is public.
+	 *
+	 * @param array  $catalog     The catalog object.
+	 * @param string $catalogSlug The catalog slug.
+	 * @param array  $publication The publication, as OpenRegister serialises it.
+	 *
+	 * @return array The dataset node.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+	 */
+	public function buildPublicationDataset(array $catalog, string $catalogSlug, array $publication): array {
+		$scope = $this->resolveCatalogScope(catalog: $catalog, catalogSlug: $catalogSlug);
+		$scope['fileService'] = $this->getFileService();
+		$scope['dqvExposure'] = false;
+
+		return $this->mapCatalogDataset(source: $this->datasetSource(publication: $publication, scope: $scope), scope: $scope);
+	}//end buildPublicationDataset()
+
+	/**
 	 * Map one publication to a DCAT dataset; its violations are left on the source.
 	 *
 	 * @param DcatDatasetSource $source The publication, its IRI and its attachments.

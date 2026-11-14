@@ -172,6 +172,30 @@ class DcatCatalogDocumentTest extends TestCase {
 		);
 	}
 
+	/**
+	 * One publication renders as the same dataset node the catalogue feed holds, without DQV.
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md#task-25
+	 */
+	public function testOnePublicationRendersAsItsNodeInTheCatalogueFeed(): void {
+		$searched = [];
+		$catalog = ['id' => 'c1', 'title' => 'WOO', 'registers' => ['20'], 'schemas' => '[28, 29, 30]', 'dqvExposure' => 'true'];
+		$service = $this->service($searched);
+		$publication = ['@self' => ['uuid' => 'u1', 'schema' => 28, 'updated' => '2026-02-03T04:05:06+00:00'], 'id' => 'u1', 'title' => 'Besluit een', 'summary' => 'Kort'];
+
+		$node = $service->buildPublicationDataset(catalog: $catalog, catalogSlug: 'woo', publication: $publication);
+
+		$catalog['dqvExposure'] = 'false';
+		$feed = array_values(array_filter(
+			$service->buildCatalogDocument(catalog: $catalog, catalogSlug: 'woo')['@graph'],
+			static fn (array $item): bool => ($item['@type'] ?? '') === 'dcat:Dataset' && str_ends_with((string)($item['@id'] ?? ''), 'u1')
+		));
+		$this->assertCount(1, $feed);
+		$this->assertSame($feed[0], $node);
+		$this->assertSame('Besluit een', $node['dct:title']);
+		$this->assertArrayNotHasKey('dqv:hasQualityMeasurement', $node);
+	}
+
 	public function testWithoutOpenRegisterTheDocumentIsRefused(): void {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn([]);

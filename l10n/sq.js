@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Afatet e parazgjedhura të ruajtjes nuk mund të ruheshin",
         "Any other category": "Çdo kategori tjetër",
         "Retention Decision Log": "Regjistri i vendimeve të ruajtjes",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Çdo vendim ruajtjeje për këtë botim, më i vjetri i pari: çfarë u vendos, nga kush, kur, shënimi dhe baza ligjore."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Çdo vendim ruajtjeje për këtë botim, më i vjetri i pari: çfarë u vendos, nga kush, kur, shënimi dhe baza ligjore.",
+        "A low score never stops publishing.": "Një rezultat i ulët nuk e ndalon kurrë botimin.",
+        "Access link": "Lidhje qasjeje",
+        "Download link": "Lidhje shkarkimi",
+        "File format": "Formati i skedarit",
+        "Landing page": "Faqja hyrëse",
+        "Last modified": "Ndryshuar së fundi",
+        "Metadata quality": "Cilësia e meta të dhënave",
+        "Missing metadata": "Meta të dhëna që mungojnë",
+        "Nothing is missing": "Nuk mungon asgjë",
+        "Publisher": "Botuesi",
+        "The metadata quality could not be loaded": "Cilësia e meta të dhënave nuk mund të ngarkohej",
+        "{score} of 100": "{score} nga 100",
+        "Could not compute the metadata quality.": "Cilësia e meta të dhënave nuk mund të llogaritej."
     },
     "nplurals=2; plural=(n != 1);"
 )

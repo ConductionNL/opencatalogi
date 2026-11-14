@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Predvolené lehoty uchovávania sa nepodarilo uložiť",
         "Any other category": "Akákoľvek iná kategória",
         "Retention Decision Log": "Záznam rozhodnutí o uchovávaní",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Každé rozhodnutie o uchovávaní tejto publikácie, od najstaršieho: čo sa rozhodlo, kto, kedy, poznámka a právny základ."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Každé rozhodnutie o uchovávaní tejto publikácie, od najstaršieho: čo sa rozhodlo, kto, kedy, poznámka a právny základ.",
+        "A low score never stops publishing.": "Nízke skóre nikdy nebráni zverejneniu.",
+        "Access link": "Prístupový odkaz",
+        "Download link": "Odkaz na stiahnutie",
+        "File format": "Formát súboru",
+        "Landing page": "Vstupná stránka",
+        "Last modified": "Naposledy zmenené",
+        "Metadata quality": "Kvalita metadát",
+        "Missing metadata": "Chýbajúce metadáta",
+        "Nothing is missing": "Nič nechýba",
+        "Publisher": "Vydavateľ",
+        "The metadata quality could not be loaded": "Kvalitu metadát sa nepodarilo načítať",
+        "{score} of 100": "{score} zo 100",
+        "Could not compute the metadata quality.": "Kvalitu metadát sa nepodarilo vypočítať."
     },
     "nplurals=2; plural=(n != 1);"
 )

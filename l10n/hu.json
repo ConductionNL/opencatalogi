@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Az alapértelmezett megőrzési időket nem sikerült menteni",
         "Any other category": "Bármely más kategória",
         "Retention Decision Log": "Megőrzési döntések naplója",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "A kiadványra vonatkozó minden megőrzési döntés, a legrégebbivel kezdve: mit döntöttek, ki, mikor, a megjegyzés és a jogalap."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "A kiadványra vonatkozó minden megőrzési döntés, a legrégebbivel kezdve: mit döntöttek, ki, mikor, a megjegyzés és a jogalap.",
+        "A low score never stops publishing.": "Az alacsony pontszám soha nem akadályozza a közzétételt.",
+        "Access link": "Hozzáférési hivatkozás",
+        "Download link": "Letöltési hivatkozás",
+        "File format": "Fájlformátum",
+        "Landing page": "Céloldal",
+        "Last modified": "Utoljára módosítva",
+        "Metadata quality": "Metaadat-minőség",
+        "Missing metadata": "Hiányzó metaadatok",
+        "Nothing is missing": "Semmi sem hiányzik",
+        "Publisher": "Kiadó",
+        "The metadata quality could not be loaded": "A metaadat-minőséget nem sikerült betölteni",
+        "{score} of 100": "{score} / 100",
+        "Could not compute the metadata quality.": "A metaadat-minőséget nem sikerült kiszámítani."
     },
     "plurals": {}
 }

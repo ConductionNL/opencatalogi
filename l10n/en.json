@@ -1569,7 +1569,20 @@
         "The retention defaults could not be saved": "The retention defaults could not be saved",
         "Any other category": "Any other category",
         "Retention Decision Log": "Retention Decision Log",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.",
+        "A low score never stops publishing.": "A low score never stops publishing.",
+        "Access link": "Access link",
+        "Download link": "Download link",
+        "File format": "File format",
+        "Landing page": "Landing page",
+        "Last modified": "Last modified",
+        "Metadata quality": "Metadata quality",
+        "Missing metadata": "Missing metadata",
+        "Nothing is missing": "Nothing is missing",
+        "Publisher": "Publisher",
+        "The metadata quality could not be loaded": "The metadata quality could not be loaded",
+        "{score} of 100": "{score} of 100",
+        "Could not compute the metadata quality.": "Could not compute the metadata quality."
     },
     "plurals": {}
 }

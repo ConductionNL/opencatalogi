@@ -29,6 +29,7 @@ import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
 import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
+import PublicationQualityWidget from './components/widgets/PublicationQualityWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
@@ -97,6 +98,17 @@ registerDashboardWidget('publication-visibility', {
 	defaultContent: {},
 	displayName: 'Publication status',
 	icon: 'EyeOutline',
+	surfaces: ['detail-page'],
+})
+// The metadata-quality score and the missing fields, before publishing
+// (capability-rows-close-gaps task 2.5, PQM-001): the screen for
+// GET /api/catalogs/{slug}/publications/{id}/quality.
+registerDashboardWidget('publication-quality', {
+	renderer: PublicationQualityWidget,
+	form: null,
+	defaultContent: {},
+	displayName: 'Metadata quality',
+	icon: 'ChartBar',
 	surfaces: ['detail-page'],
 })
 // The publication's attachments with Add attachment, which opens the app's

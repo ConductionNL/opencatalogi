@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Oletussäilytysaikoja ei voitu tallentaa",
         "Any other category": "Mikä tahansa muu luokka",
         "Retention Decision Log": "Säilytyspäätösten loki",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Jokainen tätä julkaisua koskeva säilytyspäätös, vanhin ensin: mitä päätettiin, kuka, milloin, huomautus ja oikeusperusta."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Jokainen tätä julkaisua koskeva säilytyspäätös, vanhin ensin: mitä päätettiin, kuka, milloin, huomautus ja oikeusperusta.",
+        "A low score never stops publishing.": "Matala pistemäärä ei koskaan estä julkaisua.",
+        "Access link": "Käyttölinkki",
+        "Download link": "Latauslinkki",
+        "File format": "Tiedostomuoto",
+        "Landing page": "Aloitussivu",
+        "Last modified": "Viimeksi muokattu",
+        "Metadata quality": "Metatietojen laatu",
+        "Missing metadata": "Puuttuvat metatiedot",
+        "Nothing is missing": "Mitään ei puutu",
+        "Publisher": "Julkaisija",
+        "The metadata quality could not be loaded": "Metatietojen laatua ei voitu ladata",
+        "{score} of 100": "{score}/100",
+        "Could not compute the metadata quality.": "Metatietojen laatua ei voitu laskea."
     },
     "nplurals=2; plural=(n != 1);"
 )

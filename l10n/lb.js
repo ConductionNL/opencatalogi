@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "D'Standard-Opbewahrungsfriste konnten net gespäichert ginn",
         "Any other category": "All aner Kategorie",
         "Retention Decision Log": "Protokoll vun den Opbewahrungsentscheedungen",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "All Opbewahrungsentscheedung iwwer dës Publikatioun, déi eelst als éischt: wat decidéiert gouf, vu wiem, wéini, d'Notiz an d'Rechtsgrondlag."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "All Opbewahrungsentscheedung iwwer dës Publikatioun, déi eelst als éischt: wat decidéiert gouf, vu wiem, wéini, d'Notiz an d'Rechtsgrondlag.",
+        "A low score never stops publishing.": "E nidderegen Score verhënnert ni d'Verëffentlechung.",
+        "Access link": "Zougangslink",
+        "Download link": "Download-Link",
+        "File format": "Dateiformat",
+        "Landing page": "Landingpage",
+        "Last modified": "Lescht geännert",
+        "Metadata quality": "Metadatequalitéit",
+        "Missing metadata": "Feelend Metadaten",
+        "Nothing is missing": "Et feelt näischt",
+        "Publisher": "Editeur",
+        "The metadata quality could not be loaded": "D'Metadatequalitéit konnt net geluede ginn",
+        "{score} of 100": "{score} vun 100",
+        "Could not compute the metadata quality.": "D'Metadatequalitéit konnt net berechent ginn."
     },
     "nplurals=2; plural=(n != 1);"
 )

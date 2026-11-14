@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Стандардните рокови на чување не можеа да се зачуваат",
         "Any other category": "Која било друга категорија",
         "Retention Decision Log": "Дневник на одлуки за чување",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Секоја одлука за чување на оваа објава, најстарата прва: што е одлучено, кој, кога, белешката и правната основа."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Секоја одлука за чување на оваа објава, најстарата прва: што е одлучено, кој, кога, белешката и правната основа.",
+        "A low score never stops publishing.": "Ниска оценка никогаш не го спречува објавувањето.",
+        "Access link": "Врска за пристап",
+        "Download link": "Врска за преземање",
+        "File format": "Формат на датотека",
+        "Landing page": "Почетна страница",
+        "Last modified": "Последна измена",
+        "Metadata quality": "Квалитет на метаподатоци",
+        "Missing metadata": "Метаподатоци што недостасуваат",
+        "Nothing is missing": "Ништо не недостасува",
+        "Publisher": "Издавач",
+        "The metadata quality could not be loaded": "Квалитетот на метаподатоците не можеше да се вчита",
+        "{score} of 100": "{score} од 100",
+        "Could not compute the metadata quality.": "Квалитетот на метаподатоците не можеше да се пресмета."
     },
     "plurals": {}
 }

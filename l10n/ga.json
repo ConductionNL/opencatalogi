@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Níorbh fhéidir na tréimhsí coinneála réamhshocraithe a shábháil",
         "Any other category": "Aon chatagóir eile",
         "Retention Decision Log": "Loga na gcinntí coinneála",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Gach cinneadh coinneála faoin bhfoilseachán seo, an ceann is sine ar dtús: cad a cinneadh, cé, cathain, an nóta agus an bunús dlíthiúil."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Gach cinneadh coinneála faoin bhfoilseachán seo, an ceann is sine ar dtús: cad a cinneadh, cé, cathain, an nóta agus an bunús dlíthiúil.",
+        "A low score never stops publishing.": "Ní stopann scór íseal foilsiú riamh.",
+        "Access link": "Nasc rochtana",
+        "Download link": "Nasc íoslódála",
+        "File format": "Formáid comhaid",
+        "Landing page": "Leathanach tuirlingthe",
+        "Last modified": "Athraithe go deireanach",
+        "Metadata quality": "Cáilíocht meiteashonraí",
+        "Missing metadata": "Meiteashonraí atá in easnamh",
+        "Nothing is missing": "Níl aon rud in easnamh",
+        "Publisher": "Foilsitheoir",
+        "The metadata quality could not be loaded": "Níorbh fhéidir cáilíocht na meiteashonraí a lódáil",
+        "{score} of 100": "{score} as 100",
+        "Could not compute the metadata quality.": "Níorbh fhéidir cáilíocht na meiteashonraí a ríomh."
     },
     "plurals": {}
 }

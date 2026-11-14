@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Die Standard-Aufbewahrungsfristen konnten nicht gespeichert werden",
         "Any other category": "Jede andere Kategorie",
         "Retention Decision Log": "Protokoll der Aufbewahrungsentscheidungen",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Jede Aufbewahrungsentscheidung zu dieser Veröffentlichung, älteste zuerst: was entschieden wurde, von wem, wann, die Notiz und die Rechtsgrundlage."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Jede Aufbewahrungsentscheidung zu dieser Veröffentlichung, älteste zuerst: was entschieden wurde, von wem, wann, die Notiz und die Rechtsgrundlage.",
+        "A low score never stops publishing.": "Eine niedrige Bewertung verhindert die Veröffentlichung nie.",
+        "Access link": "Zugangslink",
+        "Download link": "Download-Link",
+        "File format": "Dateiformat",
+        "Landing page": "Landingpage",
+        "Last modified": "Zuletzt geändert",
+        "Metadata quality": "Metadatenqualität",
+        "Missing metadata": "Fehlende Metadaten",
+        "Nothing is missing": "Es fehlt nichts",
+        "Publisher": "Herausgeber",
+        "The metadata quality could not be loaded": "Die Metadatenqualität konnte nicht geladen werden",
+        "{score} of 100": "{score} von 100",
+        "Could not compute the metadata quality.": "Die Metadatenqualität konnte nicht berechnet werden."
     },
     "plurals": {}
 }

@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "No se pudieron guardar los plazos de conservación predeterminados",
         "Any other category": "Cualquier otra categoría",
         "Retention Decision Log": "Registro de decisiones de conservación",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Cada decisión de conservación sobre esta publicación, la más antigua primero: qué se decidió, quién, cuándo, la nota y la base legal."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Cada decisión de conservación sobre esta publicación, la más antigua primero: qué se decidió, quién, cuándo, la nota y la base legal.",
+        "A low score never stops publishing.": "Una puntuación baja nunca impide publicar.",
+        "Access link": "Enlace de acceso",
+        "Download link": "Enlace de descarga",
+        "File format": "Formato de archivo",
+        "Landing page": "Página de destino",
+        "Last modified": "Última modificación",
+        "Metadata quality": "Calidad de los metadatos",
+        "Missing metadata": "Metadatos que faltan",
+        "Nothing is missing": "No falta nada",
+        "Publisher": "Editor",
+        "The metadata quality could not be loaded": "No se pudo cargar la calidad de los metadatos",
+        "{score} of 100": "{score} de 100",
+        "Could not compute the metadata quality.": "No se pudo calcular la calidad de los metadatos."
     },
     "nplurals=2; plural=(n != 1);"
 )

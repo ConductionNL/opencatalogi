@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Nepavyko įrašyti numatytųjų saugojimo terminų",
         "Any other category": "Bet kuri kita kategorija",
         "Retention Decision Log": "Saugojimo sprendimų žurnalas",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Kiekvienas šio leidinio saugojimo sprendimas, seniausias pirmas: kas nuspręsta, kas, kada, pastaba ir teisinis pagrindas."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Kiekvienas šio leidinio saugojimo sprendimas, seniausias pirmas: kas nuspręsta, kas, kada, pastaba ir teisinis pagrindas.",
+        "A low score never stops publishing.": "Žemas balas niekada nesustabdo skelbimo.",
+        "Access link": "Prieigos nuoroda",
+        "Download link": "Atsisiuntimo nuoroda",
+        "File format": "Failo formatas",
+        "Landing page": "Nukreipimo puslapis",
+        "Last modified": "Paskutinį kartą keista",
+        "Metadata quality": "Metaduomenų kokybė",
+        "Missing metadata": "Trūkstami metaduomenys",
+        "Nothing is missing": "Nieko netrūksta",
+        "Publisher": "Leidėjas",
+        "The metadata quality could not be loaded": "Nepavyko įkelti metaduomenų kokybės",
+        "{score} of 100": "{score} iš 100",
+        "Could not compute the metadata quality.": "Nepavyko apskaičiuoti metaduomenų kokybės."
     },
     "nplurals=2; plural=(n != 1);"
 )

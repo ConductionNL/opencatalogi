@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Не вдалося зберегти типові строки зберігання",
         "Any other category": "Будь-яка інша категорія",
         "Retention Decision Log": "Журнал рішень про зберігання",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Кожне рішення про зберігання цієї публікації, починаючи з найдавнішого: що вирішено, ким, коли, примітка та правова підстава."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Кожне рішення про зберігання цієї публікації, починаючи з найдавнішого: що вирішено, ким, коли, примітка та правова підстава.",
+        "A low score never stops publishing.": "Низька оцінка ніколи не заважає публікації.",
+        "Access link": "Посилання для доступу",
+        "Download link": "Посилання для завантаження",
+        "File format": "Формат файлу",
+        "Landing page": "Цільова сторінка",
+        "Last modified": "Остання зміна",
+        "Metadata quality": "Якість метаданих",
+        "Missing metadata": "Відсутні метадані",
+        "Nothing is missing": "Нічого не бракує",
+        "Publisher": "Видавець",
+        "The metadata quality could not be loaded": "Не вдалося завантажити якість метаданих",
+        "{score} of 100": "{score} зі 100",
+        "Could not compute the metadata quality.": "Не вдалося обчислити якість метаданих."
     },
     "nplurals=2; plural=(n != 1);"
 )

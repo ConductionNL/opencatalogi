@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Standard oppbevaringsfrister kunne ikke lagres",
         "Any other category": "Enhver annen kategori",
         "Retention Decision Log": "Logg over oppbevaringsvedtak",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Hvert oppbevaringsvedtak om denne publikasjonen, eldste først: hva som ble besluttet, av hvem, når, notatet og rettsgrunnlaget."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Hvert oppbevaringsvedtak om denne publikasjonen, eldste først: hva som ble besluttet, av hvem, når, notatet og rettsgrunnlaget.",
+        "A low score never stops publishing.": "En lav poengsum stopper aldri publisering.",
+        "Access link": "Tilgangslenke",
+        "Download link": "Nedlastingslenke",
+        "File format": "Filformat",
+        "Landing page": "Landingsside",
+        "Last modified": "Sist endret",
+        "Metadata quality": "Metadatakvalitet",
+        "Missing metadata": "Manglende metadata",
+        "Nothing is missing": "Ingenting mangler",
+        "Publisher": "Utgiver",
+        "The metadata quality could not be loaded": "Metadatakvaliteten kunne ikke lastes inn",
+        "{score} of 100": "{score} av 100",
+        "Could not compute the metadata quality.": "Metadatakvaliteten kunne ikke beregnes."
     },
     "nplurals=2; plural=(n != 1);"
 )

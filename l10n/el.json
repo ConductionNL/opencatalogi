@@ -737,7 +737,20 @@
         "The retention defaults could not be saved": "Δεν ήταν δυνατή η αποθήκευση των προεπιλεγμένων προθεσμιών διατήρησης",
         "Any other category": "Οποιαδήποτε άλλη κατηγορία",
         "Retention Decision Log": "Αρχείο αποφάσεων διατήρησης",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Κάθε απόφαση διατήρησης για αυτή τη δημοσίευση, η παλαιότερη πρώτη: τι αποφασίστηκε, από ποιον, πότε, η σημείωση και η νομική βάση."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Κάθε απόφαση διατήρησης για αυτή τη δημοσίευση, η παλαιότερη πρώτη: τι αποφασίστηκε, από ποιον, πότε, η σημείωση και η νομική βάση.",
+        "A low score never stops publishing.": "Μια χαμηλή βαθμολογία δεν εμποδίζει ποτέ τη δημοσίευση.",
+        "Access link": "Σύνδεσμος πρόσβασης",
+        "Download link": "Σύνδεσμος λήψης",
+        "File format": "Μορφή αρχείου",
+        "Landing page": "Σελίδα προορισμού",
+        "Last modified": "Τελευταία τροποποίηση",
+        "Metadata quality": "Ποιότητα μεταδεδομένων",
+        "Missing metadata": "Μεταδεδομένα που λείπουν",
+        "Nothing is missing": "Δεν λείπει τίποτα",
+        "Publisher": "Εκδότης",
+        "The metadata quality could not be loaded": "Δεν ήταν δυνατή η φόρτωση της ποιότητας των μεταδεδομένων",
+        "{score} of 100": "{score} στα 100",
+        "Could not compute the metadata quality.": "Δεν ήταν δυνατός ο υπολογισμός της ποιότητας των μεταδεδομένων."
     },
     "plurals": {}
 }

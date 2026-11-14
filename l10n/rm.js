@@ -738,7 +738,20 @@ OC.L10N.register(
         "The retention defaults could not be saved": "Ils termins da conservaziun predefinids n'han betg pudì vegnir memorisads",
         "Any other category": "Mintga autra categoria",
         "Retention Decision Log": "Protocol da las decisiuns da conservaziun",
-        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Mintga decisiun da conservaziun davart questa publicaziun, la pli veglia l'emprima: tge ch'è vegnì decidì, da tgi, cura, la notizia e la basa giuridica."
+        "Every retention decision on this publication, oldest first: what was decided, by whom, when, the note and the legal basis.": "Mintga decisiun da conservaziun davart questa publicaziun, la pli veglia l'emprima: tge ch'è vegnì decidì, da tgi, cura, la notizia e la basa giuridica.",
+        "A low score never stops publishing.": "Ina pitschna valitaziun n'impedescha mai da publitgar.",
+        "Access link": "Link d'access",
+        "Download link": "Link da telechargiar",
+        "File format": "Format da datoteca",
+        "Landing page": "Pagina d'arrivada",
+        "Last modified": "Midà l'ultima giada",
+        "Metadata quality": "Qualitad da las metadatas",
+        "Missing metadata": "Metadatas mancantas",
+        "Nothing is missing": "I na manca nagut",
+        "Publisher": "Editur",
+        "The metadata quality could not be loaded": "La qualitad da las metadatas n'ha betg pudì vegnir chargiada",
+        "{score} of 100": "{score} da 100",
+        "Could not compute the metadata quality.": "La qualitad da las metadatas n'ha betg pudì vegnir calculada."
     },
     "nplurals=2; plural=(n != 1);"
 )

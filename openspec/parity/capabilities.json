@@ -1728,9 +1728,9 @@
 			"source": "own-code",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/opencatalogi",
-				"evidence": "appinfo/routes.php:205 GET /api/catalogs/{slug}/quality -> StatsController.php:223 + QualityService.php:106 scoreDataset; routes.php:28-29 DCAT validate endpoints; grep of src/ finds no caller of /quality; publication_register.json:289 hardValidation false, required only title Not built: the quality score is computed server side but no staff page shows it, so nobody sees the missing metadata before publishing. Task 2.5 of capability-rows-close-gaps.",
+				"evidence": "src/manifest.json PublicationDetail pub-quality card -> src/components/widgets/PublicationQualityWidget.vue -> services/publicationQuality.js GET /api/catalogs/{slug}/publications/{id}/quality -> StatsController::publicationQuality (readable catalogue) -> lib/Service/PublicationQuality.php reads the publication under RBAC, DcatService::buildPublicationDataset renders the same dcat:Dataset the feed holds, QualityService::scoreDataset scores it; the card shows the 0-100 score and names the missing fields, published or not, advisory only (PublicationQualityTest, StatsPublicationQualityTest, DcatCatalogDocumentTest, PublicationQualityWidget.spec.js, tests/vitest/publicationQuality.spec.js)",
 				"change": "publication-quality-metrics",
 				"requirement": [
 					"openspec/specs/publication-quality :: Per-publication metadata-quality score over MQA dimensions (PQM-001)",
