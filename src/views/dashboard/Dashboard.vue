@@ -124,6 +124,28 @@
 					@click="navigateToPublications()" />
 			</template>
 
+			<!-- Catalogues count widget -->
+			<template #widget-count-catalogs>
+				<CnStatsBlock
+					:title="t('opencatalogi', 'Catalogs')"
+					:count="kpis.catalogCount"
+					:countLabel="t('opencatalogi', 'catalogs')"
+					:icon="Bookshelf"
+					variant="default"
+					horizontal />
+			</template>
+
+			<!-- Attachments count widget -->
+			<template #widget-count-attachments>
+				<CnStatsBlock
+					:title="t('opencatalogi', 'Attachments')"
+					:count="kpis.attachmentCount"
+					:countLabel="t('opencatalogi', 'attachments')"
+					:icon="Paperclip"
+					variant="default"
+					horizontal />
+			</template>
+
 			<!-- Concept Attachments count widget -->
 			<!-- TODO: Re-add concept attachments widget once a scalable fetch strategy is in place.
 			     Fetching files per-publication does not scale for large catalogs.
@@ -324,10 +346,12 @@ import {
 import { loadState } from '@nextcloud/initial-state'
 import { NcButton } from '@nextcloud/vue'
 import AlertOutline from 'vue-material-design-icons/AlertOutline.vue'
+import Bookshelf from 'vue-material-design-icons/Bookshelf.vue'
 import ChartAreaspline from 'vue-material-design-icons/ChartAreaspline.vue'
 import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue'
 import FileDocumentCheckOutline from 'vue-material-design-icons/FileDocumentCheckOutline.vue'
 import FileDocumentEditOutline from 'vue-material-design-icons/FileDocumentEditOutline.vue'
+import Paperclip from 'vue-material-design-icons/Paperclip.vue'
 import Plus from 'vue-material-design-icons/Plus.vue'
 import {
 	useAccentChartColor,
@@ -338,6 +362,7 @@ import {
 	isDepublished,
 	isPublished,
 } from '../../services/publicationStatus.js'
+import { fetchPublicationStatusCounts } from '../../services/publicationStatusCounts.js'
 import { countingStartNote, fetchInstanceSeries } from '../../services/usageStats.js'
 import { navigationStore, objectStore } from '../../store/store.js'
 
@@ -362,7 +387,7 @@ const DEFAULT_LAYOUT = [
 		gridX: 0,
 		gridY: 0,
 		gridWidth: 3,
-		gridHeight: 3,
+		gridHeight: 2,
 		showTitle: false,
 	},
 	{
@@ -371,25 +396,43 @@ const DEFAULT_LAYOUT = [
 		gridX: 3,
 		gridY: 0,
 		gridWidth: 3,
-		gridHeight: 3,
+		gridHeight: 2,
 		showTitle: false,
 	},
 	{
 		id: 3,
 		widgetId: 'count-published-publications',
 		gridX: 0,
-		gridY: 3,
+		gridY: 2,
 		gridWidth: 3,
-		gridHeight: 3,
+		gridHeight: 2,
 		showTitle: false,
 	},
 	{
 		id: 9,
 		widgetId: 'count-depublished-publications',
 		gridX: 3,
-		gridY: 3,
+		gridY: 2,
 		gridWidth: 3,
-		gridHeight: 3,
+		gridHeight: 2,
+		showTitle: false,
+	},
+	{
+		id: 13,
+		widgetId: 'count-catalogs',
+		gridX: 0,
+		gridY: 4,
+		gridWidth: 3,
+		gridHeight: 2,
+		showTitle: false,
+	},
+	{
+		id: 14,
+		widgetId: 'count-attachments',
+		gridX: 3,
+		gridY: 4,
+		gridWidth: 3,
+		gridHeight: 2,
 		showTitle: false,
 	},
 	// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
@@ -507,6 +550,26 @@ function customWidget(id, title) {
 }
 
 /**
+ * How many attachments the publications carry, read from each one's
+ * `@self.files`: a count, or the list of its files. Counts what the
+ * publications list holds, so no request per publication is made.
+ *
+ * @param {Array<object>} publications The publications
+ * @return {number} The number of attachments
+ * @spec openspec/changes/capability-rows-get-requirements/specs/retrofit-2026-05-26-dashboard-widgets/spec.md#requirement-the-dashboard-counts-catalogues-publications-and-attachments-req-crr-005
+ */
+export function attachmentCount(publications) {
+	return publications.reduce((total, publication) => {
+		const files = publication?.['@self']?.files
+		if (Array.isArray(files)) {
+			return total + files.length
+		}
+		const count = Number(files)
+		return total + (Number.isFinite(count) && count > 0 ? count : 0)
+	}, 0)
+}
+
+/**
  * A publication list widget whose title icon shows the status colour.
  *
  * @param {string} id - The widget id
@@ -541,6 +604,8 @@ function countWidgetDefs() {
 			'count-depublished-publications',
 			t('opencatalogi', 'Depublished Publications'),
 		),
+		customWidget('count-catalogs', t('opencatalogi', 'Catalogs')),
+		customWidget('count-attachments', t('opencatalogi', 'Attachments')),
 		// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 		// { id: 'count-concept-attachments', title: t('opencatalogi', 'Concept Attachments'), type: 'custom' },
 	]
@@ -619,6 +684,8 @@ export default {
 			FileDocumentEditOutline,
 			FileDocumentCheckOutline,
 			AlertOutline,
+			Bookshelf,
+			Paperclip,
 			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 			// PaperclipOff,
 			globalLoading: false,
@@ -630,6 +697,8 @@ export default {
 			usageCountingStart: null,
 			popularSearchTerms: [],
 			publicationTotal: 0,
+			// Per-status totals from OR's ad-hoc aggregation; null until they load.
+			statusCounts: null,
 			// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 			// attachmentsList: [],
 		}
@@ -711,9 +780,16 @@ export default {
 				publicationCount:
 					this.publicationTotal || this.allPublications.length,
 
-				conceptPublicationCount: this.conceptPublications.length,
-				publishedPublicationCount: this.publishedPublications.length,
-				depublishedPublicationCount: this.depublishedPublications.length,
+				conceptPublicationCount:
+					this.statusCounts?.concept ?? this.conceptPublications.length,
+
+				publishedPublicationCount:
+					this.statusCounts?.published ?? this.publishedPublications.length,
+
+				depublishedPublicationCount:
+					this.statusCounts?.depublished ?? this.depublishedPublications.length,
+
+				attachmentCount: attachmentCount(this.allPublications),
 				// TODO: Re-add when concept attachments widget is restored. Do NOT remove.
 				// conceptAttachmentCount: this.conceptAttachments.length,
 			}
@@ -834,61 +910,45 @@ export default {
 		},
 
 		/**
-		 * Source the total publication count from OR's generic ad-hoc aggregation
-		 * endpoint (`GET /api/objects/aggregations/{register}/{schema}/value`) instead
-		 * of the `_limit=1000`-capped `fetchAllPublications()` response (DSH-010 /
-		 * dashboard-consume-or-aggregations). This endpoint requires no schema-level
-		 * `x-openregister-aggregations` declaration — it is OR's always-available
-		 * ad-hoc count/sum/avg entry point — so it is correct for any catalog size,
-		 * unlike the previous truncated-at-1000 total.
+		 * Source the publication KPI counts from OR's generic ad-hoc aggregation
+		 * endpoint (`GET /api/objects/aggregations/{register}/{schema}/value`)
+		 * instead of the `_limit=1000`-capped `fetchAllPublications()` response
+		 * (DSH-010 / DSH-OR-001). The endpoint needs no schema-level
+		 * `x-openregister-aggregations` declaration and has no row cap.
 		 *
-		 * `conceptPublicationCount` / `publishedPublicationCount` /
-		 * `depublishedPublicationCount` remain client-computed from
-		 * `fetchAllPublications()`'s (bounded, not 1000-capped-as-a-total-source)
-		 * result: those three states are DERIVED from a date comparison against "now"
-		 * (`publicationDate` / `depublicationDate` — see `publicationStatus.js`), not a
-		 * stored field, so grouping by them via OR's field-based `groupBy` aggregation
-		 * is not possible without either (a) a materialized status field written on
-		 * save, or (b) confirmed null-safe date-range filter support in OR's ad-hoc
-		 * aggregation filter DSL (unconfirmed at authoring time — see
-		 * openspec/changes/dashboard-consume-or-aggregations/tasks.md). Tracked as a
-		 * follow-up; not silently guessed here to avoid shipping confidently-wrong
-		 * counts.
+		 * The concept / published / depublished states are derived from
+		 * `publicationDate` / `depublicationDate` against "now", not stored, so
+		 * they are counted with date filters: total, live (published on or before
+		 * now) and ended (also depublished on or before now) — see
+		 * `services/publicationStatusCounts.js`. When the register or schema is
+		 * not configured or a count fails, the KPIs keep the list-derived counts.
 		 *
 		 * @return {Promise<void>}
 		 * @spec openspec/specs/dashboard/spec.md#requirement-dashboard-overview-view-dsh-010
+		 * @spec openspec/changes/dashboard-consume-or-aggregations/tasks.md
 		 */
 		async fetchPublicationAggregations() {
-			if (!PUBLICATION_REGISTER || !PUBLICATION_SCHEMA) {
+			const counts = await fetchPublicationStatusCounts({
+				register: PUBLICATION_REGISTER,
+				schema: PUBLICATION_SCHEMA,
+				prefix: window.location.pathname.includes('/index.php')
+					? '/index.php'
+					: '',
+				headers: buildHeaders(),
+			})
+			if (counts === null) {
+				console.warn('Failed to load publication count aggregations')
 				return
 			}
-
-			try {
-				const prefix = window.location.pathname.includes('/index.php')
-					? '/index.php'
-					: ''
-				const response = await fetch(
-					`${prefix}/apps/openregister/api/objects/aggregations/${PUBLICATION_REGISTER}/${PUBLICATION_SCHEMA}/value?metric=count`,
-					{ method: 'GET', headers: buildHeaders() },
-				)
-				if (response.ok) {
-					const data = await response.json()
-					if (typeof data.value === 'number') {
-						this.publicationTotal = data.value
-					}
-				}
-			} catch (err) {
-				console.warn('Failed to load publication count aggregation:', err)
-			}
+			this.statusCounts = counts
+			this.publicationTotal = counts.total
 		},
 
 		/**
 		 * Fetch a bounded page of publication objects to power the concept /
-		 * published / depublished side-panel lists and their (client-computed)
-		 * counts. `publicationTotal` (the headline KPI) is sourced separately by
-		 * `fetchPublicationAggregations()`, so this fetch no longer needs to
-		 * masquerade as the count source — see that method's docblock for why the
-		 * three sub-status counts remain list-derived rather than aggregation-derived.
+		 * published / depublished side-panel lists and the category chart. The KPI
+		 * counts are sourced separately by `fetchPublicationAggregations()`; this
+		 * page only stands in for them when that aggregation is unavailable.
 		 *
 		 * @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-1
 		 */

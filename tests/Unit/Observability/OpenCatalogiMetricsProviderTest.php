@@ -188,6 +188,8 @@ class OpenCatalogiMetricsProviderTest extends TestCase {
 				'catalogs_total',
 				'listings_total',
 				'directory_entries_total',
+				'federation_reachable_total',
+				'federation_unreachable_total',
 				'publication_views_total',
 				'file_downloads_total',
 			],
@@ -213,6 +215,8 @@ class OpenCatalogiMetricsProviderTest extends TestCase {
 		$this->assertSame('gauge', $byName['catalogs_total']);
 		$this->assertSame('gauge', $byName['listings_total']);
 		$this->assertSame('gauge', $byName['directory_entries_total']);
+		$this->assertSame('gauge', $byName['federation_reachable_total']);
+		$this->assertSame('gauge', $byName['federation_unreachable_total']);
 		$this->assertSame('counter', $byName['publication_views_total']);
 		$this->assertSame('counter', $byName['file_downloads_total']);
 
@@ -327,5 +331,101 @@ class OpenCatalogiMetricsProviderTest extends TestCase {
 		);
 
 	}//end testAggregatesPublicationsAndUsageFromOr()
+
+	/**
+	 * Listings split into reachable (last sync 2xx) and unreachable (any other
+	 * status code); a listing never synced is in neither gauge.
+	 *
+	 * @return void
+	 */
+	public function testFederationSplitsListingsByTheirLastSync(): void {
+		$this->registerService('OCA\OpenRegister\Db\SchemaMapper', $this->schemaMapperReturning([['id' => 14, 'title' => 'Listing']]));
+		$this->registerService('OCA\OpenRegister\Db\RegisterMapper', $this->registerMapperReturning([['id' => 2, 'schemas' => [14]]]));
+		$this->registerService(
+			'OCA\OpenRegister\Service\ObjectService',
+			$this->objectServiceReturning(
+				[
+					'2:14' => [
+						['status' => 'active', 'statusCode' => 200],
+						['status' => 'active', 'statusCode' => '204'],
+						['status' => 'active', 'statusCode' => 500],
+						['status' => 'active', 'statusCode' => 404],
+						['status' => 'active', 'statusCode' => 0],
+						['status' => 'new'],
+						['status' => 'new', 'statusCode' => 'n/a'],
+					],
+				]
+			)
+		);
+
+		$byName = [];
+		foreach ($this->provider()->metrics() as $sample) {
+			$byName[$sample->name] = $sample->samples;
+		}
+
+		$this->assertSame([['labels' => [], 'value' => 2]], $byName['federation_reachable_total']);
+		$this->assertSame([['labels' => [], 'value' => 3]], $byName['federation_unreachable_total']);
+		$this->assertSame(
+			[['labels' => ['status' => 'active'], 'value' => 5], ['labels' => ['status' => 'new'], 'value' => 2]],
+			$byName['listings_total']
+		);
+
+	}//end testFederationSplitsListingsByTheirLastSync()
+
+	/**
+	 * Without OpenRegister's RegisterMapper no register holds the schemas, so
+	 * no object is searched and every family answers its zero fallback.
+	 *
+	 * @return void
+	 */
+	public function testWithoutTheRegisterMapperNothingIsSearched(): void {
+		$this->registerService(
+			'OCA\OpenRegister\Db\SchemaMapper',
+			$this->schemaMapperReturning(
+				[
+					['id' => 11, 'title' => 'Publication'],
+					['id' => 12, 'title' => 'usageCounter'],
+				]
+			)
+		);
+		$searched = new class () {
+			/**
+			 * The queries asked.
+			 *
+			 * @var array<int, array<string, mixed>>
+			 */
+			public array $queries = [];
+
+			/**
+			 * Records the query and answers a publication.
+			 *
+			 * @param array<string, mixed> $query         The query.
+			 * @param bool                 $_rbac         Unused.
+			 * @param bool                 $_multitenancy Unused.
+			 *
+			 * @return array<int, array<string, mixed>>
+			 */
+			public function searchObjects(array $query = [], bool $_rbac = true, bool $_multitenancy = true): array {
+				$this->queries[] = $query;
+				return [['status' => 'published', 'catalog' => 'woo']];
+			}
+		};
+		$this->registerService('OCA\OpenRegister\Service\ObjectService', $searched);
+
+		$byName = [];
+		foreach ($this->provider()->metrics() as $sample) {
+			$byName[$sample->name] = $sample;
+		}
+
+		$this->assertSame([], $searched->queries);
+		$this->assertSame(
+			[['labels' => ['catalog' => ''], 'value' => 0]],
+			$byName['publication_views_total']->samples
+		);
+		$this->assertSame(
+			[['labels' => ['catalog' => ''], 'value' => 0]],
+			$byName['file_downloads_total']->samples
+		);
+	}//end testWithoutTheRegisterMapperNothingIsSearched()
 
 }//end class

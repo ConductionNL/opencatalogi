@@ -12,6 +12,10 @@ import { h } from 'vue'
 import CopyObjectDialog from './CopyObjectDialog.vue'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 
+// The object store imports @nextcloud/auth, whose ESM-only dependency Jest
+// cannot parse; the dialog never reaches it.
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'token' }))
+
 jest.mock('@nextcloud/router', () => ({
 	generateUrl: (path) => path,
 }))

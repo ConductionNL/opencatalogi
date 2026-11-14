@@ -287,6 +287,19 @@ class PublicationWithdrawGoldenTest extends TestCase {
 					return $this->fileService(case: $case, calls: $calls);
 				}
 
+				if ($id === 'OCA\\OpenRegister\\Files\\Db\\FileMapper') {
+					// Ending the file's window is pinned in PublicationStateControllerTest.
+					return new class {
+						public function findByFileIds(array $fileIds): array {
+							return [];
+						}
+
+						public function setPublicationWindowForFile(int $fileId, object $window): object {
+							return $window;
+						}
+					};
+				}
+
 				throw new \RuntimeException('not available: ' . $id);
 			}
 		);

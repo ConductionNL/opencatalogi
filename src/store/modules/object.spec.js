@@ -5,6 +5,10 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { useObjectStore } from './object.js'
 
+// @nextcloud/auth ships ESM that Jest does not transform; the store only
+// reads the request token from it, so stub that boundary.
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'tok' }))
+
 /**
  * Mock settings response
  */
@@ -380,7 +384,7 @@ describe('ObjectStore', () => {
 
 			expect(fetch).toHaveBeenCalledWith(
 				'/index.php/apps/openregister/api/objects/20/105/1',
-				{ method: 'DELETE' },
+				{ method: 'DELETE', headers: { requesttoken: 'tok' } },
 			)
 			// Deleting an object drops it from the selection.
 			expect(store.selectedObjects).toEqual([])
@@ -506,7 +510,7 @@ describe('ObjectStore', () => {
 
 			expect(fetch).toHaveBeenCalledWith(
 				'/index.php/apps/openregister/api/objects/20/105/1',
-				{ method: 'DELETE' },
+				{ method: 'DELETE', headers: { requesttoken: 'tok' } },
 			)
 		})
 

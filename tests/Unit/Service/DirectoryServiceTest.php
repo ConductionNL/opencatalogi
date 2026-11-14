@@ -4738,4 +4738,91 @@ class DirectoryServiceTest extends TestCase {
 		parse_str($uri->getQuery(), $query);
 		$this->assertSame('false', $query['_aggregate'] ?? null);
 	}
+
+	/**
+	 * The attachments of a remote publication come from the peer's federation
+	 * endpoint, without further aggregation, keep the peer's download URL and
+	 * say which instance they came from; the loopback entry is never called.
+	 *
+	 * @dataProvider peerListingUrlShapes
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testGetRemoteAttachmentsAsksThePeersFederationEndpoint(string $publicationsUrl): void {
+		$this->urlGenerator->method('getAbsoluteURL')
+			->willReturn('https://myserver.example.com/index.php/apps/opencatalogi/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/index.php/apps/opencatalogi/api/directory');
+		$this->setPrivateProperty('cachedUniqueDirs', [$publicationsUrl, 'https://127.0.0.1/index.php/apps/opencatalogi/api/federation/publications']);
+		$this->setPrivateProperty('cacheTimestamp', time());
+
+		$files = [
+			['id' => 'f1', 'title' => 'besluit.pdf', 'downloadUrl' => 'https://93.184.216.34/remote.php/dav/f1'],
+			['id' => 'f2', 'title' => 'bijlage.pdf', 'downloadUrl' => 'https://93.184.216.34/remote.php/dav/f2'],
+		];
+		$history = [];
+		$stack = \GuzzleHttp\HandlerStack::create(new \GuzzleHttp\Handler\MockHandler([
+			new Response(200, [], json_encode(['results' => $files, 'total' => 2])),
+		]));
+		$stack->push(\GuzzleHttp\Middleware::history($history));
+
+		$result = $this->service->getRemoteAttachments('pub-1', ['handler' => $stack]);
+
+		$this->assertCount(1, $history, 'only the safe peer is asked; the loopback entry is refused');
+		$uri = $history[0]['request']->getUri();
+		$this->assertSame('93.184.216.34', $uri->getHost());
+		$this->assertSame('/index.php/apps/opencatalogi/api/federation/publications/pub-1/attachments', $uri->getPath());
+		parse_str($uri->getQuery(), $query);
+		$this->assertSame('false', $query['_aggregate'] ?? null);
+
+		$this->assertSame(
+			[
+				$files[0] + ['source' => ['instance' => 'https://93.184.216.34']],
+				$files[1] + ['source' => ['instance' => 'https://93.184.216.34']],
+			],
+			$result['results']
+		);
+		$this->assertSame(['93.184.216.34'], array_keys($result['source']));
+	}
+
+	/**
+	 * A peer that does not hold the publication is passed over, and with no
+	 * other peer there is no answer.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testGetRemoteAttachmentsIsNullWhenNoPeerHoldsThePublication(): void {
+		$this->urlGenerator->method('getAbsoluteURL')
+			->willReturn('https://myserver.example.com/index.php/apps/opencatalogi/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/index.php/apps/opencatalogi/api/directory');
+		$this->setPrivateProperty('cachedUniqueDirs', ['https://93.184.216.34/index.php/apps/opencatalogi/api/federation/publications']);
+		$this->setPrivateProperty('cacheTimestamp', time());
+
+		$stack = \GuzzleHttp\HandlerStack::create(new \GuzzleHttp\Handler\MockHandler([
+			new Response(404, [], json_encode(['error' => 'Not Found'])),
+		]));
+
+		$this->assertNull($this->service->getRemoteAttachments('pub-1', ['handler' => $stack]));
+	}
+
+	/**
+	 * A directory on a private address is never called.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testGetRemoteAttachmentsNeverCallsAPrivateAddress(): void {
+		$this->urlGenerator->method('getAbsoluteURL')
+			->willReturn('https://myserver.example.com/index.php/apps/opencatalogi/api/directory');
+		$this->urlGenerator->method('linkToRoute')->willReturn('/index.php/apps/opencatalogi/api/directory');
+		$this->setPrivateProperty('cachedUniqueDirs', ['https://10.0.0.5/index.php/apps/opencatalogi/api/federation/publications']);
+		$this->setPrivateProperty('cacheTimestamp', time());
+
+		$history = [];
+		$stack = \GuzzleHttp\HandlerStack::create(new \GuzzleHttp\Handler\MockHandler([
+			new Response(200, [], json_encode(['results' => [['id' => 'f1']]])),
+		]));
+		$stack->push(\GuzzleHttp\Middleware::history($history));
+
+		$this->assertNull($this->service->getRemoteAttachments('pub-1', ['handler' => $stack]));
+		$this->assertSame([], $history);
+	}
 }

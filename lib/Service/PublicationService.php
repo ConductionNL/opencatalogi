@@ -73,6 +73,7 @@ use ZipArchive;
  *
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+ * @spec openspec/changes/publications/tasks.md
  */
 class PublicationService implements PublicationServiceInterface {
 
@@ -792,9 +793,13 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure function over the query (WOO-581)
 	 */
 	private function searchObjectsWithinScope($objectService, array $query, array $registers, array $schemas): array {
+		// The list is narrowed to the catalogue union; say so in the response (REQ-ASF-001).
+		$this->getQueryService()->recordCatalogScope(schemaIds: $schemas, registerIds: $registers);
+
 		try {
 			return $objectService->searchObjectsPaginated(
 				query: CallerScope::writeScope(query: $query, registers: $registers, schemas: $schemas),
@@ -1057,6 +1062,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @return JSONResponse A JSON response containing the list of objects
 	 *
+	 * @spec openspec/changes/search/tasks.md#task-2.3
 	 * @spec openspec/specs/publications/spec.md
 	 */
 	public function index(null|string|int $catalogId = null, ?array $customParams = null): JSONResponse {
@@ -1676,6 +1682,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @spec openspec/changes/search/tasks.md#task-2.4
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array {
@@ -2896,6 +2903,57 @@ class PublicationService implements PublicationServiceInterface {
 
 		return $this->fetchFederatedPublication(id: $id, queryParams: $queryParams);
 	}//end getFederatedPublication()
+
+	/**
+	 * The attachments of a publication, local first and otherwise read from the
+	 * instance that holds it.
+	 *
+	 * A local publication answers with its own attachments, exactly as
+	 * attachments() does. When it is not held here and `_aggregate` is not
+	 * false, the instance that holds it is asked through
+	 * DirectoryService::getRemoteAttachments(); each attachment keeps that
+	 * instance's download URL. With `_aggregate=false` (a peer asking us) the
+	 * local answer stands, so a lookup never fans out twice.
+	 *
+	 * @param string $id The ID of the publication
+	 * @param array $queryParams Query parameters including aggregation settings
+	 *
+	 * @return JSONResponse The attachments, or a 404 when no reachable source holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getFederatedAttachments(string $id, array $queryParams = []): JSONResponse {
+		$local = $this->attachments(id: $id);
+		if ($local->getStatus() !== 404) {
+			return $local;
+		}
+
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		if ($aggregate === 'false' || $aggregate === '0') {
+			return $local;
+		}
+
+		try {
+			$remote = $this->directoryService->getRemoteAttachments($id, $this->federationRequestConfig(queryParams: $queryParams));
+		} catch (\Exception $e) {
+			$remote = null;
+		}
+
+		if ($remote === null) {
+			return new JSONResponse(['error' => 'Not Found: no reachable source holds this publication'], 404);
+		}
+
+		$total = count($remote['results']);
+		return new JSONResponse(
+			[
+				'results' => $remote['results'],
+				'total' => $total,
+				'page' => 1,
+				'pages' => 1,
+				'sources' => $remote['source'],
+			]
+		);
+	}//end getFederatedAttachments()
 
 	/**
 	 * Add this instance's catalogs to the `@self.catalogs` of a local publication.
