@@ -300,6 +300,102 @@ class SitemapServiceTest extends TestCase {
 		$this->assertEquals('reg-woo', $registerId);
 	}
 
+	/**
+	 * Every one of the 18 category codes resolves, given a catalogue whose
+	 * register holds the schema titled after that category (woo-compliance
+	 * task 7.2, REQ-WOO-003).
+	 *
+	 * @param int $number The category number, 1 to 18.
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('everyCategoryNumber')]
+	public function testEveryCategoryCodeResolvesForAConfiguredCatalogue(int $number): void {
+		$code = sprintf('sitemapindex-diwoo-infocat%03d.xml', $number);
+		$schemas = [];
+		foreach (array_values($this->wooCategories->sitemapFiles()) as $index => $title) {
+			$schemas[] = ['id' => 'sch-' . ($index + 1), 'title' => $title];
+		}
+
+		$this->settingsService->method('getSettings')->willReturn(
+			[
+				'availableRegisters' => [['title' => 'Woo', 'id' => 'reg-woo', 'schemas' => $schemas]],
+				'configuration' => ['catalog_register' => 'cat-reg', 'catalog_schema' => 'cat-sch'],
+			]
+		);
+		$catalogue = new class {
+			public function getObject(): array {
+				return ['schemas' => array_map(static fn (int $n): string => 'sch-' . $n, range(1, 18)), 'hasWooSitemap' => true];
+			}
+
+			public function getSlug(): string {
+				return 'woo-catalogus';
+			}
+
+			public function jsonSerialize(): array {
+				return ['slug' => 'woo-catalogus'];
+			}
+		};
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')->willReturn(['results' => [$catalogue]]);
+
+		$request = new SitemapRequest('woo-catalogus', $code);
+		$result = $this->getPrivateMethod('resolveSitemapRequest')->invoke($this->service, $request, $objectService);
+
+		$this->assertNull($result, $code . ' must resolve');
+		$this->assertSame('sch-' . $number, $request->schemaId);
+		$this->assertSame('reg-woo', $request->registerId);
+	}
+
+	/**
+	 * The category numbers 1 to 18.
+	 *
+	 * @return array<string, array{0: int}>
+	 */
+	public static function everyCategoryNumber(): array {
+		$cases = [];
+		for ($number = 1; $number <= 18; $number++) {
+			$cases['infocat' . sprintf('%03d', $number)] = [$number];
+		}
+
+		return $cases;
+	}
+
+	/**
+	 * A code outside 1 to 18 is refused with a 400, before any catalogue is read
+	 * (woo-compliance task 7.3, REQ-WOO-007).
+	 *
+	 * @param string $code The out-of-range file name.
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('outOfRangeCodes')]
+	public function testAnOutOfRangeCategoryCodeIsRefused(string $code): void {
+		$this->settingsService->method('getSettings')->willReturn(
+			['availableRegisters' => [['title' => 'Woo', 'id' => 'reg-woo', 'schemas' => []]], 'configuration' => []]
+		);
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$result = $this->getPrivateMethod('resolveSitemapRequest')->invoke($this->service, new SitemapRequest('woo-catalogus', $code), $objectService);
+
+		$this->assertInstanceOf(XMLResponse::class, $result);
+		$this->assertSame(400, $result->getStatus());
+	}
+
+	/**
+	 * File names next to the 18 that are served.
+	 *
+	 * @return array<string, array{0: string}>
+	 */
+	public static function outOfRangeCodes(): array {
+		return [
+			'zero' => ['sitemapindex-diwoo-infocat000.xml'],
+			'nineteen' => ['sitemapindex-diwoo-infocat019.xml'],
+			'unpadded' => ['sitemapindex-diwoo-infocat1.xml'],
+		];
+	}
+
 	public function testIsValidSitemapRequestEmptyCatalog(): void {
 		$this->settingsService->method('getSettings')
 			->willReturn([
