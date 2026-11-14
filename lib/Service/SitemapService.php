@@ -236,7 +236,11 @@ class SitemapService implements SitemapServiceInterface {
 		$apiBase = $this->instance->baseUrl() . '/apps/opencatalogi/api/' . rawurlencode($catalogSlug);
 		foreach ($publications as $publication) {
 			foreach (SitemapDocumentRelations::forPublication(publication: $publication, apiBase: $apiBase) as [$file, $relations]) {
-				$documents[] = $this->mapDiwooDocument(publication: $publication, file: $file, relations: $relations);
+				// A document the Woo-index would refuse is held back; validateDiwooOutput() reports it (REQ-DWP-004).
+				$document = $this->mapDiwooDocument(publication: $publication, file: $file, relations: $relations, omitIncomplete: true);
+				if ($document !== null) {
+					$documents[] = $document;
+				}
 			}
 		}
 
@@ -278,21 +282,35 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param array $file The file metadata belonging to that publication.
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference).
 	 * @param array<string, array<string, mixed>> $relations The document's `isPartOf` or `hasParts` element, if any.
+	 * @param bool $omitIncomplete Whether a document missing a mandatory element is left out (REQ-DWP-004).
 	 *
-	 * @return array A DIWOO metadata array ready for XMLResponse.
+	 * @return array|null A DIWOO metadata array ready for XMLResponse, or null when held back.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function mapDiwooDocument(array $publication, array $file, array &$violations = [], array $relations = []): array {
+	private function mapDiwooDocument(
+		array $publication,
+		array $file,
+		array &$violations = [],
+		array $relations = [],
+		bool $omitIncomplete = false
+	): ?array {
 		if ($this->documentMapper === null) {
 			$this->documentMapper = new SitemapDocumentMapper(
 				tooiVocabulary: $this->tooiVocabulary,
 				categories: $this->categories,
-				openRegister: $this->openRegister
+				openRegister: $this->openRegister,
+				instance: $this->instance
 			);
 		}
 
-		return $this->documentMapper->map(publication: $publication, file: $file, violations: $violations, relations: $relations);
+		return $this->documentMapper->map(
+			publication: $publication,
+			file: $file,
+			violations: $violations,
+			relations: $relations,
+			omitIncomplete: $omitIncomplete
+		);
 	}//end mapDiwooDocument()
 
 	/**

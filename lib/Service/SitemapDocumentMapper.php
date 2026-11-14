@@ -48,6 +48,21 @@ class SitemapDocumentMapper {
 	];
 
 	/**
+	 * The reported axes whose absence does not hold a document back: the element is optional in the XSD.
+	 */
+	private const OPTIONAL_GAPS = ['documentsoort'];
+
+	/**
+	 * The app-config key holding the moment the DiWoo fields were introduced (written by the repair step).
+	 */
+	public const FIELDS_INTRODUCED_AT = 'diwoo_fields_introduced_at';
+
+	/**
+	 * The two-letter codes the publication schema stores, as the DiWoo language list's three-letter codes.
+	 */
+	private const LANGUAGE_CODES = ['nl' => 'NLD', 'en' => 'ENG', 'de' => 'DEU', 'fr' => 'FRA', 'fy' => 'FRY'];
+
+	/**
 	 * Per-request cache of organisation rows, by organisation uuid; an empty array when not found.
 	 *
 	 * @var array<string, array<string, mixed>>
@@ -60,11 +75,13 @@ class SitemapDocumentMapper {
 	 * @param TooiVocabularyService $tooiVocabulary Resolves organisations and handling types to TOOI.
 	 * @param WooCategoryRegistry $categories Resolves a publication's category.
 	 * @param OpenRegisterLookup $openRegister Reaches OpenRegister for the organisation lookup.
+	 * @param InstanceSettings|null $instance Holds the moment the DiWoo fields were introduced; without it every record is legacy.
 	 */
 	public function __construct(
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly WooCategoryRegistry $categories,
 		private readonly OpenRegisterLookup $openRegister,
+		private readonly ?InstanceSettings $instance = null,
 	) {
 	}//end __construct()
 
@@ -85,22 +102,30 @@ class SitemapDocumentMapper {
 	 * @param array $file The file metadata belonging to that publication
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference)
 	 * @param array<string, array<string, mixed>> $relations The document's `isPartOf` or `hasParts` element, if any ({@see SitemapDocumentRelations}).
+	 * @param bool $omitIncomplete Whether a document missing a mandatory element is left out (null) rather than emitted.
 	 *
-	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array} The url entry, ready for XMLResponse.
+	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array}|null The url entry, ready for XMLResponse.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
 	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
-	public function map(array $publication, array $file, array &$violations = [], array $relations = []): array {
+	public function map(array $publication, array $file, array &$violations = [], array $relations = [], bool $omitIncomplete = false): ?array {
 		$loc = ($file['downloadUrl'] ?? '');
 		$diwoo = $this->diwooCore(publication: $publication, file: $file);
 		// Each optional axis is its element, or null with the violation that omits it.
 		$elements = $this->optionalAxes(publication: $publication, file: $file);
-		foreach ($this->axisGaps(diwoo: $diwoo, elements: $elements) as $gap) {
+		$gaps = $this->axisGaps(diwoo: $diwoo, elements: $elements);
+		foreach ($gaps as $gap) {
 			$this->addViolation(violations: $violations, loc: $loc, axis: $gap[0], reason: $gap[1]);
 		}
 
+		// A document the Woo-index would refuse is held back; the rest of the page is served (REQ-DWP-004).
+		if ($omitIncomplete === true && array_diff(array_column($gaps, 0), self::OPTIONAL_GAPS) !== []) {
+			return null;
+		}
+
+		$elements = self::withoutUnresolvedType(elements: $elements);
 		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null), $relations);
 
 		return [
@@ -205,12 +230,22 @@ class SitemapDocumentMapper {
 			$gaps[] = self::OPTIONAL_AXES[$key];
 		}
 
+		if (isset($diwoo['diwoo:creatiedatum']) === false) {
+			$gaps[] = ['creatiedatum', 'publication has no creation date'];
+		}
+
+		$documentsoorten = ($elements['diwoo:classificatiecollectie']['diwoo:documentsoorten'] ?? null);
+		if ($documentsoorten === false) {
+			$gaps[] = ['documentsoort', 'document type resolves to no member of the documentsoorten waardelijst'];
+		}
+
 		return $gaps;
 
 	}//end axisGaps()
 
 	/**
-	 * The DiWoo creation date, publisher and format of one file's document.
+	 * The DiWoo creation date, publisher, responsible organisation, format, language
+	 * and validity of one file's document, from the fields the publication stores.
 	 *
 	 * @param array $publication The publication.
 	 * @param array $file The file.
@@ -220,16 +255,36 @@ class SitemapDocumentMapper {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	private function diwooCore(array $publication, array $file): array {
-		$created = ($publication['@self']['created'] ?? 'now');
+		$legacy = $this->isLegacy(publication: $publication);
+		$publisher = $this->publisherElement(publication: $publication);
+		$core = [];
+		$created = $this->creationDay(publication: $publication, legacy: $legacy);
+		if ($created !== null) {
+			$core['diwoo:creatiedatum'] = $created;
+		}
 
-		return [
-			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
-			'diwoo:publisher' => $this->publisherElement(publication: $publication),
-			'diwoo:format' => [
-				'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($file['extension']),
-				'#text' => strtolower($file['extension']),
-			],
+		$core['diwoo:publisher'] = $publisher;
+		// The responsible organisation is the publisher until it is stored apart.
+		if (isset($publisher['@resource']) === true && $publisher['#text'] !== '') {
+			$core['diwoo:verantwoordelijke'] = $publisher;
+		}
+
+		$core['diwoo:format'] = [
+			'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($file['extension']),
+			'#text' => strtolower($file['extension']),
 		];
+
+		$language = $this->languageElement(publication: $publication, legacy: $legacy);
+		if ($language !== null) {
+			$core['diwoo:language'] = $language;
+		}
+
+		$validity = self::validityElement(publication: $publication);
+		if ($validity !== null) {
+			$core['diwoo:geldigheid'] = $validity;
+		}
+
+		return $core;
 	}//end diwooCore()
 
 	/**
@@ -248,9 +303,14 @@ class SitemapDocumentMapper {
 	 */
 	private function optionalAxes(array $publication, array $file): array {
 		$handlingTime = self::utcDateTime(value: ($file['published'] ?? $publication['publicationDate'] ?? 'now'));
+		$classification = $this->categoryElement(publication: $publication);
+		if ($classification !== null) {
+			$classification['diwoo:documentsoorten'] = $this->documentTypeElement(publication: $publication, file: $file);
+		}
+
 		return [
 			'diwoo:titelcollectie' => $this->titleElement(publication: $publication),
-			'diwoo:classificatiecollectie' => $this->categoryElement(publication: $publication),
+			'diwoo:classificatiecollectie' => $classification,
 			'diwoo:documenthandelingen' => $this->handlingElement(publication: $publication, handlingTime: $handlingTime),
 		];
 	}//end optionalAxes()
@@ -335,6 +395,148 @@ class SitemapDocumentMapper {
 			],
 		];
 	}//end handlingElement()
+
+	/**
+	 * The axes with the document type left out when none is stored or it resolves to no member.
+	 *
+	 * @param array<string, array|null> $elements The optional axes.
+	 *
+	 * @return array<string, array|null> The axes, ready to emit.
+	 */
+	private static function withoutUnresolvedType(array $elements): array {
+		if (is_array($elements['diwoo:classificatiecollectie'] ?? null) === true
+			&& is_array($elements['diwoo:classificatiecollectie']['diwoo:documentsoorten'] ?? null) === false
+		) {
+			unset($elements['diwoo:classificatiecollectie']['diwoo:documentsoorten']);
+		}
+
+		return $elements;
+	}//end withoutUnresolvedType()
+
+	/**
+	 * The documentsoorten element: the file's own type first, else the publication's (REQ-DWP-002).
+	 *
+	 * @param array $publication The publication.
+	 * @param array $file The file.
+	 *
+	 * @return array|false|null The element, false when the stored type resolves to no member, null when none is stored.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 */
+	private function documentTypeElement(array $publication, array $file): array|false|null {
+		$perFile = $publication['fileDocumentsoorten'] ?? [];
+		$fileId = (string)($file['id'] ?? '');
+		$value = $this->stringOrNull(value: $publication['documentsoort'] ?? null);
+		if (is_array($perFile) === true && $fileId !== '' && $this->stringOrNull(value: $perFile[$fileId] ?? null) !== null) {
+			$value = $perFile[$fileId];
+		}
+
+		if ($value === null) {
+			return null;
+		}
+
+		$member = $this->tooiVocabulary->resolveDocumentsoort($value);
+		if ($member === null) {
+			return false;
+		}
+
+		return ['diwoo:documentsoort' => ['#text' => $member['label'], '@resource' => $member['uri']]];
+	}//end documentTypeElement()
+
+	/**
+	 * Whether the publication was created before the DiWoo fields were introduced.
+	 *
+	 * Before the repair step has recorded that moment every record is legacy. A
+	 * record without a creation moment is legacy too: it cannot be newer.
+	 *
+	 * @param array $publication The publication.
+	 *
+	 * @return bool True when the derivation may fill a missing field.
+	 *
+	 * @spec openspec/changes/diwoo-metadata-on-the-publication/specs/woo-compliance/spec.md#requirement-the-sitemap-emits-the-stored-diwoo-values-req-dwp-004
+	 */
+	private function isLegacy(array $publication): bool {
+		$introduced = strtotime((string)$this->instance?->stringValue(self::FIELDS_INTRODUCED_AT, ''));
+		$created = strtotime((string)($publication['@self']['created'] ?? ''));
+		if ($introduced === false || $created === false) {
+			return true;
+		}
+
+		return $created < $introduced;
+	}//end isLegacy()
+
+	/**
+	 * The day the document was made: the stored creationDate, else for a legacy record the day it was saved.
+	 *
+	 * @param array $publication The publication.
+	 * @param bool $legacy Whether the record predates the DiWoo fields.
+	 *
+	 * @return string|null The day, or null when there is none.
+	 */
+	private function creationDay(array $publication, bool $legacy): ?string {
+		$stored = $this->stringOrNull(value: $publication['creationDate'] ?? null);
+		if ($stored !== null && strtotime($stored) !== false) {
+			return gmdate('Y-m-d', (int)strtotime($stored));
+		}
+
+		if ($legacy === false) {
+			return null;
+		}
+
+		return date('Y-m-d', (int)strtotime((string)($publication['@self']['created'] ?? 'now')));
+	}//end creationDay()
+
+	/**
+	 * The language element from the stored language, else nl for a legacy record.
+	 *
+	 * The schema stores a two-letter code (`nl`), the DiWoo list a three-letter one
+	 * (`NLD`): the common two-letter codes are mapped, anything else resolves as given.
+	 *
+	 * @param array $publication The publication.
+	 * @param bool $legacy Whether the record predates the DiWoo fields.
+	 *
+	 * @return array|null The element, or null when there is none or it resolves to no member.
+	 */
+	private function languageElement(array $publication, bool $legacy): ?array {
+		$value = $this->stringOrNull(value: $publication['language'] ?? null);
+		if ($value === null && $legacy === true) {
+			$value = 'nl';
+		}
+
+		if ($value === null) {
+			return null;
+		}
+
+		$member = $this->tooiVocabulary->resolveLanguage(self::LANGUAGE_CODES[strtolower(trim($value))] ?? $value);
+		if ($member === null) {
+			return null;
+		}
+
+		return ['#text' => $member['label'], '@resource' => $member['uri']];
+	}//end languageElement()
+
+	/**
+	 * The geldigheid element from the stored validFrom and validUntil, or null when neither is stored.
+	 *
+	 * @param array $publication The publication.
+	 *
+	 * @return array|null The element.
+	 */
+	private static function validityElement(array $publication): ?array {
+		$validity = [];
+		foreach (['diwoo:begindatum' => 'validFrom', 'diwoo:einddatum' => 'validUntil'] as $element => $field) {
+			$value = $publication[$field] ?? null;
+			if (is_string($value) === true && trim($value) !== '' && strtotime($value) !== false) {
+				$validity[$element] = self::utcDateTime(value: $value);
+			}
+		}
+
+		if ($validity === []) {
+			return null;
+		}
+
+		return $validity;
+	}//end validityElement()
 
 	/**
 	 * The titelcollectie element with the publication's title as officieleTitel, or null without a title.
