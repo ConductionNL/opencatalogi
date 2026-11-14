@@ -31,6 +31,7 @@ namespace OCA\OpenCatalogi\Service;
 use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
+use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
 
@@ -98,6 +99,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param TooiVocabularyService $tooiVocabulary The TOOI value-list resolver
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
+	 * @param WooIndexFieldMapper|null $fieldMapper Reads the Woo-index fields from integriq's mapping (REQ-WIM-001).
 	 */
 	public function __construct(
 		private readonly OpenRegisterLookup $openRegister,
@@ -106,6 +108,7 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
+		private readonly ?WooIndexFieldMapper $fieldMapper = null,
 	) {
 
 	}//end __construct()
@@ -281,7 +284,8 @@ class SitemapService implements SitemapServiceInterface {
 			$this->documentMapper = new SitemapDocumentMapper(
 				tooiVocabulary: $this->tooiVocabulary,
 				categories: $this->categories,
-				openRegister: $this->openRegister
+				openRegister: $this->openRegister,
+				fieldMapper: $this->fieldMapper
 			);
 		}
 

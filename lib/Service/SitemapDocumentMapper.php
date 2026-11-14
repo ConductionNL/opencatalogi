@@ -26,6 +26,7 @@ use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
+use OCA\OpenCatalogi\Service\Woo\WooIndexFieldMapper;
 
 /**
  * The DiWoo document of one downloadable file: location, dates, publisher, format
@@ -60,11 +61,14 @@ class SitemapDocumentMapper {
 	 * @param TooiVocabularyService $tooiVocabulary Resolves organisations and handling types to TOOI.
 	 * @param WooCategoryRegistry $categories Resolves a publication's category.
 	 * @param OpenRegisterLookup $openRegister Reaches OpenRegister for the organisation lookup.
+	 * @param WooIndexFieldMapper|null $fieldMapper Reads the four Woo-index fields from integriq's
+	 *                                              mapping; without it every field is the built-in read.
 	 */
 	public function __construct(
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly WooCategoryRegistry $categories,
 		private readonly OpenRegisterLookup $openRegister,
+		private readonly ?WooIndexFieldMapper $fieldMapper = null,
 	) {
 	}//end __construct()
 
@@ -92,9 +96,10 @@ class SitemapDocumentMapper {
 	 */
 	public function map(array $publication, array $file, array &$violations = []): array {
 		$loc = ($file['downloadUrl'] ?? '');
-		$diwoo = $this->diwooCore(publication: $publication, file: $file);
+		$mapped = $this->mappedFields(publication: $publication);
+		$diwoo = $this->diwooCore(publication: $publication, file: $file, mapped: $mapped);
 		// Each optional axis is its element, or null with the violation that omits it.
-		$elements = $this->optionalAxes(publication: $publication, file: $file);
+		$elements = $this->optionalAxes(publication: $publication, file: $file, mapped: $mapped);
 		foreach ($this->axisGaps(diwoo: $diwoo, elements: $elements) as $gap) {
 			$this->addViolation(violations: $violations, loc: $loc, axis: $gap[0], reason: $gap[1]);
 		}
@@ -107,6 +112,25 @@ class SitemapDocumentMapper {
 			'diwoo:Document' => ['diwoo:DiWoo' => $diwoo],
 		];
 	}//end map()
+
+	/**
+	 * The Woo-index fields integriq's mapping filled for a publication; none
+	 * without a mapper. Each is validated below exactly as the built-in read is
+	 * (REQ-WIM-003), so a wrong edit on integriq's page becomes a violation.
+	 *
+	 * @param array $publication The publication.
+	 *
+	 * @return array<string, string> Field => mapped value.
+	 *
+	 * @spec openspec/changes/woo-index-fields-from-the-mapping/specs/woo-compliance/spec.md#requirement-woo-index-fields-come-from-the-editable-mapping-when-integriq-answers-req-wim-001
+	 */
+	private function mappedFields(array $publication): array {
+		if ($this->fieldMapper === null) {
+			return [];
+		}
+
+		return $this->fieldMapper->map(publication: $publication, organisation: $this->organisationRow(publication: $publication))['fields'];
+	}//end mappedFields()
 
 	/**
 	 * What the document is missing, as axis and reason pairs: the publisher's
@@ -140,17 +164,18 @@ class SitemapDocumentMapper {
 	 *
 	 * @param array $publication The publication.
 	 * @param array $file The file.
+	 * @param array<string, string> $mapped The fields integriq's mapping filled.
 	 *
 	 * @return array<string, mixed>
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function diwooCore(array $publication, array $file): array {
+	private function diwooCore(array $publication, array $file, array $mapped = []): array {
 		$created = ($publication['@self']['created'] ?? 'now');
 
 		return [
 			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
-			'diwoo:publisher' => $this->publisherElement(publication: $publication),
+			'diwoo:publisher' => $this->publisherElement(publication: $publication, mappedPublisher: ($mapped['publisher'] ?? null)),
 			'diwoo:format' => [
 				'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($file['extension']),
 				'#text' => strtolower($file['extension']),
@@ -167,17 +192,27 @@ class SitemapDocumentMapper {
 	 *
 	 * @param array $publication The publication.
 	 * @param array $file The file.
+	 * @param array<string, string> $mapped The fields integriq's mapping filled; each replaces its built-in read.
 	 *
 	 * @return array<string, array|null>
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function optionalAxes(array $publication, array $file): array {
+	private function optionalAxes(array $publication, array $file, array $mapped = []): array {
 		$handlingTime = self::utcDateTime(value: ($file['published'] ?? $publication['publicationDate'] ?? 'now'));
+		$read = $publication;
+		if (isset($mapped['officieleTitel']) === true) {
+			$read['title'] = $mapped['officieleTitel'];
+		}
+
+		if (isset($mapped['soortHandeling']) === true) {
+			$read['soortHandeling'] = $mapped['soortHandeling'];
+		}
+
 		return [
-			'diwoo:titelcollectie' => $this->titleElement(publication: $publication),
-			'diwoo:classificatiecollectie' => $this->categoryElement(publication: $publication),
-			'diwoo:documenthandelingen' => $this->handlingElement(publication: $publication, handlingTime: $handlingTime),
+			'diwoo:titelcollectie' => $this->titleElement(publication: $read),
+			'diwoo:classificatiecollectie' => $this->categoryElement(publication: $publication, mappedCategory: ($mapped['informatiecategorie'] ?? null)),
+			'diwoo:documenthandelingen' => $this->handlingElement(publication: $read, handlingTime: $handlingTime),
 		];
 	}//end optionalAxes()
 
@@ -189,15 +224,16 @@ class SitemapDocumentMapper {
 	 * sitemap. Without an organisation name it is empty, and map() reports it.
 	 *
 	 * @param array $publication The publication as returned from ObjectService
+	 * @param string|null $mappedPublisher The publisher URI integriq's mapping gave; it replaces the built-in identifier.
 	 *
 	 * @return array{'#text': string, '@resource'?: string} The publisher element.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function publisherElement(array $publication): array {
+	private function publisherElement(array $publication, ?string $mappedPublisher = null): array {
 		$organisation = $this->organisationRow(publication: $publication);
 		$publisher = ['#text' => trim((string)$this->stringOrNull(value: ($organisation['name'] ?? null)))];
-		$tooiIdentifier = $this->resolveOrganisationTooiIdentifier(publication: $publication, organisation: $organisation);
+		$tooiIdentifier = ($mappedPublisher ?? $this->resolveOrganisationTooiIdentifier(publication: $publication, organisation: $organisation));
 		$orgUri = $this->tooiVocabulary->resolveOrganisatie($tooiIdentifier);
 		if ($orgUri !== null) {
 			$publisher['@resource'] = $orgUri;
@@ -211,13 +247,14 @@ class SitemapDocumentMapper {
 	 * or null when the publication's category resolves to none.
 	 *
 	 * @param array $publication The publication as returned from ObjectService
+	 * @param string|null $mappedCategory The category integriq's mapping gave; it replaces the built-in read.
 	 *
 	 * @return array|null The classificatiecollectie element, or null.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
-	private function categoryElement(array $publication): ?array {
-		$categoryRaw = ($publication['wooCategory'] ?? $publication['category'] ?? $publication['tooiCategorieUri']
+	private function categoryElement(array $publication, ?string $mappedCategory = null): ?array {
+		$categoryRaw = ($mappedCategory ?? $publication['wooCategory'] ?? $publication['category'] ?? $publication['tooiCategorieUri']
 			?? $publication['tooiCategorieNaam'] ?? null);
 		$category = $this->categories->resolveForDocument($this->stringOrNull(value: $categoryRaw));
 		if ($category === null) {
