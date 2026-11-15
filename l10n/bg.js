@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Целева страница",
         "Last modified": "Последна промяна",
         "Metadata quality": "Качество на метаданните",
+        "Version history": "История на версиите",
         "Missing metadata": "Липсващи метаданни",
         "Nothing is missing": "Нищо не липсва",
         "Publisher": "Издател",

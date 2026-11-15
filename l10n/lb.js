@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Landingpage",
         "Last modified": "Lescht geännert",
         "Metadata quality": "Metadatequalitéit",
+        "Version history": "Versiounsgeschicht",
         "Missing metadata": "Feelend Metadaten",
         "Nothing is missing": "Et feelt näischt",
         "Publisher": "Editeur",

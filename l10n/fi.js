@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Aloitussivu",
         "Last modified": "Viimeksi muokattu",
         "Metadata quality": "Metatietojen laatu",
+        "Version history": "Versiohistoria",
         "Missing metadata": "Puuttuvat metatiedot",
         "Nothing is missing": "Mitään ei puutu",
         "Publisher": "Julkaisija",

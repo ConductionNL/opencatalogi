@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Landningssida",
         "Last modified": "Senast ändrad",
         "Metadata quality": "Metadatakvalitet",
+        "Version history": "Versionshistorik",
         "Missing metadata": "Saknade metadata",
         "Nothing is missing": "Inget saknas",
         "Publisher": "Utgivare",

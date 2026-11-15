@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Целевая страница",
         "Last modified": "Последнее изменение",
         "Metadata quality": "Качество метаданных",
+        "Version history": "История версий",
         "Missing metadata": "Недостающие метаданные",
         "Nothing is missing": "Ничего не отсутствует",
         "Publisher": "Издатель",

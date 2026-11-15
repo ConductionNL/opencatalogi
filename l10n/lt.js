@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Nukreipimo puslapis",
         "Last modified": "Paskutinį kartą keista",
         "Metadata quality": "Metaduomenų kokybė",
+        "Version history": "Versijų istorija",
         "Missing metadata": "Trūkstami metaduomenys",
         "Nothing is missing": "Nieko netrūksta",
         "Publisher": "Leidėjas",

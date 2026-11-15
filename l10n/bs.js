@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Odredišna stranica",
         "Last modified": "Zadnja izmjena",
         "Metadata quality": "Kvalitet metapodataka",
+        "Version history": "Historija verzija",
         "Missing metadata": "Metapodaci koji nedostaju",
         "Nothing is missing": "Ništa ne nedostaje",
         "Publisher": "Izdavač",

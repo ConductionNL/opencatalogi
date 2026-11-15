@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Faqja hyrëse",
         "Last modified": "Ndryshuar së fundi",
         "Metadata quality": "Cilësia e meta të dhënave",
+        "Version history": "Historiku i versioneve",
         "Missing metadata": "Meta të dhëna që mungojnë",
         "Nothing is missing": "Nuk mungon asgjë",
         "Publisher": "Botuesi",

@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Pagina d'arrivada",
         "Last modified": "Midà l'ultima giada",
         "Metadata quality": "Qualitad da las metadatas",
+        "Version history": "Istorgia da las versiuns",
         "Missing metadata": "Metadatas mancantas",
         "Nothing is missing": "I na manca nagut",
         "Publisher": "Editur",

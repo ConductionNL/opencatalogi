@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Sihtleht",
         "Last modified": "Viimati muudetud",
         "Metadata quality": "Metaandmete kvaliteet",
+        "Version history": "Versioonide ajalugu",
         "Missing metadata": "Puuduvad metaandmed",
         "Nothing is missing": "Midagi ei puudu",
         "Publisher": "Väljaandja",

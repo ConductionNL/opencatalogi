@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Vstupná stránka",
         "Last modified": "Naposledy zmenené",
         "Metadata quality": "Kvalita metadát",
+        "Version history": "História verzií",
         "Missing metadata": "Chýbajúce metadáta",
         "Nothing is missing": "Nič nechýba",
         "Publisher": "Vydavateľ",

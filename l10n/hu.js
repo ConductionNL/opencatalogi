@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Céloldal",
         "Last modified": "Utoljára módosítva",
         "Metadata quality": "Metaadat-minőség",
+        "Version history": "Verzióelőzmények",
         "Missing metadata": "Hiányzó metaadatok",
         "Nothing is missing": "Semmi sem hiányzik",
         "Publisher": "Kiadó",

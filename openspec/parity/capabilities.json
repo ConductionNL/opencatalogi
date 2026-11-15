@@ -1579,9 +1579,9 @@
 			"source": "competitor-derived",
 			"opencatalogi": "partial",
 			"built": {
-				"state": "specified",
+				"state": "built",
 				"owner": "ConductionNL/openregister",
-				"evidence": "src/manifest.json:750 PublicationDetail sidebar History tab = audit widget; nextcloud-vue CnAuditTrailTab.vue:78-81 renders each entry's changed fields Not built: the publication page shows only the audit list (Geschiedenis); there is no list of versions to open and no compare. Task 2.4 of capability-rows-close-gaps.",
+				"evidence": "src/manifest.json PublicationDetail pub-versions card = the nextcloud-vue version-history integration (CnVersionHistory, registered by OpenRegister's registerBuiltinIntegrations): it lists the publication's versions from OpenRegister's object audit trail (GET /api/objects/{register}/{schema}/{id}/audit-trails: semantic version, action, date, user) newest first, opens one to see what it changed, and compares two checked versions field by field by folding the audit deltas between them (added, removed, changed, with old and new values). The sidebar History tab stays the raw event log (tests/vitest/publicationVersionHistory.spec.js). OpenRegister has no server-side diff endpoint and no revert from this card.",
 				"spec": "openregister/openspec/specs/enhanced-audit-trail",
 				"requirement": "openregister:openspec/specs/content-versioning :: The system MUST support version comparison with visual diffs",
 				"plan": "openspec/changes/capability-rows-close-gaps"

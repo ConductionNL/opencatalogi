@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Цільова сторінка",
         "Last modified": "Остання зміна",
         "Metadata quality": "Якість метаданих",
+        "Version history": "Історія версій",
         "Missing metadata": "Відсутні метадані",
         "Nothing is missing": "Нічого не бракує",
         "Publisher": "Видавець",

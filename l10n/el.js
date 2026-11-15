@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Σελίδα προορισμού",
         "Last modified": "Τελευταία τροποποίηση",
         "Metadata quality": "Ποιότητα μεταδεδομένων",
+        "Version history": "Ιστορικό εκδόσεων",
         "Missing metadata": "Μεταδεδομένα που λείπουν",
         "Nothing is missing": "Δεν λείπει τίποτα",
         "Publisher": "Εκδότης",

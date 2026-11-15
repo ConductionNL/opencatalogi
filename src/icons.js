@@ -35,6 +35,7 @@ import DatabaseEyeOutline from 'vue-material-design-icons/DatabaseEyeOutline.vue
 import EyeOutline from 'vue-material-design-icons/EyeOutline.vue'
 import FileChartOutline from 'vue-material-design-icons/FileChartOutline.vue'
 import FileClockOutline from 'vue-material-design-icons/FileClockOutline.vue'
+import FileCompare from 'vue-material-design-icons/FileCompare.vue'
 import FileDocument from 'vue-material-design-icons/FileDocument.vue'
 import Folder from 'vue-material-design-icons/Folder.vue'
 import FolderMultiple from 'vue-material-design-icons/FolderMultiple.vue'
@@ -89,6 +90,7 @@ export default {
 	EyeOutline,
 	FileChartOutline,
 	FileClockOutline,
+	FileCompare,
 	FileDocument,
 	Folder,
 	FolderMultiple,

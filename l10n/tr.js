@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Açılış sayfası",
         "Last modified": "Son değişiklik",
         "Metadata quality": "Üst veri kalitesi",
+        "Version history": "Sürüm geçmişi",
         "Missing metadata": "Eksik üst veriler",
         "Nothing is missing": "Eksik bir şey yok",
         "Publisher": "Yayıncı",

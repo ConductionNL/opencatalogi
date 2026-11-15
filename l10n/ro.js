@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Pagină de destinație",
         "Last modified": "Ultima modificare",
         "Metadata quality": "Calitatea metadatelor",
+        "Version history": "Istoricul versiunilor",
         "Missing metadata": "Metadate lipsă",
         "Nothing is missing": "Nu lipsește nimic",
         "Publisher": "Editor",

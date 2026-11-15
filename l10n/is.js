@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Lendingarsíða",
         "Last modified": "Síðast breytt",
         "Metadata quality": "Gæði lýsigagna",
+        "Version history": "Útgáfusaga",
         "Missing metadata": "Lýsigögn sem vantar",
         "Nothing is missing": "Ekkert vantar",
         "Publisher": "Útgefandi",

@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Galvenā lapa",
         "Last modified": "Pēdējoreiz mainīts",
         "Metadata quality": "Metadatu kvalitāte",
+        "Version history": "Versiju vēsture",
         "Missing metadata": "Trūkstošie metadati",
         "Nothing is missing": "Nekas netrūkst",
         "Publisher": "Izdevējs",

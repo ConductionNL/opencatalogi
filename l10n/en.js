@@ -1633,6 +1633,7 @@ OC.L10N.register(
         "Landing page": "Landing page",
         "Last modified": "Last modified",
         "Metadata quality": "Metadata quality",
+        "Version history": "Version history",
         "Missing metadata": "Missing metadata",
         "Nothing is missing": "Nothing is missing",
         "Publisher": "Publisher",

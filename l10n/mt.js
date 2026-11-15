@@ -746,6 +746,7 @@ OC.L10N.register(
         "Landing page": "Paġna tal-wasla",
         "Last modified": "L-aħħar modifika",
         "Metadata quality": "Kwalità tal-metadata",
+        "Version history": "Storja tal-verżjonijiet",
         "Missing metadata": "Metadata nieqsa",
         "Nothing is missing": "Xejn ma hu nieqes",
         "Publisher": "Pubblikatur",

@@ -1588,6 +1588,7 @@ OC.L10N.register(
         "Landing page": "Landingspagina",
         "Last modified": "Laatst gewijzigd",
         "Metadata quality": "Kwaliteit van metadata",
+        "Version history": "Versiegeschiedenis",
         "Missing metadata": "Ontbrekende metadata",
         "Nothing is missing": "Er ontbreekt niets",
         "Publisher": "Uitgever",
