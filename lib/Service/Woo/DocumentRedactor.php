@@ -140,29 +140,115 @@ class DocumentRedactor {
 	 * @return array<int, array{fileName: string, reason: string}>
 	 *
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-the-officer-sees-why-a-partly-public-document-cannot-be-published-req-wrp-002
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
 	 */
 	public function unredacted(array $assessments): array {
 		$out = [];
 		foreach ($assessments as $assessment) {
-			if ((string)($assessment['assessment'] ?? '') !== 'deels_openbaar'
-				|| (string)($assessment['redactionStatus'] ?? '') === self::VERIFIED
-			) {
+			if ((string)($assessment['assessment'] ?? '') !== 'deels_openbaar') {
 				continue;
 			}
 
-			$reason = (string)($assessment['redactionMessage'] ?? '');
-			if ($reason === '') {
-				$reason = $this->l10n->t('No verified redacted version exists yet.');
+			$reason = $this->unpublishableReason(assessment: $assessment);
+			if ($reason === null) {
+				continue;
 			}
 
 			$out[] = [
 				'fileName' => (string)($assessment['fileName'] ?? ($assessment['documentReference'] ?? '')),
 				'reason' => $reason,
 			];
-		}//end foreach
+		}
 
 		return $out;
 	}//end unredacted()
+
+	/**
+	 * Why a partly public assessment cannot be published yet, or null when it can.
+	 *
+	 * A mechanically verified redaction still waits for a person to check it
+	 * (woo-document-assessment-screen).
+	 *
+	 * @param array<string, mixed> $assessment The partly public assessment.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function unpublishableReason(array $assessment): ?string {
+		if ((string)($assessment['redactionStatus'] ?? '') !== self::VERIFIED) {
+			$reason = (string)($assessment['redactionMessage'] ?? '');
+			if ($reason === '') {
+				return $this->l10n->t('No verified redacted version exists yet.');
+			}
+
+			return $reason;
+		}
+
+		if ((string)($assessment['redactionVerifiedBy'] ?? '') === '') {
+			return $this->l10n->t('Redaction not checked by a person.');
+		}
+
+		return null;
+	}//end unpublishableReason()
+
+	/**
+	 * Why the redaction of an assessment cannot be marked verified by a person,
+	 * or null when it can: it must be partly public, mechanically verified, and
+	 * its redacted file must still carry the recorded hash.
+	 *
+	 * @param array<string, mixed> $assessment The assessment.
+	 * @param string|null $batchId The batch, whose creator owns relative references.
+	 * @param string $fallbackOwner The acting officer, when the batch names no creator.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function verificationRefusal(array $assessment, ?string $batchId, string $fallbackOwner): ?string {
+		$refusal = $this->statusRefusal(assessment: $assessment);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$listing = [
+			'document' => (string)($assessment['anonymizedDocument'] ?? ''),
+			'original' => (string)($assessment['documentReference'] ?? ''),
+			'redactionStatus' => self::VERIFIED,
+			'redactionHash' => (string)($assessment['anonymizedDocumentHash'] ?? ''),
+		];
+		if ($this->isVerified(listing: $listing, owner: $this->ownerOf(batchId: $batchId, fallback: $fallbackOwner)) === false) {
+			return $this->l10n->t('The redacted file no longer matches the version that was verified.');
+		}
+
+		return null;
+	}//end verificationRefusal()
+
+	/**
+	 * Why the assessment has no mechanically verified redaction, or null when it has.
+	 *
+	 * @param array<string, mixed> $assessment The assessment.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function statusRefusal(array $assessment): ?string {
+		if ((string)($assessment['assessment'] ?? '') !== 'deels_openbaar') {
+			return $this->l10n->t('Only a partly public document has a redaction to verify.');
+		}
+
+		$status = (string)($assessment['redactionStatus'] ?? '');
+		if ($status === self::VERIFIED) {
+			return null;
+		}
+
+		if ($status === '') {
+			$status = $this->l10n->t('none');
+		}
+
+		return $this->l10n->t('The redaction status is %s, not verified.', [$status]);
+	}//end statusRefusal()
 
 	/**
 	 * Redact one assessed document and verify the result.
@@ -483,9 +569,10 @@ class DocumentRedactor {
 	 *
 	 * A `deels_openbaar` document passes only when its redaction was verified,
 	 * its redacted file still exists, is not the original, and still has the
-	 * bytes that were verified. Anything else names the document and stops
-	 * the publish before anything is written. A verified one also needs a
-	 * redaction log that lists what was removed with a ground for each passage.
+	 * bytes that were verified, and a person marked it verified. A verified
+	 * one also needs a redaction log that lists what was removed with a ground
+	 * for each passage. Anything else names the document and stops the publish
+	 * before anything is written.
 	 *
 	 * @param array<int, array<string, mixed>> $listings The publishable documents.
 	 * @param string $owner The batch's creator.
@@ -496,34 +583,21 @@ class DocumentRedactor {
 	 *                          or without a redaction log that names a ground for every passage.
 	 *
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
 	 * @spec openspec/changes/woo-review-surface/specs/woo-transparency/spec.md#requirement-the-redaction-log-records-what-was-removed-and-on-which-ground-req-wrv-003
 	 */
 	public function assertPublishable(array $listings, string $owner): void {
-		$unredacted = [];
-		$unlogged = [];
-		foreach ($listings as $listing) {
-			if ((string)($listing['assessment'] ?? '') !== 'deels_openbaar') {
-				continue;
-			}
-
-			$name = (string)($listing['title'] ?? '');
-			if ($name === '') {
-				$name = (string)($listing['original'] ?? '');
-			}
-
-			if ($this->isVerified(listing: $listing, owner: $owner) === false) {
-				$unredacted[] = $name;
-				continue;
-			}
-
-			if ((string)($listing['redactionLogState'] ?? self::LOG_UNREADABLE) !== self::LOG_GROUNDED) {
-				$unlogged[] = $name;
-			}
-		}//end foreach
+		[$unredacted, $unchecked, $unlogged] = $this->publishBlocks(listings: $listings, owner: $owner);
 
 		if ($unredacted !== []) {
 			throw new RuntimeException(
 				$this->l10n->t('Publishing is blocked: these partly public documents have no verified redacted version: %s', [implode(', ', $unredacted)])
+			);
+		}
+
+		if ($unchecked !== []) {
+			throw new RuntimeException(
+				$this->l10n->t('Publishing is blocked, redaction not checked by a person: %s', [implode(', ', $unchecked)])
 			);
 		}
 
@@ -537,6 +611,60 @@ class DocumentRedactor {
 		}
 
 	}//end assertPublishable()
+
+	/**
+	 * The partly public documents that block a publish: without a verified
+	 * redacted version, verified mechanically but not checked by a person,
+	 * and verified with a redaction log that does not ground every passage.
+	 *
+	 * @param array<int, array<string, mixed>> $listings The publishable documents.
+	 * @param string $owner The batch's creator.
+	 *
+	 * @return array{0: array<int, string>, 1: array<int, string>, 2: array<int, string>} The names, unredacted, unchecked and unlogged.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function publishBlocks(array $listings, string $owner): array {
+		$unredacted = [];
+		$unchecked = [];
+		$unlogged = [];
+		foreach ($listings as $listing) {
+			if ((string)($listing['assessment'] ?? '') !== 'deels_openbaar') {
+				continue;
+			}
+
+			if ($this->isVerified(listing: $listing, owner: $owner) === false) {
+				$unredacted[] = self::listingName(listing: $listing);
+				continue;
+			}
+
+			if ((string)($listing['redactionVerifiedBy'] ?? '') === '') {
+				$unchecked[] = self::listingName(listing: $listing);
+			}
+
+			if ((string)($listing['redactionLogState'] ?? self::LOG_UNREADABLE) !== self::LOG_GROUNDED) {
+				$unlogged[] = self::listingName(listing: $listing);
+			}
+		}//end foreach
+
+		return [$unredacted, $unchecked, $unlogged];
+	}//end publishBlocks()
+
+	/**
+	 * The name a refusal gives a listing: its title, else its original reference.
+	 *
+	 * @param array<string, mixed> $listing The listing.
+	 *
+	 * @return string
+	 */
+	private static function listingName(array $listing): string {
+		$name = (string)($listing['title'] ?? '');
+		if ($name === '') {
+			$name = (string)($listing['original'] ?? '');
+		}
+
+		return $name;
+	}//end listingName()
 
 	/**
 	 * Whether a partly public listing points at its verified redacted file.

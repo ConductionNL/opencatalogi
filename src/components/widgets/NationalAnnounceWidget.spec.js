@@ -8,6 +8,7 @@
  */
 
 import { getCurrentUser } from '@nextcloud/auth'
+import axios from '@nextcloud/axios'
 import { mount } from '@vue/test-utils'
 import NationalAnnounceWidget from './NationalAnnounceWidget.vue'
 
@@ -99,5 +100,72 @@ describe('NationalAnnounceWidget', () => {
 
 	it('lists no rows for an answer without channels', () => {
 		expect(vm().toResults({})).toEqual([])
+	})
+})
+
+describe('NationalAnnounceWidget announce()', () => {
+	beforeEach(() => {
+		axios.get.mockReset()
+		axios.post.mockReset()
+	})
+
+	it('reads the stored publication, posts the decision and lists every channel', async () => {
+		axios.get.mockResolvedValue({ data: { title: 'Besluit' } })
+		axios.post.mockResolvedValue({
+			data: {
+				delivered: [{ channel: 'local-channel', delivery: { identifier: 'L-1' } }],
+				unreachable: [{ channel: 'national-publication-platform', reason: 'timeout' }],
+			},
+		})
+		const widget = vm()
+
+		await widget.announce()
+
+		expect(axios.get).toHaveBeenCalledWith('/apps/openregister/api/objects/{register}/{schema}/{id}')
+		expect(axios.post).toHaveBeenCalledTimes(1)
+		const [url, payload] = axios.post.mock.calls[0]
+		expect(url).toBe('/apps/opencatalogi/api/publications/announce')
+		expect(payload.decision).toMatchObject({ title: 'Besluit', id: 'pub-1', publicationType: '', effectiveDate: '' })
+		expect(widget.results).toEqual([
+			{ channel: 'local-channel', delivered: true, identifier: 'L-1', reason: '' },
+			{ channel: 'national-publication-platform', delivered: false, identifier: '', reason: 'timeout' },
+		])
+		expect(widget.error).toBe('')
+		expect(widget.announcing).toBe(false)
+	})
+
+	it('reads a failed post that still carries notices as the answer', async () => {
+		axios.get.mockResolvedValue({ data: {} })
+		axios.post.mockRejectedValue({
+			response: { status: 502, data: { notices: ['partial'], unreachable: [{ channel: 'x', reason: 'down' }] } },
+		})
+		const widget = vm()
+
+		await widget.announce()
+
+		expect(widget.results).toEqual([{ channel: 'x', delivered: false, identifier: '', reason: 'down' }])
+		expect(widget.error).toBe('')
+	})
+
+	it('shows the error and no rows when the post fails without an answer', async () => {
+		axios.get.mockResolvedValue({ data: {} })
+		axios.post.mockRejectedValue(new Error('network'))
+		const widget = vm()
+
+		await widget.announce()
+
+		expect(widget.results).toEqual([])
+		expect(widget.error).toBe('The decision could not be announced. Try again.')
+		expect(widget.announcing).toBe(false)
+	})
+
+	it('shows the error when the publication cannot be read, without posting', async () => {
+		axios.get.mockRejectedValue(new Error('404'))
+		const widget = vm()
+
+		await widget.announce()
+
+		expect(axios.post).not.toHaveBeenCalled()
+		expect(widget.error).toBe('The decision could not be announced. Try again.')
 	})
 })

@@ -152,6 +152,7 @@ class DocumentRedactorPublishTest extends TestCase {
 			'redactionStatus' => DocumentRedactor::VERIFIED,
 			'redactionHash' => $hash,
 			'redactionLogState' => DocumentRedactor::LOG_GROUNDED,
+			'redactionVerifiedBy' => 'bob',
 		];
 	}//end listing()
 
