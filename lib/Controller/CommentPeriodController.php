@@ -36,6 +36,10 @@ use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -197,11 +201,12 @@ class CommentPeriodController extends Controller {
 			$saved = $this->asArray(
 				object: $objectService->saveObject(
 					object: $period,
-					register: $config['register'],
-					schema: $config['schema'],
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $config['register'], schema: $config['schema']),
+						actor: new SaveActor(unowned: true)
+					),
 					_rbac: false,
-					_multitenancy: false,
-					_unowned: true
+					_multitenancy: false
 				)
 			);
 		} catch (\Throwable $e) {
@@ -262,8 +267,7 @@ class CommentPeriodController extends Controller {
 			return $this->asArray(
 				object: $objectService->find(
 					id: $lookup['id'],
-					register: $lookup['register'],
-					schema: $lookup['schema']
+					options: new ObjectFindOptions(register: $lookup['register'], schema: $lookup['schema'])
 				)
 			);
 		} catch (\Throwable $e) {

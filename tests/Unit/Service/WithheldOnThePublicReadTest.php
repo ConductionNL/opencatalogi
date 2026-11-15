@@ -30,6 +30,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * OpenRegister as the public read sees it: rows per schema, objects by id.
@@ -68,6 +69,7 @@ class PublicReadObjectService {
 	}//end searchObjectsPaginated()
 
 	public function find(string $id, mixed ...$rest): array {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		if (isset($this->objects[$id]) === false) {
 			throw new RuntimeException('not found');
 		}

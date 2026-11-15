@@ -41,6 +41,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Duck-typed fake of the consumed OpenRegister ObjectService.
@@ -53,6 +55,7 @@ class WooFakeObjectService {
 	public int $counter = 0;
 
 	public function find(string $id, mixed ...$rest) {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		foreach ($this->objects as $object) {
 			if ((string)($object['id'] ?? '') === $id) {
 				return $object;
@@ -68,7 +71,11 @@ class WooFakeObjectService {
 	/** @var (\Closure(array, mixed): ?\Throwable)|null Refuses a save, as a pre-save hook does. */
 	public ?\Closure $refuse = null;
 
-	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true) {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$refusal = ($this->refuse !== null) ? ($this->refuse)($object, $schema) : null;
 		if ($refusal !== null) {
 			throw $refusal;
