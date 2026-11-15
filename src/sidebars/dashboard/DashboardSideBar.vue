@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { objectStore } from '../../store/store.js'
 defineOptions({
@@ -537,6 +541,7 @@ defineOptions({
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
 import {
 	NcActionButton,
 	NcAppSidebar,
@@ -548,7 +553,6 @@ import {
 	NcSelect,
 	NcTextField,
 } from '@nextcloud/vue'
-import axios from 'axios'
 import { ref } from 'vue'
 import Delete from 'vue-material-design-icons/Delete.vue'
 import FileOutline from 'vue-material-design-icons/FileOutline.vue'

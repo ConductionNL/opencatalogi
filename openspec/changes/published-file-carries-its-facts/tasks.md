@@ -4,9 +4,11 @@ Read `openspec/woo-build-rules.md` first. Mock `OCP\Files\File` and `OCP\Files\I
 
 ## 1. Type from the bytes
 
-- [ ] 1.1 Add `FileFacts::mimeTypeOf()` (REQ-PFF-001). Verify: `tests/Unit/Service/FileFactsTest.php::testAPdfNamedDocxIsDetectedAsPdf`, `::testUnreadableBytesGiveNull`, `::testOnlyTheFirst8KbAreRead`.
-- [ ] 1.2 Use it in `SitemapService::mapDiwooDocument()` and `DcatMappingService`, and report `type-mismatch` and `type-unreadable` in `collectDiwooViolations()` (REQ-PFF-001). Verify: `tests/Unit/Service/SitemapServiceTest.php::testTheFormatComesFromTheBytesNotTheName` (fails today), `::testUnreadableBytesOmitTheFormatAndReportIt`; `tests/Unit/Service/DcatMappingServiceTest.php::testTheMediaTypeComesFromTheBytes`.
-- [ ] 1.3 Store the detected type and `fileTypeClaimed` in `WooService` (REQ-PFF-001); add `fileTypeClaimed` to `#wooAssessment` with a bumped version. Verify: `tests/Unit/Service/WooServiceTest.php::testTheAssessmentFileTypeIsTheDetectedTypeAndTheClaimIsKept`.
+- [x] 1.1 Add `FileFacts::mimeTypeOf()` (REQ-PFF-001). Verify: `tests/Unit/Service/FileFactsTest.php::testAPdfNamedDocxIsDetectedAsPdf`, `::testUnreadableBytesGiveNull`, `::testOnlyTheFirst8KbAreRead`.
+- [x] 1.2 Use it in `SitemapService::mapDiwooDocument()` and `DcatMappingService`, and report `type-mismatch` and `type-unreadable` in `collectDiwooViolations()` (REQ-PFF-001). Verify: `tests/Unit/Service/SitemapServiceTest.php::testTheFormatComesFromTheBytesNotTheName` (fails today), `::testUnreadableBytesOmitTheFormatAndReportIt`; `tests/Unit/Service/DcatMappingServiceTest.php::testTheMediaTypeComesFromTheBytes`.
+  - Sitemap half done: `SitemapDocumentMapper` takes `diwoo:format` from `FileFacts::mimeTypeOfListedFile()` (the file's Nextcloud id), mapped to the DiWoo format list, and reports `type-mismatch` and `type-unreadable` (and `type-unlisted` for a detected type the DiWoo list has no format for) through `collectDiwooViolations()`. DCAT half: `DcatDistributionMapper` takes an optional `FileFacts` (autowired) and, with it, sets `dcat:mediaType` and `dct:format` from the stored bytes and omits both when the bytes cannot be read; `DcatMappingServiceTest::testTheMediaTypeComesFromTheBytes`.
+- [x] 1.3 Store the detected type and `fileTypeClaimed` in `WooService` (REQ-PFF-001); add `fileTypeClaimed` to `#wooAssessment` with a bumped version. Verify: `tests/Unit/Service/WooServiceTest.php::testTheAssessmentFileTypeIsTheDetectedTypeAndTheClaimIsKept`.
+  - `WooService` takes an optional `FileFacts` (autowired): a new assessment's `fileType` is the type of the document's stored bytes (resolved like the publish path resolves it), a caller value that differs is kept as `fileTypeClaimed`, and an unreadable or missing document gets an empty `fileType`. `#wooAssessment` 0.3.0 -> 0.4.0 with `fileTypeClaimed`.
 
 ## 2. Title in the file
 

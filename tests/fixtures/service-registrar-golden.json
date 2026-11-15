@@ -121,6 +121,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublishedTableServiceInterface",
+        "OCA\\OpenCatalogi\\Service\\Table\\PublishedTableService"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\CatalogAccessServiceInterface",
         "OCA\\OpenCatalogi\\Service\\CatalogAccessService"
     ],
@@ -268,6 +273,11 @@
         "alias",
         "OCA\\OpenCatalogi\\Contract\\PublishedCollectionsServiceInterface",
         "OCA\\OpenCatalogi\\Service\\Publication\\PublishedCollectionsService"
+    ],
+    [
+        "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublishedRecordViewInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublishedRecordView"
     ],
     [
         "alias",

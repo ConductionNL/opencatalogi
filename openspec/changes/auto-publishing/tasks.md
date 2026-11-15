@@ -4,7 +4,7 @@
 
 - **Spec ref**: specs/auto-publishing/spec.md
 - **Status**: done
-- [ ] Verify no overlap with OpenRegister's built-in publishing capabilities.
+- [x] Verify no overlap with OpenRegister's built-in publishing capabilities.
   - `ObjectService.publish()` is the canonical publish method — opencatalogi must not re-implement it.
   - `FileService.createShareLink()` is the canonical share-link method — no custom sharing logic.
   - `FileMapper.getFilesForObject()` is used specifically to avoid re-triggering events from inside the event handler (APB-010). This is an explicit architectural decision, not a bypass of OR abstractions.
@@ -15,14 +15,14 @@
 ## Task 2: Remove debug logging from ObjectUpdatedEventListener
 
 - **Spec ref**: specs/auto-publishing/spec.md (APB-016)
-- **Status**: todo
+- **Status**: done (the debug entries were already gone; verified)
 - **Files**: `lib/Listener/ObjectUpdatedEventListener.php`
 - **Acceptance criteria**:
-  - [ ] All `OPENCATALOGI_EVENT_LISTENER_CALLED_AT_*` log statements are removed from the listener.
-  - [ ] No other development-only debug log entries remain in the listener.
-  - [ ] Functional logging (info/error results from `EventService`) is preserved.
-  - [ ] `grep -n "OPENCATALOGI_EVENT_LISTENER_CALLED_AT_" lib/Listener/ObjectUpdatedEventListener.php` returns no matches.
-  - [ ] `composer check:strict` passes.
+  - [x] All `OPENCATALOGI_EVENT_LISTENER_CALLED_AT_*` log statements are removed from the listener.
+  - [x] No other development-only debug log entries remain in the listener.
+  - [x] Functional logging (info/error results from `EventService`) is preserved.
+  - [x] `grep -n "OPENCATALOGI_EVENT_LISTENER_CALLED_AT_" lib/Listener/ObjectUpdatedEventListener.php` returns no matches.
+  - [x] `composer check:strict` passes.
 
 ---
 
@@ -34,9 +34,10 @@
 - **Acceptance criteria**:
   - [ ] The `@self.files = []` placeholder is replaced with `FileMapper.getFilesForObject($objectId)`.
   - [ ] `FileMapper` is injected into `ObjectUpdatedEventListener` via constructor dependency injection (no `new FileMapper(...)` instantiation inside the class).
-  - [ ] When a published object with 2 unpublished attachments is updated (both have no `share_token`), the processing result shows `attachmentsPublished = 2`.
-  - [ ] No new `ObjectUpdatedEvent` is dispatched as a side effect of the `FileMapper` call (FileMapper reads directly from DB — does not touch the event bus).
-  - [ ] `composer check:strict` passes.
+  - [x] When a published object with 2 unpublished attachments is updated (both have no `share_token`), the processing result shows `attachmentsPublished = 2`.
+  - [x] No new `ObjectUpdatedEvent` is dispatched as a side effect of the `FileMapper` call (FileMapper reads directly from DB — does not touch the event bus).
+  - [x] `composer check:strict` passes.
+  - Note: the file list is read in `EventService::publishObjectAttachments()` through `FileMapper` (fetched lazily from the container, so the app stays installable without OpenRegister), not in the listener. Update events therefore already publish the real attachments; `EventServiceAutoPublishingTest::testAnUpdateSharesTheRealFileList` pins `attachmentsPublished = 2` for an update whose listener payload carries `@self.files = []`. Injecting `FileMapper` into the listener as well would read the files twice, so the two DI items above are left open for a decision.
 
 ---
 
@@ -46,9 +47,9 @@
 - **Status**: todo
 - **Files**: `lib/Service/EventService.php`, `tests/Unit/Service/EventServiceTest.php`
 - **Acceptance criteria**:
-  - [ ] Confirm `EventService.publishObjectAttachments()` prepends `/OpenRegister/` to the FileMapper path before calling `FileService.createShareLink()`.
-  - [ ] Add a unit test asserting the path transformation: a FileMapper path of `files/object-uuid/document.pdf` becomes `/OpenRegister/files/object-uuid/document.pdf` when passed to `FileService.createShareLink()`.
-  - [ ] Unit test uses a mock `FileService` and asserts the exact path argument.
+  - [x] Confirm `EventService.publishObjectAttachments()` prepends `/OpenRegister/` to the FileMapper path before calling `FileService.createShareLink()`.
+  - [x] Add a unit test asserting the path transformation: a FileMapper path of `files/object-uuid/document.pdf` becomes `/OpenRegister/files/object-uuid/document.pdf` when passed to `FileService.createShareLink()`.
+  - [x] Unit test uses a mock `FileService` and asserts the exact path argument.
 
 ---
 
@@ -58,14 +59,14 @@
 - **Status**: todo
 - **Files**: `tests/Unit/Service/EventServiceTest.php`
 - **Acceptance criteria**:
-  - [ ] **APB-003**: `handleObjectCreateEvents()` with a matching catalog calls `ObjectService.publish()` once; with no catalog match it does not call `publish()`.
-  - [ ] **APB-004**: `publishObjectAttachments()` calls `FileService.createShareLink()` for each file without a `share_token`.
-  - [ ] **APB-006**: `isObjectPublished()` returns `true` for published-only, `false` for depublished-after-published, `true` for published-after-depublished.
-  - [ ] **APB-007**: When both options are `false`, the listener returns without calling any `EventService` method.
-  - [ ] **APB-011**: `publishObjectAttachments()` skips files that already have a `share_token`.
-  - [ ] **APB-012**: The returned result array contains `processed`, `published`, `attachmentsPublished`, `errors`, and `details` keys with the correct values.
-  - [ ] **APB-014**: An exception from `ObjectService.publish()` is caught; the method still returns a result array with the error recorded in `errors`.
-  - [ ] All tests pass under `composer test`.
+  - [x] **APB-003**: `handleObjectCreateEvents()` with a matching catalog calls `ObjectService.publish()` once; with no catalog match it does not call `publish()`.
+  - [x] **APB-004**: `publishObjectAttachments()` calls `FileService.createShareLink()` for each file without a `share_token`.
+  - [x] **APB-006**: `isObjectPublished()` returns `true` for published-only, `false` for depublished-after-published, `true` for published-after-depublished.
+  - [x] **APB-007**: When both options are `false`, the listener returns without calling any `EventService` method.
+  - [x] **APB-011**: `publishObjectAttachments()` skips files that already have a `share_token`.
+  - [x] **APB-012**: The returned result array contains `processed`, `published`, `attachmentsPublished`, `errors`, and `details` keys with the correct values.
+  - [x] **APB-014**: An exception from `ObjectService.publish()` is caught; the method still returns a result array with the error recorded in `errors`.
+  - [x] All tests pass under `composer test`.
 
 ---
 
@@ -95,7 +96,7 @@
 
 ## Cross-cutting acceptance criteria
 
-- [ ] `C.1` No `ObjectService` call exists inside `EventService.publishObjectAttachments()` after Task 3. `FileMapper` is the only file-data source in that method (APB-010 hard constraint).
-- [ ] `C.2` `composer check:strict` passes on all modified files after each task.
-- [ ] `C.3` The processing result structure (`processed`, `published`, `attachmentsPublished`, `errors`, `details`) is returned by both `handleObjectCreateEvents()` and `handleObjectUpdateEvents()` on every code path — including error paths (APB-012, APB-014).
-- [ ] `C.4` No new custom database tables, REST endpoints, or frontend components are introduced by this change. Auto-publishing remains a pure event-listener + service layer over existing OpenRegister primitives.
+- [x] `C.1` No `ObjectService` call exists inside `EventService.publishObjectAttachments()` after Task 3. `FileMapper` is the only file-data source in that method (APB-010 hard constraint).
+- [x] `C.2` `composer check:strict` passes on all modified files after each task.
+- [x] `C.3` The processing result structure (`processed`, `published`, `attachmentsPublished`, `errors`, `details`) is returned by both `handleObjectCreateEvents()` and `handleObjectUpdateEvents()` on every code path — including error paths (APB-012, APB-014).
+- [x] `C.4` No new custom database tables, REST endpoints, or frontend components are introduced by this change. Auto-publishing remains a pure event-listener + service layer over existing OpenRegister primitives.

@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Kartlar",
         "Catalog not found": "Katalog bulunamadı",
         "Catalogs": "Kataloglar",
+        "catalogs": "kataloglar",
         "Check server logs for more details.": "Daha fazla ayrıntı için sunucu günlüklerini denetleyin.",
         "Choose sorting": "Sıralama seçin",
         "Clear": "Temizle",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Ek başarıyla yayımlandı",
         "Attachment successfully updated": "Ek başarıyla güncellendi",
         "Attachments": "Ekler",
+        "attachments": "ekler",
         "Attachments are loading": "Ekler yükleniyor",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Ekler geçerli tarih ve saatle yayımlanacaktır. Herhangi bir ekin yayından kaldırma tarihi ayarlanmışsa, tamamen yayımlanması için bu tarih kaldırılacaktır.",
         "Auto publish attachments": "Ekleri otomatik yayımla",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Yayınlarının burada listelenmesi için kataloğa bir kayıt ve bir şema ekleyin.",
         "Open catalog": "Kataloğu aç",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "İlk kataloğunuzu oluşturun. Yayınlarınızın yer alacağı kapsayıcıdır. Kataloğun eklediğiniz yayınları listelemesi için Publication kaydını ve Publication şemasını seçin.",
-        "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin"
+        "Manage your publications and their status": "Yayınlarınızı ve durumlarını yönetin",
+        "Open at the source": "Kaynakta aç"
     },
     "nplurals=2; plural=(n != 1);"
 )

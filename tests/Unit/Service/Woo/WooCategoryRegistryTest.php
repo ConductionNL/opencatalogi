@@ -288,6 +288,20 @@ class WooCategoryRegistryTest extends TestCase {
 		$this->assertSame('Adviezen', $member['label']);
 	}
 
+	public function testALaterLocalCategoryResolvesPastAnEarlierOneThatDoesNotMatch(): void {
+		$registry = $this->registry(
+			[
+				['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat018'],
+				['code' => 'adviesraad', 'title' => 'Adviesraad', 'mapsTo' => 'infocat010'],
+			]
+		);
+
+		$member = $registry->resolveForDocument('  ADVIESRAAD ');
+		$this->assertNotNull($member);
+		$this->assertSame('Adviezen', $member['label']);
+		$this->assertNull($registry->resolveForDocument('onbekend'));
+	}
+
 	public function testAStoredRowThatIsAPlainArrayIsReadToo(): void {
 		// OpenRegister hands back entities, but a caller that already serialised them
 		// must not silently lose its categories.

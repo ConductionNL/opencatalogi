@@ -34,6 +34,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -107,6 +108,7 @@ class InspectionController extends Controller {
 	 * @return JSONResponse The inspection, or the refusal.
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function open(): JSONResponse {
@@ -121,6 +123,12 @@ class InspectionController extends Controller {
 			return new JSONResponse(
 				data: ['error' => 'inspection-refused', 'message' => $e->getMessage()],
 				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		} catch (TermRollUnavailableException $e) {
+			// A statutory end is never stored unrolled because the engine was down.
+			return new JSONResponse(
+				data: ['error' => 'term-engine-unavailable', 'message' => $e->getMessage()],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
 			);
 		}
 

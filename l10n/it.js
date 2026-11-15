@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Schede",
         "Catalog not found": "Catalogo non trovato",
         "Catalogs": "Cataloghi",
+        "catalogs": "cataloghi",
         "Check server logs for more details.": "Controlli i registri del server per maggiori dettagli.",
         "Choose sorting": "Scelga l'ordinamento",
         "Clear": "Cancella",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Allegato pubblicato correttamente",
         "Attachment successfully updated": "Allegato aggiornato correttamente",
         "Attachments": "Allegati",
+        "attachments": "allegati",
         "Attachments are loading": "Caricamento degli allegati in corso",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Gli allegati verranno pubblicati con la data e l'ora correnti. Se per alcuni allegati è impostata una data di ritiro, questa verrà rimossa per renderli completamente pubblicati.",
         "Auto publish attachments": "Pubblica automaticamente gli allegati",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Aggiungi un registro e uno schema al catalogo per elencarne qui le pubblicazioni.",
         "Open catalog": "Apri catalogo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Crea il tuo primo catalogo. È il contenitore in cui vivranno le tue pubblicazioni. Scegli il registro Publication e lo schema Publication, così il catalogo elenca le pubblicazioni che aggiungi.",
-        "Manage your publications and their status": "Gestisci le tue pubblicazioni e il loro stato"
+        "Manage your publications and their status": "Gestisci le tue pubblicazioni e il loro stato",
+        "Open at the source": "Apri alla fonte"
     },
     "nplurals=2; plural=(n != 1);"
 )

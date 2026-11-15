@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 import { useDropZone, useFileDialog } from '@vueuse/core'
 import { computed, ref } from 'vue'
 import { objectStore } from './../store/store.js'
