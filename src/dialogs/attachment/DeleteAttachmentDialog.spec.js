@@ -52,6 +52,33 @@ function open() {
 	})
 }
 
+/**
+ * Mount the dialog with buttons that render their icon and label and can be pressed.
+ *
+ * @return {object} The wrapper.
+ */
+function openWithButtons() {
+	objectStore.active = {
+		publication: { id: 'pub-1', '@self': { register: 'reg-5', schema: 'sch-9' } },
+		publicationAttachment: { id: 'file-7', title: 'Besluit.pdf' },
+	}
+	return shallowMount(DeleteAttachmentDialog, {
+		global: {
+			mocks: { t: (app, text, vars) => text.replace('{name}', vars?.name ?? '') },
+			stubs: {
+				NcDialog: { template: '<div><slot /><footer><slot name="actions" /></footer></div>' },
+				NcNoteCard: { template: '<div class="note"><slot /></div>' },
+				NcButton: {
+					props: ['disabled'],
+					emits: ['click'],
+					template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot name="icon" /><slot /></button>',
+				},
+				NcLoadingIcon: { template: '<span class="spinner" />' },
+			},
+		},
+	})
+}
+
 describe('DeleteAttachmentDialog', () => {
 	beforeEach(() => {
 		jest.useFakeTimers()
@@ -106,5 +133,36 @@ describe('DeleteAttachmentDialog', () => {
 
 		jest.advanceTimersByTime(2000)
 		expect(navigationStore.setDialog).toHaveBeenCalledWith(false)
+	})
+
+	it('offers Cancel and Delete, and Cancel closes without deleting', async () => {
+		const wrapper = openWithButtons()
+
+		const buttons = wrapper.findAll('footer button')
+		expect(buttons.map((button) => button.text())).toEqual(['Cancel', 'Delete'])
+		expect(buttons[1].find('.spinner').exists()).toBe(false)
+		expect(buttons.some((button) => button.attributes('disabled') !== undefined)).toBe(false)
+
+		await buttons[0].trigger('click')
+		expect(navigationStore.setDialog).toHaveBeenCalledWith(false)
+		expect(global.fetch).not.toHaveBeenCalled()
+	})
+
+	it('deletes from its button with a spinner, then offers only Close', async () => {
+		let answer
+		global.fetch.mockImplementation(() => new Promise((resolve) => { answer = resolve }))
+		const wrapper = openWithButtons()
+
+		await wrapper.findAll('footer button')[1].trigger('click')
+		expect(global.fetch).toHaveBeenCalledTimes(1)
+		const deleting = wrapper.findAll('footer button')
+		expect(deleting[1].find('.spinner').exists()).toBe(true)
+		expect(deleting.every((button) => button.attributes('disabled') !== undefined)).toBe(true)
+
+		answer({ status: 200 })
+		await flushPromises()
+
+		const done = wrapper.findAll('footer button')
+		expect(done.map((button) => button.text())).toEqual(['Close'])
 	})
 })
