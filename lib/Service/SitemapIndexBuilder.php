@@ -138,19 +138,26 @@ final class SitemapIndexBuilder {
 	/**
 	 * A sitemap index document over the given entries.
 	 *
+	 * An index without entries is a `sitemapindex` without children, not one
+	 * with an empty `sitemap` element, which the sitemap schema refuses
+	 * (REQ-WOO-001-B).
+	 *
 	 * @param array<int, array{loc: string, lastmod: string|null}> $sitemaps The entries.
 	 *
 	 * @return XMLResponse
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
 	 */
 	public function response(array $sitemaps): XMLResponse {
-		return new XMLResponse(
-			data: [
-				'@root' => 'sitemapindex',
-				'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
-				'sitemap' => $sitemaps,
-			]
-		);
+		$index = [
+			'@root' => 'sitemapindex',
+			'@attributes' => ['xmlns' => 'http://www.sitemaps.org/schemas/sitemap/0.9'],
+		];
+		if ($sitemaps !== []) {
+			$index['sitemap'] = $sitemaps;
+		}
+
+		return new XMLResponse(data: $index);
 	}//end response()
 }//end class
