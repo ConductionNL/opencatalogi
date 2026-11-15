@@ -20,6 +20,7 @@ namespace Unit\Service\AttachmentReading;
 
 use OCA\OpenCatalogi\Service\AttachmentReading\AttachmentReadingStore;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use RuntimeException;
@@ -43,8 +44,15 @@ class ReadingStoreFakeObjects {
 		return ['results' => $this->rows];
 	}//end searchObjectsPaginated()
 
-	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true): array {
-		$this->saves[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+		$this->saves[] = [
+			'object' => $object,
+			'register' => $options->target->register,
+			'schema' => $options->target->schema,
+			'uuid' => $options->uuid,
+			'rbac' => $_rbac,
+			'multitenancy' => $_multitenancy,
+		];
 		return $object;
 	}//end saveObject()
 }//end class

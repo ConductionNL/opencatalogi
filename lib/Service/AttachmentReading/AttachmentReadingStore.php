@@ -27,6 +27,8 @@ namespace OCA\OpenCatalogi\Service\AttachmentReading;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -90,9 +92,10 @@ class AttachmentReadingStore {
 
 		$objects->saveObject(
 			object: $object,
-			register: $register,
-			schema: $schema,
-			uuid: $this->existingId(objects: $objects, fileId: $fileId),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $register, schema: $schema),
+				uuid: $this->existingId(objects: $objects, fileId: $fileId)
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
