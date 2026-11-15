@@ -723,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Pievienojiet katalogam reģistru un shēmu, lai šeit tiktu parādītas tā publikācijas.",
         "Open catalog": "Atvērt katalogu",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Izveidojiet savu pirmo katalogu. Tas ir konteiners, kurā būs jūsu publikācijas. Izvēlieties reģistru Publication un shēmu Publication, lai katalogs rādītu jūsu pievienotās publikācijas.",
-        "Manage your publications and their status": "Pārvaldiet savas publikācijas un to statusu"
+        "Manage your publications and their status": "Pārvaldiet savas publikācijas un to statusu",
+        "Open at the source": "Atvērt avotā"
     },
     "nplurals=2; plural=(n != 1);"
 )

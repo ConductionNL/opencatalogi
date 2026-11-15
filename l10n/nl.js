@@ -1565,6 +1565,8 @@ OC.L10N.register(
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
+        "Planning (does not publish)": "Planning (publiceert niet)",
+        "Open at the source": "Openen bij de bron",
         "Amends": "Wijzigt",
         "Implements": "Geeft uitvoering aan",
         "Publications that belong with this one. The relation reads the same from both sides.": "Publicaties die bij deze horen. De relatie leest van beide kanten hetzelfde.",
@@ -1578,8 +1580,7 @@ OC.L10N.register(
         "The publications this one implements. Each of them reads that it is implemented by this one.": "De publicaties waaraan deze uitvoering geeft. Bij elk daarvan staat dat het door deze wordt uitgevoerd.",
         "The publications this one replaces. Each of them reads that it is replaced by this one.": "De publicaties die deze vervangt. Bij elk daarvan staat dat het door deze wordt vervangen.",
         "The source system, such as case or decos.": "Het bronsysteem, zoals case of decos.",
-        "Whether the identifier may be shown and searched on the public API.": "Of het kenmerk via de openbare API getoond en doorzocht mag worden.",
-        "Planning (does not publish)": "Planning (publiceert niet)"
+        "Whether the identifier may be shown and searched on the public API.": "Of het kenmerk via de openbare API getoond en doorzocht mag worden."
     },
     "nplurals=2; plural=(n != 1);"
 )

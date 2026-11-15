@@ -37,6 +37,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\SettingsService
@@ -300,7 +301,11 @@ class SettingsServiceCatalogScopeTest extends TestCase {
 			->getMock();
 		$objects->method('searchObjects')->willReturn($catalogues);
 		$objects->method('saveObject')->willReturnCallback(
-			function (mixed $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): ObjectEntity {
+			function (mixed $object, ObjectSaveOptions $options = new ObjectSaveOptions()): ObjectEntity {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$this->assertSame('23', $register);
 				$this->assertSame('8', $schema);
 				$this->savedWithUuid[] = [$object, $uuid];

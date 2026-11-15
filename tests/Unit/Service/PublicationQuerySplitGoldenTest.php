@@ -27,6 +27,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * Every world of the three steps gives the recorded answer, OpenRegister calls and log lines.
@@ -83,7 +84,11 @@ class PublicationQuerySplitGoldenTest extends TestCase {
 			 *
 			 * @return object|null
 			 */
-			public function find(string $id, array $_extend = [], bool $files = false, int|string|null $register = null, int|string|null $schema = null, bool $_rbac = true, bool $_multitenancy = true): ?object {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): ?object {
+				$_extend = $options?->extend ?? [];
+				$files = $options?->files ?? false;
+				$register = $options?->register;
+				$schema = $options?->schema;
 				$this->log[] = ['find' => [$id, $_extend, $files, $register, $schema, $_rbac, $_multitenancy]];
 				$answer = ($this->world['find'][$register . '/' . $schema] ?? null);
 				if ($answer === 'missing') {
