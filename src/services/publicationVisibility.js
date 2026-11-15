@@ -50,3 +50,43 @@ export function documentOptions(data) {
 		label: file.title || file.name || String(file.id),
 	}))
 }
+
+/**
+ * Whether a file's own publication window has ended: its `depublished`
+ * moment (OpenRegister's file window) is now or past. A file without an end,
+ * or with an unreadable one, is not withdrawn.
+ *
+ * @param {object} file One file of a files response.
+ * @param {Date} [now] The moment to compare with.
+ * @return {boolean} Whether the file is withdrawn.
+ * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+ */
+export function isWithdrawnFile(file, now = new Date()) {
+	if (!file || !file.depublished) {
+		return false
+	}
+	const end = new Date(file.depublished)
+	return !Number.isNaN(end.getTime()) && end.getTime() <= now.getTime()
+}
+
+/**
+ * The withdrawn documents of a files response, each with its id, label, the
+ * moment it was withdrawn and the reason kept on the file. OpenRegister turns
+ * the `withdrawn-reason:<reason>` label into the `withdrawn-reason` field.
+ *
+ * @param {Array<object>|{results: Array<object>}} data The files response body.
+ * @param {Date} [now] The moment to compare with.
+ * @return {Array<{id: (string|number), label: string, withdrawnAt: string, reason: string}>} The withdrawn documents.
+ * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+ */
+export function withdrawnDocuments(data, now = new Date()) {
+	const files = Array.isArray(data) ? data : data.results || []
+	return files
+		.filter((file) => isWithdrawnFile(file, now))
+		.map((file) => ({
+			id: file.id,
+			label: file.title || file.name || String(file.id),
+			withdrawnAt: file.depublished,
+			reason: String(file['withdrawn-reason'] || ''),
+		}))
+}
