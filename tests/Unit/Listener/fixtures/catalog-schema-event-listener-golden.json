@@ -1,0 +1,363 @@
+{
+    "a post-save event": {
+        "calls": []
+    },
+    "an unrelated event": {
+        "calls": []
+    },
+    "creating, rewritten": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": {
+                    "registers": [
+                        "r"
+                    ],
+                    "schemas": [
+                        "s"
+                    ]
+                }
+            }
+        ],
+        "modified": {
+            "registers": [
+                42
+            ]
+        }
+    },
+    "updating, rewritten": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": {
+                    "registers": [
+                        "r"
+                    ],
+                    "schemas": [
+                        "s"
+                    ]
+                }
+            }
+        ],
+        "modified": {
+            "schemas": [
+                7
+            ]
+        }
+    },
+    "updating, merged with earlier data": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": {
+                    "registers": [
+                        "r"
+                    ],
+                    "schemas": [
+                        "s"
+                    ]
+                }
+            }
+        ],
+        "modified": {
+            "title": "x",
+            "schemas": [
+                7
+            ]
+        }
+    },
+    "nothing to rewrite": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": {
+                    "registers": [
+                        "r"
+                    ],
+                    "schemas": [
+                        "s"
+                    ]
+                }
+            }
+        ],
+        "modified": []
+    },
+    "another schema": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema"
+        ],
+        "modified": []
+    },
+    "another register": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister"
+        ],
+        "modified": []
+    },
+    "empty object data": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": []
+            }
+        ],
+        "modified": {
+            "registers": [
+                42
+            ]
+        }
+    },
+    "the rewrite throws": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": {
+                    "registers": [
+                        "r"
+                    ],
+                    "schemas": [
+                        "s"
+                    ]
+                }
+            },
+            {
+                "error": [
+                    "OpenCatalogi: Exception in catalog schema event listener: Register ghost not found.",
+                    "RuntimeException"
+                ]
+            }
+        ],
+        "modified": []
+    },
+    "the rewrite errors": {
+        "thrown": "Error: crashed",
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": {
+                    "registers": [
+                        "r"
+                    ],
+                    "schemas": [
+                        "s"
+                    ]
+                }
+            }
+        ]
+    },
+    "an unconfigured catalog schema": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": {
+                    "registers": [
+                        "r"
+                    ],
+                    "schemas": [
+                        "s"
+                    ]
+                }
+            }
+        ],
+        "modified": {
+            "registers": [
+                42
+            ]
+        }
+    },
+    "the rewrite throws a plain exception": {
+        "calls": [
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_schema",
+                    ""
+                ]
+            },
+            {
+                "getValueString": [
+                    "opencatalogi",
+                    "catalog_register",
+                    ""
+                ]
+            },
+            "getSchema",
+            "getRegister",
+            "getObject",
+            {
+                "compute": {
+                    "registers": [
+                        "r"
+                    ],
+                    "schemas": [
+                        "s"
+                    ]
+                }
+            },
+            {
+                "error": [
+                    "OpenCatalogi: Exception in catalog schema event listener: stopped",
+                    "Exception"
+                ]
+            }
+        ],
+        "modified": []
+    }
+}

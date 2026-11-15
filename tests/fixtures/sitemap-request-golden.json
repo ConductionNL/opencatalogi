@@ -1,0 +1,379 @@
+{
+    "no settings": {
+        "outcome": {
+            "status": 500,
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<response>\n  <value>\n    <content>Could net fetch settings</content>\n  </value>\n</response>\n"
+        },
+        "registerId": null,
+        "schemaId": null,
+        "catalog": "stdClass",
+        "calls": []
+    },
+    "unknown category": {
+        "outcome": {
+            "status": 400,
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<response>\n  <value>\n    <content>Invalid category code</content>\n  </value>\n</response>\n"
+        },
+        "registerId": "reg-woo",
+        "schemaId": null,
+        "catalog": "stdClass",
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            }
+        ]
+    },
+    "accepted, title-matched schema": {
+        "outcome": true,
+        "registerId": "reg-woo",
+        "schemaId": "sch-1",
+        "catalog": {
+            "catalog": {
+                "schemas": [
+                    "sch-1",
+                    "sch-2"
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "accepted, jaarplan title mapping": {
+        "outcome": true,
+        "registerId": "reg-woo",
+        "schemaId": "sch-12",
+        "catalog": {
+            "catalog": {
+                "schemas": [
+                    "sch-12"
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "last woo register wins": {
+        "outcome": true,
+        "registerId": "reg-2",
+        "schemaId": "sch-9",
+        "catalog": {
+            "catalog": {
+                "schemas": [
+                    "sch-9"
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "no woo register, catalog scope lists": {
+        "outcome": true,
+        "registerId": null,
+        "schemaId": null,
+        "catalog": {
+            "catalog": {
+                "registers": [
+                    "r1"
+                ],
+                "schemas": [
+                    "s1"
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "named category schemas skip the title match": {
+        "outcome": true,
+        "registerId": null,
+        "schemaId": null,
+        "catalog": {
+            "catalog": {
+                "registers": [
+                    "r1",
+                    ""
+                ],
+                "schemas": [
+                    "sch-1",
+                    null
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "named category without catalog scope": {
+        "outcome": {
+            "status": 400,
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<response>\n  <value>\n    <content>Schema not configured in catalog</content>\n  </value>\n</response>\n"
+        },
+        "registerId": null,
+        "schemaId": null,
+        "catalog": {
+            "catalog": {
+                "registers": [],
+                "schemas": [
+                    "sch-1"
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "unknown catalog": {
+        "outcome": {
+            "status": 400,
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<response>\n  <value>\n    <content>Invalid Woo catalog</content>\n  </value>\n</response>\n"
+        },
+        "registerId": "reg-woo",
+        "schemaId": "sch-1",
+        "catalog": [],
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "schema outside the catalog": {
+        "outcome": {
+            "status": 400,
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<response>\n  <value>\n    <content>Schema not configured in catalog</content>\n  </value>\n</response>\n"
+        },
+        "registerId": null,
+        "schemaId": null,
+        "catalog": {
+            "catalog": {
+                "schemas": [
+                    "sch-2"
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "schema outside the catalog, scope lists kept": {
+        "outcome": true,
+        "registerId": null,
+        "schemaId": null,
+        "catalog": {
+            "catalog": {
+                "registers": [
+                    "r1"
+                ],
+                "schemas": [
+                    "sch-2"
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "no matching title": {
+        "outcome": true,
+        "registerId": null,
+        "schemaId": null,
+        "catalog": {
+            "catalog": {
+                "registers": [
+                    "r1"
+                ],
+                "schemas": [
+                    "s1"
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    },
+    "catalog with registers but no schemas": {
+        "outcome": {
+            "status": 400,
+            "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<response>\n  <value>\n    <content>Schema not configured in catalog</content>\n  </value>\n</response>\n"
+        },
+        "registerId": null,
+        "schemaId": null,
+        "catalog": {
+            "catalog": {
+                "registers": [
+                    "r1"
+                ],
+                "schemas": []
+            }
+        },
+        "calls": [
+            {
+                "findBySitemapFile": "sitemapindex-diwoo-infocat001.xml"
+            },
+            {
+                "searchObjectsPaginated": {
+                    "@self": {
+                        "register": "cat-reg",
+                        "schema": "cat-sch"
+                    },
+                    "slug": "the-catalog",
+                    "hasWooSitemap": true
+                },
+                "rbac": true,
+                "multitenancy": false,
+                "deleted": false
+            }
+        ]
+    }
+}

@@ -13,6 +13,9 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -124,7 +127,7 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
 	 */
 	public function getUuid(): ?string {
 		$value = ($this->_props['uuid'] ?? null);
-		return ($value === null) ? null : (string) $value;
+		return ($value === null) ? null : (string)$value;
 	}//end getUuid()
 
 	/**
@@ -134,7 +137,7 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
 	 */
 	public function getRegister(): ?string {
 		$value = ($this->_props['register'] ?? null);
-		return ($value === null) ? null : (string) $value;
+		return ($value === null) ? null : (string)$value;
 	}//end getRegister()
 
 	/**
@@ -144,7 +147,7 @@ class ObjectEntity extends \OCP\AppFramework\Db\Entity implements \JsonSerializa
 	 */
 	public function getSchema(): ?string {
 		$value = ($this->_props['schema'] ?? null);
-		return ($value === null) ? null : (string) $value;
+		return ($value === null) ? null : (string)$value;
 	}//end getSchema()
 
 	/**

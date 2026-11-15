@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Catalogi entity class
  *
  * @module Entities
@@ -10,8 +14,8 @@
  * @see {@link https://github.com/opencatalogi/opencatalogi}
  */
 
-import type { SafeParseReturnType } from 'zod'
-import type { CatalogStatus, TCatalogi } from './catalogi.types'
+import type { ZodSafeParseResult } from 'zod'
+import type { CatalogStatus, TCatalogi, TCatalogStaffAccess } from './catalogi.types'
 
 import { z } from 'zod'
 
@@ -35,6 +39,8 @@ export class Catalogi implements TCatalogi {
 	public slug!: string
 	public hasWooSitemap!: boolean
 	public hasOoapi!: boolean
+	public showWithheld!: boolean
+	public staffAccess?: TCatalogStaffAccess
 
 	/**
 	 * @param data
@@ -46,24 +52,72 @@ export class Catalogi implements TCatalogi {
 
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	private hydrate(data: TCatalogi): void {
+		this.hydrateText(data)
+		this.hydrateScope(data)
+		this.hydrateFlags(data)
+		this.hydrateStaffAccess(data)
+	}
+
+	/**
+	 * Fill the id, texts, slug and status.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateText(data: TCatalogi): void {
 		this.id = data?.id?.toString() || ''
 		this.title = data?.title || ''
 		this.summary = data?.summary || ''
 		this.description = data?.description || ''
 		this.image = data?.image || ''
-		this.listed = data?.listed || false
 		this.status = (data?.status as CatalogStatus) || 'development'
+		this.slug = data?.slug || ''
+	}
+
+	/**
+	 * Fill the organization, the registers and schemas (arrays only) and the filters.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateScope(data: TCatalogi): void {
 		this.organization = data.organization || ''
 		this.registers = (Array.isArray(data.registers) && data.registers) || []
 		this.schemas = (Array.isArray(data.schemas) && data.schemas) || []
 		this.filters = data.filters || {}
-		this.slug = data?.slug || ''
+	}
+
+	/**
+	 * Fill the listing and feature flags.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateFlags(data: TCatalogi): void {
+		this.listed = data?.listed || false
 		this.hasWooSitemap = data?.hasWooSitemap || false
 		this.hasOoapi = data?.hasOoapi || false
+		this.showWithheld = data?.showWithheld === true
+	}
+
+	/**
+	 * Copy the staff access, when the data has it.
+	 *
+	 * @param data The raw data
+	 * @spec openspec/specs/entity-typescript-models/spec.md
+	 */
+	private hydrateStaffAccess(data: TCatalogi): void {
+		if (data?.staffAccess) {
+			this.staffAccess = {
+				restricted: data.staffAccess.restricted === true,
+				readGroups: [...(data.staffAccess.readGroups || [])],
+				editGroups: [...(data.staffAccess.editGroups || [])],
+			}
+		}
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TCatalogi, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/l89lv7ocvq848-create-catalog
 		const schema = z.object({
 			title: z
@@ -78,7 +132,7 @@ export class Catalogi implements TCatalogi {
 			organization: z.number().or(z.string()).or(z.null()),
 			registers: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
 			schemas: z.array(z.number().or(z.string())).min(1, 'is verplicht'),
-			filters: z.record(z.unknown()),
+			filters: z.record(z.string(), z.unknown()),
 			slug: z
 				.string()
 				.min(1, 'is verplicht')
@@ -89,12 +143,16 @@ export class Catalogi implements TCatalogi {
 				),
 			hasWooSitemap: z.boolean(),
 			hasOoapi: z.boolean(),
+			showWithheld: z.boolean(),
+			staffAccess: z
+				.object({
+					restricted: z.boolean(),
+					readGroups: z.array(z.string()),
+					editGroups: z.array(z.string()),
+				})
+				.optional(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

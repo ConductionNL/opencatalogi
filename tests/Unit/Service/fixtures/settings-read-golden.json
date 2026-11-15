@@ -1,0 +1,575 @@
+{
+    "settings without OpenRegister": {
+        "answer": {
+            "objectTypes": [
+                "catalog",
+                "listing",
+                "organization",
+                "theme",
+                "glossary",
+                "usageCounter",
+                "ooapi_courses",
+                "ooapi_programs",
+                "ooapi_offerings"
+            ],
+            "openRegisters": false,
+            "availableRegisters": [],
+            "configuration": {
+                "catalog_source": "openregister",
+                "catalog_schema": "",
+                "catalog_register": "",
+                "listing_source": "openregister",
+                "listing_schema": "",
+                "listing_register": "",
+                "organization_source": "openregister",
+                "organization_schema": "",
+                "organization_register": "",
+                "theme_source": "openregister",
+                "theme_schema": "",
+                "theme_register": "",
+                "glossary_source": "openregister",
+                "glossary_schema": "",
+                "glossary_register": "",
+                "usageCounter_source": "openregister",
+                "usageCounter_schema": "",
+                "usageCounter_register": "",
+                "ooapi_courses_source": "openregister",
+                "ooapi_courses_schema": "",
+                "ooapi_courses_register": "",
+                "ooapi_programs_source": "openregister",
+                "ooapi_programs_schema": "",
+                "ooapi_programs_register": "",
+                "ooapi_offerings_source": "openregister",
+                "ooapi_offerings_schema": "",
+                "ooapi_offerings_register": "",
+                "auto_publish_attachments": "false",
+                "auto_publish_objects": "false",
+                "use_old_style_publishing_view": "false",
+                "dcat_instance_title": "OpenCatalogi",
+                "dcat_publisher_name": "",
+                "dcat_publisher_uri": "",
+                "dcat_default_license": "http://creativecommons.org/publicdomain/zero/1.0/",
+                "dcat_contact_point": "",
+                "ooapi_consumers": "",
+                "woo_index_registration_status": "not_registered",
+                "woo_index_registration_url": "",
+                "woo_index_registration_at": "",
+                "woo_index_registration_answer": "",
+                "channel_sources": "{}",
+                "public_api_cache_seconds": "60"
+            }
+        },
+        "enabled": [],
+        "written": []
+    },
+    "settings with registers": {
+        "answer": {
+            "objectTypes": [
+                "catalog",
+                "listing",
+                "organization",
+                "theme",
+                "glossary",
+                "usageCounter",
+                "ooapi_courses",
+                "ooapi_programs",
+                "ooapi_offerings"
+            ],
+            "openRegisters": true,
+            "availableRegisters": [
+                {
+                    "id": 1,
+                    "slug": "publication",
+                    "schemas": []
+                }
+            ],
+            "configuration": {
+                "catalog_source": "openregister",
+                "catalog_schema": "",
+                "catalog_register": "",
+                "listing_source": "openregister",
+                "listing_schema": "",
+                "listing_register": "",
+                "organization_source": "openregister",
+                "organization_schema": "",
+                "organization_register": "",
+                "theme_source": "openregister",
+                "theme_schema": "",
+                "theme_register": "",
+                "glossary_source": "openregister",
+                "glossary_schema": "",
+                "glossary_register": "",
+                "usageCounter_source": "openregister",
+                "usageCounter_schema": "",
+                "usageCounter_register": "",
+                "ooapi_courses_source": "openregister",
+                "ooapi_courses_schema": "",
+                "ooapi_courses_register": "",
+                "ooapi_programs_source": "openregister",
+                "ooapi_programs_schema": "",
+                "ooapi_programs_register": "",
+                "ooapi_offerings_source": "openregister",
+                "ooapi_offerings_schema": "",
+                "ooapi_offerings_register": "",
+                "auto_publish_attachments": "false",
+                "auto_publish_objects": "false",
+                "use_old_style_publishing_view": "false",
+                "dcat_instance_title": "OpenCatalogi",
+                "dcat_publisher_name": "",
+                "dcat_publisher_uri": "",
+                "dcat_default_license": "http://creativecommons.org/publicdomain/zero/1.0/",
+                "dcat_contact_point": "",
+                "ooapi_consumers": "",
+                "woo_index_registration_status": "not_registered",
+                "woo_index_registration_url": "",
+                "woo_index_registration_at": "",
+                "woo_index_registration_answer": "",
+                "channel_sources": "{}",
+                "public_api_cache_seconds": "60"
+            }
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "settings with stored values": {
+        "answer": {
+            "objectTypes": [
+                "catalog",
+                "listing",
+                "organization",
+                "theme",
+                "glossary",
+                "usageCounter",
+                "ooapi_courses",
+                "ooapi_programs",
+                "ooapi_offerings"
+            ],
+            "openRegisters": true,
+            "availableRegisters": [],
+            "configuration": {
+                "catalog_source": "openregister",
+                "catalog_schema": "12",
+                "catalog_register": "",
+                "listing_source": "openregister",
+                "listing_schema": "",
+                "listing_register": "",
+                "organization_source": "openregister",
+                "organization_schema": "",
+                "organization_register": "",
+                "theme_source": "openregister",
+                "theme_schema": "",
+                "theme_register": "",
+                "glossary_source": "openregister",
+                "glossary_schema": "",
+                "glossary_register": "",
+                "usageCounter_source": "openregister",
+                "usageCounter_schema": "",
+                "usageCounter_register": "",
+                "ooapi_courses_source": "openregister",
+                "ooapi_courses_schema": "",
+                "ooapi_courses_register": "",
+                "ooapi_programs_source": "openregister",
+                "ooapi_programs_schema": "",
+                "ooapi_programs_register": "",
+                "ooapi_offerings_source": "openregister",
+                "ooapi_offerings_schema": "",
+                "ooapi_offerings_register": "",
+                "auto_publish_attachments": "false",
+                "auto_publish_objects": "false",
+                "use_old_style_publishing_view": "false",
+                "dcat_instance_title": "Mijn catalogus",
+                "dcat_publisher_name": "",
+                "dcat_publisher_uri": "",
+                "dcat_default_license": "http://creativecommons.org/publicdomain/zero/1.0/",
+                "dcat_contact_point": "",
+                "ooapi_consumers": "",
+                "woo_index_registration_status": "not_registered",
+                "woo_index_registration_url": "",
+                "woo_index_registration_at": "",
+                "woo_index_registration_answer": "",
+                "channel_sources": "{}",
+                "public_api_cache_seconds": "0"
+            }
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "settings with a failing config": {
+        "answer": {
+            "thrown": "RuntimeException",
+            "message": "Failed to retrieve settings: config down"
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "auto configure without registers": {
+        "answer": [],
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                []
+            ]
+        ]
+    },
+    "auto configure, publication register second": {
+        "answer": {
+            "catalog_register": 7,
+            "catalog_schema": 70,
+            "listing_register": 7,
+            "listing_schema": 71,
+            "organization_register": 7,
+            "theme_register": 7,
+            "theme_schema": 72,
+            "glossary_register": 7,
+            "usageCounter_register": 7,
+            "ooapi_courses_register": 7,
+            "ooapi_programs_register": 7,
+            "ooapi_offerings_register": 7
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "auto configure, register as entity": {
+        "answer": {
+            "catalog_register": 7,
+            "catalog_schema": 70,
+            "listing_register": 7,
+            "listing_schema": 71,
+            "organization_register": 7,
+            "theme_register": 7,
+            "theme_schema": 72,
+            "glossary_register": 7,
+            "usageCounter_register": 7,
+            "ooapi_courses_register": 7,
+            "ooapi_programs_register": 7,
+            "ooapi_offerings_register": 7
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "auto configure, no publication register": {
+        "answer": [],
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "auto configure, register without schemas": {
+        "answer": {
+            "catalog_register": 3,
+            "listing_register": 3,
+            "organization_register": 3,
+            "theme_register": 3,
+            "glossary_register": 3,
+            "usageCounter_register": 3,
+            "ooapi_courses_register": 3,
+            "ooapi_programs_register": 3,
+            "ooapi_offerings_register": 3
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "auto configure, two publication registers": {
+        "answer": {
+            "catalog_register": 4,
+            "listing_register": 4,
+            "organization_register": 4,
+            "theme_register": 4,
+            "glossary_register": 4,
+            "usageCounter_register": 4,
+            "ooapi_courses_register": 4,
+            "ooapi_programs_register": 4,
+            "ooapi_offerings_register": 4
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ]
+        ]
+    },
+    "auto configure without OpenRegister": {
+        "answer": {
+            "thrown": "RuntimeException",
+            "message": "Failed to auto-configure: RegisterMapper is not available."
+        },
+        "enabled": [],
+        "written": []
+    },
+    "install, present and new enough": {
+        "answer": true,
+        "enabled": [],
+        "written": []
+    },
+    "install, enabled on demand": {
+        "answer": true,
+        "enabled": [
+            "openregister"
+        ],
+        "written": []
+    },
+    "install, missing": {
+        "answer": {
+            "thrown": "RuntimeException",
+            "message": "Failed to install/update OpenRegister: OpenRegister is not installed on this server and cannot be installed by OpenCatalogi. Install it from the Nextcloud App Store (or `occ app:install openregister`). Reason: Could not find path for openregister"
+        },
+        "enabled": [],
+        "written": []
+    },
+    "install, too old": {
+        "answer": {
+            "thrown": "RuntimeException",
+            "message": "Failed to install/update OpenRegister: version 0.1.9 is older than the required 0.2.0. Update it from the Nextcloud App Store (or `occ app:update openregister`)."
+        },
+        "enabled": [],
+        "written": []
+    },
+    "publishing options default": {
+        "answer": {
+            "auto_publish_attachments": false,
+            "auto_publish_objects": false,
+            "use_old_style_publishing_view": false
+        },
+        "enabled": [],
+        "written": []
+    },
+    "publishing options stored": {
+        "answer": {
+            "auto_publish_attachments": false,
+            "auto_publish_objects": true,
+            "use_old_style_publishing_view": true
+        },
+        "enabled": [],
+        "written": []
+    },
+    "publishing options failing config": {
+        "answer": {
+            "thrown": "RuntimeException",
+            "message": "Failed to retrieve publishing options: config down"
+        },
+        "enabled": [],
+        "written": []
+    },
+    "sync options in range": {
+        "answer": {
+            "sync_interval_seconds": 7200,
+            "min_interval_seconds": 900,
+            "max_interval_seconds": 86400,
+            "default_interval_seconds": 3600
+        },
+        "enabled": [],
+        "written": []
+    },
+    "sync options below the minimum": {
+        "answer": {
+            "sync_interval_seconds": 900,
+            "min_interval_seconds": 900,
+            "max_interval_seconds": 86400,
+            "default_interval_seconds": 3600
+        },
+        "enabled": [],
+        "written": []
+    },
+    "sync options above the maximum": {
+        "answer": {
+            "sync_interval_seconds": 86400,
+            "min_interval_seconds": 900,
+            "max_interval_seconds": 86400,
+            "default_interval_seconds": 3600
+        },
+        "enabled": [],
+        "written": []
+    },
+    "initialize, OpenRegister missing": {
+        "answer": {
+            "openRegister": false,
+            "autoConfigured": false,
+            "settingsLoaded": false,
+            "errors": [
+                "Failed to install/update OpenRegister: OpenRegister is not installed on this server and cannot be installed by OpenCatalogi. Install it from the Nextcloud App Store (or `occ app:install openregister`). Reason: Could not find path for openregister"
+            ]
+        },
+        "enabled": [],
+        "written": []
+    },
+    "initialize, nothing to configure": {
+        "answer": {
+            "openRegister": true,
+            "autoConfigured": false,
+            "settingsLoaded": true,
+            "errors": [
+                "Failed to load settings: Configuration file not found: /lib/Settings/publication_register.json"
+            ]
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                []
+            ]
+        ]
+    },
+    "initialize, configured": {
+        "answer": {
+            "openRegister": true,
+            "autoConfigured": true,
+            "settingsLoaded": true,
+            "errors": [
+                "Failed to load settings: Configuration file not found: /lib/Settings/publication_register.json"
+            ]
+        },
+        "enabled": [],
+        "written": [
+            [
+                "findAll",
+                []
+            ],
+            [
+                "findAll",
+                {
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            ],
+            [
+                "catalog_schema",
+                "20"
+            ],
+            [
+                "catalog_register",
+                "2"
+            ],
+            [
+                "listing_register",
+                "2"
+            ],
+            [
+                "organization_register",
+                "2"
+            ],
+            [
+                "theme_register",
+                "2"
+            ],
+            [
+                "glossary_register",
+                "2"
+            ],
+            [
+                "ooapi_courses_register",
+                "2"
+            ],
+            [
+                "ooapi_programs_register",
+                "2"
+            ],
+            [
+                "ooapi_offerings_register",
+                "2"
+            ]
+        ]
+    },
+    "initialize, enabled on demand": {
+        "answer": {
+            "openRegister": true,
+            "autoConfigured": false,
+            "settingsLoaded": true,
+            "errors": [
+                "Failed to load settings: Configuration file not found: /lib/Settings/publication_register.json"
+            ]
+        },
+        "enabled": [
+            "openregister"
+        ],
+        "written": [
+            [
+                "findAll",
+                []
+            ]
+        ]
+    },
+    "install, no minimum": {
+        "answer": true,
+        "enabled": [],
+        "written": []
+    }
+}

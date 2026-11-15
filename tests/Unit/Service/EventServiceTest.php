@@ -1,12 +1,17 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenRegister\Db\FileMapper;
+use OCA\OpenRegister\Files\Db\FileMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -160,7 +165,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 			->willReturn(['openregister']);
 
 		$this->containerMock->method('get')
-			->with('OCA\OpenRegister\Db\FileMapper')
+			->with('OCA\OpenRegister\Files\Db\FileMapper')
 			->willReturn($mockMapper);
 
 		$result = $this->eventService->getFileMapper();
@@ -664,7 +669,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -678,6 +683,101 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertEmpty($result['errors']);
 
 	}//end testPublishObjectAttachmentsSuccess()
+
+	/**
+	 * The attachment publishing of one object over the given files and their stored windows.
+	 *
+	 * @param array $files   The files FileMapper lists.
+	 * @param mixed $windows The window rows by file id, or a Throwable findByFileIds throws.
+	 *
+	 * @return array{result: array, shared: array<int, string>}
+	 */
+	private function publishAttachmentsOver(array $files, mixed $windows): array {
+		$this->appManagerMock->method('getInstalledApps')->willReturn(['openregister']);
+		$shared = new \ArrayObject();
+
+		$mockFileService = $this->createMock(FileService::class);
+		$mockFileService->method('createShareLink')->willReturnCallback(
+			static function (string $path) use ($shared): string {
+				$shared[] = $path;
+				return 'https://example.com/s/' . count($shared);
+			}
+		);
+
+		$mockFileMapper = $this->createMock(FileMapper::class);
+		$mockFileMapper->method('getFilesForObject')->willReturn($files);
+		if ($windows instanceof \Throwable) {
+			$mockFileMapper->method('findByFileIds')->willThrowException($windows);
+		} else {
+			$mockFileMapper->method('findByFileIds')->with(array_map(static fn (array $f): int => (int)$f['fileid'], $files))->willReturn($windows);
+		}
+
+		$mockObjectService = $this->createMock(ObjectService::class);
+		$mockObjectService->method('find')->willReturn(new ObjectEntity());
+
+		$this->containerMock->method('get')->willReturnCallback(
+			static fn (string $class): object => match ($class) {
+				'OCA\OpenRegister\Service\FileService' => $mockFileService,
+				'OCA\OpenRegister\Files\Db\FileMapper' => $mockFileMapper,
+				default => $mockObjectService,
+			}
+		);
+
+		$result = $this->invokePrivateMethod($this->eventService, 'publishObjectAttachments', [['@self' => ['uuid' => 'obj-uuid', 'id' => 1]]]);
+
+		return ['result' => $result, 'shared' => $shared->getArrayCopy()];
+	}//end publishAttachmentsOver()
+
+	/**
+	 * A stored window row ending at the given moment, or open-ended.
+	 *
+	 * @param string|null $end The depublication moment.
+	 *
+	 * @return object
+	 */
+	private static function windowEnding(?string $end): object {
+		return new class($end) {
+			public function __construct(private ?string $end) {
+			}
+
+			public function getDepublished(): ?\DateTime {
+				return $this->end === null ? null : new \DateTime($this->end);
+			}
+		};
+	}//end windowEnding()
+
+	/**
+	 * REQ-ATT-104: auto-publishing never shares a file whose own window has ended.
+	 */
+	public function testAutoPublishSkipsAWithdrawnFile(): void {
+		$run = $this->publishAttachmentsOver(
+			files: [
+				['fileid' => 11, 'name' => 'besluit.pdf', 'path' => 'files/besluit.pdf', 'share_token' => ''],
+				['fileid' => 12, 'name' => 'bijlage.pdf', 'path' => 'files/bijlage.pdf', 'share_token' => ''],
+				['fileid' => 13, 'name' => 'later.pdf', 'path' => 'files/later.pdf', 'share_token' => ''],
+			],
+			windows: [
+				12 => self::windowEnding('2020-01-01T00:00:00+00:00'),
+				13 => self::windowEnding('2999-01-01T00:00:00+00:00'),
+			]
+		);
+
+		$this->assertSame(['/OpenRegister/files/besluit.pdf', '/OpenRegister/files/later.pdf'], $run['shared']);
+		$this->assertSame(['published' => 2, 'skipped' => 1, 'errors' => []], $run['result']);
+	}//end testAutoPublishSkipsAWithdrawnFile()
+
+	/**
+	 * REQ-ATT-104: when the windows cannot be read, nothing is shared.
+	 */
+	public function testAutoPublishSharesNothingWhenTheWindowsCannotBeRead(): void {
+		$run = $this->publishAttachmentsOver(
+			files: [['fileid' => 11, 'name' => 'besluit.pdf', 'path' => 'files/besluit.pdf', 'share_token' => '']],
+			windows: new RuntimeException('database is down')
+		);
+
+		$this->assertSame([], $run['shared']);
+		$this->assertSame(['published' => 0, 'skipped' => 0, 'errors' => ['Failed to access file service: database is down']], $run['result']);
+	}//end testAutoPublishSharesNothingWhenTheWindowsCannotBeRead()
 
 	/**
 	 * Test publishObjectAttachments returns empty result when object entity is null.
@@ -705,7 +805,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -778,7 +878,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -831,7 +931,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -1055,7 +1155,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -1228,7 +1328,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 					return $mockFileService;
 				}
 
-				if ($class === 'OCA\OpenRegister\Db\FileMapper') {
+				if ($class === 'OCA\OpenRegister\Files\Db\FileMapper') {
 					return $mockFileMapper;
 				}
 
@@ -1342,5 +1442,33 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 		$this->assertCount(3, $result['details']);
 
 	}//end testHandleObjectUpdateEventsMultipleObjects()
+
+	/**
+	 * An object that fails while it is processed is reported on its own, and the next object is still processed.
+	 */
+	public function testAFailingObjectIsReportedAndTheNextOneStillRuns(): void {
+		$this->settingsServiceMock->method('getPublishingOptions')
+			->willReturn(['auto_publish_objects' => false, 'auto_publish_attachments' => true]);
+
+		$unreadableDate = new class {
+			public function __toString(): string {
+				throw new \RuntimeException('date unreadable');
+			}
+		};
+
+		foreach (['handleObjectCreateEvents', 'handleObjectUpdateEvents'] as $handler) {
+			$result = $this->eventService->$handler(
+				[
+					['publicationDate' => $unreadableDate, '@self' => ['id' => 'bad']],
+					['@self' => ['id' => 'fine']],
+				]
+			);
+
+			$this->assertSame(1, $result['processed'], $handler);
+			$this->assertSame(['Error processing object bad: date unreadable'], $result['errors'], $handler);
+			$this->assertSame(['objectId' => 'bad', 'actions' => [], 'errors' => ['date unreadable']], $result['details'][0], $handler);
+			$this->assertSame(['objectId' => 'fine', 'actions' => [], 'errors' => []], $result['details'][1], $handler);
+		}
+	}//end testAFailingObjectIsReportedAndTheNextOneStillRuns()
 
 }//end class

@@ -21,7 +21,7 @@ declare(strict_types=1);
 
 namespace Unit\Service\Portal;
 
-require_once __DIR__.'/FakePortalObjectStore.php';
+require_once __DIR__ . '/FakePortalObjectStore.php';
 
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
@@ -55,7 +55,7 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->store->publication(self::PUB_LATER, 'Nog niet openbaar', '+1 day');
 
 		$linker = $this->createMock(PublicationLinker::class);
-		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/'.$id);
+		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/' . $id);
 
 		$this->service = new CitizenCollectionService(store: $this->store, linker: $linker, logger: new NullLogger());
 		$this->shares = new CollectionShareService(store: $this->store, linker: $linker);
@@ -70,7 +70,7 @@ class CitizenCollectionServiceTest extends TestCase {
 	 */
 	private function assertStoredDossierIsValid(string $id): void {
 		$root = dirname(__DIR__, 4);
-		$fragment = json_decode((string)file_get_contents($root.'/lib/Settings/register.d/citizen-collections.json'), true)['components']['schemas']['collection'];
+		$fragment = json_decode((string)file_get_contents($root . '/lib/Settings/register.d/citizen-collections.json'), true)['components']['schemas']['collection'];
 		$properties = $fragment['properties'];
 		$properties['share']['type'] = ['object', 'null'];
 		$data = $this->store->objects['collection'][$id];
@@ -85,7 +85,7 @@ class CitizenCollectionServiceTest extends TestCase {
 	/**
 	 * Make a dossier for a subject with the given publications.
 	 *
-	 * @param string             $owner        The owner.
+	 * @param string $owner The owner.
 	 * @param array<int, string> $publications The publication ids.
 	 *
 	 * @return array<string, mixed> The owner view.
@@ -109,7 +109,7 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->assertSame(self::PUB_A, $stored['items'][0]['publication']);
 		$this->assertSame('resident', $stored['items'][0]['addedBy']);
 		$this->assertSame('Besluit windpark', $stored['items'][0]['title']);
-		$this->assertNull($stored['items'][0]['attachment']);
+		$this->assertArrayNotHasKey('attachment', $stored['items'][0]);
 		$this->assertMatchesRegularExpression('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $stored['items'][0]['id']);
 		$this->assertStoredDossierIsValid($view['id']);
 	}
@@ -166,7 +166,7 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->assertCount(2, $view['items']);
 		$this->assertSame('eerste', $view['items'][0]['note']);
 		$this->assertTrue($view['items'][0]['public']);
-		$this->assertSame('https://example.org/p/'.self::PUB_A, $view['items'][0]['url']);
+		$this->assertSame('https://example.org/p/' . self::PUB_A, $view['items'][0]['url']);
 		$this->assertArrayNotHasKey('owner', $view);
 	}
 
@@ -217,14 +217,14 @@ class CitizenCollectionServiceTest extends TestCase {
 		$view = $this->dossierOf('subject-1', [self::PUB_A]);
 		$share = $this->shares->share(owner: 'subject-1', collectionId: $view['id']);
 
-		$this->assertSame('/index.php/apps/opencatalogi/api/collections/shared/'.$share['token'], $share['url']);
-		$this->assertSame('/index.php/apps/portaliq/site?route=/gedeeld-dossier/'.$share['token'], $share['link']);
+		$this->assertSame('/index.php/apps/opencatalogi/api/collections/shared/' . $share['token'], $share['url']);
+		$this->assertSame('/index.php/apps/portaliq/site?route=/gedeeld-dossier/' . $share['token'], $share['link']);
 
 		$urls = $this->createMock(IURLGenerator::class);
-		$urls->method('getAbsoluteURL')->willReturnCallback(static fn (string $path): string => 'https://gemeente.example'.$path);
+		$urls->method('getAbsoluteURL')->willReturnCallback(static fn (string $path): string => 'https://gemeente.example' . $path);
 		$absolute = (new CollectionShareService(store: $this->store, linker: $this->createMock(PublicationLinker::class), urlGenerator: $urls))
 			->share(owner: 'subject-1', collectionId: $view['id']);
-		$this->assertSame('https://gemeente.example/index.php/apps/portaliq/site?route=/gedeeld-dossier/'.$absolute['token'], $absolute['link']);
+		$this->assertSame('https://gemeente.example/index.php/apps/portaliq/site?route=/gedeeld-dossier/' . $absolute['token'], $absolute['link']);
 	}
 
 	/**
@@ -233,7 +233,7 @@ class CitizenCollectionServiceTest extends TestCase {
 	public function testASharedDossierShowsOnlyPublicItemsAndNoOwner(): void {
 		$view = $this->dossierOf('subject-1', [self::PUB_A, self::PUB_B]);
 		$share = $this->shares->share(owner: 'subject-1', collectionId: $view['id']);
-		$this->assertMatchesRegularExpression('/^'.preg_quote($view['id'], '/').'\.[0-9a-f]{48}$/', $share['token']);
+		$this->assertMatchesRegularExpression('/^' . preg_quote($view['id'], '/') . '\.[0-9a-f]{48}$/', $share['token']);
 		$this->assertStoredDossierIsValid($view['id']);
 
 		$this->store->publication(self::PUB_B, 'Advies windpark', '-10 days', '-1 day');
@@ -260,10 +260,10 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->assertNull($this->store->objects['collection'][$view['id']]['share']);
 		$this->assertStoredDossierIsValid($view['id']);
 
-		foreach ([$share['token'], $view['id'].'.'.str_repeat('0', 48), 'nonsense', ''] as $token) {
+		foreach ([$share['token'], $view['id'] . '.' . str_repeat('0', 48), 'nonsense', ''] as $token) {
 			try {
 				$this->shares->shared(token: $token);
-				$this->fail('Expected not found for '.$token);
+				$this->fail('Expected not found for ' . $token);
 			} catch (PortalNotFoundException) {
 				$this->addToAssertionCount(1);
 			}
@@ -283,7 +283,7 @@ class CitizenCollectionServiceTest extends TestCase {
 		] as $input) {
 			try {
 				$this->service->addItem(owner: 'subject-1', input: $input);
-				$this->fail('Expected refusal for '.json_encode(array_keys($input)));
+				$this->fail('Expected refusal for ' . json_encode(array_keys($input)));
 			} catch (PortalInputException) {
 				$this->addToAssertionCount(1);
 			}
@@ -330,5 +330,53 @@ class CitizenCollectionServiceTest extends TestCase {
 		$this->assertSame([$other['id']], array_keys($this->store->objects['collection']));
 		$this->assertSame(['s2'], array_keys($this->store->objects['savedSearch']));
 		$this->assertSame(0, $this->service->removeEverythingOf(owner: ''));
+	}
+
+	public function testANewDossierIsRefusedOnceTheResidentHasTheMost(): void {
+		for ($i = 0; $i < CitizenCollectionService::MAX_DOSSIERS; $i++) {
+			$this->store->objects['collection']['d-' . $i] = ['id' => 'd-' . $i, 'title' => 'D' . $i, 'owner' => 'subject-1', 'items' => []];
+		}
+
+		try {
+			$this->service->addItem(owner: 'subject-1', input: ['title' => 'Nog een', 'publication' => self::PUB_A]);
+			$this->fail('Expected refusal of a dossier past the most');
+		} catch (PortalInputException $e) {
+			$this->assertSame('You have the most dossiers you can have', $e->getMessage());
+		}
+
+		$this->assertCount(CitizenCollectionService::MAX_DOSSIERS, $this->store->objects['collection']);
+		$view = $this->service->addItem(owner: 'subject-2', input: ['title' => 'Eigen', 'publication' => self::PUB_A]);
+		$this->assertSame('subject-2', $this->store->objects['collection'][$view['id']]['owner']);
+	}
+
+	public function testANoteOnAnItemTheDossierDoesNotHoldAnswersNotFound(): void {
+		$view = $this->dossierOf('subject-1', [self::PUB_A]);
+		$before = $this->store->objects['collection'][$view['id']];
+
+		try {
+			$this->service->note(owner: 'subject-1', collectionId: $view['id'], itemId: 'no-such-item', note: 'x');
+			$this->fail('Expected not found');
+		} catch (PortalNotFoundException $e) {
+			$this->assertSame('Not found', $e->getMessage());
+		}
+
+		$this->assertSame($before, $this->store->objects['collection'][$view['id']]);
+	}
+
+	public function testATitleThatIsNotTextOrTooLongIsRefusedByName(): void {
+		foreach ([
+			[['title' => ['Windpark'], 'publication' => self::PUB_A], 'title must be text'],
+			[['title' => str_repeat('x', 201), 'publication' => self::PUB_A], 'title is too long'],
+			[['title' => 'x', 'publication' => 42], 'publication must be text'],
+		] as [$input, $message]) {
+			try {
+				$this->service->addItem(owner: 'subject-1', input: $input);
+				$this->fail('Expected refusal: ' . $message);
+			} catch (PortalInputException $e) {
+				$this->assertSame($message, $e->getMessage());
+			}
+		}
+
+		$this->assertSame([], ($this->store->objects['collection'] ?? []));
 	}
 }

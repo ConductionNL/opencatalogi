@@ -27,6 +27,7 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Service\DcatService;
 use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCP\IURLGenerator;
@@ -80,6 +81,12 @@ class SchemaOrgServiceTest extends TestCase {
 				'organisation' => null,
 			]
 		);
+
+		$visibility = $this->createMock(originalClassName: PublicationQueryServiceInterface::class);
+		$visibility->method('isObjectPublic')->willReturnCallback(
+			callback: static fn (array $objectData): bool => (($objectData['publicationDate'] ?? null) === '2020-01-01T00:00:00+00:00')
+		);
+		$this->services[PublicationQueryServiceInterface::class] = $visibility;
 
 		$this->container->method('get')->willReturnCallback(
 			function (string $id) {
@@ -291,9 +298,9 @@ class SchemaOrgServiceTest extends TestCase {
 	public function testCatalogNodeListsVisiblePublications(): void {
 		$this->services['OCA\OpenRegister\Service\ObjectService'] = $this->objectServiceReturning(
 			[
-				['id' => 'p1', '@self' => ['uuid' => 'p1']],
-				['id' => 'p2', '@self' => ['uuid' => 'p2']],
-				['id' => 'p3', '@self' => ['uuid' => 'p3']],
+				['id' => 'p1', 'publicationDate' => '2020-01-01T00:00:00+00:00', '@self' => ['uuid' => 'p1']],
+				['id' => 'p2', 'publicationDate' => '2020-01-01T00:00:00+00:00', '@self' => ['uuid' => 'p2']],
+				['id' => 'p3', 'publicationDate' => '2020-01-01T00:00:00+00:00', '@self' => ['uuid' => 'p3']],
 			]
 		);
 
@@ -311,6 +318,47 @@ class SchemaOrgServiceTest extends TestCase {
 		$this->assertSame('https://example.test/apps/opencatalogi/api/woo/p1', $node['dataset'][0]['@id']);
 
 	}//end testCatalogNodeListsVisiblePublications()
+
+	/**
+	 * A draft the caller may read is not listed: only publications inside their
+	 * publication window become dataset refs.
+	 *
+	 * @return void
+	 */
+	public function testCatalogNodeLeavesOutPublicationsOutsideTheirWindow(): void {
+		$this->services['OCA\OpenRegister\Service\ObjectService'] = $this->objectServiceReturning(
+			results: [
+				['id' => 'p1', 'publicationDate' => '2020-01-01T00:00:00+00:00', '@self' => ['uuid' => 'p1']],
+				['id' => 'draft', '@self' => ['uuid' => 'draft']],
+				['id' => 'later', 'publicationDate' => '2999-01-01T00:00:00+00:00', '@self' => ['uuid' => 'later']],
+			]
+		);
+
+		$node = $this->service()->buildCatalogNode(catalog: ['title' => 'WOO', 'registers' => [1], 'schemas' => [11]], catalogSlug: 'woo');
+
+		$this->assertSame(
+			expected: ['https://example.test/apps/opencatalogi/api/woo/p1'],
+			actual: array_column(array: $node['dataset'], column_key: '@id')
+		);
+
+	}//end testCatalogNodeLeavesOutPublicationsOutsideTheirWindow()
+
+	/**
+	 * Without the publication query service no publication is listed.
+	 *
+	 * @return void
+	 */
+	public function testCatalogNodeListsNothingWithoutThePublicationWindowRule(): void {
+		unset($this->services[PublicationQueryServiceInterface::class]);
+		$this->services['OCA\OpenRegister\Service\ObjectService'] = $this->objectServiceReturning(
+			results: [['id' => 'p1', 'publicationDate' => '2020-01-01T00:00:00+00:00', '@self' => ['uuid' => 'p1']]]
+		);
+
+		$node = $this->service()->buildCatalogNode(catalog: ['title' => 'WOO', 'registers' => [1], 'schemas' => [11]], catalogSlug: 'woo');
+
+		$this->assertSame(expected: [], actual: $node['dataset']);
+
+	}//end testCatalogNodeListsNothingWithoutThePublicationWindowRule()
 
 	/**
 	 * WOO-581 review round 4 (r3-f1): one schema over two registers. A scalar

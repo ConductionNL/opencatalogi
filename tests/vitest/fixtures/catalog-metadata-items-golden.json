@@ -1,0 +1,413 @@
+[
+	{
+		"name": "no catalog",
+		"catalog": null,
+		"items": [],
+		"error": null
+	},
+	{
+		"name": "empty catalog",
+		"catalog": {},
+		"items": [
+			{
+				"label": "Title",
+				"value": "-"
+			},
+			{
+				"label": "Summary",
+				"value": "-"
+			},
+			{
+				"label": "Slug",
+				"value": "-"
+			},
+			{
+				"label": "Status",
+				"value": "-"
+			},
+			{
+				"label": "Listed",
+				"value": "Private"
+			},
+			{
+				"label": "Staff access",
+				"value": "All staff"
+			},
+			{
+				"label": "Created",
+				"value": "-"
+			},
+			{
+				"label": "Updated",
+				"value": "-"
+			},
+			{
+				"label": "ID",
+				"value": "-"
+			}
+		],
+		"error": null
+	},
+	{
+		"name": "full catalog",
+		"catalog": {
+			"title": "Woo",
+			"summary": "Sum",
+			"slug": "woo",
+			"status": "active",
+			"listed": true,
+			"staffAccess": {
+				"restricted": true,
+				"editGroups": [
+					"a"
+				],
+				"readGroups": [
+					"b",
+					"a"
+				]
+			},
+			"id": "top",
+			"@self": {
+				"id": "self",
+				"created": "2026-09-01T08:00:00.000Z",
+				"updated": "2026-10-02T09:15:00.000Z"
+			}
+		},
+		"items": [
+			{
+				"label": "Title",
+				"value": "Woo"
+			},
+			{
+				"label": "Summary",
+				"value": "Sum"
+			},
+			{
+				"label": "Slug",
+				"value": "woo"
+			},
+			{
+				"label": "Status",
+				"value": "active"
+			},
+			{
+				"label": "Listed",
+				"value": "Public"
+			},
+			{
+				"label": "Staff access",
+				"value": "Restricted to a, b"
+			},
+			{
+				"label": "Created",
+				"value": "D[2026-09-01T08:00:00.000Z]"
+			},
+			{
+				"label": "Updated",
+				"value": "D[2026-10-02T09:15:00.000Z]"
+			},
+			{
+				"label": "ID",
+				"value": "self"
+			}
+		],
+		"error": null
+	},
+	{
+		"name": "private, restricted to admins",
+		"catalog": {
+			"title": "T",
+			"listed": false,
+			"staffAccess": {
+				"restricted": true
+			},
+			"@self": {
+				"created": "2026-09-01T08:00:00.000Z"
+			}
+		},
+		"items": [
+			{
+				"label": "Title",
+				"value": "T"
+			},
+			{
+				"label": "Summary",
+				"value": "-"
+			},
+			{
+				"label": "Slug",
+				"value": "-"
+			},
+			{
+				"label": "Status",
+				"value": "-"
+			},
+			{
+				"label": "Listed",
+				"value": "Private"
+			},
+			{
+				"label": "Staff access",
+				"value": "Restricted to administrators"
+			},
+			{
+				"label": "Created",
+				"value": "D[2026-09-01T08:00:00.000Z]"
+			},
+			{
+				"label": "Updated",
+				"value": "-"
+			},
+			{
+				"label": "ID",
+				"value": "-"
+			}
+		],
+		"error": null
+	},
+	{
+		"name": "listed truthy string",
+		"catalog": {
+			"listed": "yes",
+			"@self": null
+		},
+		"items": [
+			{
+				"label": "Title",
+				"value": "-"
+			},
+			{
+				"label": "Summary",
+				"value": "-"
+			},
+			{
+				"label": "Slug",
+				"value": "-"
+			},
+			{
+				"label": "Status",
+				"value": "-"
+			},
+			{
+				"label": "Listed",
+				"value": "Public"
+			},
+			{
+				"label": "Staff access",
+				"value": "All staff"
+			},
+			{
+				"label": "Created",
+				"value": "-"
+			},
+			{
+				"label": "Updated",
+				"value": "-"
+			},
+			{
+				"label": "ID",
+				"value": "-"
+			}
+		],
+		"error": null
+	},
+	{
+		"name": "top id when no self id",
+		"catalog": {
+			"id": "top",
+			"@self": {
+				"updated": "2026-10-02T09:15:00.000Z"
+			}
+		},
+		"items": [
+			{
+				"label": "Title",
+				"value": "-"
+			},
+			{
+				"label": "Summary",
+				"value": "-"
+			},
+			{
+				"label": "Slug",
+				"value": "-"
+			},
+			{
+				"label": "Status",
+				"value": "-"
+			},
+			{
+				"label": "Listed",
+				"value": "Private"
+			},
+			{
+				"label": "Staff access",
+				"value": "All staff"
+			},
+			{
+				"label": "Created",
+				"value": "-"
+			},
+			{
+				"label": "Updated",
+				"value": "D[2026-10-02T09:15:00.000Z]"
+			},
+			{
+				"label": "ID",
+				"value": "top"
+			}
+		],
+		"error": null
+	},
+	{
+		"name": "empty strings fall to dash",
+		"catalog": {
+			"title": "",
+			"summary": "",
+			"slug": "",
+			"status": "",
+			"id": "",
+			"@self": {
+				"id": "",
+				"created": "",
+				"updated": ""
+			}
+		},
+		"items": [
+			{
+				"label": "Title",
+				"value": "-"
+			},
+			{
+				"label": "Summary",
+				"value": "-"
+			},
+			{
+				"label": "Slug",
+				"value": "-"
+			},
+			{
+				"label": "Status",
+				"value": "-"
+			},
+			{
+				"label": "Listed",
+				"value": "Private"
+			},
+			{
+				"label": "Staff access",
+				"value": "All staff"
+			},
+			{
+				"label": "Created",
+				"value": "-"
+			},
+			{
+				"label": "Updated",
+				"value": "-"
+			},
+			{
+				"label": "ID",
+				"value": "-"
+			}
+		],
+		"error": null
+	},
+	{
+		"name": "zero values",
+		"catalog": {
+			"title": 0,
+			"status": 0,
+			"id": 0
+		},
+		"items": [
+			{
+				"label": "Title",
+				"value": "-"
+			},
+			{
+				"label": "Summary",
+				"value": "-"
+			},
+			{
+				"label": "Slug",
+				"value": "-"
+			},
+			{
+				"label": "Status",
+				"value": "-"
+			},
+			{
+				"label": "Listed",
+				"value": "Private"
+			},
+			{
+				"label": "Staff access",
+				"value": "All staff"
+			},
+			{
+				"label": "Created",
+				"value": "-"
+			},
+			{
+				"label": "Updated",
+				"value": "-"
+			},
+			{
+				"label": "ID",
+				"value": "-"
+			}
+		],
+		"error": null
+	},
+	{
+		"name": "restricted not strictly true",
+		"catalog": {
+			"staffAccess": {
+				"restricted": "true",
+				"editGroups": [
+					"x"
+				]
+			}
+		},
+		"items": [
+			{
+				"label": "Title",
+				"value": "-"
+			},
+			{
+				"label": "Summary",
+				"value": "-"
+			},
+			{
+				"label": "Slug",
+				"value": "-"
+			},
+			{
+				"label": "Status",
+				"value": "-"
+			},
+			{
+				"label": "Listed",
+				"value": "Private"
+			},
+			{
+				"label": "Staff access",
+				"value": "All staff"
+			},
+			{
+				"label": "Created",
+				"value": "-"
+			},
+			{
+				"label": "Updated",
+				"value": "-"
+			},
+			{
+				"label": "ID",
+				"value": "-"
+			}
+		],
+		"error": null
+	}
+]

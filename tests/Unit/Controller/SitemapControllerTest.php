@@ -1,12 +1,17 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Controller\SitemapController;
 use OCA\OpenCatalogi\Http\XMLResponse;
-use OCA\OpenCatalogi\Service\SitemapService;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
@@ -17,12 +22,12 @@ use PHPUnit\Framework\TestCase;
 class SitemapControllerTest extends TestCase {
 
 	private IRequest|MockObject $request;
-	private SitemapService|MockObject $sitemapService;
+	private SitemapServiceInterface|MockObject $sitemapService;
 	private SitemapController $controller;
 
 	protected function setUp(): void {
 		$this->request = $this->createMock(IRequest::class);
-		$this->sitemapService = $this->createMock(SitemapService::class);
+		$this->sitemapService = $this->createMock(SitemapServiceInterface::class);
 
 		$this->controller = new SitemapController(
 			'opencatalogi',

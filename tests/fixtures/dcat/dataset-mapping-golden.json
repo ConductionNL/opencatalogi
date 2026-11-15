@@ -1,0 +1,373 @@
+{
+    "annotated list and scalars": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dct:title": "Annual report",
+            "dct:description": "Nested summary",
+            "dcat:keyword": [
+                "finance",
+                "7",
+                "1"
+            ],
+            "dct:subject": "not-a-list",
+            "dct:modified": "2025-01-02T10:00:00+00:00",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-1"
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "theme on object": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": {
+                "@id": "https://identifier.overheid.nl/tooi/def/thes/c_123"
+            },
+            "dct:modified": "2024-05-06T00:00:00+00:00",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-2"
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "theme resolved through the vocabulary": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": {
+                "@id": "http://publications.europa.eu/resource/authority/data-theme/TRAN"
+            },
+            "dct:title": "uuid-3",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-3"
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "theme violation": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            },
+            {
+                "iri": "https://host/api/cat/dataset",
+                "axis": "dcat:theme",
+                "reason": "theme does not resolve to a controlled data-theme authority URI"
+            }
+        ]
+    },
+    "hvd from property with custom legislation": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_b79e35eb"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "https://law/custom"
+            },
+            "dct:modified": "1700000000",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-5"
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "hvd from catalog default": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_e1da4e07"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-6"
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "hvd unresolved": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-7"
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "mapping overrides a mandatory key": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dct:identifier": "uuid-8",
+            "dct:title": "T",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            }
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "publisher object and contact point": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dct:license": "https://lic/pub",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-9",
+            "dct:publisher": {
+                "@type": "foaf:Agent",
+                "@id": "https://tooi/a",
+                "foaf:name": "Gemeente A"
+            },
+            "dcat:contactPoint": {
+                "@type": "vcard:Organization",
+                "vcard:hasEmail": {
+                    "@id": "mailto:nfo@a.nl"
+                }
+            },
+            "dcat:distribution": [
+                {
+                    "@id": "https://host/d/1/download",
+                    "@type": "dcat:Distribution",
+                    "dcat:downloadURL": {
+                        "@id": "https://host/d/1/download"
+                    },
+                    "dcat:accessURL": {
+                        "@id": "https://host/d/1"
+                    },
+                    "dct:title": "doc.pdf",
+                    "dcat:mediaType": "application/pdf",
+                    "dct:format": {
+                        "@id": "http://publications.europa.eu/resource/authority/file-type/PDF"
+                    },
+                    "dcat:byteSize": 1234,
+                    "dct:license": {
+                        "@id": "https://lic/pub"
+                    }
+                },
+                {
+                    "@id": "https://host/d/2",
+                    "@type": "dcat:Distribution",
+                    "dcat:downloadURL": {
+                        "@id": "https://host/d/2"
+                    },
+                    "dcat:accessURL": {
+                        "@id": "https://host/d/2"
+                    },
+                    "dct:title": "data.csv",
+                    "dcat:mediaType": "text/csv",
+                    "dct:format": {
+                        "@id": "http://publications.europa.eu/resource/authority/file-type/CSV"
+                    },
+                    "dct:license": {
+                        "@id": "https://lic/pub"
+                    }
+                },
+                {
+                    "@id": "https://host/d/3/download",
+                    "@type": "dcat:Distribution",
+                    "dcat:downloadURL": {
+                        "@id": "https://host/d/3/download"
+                    },
+                    "dcat:accessURL": {
+                        "@id": "https://host/d/3/download"
+                    },
+                    "dct:license": {
+                        "@id": "https://lic/pub"
+                    }
+                }
+            ]
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "publisher string": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-10",
+            "dct:publisher": {
+                "@type": "foaf:Agent",
+                "foaf:name": "Gemeente B"
+            }
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "publisher empty object falls back to defaults": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "uuid-11",
+            "dct:publisher": {
+                "@type": "foaf:Agent",
+                "@id": "https://pub/default",
+                "foaf:name": "Default name"
+            },
+            "dcat:contactPoint": {
+                "@type": "vcard:Organization",
+                "vcard:hasEmail": {
+                    "@id": "mailto:cat@x.nl"
+                }
+            },
+            "dcat:distribution": [
+                {
+                    "@id": "https://host/d/1/download",
+                    "@type": "dcat:Distribution",
+                    "dcat:downloadURL": {
+                        "@id": "https://host/d/1/download"
+                    },
+                    "dcat:accessURL": {
+                        "@id": "https://host/d/1"
+                    },
+                    "dct:title": "doc.pdf",
+                    "dcat:mediaType": "application/pdf",
+                    "dct:format": {
+                        "@id": "http://publications.europa.eu/resource/authority/file-type/PDF"
+                    },
+                    "dcat:byteSize": 1234,
+                    "dct:license": {
+                        "@id": "https://lic/default"
+                    }
+                },
+                {
+                    "@id": "https://host/d/2",
+                    "@type": "dcat:Distribution",
+                    "dcat:downloadURL": {
+                        "@id": "https://host/d/2"
+                    },
+                    "dcat:accessURL": {
+                        "@id": "https://host/d/2"
+                    },
+                    "dct:title": "data.csv",
+                    "dcat:mediaType": "text/csv",
+                    "dct:format": {
+                        "@id": "http://publications.europa.eu/resource/authority/file-type/CSV"
+                    },
+                    "dct:license": {
+                        "@id": "https://lic/default"
+                    }
+                },
+                {
+                    "@id": "https://host/d/3/download",
+                    "@type": "dcat:Distribution",
+                    "dcat:downloadURL": {
+                        "@id": "https://host/d/3/download"
+                    },
+                    "dcat:accessURL": {
+                        "@id": "https://host/d/3/download"
+                    },
+                    "dct:license": {
+                        "@id": "https://lic/default"
+                    }
+                }
+            ]
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    },
+    "nothing resolves": {
+        "dataset": {
+            "@id": "https://host/api/cat/none",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/none"
+            },
+            "dct:identifier": "https://host/api/cat/none"
+        },
+        "violations": [
+            {
+                "iri": "earlier",
+                "axis": "kept",
+                "reason": "collected before this dataset"
+            }
+        ]
+    }
+}

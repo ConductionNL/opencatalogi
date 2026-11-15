@@ -32,7 +32,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\RetentionService;
+use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -52,14 +52,14 @@ class RetentionController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param RetentionService $retentionService The retention service.
+	 * @param RetentionServiceInterface $retentionService The retention service.
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly RetentionService $retentionService,
+		private readonly RetentionServiceInterface $retentionService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 	) {
@@ -198,24 +198,9 @@ class RetentionController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function exportReport(): DataDownloadResponse|JSONResponse {
 		try {
-			$catalog = $this->request->getParam('catalog', null);
-			$from = $this->request->getParam('from', null);
-			$to = $this->request->getParam('to', null);
-
-			$catalogSlug = null;
-			if ($catalog !== null) {
-				$catalogSlug = (string)$catalog;
-			}
-
-			$fromValue = null;
-			if ($from !== null) {
-				$fromValue = (string)$from;
-			}
-
-			$toValue = null;
-			if ($to !== null) {
-				$toValue = (string)$to;
-			}
+			$catalogSlug = $this->textParam(name: 'catalog');
+			$fromValue = $this->textParam(name: 'from');
+			$toValue = $this->textParam(name: 'to');
 
 			$rows = $this->retentionService->buildReport(
 				catalogSlug: $catalogSlug,
@@ -230,4 +215,20 @@ class RetentionController extends Controller {
 		}//end try
 
 	}//end exportReport()
+
+	/**
+	 * A request parameter as text, or null when it is not given.
+	 *
+	 * @param string $name The parameter.
+	 *
+	 * @return string|null
+	 */
+	private function textParam(string $name): ?string {
+		$value = $this->request->getParam($name, null);
+		if ($value === null) {
+			return null;
+		}
+
+		return (string)$value;
+	}//end textParam()
 }//end class

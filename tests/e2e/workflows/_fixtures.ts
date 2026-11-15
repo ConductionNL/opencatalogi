@@ -66,6 +66,8 @@ export let REG_PUBLICATION: number | string = 14
 export let SCHEMA_PUBLICATION: number | string = 53
 export let SCHEMA_CATALOG: number | string = 54
 export let SCHEMA_USAGE_COUNTER: number | string = 56
+/** The publiccode schema (register.d/publiccode-software.json); null until resolved, as it has no dev-box id to fall back on. */
+export let SCHEMA_PUBLICCODE: number | string | null = null
 
 /**
  * The register the MANIFEST reads, which is not always the one above.
@@ -88,6 +90,7 @@ const SCHEMA_SLUGS = {
 	publication: 'publication',
 	catalog: 'catalog',
 	usageCounter: 'usageCounter',
+	publiccode: 'publiccode',
 }
 
 function OBJ(reg: number | string, schema: number | string, id?: string) {
@@ -189,6 +192,8 @@ export class Fixtures {
 			SCHEMA_CATALOG = resolved.get(SCHEMA_SLUGS.catalog)!
 		if (resolved.has(SCHEMA_SLUGS.usageCounter))
 			SCHEMA_USAGE_COUNTER = resolved.get(SCHEMA_SLUGS.usageCounter)!
+		if (resolved.has(SCHEMA_SLUGS.publiccode))
+			SCHEMA_PUBLICCODE = resolved.get(SCHEMA_SLUGS.publiccode)!
 
 		// FAIL HERE, not at the create. A slug that did not resolve leaves a
 		// hardcoded id in place, and that id belongs to somebody. Better to
@@ -370,6 +375,33 @@ export class Fixtures {
 			description: 'Created by the OpenCatalogi deep e2e workflow suite.',
 			...extra,
 		})
+	}
+
+	/**
+	 * Create a publiccode component in the publication register.
+	 *
+	 * The schema identifies a component by `name` and `url`, so the label goes
+	 * in `name`; the tracked-id pass of {@link cleanupAll} removes it.
+	 *
+	 * @param name  Name suffix, prefixed with the run label.
+	 * @param extra Extra fields merged into the object.
+	 */
+	async createPubliccode(
+		name: string,
+		extra: Record<string, unknown> = {},
+	): Promise<SeededObject> {
+		if (SCHEMA_PUBLICCODE === null) {
+			throw new Error(
+				`Fixtures.createPubliccode(): register "${REGISTER_SLUG}" carries no publiccode schema.`,
+			)
+		}
+		const label = this.label(name)
+		const seeded = await this.create(REG_PUBLICATION, SCHEMA_PUBLICCODE, {
+			name: label,
+			url: `https://example.org/${this.prefix}/${encodeURIComponent(name)}`,
+			...extra,
+		})
+		return { ...seeded, title: label }
 	}
 
 	/**

@@ -1,0 +1,170 @@
+{
+    "no datasets": {
+        "validateCatalog": [],
+        "validateForDonl": {
+            "sourceUrl": "https://host/apps/opencatalogi/api/dcat",
+            "valid": true,
+            "violations": []
+        }
+    },
+    "complete dataset": {
+        "validateCatalog": [],
+        "validateForDonl": {
+            "sourceUrl": "https://host/apps/opencatalogi/api/dcat",
+            "valid": true,
+            "violations": []
+        }
+    },
+    "missing everything": {
+        "validateCatalog": [
+            {
+                "iri": "https://d/2",
+                "missing": [
+                    "dct:title",
+                    "dct:publisher",
+                    "dcat:landingPage"
+                ]
+            }
+        ],
+        "validateForDonl": {
+            "sourceUrl": "https://host/apps/opencatalogi/api/dcat",
+            "valid": false,
+            "violations": [
+                {
+                    "iri": "https://d/2",
+                    "axis": "mandatory",
+                    "missing": [
+                        "dct:title",
+                        "dct:publisher",
+                        "dcat:landingPage"
+                    ]
+                }
+            ]
+        }
+    },
+    "empty values and no id": {
+        "validateCatalog": [
+            {
+                "iri": "",
+                "missing": [
+                    "dct:title",
+                    "dct:publisher"
+                ]
+            }
+        ],
+        "validateForDonl": {
+            "sourceUrl": "https://host/apps/opencatalogi/api/dcat",
+            "valid": false,
+            "violations": [
+                {
+                    "iri": "",
+                    "axis": "mandatory",
+                    "missing": [
+                        "dct:title",
+                        "dct:publisher"
+                    ]
+                }
+            ]
+        }
+    },
+    "only datasets count": {
+        "validateCatalog": [
+            {
+                "iri": "https://d/3",
+                "missing": [
+                    "dct:publisher",
+                    "dcat:landingPage"
+                ]
+            }
+        ],
+        "validateForDonl": {
+            "sourceUrl": "https://host/apps/opencatalogi/api/dcat",
+            "valid": false,
+            "violations": [
+                {
+                    "iri": "https://d/3",
+                    "axis": "mandatory",
+                    "missing": [
+                        "dct:publisher",
+                        "dcat:landingPage"
+                    ]
+                }
+            ]
+        }
+    },
+    "theme violations": {
+        "validateCatalog": [],
+        "validateForDonl": {
+            "sourceUrl": "https://host/apps/opencatalogi/api/dcat",
+            "valid": false,
+            "violations": [
+                {
+                    "axis": "theme",
+                    "iri": "https://d/1",
+                    "value": "bad"
+                }
+            ]
+        }
+    },
+    "profile behind": {
+        "validateCatalog": [
+            {
+                "axis": "profile-version",
+                "declared": "3.0",
+                "published": "3.1"
+            },
+            {
+                "iri": "https://d/4",
+                "missing": [
+                    "dct:title",
+                    "dct:publisher",
+                    "dcat:landingPage"
+                ]
+            }
+        ],
+        "validateForDonl": {
+            "sourceUrl": "https://host/apps/opencatalogi/api/dcat",
+            "valid": false,
+            "violations": [
+                {
+                    "axis": "profile-version",
+                    "declared": "3.0",
+                    "published": "3.1"
+                },
+                {
+                    "iri": "https://d/4",
+                    "axis": "mandatory",
+                    "missing": [
+                        "dct:title",
+                        "dct:publisher",
+                        "dcat:landingPage"
+                    ]
+                }
+            ]
+        }
+    },
+    "profile behind with themes": {
+        "validateCatalog": [
+            {
+                "axis": "profile-version",
+                "declared": "3.0",
+                "published": "3.1"
+            }
+        ],
+        "validateForDonl": {
+            "sourceUrl": "https://host/apps/opencatalogi/api/dcat",
+            "valid": false,
+            "violations": [
+                {
+                    "axis": "profile-version",
+                    "declared": "3.0",
+                    "published": "3.1"
+                },
+                {
+                    "axis": "theme",
+                    "iri": "x"
+                }
+            ]
+        }
+    }
+}

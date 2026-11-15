@@ -83,6 +83,8 @@ class WooRegisterSchemasTest extends TestCase {
 		'documentReference',
 		'fileName',
 		'fileType',
+		// The caller's type when it differs from the bytes' (REQ-PFF-001).
+		'fileTypeClaimed',
 		'assessment',
 		'weigeringsgronden',
 		'redactionInstructions',
@@ -90,9 +92,15 @@ class WooRegisterSchemasTest extends TestCase {
 		'anonymizedDocumentHash',
 		'redactionStatus',
 		'redactionMessage',
+		// Set by verifyRedaction() when a person checked the redaction (REQ-WDA-004).
+		'redactionVerifiedBy',
+		'redactionVerifiedAt',
 		'caseReference',
 		'assessedBy',
 		'assessedAt',
+		// Not written by WooService: set by an administrator through OpenRegister's
+		// object API and read by the public withheld list (REQ-PDP-004).
+		'titlePublic',
 	];
 
 	/**

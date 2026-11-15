@@ -25,12 +25,12 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
+use OCA\OpenCatalogi\Contract\DcatSerializerInterface;
+use OCA\OpenCatalogi\Contract\DcatServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
-use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\DcatSerializer;
-use OCA\OpenCatalogi\Service\DcatService;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -50,18 +50,20 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/changes/dcat-ap-harvest/tasks.md#task-3-serializer-public-endpoints
  */
 class DcatController extends Controller {
+	use AnswersCrossOriginReadRequests;
+
 	/**
 	 * DcatController constructor.
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
-	 * @param DcatService $dcatService The DCAT orchestration service.
-	 * @param DcatSerializer $serializer The DCAT serializer.
-	 * @param CatalogiService $catalogiService Catalog resolution (slug → catalog).
-	 * @param PublicationQueryService $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
+	 * @param DcatServiceInterface $dcatService The DCAT orchestration service.
+	 * @param DcatSerializerInterface $serializer The DCAT serializer.
+	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug → catalog).
+	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param StandardsVersionService $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
+	 * @param StandardsVersionServiceInterface $standardsVersions The declared DCAT-AP-NL profile version, and the published one.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
@@ -69,69 +71,18 @@ class DcatController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly DcatService $dcatService,
-		private readonly DcatSerializer $serializer,
-		private readonly CatalogiService $catalogiService,
-		private readonly PublicationQueryService $queryService,
+		private readonly DcatServiceInterface $dcatService,
+		private readonly DcatSerializerInterface $serializer,
+		private readonly CatalogiServiceInterface $catalogiService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
-		private readonly StandardsVersionService $standardsVersions,
+		private readonly StandardsVersionServiceInterface $standardsVersions,
 		private readonly ?IAppConfig $appConfig = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * '*' (the default) emits a literal '*'; an unvetted caller Origin is never echoed
-	 * back unless explicitly allowlisted — mirroring PublicationsController (#735).
-	 *
-	 * @return string The Access-Control-Allow-Origin value.
-	 *
-	 * @spec exclude CORS-policy plumbing mirroring PublicationsController; fail-closed on
-	 *       Origin reflection, no domain behaviour.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = trim($this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
-	 * Build the standard public-CORS header set for DCAT responses.
-	 *
-	 * @return array<string, string> The header map.
-	 */
-	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
-
-	}//end corsHeaders()
 
 	/**
 	 * Preflighted CORS response for the public DCAT OPTIONS routes.
@@ -145,14 +96,7 @@ class DcatController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-		return $response;
+		return $this->readOnlyPreflight();
 	}//end preflightedCors()
 
 	/**
@@ -216,12 +160,9 @@ class DcatController extends Controller {
 			}
 
 			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			if ($catalog === null) {
-				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
-			}
-
-			if ($this->dcatService->isDcatEnabled($catalog) === false) {
-				return new JSONResponse(['error' => $this->l10n->t('DCAT harvesting is not enabled for this catalog')], 404);
+			$refusal = $this->harvestRefusal(catalog: $catalog);
+			if ($refusal !== null) {
+				return $refusal;
 			}
 
 			// SCH-PFTS-CAT-002 (WOO-581): an anonymous harvester must not reach a
@@ -233,19 +174,7 @@ class DcatController extends Controller {
 			$page = max(1, (int)$this->request->getParam('page', 1));
 			$document = $this->dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $catalogSlug, page: $page);
 
-			// Conditional GET — return 304 when the harvester's ETag still matches.
-			$ifNoneMatch = $this->request->getHeader('If-None-Match');
-			$etag = ($document['_meta']['etag'] ?? '');
-			if ($ifNoneMatch !== '' && $etag !== '' && trim($ifNoneMatch) === $etag) {
-				return new DcatResponse(
-					body: '',
-					contentType: DcatSerializer::FORMATS[$format],
-					status: 304,
-					headers: $this->cachingHeaders(document: $document)
-				);
-			}
-
-			return $this->respond(document: $document, format: $format);
+			return $this->catalogResponse(document: $document, format: $format);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'[DcatController::catalog] Failed to build catalog DCAT document',
@@ -255,6 +184,63 @@ class DcatController extends Controller {
 		}//end try
 
 	}//end catalog()
+
+	/**
+	 * Why a catalog cannot be harvested, or null when it can.
+	 *
+	 * @param array<string, mixed>|null $catalog The catalog, or null when the slug is unknown.
+	 *
+	 * @return JSONResponse|null 404 for an unknown catalog or one without DCAT harvesting.
+	 */
+	private function harvestRefusal(?array $catalog): ?JSONResponse {
+		if ($catalog === null) {
+			return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
+		}
+
+		if ($this->dcatService->isDcatEnabled($catalog) === false) {
+			return new JSONResponse(['error' => $this->l10n->t('DCAT harvesting is not enabled for this catalog')], 404);
+		}
+
+		return null;
+
+	}//end harvestRefusal()
+
+	/**
+	 * Answer a catalog document, or 304 when the harvester's ETag still matches.
+	 *
+	 * @param array<string, mixed> $document The DCAT document with its `_meta`.
+	 * @param string $format The negotiated format.
+	 *
+	 * @return DcatResponse The feed or the empty 304.
+	 */
+	private function catalogResponse(array $document, string $format): DcatResponse {
+		if ($this->etagStillMatches(document: $document) === true) {
+			return new DcatResponse(
+				body: '',
+				contentType: DcatSerializerInterface::FORMATS[$format],
+				status: 304,
+				headers: $this->cachingHeaders(document: $document)
+			);
+		}
+
+		return $this->respond(document: $document, format: $format);
+
+	}//end catalogResponse()
+
+	/**
+	 * Whether the request's If-None-Match names the document's ETag (conditional GET).
+	 *
+	 * @param array<string, mixed> $document The DCAT document with its `_meta`.
+	 *
+	 * @return bool
+	 */
+	private function etagStillMatches(array $document): bool {
+		$ifNoneMatch = $this->request->getHeader('If-None-Match');
+		$etag = ($document['_meta']['etag'] ?? '');
+
+		return $ifNoneMatch !== '' && $etag !== '' && trim($ifNoneMatch) === $etag;
+
+	}//end etagStillMatches()
 
 	/**
 	 * Validate a catalog's DCAT feed against the DCAT-AP-NL mandatory-property checklist.
@@ -345,7 +331,7 @@ class DcatController extends Controller {
 
 		return new DcatResponse(
 			body: $body,
-			contentType: DcatSerializer::FORMATS[$format],
+			contentType: DcatSerializerInterface::FORMATS[$format],
 			status: 200,
 			headers: $headers
 		);
@@ -384,7 +370,7 @@ class DcatController extends Controller {
 		return new JSONResponse(
 			[
 				'error' => $this->l10n->t('Unsupported serialization format'),
-				'supported' => array_keys(DcatSerializer::FORMATS),
+				'supported' => array_keys(DcatSerializerInterface::FORMATS),
 			],
 			406
 		);

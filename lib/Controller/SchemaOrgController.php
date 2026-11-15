@@ -28,9 +28,6 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CatalogiService;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\SchemaOrgService;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
@@ -48,14 +45,14 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/structured-data-discoverability/spec.md
  */
 class SchemaOrgController extends Controller {
+	use AnswersCrossOriginReadRequests;
+
 	/**
 	 * SchemaOrgController constructor.
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
-	 * @param SchemaOrgService $schemaOrgService The schema.org JSON-LD renderer.
-	 * @param CatalogiService $catalogiService Catalog resolution (slug → catalog).
-	 * @param PublicationQueryService $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
+	 * @param SchemaOrgCatalogDocument $document The read-rule guarded DataCatalog node of a catalog.
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
@@ -63,9 +60,7 @@ class SchemaOrgController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly SchemaOrgService $schemaOrgService,
-		private readonly CatalogiService $catalogiService,
-		private readonly PublicationQueryService $queryService,
+		private readonly SchemaOrgCatalogDocument $document,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,
@@ -73,58 +68,6 @@ class SchemaOrgController extends Controller {
 		parent::__construct(appName: $appName, request: $request);
 
 	}//end __construct()
-
-	/**
-	 * Resolve the Access-Control-Allow-Origin header value.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV);
-	 * '*' (default) emits a literal '*'; an unvetted caller Origin is never echoed back
-	 * unless explicitly allowlisted (mirrors DcatController / PublicationsController #735).
-	 *
-	 * @return string The Access-Control-Allow-Origin value.
-	 *
-	 * @spec exclude CORS-policy plumbing mirroring DcatController; fail-closed, no domain behaviour.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = '*';
-		if ($this->appConfig !== null) {
-			$configured = trim($this->appConfig->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		}
-
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_values(
-			array_filter(
-				array_map('trim', explode(',', $configured)),
-				static fn (string $entry): bool => $entry !== ''
-			)
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
-	 * Build the standard public-CORS header set.
-	 *
-	 * @return array<string, string> The header map.
-	 *
-	 * @spec exclude CORS-header plumbing.
-	 */
-	private function corsHeaders(): array {
-		return [
-			'Access-Control-Allow-Origin' => $this->resolveAllowedOrigin(),
-			'Access-Control-Allow-Methods' => 'GET, OPTIONS',
-			'Access-Control-Allow-Headers' => 'Authorization, Content-Type, Accept',
-		];
-
-	}//end corsHeaders()
 
 	/**
 	 * Preflighted CORS response for the public schema.org OPTIONS route.
@@ -138,14 +81,7 @@ class SchemaOrgController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		foreach ($this->corsHeaders() as $name => $value) {
-			$response->addHeader($name, $value);
-		}
-
-		$response->addHeader('Access-Control-Max-Age', '1728000');
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-		return $response;
+		return $this->readOnlyPreflight();
 	}//end preflightedCors()
 
 	/**
@@ -167,24 +103,14 @@ class SchemaOrgController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function catalog(string $catalogSlug): JSONResponse {
 		try {
-			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			if ($catalog === null) {
+			$node = $this->document->node(catalogSlug: $catalogSlug);
+			if ($node === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
 			}
 
-			// SCH-PFTS-CAT-002 (WOO-581): same guard as `/api/{catalogSlug}` since
-			// WOO-580 — an anonymous caller must not see a schema without
-			// `authorization.read` rules listed in this DataCatalog.
-			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
-
-			$node = $this->schemaOrgService->buildCatalogNode($catalog, $catalogSlug);
 			$response = new JSONResponse($node, 200);
 			$response->addHeader('Content-Type', 'application/ld+json');
-			foreach ($this->corsHeaders() as $name => $value) {
-				$response->addHeader($name, $value);
-			}
-
-			return $response;
+			return $this->withCorsHeaders(response: $response);
 		} catch (\Throwable $e) {
 			$this->logger->error(
 				'[SchemaOrgController::catalog] Failed to build schema.org catalog document',

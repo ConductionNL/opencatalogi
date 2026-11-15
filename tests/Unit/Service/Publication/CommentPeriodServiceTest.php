@@ -33,6 +33,7 @@ namespace Unit\Service\Publication;
 
 use DateTimeImmutable;
 use DomainException;
+use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
 use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
 use OCA\OpenCatalogi\Service\Publication\TermRoll;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
@@ -43,18 +44,14 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 /**
- * A duck-typed stand-in for the engine's calendar.
- */
-class FakeWorkingCalendar {
-}//end class
-
-/**
  * A duck-typed stand-in for the engine's calendar service.
  */
 class FakeCalendarService {
 
-	public function resolve(?string $slug, ?string $organisation): FakeWorkingCalendar {
-		return new FakeWorkingCalendar();
+	public function resolve(?string $slug, ?string $organisation): ?object {
+		// The faked calculator ignores the calendar; the engine's RollRule takes a
+		// real WorkingCalendar or none, so the stand-in answers with none.
+		return null;
 	}//end resolve()
 }//end class
 
@@ -68,7 +65,7 @@ class FakeSlaCalculator {
 		return DateTimeImmutable::createFromInterface($from)->modify(sprintf('%+d days', (int)$value));
 	}//end add()
 
-	public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+	public function roll(\DateTimeInterface $moment, \OCA\OpenRegister\Service\Flow\Timer\RollRule $rule): array {
 		$at = DateTimeImmutable::createFromInterface($moment);
 		$day = (int)$at->format('N');
 		if ($day < 6) {
@@ -153,9 +150,7 @@ class CommentPeriodServiceTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return $appManager;
-
 	}//end appManager()
-
 
 	/**
 	 * A period opens with its computed end, its remedy and its form.
@@ -217,12 +212,14 @@ class CommentPeriodServiceTest extends TestCase {
 
 		$this->expectException(TermRollUnavailableException::class);
 		$service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: 42,
-			legalRemedy: 'zienswijze',
-			announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: false,
-			openedBy: 'alice'
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: 42,
+				legalRemedy: 'zienswijze',
+				announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			)
 		);
 
 	}//end testWithNoEngineTheEndDateIsRefusedNotGuessed()
@@ -272,12 +269,14 @@ class CommentPeriodServiceTest extends TestCase {
 	public function testAPeriodWithNoPublicationIsRefused(): void {
 		$this->expectException(DomainException::class);
 		$this->service->open(
-			publication: [],
-			termDays: 42,
-			legalRemedy: 'zienswijze',
-			announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: false,
-			openedBy: 'alice'
+			request: new CommentPeriodRequest(
+				publication: [],
+				termDays: 42,
+				legalRemedy: 'zienswijze',
+				announcementUrl: 'https://officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			)
 		);
 
 	}//end testAPeriodWithNoPublicationIsRefused()
@@ -440,12 +439,14 @@ class CommentPeriodServiceTest extends TestCase {
 		string $announcement = 'https://officielebekendmakingen.nl/stcrt-2026-1',
 	): array {
 		return $this->service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: $termDays,
-			legalRemedy: $remedy,
-			announcementUrl: $announcement,
-			automaticWithdrawal: false,
-			openedBy: 'alice',
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: $termDays,
+				legalRemedy: $remedy,
+				announcementUrl: $announcement,
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			),
 			start: new DateTimeImmutable($start)
 		);
 
@@ -510,12 +511,14 @@ class CommentPeriodServiceTest extends TestCase {
 		$this->expectException(\DomainException::class);
 		$this->expectExceptionMessageMatches('/absolute https url/');
 		$this->service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: 42,
-			legalRemedy: 'zienswijze',
-			announcementUrl: 'http://www.officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: false,
-			openedBy: 'alice'
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: 42,
+				legalRemedy: 'zienswijze',
+				announcementUrl: 'http://www.officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			)
 		);
 
 	}//end testAnAnnouncementThatIsNotAbsoluteHttpsIsRefused()
@@ -538,7 +541,7 @@ class CommentPeriodServiceTest extends TestCase {
 							return DateTimeImmutable::createFromInterface($from);
 						}
 
-						public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+						public function roll(\DateTimeInterface $moment, \OCA\OpenRegister\Service\Flow\Timer\RollRule $rule): array {
 							return ['at' => DateTimeImmutable::createFromInterface($moment), 'unrolledAt' => null, 'rolledBy' => null];
 						}
 					};
@@ -562,12 +565,14 @@ class CommentPeriodServiceTest extends TestCase {
 		$this->expectException(\DomainException::class);
 		$this->expectExceptionMessageMatches('/end after it starts/');
 		$service->open(
-			publication: ['id' => 'pub-1'],
-			termDays: 42,
-			legalRemedy: 'zienswijze',
-			announcementUrl: 'https://www.officielebekendmakingen.nl/stcrt-2026-1',
-			automaticWithdrawal: false,
-			openedBy: 'alice'
+			request: new CommentPeriodRequest(
+				publication: ['id' => 'pub-1'],
+				termDays: 42,
+				legalRemedy: 'zienswijze',
+				announcementUrl: 'https://www.officielebekendmakingen.nl/stcrt-2026-1',
+				automaticWithdrawal: false,
+				openedBy: 'alice'
+			)
 		);
 
 	}//end testAPeriodThatEndsBeforeItStartsIsRefused()
@@ -631,7 +636,7 @@ class CommentPeriodServiceTest extends TestCase {
 							return DateTimeImmutable::createFromInterface($from);
 						}
 
-						public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+						public function roll(\DateTimeInterface $moment, \OCA\OpenRegister\Service\Flow\Timer\RollRule $rule): array {
 							return ['at' => 'not a moment', 'unrolledAt' => null, 'rolledBy' => null];
 						}
 					};

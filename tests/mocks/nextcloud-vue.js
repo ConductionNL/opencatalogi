@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Jest mock for `@nextcloud/vue`.
  *
  * The real package ships an ESM/CJS dist bundled with inlined CSS chunks
@@ -121,5 +125,6 @@ module.exports = {
 	NcModal: slotStub('NcModal'),
 	NcNoteCard,
 	NcSelect,
+	NcTextArea: slotStub('NcTextArea'),
 	NcTextField: slotStub('NcTextField'),
 }

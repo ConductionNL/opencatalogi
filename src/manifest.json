@@ -380,7 +380,7 @@
 		},
 		{
 			"id": "StoreMenu",
-			"label": "Store",
+			"label": "Marketplace",
 			"icon": "StoreOutline",
 			"route": "Store",
 			"section": "footer",
@@ -425,10 +425,10 @@
 			"id": "Store",
 			"route": "/store",
 			"type": "store",
-			"title": "Store",
+			"title": "Marketplace",
 			"config": {
 				"app": "opencatalogi",
-				"title": "Store",
+				"title": "Marketplace",
 				"description": "Install catalogue configurations that other organisations have published: a publication type, a set of themes, or the flows behind them."
 			},
 			"_note": "ADR-114 Decision 4 / ADR-080. Declarative: openregister hosts the store plane, so this app writes NO store controller. With no registry configured the page renders the app's built-in items and makes NO network call."
@@ -449,6 +449,7 @@
 					"showViewToggle": true,
 					"selectable": false
 				},
+				"rowRoute": "WooBatchDetail",
 				"documentationUrl": "https://opencatalogi.conduction.nl"
 			},
 			"_note": "WOO disclosure-batch list via the generic index renderer over the WOO register/schema (ADR-022 — reuses the lib, no bespoke table). Per-batch detail (deck board widget + WOO tabs) is the WooBatchDetail custom page."
@@ -459,7 +460,15 @@
 			"type": "custom",
 			"title": "WOO batch",
 			"component": "WooBatchDetailView",
-			"_note": "Surfaces the OpenRegister deck-board widget (queue/board — not bespoke) plus WOO-specific surfaces: progress summary, redaction review, inventarislijst download, ready-for-review/publish (approval-workflow gated)."
+			"_note": "The document queue in four columns read through the OpenRegister object store (woo-document-assessment-screen), with moves saved through the assessment PUT, plus the progress summary, redaction state, inventarislijst download and ready-for-review/publish (approval-workflow gated)."
+		},
+		{
+			"id": "WooRedaction",
+			"route": "/woo/:id/documents/:docId",
+			"type": "custom",
+			"title": "Redaction",
+			"component": "WooRedactionView",
+			"_note": "The redaction page of a partly public Woo document (woo-document-assessment-screen, REQ-WDA-003/004): the three steps, redacted version and original, the findings OpenRegister holds for the redacted file with kept and rejected counts, and Mark redaction verified. Findings are decided in OpenRegister, not here."
 		},
 		{
 			"id": "Dashboard",
@@ -508,7 +517,7 @@
 			"type": "custom",
 			"component": "CatalogPublicationsIndex",
 			"title": "Publications",
-			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage for one register/schema pair, with a selector when the catalog has several, kept in the `_pair` query parameter. It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. `register`/`schema` below name the publication pair: rows of that pair open on PublicationDetail, rows of any other pair (e.g. publiccode) have no detail page, so a click selects them and Edit uses CnIndexPage's form for their schema. CnIndexPage itself lists the catalog's active pair. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Every other config key reaches CnIndexPage for every pair, so it must fit any schema; config that only fits the publication schema, such as `columns` naming its properties or `actions` with a publication handler, goes in `publicationPairConfig`, which CnIndexPage gets on the publication pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`. The columns name publication properties, so they sit in `publicationPairConfig` and other pairs show CnIndexPage's default columns for their schema. Bare-string columns take their label from the live schema; fragment-only properties carry a label so an install without them shows a named column.",
+			"_note": "Lists the publications of the catalog named by `:catalogSlug`, scoped like the backend's `/api/{catalogSlug}`: the catalog's numeric `registers` × `schemas` (slugs and free text in those arrays are ignored). A publication carries no catalog property, so the scope cannot be a manifest `filter`, and a type:\"index\" page lists exactly one register + schema. CatalogPublicationsIndex resolves the catalog by slug and renders CnIndexPage over all of its pairs at once: the list comes from `/api/{catalogSlug}` through CnIndexPage's `collectionUrl`, newest first, while `register`/`schema` below name the page's own pair (the publication pair, which drives the columns, Add and the form). It shows an empty state for an unknown slug and for a catalog without numeric registers or schemas. Publication rows open on PublicationDetail and edit in the publication modal; rows of any other pair (e.g. publicationRule, publiccode) open on the generic CatalogObjectDetail page (click, View, or a new tab), while Edit opens CnIndexPage's form for their own schema; save, copy and delete go to their own pair. A row whose `@self` register or schema is not numeric has no detail page and opens in the form. `sidebar` turns on CnIndexPage's search, filter and columns sidebar. Config for a catalog WITHOUT the publication pair goes in `otherPairConfig`, applied only then: its Name, Summary and Updated columns replace the every-scalar-property default, and the other properties stay available in the sidebar's Columns tab. `actionToggles` is flattened onto CnIndexPage the way CnPageRenderer does for type:\"index\" pages, and `documentationUrl` is passed through. Config that only fits the publication schema, such as `columns` and `actions` with a publication handler, goes in `publicationPairConfig`, applied when the page's pair is the publication pair; its custom actions show on publication rows only. Mass export and import stay off because they would cover the page's own pair only. SORT: newest first by default, on every pair; `_uuid` is a hidden tie-break so equal timestamps page stably in the default view (a header click replaces it with a single key). COLUMNS: Name, Status, Files, Updated, the set the list had before the CnIndexPage migration. Name is `@self.name`, which every schema has. Files counts `@self.files` (file IDs) with the library's `count` formatter; it is not sortable. Metadata columns use `@self.<field>` keys because OpenRegister sorts on those and ignores a bare `created`. BULK: `publicationPairConfig.bulkActions` name handlers in the app's handler map; the page calls them with the selected rows and the action's own `props` (`openSelectionDialog` opens the mass dialog `props.dialog` names), and reloads the list and clears the selection when that dialog closes. The bulk actions follow `showDeleteAction`: off, they are hidden.",
 			"config": {
 				"register": "@resolve:publication_register",
 				"schema": "@resolve:publication_schema",
@@ -526,52 +535,26 @@
 				"sortOrder": "desc",
 				"publicationPairConfig": {
 					"columns": [
-						"title",
+						{
+							"key": "@self.name",
+							"label": "Name",
+							"sortable": true
+						},
 						"status",
 						{
-							"key": "@self.created",
-							"label": "Created",
-							"format": "date-time",
-							"sortable": true
+							"key": "@self.files",
+							"label": "Files",
+							"formatter": "count",
+							"formatterOptions": {
+								"zero": "0"
+							}
 						},
 						{
 							"key": "@self.updated",
 							"label": "Updated",
 							"format": "date-time",
 							"sortable": true
-						},
-						{
-							"key": "caseReference",
-							"label": "Case reference",
-							"sortable": true
-						},
-						"depublicationDate",
-						"description",
-						"organization",
-						"plooiDeliveredAt",
-						"plooiIdentifier",
-						"plooiReason",
-						"plooiStatus",
-						"publicationDate",
-						{
-							"key": "publicationKind",
-							"label": "Kind of publication",
-							"sortable": true
-						},
-						"retentionAction",
-						"retentionCategory",
-						"retentionExpiresAt",
-						"retentionLastEvaluatedAt",
-						"retentionNote",
-						"retentionTermMonths",
-						{
-							"key": "soortHandeling",
-							"label": "Document handling",
-							"sortable": true
-						},
-						"summary",
-						"themes",
-						"wooCategory"
+						}
 					],
 					"actions": [
 						"builtin:view",
@@ -584,6 +567,65 @@
 						},
 						"builtin:copy",
 						"builtin:delete"
+					],
+					"bulkActions": [
+						{
+							"id": "publish",
+							"label": "Publish",
+							"icon": "Publish",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massPublishObjects"
+							}
+						},
+						{
+							"id": "depublish",
+							"label": "Depublish",
+							"icon": "PublishOff",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massDepublishObjects"
+							}
+						},
+						{
+							"id": "lock",
+							"label": "Lock",
+							"icon": "Lock",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massLockObjects"
+							}
+						},
+						{
+							"id": "unlock",
+							"label": "Unlock",
+							"icon": "LockOpen",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massUnlockObjects"
+							}
+						},
+						{
+							"id": "validate",
+							"label": "Validate",
+							"icon": "CheckDecagram",
+							"handler": "openSelectionDialog",
+							"props": {
+								"dialog": "massValidateObjects"
+							}
+						},
+						{
+							"id": "merge",
+							"label": "Merge",
+							"icon": "CallMerge",
+							"handler": "openPublicationMerge"
+						},
+						{
+							"id": "migrate",
+							"label": "Migrate",
+							"icon": "DatabaseArrowRight",
+							"handler": "openPublicationMigration"
+						}
 					]
 				},
 				"actionToggles": {
@@ -592,12 +634,107 @@
 					"showCopyAction": true,
 					"showDeleteAction": true,
 					"showViewToggle": true,
-					"selectable": true
+					"selectable": true,
+					"showMassExport": false,
+					"showMassImport": false
 				},
 				"inlineSearch": true,
 				"showCountWithSearch": true,
 				"emptyText": "No publications found",
+				"otherPairConfig": {
+					"columns": [
+						{
+							"key": "@self.name",
+							"label": "Name",
+							"sortable": true
+						},
+						{
+							"key": "@self.summary",
+							"label": "Summary",
+							"sortable": true
+						},
+						{
+							"key": "@self.updated",
+							"label": "Updated",
+							"format": "date-time",
+							"sortable": true
+						}
+					]
+				},
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true
+				},
 				"documentationUrl": "https://opencatalogi.conduction.nl"
+			}
+		},
+		{
+			"id": "CatalogObjectDetail",
+			"route": "/publications/:catalogSlug/:register/:schema/:id",
+			"type": "detail",
+			"title": "Details",
+			"_note": "Generic detail page for an object of any schema in a catalog other than the publication schema, e.g. a harvested publiccode component in the Componenten catalog. CatalogPublicationsIndex opens rows of other pairs here; register and schema come from the row's own `@self`, through the route. The Data card is read-only because its inline editor cannot edit free-form object properties such as publiccode's per-language `description` (it would write back a string); edits go through the header Edit button, whose form renders those properties with their schema `widget`. Related lists the object's references; the audit trail lives in the sidebar.",
+			"config": {
+				"register": "@route.register",
+				"schema": "@route.schema",
+				"idParam": "@route.id",
+				"notFoundRoute": {
+					"name": "Publications"
+				},
+				"notFoundRouteLabel": "Publications",
+				"documentationUrl": "https://opencatalogi.conduction.nl",
+				"widgets": [
+					{
+						"id": "object-data",
+						"type": "data",
+						"title": "Data",
+						"icon": "FileDocument",
+						"content": {
+							"columns": 2,
+							"editable": false
+						}
+					},
+					{
+						"id": "object-related",
+						"type": "related",
+						"title": "Related",
+						"icon": "LinkVariant"
+					}
+				],
+				"layout": [
+					{
+						"id": "1",
+						"widgetId": "object-data",
+						"gridX": 0,
+						"gridY": 0,
+						"gridWidth": 12,
+						"gridHeight": 10
+					},
+					{
+						"id": "2",
+						"widgetId": "object-related",
+						"gridX": 0,
+						"gridY": 10,
+						"gridWidth": 12,
+						"gridHeight": 4
+					}
+				],
+				"sidebar": {
+					"enabled": true,
+					"showMetadata": true,
+					"tabs": [
+						{
+							"id": "audit",
+							"label": "History",
+							"icon": "History",
+							"widgets": [
+								{
+									"type": "audit"
+								}
+							]
+						}
+					]
+				}
 			}
 		},
 		{
@@ -605,7 +742,7 @@
 			"route": "/publications/:catalogSlug/:id",
 			"type": "detail",
 			"title": "Publication",
-			"_note": "DCAT-AP publication record — the app's core artifact and the reason OpenCatalogi exists. Publication/document archetype: someone lands here to (1) read/edit the WOO metadata, (2) manage the distributables, (3) check publish/retention state. ADR-062 rev-3 rework: the primary Data card was SPLIT into two field-scoped Data widgets so neither clips — 'Publication' (identity/publishing: title, summary, description, publicationDate, depublicationDate, status) and 'Retention' (the RET-003/006 statutory-retention group: retentionCategory, retentionTermMonths, retentionAction, retentionExpiresAt, retentionNote, retentionLastEvaluatedAt) — both 8-wide, 2-column. The `organization` and `themes[]` fields are excluded from the Data cards because the compact Related panel (4-wide) resolves them; now that publication.organization carries $ref:organization and publication.themes[] items carry $ref:theme, the Related panel renders publisher + theme NAMES instead of raw uuids. The former header `summaryAggregates` KPI chips became an in-grid `stats-block` (top-right, 4-wide): Views + Downloads summed from this publication's usageCounter rows (usageCounter.publication is the FK, now $ref:publication). Below sits the full-width Attachments Files leaf: a publication IS its distributables, so Files (documents/downloads) is the dominant secondary surface, followed by Images (photos) and external Links (bookmarks) side-by-side for the rest of the DCAT distribution set. schema-verified absences: there is NO publicationType schema in this register (only catalog/listing/organization/publication/theme/page/menu/glossary/usageCounter exist), so no publication-type Related row; and the publication schema declares NO linkedTypes, so NO email/calendar/talk/contacts leaves — a publication is metadata about a document, not a correspondence thread (HARD RULE 1). geo/maps dropped — no geo field. lifecycleActions drives the schema's real status transition (published → archived, the RET-006 retention transition — the transitions block exists, so this stays a real lifecycle, not a frozen readOnly field). The audit trail (publications are FOI/WOO records where change history matters legally) lives in the sidebar as widgets:[{type:'audit'}], per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu (showMetadata) rather than a permanent card.",
+			"_note": "DCAT-AP publication record — the app's core artifact and the reason OpenCatalogi exists. Publication/document archetype: someone lands here to (1) read/edit the WOO metadata, (2) manage the distributables, (3) check publish/retention state. ADR-062 rev-3 rework: the primary Data card was SPLIT into two field-scoped Data widgets so neither clips — 'Publication' (identity/publishing: title, summary, description, publicationDate, depublicationDate, status) and 'Retention' (the RET-003/006 statutory-retention group: retentionCategory, retentionTermMonths, retentionAction, retentionExpiresAt, retentionNote, retentionLastEvaluatedAt) — both 8-wide, 2-column. The `organization` and `themes[]` fields are excluded from the Data cards because the compact Related panel (4-wide) resolves them; now that publication.organization carries $ref:organization and publication.themes[] items carry $ref:theme, the Related panel renders publisher + theme NAMES instead of raw uuids. The former header `summaryAggregates` KPI chips became an in-grid `stats-block` (top-right, 4-wide): Views + Downloads summed from this publication's usageCounter rows (usageCounter.publication is the FK, now $ref:publication). Below sits the full-width Attachments Files leaf: a publication IS its distributables, so Files (documents/downloads) is the dominant secondary surface, followed by Images (photos) and external Links (bookmarks) side-by-side for the rest of the DCAT distribution set. schema-verified absences: there is NO publicationType schema in this register (only catalog/listing/organization/publication/theme/page/menu/glossary/usageCounter exist), so no publication-type Related row; the publication schema declares linkedTypes mail and calendar (leaf-integrations): mail is the NC Mail sidebar's create-a-draft-publication-from-an-email intake and renders there, not on this page; calendar is the 'Planning (does not publish)' leaf below, which links planning events and never reads or writes publicationDate, depublicationDate or status. No talk/contacts leaves — a publication is metadata about a document, not a correspondence thread (HARD RULE 1). geo/maps dropped — no geo field. lifecycleActions drives the schema's real status transition (published → archived, the RET-006 retention transition — the transitions block exists, so this stays a real lifecycle, not a frozen readOnly field). The audit trail (publications are FOI/WOO records where change history matters legally) lives in the sidebar as widgets:[{type:'audit'}], per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu (showMetadata) rather than a permanent card.",
 			"config": {
 				"register": "publication",
 				"schema": "publication",
@@ -714,11 +851,10 @@
 					},
 					{
 						"id": "pub-files",
-						"type": "integration",
-						"integrationId": "files",
+						"type": "publication-attachments",
 						"title": "Attachments",
 						"icon": "FolderOutline",
-						"props": {
+						"content": {
 							"maxDisplay": 100
 						}
 					},
@@ -735,6 +871,13 @@
 						"integrationId": "bookmarks",
 						"title": "Links",
 						"icon": "LinkVariant"
+					},
+					{
+						"id": "pub-calendar",
+						"type": "integration",
+						"integrationId": "calendar",
+						"title": "Planning (does not publish)",
+						"icon": "CalendarClock"
 					},
 					{
 						"id": "pub-announce",
@@ -866,6 +1009,14 @@
 						"gridY": 26,
 						"gridWidth": 12,
 						"gridHeight": 3
+					},
+					{
+						"id": "13",
+						"widgetId": "pub-calendar",
+						"gridX": 0,
+						"gridY": 29,
+						"gridWidth": 12,
+						"gridHeight": 4
 					}
 				],
 				"lifecycleActions": {
@@ -898,14 +1049,22 @@
 			"_note": "FederationSearch (custom) wraps CnSearchPage with the federation-aware search store so /search hits /api/federation/publications. The previous type:'search' default fanned out per-schema against the local OpenRegister, bypassing federation entirely."
 		},
 		{
+			"id": "FederatedPublication",
+			"route": "/federation/publications/:id",
+			"type": "custom",
+			"title": "Publication",
+			"component": "FederatedPublicationView",
+			"_note": "FederatedPublicationView (custom) shows a publication another instance holds, read through /api/federation/publications/{id} and its /attachments, both answered from the source (federation-open-remote-publication D3). Custom because the record lives on another instance: there is no local register and schema for a detail page to bind to. The ui#federatedPublication page route serves it on reload."
+		},
+		{
 			"id": "Organizations",
 			"route": "/organizations",
 			"type": "index",
 			"title": "Organizations",
 			"_note": "rowClickToView pinned false so a row-body click selects instead of navigating — see the Glossary page note.",
 			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "organization",
+				"register": "@resolve:organization_register",
+				"schema": "@resolve:organization_schema",
 				"rowClickToView": false,
 				"actionToggles": {
 					"showAdd": true,
@@ -929,8 +1088,8 @@
 			"title": "Organization",
 			"_note": "Publisher-organization archetype — the legal entity behind catalogs/publications (name, summary, description, the government identifiers OIN/TOOI/RSIN/PKI, and a single logo `image`). A user lands here to answer 'who is this publisher and what do they publish?'. The body leads with the identity block (8-wide, 2-column so the four registration codes read cleanly, `image` excluded because the Logo leaf renders it). The right column stacks the in-grid `stats-block` (top: Publications + Catalogs counts, formerly header summaryAggregates) over the Images leaf (4-wide) carrying the logo/branding (the schema's `image` is a single logo, so Images is the right surface, not Files). The 'what do they publish' half is answered with two INBOUND object-lists on the row below: the publications whose `organization` FK points at this record, and the catalogs whose `organization` FK points at it — both FKs now carry $ref:organization so their name display + org picker resolve. A `related` (outbound) widget stays intentionally ABSENT — the organization schema has ZERO outbound refs (every field is a scalar), so a related panel would render empty; the meaningful relations are inbound, which object-list expresses (the petstore parent→children pattern). org-catalogs gets viewAllRoute:'Catalogs' (that index takes no route param, so the deep-link resolves) + rowRoute:'CatalogDetail'; org-publications gets NO viewAllRoute/rowRoute — the Publications index/detail routes both require a :catalogSlug this page can't supply, so a broken deep-link is deliberately omitted. Both lists keep create ON (default): an organization OWNS its publications/catalogs, so creating from the list pre-links the org FK. schema-verified absences: NO contacts/comms leaves — the organization schema declares NO linkedTypes and no contactpersoon relation (HARD RULE 1); no status lifecycle field, so no lifecycleActions. The change-history audit trail (federation syncs matter) lives in the sidebar widgets:[{type:'audit'}] per the audit-only sidebar rule. Metadata is on-demand via the Data widget's Actions menu.",
 			"config": {
-				"register": "@resolve:listing_register",
-				"schema": "organization",
+				"register": "@resolve:organization_register",
+				"schema": "@resolve:organization_schema",
 				"idParam": "@route.id",
 				"documentationUrl": "https://opencatalogi.conduction.nl",
 				"widgets": [
@@ -941,8 +1100,13 @@
 						"icon": "OfficeBuilding",
 						"content": {
 							"columns": 2,
-							"exclude": [
-								"image"
+							"include": [
+								"name",
+								"summary",
+								"oin",
+								"tooi",
+								"rsin",
+								"pki"
 							]
 						}
 					},
@@ -1434,7 +1598,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"metric": "count",
 								"filter": {
@@ -1458,7 +1622,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"metric": "count",
 								"filter": {
@@ -1482,7 +1646,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"metric": "count",
 								"filter": {
@@ -1500,7 +1664,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing published yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"aggregate": {
 									"groupBy": "status",
@@ -1518,7 +1682,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing published yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"aggregate": {
 									"groupBy": "retentionAction",
@@ -1536,7 +1700,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing published yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "publication",
 								"aggregate": {
 									"groupBy": "organization",
@@ -1556,7 +1720,7 @@
 						"title": "Most recent",
 						"type": "object-table",
 						"content": {
-							"register": "opencatalogi",
+							"register": "publication",
 							"schema": "publication",
 							"filter": {},
 							"sort": {
@@ -1677,7 +1841,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "usageCounter",
 								"metric": "sum",
 								"field": "count",
@@ -1702,7 +1866,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "usageCounter",
 								"metric": "sum",
 								"field": "count",
@@ -1721,7 +1885,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing has been read yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "usageCounter",
 								"aggregate": {
 									"groupBy": "kind",
@@ -1740,7 +1904,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "Nothing has been read yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "usageCounter",
 								"aggregate": {
 									"groupBy": "publication",
@@ -1761,7 +1925,7 @@
 						"title": "Most recent",
 						"type": "object-table",
 						"content": {
-							"register": "opencatalogi",
+							"register": "publication",
 							"schema": "usageCounter",
 							"filter": {},
 							"sort": {
@@ -1864,7 +2028,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "catalog",
 								"metric": "count",
 								"filter": {
@@ -1888,7 +2052,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "listing",
 								"metric": "count"
 							}
@@ -1909,7 +2073,7 @@
 								"decimals": 0
 							},
 							"source": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "listing",
 								"metric": "count",
 								"filter": {
@@ -1927,7 +2091,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "No catalogs yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "catalog",
 								"aggregate": {
 									"groupBy": "status",
@@ -1945,7 +2109,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "No listings yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "listing",
 								"aggregate": {
 									"groupBy": "status",
@@ -1963,7 +2127,7 @@
 							"legendPosition": "bottom",
 							"emptyLabel": "No listings yet",
 							"dataSource": {
-								"register": "opencatalogi",
+								"register": "publication",
 								"schema": "listing",
 								"aggregate": {
 									"groupBy": "integrationLevel",
@@ -1977,7 +2141,7 @@
 						"title": "Most recently synced",
 						"type": "object-table",
 						"content": {
-							"register": "opencatalogi",
+							"register": "publication",
 							"schema": "listing",
 							"filter": {},
 							"sort": {
@@ -2087,17 +2251,19 @@
 		{
 			"id": "Flows",
 			"route": "/flows",
-			"type": "flows",
+			"type": "index",
 			"title": "Flows",
 			"config": {
-				"app": "opencatalogi"
+				"entitySource": "flows",
+				"app": "opencatalogi",
+				"rowRoute": "FlowDetail"
 			},
-			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. Rendered by the shared CnFlowsPage page type over OpenRegister's one native flow store (ADR-065), scoped to this app."
+			"_note": "ADR-110 Decision 4: a flow is app-specific, so the authoring surface lives here rather than behind a deep link to another app's list. An ordinary index over the named `flows` source, reading OpenRegister's one native flow store (ADR-065), scoped to this app by config.app. rowRoute names the FlowDetail page (a route name, not a path): a named-source page has no register and schema, so without it a row click opens nothing and Edit falls back to the source's own /flows path."
 		},
 		{
 			"id": "FlowDetail",
 			"route": "/flows/:id",
-			"type": "flow-detail",
+			"type": "flow",
 			"title": "Flow",
 			"config": {
 				"app": "opencatalogi"

@@ -35,12 +35,14 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Community;
 
+use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
+
 /**
  * Renders this app's markup dialect to HTML, and stores nothing.
  *
  * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-client-renders-our-markup-the-way-we-render-it-req-pcs-107
  */
-class MarkupRenderService {
+class MarkupRenderService implements MarkupRenderServiceInterface {
 
 	/**
 	 * The largest body this endpoint renders.
@@ -136,7 +138,6 @@ class MarkupRenderService {
 		}
 
 		return '<p>' . $this->inline(text: implode(' ', array_map('trim', $lines))) . '</p>';
-
 	}//end renderBlock()
 
 	/**
@@ -155,7 +156,6 @@ class MarkupRenderService {
 		}
 
 		return ($lines !== []);
-
 	}//end everyLineStartsWith()
 
 	/**
@@ -179,7 +179,6 @@ class MarkupRenderService {
 		}
 
 		return ($lines !== []);
-
 	}//end isList()
 
 	/**
@@ -198,7 +197,6 @@ class MarkupRenderService {
 		}
 
 		return '<' . $tag . '>' . implode('', $items) . '</' . $tag . '>';
-
 	}//end renderList()
 
 	/**
@@ -210,7 +208,6 @@ class MarkupRenderService {
 	 */
 	private function escape(string $text): string {
 		return htmlspecialchars($text, (ENT_QUOTES | ENT_SUBSTITUTE | ENT_HTML5), 'UTF-8');
-
 	}//end escape()
 
 	/**

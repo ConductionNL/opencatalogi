@@ -1,0 +1,2332 @@
+{
+    "unknown catalog": {
+        "status": 404,
+        "data": {
+            "error": "Catalog not found",
+            "message": "The catalog \"woo\" does not exist.",
+            "catalogSlug": "woo"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": []
+    },
+    "unscoped catalog": {
+        "status": 404,
+        "data": {
+            "error": "Publication not found",
+            "message": "The publication with ID \"0b1e7a52-0000-4000-8000-000000000001\" does not exist or is not accessible.",
+            "id": "0b1e7a52-0000-4000-8000-000000000001",
+            "catalogSlug": "woo"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [],
+                    "schemas": [
+                        3
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [],
+                        "schemas": [
+                            3
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "warning": "[PublicationsController::show] Object not found in any register/schema",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo"
+                }
+            }
+        ]
+    },
+    "registers as json text, first pair": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": "[\"1\",\"x\",2]",
+                    "schemas": [
+                        3
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": "[\"1\",\"x\",2]",
+                        "schemas": [
+                            3
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "uuid in the last pair": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 2,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 2,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 4,
+                    "register": 2
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "uuid through the location fallback": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 2,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 2
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "location found but the search is empty, slug hit": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p2",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"9b63373d78b54951b970e4e3bfb66f23a8a09104\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "Besluit_1",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "Besluit_1",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "Besluit_1",
+                        "register": 1,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "Besluit_1",
+                        "register": 2,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "Besluit_1",
+                        "register": 2,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "location": [
+                    "Besluit_1",
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "Besluit_1",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 1,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 1,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 2,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 2,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "Besluit_1",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 2
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p2",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "uuid-of-p2",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "slug hit on a show-withheld catalog": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p2",
+            "title": "T",
+            "withheld": [
+                "uuid-of-p2"
+            ]
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"bbd8afa25d5f61c1214371d99d59352b4dd243c4\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "showWithheld": true
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "besluit-1",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "showWithheld": true,
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "besluit-1",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "besluit-1",
+                        "register": 1,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "besluit-1",
+                        "register": 2,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "besluit-1",
+                        "register": 2,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "location": [
+                    "besluit-1",
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 1,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 1,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 2,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "besluit-1",
+                        "register": 2,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "besluit-1",
+                    "objectId": 42,
+                    "schema": 4,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p2",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\WithheldFromPublicationInterface"
+            },
+            {
+                "withheld": [
+                    "woo",
+                    "uuid-of-p2"
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "uuid-of-p2",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "ambiguous slug": {
+        "status": 404,
+        "data": {
+            "error": "Publication not found",
+            "message": "The publication with ID \"dup\" does not exist or is not accessible.",
+            "id": "dup",
+            "catalogSlug": "woo"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "dup",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "dup",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "dup",
+                        "register": 1,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "dup",
+                        "register": 2,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "dup",
+                        "register": 2,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "location": [
+                    "dup",
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "dup",
+                        "register": 1,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "warning": "[PublicationsController] Slug \"dup\" is ambiguous in catalog woo: matches publications uuid-of-p1, uuid-of-p2",
+                "context": {
+                    "slug": "dup",
+                    "catalogSlug": "woo",
+                    "uuids": [
+                        "uuid-of-p1",
+                        "uuid-of-p2"
+                    ]
+                }
+            },
+            {
+                "warning": "[PublicationsController::show] Object not found in any register/schema",
+                "context": {
+                    "id": "dup",
+                    "catalogSlug": "woo"
+                }
+            }
+        ]
+    },
+    "nothing found": {
+        "status": 404,
+        "data": {
+            "error": "Publication not found",
+            "message": "The publication with ID \"missing\" does not exist or is not accessible.",
+            "id": "missing",
+            "catalogSlug": "woo"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "missing",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "missing",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "missing",
+                        "register": 1,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "missing",
+                        "register": 2,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "missing",
+                        "register": 2,
+                        "schema": 4
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "location": [
+                    "missing",
+                    [
+                        1,
+                        2
+                    ],
+                    [
+                        3,
+                        4
+                    ]
+                ]
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "missing",
+                        "register": 1,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "missing",
+                        "register": 1,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "missing",
+                        "register": 2,
+                        "schema": 3
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "search": {
+                    "@self": {
+                        "slug": "missing",
+                        "register": 2,
+                        "schema": 4
+                    },
+                    "_limit": 2
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "warning": "[PublicationsController::show] Object not found in any register/schema",
+                "context": {
+                    "id": "missing",
+                    "catalogSlug": "woo"
+                }
+            }
+        ]
+    },
+    "found outside the catalog scope": {
+        "status": 404,
+        "data": {
+            "error": "Publication not found",
+            "message": "The publication with ID \"0b1e7a52-0000-4000-8000-000000000001\" does not exist or is not accessible.",
+            "id": "0b1e7a52-0000-4000-8000-000000000001",
+            "catalogSlug": "woo"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 9
+                }
+            },
+            {
+                "warning": "[PublicationsController::show] Object outside catalog scope",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "objectRegister": 9,
+                    "objectSchema": 3
+                }
+            }
+        ]
+    },
+    "extend as text is sanitised": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [
+                        "@self.a",
+                        "@self.c"
+                    ],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [
+                        "@self.a",
+                        "@self.c"
+                    ],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "_extend as list, capped at five": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [
+                        "@self.a",
+                        "@self.b",
+                        "@self.c",
+                        "@self.d",
+                        "@self.e"
+                    ],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [
+                        "@self.a",
+                        "@self.b",
+                        "@self.c",
+                        "@self.d",
+                        "@self.e"
+                    ],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "extend as a number": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "schema.org by format": {
+        "status": 200,
+        "data": {
+            "@type": "CreativeWork",
+            "identifier": "uuid-of-p1"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/ld+json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"eb8d6c9e41f795b6653fbc01a6bc528220cce3f1\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "showWithheld": true
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "showWithheld": true,
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\SchemaOrgServiceInterface"
+            },
+            {
+                "schemaOrg": [
+                    "uuid-of-p1",
+                    "woo",
+                    "woo"
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "schema.org by accept header": {
+        "status": 200,
+        "data": {
+            "@type": "CreativeWork",
+            "identifier": "uuid-of-p1"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/ld+json",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"eb8d6c9e41f795b6653fbc01a6bc528220cce3f1\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\SchemaOrgServiceInterface"
+            },
+            {
+                "schemaOrg": [
+                    "uuid-of-p1",
+                    "woo",
+                    "woo"
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "withheld catalog, uuid hit": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T",
+            "withheld": [
+                "0b1e7a52-0000-4000-8000-000000000001"
+            ]
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"cf8d1f04cba80899c2e208269e5ca849cb0850dd\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ],
+                    "showWithheld": true
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "showWithheld": true,
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCA\\OpenCatalogi\\Contract\\WithheldFromPublicationInterface"
+            },
+            {
+                "withheld": [
+                    "woo",
+                    "0b1e7a52-0000-4000-8000-000000000001"
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "signed in caller": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "private, no-store",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "count": [
+                    "0b1e7a52-0000-4000-8000-000000000001",
+                    "view",
+                    "woo"
+                ]
+            }
+        ]
+    },
+    "revalidation answers 304 and is not counted": {
+        "status": 304,
+        "data": [],
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "HEAD request is not counted": {
+        "status": 200,
+        "data": {
+            "id": "uuid-of-p1",
+            "title": "T"
+        },
+        "headers": {
+            "Cache-Control": "public, max-age=60, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8",
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "PUT, POST, GET, DELETE, PATCH",
+            "Access-Control-Allow-Headers": "Authorization, Content-Type, Accept",
+            "ETag": "W/\"047316a36a44d98ba07164cfdc6354ca1b6bf619\"",
+            "Vary": "Origin, Accept, Accept-Language"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "debug": "[PublicationsController::show] Object found successfully",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "objectId": 42,
+                    "schema": 3,
+                    "register": 1
+                }
+            },
+            {
+                "render": [
+                    "uuid-of-p1",
+                    [],
+                    0,
+                    [],
+                    [],
+                    [],
+                    true,
+                    false
+                ]
+            },
+            {
+                "get": "OCP\\IUserSession"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            }
+        ]
+    },
+    "openregister missing": {
+        "status": 500,
+        "data": {
+            "error": "Internal server error",
+            "hint": "Check server logs for more details."
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "error": "[PublicationsController::show] Failed to retrieve publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "error": "OpenRegister service is not available."
+                }
+            }
+        ]
+    },
+    "lookup throws DoesNotExist": {
+        "status": 404,
+        "data": {
+            "error": "Publication not found",
+            "message": "The publication with ID \"0b1e7a52-0000-4000-8000-000000000001\" does not exist in the database.",
+            "id": "0b1e7a52-0000-4000-8000-000000000001",
+            "catalogSlug": "woo",
+            "exception": "DoesNotExistException"
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            }
+        ]
+    },
+    "lookup throws": {
+        "status": 500,
+        "data": {
+            "error": "Internal server error",
+            "hint": "Check server logs for more details."
+        },
+        "headers": {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+            "Content-Type": "application/json; charset=utf-8"
+        },
+        "log": [
+            {
+                "guard": {
+                    "slug": "woo",
+                    "registers": [
+                        1,
+                        2
+                    ],
+                    "schemas": [
+                        3,
+                        4
+                    ]
+                }
+            },
+            {
+                "get": "OCA\\OpenRegister\\Service\\ObjectService"
+            },
+            {
+                "debug": "[PublicationsController::show] Attempting to find publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "catalog": {
+                        "slug": "woo",
+                        "registers": [
+                            1,
+                            2
+                        ],
+                        "schemas": [
+                            3,
+                            4
+                        ],
+                        "guarded": true
+                    },
+                    "extend": [],
+                    "rbac": false,
+                    "multi": false
+                }
+            },
+            {
+                "search": {
+                    "@self": {
+                        "uuid": "0b1e7a52-0000-4000-8000-000000000001",
+                        "register": 1,
+                        "schema": 3
+                    }
+                },
+                "rbac": true,
+                "multitenancy": false
+            },
+            {
+                "error": "[PublicationsController::show] Failed to retrieve publication",
+                "context": {
+                    "id": "0b1e7a52-0000-4000-8000-000000000001",
+                    "catalogSlug": "woo",
+                    "error": "secret detail"
+                }
+            }
+        ]
+    }
+}

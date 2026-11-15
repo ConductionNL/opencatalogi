@@ -9,6 +9,9 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -75,5 +78,16 @@ class RegisterMapper {
 	): array {
 		return [];
 	}//end findAll()
+
+	/**
+	 * Persist a changed register.
+	 *
+	 * @param \OCP\AppFramework\Db\Entity $entity The register.
+	 *
+	 * @return \OCP\AppFramework\Db\Entity
+	 */
+	public function update(\OCP\AppFramework\Db\Entity $entity): \OCP\AppFramework\Db\Entity {
+		return $entity;
+	}//end update()
 
 }//end class

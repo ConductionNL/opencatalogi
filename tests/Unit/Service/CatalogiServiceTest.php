@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -79,6 +84,49 @@ class CatalogiServiceTest extends TestCase {
 			$this->userSession,
 		);
 	}//end setUp()
+
+	// ──────────────────────────────────────────────────────────
+	// getCatalogSlugs (integration-maintenance-commands)
+	// ──────────────────────────────────────────────────────────
+
+	/**
+	 * Every catalogue's slug in the configured register and schema, each once,
+	 * read outside RBAC; rows without a slug are left out.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function testGetCatalogSlugsListsEveryCatalogueOnce(): void {
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'catalog_schema' => '5',
+				'catalog_register' => '2',
+				default => $default,
+			}
+		);
+		$entity = $this->createMock(\OCA\OpenRegister\Db\ObjectEntity::class);
+		$entity->method('jsonSerialize')->willReturn(['slug' => 'open-data']);
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('searchObjects')
+			->with(['@self' => ['register' => '2', 'schema' => '5']], false, false)
+			->willReturn([['slug' => 'woo'], $entity, ['slug' => 'woo'], ['title' => 'no slug'], ['slug' => '']]);
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')->willReturn($objectService);
+
+		$this->assertSame(['woo', 'open-data'], $this->service->getCatalogSlugs());
+	}//end testGetCatalogSlugsListsEveryCatalogueOnce()
+
+	/**
+	 * Without a configured catalogue register or schema there is nothing to list, and nothing is searched.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function testGetCatalogSlugsIsEmptyWhenUnconfigured(): void {
+		$this->config->method('getValueString')->willReturn('');
+		$this->container->expects($this->never())->method('get');
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$this->assertSame([], $this->service->getCatalogSlugs());
+	}//end testGetCatalogSlugsIsEmptyWhenUnconfigured()
 
 	// ──────────────────────────────────────────────────────────
 	// getObjectService
@@ -349,7 +397,7 @@ class CatalogiServiceTest extends TestCase {
 		$cachedData = ['id' => '1', 'slug' => 'test-catalog', 'title' => 'Test'];
 
 		$this->cache->method('get')
-			->with('catalog_slug_test-catalog')
+			->with('catalog_public_slug_test-catalog')
 			->willReturn($cachedData);
 
 		$result = $this->service->getCatalogBySlug('test-catalog');
@@ -361,7 +409,7 @@ class CatalogiServiceTest extends TestCase {
 		$catalogData = ['id' => '2', 'slug' => 'my-catalog', 'title' => 'My Catalog'];
 
 		$this->cache->method('get')
-			->with('catalog_slug_my-catalog')
+			->with('catalog_public_slug_my-catalog')
 			->willReturn(null);
 
 		$this->config->method('getValueString')
@@ -380,7 +428,7 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->cache->expects($this->once())
 			->method('set')
-			->with('catalog_slug_my-catalog', $catalogData, 3600);
+			->with('catalog_public_slug_my-catalog', $catalogData, 3600);
 
 		$this->injectObjectService($objectService);
 
@@ -458,13 +506,103 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertNull($result);
 	}//end testGetCatalogBySlugExceptionReturnsNull()
 
+	public function testGetCatalogBySlugDoesNotServeAnAnonymousCallerWhatASignedInCallerLoaded(): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		// RBAC admits the signed-in caller (first search) and refuses the anonymous one.
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->willReturnOnConsecutiveCalls([$this->createMockCatalogObject(['slug' => 'draft'])], []);
+		$this->injectObjectService($objectService);
+
+		$cacheFactory = $this->arrayBackedCacheFactory();
+		$signedIn = $this->createMock(IUserSession::class);
+		$signedIn->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$this->assertSame(['slug' => 'draft'], $this->catalogiServiceFor($cacheFactory, $signedIn)->getCatalogBySlug('draft'));
+		$this->assertNull($this->catalogiServiceFor($cacheFactory, $this->userSession)->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugDoesNotServeAnAnonymousCallerWhatASignedInCallerLoaded()
+
+	public function testGetCatalogBySlugDoesNotServeASignedInCallerWhatAnotherSignedInCallerLoaded(): void {
+		$this->config->method('getValueString')
+			->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', 'schema-1'],
+					['opencatalogi', 'catalog_register', '', 'register-1'],
+				]
+			);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')
+			->willReturnOnConsecutiveCalls([$this->createMockCatalogObject(['slug' => 'draft'])], []);
+		$this->injectObjectService($objectService);
+
+		$cacheFactory = $this->arrayBackedCacheFactory();
+		$admin = $this->createMock(IUserSession::class);
+		$admin->method('getUser')->willReturn($this->createMock(IUser::class));
+		$reader = $this->createMock(IUserSession::class);
+		$reader->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$this->assertSame(['slug' => 'draft'], $this->catalogiServiceFor($cacheFactory, $admin)->getCatalogBySlug('draft'));
+		$this->assertNull($this->catalogiServiceFor($cacheFactory, $reader)->getCatalogBySlug('draft'));
+	}//end testGetCatalogBySlugDoesNotServeASignedInCallerWhatAnotherSignedInCallerLoaded()
+
+	/**
+	 * A cache factory whose distributed cache keeps values in memory, shared by every
+	 * service built from it.
+	 *
+	 * @return ICacheFactory&MockObject
+	 */
+	private function arrayBackedCacheFactory(): ICacheFactory {
+		$store = new \ArrayObject();
+		$cache = $this->createMock(ICache::class);
+		$cache->method('get')->willReturnCallback(static fn (string $key) => $store[$key] ?? null);
+		$cache->method('set')->willReturnCallback(
+			static function (string $key, $value) use ($store): bool {
+				$store[$key] = $value;
+				return true;
+			}
+		);
+
+		$factory = $this->createMock(ICacheFactory::class);
+		$factory->method('createDistributed')->willReturn($cache);
+
+		return $factory;
+	}//end arrayBackedCacheFactory()
+
+	/**
+	 * Build a CatalogiService on the shared mocks with its own cache factory and session.
+	 *
+	 * @param ICacheFactory $cacheFactory The cache factory to use.
+	 * @param IUserSession  $userSession  The caller's session.
+	 *
+	 * @return CatalogiService
+	 */
+	private function catalogiServiceFor(ICacheFactory $cacheFactory, IUserSession $userSession): CatalogiService {
+		return new CatalogiService(
+			$this->config,
+			$this->request,
+			$this->container,
+			$this->appManager,
+			$cacheFactory,
+			$this->logger,
+			$userSession,
+		);
+	}//end catalogiServiceFor()
+
 	// ──────────────────────────────────────────────────────────
 	// invalidateCatalogCache
 	// ──────────────────────────────────────────────────────────
 	public function testInvalidateCatalogCache(): void {
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_test-slug');
+			->with('catalog_public_slug_test-slug');
 
 		$this->service->invalidateCatalogCache('test-slug');
 	}//end testInvalidateCatalogCache()
@@ -472,6 +610,89 @@ class CatalogiServiceTest extends TestCase {
 	// ──────────────────────────────────────────────────────────
 	// invalidateCatalogCacheById
 	// ──────────────────────────────────────────────────────────
+	/**
+	 * Both by-id cache operations fail closed: an unset catalog register or
+	 * schema means nothing is looked up, cached, removed or logged.
+	 *
+	 * @return void
+	 */
+	public function testCacheByIdFailsClosedWithoutCatalogConfiguration(): void {
+		foreach ([['', 'register-1'], ['schema-1', '']] as [$schema, $register]) {
+			$config = $this->createMock(\OCP\IAppConfig::class);
+			$config->method('getValueString')->willReturnMap(
+				[
+					['opencatalogi', 'catalog_schema', '', $schema],
+					['opencatalogi', 'catalog_register', '', $register],
+				]
+			);
+			$objectService = $this->createMock(ObjectService::class);
+			$objectService->expects($this->never())->method('find');
+			$this->cache->expects($this->never())->method('remove');
+			$this->cache->expects($this->never())->method('set');
+			$this->logger->expects($this->never())->method('error');
+			$service = $this->serviceWithConfig($config);
+			$this->injectObjectService($objectService);
+
+			$service->invalidateCatalogCacheById(42);
+			$service->warmupCatalogCacheById(42);
+		}
+	}//end testCacheByIdFailsClosedWithoutCatalogConfiguration()
+
+	/**
+	 * Both by-id cache operations look the catalog up in the configured register and schema.
+	 *
+	 * @return void
+	 */
+	public function testCacheByIdLooksUpInTheConfiguredScope(): void {
+		$this->config->method('getValueString')->willReturnMap(
+			[
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]
+		);
+		$catalogEntity = new \OCA\OpenRegister\Db\ObjectEntity();
+		$catalogEntity->setObject(['title' => 'No Slug']);
+		$objectService = $this->createMock(ObjectService::class);
+		$finds = [];
+		$objectService->method('find')->willReturnCallback(
+			static function (...$args) use (&$finds, $catalogEntity) {
+				$named = [];
+				foreach ((new \ReflectionMethod(ObjectService::class, 'find'))->getParameters() as $i => $param) {
+					$named[$param->getName()] = ($args[$param->getName()] ?? $args[$i] ?? null);
+				}
+
+				$finds[] = [$named['id'], $named['register'], $named['schema']];
+				return $catalogEntity;
+			}
+		);
+		$this->injectObjectService($objectService);
+		$this->cache->expects($this->never())->method('remove');
+		$this->cache->expects($this->never())->method('set');
+
+		$this->service->invalidateCatalogCacheById(42);
+		$this->service->warmupCatalogCacheById(42);
+		$this->assertSame([[42, 'register-1', 'schema-1'], [42, 'register-1', 'schema-1']], $finds);
+	}//end testCacheByIdLooksUpInTheConfiguredScope()
+
+	/**
+	 * A CatalogiService over the given app config and this test's other doubles.
+	 *
+	 * @param \OCP\IAppConfig $config The app config.
+	 *
+	 * @return CatalogiService
+	 */
+	private function serviceWithConfig(\OCP\IAppConfig $config): CatalogiService {
+		return new CatalogiService(
+			$config,
+			$this->request,
+			$this->container,
+			$this->appManager,
+			$this->cacheFactory,
+			$this->logger,
+			$this->userSession,
+		);
+	}//end serviceWithConfig()
+
 	public function testInvalidateCatalogCacheByIdSuccess(): void {
 		$this->config->method('getValueString')
 			->willReturnMap(
@@ -492,7 +713,7 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_found-slug');
+			->with('catalog_public_slug_found-slug');
 
 		$this->service->invalidateCatalogCacheById(42);
 	}//end testInvalidateCatalogCacheByIdSuccess()
@@ -550,7 +771,7 @@ class CatalogiServiceTest extends TestCase {
 		// warmupCatalogCache invalidates, then calls getCatalogBySlug.
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_warm-slug');
+			->with('catalog_public_slug_warm-slug');
 
 		// getCatalogBySlug will try cache first (returns null after invalidation),
 		// then query the DB.
@@ -606,7 +827,7 @@ class CatalogiServiceTest extends TestCase {
 		// Should call invalidateCatalogCache (remove) then getCatalogBySlug.
 		$this->cache->expects($this->once())
 			->method('remove')
-			->with('catalog_slug_warmup-by-id');
+			->with('catalog_public_slug_warmup-by-id');
 
 		$this->cache->method('get')
 			->willReturn(null);
@@ -1443,6 +1664,38 @@ class CatalogiServiceTest extends TestCase {
 		$this->assertFalse($this->service->rewriteSchemasAndRegisters($entity));
 	}//end testRewriteSchemasAndRegistersSkipsSaveWhenNothingChanged()
 
+	public function testRewriteSchemasAndRegistersSavesTheResolvedIds(): void {
+		$registerMapper = $this->createMock(RegisterMapper::class);
+		$registerMapper->method('find')->with('woo')->willReturn($this->createEntityMock(Register::class, 21));
+		$schemaMapper = $this->createMock(SchemaMapper::class);
+		$schemaMapper->expects($this->never())->method('find');
+
+		$entity = $this->createMockObjectEntity(['title' => 'C', 'registers' => ['woo'], 'schemas' => ['7']]);
+		$entity->expects($this->once())->method('setObject')
+			->with(['title' => 'C', 'registers' => [21], 'schemas' => ['7']]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->expects($this->once())->method('saveObject')->with($entity);
+
+		$this->injectAll($registerMapper, $schemaMapper, $objectService);
+
+		$this->assertTrue($this->service->rewriteSchemasAndRegisters($entity));
+	}//end testRewriteSchemasAndRegistersSavesTheResolvedIds()
+
+	public function testMappersAreRefusedWithoutOpenRegister(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['opencatalogi']);
+		$this->container->expects($this->never())->method('get');
+
+		foreach (['getSchemaMapper', 'getRegisterMapper'] as $getter) {
+			try {
+				$this->service->$getter();
+				$this->fail($getter . ' answered without OpenRegister');
+			} catch (\RuntimeException $e) {
+				$this->assertSame('OpenRegister service is not available.', $e->getMessage());
+			}
+		}
+	}//end testMappersAreRefusedWithoutOpenRegister()
+
 	// ──────────────────────────────────────────────────────────
 	// Helper methods
 	// ──────────────────────────────────────────────────────────
@@ -1651,7 +1904,7 @@ class CatalogiServiceTest extends TestCase {
 	 * whose read-rule guard the test decides.
 	 *
 	 * @param ObjectService|MockObject $objectService The ObjectService mock.
-	 * @param \Closure                 $guard         What applySchemaScopeReadRuleGuard() returns.
+	 * @param \Closure $guard What applySchemaScopeReadRuleGuard() returns.
 	 *
 	 * @return void
 	 */
@@ -1699,6 +1952,31 @@ class CatalogiServiceTest extends TestCase {
 
 		$this->assertSame(200, $this->service->index('publications')->getStatus());
 	}//end testIndexIgnoresACallerSuppliedSelfScope()
+
+	/**
+	 * A requested page reaches OpenRegister as its page and the offset it implies.
+	 *
+	 * @return void
+	 */
+	public function testIndexPassesThePageAndItsOffset(): void {
+		$this->request->method('getParams')->willReturn(['limit' => '5', 'page' => '3']);
+		$this->config->method('getValueString')->willReturnMap([
+			['opencatalogi', 'catalog_schema', '', 'schema-1'],
+			['opencatalogi', 'catalog_register', '', 'register-1'],
+		]);
+
+		$objectService = $this->createMock(ObjectService::class);
+		$objectService->method('searchObjects')->willReturn([
+			$this->createMockCatalogObject(['registers' => [20], 'schemas' => [28]]),
+		]);
+		$objectService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with($this->callback(static fn (array $q): bool => $q['_limit'] === 5 && $q['_offset'] === 10 && $q['_page'] === 3))
+			->willReturn(['results' => [], 'total' => 0]);
+		$this->injectObjectServiceWithGuard($objectService, static fn (array $schemas): array => $schemas);
+
+		$this->assertSame(200, $this->service->index('publications')->getStatus());
+	}//end testIndexPassesThePageAndItsOffset()
 
 	/**
 	 * The catalog's schema list goes through the SCH-PFTS-CAT-002 guard before

@@ -1,0 +1,160 @@
+<?php
+
+/**
+ * OpenCatalogi public object list trait.
+ *
+ * The parts a public, read-only controller over one configured register and
+ * schema shares: the search query scoped to that pair, the paginated answer,
+ * and the CORS headers on every answer.
+ *
+ * @category Controller
+ * @package  OCA\OpenCatalogi\Controller
+ *
+ * @author    Conduction Development Team <info@conduction.nl>
+ * @copyright 2026 Conduction B.V.
+ * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-License-Identifier: EUPL-1.2
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ *
+ * @version GIT: <git_id>
+ *
+ * @link https://www.OpenCatalogi.nl
+ */
+
+declare(strict_types=1);
+
+namespace OCA\OpenCatalogi\Controller;
+
+use OCA\OpenCatalogi\Service\AppliedFilters;
+use OCA\OpenCatalogi\Service\CallerScope;
+use OCP\AppFramework\Http\JSONResponse;
+
+/**
+ * Build scoped searches and CORS-enabled paginated answers for a public object list.
+ *
+ * The consuming controller provides `$appName`, `$request`, `$config`,
+ * `$corsMethods` and `$corsAllowedHeaders`.
+ */
+trait ListsConfiguredObjects {
+	use AnswersCrossOriginListRequests;
+	use SendsListCorsHeaders;
+
+	/**
+	 * The request's query, without route keys or any caller scope, scoped to the configured pair.
+	 *
+	 * The configured scope wins for the rows, but OpenRegister's facet path reads
+	 * `@self.schemas ?? _schemas` first, so every caller scope key is dropped (WOO-581).
+	 *
+	 * With a collector, the stripped caller keys and the configured scope are
+	 * recorded as applied filters (REQ-ASF-002).
+	 *
+	 * @param array<string, string> $objectConfig The configured `register` and `schema`.
+	 * @param AppliedFilters|null $appliedFilters The request's collector.
+	 *
+	 * @return array<string, mixed> The search query.
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+	 *
+	 * @spec openspec/specs/content-management/spec.md
+	 */
+	private function scopedSearchQuery(array $objectConfig, ?AppliedFilters $appliedFilters = null): array {
+		$searchQuery = $this->request->getParams();
+		unset($searchQuery['id'], $searchQuery['_route']);
+
+		$searchQuery = CallerScope::strip(query: $searchQuery, appliedFilters: $appliedFilters);
+		$appliedFilters?->record(
+			name: AppliedFilters::CATALOG_SCOPE,
+			value: [
+				'schemas' => array_values(array_filter([($objectConfig['schema'] ?? null)])),
+				'registers' => array_values(array_filter([($objectConfig['register'] ?? null)])),
+			],
+			reason: 'The list is limited to the configured schema and register.'
+		);
+
+		if (empty($objectConfig['schema']) === false) {
+			$searchQuery['@self']['schema'] = $objectConfig['schema'];
+		}
+
+		if (empty($objectConfig['register']) === false) {
+			$searchQuery['@self']['register'] = $objectConfig['register'];
+		}
+
+		return $searchQuery;
+	}//end scopedSearchQuery()
+
+	/**
+	 * The paginated answer for a search result: rows and paging with defaults,
+	 * plus the links, facets and facetable fields when present.
+	 *
+	 * @param array<string, mixed> $result The paginated search result.
+	 *
+	 * @return array<string, mixed> The response data.
+	 *
+	 * @spec openspec/specs/content-management/spec.md
+	 */
+	private function paginatedResponseData(array $result): array {
+		$responseData = [
+			'results' => ($result['results'] ?? []),
+			'total' => ($result['total'] ?? 0),
+			'limit' => ($result['limit'] ?? 20),
+			'offset' => ($result['offset'] ?? 0),
+			'page' => ($result['page'] ?? 1),
+			'pages' => ($result['pages'] ?? 1),
+		];
+
+		return $this->withOptionalParts(responseData: $responseData, result: $result);
+	}//end paginatedResponseData()
+
+	/**
+	 * The response data with the links, facets and facetable fields the search
+	 * result carries, in that order; the facets unwrapped.
+	 *
+	 * @param array<string, mixed> $responseData The rows and paging.
+	 * @param array<string, mixed> $result The paginated search result.
+	 *
+	 * @return array<string, mixed> The response data.
+	 */
+	private function withOptionalParts(array $responseData, array $result): array {
+		foreach (['next', 'prev', 'facets', 'facetable'] as $part) {
+			if (isset($result[$part]) === true) {
+				$responseData[$part] = $result[$part];
+			}
+		}
+
+		if (isset($responseData['facets']) === true) {
+			$responseData['facets'] = $this->unwrappedFacets(facets: $responseData['facets']);
+		}
+
+		return $responseData;
+	}//end withOptionalParts()
+
+	/**
+	 * The facets of a search result, unwrapped when they arrive nested under
+	 * their own `facets` key.
+	 *
+	 * @param mixed $facets The result's facets.
+	 *
+	 * @return mixed The facets.
+	 */
+	private function unwrappedFacets(mixed $facets): mixed {
+		if (isset($facets['facets']) === true && is_array($facets['facets']) === true) {
+			return $facets['facets'];
+		}
+
+		return $facets;
+	}//end unwrappedFacets()
+
+	/**
+	 * A JSON answer with the CORS headers for public API access (#735: never reflect an arbitrary Origin).
+	 *
+	 * @param mixed $data The response data.
+	 *
+	 * @return JSONResponse The response.
+	 *
+	 * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
+	 */
+	private function publicJsonResponse(mixed $data): JSONResponse {
+		return $this->withListCorsHeaders(response: new JSONResponse($data));
+	}//end publicJsonResponse()
+}//end trait

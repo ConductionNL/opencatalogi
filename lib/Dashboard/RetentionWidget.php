@@ -22,7 +22,7 @@
 
 namespace OCA\OpenCatalogi\Dashboard;
 
-use OCA\OpenCatalogi\AppInfo\Application;
+use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCP\Dashboard\IWidget;
 use OCP\IL10N;
 use OCP\Util;
@@ -97,10 +97,10 @@ class RetentionWidget implements IWidget {
 	 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 	 */
 	public function load(): void {
-		Util::addScript(application: Application::APP_ID, file: Application::APP_ID . '-shared-vendor');
-		Util::addScript(application: Application::APP_ID, file: Application::APP_ID . '-shared-nc-vue');
-		Util::addScript(application: Application::APP_ID, file: Application::APP_ID . '-retentionWidget');
-		Util::addStyle(application: Application::APP_ID, file: 'dashboardWidgets');
+		Util::addScript(application: AppIdentity::APP_ID, file: AppIdentity::APP_ID . '-shared-vendor');
+		Util::addScript(application: AppIdentity::APP_ID, file: AppIdentity::APP_ID . '-shared-nc-vue');
+		Util::addScript(application: AppIdentity::APP_ID, file: AppIdentity::APP_ID . '-retentionWidget');
+		Util::addStyle(application: AppIdentity::APP_ID, file: 'dashboardWidgets');
 
 	}//end load()
 }//end class

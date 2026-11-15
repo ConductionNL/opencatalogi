@@ -28,7 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\BackgroundJob;
 
-use OCA\OpenCatalogi\Service\Publication\PlooiDeliveryService;
+use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCP\AppFramework\Utility\ITimeFactory;
 use OCP\BackgroundJob\QueuedJob;
 use Psr\Log\LoggerInterface;
@@ -44,12 +44,12 @@ class PlooiDelivery extends QueuedJob {
 	 * Constructor.
 	 *
 	 * @param ITimeFactory $time Time factory.
-	 * @param PlooiDeliveryService $deliveryService The PLOOI delivery.
+	 * @param PlooiDeliveryServiceInterface $deliveryService The PLOOI delivery.
 	 * @param LoggerInterface $logger Logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
-		private readonly PlooiDeliveryService $deliveryService,
+		private readonly PlooiDeliveryServiceInterface $deliveryService,
 		private readonly LoggerInterface $logger,
 	) {
 		parent::__construct(time: $time);

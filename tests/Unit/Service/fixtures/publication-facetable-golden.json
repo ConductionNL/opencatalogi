@@ -1,0 +1,314 @@
+{
+    "both empty": {
+        "@self": {
+            "directory": {
+                "type": "categorical",
+                "description": "Directory/catalog source of the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "local",
+                        "label": "Local OpenCatalogi",
+                        "count": 1
+                    },
+                    {
+                        "value": "directory.opencatalogi.nl",
+                        "label": "OpenCatalogi Directory",
+                        "count": 1
+                    },
+                    {
+                        "value": "dimpact.commonground.nu",
+                        "label": "Dimpact",
+                        "count": 1
+                    }
+                ]
+            },
+            "catalogs": {
+                "type": "categorical",
+                "description": "Catalog that contains the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "default",
+                        "label": "Default Catalog",
+                        "count": 1
+                    },
+                    {
+                        "value": "test-catalog",
+                        "label": "Test Catalog",
+                        "count": 1
+                    }
+                ]
+            }
+        }
+    },
+    "federated only": {
+        "@self": {
+            "register": {
+                "type": "terms"
+            },
+            "directory": {
+                "type": "categorical",
+                "description": "Directory/catalog source of the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "local",
+                        "label": "Local OpenCatalogi",
+                        "count": 1
+                    },
+                    {
+                        "value": "directory.opencatalogi.nl",
+                        "label": "OpenCatalogi Directory",
+                        "count": 1
+                    },
+                    {
+                        "value": "dimpact.commonground.nu",
+                        "label": "Dimpact",
+                        "count": 1
+                    }
+                ]
+            },
+            "catalogs": {
+                "type": "categorical",
+                "description": "Catalog that contains the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "default",
+                        "label": "Default Catalog",
+                        "count": 1
+                    },
+                    {
+                        "value": "test-catalog",
+                        "label": "Test Catalog",
+                        "count": 1
+                    }
+                ]
+            }
+        },
+        "theme": {
+            "type": "terms"
+        }
+    },
+    "local wins": {
+        "@self": {
+            "status": {
+                "type": "categorical"
+            },
+            "directory": {
+                "type": "categorical",
+                "description": "Directory/catalog source of the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "local",
+                        "label": "Local OpenCatalogi",
+                        "count": 1
+                    },
+                    {
+                        "value": "directory.opencatalogi.nl",
+                        "label": "OpenCatalogi Directory",
+                        "count": 1
+                    },
+                    {
+                        "value": "dimpact.commonground.nu",
+                        "label": "Dimpact",
+                        "count": 1
+                    }
+                ]
+            },
+            "catalogs": {
+                "type": "categorical",
+                "description": "Catalog that contains the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "default",
+                        "label": "Default Catalog",
+                        "count": 1
+                    },
+                    {
+                        "value": "test-catalog",
+                        "label": "Test Catalog",
+                        "count": 1
+                    }
+                ]
+            }
+        },
+        "custom": {
+            "field": "data"
+        }
+    },
+    "local without @self": {
+        "title": {
+            "type": "text"
+        },
+        "@self": {
+            "directory": {
+                "type": "categorical",
+                "description": "Directory/catalog source of the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "local",
+                        "label": "Local OpenCatalogi",
+                        "count": 1
+                    },
+                    {
+                        "value": "directory.opencatalogi.nl",
+                        "label": "OpenCatalogi Directory",
+                        "count": 1
+                    },
+                    {
+                        "value": "dimpact.commonground.nu",
+                        "label": "Dimpact",
+                        "count": 1
+                    }
+                ]
+            },
+            "catalogs": {
+                "type": "categorical",
+                "description": "Catalog that contains the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "default",
+                        "label": "Default Catalog",
+                        "count": 1
+                    },
+                    {
+                        "value": "test-catalog",
+                        "label": "Test Catalog",
+                        "count": 1
+                    }
+                ]
+            }
+        }
+    },
+    "local overrides the virtual fields": {
+        "@self": {
+            "directory": {
+                "type": "categorical",
+                "description": "Directory/catalog source of the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "local",
+                        "label": "Local OpenCatalogi",
+                        "count": 1
+                    },
+                    {
+                        "value": "directory.opencatalogi.nl",
+                        "label": "OpenCatalogi Directory",
+                        "count": 1
+                    },
+                    {
+                        "value": "dimpact.commonground.nu",
+                        "label": "Dimpact",
+                        "count": 1
+                    }
+                ]
+            },
+            "catalogs": {
+                "type": "categorical",
+                "description": "Catalog that contains the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "default",
+                        "label": "Default Catalog",
+                        "count": 1
+                    },
+                    {
+                        "value": "test-catalog",
+                        "label": "Test Catalog",
+                        "count": 1
+                    }
+                ]
+            },
+            "organization": {
+                "type": "terms"
+            }
+        }
+    },
+    "federated with virtual fields": {
+        "@self": {
+            "directory": {
+                "type": "categorical",
+                "description": "Directory/catalog source of the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "local",
+                        "label": "Local OpenCatalogi",
+                        "count": 1
+                    },
+                    {
+                        "value": "directory.opencatalogi.nl",
+                        "label": "OpenCatalogi Directory",
+                        "count": 1
+                    },
+                    {
+                        "value": "dimpact.commonground.nu",
+                        "label": "Dimpact",
+                        "count": 1
+                    }
+                ]
+            },
+            "catalogs": {
+                "type": "categorical",
+                "description": "Catalog that contains the publication",
+                "facet_types": [
+                    "terms"
+                ],
+                "has_labels": true,
+                "sample_values": [
+                    {
+                        "value": "default",
+                        "label": "Default Catalog",
+                        "count": 1
+                    },
+                    {
+                        "value": "test-catalog",
+                        "label": "Test Catalog",
+                        "count": 1
+                    }
+                ]
+            }
+        }
+    }
+}

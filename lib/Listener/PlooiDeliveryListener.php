@@ -109,6 +109,5 @@ class PlooiDeliveryListener implements IEventListener {
 
 		$depublished = strtotime((string)($data['depublicationDate'] ?? ''));
 		return ($depublished === false || $depublished > time());
-
 	}//end isPublic()
 }//end class

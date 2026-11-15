@@ -1,4 +1,8 @@
-import type { SafeParseReturnType } from 'zod'
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+import type { ZodSafeParseResult } from 'zod'
 import type { TConfiguration } from './configuration.types'
 
 import { z } from 'zod'
@@ -27,17 +31,13 @@ export class Configuration implements TConfiguration {
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TConfiguration, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/8azwyic71djee-create-listing
 		const schema = z.object({
 			useElastic: z.boolean(),
 			useMongo: z.boolean(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

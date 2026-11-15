@@ -32,6 +32,9 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\OoapiPage;
+use OCA\OpenCatalogi\Contract\OoapiScope;
+use OCA\OpenCatalogi\Contract\OoapiServiceInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
@@ -48,7 +51,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/ooapi-catalog-publication/tasks.md#task-3-public-endpoints-serializer
  */
-class OoapiService {
+class OoapiService implements OoapiServiceInterface {
 
 	/**
 	 * OOAPI 5.0 list-endpoint page-size ceiling (OOAPI-007).
@@ -56,13 +59,6 @@ class OoapiService {
 	 * @var integer
 	 */
 	public const MAX_PAGE_SIZE = 250;
-
-	/**
-	 * Default page size when the caller does not specify one.
-	 *
-	 * @var integer
-	 */
-	public const DEFAULT_PAGE_SIZE = 50;
 
 	/**
 	 * OoapiService constructor.
@@ -201,26 +197,19 @@ class OoapiService {
 	 * Render the catalog's owning Organisation as an OOAPI 5.0 `organization`
 	 * resource, live, with no materialization step (OOAPI-002).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $organizationRegister The resolved organisation register id.
-	 * @param string $organizationSchema The resolved organisation schema id.
+	 * @param OoapiScope $scope The catalog and the organisation register/schema pair.
 	 *
 	 * @return array<string, mixed>|null The rendered `organization` resource, or null when the catalog has none.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
-	public function renderOrganization(array $catalog, string $organizationRegister, string $organizationSchema): ?array {
-		$organisationId = $catalog['organization'] ?? null;
-		if (is_string($organisationId) === false || $organisationId === '') {
+	public function renderOrganization(OoapiScope $scope): ?array {
+		$organisationId = $scope->organisationId();
+		if ($organisationId === null) {
 			return null;
 		}
 
-		return $this->getOrganization(
-			organisationId: $organisationId,
-			organizationRegister: $organizationRegister,
-			organizationSchema: $organizationSchema
-		);
-
+		return $this->getOrganization(organisationId: $organisationId, scope: $scope);
 	}//end renderOrganization()
 
 	/**
@@ -228,53 +217,37 @@ class OoapiService {
 	 * the catalog's own owning Organisation (D1/D4 — no bespoke query layer,
 	 * reuse the existing single `catalog.organization` reference).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
+	 * @param OoapiScope $scope The catalog and the organisation register/schema pair.
 	 * @param string $id The requested organization id.
-	 * @param string $organizationRegister The resolved organisation register id.
-	 * @param string $organizationSchema The resolved organisation schema id.
 	 *
 	 * @return array<string, mixed>|null The rendered `organization` resource, or null when unresolvable.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-organization-resource-renders-the-existing-organisation-object-live-ooapi-002
 	 */
-	public function organizationById(array $catalog, string $id, string $organizationRegister, string $organizationSchema): ?array {
-		$organisationId = $catalog['organization'] ?? null;
-		if (is_string($organisationId) === false || $organisationId === '' || $organisationId !== $id) {
+	public function organizationById(OoapiScope $scope, string $id): ?array {
+		$organisationId = $scope->organisationId();
+		if ($organisationId === null || $organisationId !== $id) {
 			return null;
 		}
 
-		return $this->getOrganization(
-			organisationId: $organisationId,
-			organizationRegister: $organizationRegister,
-			organizationSchema: $organizationSchema
-		);
-
+		return $this->getOrganization(organisationId: $organisationId, scope: $scope);
 	}//end organizationById()
 
 	/**
 	 * Fetch a single Organisation object and render it as an OOAPI `organization` resource.
 	 *
 	 * @param string $organisationId The Organisation object id/uuid.
-	 * @param string $organizationRegister The resolved organisation register id.
-	 * @param string $organizationSchema The resolved organisation schema id.
+	 * @param OoapiScope $scope The catalog and the organisation register/schema pair.
 	 *
 	 * @return array<string, mixed>|null The rendered resource, or null when not found.
 	 */
-	private function getOrganization(string $organisationId, string $organizationRegister, string $organizationSchema): ?array {
-		try {
-			$object = $this->getObjectService()->find(id: $organisationId, _extend: []);
-		} catch (\Throwable $e) {
-			$this->logger->debug('[OoapiService] Organisation not found', ['id' => $organisationId, 'error' => $e->getMessage()]);
+	private function getOrganization(string $organisationId, OoapiScope $scope): ?array {
+		$organisation = $this->fetchObject(id: $organisationId, kind: 'Organisation');
+		if ($organisation === null) {
 			return null;
 		}
 
-		if ($object === null) {
-			return null;
-		}
-
-		$organisation = $this->toArray(item: $object);
-
-		$mapping = $this->resolveSchemaMapping(schemaId: $organizationSchema);
+		$mapping = $this->resolveSchemaMapping(schemaId: $scope->schema);
 		if ($mapping['resource'] === null) {
 			// Unannotated schema — never offered as an OOAPI resource (OOAPI-004).
 			return null;
@@ -284,154 +257,142 @@ class OoapiService {
 	}//end getOrganization()
 
 	/**
+	 * One object by id as an array, or null when OpenRegister has none (a failing lookup is logged).
+	 *
+	 * @param string $id The object id.
+	 * @param string $kind What the object is, for the log line.
+	 *
+	 * @return array<string, mixed>|null
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md
+	 */
+	private function fetchObject(string $id, string $kind): ?array {
+		try {
+			$object = $this->getObjectService()->find(id: $id, _extend: []);
+		} catch (\Throwable $e) {
+			$this->logger->debug('[OoapiService] ' . $kind . ' not found', ['id' => $id, 'error' => $e->getMessage()]);
+			return null;
+		}
+
+		if ($object === null) {
+			return null;
+		}
+
+		return $this->toArray(item: $object);
+	}//end fetchObject()
+
+	/**
 	 * Search a paginated OOAPI resource collection scoped to the catalog
 	 * (`catalog` field, D6 addendum — the shared-register equivalent of
 	 * DCAT's `catalog.registers`/`catalog.schemas` scoping) and, optionally,
-	 * an extra equality filter (e.g. `courseId` for the offerings-under-course
-	 * view, OOAPI-006).
+	 * the page's extra equality filter (e.g. `courseId` for the
+	 * offerings-under-course view, OOAPI-006).
 	 *
-	 * @param string $catalogId The catalog's own id/uuid.
-	 * @param string $register The resolved register id.
-	 * @param string $schema The resolved schema id.
+	 * @param OoapiScope $scope The catalog and the register/schema pair.
+	 * @param OoapiPage $page The page asked for (size capped at MAX_PAGE_SIZE).
 	 * @param string $idField The OOAPI resource id field name.
-	 * @param int $page The 1-based page number.
-	 * @param int $pageSize The requested page size (capped at MAX_PAGE_SIZE).
-	 * @param array<string, mixed> $extraQuery Additional equality filters (e.g. `['courseId' => '...']`).
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated OOAPI collection.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
 	 */
-	private function searchCollection(
-		string $catalogId,
-		string $register,
-		string $schema,
-		string $idField,
-		int $page,
-		int $pageSize,
-		array $extraQuery = [],
-	): array {
-		$page = max(1, $page);
-		$pageSize = max(1, min($pageSize, self::MAX_PAGE_SIZE));
-
-		$mapping = $this->resolveSchemaMapping(schemaId: $schema);
+	private function searchCollection(OoapiScope $scope, OoapiPage $page, string $idField): array {
+		$page = new OoapiPage(number: max(1, $page->number), size: max(1, min($page->size, self::MAX_PAGE_SIZE)), filter: $page->filter);
+		$mapping = $this->resolveSchemaMapping(schemaId: $scope->schema);
 		if ($mapping['resource'] === null) {
 			// Unannotated schema — never offered as an OOAPI resource (OOAPI-004).
-			return ['items' => [], 'pageNumber' => $page, 'pageSize' => $pageSize, 'hasNext' => false];
+			return ['items' => [], 'pageNumber' => $page->number, 'pageSize' => $page->size, 'hasNext' => false];
 		}
 
-		$query = array_merge(
-			$extraQuery,
-			[
-				'@self' => ['register' => $register, 'schema' => $schema],
-				'catalog' => $catalogId,
-				'_limit' => $pageSize,
-				'_page' => $page,
-				'_order' => ['@self.created' => 'asc'],
-			]
-		);
-
-		$result = $this->getObjectService()->searchObjectsPaginated(
-			query: $query,
-			_rbac: true,
-			_multitenancy: false,
-			deleted: false
-		);
+		// The same organisation scope as the single read (fetchObject), so a listed
+		// resource can always be read and nothing is listed that a read would refuse.
+		$query = $this->collectionQuery(scope: $scope, page: $page);
+		$result = $this->getObjectService()->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: true, deleted: false);
 
 		$items = [];
 		foreach (($result['results'] ?? []) as $object) {
 			$items[] = $this->mappingService->buildResource(object: $this->toArray(item: $object), mapping: $mapping['mapping'], idField: $idField);
 		}
 
-		return [
-			'items' => $items,
-			'pageNumber' => $page,
-			'pageSize' => $pageSize,
-			'hasNext' => (($result['next'] ?? null) !== null),
-		];
-
+		return ['items' => $items, 'pageNumber' => $page->number, 'pageSize' => $page->size, 'hasNext' => (($result['next'] ?? null) !== null)];
 	}//end searchCollection()
+
+	/**
+	 * The OpenRegister query for one page of a catalog-scoped collection: the
+	 * page's extra filter, the register/schema pair, the catalog, and oldest first.
+	 *
+	 * @param OoapiScope $scope The catalog and the register/schema pair.
+	 * @param OoapiPage $page The clamped page.
+	 *
+	 * @return array<string, mixed> The query.
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-ooapi-5-0-pagination-ooapi-007
+	 */
+	private function collectionQuery(OoapiScope $scope, OoapiPage $page): array {
+		return array_merge(
+			$page->filter,
+			[
+				'@self' => ['register' => $scope->register, 'schema' => $scope->schema],
+				'catalog' => $scope->catalogId(),
+				'_limit' => $page->size,
+				'_page' => $page->number,
+				'_order' => ['@self.created' => 'asc'],
+			]
+		);
+
+	}//end collectionQuery()
 
 	/**
 	 * List the materialized `course` resources scoped to a catalog (OOAPI-001).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $register The resolved `ooapi_courses` register id.
-	 * @param string $schema The resolved `ooapi_courses` schema id.
-	 * @param int $page The 1-based page number.
-	 * @param int $pageSize The requested page size.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_courses` register/schema pair.
+	 * @param OoapiPage $page The page asked for.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated course collection.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
-	public function listCourses(array $catalog, string $register, string $schema, int $page, int $pageSize): array {
-		return $this->searchCollection(
-			catalogId: (string)($catalog['id'] ?? ''),
-			register: $register,
-			schema: $schema,
-			idField: 'courseId',
-			page: $page,
-			pageSize: $pageSize
-		);
-
+	public function listCourses(OoapiScope $scope, OoapiPage $page): array {
+		return $this->searchCollection(scope: $scope, page: $page, idField: 'courseId');
 	}//end listCourses()
 
 	/**
 	 * List the materialized `program` resources scoped to a catalog (OOAPI-001).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $register The resolved `ooapi_programs` register id.
-	 * @param string $schema The resolved `ooapi_programs` schema id.
-	 * @param int $page The 1-based page number.
-	 * @param int $pageSize The requested page size.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_programs` register/schema pair.
+	 * @param OoapiPage $page The page asked for.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated program collection.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-per-catalog-ooapi-5-0-resource-endpoints-ooapi-001
 	 */
-	public function listPrograms(array $catalog, string $register, string $schema, int $page, int $pageSize): array {
-		return $this->searchCollection(
-			catalogId: (string)($catalog['id'] ?? ''),
-			register: $register,
-			schema: $schema,
-			idField: 'programId',
-			page: $page,
-			pageSize: $pageSize
-		);
-
+	public function listPrograms(OoapiScope $scope, OoapiPage $page): array {
+		return $this->searchCollection(scope: $scope, page: $page, idField: 'programId');
 	}//end listPrograms()
 
 	/**
 	 * List the materialized `offering` resources scoped to a catalog, optionally
 	 * filtered to a single parent course (OOAPI-006).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $register The resolved `ooapi_offerings` register id.
-	 * @param string $schema The resolved `ooapi_offerings` schema id.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_offerings` register/schema pair.
+	 * @param OoapiPage $page The page asked for.
 	 * @param string|null $courseId Filter to this parent course's offerings, or null for all.
-	 * @param int $page The 1-based page number.
-	 * @param int $pageSize The requested page size.
 	 *
 	 * @return array{items: array<int, array<string, mixed>>, pageNumber: int, pageSize: int, hasNext: bool} The paginated offering collection.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-offerings-nest-under-their-course-ooapi-006
 	 */
-	public function listOfferings(array $catalog, string $register, string $schema, ?string $courseId, int $page, int $pageSize): array {
-		$extraQuery = [];
+	public function listOfferings(OoapiScope $scope, OoapiPage $page, ?string $courseId): array {
+		$filter = [];
 		if ($courseId !== null && $courseId !== '') {
-			$extraQuery['courseId'] = $courseId;
+			$filter['courseId'] = $courseId;
 		}
 
 		return $this->searchCollection(
-			catalogId: (string)($catalog['id'] ?? ''),
-			register: $register,
-			schema: $schema,
-			idField: 'offeringId',
-			page: $page,
-			pageSize: $pageSize,
-			extraQuery: $extraQuery
+			scope: $scope,
+			page: new OoapiPage(number: $page->number, size: $page->size, filter: $filter),
+			idField: 'offeringId'
 		);
 
 	}//end listOfferings()
@@ -441,9 +402,7 @@ class OoapiService {
 	 * by id, scoped to the catalog. Returns null when the object does not exist, is
 	 * not scoped to this catalog, or its schema carries no `x-ooapi` annotation.
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $register The resolved register id.
-	 * @param string $schema The resolved schema id.
+	 * @param OoapiScope $scope The catalog and the resolved register/schema pair.
 	 * @param string $id The requested object id.
 	 * @param string $idField The OOAPI resource id field name.
 	 *
@@ -451,31 +410,13 @@ class OoapiService {
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-course-program-offering-resources-are-materialized-not-rendered-live-from-scholiq-ooapi-003
 	 */
-	public function getResource(array $catalog, string $register, string $schema, string $id, string $idField): ?array {
-		try {
-			$object = $this->getObjectService()->find(id: $id, _extend: []);
-		} catch (\Throwable $e) {
-			$this->logger->debug('[OoapiService] Resource not found', ['id' => $id, 'error' => $e->getMessage()]);
+	public function getResource(OoapiScope $scope, string $id, string $idField): ?array {
+		$data = $this->fetchObject(id: $id, kind: 'Resource');
+		if ($data === null || self::inScope(data: $data, scope: $scope) === false) {
 			return null;
 		}
 
-		if ($object === null) {
-			return null;
-		}
-
-		$data = $this->toArray(item: $object);
-
-		// Scoped to this catalog (D6 addendum) — an archived/foreign-catalog object 404s.
-		if (($data['catalog'] ?? null) !== ($catalog['id'] ?? null)) {
-			return null;
-		}
-
-		$objectSchema = (string)($data['@self']['schema'] ?? '');
-		if ($objectSchema !== (string)$schema) {
-			return null;
-		}
-
-		$mapping = $this->resolveSchemaMapping(schemaId: $schema);
+		$mapping = $this->resolveSchemaMapping(schemaId: $scope->schema);
 		if ($mapping['resource'] === null) {
 			return null;
 		}
@@ -484,40 +425,47 @@ class OoapiService {
 	}//end getResource()
 
 	/**
+	 * Whether an object belongs to the scope: its catalog, its register and its schema.
+	 *
+	 * An archived or foreign-catalog object reads as absent (D6 addendum). A scope
+	 * whose catalog has no id holds nothing, so an object without a catalog is
+	 * never served for it.
+	 *
+	 * @param array<string, mixed> $data The object.
+	 * @param OoapiScope $scope The catalog's OOAPI scope.
+	 *
+	 * @return boolean
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md
+	 */
+	private static function inScope(array $data, OoapiScope $scope): bool {
+		if ($scope->catalogId() === '') {
+			return false;
+		}
+
+		return ($data['catalog'] ?? null) === $scope->catalog['id']
+			&& (string)($data['@self']['register'] ?? '') === $scope->register
+			&& (string)($data['@self']['schema'] ?? '') === $scope->schema;
+	}//end inScope()
+
+	/**
 	 * Validate a catalog's OOAPI feed against a minimal mandatory-property
 	 * checklist. Advisory only — never gates serving (mirrors DCAT-010's
 	 * precedent, OOAPI-010).
 	 *
-	 * @param array<string, mixed> $catalog The catalog object.
-	 * @param string $courseRegister The resolved `ooapi_courses` register id.
-	 * @param string $courseSchema The resolved `ooapi_courses` schema id.
+	 * @param OoapiScope $scope The catalog and the resolved `ooapi_courses` register/schema pair.
 	 *
 	 * @return array<int, array<string, mixed>> One entry per violating course resource.
 	 *
 	 * @spec openspec/specs/ooapi-catalog-publication/spec.md#requirement-admin-configuration-for-ooapi-publication-ooapi-010
 	 */
-	public function validateCatalog(array $catalog, string $courseRegister, string $courseSchema): array {
+	public function validateCatalog(OoapiScope $scope): array {
 		$violations = [];
 		$page = 1;
 		do {
-			$result = $this->listCourses(
-				catalog: $catalog,
-				register: $courseRegister,
-				schema: $courseSchema,
-				page: $page,
-				pageSize: self::MAX_PAGE_SIZE
-			);
+			$result = $this->listCourses(scope: $scope, page: new OoapiPage(number: $page, size: self::MAX_PAGE_SIZE));
 			foreach ($result['items'] as $course) {
-				$missing = [];
-				foreach (['courseId', 'code', 'name'] as $required) {
-					if (isset($course[$required]) === false || $course[$required] === '') {
-						$missing[] = $required;
-					}
-				}
-
-				if (empty($missing) === false) {
-					$violations[] = ['id' => ($course['courseId'] ?? ''), 'missing' => $missing];
-				}
+				$violations = array_merge($violations, self::courseViolations(course: $course));
 			}
 
 			$page++;
@@ -525,6 +473,26 @@ class OoapiService {
 
 		return $violations;
 	}//end validateCatalog()
+
+	/**
+	 * The course's violation when it lacks a required field, as a list of zero or one.
+	 *
+	 * @param array<string, mixed> $course The mapped course.
+	 *
+	 * @return array<int, array{id: mixed, missing: array<int, string>}>
+	 *
+	 * @spec openspec/specs/ooapi-catalog-publication/spec.md
+	 */
+	private static function courseViolations(array $course): array {
+		$missing = array_values(
+			array_filter(['courseId', 'code', 'name'], static fn (string $required): bool => isset($course[$required]) === false || $course[$required] === '')
+		);
+		if ($missing === []) {
+			return [];
+		}
+
+		return [['id' => ($course['courseId'] ?? ''), 'missing' => $missing]];
+	}//end courseViolations()
 
 	/**
 	 * Normalise an OpenRegister entity or array result to an array.

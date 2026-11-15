@@ -18,8 +18,8 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
-require_once __DIR__.'/../Service/Portal/FakePortalObjectStore.php';
-require_once __DIR__.'/../Portal/PortalAssertionVerifierTest.php';
+require_once __DIR__ . '/../Service/Portal/FakePortalObjectStore.php';
+require_once __DIR__ . '/../Portal/PortalAssertionVerifierTest.php';
 
 use OCA\OpenCatalogi\Controller\PortalCollectionController;
 use OCA\OpenCatalogi\Controller\PortalSavedSearchController;
@@ -63,7 +63,7 @@ class PortalCollectionControllerTest extends TestCase {
 	 * A controller for a request with these params and assertion header.
 	 *
 	 * @param array<string, mixed> $params The params.
-	 * @param string|null          $header The X-Portal-Subject header.
+	 * @param string|null $header The X-Portal-Subject header.
 	 *
 	 * @return PortalCollectionController
 	 */
@@ -82,7 +82,7 @@ class PortalCollectionControllerTest extends TestCase {
 	 * A saved-search controller for a request.
 	 *
 	 * @param array<string, mixed> $params The params.
-	 * @param string|null          $header The X-Portal-Subject header.
+	 * @param string|null $header The X-Portal-Subject header.
 	 *
 	 * @return PortalSavedSearchController
 	 */
@@ -100,13 +100,13 @@ class PortalCollectionControllerTest extends TestCase {
 	 * A request with params and the assertion header.
 	 *
 	 * @param array<string, mixed> $params The params.
-	 * @param string|null          $header The X-Portal-Subject header.
+	 * @param string|null $header The X-Portal-Subject header.
 	 *
 	 * @return IRequest
 	 */
 	private function request(array $params, ?string $header): IRequest {
 		$request = $this->createMock(IRequest::class);
-		$request->method('getParam')->willReturnCallback(static fn (string $name, $default=null) => ($params[$name] ?? $default));
+		$request->method('getParam')->willReturnCallback(static fn (string $name, $default = null) => ($params[$name] ?? $default));
 		$request->method('getHeader')->willReturnCallback(static fn (string $name): string => ($name === 'X-Portal-Subject' ? (string)$header : ''));
 
 		return $request;
@@ -148,8 +148,8 @@ class PortalCollectionControllerTest extends TestCase {
 		$owner = PortalAssertionVerifierTest::mint(['sub' => 'subject-1']);
 		$made = $this->controller(['title' => 'Windpark', 'publication' => self::PUB], $owner)->addItem()->getData();
 		$share = $this->controller(['collection' => $made['id']], $owner)->share()->getData();
-		$this->assertSame('/index.php/apps/portaliq/site?route=/gedeeld-dossier/'.$share['token'], $share['link']);
-		$this->assertSame('/index.php/apps/opencatalogi/api/collections/shared/'.$share['token'], $share['url']);
+		$this->assertSame('/index.php/apps/portaliq/site?route=/gedeeld-dossier/' . $share['token'], $share['link']);
+		$this->assertSame('/index.php/apps/opencatalogi/api/collections/shared/' . $share['token'], $share['url']);
 
 		$removed = $this->controller(['collection' => $made['id'], 'itemId' => $made['items'][0]['id']], PortalAssertionVerifierTest::mint(['sub' => 'subject-2']))->removeItem();
 		$this->assertSame(404, $removed->getStatus());

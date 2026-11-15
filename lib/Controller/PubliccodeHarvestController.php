@@ -28,7 +28,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\PubliccodeHarvestService;
+use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,14 +48,14 @@ class PubliccodeHarvestController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param PubliccodeHarvestService $harvest The harvest's status and actions.
+	 * @param PubliccodeHarvestServiceInterface $harvest The harvest's status and actions.
 	 *
 	 * @spec openspec/changes/publiccode-github-harvest/specs/publiccode-github-harvest/spec.md#requirement-req-pgh-006-the-administrator-sets-the-harvest-up-switches-it-on-and-runs-it-from-opencatalogi
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PubliccodeHarvestService $harvest,
+		private readonly PubliccodeHarvestServiceInterface $harvest,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

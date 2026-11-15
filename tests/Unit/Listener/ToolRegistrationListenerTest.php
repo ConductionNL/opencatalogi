@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Listener;
@@ -7,7 +12,7 @@ namespace Unit\Listener;
 use OCA\OpenCatalogi\Listener\ToolRegistrationListener;
 use OCA\OpenCatalogi\Tool\CMSTool;
 use OCA\OpenRegister\Event\ToolRegistrationEvent;
-use OCA\OpenRegister\Service\ToolRegistry;
+use OCA\OpenRegister\Mcp\Service\ToolRegistry;
 use OCP\EventDispatcher\Event;
 use PHPUnit\Framework\TestCase;
 

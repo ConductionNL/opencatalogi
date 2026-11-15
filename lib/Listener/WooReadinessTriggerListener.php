@@ -48,8 +48,8 @@ class WooReadinessTriggerListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig $config  The catalogue register and schema.
-	 * @param IJobList   $jobList The background job list.
+	 * @param IAppConfig $config The catalogue register and schema.
+	 * @param IJobList $jobList The background job list.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -68,32 +68,54 @@ class WooReadinessTriggerListener implements IEventListener {
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-readiness-verdict-stays-current-without-anyone-running-it-req-wih-004
 	 */
 	public function handle(Event $event): void {
-		$new = null;
-		$old = null;
-		if ($event instanceof ObjectUpdatedEvent) {
-			$new = $event->getNewObject();
-			$old = $event->getOldObject();
-		}
-
-		if ($event instanceof ObjectCreatedEvent) {
-			$new = $event->getObject();
-		}
-
+		[$new, $old] = $this->objectsOf(event: $event);
 		if ($new === null) {
 			return;
 		}
 
-		if ($this->isCatalogue(object: $new) === false || $this->publishesWoo(object: $new) === false) {
-			return;
-		}
-
-		if ($old !== null && $this->publishesWoo(object: $old) === true) {
+		if ($this->switchesWooOn(new: $new, old: $old) === false) {
 			return;
 		}
 
 		$this->jobList->add(WooReadinessCheckNow::class);
 
 	}//end handle()
+
+	/**
+	 * The object an event carries now, and before an update.
+	 *
+	 * @param Event $event The OpenRegister object event.
+	 *
+	 * @return array{0: object|null, 1: object|null} The new object and the old one, null when absent.
+	 */
+	private function objectsOf(Event $event): array {
+		if ($event instanceof ObjectUpdatedEvent) {
+			return [$event->getNewObject(), $event->getOldObject()];
+		}
+
+		if ($event instanceof ObjectCreatedEvent) {
+			return [$event->getObject(), null];
+		}
+
+		return [null, null];
+	}//end objectsOf()
+
+	/**
+	 * Whether the object is a catalogue that publishes a Woo sitemap and did
+	 * not before.
+	 *
+	 * @param object $new The object now.
+	 * @param object|null $old The object before an update, null for a new one.
+	 *
+	 * @return boolean True when the catalogue was switched on for Woo.
+	 */
+	private function switchesWooOn(object $new, ?object $old): bool {
+		if ($this->isCatalogue(object: $new) === false || $this->publishesWoo(object: $new) === false) {
+			return false;
+		}
+
+		return $old === null || $this->publishesWoo(object: $old) === false;
+	}//end switchesWooOn()
 
 	/**
 	 * Whether the object is a catalogue of the configured register and schema.
@@ -110,7 +132,6 @@ class WooReadinessTriggerListener implements IEventListener {
 		}
 
 		return (string)$object->getSchema() === $schema && (string)$object->getRegister() === $register;
-
 	}//end isCatalogue()
 
 	/**
@@ -122,6 +143,5 @@ class WooReadinessTriggerListener implements IEventListener {
 	 */
 	private function publishesWoo(object $object): bool {
 		return (($object->getObject()['hasWooSitemap'] ?? false) === true);
-
 	}//end publishesWoo()
 }//end class

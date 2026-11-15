@@ -20,6 +20,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ListingsController;
 use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -120,8 +121,7 @@ class ListingsControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->directoryService,
 			$this->l10n,
 			$this->userSession
@@ -935,8 +935,7 @@ class ListingsControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->directoryService,
 			$this->l10n,
 			$anonymousSession

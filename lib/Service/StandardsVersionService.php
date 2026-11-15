@@ -31,14 +31,16 @@
 
 namespace OCA\OpenCatalogi\Service;
 
+use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCP\Http\Client\IClientService;
+use OCP\Http\Client\IResponse;
 
 /**
  * Declares the emitted standard versions and compares them with the published ones.
  *
  * @spec openspec/specs/woo-compliance/spec.md
  */
-class StandardsVersionService {
+class StandardsVersionService implements StandardsVersionServiceInterface {
 
 	/**
 	 * The status returned when the declared version matches the published one.
@@ -211,7 +213,6 @@ class StandardsVersionService {
 		}
 
 		return $matches[1];
-
 	}//end parseDiwooVersion()
 
 	/**
@@ -234,19 +235,14 @@ class StandardsVersionService {
 			return null;
 		}
 
-		$newestDate = '';
-		$version = null;
+		$newest = ['', ''];
 		foreach ($matches as $match) {
-			if ($match[2] <= $newestDate) {
-				continue;
+			if ($match[2] > $newest[1]) {
+				$newest = [$match[1], $match[2]];
 			}
-
-			$newestDate = $match[2];
-			$version = mb_substr($match[1], 0, 1) . '.' . mb_substr($match[1], 1);
 		}
 
-		return $version;
-
+		return mb_substr($newest[0], 0, 1) . '.' . mb_substr($newest[0], 1);
 	}//end parseDcatApNlVersion()
 
 	/**
@@ -279,7 +275,6 @@ class StandardsVersionService {
 		$comparison['profile'] = self::DCAT_AP_NL_PROFILE;
 
 		return $comparison;
-
 	}//end dcatApNlVersion()
 
 	/**
@@ -296,7 +291,6 @@ class StandardsVersionService {
 		}
 
 		return self::parseDiwooVersion(html: $body);
-
 	}//end publishedDiwooVersion()
 
 	/**
@@ -313,7 +307,6 @@ class StandardsVersionService {
 		}
 
 		return self::parseDcatApNlVersion(html: $body);
-
 	}//end publishedDcatApNlVersion()
 
 	/**
@@ -366,7 +359,29 @@ class StandardsVersionService {
 		}
 
 		$this->fetched[$url] = null;
+		$response = $this->request(url: $url);
+		if ($response !== null && $response->getStatusCode() === 200) {
+			$body = $response->getBody();
+			if (is_resource($body) === true) {
+				$body = stream_get_contents($body);
+			}
 
+			$this->fetched[$url] = (string)$body;
+		}
+
+		return $this->fetched[$url];
+	}//end fetch()
+
+	/**
+	 * GET a URL through the SSRF guard with the timeout and no redirects.
+	 *
+	 * @param string $url The URL.
+	 *
+	 * @return IResponse|null The response, or null when the guard refused it or the request failed.
+	 *
+	 * @spec exclude Outbound-fetch plumbing; the SSRF guard it delegates to carries the behavior.
+	 */
+	private function request(string $url): ?IResponse {
 		try {
 			$this->directoryService->validateOutboundUrl($url);
 		} catch (\InvalidArgumentException $e) {
@@ -374,30 +389,13 @@ class StandardsVersionService {
 		}
 
 		try {
-			$response = $this->clientService->newClient()->get(
+			return $this->clientService->newClient()->get(
 				$url,
-				[
-					'timeout' => self::TIMEOUT_SECONDS,
-					'http_errors' => false,
-					'allow_redirects' => false,
-				]
+				['timeout' => self::TIMEOUT_SECONDS, 'http_errors' => false, 'allow_redirects' => false]
 			);
 		} catch (\Throwable $e) {
 			return null;
 		}
 
-		if ($response->getStatusCode() !== 200) {
-			return null;
-		}
-
-		$body = $response->getBody();
-		if (is_resource($body) === true) {
-			$body = stream_get_contents($body);
-		}
-
-		$this->fetched[$url] = (string)$body;
-
-		return $this->fetched[$url];
-
-	}//end fetch()
+	}//end request()
 }//end class

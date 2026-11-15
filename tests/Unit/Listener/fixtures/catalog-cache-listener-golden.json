@@ -1,0 +1,320 @@
+{
+    "other event": [],
+    "created catalog": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        },
+        {
+            "object": "getRegister"
+        },
+        {
+            "object": "jsonSerialize"
+        },
+        {
+            "warmupCatalogCache": [
+                "cat-1"
+            ]
+        },
+        {
+            "object": "getUuid"
+        },
+        {
+            "info": "OpenCatalogi: Catalog cache warmed up after creation",
+            "context": {
+                "catalogId": "uuid-1",
+                "slug": "cat-1"
+            }
+        }
+    ],
+    "updated catalog": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        },
+        {
+            "object": "getRegister"
+        },
+        {
+            "object": "jsonSerialize"
+        },
+        {
+            "warmupCatalogCache": [
+                "cat-1"
+            ]
+        },
+        {
+            "object": "getUuid"
+        },
+        {
+            "info": "OpenCatalogi: Catalog cache warmed up after update",
+            "context": {
+                "catalogId": "uuid-1",
+                "slug": "cat-1"
+            }
+        }
+    ],
+    "deleted catalog": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        },
+        {
+            "object": "getRegister"
+        },
+        {
+            "object": "jsonSerialize"
+        },
+        {
+            "invalidateCatalogCache": [
+                "cat-1"
+            ]
+        },
+        {
+            "object": "getUuid"
+        },
+        {
+            "info": "OpenCatalogi: Catalog cache invalidated after deletion",
+            "context": {
+                "catalogId": "uuid-1",
+                "slug": "cat-1"
+            }
+        }
+    ],
+    "other schema": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        }
+    ],
+    "other register": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        },
+        {
+            "object": "getRegister"
+        }
+    ],
+    "null schema": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        }
+    ],
+    "no slug on create": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        },
+        {
+            "object": "getRegister"
+        },
+        {
+            "object": "jsonSerialize"
+        }
+    ],
+    "no slug on delete": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        },
+        {
+            "object": "getRegister"
+        },
+        {
+            "object": "jsonSerialize"
+        }
+    ],
+    "config throws": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "error": "OpenCatalogi: Exception in catalog cache event listener: config broken",
+            "context": {
+                "exception": "RuntimeException: config broken"
+            }
+        }
+    ],
+    "warmup throws": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        },
+        {
+            "object": "getRegister"
+        },
+        {
+            "object": "jsonSerialize"
+        },
+        {
+            "warmupCatalogCache": [
+                "cat-1"
+            ]
+        },
+        {
+            "error": "OpenCatalogi: Exception in catalog cache event listener: warmup broken",
+            "context": {
+                "exception": "RuntimeException: warmup broken"
+            }
+        }
+    ],
+    "invalidate throws": [
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_schema",
+                ""
+            ]
+        },
+        {
+            "config": [
+                "opencatalogi",
+                "catalog_register",
+                ""
+            ]
+        },
+        {
+            "object": "getSchema"
+        },
+        {
+            "object": "getRegister"
+        },
+        {
+            "object": "jsonSerialize"
+        },
+        {
+            "invalidateCatalogCache": [
+                "cat-1"
+            ]
+        },
+        {
+            "error": "OpenCatalogi: Exception in catalog cache event listener: invalidate broken",
+            "context": {
+                "exception": "RuntimeException: invalidate broken"
+            }
+        }
+    ]
+}

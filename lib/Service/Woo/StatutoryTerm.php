@@ -31,6 +31,9 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Woo;
 
 use DateTimeInterface;
+use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
+use OCA\OpenCatalogi\Service\Term\TermEngineCall;
+use OCA\OpenRegister\Service\Flow\Timer\FlowTimerService;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -40,7 +43,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-statutory-term-is-armed-when-a-request-is-received-req-wri-002
  */
-class StatutoryTerm {
+class StatutoryTerm implements StatutoryTermInterface {
 
 	/**
 	 * The Woo decision term: four weeks from the day the request was received.
@@ -169,25 +172,58 @@ class StatutoryTerm {
 			'title' => 'Woo decision term ' . $reference,
 			'purpose' => 'expiry',
 			'legalEffect' => 'wettelijk',
-			'sla' => [
-				'value' => self::TERM_DAYS,
-				'unit' => self::TERM_UNIT,
-				// A term that ends on a Saturday, a Sunday or a public holiday
-				// runs to the next working day. That is the Algemene
-				// termijnenwet, and the engine is what knows which day that is.
-				'rollToWorkingDay' => 'next',
-			],
+			'sla' => $this->termLength(),
 			'extensionMax' => self::EXTENSION_MAX,
 			'anchorEvent' => self::ANCHOR_EVENT,
 			'anchorEventAt' => $receivedAt,
-			'metadata' => [
-				'kind' => self::TERM_KIND,
-				'basis' => self::BASIS_TERM,
-				'reference' => $reference,
-			],
+			'metadata' => $this->termMetadata(reference: $reference),
 		];
 
 	}//end termConfig()
+
+	/**
+	 * How long the Woo term runs, as the engine's SLA.
+	 *
+	 * @return array<string, mixed> The SLA.
+	 */
+	private function termLength(): array {
+		return [
+			'value' => self::TERM_DAYS,
+			'unit' => self::TERM_UNIT,
+			// A term that ends on a Saturday, a Sunday or a public holiday
+			// runs to the next working day. That is the Algemene
+			// termijnenwet, and the engine is what knows which day that is.
+			'rollToWorkingDay' => 'next',
+		];
+
+	}//end termLength()
+
+	/**
+	 * What this app records on the term, so it can be found and explained.
+	 *
+	 * @param string $reference The reference the requester quotes.
+	 *
+	 * @return array<string, string> The metadata.
+	 */
+	private function termMetadata(string $reference): array {
+		return [
+			'kind' => self::TERM_KIND,
+			'basis' => self::BASIS_TERM,
+			'reference' => $reference,
+		];
+
+	}//end termMetadata()
+
+	/**
+	 * The builder of the engine's operation objects.
+	 *
+	 * @return TermEngineCall The builder.
+	 *
+	 * @spec exclude internal helper — builds the engine's value objects.
+	 */
+	private function calls(): TermEngineCall {
+		return new TermEngineCall();
+	}//end calls()
 
 	/**
 	 * Resolve the consumed term engine.
@@ -200,32 +236,54 @@ class StatutoryTerm {
 	 */
 	private function engine(): object {
 		if ($this->timerService === null) {
-			// ADR-083: ask the app manager first, so an instance without
-			// OpenRegister refuses by name instead of failing in the container.
-			if ($this->appManager->isInstalled('openregister') === false) {
-				throw new TermEngineUnavailableException(
-					message: 'OpenRegister is not installed, so no Woo term can be armed or read. The date is not '
-						. 'computed here instead: a second implementation of the Algemene termijnenwet behind a '
-						. 'legal deadline is worse than an honest refusal.'
-				);
-			}
-
-			try {
-				$this->timerService = $this->container->get('OCA\OpenRegister\Service\Flow\Timer\FlowTimerService');
-			} catch (\Throwable $e) {
-				throw new TermEngineUnavailableException(
-					message: 'The statutory term engine is unavailable, so no Woo term can be armed or read. '
-						. 'The date is not computed here instead: a second implementation of the Algemene '
-						. 'termijnenwet behind a legal deadline is worse than an honest refusal.',
-					code: 0,
-					previous: $e
-				);
-			}
+			$this->assertOpenRegisterInstalled();
+			$this->timerService = $this->engineFromContainer();
 		}
 
 		return $this->timerService;
-
 	}//end engine()
+
+	/**
+	 * Refuse by name when OpenRegister, which holds the term engine, is absent.
+	 *
+	 * @return void
+	 *
+	 * @throws TermEngineUnavailableException When OpenRegister is not installed.
+	 */
+	private function assertOpenRegisterInstalled(): void {
+		// ADR-083: ask the app manager first, so an instance without
+		// OpenRegister refuses by name instead of failing in the container.
+		if ($this->appManager->isInstalled('openregister') === false) {
+			throw new TermEngineUnavailableException(
+				message: 'OpenRegister is not installed, so no Woo term can be armed or read. The date is not '
+					. 'computed here instead: a second implementation of the Algemene termijnenwet behind a '
+					. 'legal deadline is worse than an honest refusal.'
+			);
+		}
+
+	}//end assertOpenRegisterInstalled()
+
+	/**
+	 * The term engine, from the container.
+	 *
+	 * @return object The engine.
+	 *
+	 * @throws TermEngineUnavailableException When the container cannot give it.
+	 */
+	private function engineFromContainer(): object {
+		try {
+			return $this->container->get(FlowTimerService::class);
+		} catch (\Throwable $e) {
+			throw new TermEngineUnavailableException(
+				message: 'The statutory term engine is unavailable, so no Woo term can be armed or read. '
+					. 'The date is not computed here instead: a second implementation of the Algemene '
+					. 'termijnenwet behind a legal deadline is worse than an honest refusal.',
+				code: 0,
+				previous: $e
+			);
+		}
+
+	}//end engineFromContainer()
 
 	/**
 	 * Resolve the consumed term store, which reads a term back by its id or by
@@ -255,7 +313,6 @@ class StatutoryTerm {
 		}
 
 		return $this->timerMapper;
-
 	}//end store()
 
 	/**
@@ -278,15 +335,14 @@ class StatutoryTerm {
 
 		try {
 			$timer = $engine->arm(
-				$this->termConfig(requestUuid: $requestUuid, reference: $reference, receivedAt: $receivedAt),
-				$actor
+				config: $this->termConfig(requestUuid: $requestUuid, reference: $reference, receivedAt: $receivedAt),
+				actor: $actor
 			);
 		} catch (\Throwable $e) {
 			throw $this->refusal(operation: 'arm', error: $e);
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end arm()
 
 	/**
@@ -312,19 +368,33 @@ class StatutoryTerm {
 
 		try {
 			$timer = $engine->extend(
-				$timerUuid,
-				self::EXTENSION_DAYS,
-				self::TERM_UNIT,
-				$rationale,
-				$actor
+				request: $this->extensionRequest(timerUuid: $timerUuid, rationale: $rationale),
+				act: $this->calls()->act(actor: $actor)
 			);
 		} catch (\Throwable $e) {
 			throw $this->refusal(operation: 'extend', error: $e);
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end extendOnce()
+
+	/**
+	 * The engine's request to extend a term by the two weeks the law allows.
+	 *
+	 * @param string $timerUuid The term.
+	 * @param string $rationale Why the term is extended.
+	 *
+	 * @return object The extension request.
+	 */
+	private function extensionRequest(string $timerUuid, string $rationale): object {
+		return $this->calls()->extension(
+			timerUuid: $timerUuid,
+			amount: self::EXTENSION_DAYS,
+			unit: self::TERM_UNIT,
+			rationale: $rationale
+		);
+
+	}//end extensionRequest()
 
 	/**
 	 * Suspend the term while clarification is awaited.
@@ -345,18 +415,14 @@ class StatutoryTerm {
 
 		try {
 			$timer = $engine->suspend(
-				$timerUuid,
-				$reason,
-				null,
-				$actor,
-				self::BASIS_CLARIFICATION
+				suspension: $this->calls()->suspension(timerUuid: $timerUuid, reason: $reason, basis: self::BASIS_CLARIFICATION),
+				act: $this->calls()->act(actor: $actor)
 			);
 		} catch (\Throwable $e) {
 			throw $this->refusal(operation: 'pause', error: $e);
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end pause()
 
 	/**
@@ -377,13 +443,15 @@ class StatutoryTerm {
 		$engine = $this->engine();
 
 		try {
-			$timer = $engine->resume($timerUuid, $reason, $actor);
+			$timer = $engine->resume(
+				decision: $this->calls()->decision(timerUuid: $timerUuid, reason: $reason),
+				act: $this->calls()->act(actor: $actor)
+			);
 		} catch (\Throwable $e) {
 			throw $this->refusal(operation: 'resume', error: $e);
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end resume()
 
 	/**
@@ -410,7 +478,6 @@ class StatutoryTerm {
 		}
 
 		return $this->report(timer: $timer, engine: $engine);
-
 	}//end describe()
 
 	/**
@@ -443,7 +510,6 @@ class StatutoryTerm {
 		}
 
 		return $rows;
-
 	}//end forRequest()
 
 	/**
@@ -466,7 +532,6 @@ class StatutoryTerm {
 		);
 
 		return new TermRefusedException(message: $error->getMessage(), code: 0, previous: $error);
-
 	}//end refusal()
 
 	/**
@@ -481,11 +546,51 @@ class StatutoryTerm {
 	 * @spec exclude internal helper — shapes the engine's term for the API.
 	 */
 	private function report(object $timer, object $engine): array {
+		$described = $this->derivationOf(timer: $timer, engine: $engine);
+		$extensions = $this->extensionsOf(timer: $timer);
+
+		return array_merge(
+			$described,
+			[
+				'timer' => $this->uuidOf(timer: $timer),
+				'dueAt' => ($described['fireAt'] ?? null),
+				'basis' => self::BASIS_TERM,
+				'extensionCount' => $extensions['count'],
+				'extensionMax' => $extensions['max'],
+				'extendable' => ($extensions['count'] < $extensions['max']),
+			]
+		);
+
+	}//end report()
+
+	/**
+	 * The engine's derivation of a term, or nothing when it answers with
+	 * something other than an array.
+	 *
+	 * @param object $timer The engine's term.
+	 * @param object $engine The engine.
+	 *
+	 * @return array<string, mixed> The derivation.
+	 */
+	private function derivationOf(object $timer, object $engine): array {
 		$described = $engine->describe($timer);
 		if (is_array($described) === false) {
-			$described = [];
+			return [];
 		}
 
+		return $described;
+
+	}//end derivationOf()
+
+	/**
+	 * How often a term was extended and how often it may be: zero and this
+	 * app's bound when the term does not say.
+	 *
+	 * @param object $timer The engine's term.
+	 *
+	 * @return array{count: int, max: int} The extension count and its bound.
+	 */
+	private function extensionsOf(object $timer): array {
 		$extensionCount = 0;
 		if (method_exists($timer, 'getExtensionCount') === true) {
 			$extensionCount = (int)$timer->getExtensionCount();
@@ -496,22 +601,23 @@ class StatutoryTerm {
 			$extensionMax = (int)$timer->getExtensionMax();
 		}
 
-		$uuid = '';
+		return ['count' => $extensionCount, 'max' => $extensionMax];
+
+	}//end extensionsOf()
+
+	/**
+	 * The term's uuid, or an empty string when it carries none.
+	 *
+	 * @param object $timer The engine's term.
+	 *
+	 * @return string The uuid.
+	 */
+	private function uuidOf(object $timer): string {
 		if (method_exists($timer, 'getUuid') === true) {
-			$uuid = (string)$timer->getUuid();
+			return (string)$timer->getUuid();
 		}
 
-		return array_merge(
-			$described,
-			[
-				'timer' => $uuid,
-				'dueAt' => ($described['fireAt'] ?? null),
-				'basis' => self::BASIS_TERM,
-				'extensionCount' => $extensionCount,
-				'extensionMax' => $extensionMax,
-				'extendable' => ($extensionCount < $extensionMax),
-			]
-		);
+		return '';
 
-	}//end report()
+	}//end uuidOf()
 }//end class

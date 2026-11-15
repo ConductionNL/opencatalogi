@@ -29,20 +29,39 @@ export async function loadInstanceBanners(http, generateUrl) {
 	}
 
 	const banners = Array.isArray(data?.banners) ? data.banners : []
-	return banners
-		.filter(
-			(banner) =>
-				banner
-				&& banner.id
-				&& typeof banner.body === 'string'
-				&& banner.body.trim() !== '',
-		)
-		.map((banner) => ({
-			id: String(banner.id),
-			body: banner.body,
-			severity: banner.severity || 'info',
-			dismissable: banner.dismissable !== false,
-		}))
+	return banners.filter(isShowable).map(toBanner)
+}
+
+/**
+ * Whether a banner from the server has an id and a body to show.
+ *
+ * @param {object|null} banner The banner as the server sent it.
+ * @return {boolean} True when the banner can be shown.
+ * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ */
+function isShowable(banner) {
+	return Boolean(
+		banner
+		&& banner.id
+		&& typeof banner.body === 'string'
+		&& banner.body.trim() !== '',
+	)
+}
+
+/**
+ * The banner as the app shows it, with its defaults filled in.
+ *
+ * @param {object} banner A showable banner as the server sent it.
+ * @return {{id: string, body: string, severity: string, dismissable: boolean}} The banner.
+ * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-an-administrator-shows-a-dated-banner-to-every-user-req-pcs-103
+ */
+function toBanner(banner) {
+	return {
+		id: String(banner.id),
+		body: banner.body,
+		severity: banner.severity || 'info',
+		dismissable: banner.dismissable !== false,
+	}
 }
 
 /**

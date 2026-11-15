@@ -209,34 +209,38 @@ async function printLibraryWarnings(manifest) {
 }
 
 // CatalogPublicationsIndex hands `config.publicationPairConfig` to CnIndexPage
-// on the publication pair, merged over the rest of the config. The schema leaves
-// that key open, so each such page is checked again as the type:"index" page
-// CnIndexPage receives there. Returns that manifest and the checked page indexes.
-function withPairConfigAsIndexPages(manifest) {
+// on the publication pair and `config.otherPairConfig` on any other pair, merged
+// over the rest of the config. The schema leaves those keys open, so each such
+// page is checked again as the type:"index" page CnIndexPage receives there.
+const PAIR_CONFIG_KEYS = ['publicationPairConfig', 'otherPairConfig']
+
+// Returns the manifest with `pairKey` merged in and the checked page indexes.
+function withPairConfigAsIndexPages(manifest, pairKey) {
 	const checked = []
 	const pages = (manifest.pages || []).map((page, i) => {
-		const pairConfig = page?.config?.publicationPairConfig
+		const pairConfig = page?.config?.[pairKey]
 		if (!pairConfig || typeof pairConfig !== 'object') return page
 		checked.push(i)
 		const { component, ...rest } = page
-		const { publicationPairConfig, ...config } = page.config
+		const config = { ...page.config }
+		for (const key of PAIR_CONFIG_KEYS) delete config[key]
 		return { ...rest, type: 'index', config: { ...config, ...pairConfig } }
 	})
 	return { manifest: { ...manifest, pages }, checked }
 }
 
 // Keeps the errors on the checked pages and points those on a key that came
-// from publicationPairConfig back at it.
-function pairConfigErrors(manifest, checked, errors) {
+// from the pair config back at it.
+function pairConfigErrors(manifest, checked, errors, pairKey) {
 	const result = []
 	for (const err of errors) {
 		const [, index, key, tail] =
 			/^\/pages\/(\d+)(?:\/config\/([^/]+))?(.*)$/.exec(err.instancePath) || []
 		if (!checked.includes(Number(index))) continue
-		const pairConfig = manifest.pages[index].config.publicationPairConfig
+		const pairConfig = manifest.pages[index].config[pairKey]
 		const instancePath =
 			key in pairConfig
-				? `/pages/${index}/config/publicationPairConfig/${key}${tail}`
+				? `/pages/${index}/config/${pairKey}/${key}${tail}`
 				: err.instancePath
 		result.push({ ...err, instancePath })
 	}
@@ -298,16 +302,22 @@ async function main() {
 	}
 	const validate = ajv.compile(schema)
 	const errors = validate(manifest) ? [] : [...validate.errors]
-	const pair = withPairConfigAsIndexPages(manifest)
-	if (pair.checked.length > 0) {
+	for (const pairKey of PAIR_CONFIG_KEYS) {
+		const pair = withPairConfigAsIndexPages(manifest, pairKey)
+		if (pair.checked.length === 0) continue
 		console.log(
-			`[validate-manifest] publicationPairConfig checked as type:"index" config on pages: ${pair.checked.join(', ')}`,
+			`[validate-manifest] ${pairKey} checked as type:"index" config on pages: ${pair.checked.join(', ')}`,
 		)
 		if (!validate(pair.manifest)) {
 			const seen = new Set(
 				errors.map((err) => `${err.instancePath} ${err.message}`),
 			)
-			const found = pairConfigErrors(manifest, pair.checked, validate.errors)
+			const found = pairConfigErrors(
+				manifest,
+				pair.checked,
+				validate.errors,
+				pairKey,
+			)
 			for (const err of found) {
 				if (!seen.has(`${err.instancePath} ${err.message}`)) errors.push(err)
 			}

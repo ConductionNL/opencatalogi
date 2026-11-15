@@ -1,0 +1,252 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`DeleteCategoryDialog asks before it deletes 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Category" data-can-close="false">
+  <!--v-if-->
+  <!--v-if-->
+  <p>Do you want to delete Wonen? This action cannot be undone.</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="Delete"><span class="material-design-icon-stub"></span> Delete</button></footer>
+</section>"
+`;
+
+exports[`DeleteCategoryDialog deletes, then clears the state and closes after two seconds 1`] = `
+[
+  [
+    "category",
+    "c-1",
+  ],
+]
+`;
+
+exports[`DeleteCategoryDialog deletes, then clears the state and closes after two seconds 2`] = `
+[
+  "deleteCategory",
+  {
+    "error": "kept",
+    "success": true,
+  },
+]
+`;
+
+exports[`DeleteCategoryDialog deletes, then clears the state and closes after two seconds 3`] = `
+[
+  false,
+  {
+    "error": null,
+    "success": null,
+  },
+]
+`;
+
+exports[`DeleteCategoryDialog renders nothing while another dialog is open 1`] = `"<!--v-if-->"`;
+
+exports[`DeleteCategoryDialog shows a success with only a close button 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Category" data-can-close="false">
+  <div>
+    <div class="nc-note-card-stub nc-note-card-stub--success">
+      <p>Category successfully deleted</p>
+    </div>
+    <!--v-if-->
+    <!--v-if-->
+  </div>
+  <!--v-if-->
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`DeleteCategoryDialog shows an error beside the question 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Category" data-can-close="false">
+  <div>
+    <!--v-if-->
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Something went wrong while deleting the category</p>
+    </div>
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Boom</p>
+    </div>
+  </div>
+  <!--v-if-->
+  <p>Do you want to delete Wonen? This action cannot be undone.</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="Delete"><span class="material-design-icon-stub"></span> Delete</button></footer>
+</section>"
+`;
+
+exports[`DeleteCategoryDialog shows that it is deleting 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Category" data-can-close="false">
+  <!--v-if-->
+  <div class="loading-status"><span class="nc-loading-icon-stub"></span><span>Category is being deleted...</span></div>
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`DeleteMultipleCategoriesDialog asks before it deletes 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Categories" data-can-close="false">
+  <!--v-if-->
+  <!--v-if-->
+  <p>Do you want to delete the selected categories? This action cannot be undone.</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="Delete"><span class="material-design-icon-stub"></span> Delete</button></footer>
+</section>"
+`;
+
+exports[`DeleteMultipleCategoriesDialog deletes, then clears the state and closes after two seconds 1`] = `
+[
+  [
+    "category",
+    "category-1",
+  ],
+  [
+    "category",
+    "category-2",
+  ],
+]
+`;
+
+exports[`DeleteMultipleCategoriesDialog deletes, then clears the state and closes after two seconds 2`] = `
+[
+  "deleteMultipleCategories",
+  {
+    "error": "kept",
+    "success": true,
+  },
+]
+`;
+
+exports[`DeleteMultipleCategoriesDialog deletes, then clears the state and closes after two seconds 3`] = `
+[
+  false,
+  {
+    "error": null,
+    "success": null,
+  },
+]
+`;
+
+exports[`DeleteMultipleCategoriesDialog renders nothing while another dialog is open 1`] = `"<!--v-if-->"`;
+
+exports[`DeleteMultipleCategoriesDialog shows a success with only a close button 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Categories" data-can-close="false">
+  <div>
+    <div class="nc-note-card-stub nc-note-card-stub--success">
+      <p>Categories successfully deleted</p>
+    </div>
+    <!--v-if-->
+    <!--v-if-->
+  </div>
+  <!--v-if-->
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`DeleteMultipleCategoriesDialog shows an error beside the question 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Categories" data-can-close="false">
+  <div>
+    <!--v-if-->
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Something went wrong while deleting the categories</p>
+    </div>
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Boom</p>
+    </div>
+  </div>
+  <!--v-if-->
+  <p>Do you want to delete the selected categories? This action cannot be undone.</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="Delete"><span class="material-design-icon-stub"></span> Delete</button></footer>
+</section>"
+`;
+
+exports[`DeleteMultipleCategoriesDialog shows that it is deleting 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Categories" data-can-close="false">
+  <!--v-if-->
+  <div class="loading-status"><span class="nc-loading-icon-stub"></span><span>Categories are being deleted...</span></div>
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`DeleteMultipleThemesDialog asks before it deletes 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Themes" data-can-close="false">
+  <!--v-if-->
+  <!--v-if-->
+  <p>Do you want to delete the selected themes? This action cannot be undone.</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="Delete"><span class="material-design-icon-stub"></span> Delete</button></footer>
+</section>"
+`;
+
+exports[`DeleteMultipleThemesDialog deletes, then clears the state and closes after two seconds 1`] = `
+[
+  [
+    "theme",
+    "theme-1",
+  ],
+  [
+    "theme",
+    "theme-2",
+  ],
+]
+`;
+
+exports[`DeleteMultipleThemesDialog deletes, then clears the state and closes after two seconds 2`] = `
+[
+  "deleteMultipleThemes",
+  {
+    "error": "kept",
+    "success": true,
+  },
+]
+`;
+
+exports[`DeleteMultipleThemesDialog deletes, then clears the state and closes after two seconds 3`] = `
+[
+  false,
+  {
+    "error": null,
+    "success": null,
+  },
+]
+`;
+
+exports[`DeleteMultipleThemesDialog renders nothing while another dialog is open 1`] = `"<!--v-if-->"`;
+
+exports[`DeleteMultipleThemesDialog shows a success with only a close button 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Themes" data-can-close="false">
+  <div>
+    <div class="nc-note-card-stub nc-note-card-stub--success">
+      <p>Themes successfully deleted</p>
+    </div>
+    <!--v-if-->
+    <!--v-if-->
+  </div>
+  <!--v-if-->
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`DeleteMultipleThemesDialog shows an error beside the question 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Themes" data-can-close="false">
+  <div>
+    <!--v-if-->
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Something went wrong while deleting the themes</p>
+    </div>
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Boom</p>
+    </div>
+  </div>
+  <!--v-if-->
+  <p>Do you want to delete the selected themes? This action cannot be undone.</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="Delete"><span class="material-design-icon-stub"></span> Delete</button></footer>
+</section>"
+`;
+
+exports[`DeleteMultipleThemesDialog shows that it is deleting 1`] = `
+"<section class="nc-dialog-stub" data-name="Delete Themes" data-can-close="false">
+  <!--v-if-->
+  <div class="loading-status"><span class="nc-loading-icon-stub"></span><span>Themes are being deleted...</span></div>
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;

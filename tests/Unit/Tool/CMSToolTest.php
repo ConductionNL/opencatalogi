@@ -1,12 +1,17 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Tool;
 
 use BadMethodCallException;
 use OCA\OpenCatalogi\Tool\CMSTool;
-use OCA\OpenRegister\Db\Agent;
+use OCA\OpenRegister\Mcp\Db\Agent;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\IUser;
@@ -118,6 +123,12 @@ class CMSToolTest extends TestCase {
 		$this->assertContains('cms_create_menu', $names);
 		$this->assertContains('cms_list_menus', $names);
 		$this->assertContains('cms_add_menu_item', $names);
+	}
+
+	public function testGetFunctionsMatchesThePublishedDefinitions(): void {
+		$expected = json_decode((string)file_get_contents(__DIR__ . '/fixtures/cms-tool-functions.json'), true);
+
+		$this->assertSame($expected, $this->tool->getFunctions());
 	}
 
 	public function testGetFunctionsHaveRequiredStructure(): void {

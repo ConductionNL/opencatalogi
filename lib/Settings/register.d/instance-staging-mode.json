@@ -1,0 +1,83 @@
+{
+  "components": {
+    "registers": {
+      "publication": {
+        "schemas": [
+          "dryRunDelivery"
+        ],
+        "configuration": {
+          "schemas": {
+            "dryRunDelivery": {
+              "magicMapping": true,
+              "autoCreateTable": true
+            }
+          }
+        }
+      }
+    },
+    "schemas": {
+      "dryRunDelivery": {
+        "slug": "dryRunDelivery",
+        "title": "Dry-run delivery",
+        "version": "1.0.0",
+        "description": "What a national or federation hand-over would have sent while the instance was in staging (instance-staging-mode REQ-STG-002). It is never a delivery: no acknowledgement, PLOOI status or registration answer is set from it, and switching to production does not replay it.",
+        "required": [
+          "channel",
+          "at"
+        ],
+        "properties": {
+          "channel": {
+            "type": "string",
+            "title": "Channel",
+            "description": "The hand-over that was held.",
+            "enum": [
+              "national-index",
+              "plooi",
+              "woo-registration",
+              "broadcast",
+              "directory-announce"
+            ],
+            "facetable": true
+          },
+          "payload": {
+            "type": "object",
+            "title": "Payload",
+            "description": "What would have been sent.",
+            "facetable": false
+          },
+          "at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "At",
+            "description": "When the hand-over was held.",
+            "facetable": false
+          },
+          "user": {
+            "type": "string",
+            "title": "User",
+            "description": "Who started the hand-over, or empty for a background job.",
+            "facetable": true
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "description": "Why it was held: staging, or a mode that could not be read.",
+            "facetable": false
+          }
+        },
+        "authorization": {
+          "read": [
+            "admin"
+          ],
+          "create": [
+            "admin"
+          ],
+          "update": [],
+          "delete": [
+            "admin"
+          ]
+        }
+      }
+    }
+  }
+}

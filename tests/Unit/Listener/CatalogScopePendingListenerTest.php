@@ -12,6 +12,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-004-installing-stackiq-after-opencatalogi-completes-the-scope
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -171,7 +174,7 @@ class CatalogScopePendingListenerTest extends TestCase {
 	 * @return void
 	 */
 	public function testTheListenerIsRegistered(): void {
-		$source = (string)file_get_contents(__DIR__ . '/../../../lib/AppInfo/Application.php');
+		$source = (string)file_get_contents(__DIR__ . '/../../../lib/Listener/ListenerRegistrar.php');
 
 		$this->assertStringContainsString('registerEventListener(RegisterCreatedEvent::class, CatalogScopePendingListener::class)', $source);
 		$this->assertStringContainsString('registerEventListener(RegisterUpdatedEvent::class, CatalogScopePendingListener::class)', $source);

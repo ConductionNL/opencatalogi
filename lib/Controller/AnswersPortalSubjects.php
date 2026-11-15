@@ -24,9 +24,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PortalAssertionVerifierInterface;
 use OCA\OpenCatalogi\Exception\PortalInputException;
 use OCA\OpenCatalogi\Exception\PortalNotFoundException;
-use OCA\OpenCatalogi\Portal\PortalAssertionVerifier;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use Throwable;
@@ -43,12 +43,12 @@ trait AnswersPortalSubjects {
 	 * Run an action as the asserted subject and map its outcome to a status.
 	 *
 	 * @param callable $action The action, given the owner.
-	 * @param int      $status The success status.
+	 * @param int $status The success status.
 	 *
 	 * @return JSONResponse 401 without a valid assertion, 404, 422, 500 or the success status.
 	 */
-	private function asSubject(callable $action, int $status=Http::STATUS_OK): JSONResponse {
-		$owner = $this->verifier->subjectOf(header: $this->request->getHeader(PortalAssertionVerifier::HEADER));
+	private function asSubject(callable $action, int $status = Http::STATUS_OK): JSONResponse {
+		$owner = $this->verifier->subjectOf(header: $this->request->getHeader(PortalAssertionVerifierInterface::HEADER));
 		if ($owner === null) {
 			return new JSONResponse(['error' => 'unauthenticated'], Http::STATUS_UNAUTHORIZED);
 		}
@@ -80,6 +80,5 @@ trait AnswersPortalSubjects {
 		}
 
 		return '';
-
 	}//end param()
 }//end trait

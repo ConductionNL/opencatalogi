@@ -1,0 +1,71 @@
+{
+    "params": {
+        "empty": [],
+        "renames": {
+            "other": "x",
+            "wooCategory": "c1",
+            "organization": "o1"
+        },
+        "rename blocked by the property": {
+            "wooCategory": "keep"
+        },
+        "empty renames dropped": [],
+        "null rename kept": {
+            "organization": null
+        },
+        "period both": {
+            "publicationDate": {
+                "gte": "2026-01-01",
+                "lte": "2026-12-31"
+            }
+        },
+        "period empty and null": [],
+        "period into an existing range": {
+            "publicationDate": {
+                "gte": "keep",
+                "lte": "b"
+            }
+        },
+        "period with a scalar range": {
+            "publicationDate": "2026"
+        },
+        "period zero": {
+            "publicationDate": {
+                "gte": 0,
+                "lte": "0"
+            }
+        },
+        "period with a null bound": {
+            "publicationDate": {
+                "gte": null
+            }
+        }
+    },
+    "saved": {
+        "empty": [],
+        "text and catalog": {
+            "_search": "wind",
+            "_catalog": "woo"
+        },
+        "blank text": [],
+        "filters not a list": {
+            "_search": "a"
+        },
+        "filters": {
+            "wooCategory": "c",
+            "publicationDate": {
+                "gte": "2026"
+            }
+        },
+        "numeric text": {
+            "_search": "42",
+            "_catalog": "7"
+        },
+        "null filter": {
+            "organization": "o"
+        },
+        "null organisation": {
+            "wooCategory": "c"
+        }
+    }
+}
