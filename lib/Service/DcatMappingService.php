@@ -410,6 +410,11 @@ class DcatMappingService {
 		$defaultLicense = ($source->publication['license'] ?? $defaults['license'] ?? null);
 		$distributions = [];
 		foreach ($source->files as $file) {
+			// REQ-ATT-103: a file whose own publication window has ended is withdrawn.
+			if (self::windowEnded(file: $file) === true) {
+				continue;
+			}
+
 			$distribution = $this->mapDistribution(file: $file, defaultLicense: $defaultLicense);
 			if ($distribution !== null) {
 				$distributions[] = $distribution;
@@ -521,6 +526,30 @@ class DcatMappingService {
 	private function filled(mixed $value): bool {
 		return $value !== null && $value !== '';
 	}//end filled()
+
+	/**
+	 * Whether a file's own publication window has ended: its `depublished` moment is now or past.
+	 *
+	 * A file without a window, or with an end that cannot be read, has not ended.
+	 *
+	 * @param array<string, mixed> $file A formatFiles-shape file entry.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+	 */
+	public static function windowEnded(array $file): bool {
+		$end = ($file['depublished'] ?? null);
+		if (is_string($end) === false || trim($end) === '') {
+			return false;
+		}
+
+		try {
+			return new \DateTimeImmutable($end) <= new \DateTimeImmutable();
+		} catch (\Throwable) {
+			return false;
+		}
+	}//end windowEnded()
 
 	/**
 	 * Map a single published file attachment to a `dcat:Distribution`.

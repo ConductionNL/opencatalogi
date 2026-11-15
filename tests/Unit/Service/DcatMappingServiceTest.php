@@ -26,7 +26,13 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\DcatDatasetSource;
 use OCA\OpenCatalogi\Service\DcatMappingProfile;
+use OCA\OpenCatalogi\Service\DcatDistributionMapper;
 use OCA\OpenCatalogi\Service\DcatMappingService;
+use OCA\OpenCatalogi\Service\DcatVocabularyService;
+use OCA\OpenCatalogi\Service\FileFacts;
+use OCP\Files\File;
+use OCP\Files\IMimeTypeDetector;
+use OCP\Files\IRootFolder;
 use PHPUnit\Framework\TestCase;
 
 /**
@@ -259,6 +265,33 @@ class DcatMappingServiceTest extends TestCase {
 
 	}//end testNoHvdTriplesWhenNoCategory()
 
+	/**
+	 * REQ-ATT-103: a file whose window has ended is left out; one ending later, or never, stays.
+	 *
+	 * @return void
+	 */
+	public function testAWithdrawnFileIsNotADistribution(): void {
+		$files = [
+			['downloadUrl' => 'https://host/d/1/download', 'extension' => 'pdf', 'title' => 'besluit.pdf', 'published' => '2026-01-01T00:00:00+00:00', 'depublished' => null],
+			['downloadUrl' => 'https://host/d/2/download', 'extension' => 'pdf', 'title' => 'bijlage.pdf', 'published' => '2026-01-01T00:00:00+00:00', 'depublished' => '2026-02-01T09:00:00+00:00'],
+			['downloadUrl' => 'https://host/d/3/download', 'extension' => 'pdf', 'title' => 'later.pdf', 'depublished' => '2999-01-01T00:00:00+00:00'],
+			['downloadUrl' => 'https://host/d/4/download', 'extension' => 'pdf', 'title' => 'odd.pdf', 'depublished' => 'not a date'],
+		];
+
+		$dataset = $this->mapDataset(
+			publication: ['id' => 'u', '@self' => ['uuid' => 'u']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: $files,
+			datasetIri: 'https://host/api/cat/u',
+			defaults: []
+		);
+
+		$urls = array_map(static fn (array $node): string => $node['dcat:downloadURL']['@id'], $dataset['dcat:distribution']);
+		$this->assertSame(['https://host/d/1/download', 'https://host/d/3/download', 'https://host/d/4/download'], $urls);
+		$this->assertTrue(DcatMappingService::windowEnded(['depublished' => '2026-02-01T09:00:00+00:00']));
+		$this->assertFalse(DcatMappingService::windowEnded(['depublished' => '']));
+	}//end testAWithdrawnFileIsNotADistribution()
+
 	public function testDistributionsMappedFromAttachments(): void {
 		$files = [
 			['downloadUrl' => 'https://host/d/1/download', 'accessUrl' => 'https://host/d/1', 'extension' => 'pdf', 'title' => 'doc.pdf', 'size' => 1234],
@@ -377,5 +410,40 @@ class DcatMappingServiceTest extends TestCase {
 	public function testNoAbstractWithoutAPlainSummary(): void {
 		$dataset = $this->mapDataset(['id' => 'x', 'title' => 'T', 'plainSummary' => '  '], DcatMappingService::DEFAULT_MAPPING, [], 'https://host/x', []);
 		$this->assertArrayNotHasKey('dct:abstract', $dataset);
+	}
+
+	/**
+	 * REQ-PFF-001: the distribution's media type is the stored bytes' type, not
+	 * the listed name or type, and bytes that cannot be read give no media type
+	 * rather than one from the extension.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	public function testTheMediaTypeComesFromTheBytes(): void {
+		$pdf = $this->createMock(File::class);
+		$pdf->method('fopen')->willReturnCallback(static function () {
+			$handle = fopen('php://memory', 'r+');
+			fwrite($handle, "%PDF-1.7\n");
+			rewind($handle);
+			return $handle;
+		});
+		$unreadable = $this->createMock(File::class);
+		$unreadable->method('fopen')->willThrowException(new \RuntimeException('storage gone'));
+		$root = $this->createMock(IRootFolder::class);
+		$root->method('getFirstNodeById')->willReturnMap([[11, $pdf], [12, $unreadable]]);
+		$detector = $this->createMock(IMimeTypeDetector::class);
+		$detector->method('detectString')->willReturnCallback(static fn (string $bytes): string => str_starts_with($bytes, '%PDF') ? 'application/pdf' : 'text/plain');
+		$service = new DcatMappingService(new DcatVocabularyService(), new DcatDistributionMapper(new FileFacts($detector, $root)));
+
+		$named = $service->mapDistribution(['id' => 11, 'downloadUrl' => 'https://host/d/11', 'extension' => 'docx', 'mimetype' => 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'], null);
+		$this->assertSame('application/pdf', $named['dcat:mediaType']);
+		$this->assertSame(['@id' => 'http://publications.europa.eu/resource/authority/file-type/PDF'], $named['dct:format']);
+
+		$broken = $service->mapDistribution(['id' => 12, 'downloadUrl' => 'https://host/d/12', 'extension' => 'pdf', 'mimetype' => 'application/pdf'], null);
+		$this->assertArrayNotHasKey('dcat:mediaType', $broken);
+		$this->assertArrayNotHasKey('dct:format', $broken);
+		$this->assertSame('https://host/d/12', $broken['@id']);
 	}
 }//end class
