@@ -32,9 +32,8 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
-use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\AppliedFilters;
-use OCA\OpenCatalogi\Service\Publication\PublicationCommentPeriod;
+use OCA\OpenCatalogi\Service\Publication\LocalPublicationState;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -51,13 +50,6 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
-
-	/**
-	 * The comment period state service (REQ-PDP-003), resolved when first needed.
-	 *
-	 * @var PublicationCommentPeriod|null
-	 */
-	private ?PublicationCommentPeriod $commentPeriods = null;
 	/**
 	 * FederationController constructor.
 	 *
@@ -65,7 +57,7 @@ class FederationController extends Controller {
 	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
+	 * @param LocalPublicationState|null $localState Adds the withheld list (REQ-WDW-003) and the comment period state (REQ-PDP-003).
 	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
@@ -73,7 +65,7 @@ class FederationController extends Controller {
 		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
-		private readonly ?WithheldFromPublicationInterface $withheld = null,
+		private readonly ?LocalPublicationState $localState = null,
 		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
@@ -182,8 +174,8 @@ class FederationController extends Controller {
 			$isLocal = (($result['federated'] ?? false) !== true
 				&& is_array($result['data']) === true
 				&& array_key_exists('sources', $result['data']) === false);
-			if ($result['status'] === 200 && $isLocal === true) {
-				$result['data'] = $this->withLocalState(publication: $result['data']);
+			if ($this->localState !== null && $result['status'] === 200 && $isLocal === true) {
+				$result['data'] = $this->localState->addTo(publication: $result['data']);
 			}
 
 			return new JSONResponse($result['data'], $result['status']);
@@ -203,48 +195,6 @@ class FederationController extends Controller {
 		}
 
 	}//end publication()
-
-	/**
-	 * A local publication with its withheld list (REQ-WDW-003) and the state of its
-	 * comment period (REQ-PDP-003).
-	 *
-	 * @param array<string, mixed> $publication The publication this instance answered.
-	 *
-	 * @return array<string, mixed> The publication with what applies added.
-	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
-	 */
-	private function withLocalState(array $publication): array {
-		if ($this->withheld !== null) {
-			$publication = $this->withheld->addForPublication(response: $publication);
-		}
-
-		$periods = $this->commentPeriods();
-		if ($periods !== null) {
-			$publication = $periods->addTo(publication: $publication);
-		}
-
-		return $publication;
-	}//end withLocalState()
-
-	/**
-	 * The comment period state service, resolved when first needed; null when it cannot be.
-	 *
-	 * @return PublicationCommentPeriod|null The service.
-	 *
-	 * @spec openspec/changes/publication-detail-for-the-portal/specs/publications/spec.md#requirement-the-publication-carries-its-comment-period-s-state-req-pdp-003
-	 */
-	private function commentPeriods(): ?PublicationCommentPeriod {
-		if ($this->commentPeriods === null) {
-			try {
-				$this->commentPeriods = \OCP\Server::get(PublicationCommentPeriod::class);
-			} catch (\Throwable $e) {
-				return null;
-			}
-		}
-
-		return $this->commentPeriods;
-	}//end commentPeriods()
 
 	/**
 	 * Retrieve objects that this publication references.

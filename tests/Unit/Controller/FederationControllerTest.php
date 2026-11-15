@@ -270,17 +270,13 @@ class FederationControllerTest extends TestCase {
 			->willReturn(['status' => 200, 'data' => ['id' => 'pub-1', 'title' => 'Besluit']]);
 		$this->request->method('getParams')->willReturn([]);
 
-		$controller = new FederationController(
+		return new FederationController(
 			$this->request,
 			$this->publicationService,
 			$this->l10n,
 			null,
-			null
+			new \OCA\OpenCatalogi\Service\Publication\LocalPublicationState(null, $commentPeriods)
 		);
-		$property = new \ReflectionProperty(FederationController::class, 'commentPeriods');
-		$property->setValue($controller, $commentPeriods);
-
-		return $controller;
 	}
 
 	/** @var object|null The object service double of the last controllerWithPeriod(). */
