@@ -1393,10 +1393,49 @@
               "facetable": {
                 "type": "object",
                 "additionalProperties": true
+              },
+              "appliedFilters": {
+                "$ref": "#/components/schemas/AppliedFilters"
               }
-            }
+            },
+            "required": [
+              "appliedFilters"
+            ]
           }
         ]
+      },
+      "AppliedFilters": {
+        "type": "array",
+        "description": "What the server filtered on its own for this answer, beyond the caller's own parameters: one entry per filter that applied, none for a filter that did not. A single `unknown` entry means the filters could not be read, not that nothing was filtered. The entry names are stable API.",
+        "items": {
+          "type": "object",
+          "required": [
+            "name",
+            "value",
+            "reason"
+          ],
+          "properties": {
+            "name": {
+              "type": "string",
+              "enum": [
+                "catalogScope",
+                "publicOnly",
+                "archivedExcluded",
+                "callerScopeIgnored",
+                "unknown"
+              ],
+              "description": "`catalogScope`: the catalogue's configured schemas and registers narrowed the query. `publicOnly`: the query ran as the anonymous public reader. `archivedExcluded`: rows with status archived were dropped. `callerScopeIgnored`: scope keys the caller sent were removed. `unknown`: the filters could not be read."
+            },
+            "value": {
+              "nullable": true,
+              "description": "`catalogScope`: `{schemas, registers}` as slugs. `publicOnly`: `true`. `archivedExcluded`: the number of rows dropped on this page. `callerScopeIgnored`: the removed key names. `unknown`: `null`."
+            },
+            "reason": {
+              "type": "string",
+              "description": "A short English sentence saying why the filter applied."
+            }
+          }
+        }
       }
     },
     "parameters": {
