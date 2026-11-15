@@ -43,6 +43,7 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
 
@@ -55,6 +56,20 @@ class FederationController extends Controller {
 	use AnswersCrossOriginSearchRequests;
 
 	/**
+	 * App config holding the CORS allowlist; null allows every origin.
+	 *
+	 * @var IAppConfig|null
+	 */
+	private readonly ?IAppConfig $appConfig;
+
+	/**
+	 * The request's collector of applied filters (REQ-ASF-001).
+	 *
+	 * @var AppliedFilters|null
+	 */
+	private readonly ?AppliedFilters $appliedFilters;
+
+	/**
 	 * FederationController constructor.
 	 *
 	 * @param IRequest $request The request object.
@@ -62,8 +77,9 @@ class FederationController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
-	 * @param IAppConfig|null $appConfig App config holding the CORS allowlist (without it every origin is allowed).
-	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
+	 * @param ContainerInterface|null $container DI container for the optional collaborators: the app config
+	 *                                           holding the CORS allowlist (without it every origin is allowed)
+	 *                                           and the request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
 		IRequest $request,
@@ -71,10 +87,11 @@ class FederationController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
 		private readonly ?WithheldFromPublicationInterface $withheld = null,
-		private readonly ?IAppConfig $appConfig = null,
-		private readonly ?AppliedFilters $appliedFilters = null,
+		?ContainerInterface $container = null,
 	) {
 		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
+		$this->appConfig      = $container?->get(IAppConfig::class);
+		$this->appliedFilters = $container?->get(AppliedFilters::class);
 
 	}//end __construct()
 
