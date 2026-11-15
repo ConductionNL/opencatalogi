@@ -22,6 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Observability;
 
+use OCA\OpenRegister\AppHost\IHealthCheckProvider;
 use OCA\OpenRegister\AppHost\IMetricsProvider;
 use OCP\AppFramework\Bootstrap\IRegistrationContext;
 
@@ -49,6 +50,12 @@ class ObservabilityRegistrar {
 		$context->registerServiceAlias(
 			IMetricsProvider::class . '::opencatalogi',
 			OpenCatalogiMetricsProvider::class
+		);
+		// The search_backend check the declarative health checks cannot express
+		// (prometheus-metrics task 2.2).
+		$context->registerServiceAlias(
+			IHealthCheckProvider::class . '::opencatalogi',
+			SearchBackendHealthProvider::class
 		);
 
 	}//end register()
