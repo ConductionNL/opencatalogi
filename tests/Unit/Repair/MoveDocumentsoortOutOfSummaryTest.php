@@ -113,7 +113,10 @@ class MoveDocumentsoortOutOfSummaryTest extends TestCase {
 				: ['results' => []]
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): \OCA\OpenRegister\Db\ObjectEntity {
+			function (array $object, \OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions $options): \OCA\OpenRegister\Db\ObjectEntity {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$this->saves[] = [$register, $schema, $uuid];
 				$this->store[(string)$uuid] = $object;
 				$entity = new \OCA\OpenRegister\Db\ObjectEntity();

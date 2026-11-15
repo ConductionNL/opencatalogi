@@ -149,6 +149,14 @@ class DiwooCompletenessListenerTest extends TestCase {
 	 * @return object The organisation.
 	 */
 	private function organisation(?string $tooi): object {
+		// With OpenRegister beside the app the mapper declares an Organisation return type.
+		if (class_exists(\OCA\OpenRegister\Db\Organisation::class) === true) {
+			$organisation = new \OCA\OpenRegister\Db\Organisation();
+			$organisation->setName('Gemeente Zuiddrecht');
+			$organisation->setTooi($tooi);
+			return $organisation;
+		}
+
 		return new class($tooi) {
 			public function __construct(private ?string $tooi) {
 			}

@@ -38,6 +38,8 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\DocumentTypeVocabularyInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -211,9 +213,10 @@ class MoveDocumentsoortOutOfSummary implements IRepairStep {
 		try {
 			$objects->saveObject(
 				object: $publication,
-				register: $scope['register'],
-				schema: $scope['schema'],
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $scope['register'], schema: $scope['schema']),
+					uuid: $uuid
+				),
 				_rbac: false,
 				_multitenancy: false
 			);
