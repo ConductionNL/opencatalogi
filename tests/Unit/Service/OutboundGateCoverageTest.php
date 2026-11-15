@@ -68,6 +68,7 @@ final class OutboundGateCoverageTest extends TestCase {
 	 * DirectoryService also reads (a peer's listings); its one way out is gated above.
 	 */
 	private const READERS = [
+		'Observability/SearchBackendHealthProvider.php' => 'pings the configured search backend for the health check',
 		'Service/DirectoryService.php' => 'fetches peer directories and their listings',
 		'Service/StandardsVersionService.php' => 'reads the published versions of the standards',
 		'Service/WooReadinessService.php' => 'reads the catalogue\'s own public sitemap for the readiness check',
