@@ -498,3 +498,32 @@ The batch SHALL list every `deels_openbaar` document without a verified redacted
 - **GIVEN** a batch with a `deels_openbaar` document whose redaction failed
 - **WHEN** the officer opens the batch
 - **THEN** the page names that document and the reason
+
+### Requirement: A batch goes to review only once every document in it is assessed (REQ-CRG-001)
+
+The system MUST refuse to mark a Woo batch ready for review while any of its
+documents is still to be assessed (`te_beoordelen`), and MUST refuse a batch
+that holds no documents. The batch page SHALL offer the action only when the
+batch passes this check.
+
+#### Scenario: An unassessed document blocks the review
+<!-- @e2e exclude Server-side refusal; covered by PHPUnit WooServiceTest::testCanMarkReadyForReviewFalseWhenUnassessed, and the hidden action by vitest wooHelpers.spec.js canMarkReadyForReview, which WooBatchDetail.vue uses to offer it. -->
+
+- **GIVEN** a batch with three documents, two assessed and one still to be assessed
+- **WHEN** the officer marks the batch ready for review
+- **THEN** the request is refused and the batch stays in progress
+- **AND** the batch page does not offer the action
+
+#### Scenario: Every document assessed
+<!-- @e2e exclude Server-side state change; covered by PHPUnit WooServiceTest::testMarkReadyForReviewWhenAllAssessed. -->
+
+- **GIVEN** the same batch after the third document is assessed as public
+- **WHEN** the officer marks the batch ready for review
+- **THEN** the batch is ready for review
+
+#### Scenario: An empty batch
+<!-- @e2e exclude Server-side refusal; covered by PHPUnit WooServiceTest::testAnEmptyBatchIsRefusedForReview. -->
+
+- **GIVEN** a batch without documents
+- **WHEN** the officer marks it ready for review
+- **THEN** the request is refused

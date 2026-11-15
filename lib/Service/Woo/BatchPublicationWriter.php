@@ -108,6 +108,7 @@ class BatchPublicationWriter {
 				$listing['original'] = $document;
 				$listing['redactionStatus'] = (string)($assessment['redactionStatus'] ?? '');
 				$listing['redactionHash'] = (string)($assessment['anonymizedDocumentHash'] ?? '');
+				$listing['redactionVerifiedBy'] = (string)($assessment['redactionVerifiedBy'] ?? '');
 			}
 
 			$listings[] = $listing;

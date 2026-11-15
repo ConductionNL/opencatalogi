@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Картки",
         "Catalog not found": "Каталог не знайдено",
         "Catalogs": "Каталоги",
+        "catalogs": "каталоги",
         "Check server logs for more details.": "Перевірте журнали сервера для отримання докладнішої інформації.",
         "Choose sorting": "Виберіть сортування",
         "Clear": "Очистити",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Вкладення успішно опубліковано",
         "Attachment successfully updated": "Вкладення успішно оновлено",
         "Attachments": "Вкладення",
+        "attachments": "вкладення",
         "Attachments are loading": "Вкладення завантажуються",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Вкладення будуть опубліковані з поточною датою та часом. Якщо для будь-яких вкладень встановлено дату зняття з публікації, вона буде видалена, щоб зробити їх повністю опублікованими.",
         "Auto publish attachments": "Автоматично публікувати вкладення",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Додайте до каталогу реєстр і схему, щоб тут відображалися його публікації.",
         "Open catalog": "Відкрити каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Створіть свій перший каталог. Це контейнер, у якому будуть ваші публікації. Виберіть реєстр Publication і схему Publication, щоб каталог показував публікації, які ви додаєте.",
-        "Manage your publications and their status": "Керуйте своїми публікаціями та їхнім статусом"
+        "Manage your publications and their status": "Керуйте своїми публікаціями та їхнім статусом",
+        "Open at the source": "Відкрити в джерелі"
     },
     "nplurals=2; plural=(n != 1);"
 )

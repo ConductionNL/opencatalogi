@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 /** The config keys whose entries carry a label the library renders as-is. */
 const LABELLED_ACTION_KEYS = ['actions', 'bulkActions']
 

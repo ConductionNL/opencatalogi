@@ -514,17 +514,63 @@ class EventService implements EventServiceInterface {
 		try {
 			$fileService = $this->getFileService();
 			$files = $this->objectFiles(objectId: $objectId);
+			$withdrawn = $this->withdrawnFileIds(files: $files);
 		} catch (\Exception $e) {
 			$result['errors'][] = 'Failed to access file service: ' . $e->getMessage();
 			return $result;
 		}
 
 		foreach ($files as $file) {
+			if (isset($withdrawn[(int)($file['fileid'] ?? 0)]) === true) {
+				$result['skipped']++;
+				continue;
+			}
+
 			$result = $this->withSharedFile(result: $result, share: ['fileService' => $fileService, 'file' => $file]);
 		}
 
 		return $result;
 	}//end publishObjectAttachments()
+
+	/**
+	 * The ids of the files whose own publication window has ended.
+	 *
+	 * A withdrawn attachment keeps its withdrawal on the file's window
+	 * (REQ-ATT-103), so an automatic path must never share it again
+	 * (REQ-ATT-104). The windows are read through FileMapper, like the files.
+	 * An OpenRegister without file publication windows has no withdrawn files;
+	 * a failure to read the windows is thrown, so the caller shares nothing.
+	 *
+	 * @param array $files The files, as FileMapper lists them.
+	 *
+	 * @return array<int, true> The withdrawn file ids.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	private function withdrawnFileIds(array $files): array {
+		$fileIds = [];
+		foreach ($files as $file) {
+			if (isset($file['fileid']) === true) {
+				$fileIds[] = (int)$file['fileid'];
+			}
+		}
+
+		$fileMapper = $this->getFileMapper();
+		if ($fileIds === [] || method_exists($fileMapper, 'findByFileIds') === false) {
+			return [];
+		}
+
+		$now = new DateTime();
+		$withdrawn = [];
+		foreach ($fileMapper->findByFileIds($fileIds) as $fileId => $record) {
+			$end = $record->getDepublished();
+			if ($end instanceof \DateTimeInterface && $end <= $now) {
+				$withdrawn[(int)$fileId] = true;
+			}
+		}
+
+		return $withdrawn;
+	}//end withdrawnFileIds()
 
 	/**
 	 * The files of an object, read through FileMapper, or none when the object does not exist.

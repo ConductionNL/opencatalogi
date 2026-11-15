@@ -14,6 +14,7 @@ import UploadFiles from './UploadFiles.vue'
 const mockEvents = []
 const mockDispatched = []
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'test-request-token' }))
 jest.mock('@conduction/nextcloud-vue', () => ({
 	...jest.requireActual('@conduction/nextcloud-vue'),
 	dispatchObjectsChanged: (change) => mockDispatched.push(change),
@@ -283,7 +284,7 @@ describe('UploadFiles saveTags', () => {
 		expect(log).toEqual([
 			['fetch', '/index.php/apps/openregister/api/objects/7/9/p1/files/f1', {
 				method: 'PUT',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { requesttoken: 'test-request-token', 'Content-Type': 'application/json' },
 				body: JSON.stringify({ tags: ['a', 'b'] }),
 			}],
 			['fetch', '/index.php/apps/openregister/api/objects/7/9/p1/files', undefined],

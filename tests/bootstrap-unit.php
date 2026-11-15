@@ -11,6 +11,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -342,6 +345,10 @@ if (class_exists('OCA\\OpenRegister\\AppHost\\Observability\\MetricSample') === 
 
 if (interface_exists('OCA\\OpenRegister\\AppHost\\IMetricsProvider') === false) {
 	require_once __DIR__ . '/Stubs/AppHost/IMetricsProvider.php';
+}
+
+if (interface_exists('OCA\\OpenRegister\\AppHost\\IHealthCheckProvider') === false) {
+	require_once __DIR__ . '/Stubs/AppHost/IHealthCheckProvider.php';
 }
 
 // Integriq's connection-registry events (adopt-connection-registry).

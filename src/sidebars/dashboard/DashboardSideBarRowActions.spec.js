@@ -12,6 +12,7 @@ import { mount } from '@vue/test-utils'
 import DashboardSideBar from './DashboardSideBar.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/axios', () => ({ __esModule: true, default: { post: jest.fn() } }))
 jest.mock('@nextcloud/vue', () => {
 	const slots = '<div><slot name="icon" /><slot name="subname" /><slot name="actions" /><slot /></div>'
 	const plain = { template: '<div />' }

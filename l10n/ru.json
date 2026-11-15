@@ -26,6 +26,7 @@
         "Cards": "Карточки",
         "Catalog not found": "Каталог не найден",
         "Catalogs": "Каталоги",
+        "catalogs": "каталоги",
         "Check server logs for more details.": "Проверьте журналы сервера для получения дополнительной информации.",
         "Choose sorting": "Выберите сортировку",
         "Clear": "Очистить",
@@ -238,6 +239,7 @@
         "Attachment successfully published": "Вложение успешно опубликовано",
         "Attachment successfully updated": "Вложение успешно обновлено",
         "Attachments": "Вложения",
+        "attachments": "вложения",
         "Attachments are loading": "Вложения загружаются",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Вложения будут опубликованы с текущей датой и временем. Если для каких-либо вложений установлена дата снятия с публикации, она будет удалена для их полной публикации.",
         "Auto publish attachments": "Автоматически публиковать вложения",
@@ -720,7 +722,8 @@
         "Add a register and a schema to the catalog to list its publications here.": "Добавьте в каталог реестр и схему, чтобы здесь отображались его публикации.",
         "Open catalog": "Открыть каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Создайте свой первый каталог. Это контейнер, в котором будут ваши публикации. Выберите реестр Publication и схему Publication, чтобы каталог показывал добавляемые вами публикации.",
-        "Manage your publications and their status": "Управляйте своими публикациями и их статусом"
+        "Manage your publications and their status": "Управляйте своими публикациями и их статусом",
+        "Open at the source": "Открыть в источнике"
     },
     "plurals": {}
 }

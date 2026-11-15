@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service\Publication;
@@ -63,6 +68,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 			collections: [
 				[
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'equals', 'value' => 'definitief']],
 				],
@@ -79,6 +85,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 			collections: [
 				[
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'equals', 'value' => 'definitief']],
 				],
@@ -94,6 +101,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 			collections: [
 				[
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
 				],
@@ -116,6 +124,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 				'not a collection',
 				[
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
 				],
@@ -125,6 +134,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 		$validation = (new PublicationRuleService())->validateRule(
 			rule: [
 				'recordType' => 'besluit',
+				'wooCategory' => 'infocat002',
 				'anonymousProperties' => ['title'],
 				'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
 			]
@@ -143,7 +153,7 @@ class PublishedCollectionsServiceTest extends TestCase {
 	 * A valid set is stored as a list, whatever keys it arrived with.
 	 */
 	public function testSaveStoresTheCollectionsAsAList(): void {
-		$collection = ['recordType' => 'besluit', 'anonymousProperties' => ['title'], 'conditions' => []];
+		$collection = ['recordType' => 'besluit', 'wooCategory' => 'infocat002', 'anonymousProperties' => ['title'], 'conditions' => []];
 
 		$outcome = $this->service->save(collections: ['first' => $collection]);
 

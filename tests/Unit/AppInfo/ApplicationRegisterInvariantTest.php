@@ -4,6 +4,9 @@
  * Pins the load-order invariant that keeps OpenCatalogi's register() safe
  * WITHOUT an autoloader prelude.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * THE HAZARD
  *
  * OC_App::getEnabledApps() sort()s the app list, and Coordinator::registerApps()
@@ -48,9 +51,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
  * @link https://www.OpenCatalogi.nl
  */

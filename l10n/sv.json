@@ -26,6 +26,7 @@
         "Cards": "Kort",
         "Catalog not found": "Katalogen hittades inte",
         "Catalogs": "Kataloger",
+        "catalogs": "kataloger",
         "Check server logs for more details.": "Kontrollera serverloggarna för mer information.",
         "Choose sorting": "Välj sortering",
         "Clear": "Rensa",
@@ -238,6 +239,7 @@
         "Attachment successfully published": "Bilagan publicerades",
         "Attachment successfully updated": "Bilagan uppdaterades",
         "Attachments": "Bilagor",
+        "attachments": "bilagor",
         "Attachments are loading": "Bilagor läses in",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bilagor publiceras med aktuellt datum och klockslag. Om någon bilaga har ett avpubliceringsdatum tas det bort så att den blir fullständigt publicerad.",
         "Auto publish attachments": "Publicera bilagor automatiskt",
@@ -720,7 +722,8 @@
         "Add a register and a schema to the catalog to list its publications here.": "Lägg till ett register och ett schema i katalogen för att visa dess publikationer här.",
         "Open catalog": "Öppna katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Skapa din första katalog. Den är behållaren som dina publikationer ska ligga i. Välj registret Publication och schemat Publication, så att katalogen visar publikationerna du lägger till.",
-        "Manage your publications and their status": "Hantera dina publikationer och deras status"
+        "Manage your publications and their status": "Hantera dina publikationer och deras status",
+        "Open at the source": "Öppna vid källan"
     },
     "plurals": {}
 }

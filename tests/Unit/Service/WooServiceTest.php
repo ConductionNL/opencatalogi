@@ -22,6 +22,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -278,6 +281,20 @@ class WooServiceTest extends TestCase {
 	/** @var array<string, string> */
 	private array $store = [];
 
+	/**
+	 * The batch publication writer the service resolves documents through.
+	 *
+	 * @var \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
+	 */
+	private \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter $writer;
+
+	/**
+	 * The root folder the stored documents live in.
+	 *
+	 * @var \OCP\Files\IRootFolder
+	 */
+	private \OCP\Files\IRootFolder $rootFolder;
+
 	protected function setUp(): void {
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->container = $this->createMock(ContainerInterface::class);
@@ -362,6 +379,8 @@ class WooServiceTest extends TestCase {
 		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/' . $id);
 
 		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $linker, $this->l10n);
+		$this->writer = $writer;
+		$this->rootFolder = $root;
 		$this->service = new WooService(
 			new RegisterBindings($this->config, $this->container),
 			$this->userSession,
@@ -405,6 +424,52 @@ class WooServiceTest extends TestCase {
 		$this->assertCount(2, $this->deck->links);
 
 	}//end testCreateBatchPersistsAssessmentsAndBatch()
+
+	/**
+	 * REQ-PFF-001: the assessment's `fileType` is the type read from the stored
+	 * bytes; a caller's value that differs is kept as `fileTypeClaimed`, and a
+	 * document whose bytes cannot be read gets no type from the caller.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	public function testTheAssessmentFileTypeIsTheDetectedTypeAndTheClaimIsKept(): void {
+		$detector = $this->createMock(\OCP\Files\IMimeTypeDetector::class);
+		$detector->method('detectString')->willReturnCallback(
+			static fn (string $bytes): string => str_ends_with($bytes, '.pdf') ? 'application/pdf' : 'application/octet-stream'
+		);
+		$service = new WooService(
+			new RegisterBindings($this->config, $this->container),
+			$this->userSession,
+			$this->logger,
+			$this->l10n,
+			$this->writer,
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($this->writer, $this->container, $this->l10n, $this->logger),
+			new \OCA\OpenCatalogi\Service\FileFacts($detector, $this->rootFolder)
+		);
+
+		$batch = $service->createBatch(
+			'WOO-2026-010',
+			[
+				['fileName' => 'a.pdf', 'fileType' => 'text/plain', 'documentReference' => 'doc-a'],
+				['fileName' => 'b.pdf', 'fileType' => 'application/pdf', 'documentReference' => 'doc-b'],
+				['fileName' => 'c.pdf', 'documentReference' => 'doc-c'],
+				['fileName' => 'gone.pdf', 'fileType' => 'application/pdf', 'documentReference' => 'doc-missing'],
+			]
+		);
+
+		[$claimed, $agreed, $silent, $missing] = $batch['assessments'];
+		$this->assertSame('application/pdf', $claimed['fileType']);
+		$this->assertSame('text/plain', $claimed['fileTypeClaimed']);
+		$this->assertSame('application/pdf', $agreed['fileType']);
+		$this->assertArrayNotHasKey('fileTypeClaimed', $agreed);
+		$this->assertSame('application/pdf', $silent['fileType']);
+		$this->assertArrayNotHasKey('fileTypeClaimed', $silent);
+		$this->assertSame('', $missing['fileType'], 'A document that cannot be read gets no type from the caller.');
+		$this->assertSame('application/pdf', $missing['fileTypeClaimed']);
+
+	}//end testTheAssessmentFileTypeIsTheDetectedTypeAndTheClaimIsKept()
 
 	public function testCreateBatchLinksOneCardPerAssessmentAndRecordsTheBatch(): void {
 		$batch = $this->service->createBatch(
@@ -550,6 +615,13 @@ class WooServiceTest extends TestCase {
 
 	}//end testGetBatchProducesDocumentSummary()
 
+	/**
+	 * A document still to be assessed keeps the batch out of review.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
 	public function testCanMarkReadyForReviewFalseWhenUnassessed(): void {
 		$this->seedBatchWithAssessments();
 		$this->assertFalse($this->service->canMarkReadyForReview('batch-1'));
@@ -558,6 +630,38 @@ class WooServiceTest extends TestCase {
 
 	}//end testCanMarkReadyForReviewFalseWhenUnassessed()
 
+	/**
+	 * A batch without documents is refused and stays in progress.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
+	public function testAnEmptyBatchIsRefusedForReview(): void {
+		$this->objects->objects = [
+			['id' => 'batch-1', 'status' => 'in_progress', 'caseReference' => 'WOO-2026-010', 'documents' => [], 'createdBy' => 'alice'],
+		];
+
+		$this->assertFalse($this->service->canMarkReadyForReview('batch-1'));
+
+		try {
+			$this->service->markReadyForReview('batch-1');
+			$this->fail('An empty batch was marked ready for review.');
+		} catch (\RuntimeException $e) {
+			$this->assertSame('All documents must be assessed before review', $e->getMessage());
+		}
+
+		$this->assertSame('in_progress', $this->service->getBatch('batch-1')['status']);
+
+	}//end testAnEmptyBatchIsRefusedForReview()
+
+	/**
+	 * Once every document is assessed the batch moves to review.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/capability-rows-close-gaps/specs/woo-transparency/spec.md#requirement-a-batch-goes-to-review-only-once-every-document-in-it-is-assessed-req-crg-001
+	 */
 	public function testMarkReadyForReviewWhenAllAssessed(): void {
 		$this->seedBatchWithAssessments(false);
 		$this->assertTrue($this->service->canMarkReadyForReview('batch-1'));
@@ -582,6 +686,22 @@ class WooServiceTest extends TestCase {
 		$this->assertStringContainsString('4 documenten', $html);
 
 	}//end testInventarislijstRowsAndCsv()
+
+	/**
+	 * The PDF export is a real PDF that declares PDF/A conformance.
+	 *
+	 * @return void
+	 */
+	public function testInventarislijstPdfIsAPdfA(): void {
+		$this->seedBatchWithAssessments(leaveUnassessed: false);
+		$rows = $this->service->buildInventarislijst('batch-1');
+
+		$pdf = $this->service->renderInventarislijstPdf('batch-1', $rows);
+
+		$this->assertStringStartsWith(prefix: '%PDF-', string: $pdf);
+		$this->assertStringContainsString(needle: 'pdfaid:part', haystack: $pdf);
+
+	}//end testInventarislijstPdfIsAPdfA()
 
 	public function testPublishRequiresReadyForReview(): void {
 		$this->seedBatchWithAssessments(false);
@@ -937,6 +1057,8 @@ class WooServiceTest extends TestCase {
 		$this->assertSame('verified', $assessed['redactionStatus']);
 		$this->assertSame('4', $assessed['anonymizedDocument']);
 
+		// A person checks the new redaction before it can go out (REQ-WDA-004).
+		$this->service->verifyRedaction('batch-1', 'a3');
 		$this->service->publishBatch('batch-1');
 		$this->assertSame(['a.pdf', 'b.pdf', 'c-gelakt.pdf'], $this->attachedNames());
 	}//end testAVerifiedRedactionIsWhatGetsPublished()
@@ -1031,6 +1153,86 @@ class WooServiceTest extends TestCase {
 	}//end testAssessingAwayFromPartlyPublicDropsTheRedaction()
 
 	/**
+	 * REQ-WDA-004: a new assessment that changes the redaction clears the
+	 * person's verification, and the batch cannot go out until it is given again.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testVerifyRedactionIsClearedByANewAssessment(): void {
+		$this->approvedBatch();
+		$this->documents['id:4'] = $this->documents['/alice/files/doc-c-anon'];
+		$this->files->redacted = $this->documents['/alice/files/doc-c-anon'];
+
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->assertSame('verified', $assessed['redactionStatus']);
+		$this->assertSame('', $assessed['redactionVerifiedBy']);
+		$this->assertNull($assessed['redactionVerifiedAt']);
+
+		$refusal = null;
+		try {
+			$this->service->publishBatch('batch-1');
+		} catch (\RuntimeException $e) {
+			$refusal = $e->getMessage();
+		}
+
+		$this->assertSame('Publishing is blocked, redaction not checked by a person: c.pdf', $refusal);
+		$this->assertSame([], $this->files->added);
+		$this->assertSame(
+			[['fileName' => 'c.pdf', 'reason' => 'Redaction not checked by a person.']],
+			$this->service->getBatch('batch-1')['documentSummary']['unredacted']
+		);
+
+		$verified = $this->service->verifyRedaction('batch-1', 'a3');
+		$this->assertSame('alice', $verified['redactionVerifiedBy']);
+		$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', (string)$verified['redactionVerifiedAt']);
+		$this->assertSame([], $this->service->getBatch('batch-1')['documentSummary']['unredacted']);
+	}//end testVerifyRedactionIsClearedByANewAssessment()
+
+	/**
+	 * REQ-WDA-004: an assessment save that leaves the redaction as it was keeps the verification.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testAnUnchangedRedactionKeepsItsVerification(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->files->redacted = null;
+
+		// A failing redaction changes the status, so the verification goes.
+		$this->assertSame('', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1')['redactionVerifiedBy']);
+
+		$this->seedBatchWithAssessments(false);
+		$saved = $this->service->updateAssessment('a1', 'openbaar', [], 'batch-1');
+		$this->assertArrayNotHasKey('redactionVerifiedBy', $saved);
+	}//end testAnUnchangedRedactionKeepsItsVerification()
+
+	/**
+	 * REQ-WDA-004: a failed redaction, or a document of another batch, cannot be marked verified.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testVerifyRedactionRefusesAFailedRedactionAndAForeignDocument(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->files->redacted = null;
+		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$saves = count($this->objects->saveTargets);
+
+		$refusal = null;
+		try {
+			$this->service->verifyRedaction('batch-1', 'a3');
+		} catch (\OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException $e) {
+			$refusal = $e->getMessage();
+		}
+
+		$this->assertSame('The redaction status is failed, not verified.', $refusal);
+		$this->assertSame($saves, count($this->objects->saveTargets));
+
+		$this->objects->objects[] = ['id' => 'batch-2', 'documents' => []];
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Assessment not found: a3');
+		$this->service->verifyRedaction('batch-2', 'a3');
+	}//end testVerifyRedactionRefusesAFailedRedactionAndAForeignDocument()
+
+	/**
 	 * REQ-WRP-001: without a batch the acting officer owns relative references.
 	 *
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
@@ -1067,6 +1269,8 @@ class WooServiceTest extends TestCase {
 				'anonymizedDocument' => 'doc-c-anon',
 				'anonymizedDocumentHash' => hash('sha256', 'inhoud van c-gelakt.pdf'),
 				'redactionStatus' => 'verified',
+				'redactionVerifiedBy' => 'bob',
+				'redactionVerifiedAt' => '2026-11-01T10:00:00+00:00',
 				'weigeringsgronden' => ['5.2.e'],
 			],
 			$fourth,
