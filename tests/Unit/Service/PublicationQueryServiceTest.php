@@ -548,6 +548,26 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end testCatalogSearchQueryStripsACallerSuppliedSchemaAndRegister()
 
 	/**
+	 * REQ-CVS-002: the schemas saved on a catalogue decide what `GET /api/{catalogSlug}` lists.
+	 * "Raadsstukken" holds agendas (31); adding decisions (32) lists both; taking agendas off lists only decisions.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/catalogs/spec.md#requirement-an-administrator-chooses-the-kinds-of-publication-a-catalogue-holds-req-cvs-002
+	 *
+	 * @return void
+	 */
+	public function testTheCataloguesSavedSchemasDecideWhatItLists(): void {
+		$listed = fn (array $schemas): array => $this->service->buildCatalogSearchQuery(
+			catalog: ['slug' => 'raadsstukken', 'schemas' => $schemas, 'registers' => [20]],
+			queryParams: [],
+			objectService: new FakeSearchObjectService()
+		)['_schemas'];
+
+		$this->assertSame([31], $listed([31]));
+		$this->assertSame([31, 32], $listed([31, 32]));
+		$this->assertSame([32], $listed([32]));
+	}//end testTheCataloguesSavedSchemasDecideWhatItLists()
+
+	/**
 	 * A scalar `@self` (`?@self=x`) is not a filter set; it goes rather than
 	 * reaching OR, which would read `@self['schema']` off a string.
 	 *
