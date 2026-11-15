@@ -286,6 +286,20 @@ class WooServiceTest extends TestCase {
 	/** @var array<string, string> */
 	private array $store = [];
 
+	/**
+	 * The batch publication writer the service resolves documents through.
+	 *
+	 * @var \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter
+	 */
+	private \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter $writer;
+
+	/**
+	 * The root folder the stored documents live in.
+	 *
+	 * @var \OCP\Files\IRootFolder
+	 */
+	private \OCP\Files\IRootFolder $rootFolder;
+
 	protected function setUp(): void {
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->container = $this->createMock(ContainerInterface::class);
@@ -370,6 +384,8 @@ class WooServiceTest extends TestCase {
 		$linker->method('url')->willReturnCallback(static fn (string $id): string => 'https://example.org/p/' . $id);
 
 		$writer = new \OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter($root, $this->container, $linker, $this->l10n);
+		$this->writer = $writer;
+		$this->rootFolder = $root;
 		$this->service = new WooService(
 			new RegisterBindings($this->config, $this->container),
 			$this->userSession,
@@ -413,6 +429,52 @@ class WooServiceTest extends TestCase {
 		$this->assertCount(2, $this->deck->links);
 
 	}//end testCreateBatchPersistsAssessmentsAndBatch()
+
+	/**
+	 * REQ-PFF-001: the assessment's `fileType` is the type read from the stored
+	 * bytes; a caller's value that differs is kept as `fileTypeClaimed`, and a
+	 * document whose bytes cannot be read gets no type from the caller.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	public function testTheAssessmentFileTypeIsTheDetectedTypeAndTheClaimIsKept(): void {
+		$detector = $this->createMock(\OCP\Files\IMimeTypeDetector::class);
+		$detector->method('detectString')->willReturnCallback(
+			static fn (string $bytes): string => str_ends_with($bytes, '.pdf') ? 'application/pdf' : 'application/octet-stream'
+		);
+		$service = new WooService(
+			new RegisterBindings($this->config, $this->container),
+			$this->userSession,
+			$this->logger,
+			$this->l10n,
+			$this->writer,
+			new \OCA\OpenCatalogi\Service\Woo\DocumentRedactor($this->writer, $this->container, $this->l10n, $this->logger),
+			new \OCA\OpenCatalogi\Service\FileFacts($detector, $this->rootFolder)
+		);
+
+		$batch = $service->createBatch(
+			'WOO-2026-010',
+			[
+				['fileName' => 'a.pdf', 'fileType' => 'text/plain', 'documentReference' => 'doc-a'],
+				['fileName' => 'b.pdf', 'fileType' => 'application/pdf', 'documentReference' => 'doc-b'],
+				['fileName' => 'c.pdf', 'documentReference' => 'doc-c'],
+				['fileName' => 'gone.pdf', 'fileType' => 'application/pdf', 'documentReference' => 'doc-missing'],
+			]
+		);
+
+		[$claimed, $agreed, $silent, $missing] = $batch['assessments'];
+		$this->assertSame('application/pdf', $claimed['fileType']);
+		$this->assertSame('text/plain', $claimed['fileTypeClaimed']);
+		$this->assertSame('application/pdf', $agreed['fileType']);
+		$this->assertArrayNotHasKey('fileTypeClaimed', $agreed);
+		$this->assertSame('application/pdf', $silent['fileType']);
+		$this->assertArrayNotHasKey('fileTypeClaimed', $silent);
+		$this->assertSame('', $missing['fileType'], 'A document that cannot be read gets no type from the caller.');
+		$this->assertSame('application/pdf', $missing['fileTypeClaimed']);
+
+	}//end testTheAssessmentFileTypeIsTheDetectedTypeAndTheClaimIsKept()
 
 	public function testCreateBatchLinksOneCardPerAssessmentAndRecordsTheBatch(): void {
 		$batch = $this->service->createBatch(

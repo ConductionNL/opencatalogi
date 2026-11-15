@@ -241,6 +241,13 @@
             "facetable": false,
             "title": "File Type"
           },
+          "fileTypeClaimed": {
+            "type": "string",
+            "description": "The file type the caller sent, kept when it differs from the type read from the stored bytes (published-file-carries-its-facts REQ-PFF-001). Empty when they agree.",
+            "maxLength": 255,
+            "facetable": false,
+            "title": "File Type Claimed"
+          },
           "assessment": {
             "type": "string",
             "description": "The openbaarheid assessment decision for this document",
