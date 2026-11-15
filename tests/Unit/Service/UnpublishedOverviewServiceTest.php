@@ -194,6 +194,37 @@ class UnpublishedOverviewServiceTest extends TestCase {
 	}//end testDraftAndScheduledAreListedButPublicAndWithdrawnAreNot()
 
 	/**
+	 * The demo data's three example publications: the scheduled council
+	 * agenda is listed, the public annual report and the withdrawn quarterly
+	 * report are not (task 3.2).
+	 *
+	 * @return void
+	 */
+	public function testTheDemoDataListsItsScheduledExampleButNotTheWithdrawnOne(): void {
+		$register = json_decode((string)file_get_contents(__DIR__ . '/../../../lib/Settings/opencatalogi_mock_register.json'), true);
+		$rows = [];
+		foreach ($register['components']['objects'] as $object) {
+			$slug = (string)($object['@self']['slug'] ?? '');
+			if (($object['@self']['schema'] ?? '') !== 'publication' || str_starts_with($slug, 'example-') === false) {
+				continue;
+			}
+
+			$rows[] = $this->publication(
+				uuid: $slug,
+				title: (string)$object['title'],
+				publicationDate: ($object['publicationDate'] ?? null),
+				depublicationDate: ($object['depublicationDate'] ?? null),
+				updated: '2026-11-10T10:00:00+00:00'
+			);
+		}
+
+		$result = $this->service(publications: $rows)->publications(limit: 10);
+
+		$this->assertCount(expectedCount: 3, haystack: $rows);
+		$this->assertSame(expected: ['example-municipality-council-agenda'], actual: array_column($result['items'], 'publicationId'));
+	}//end testTheDemoDataListsItsScheduledExampleButNotTheWithdrawnOne()
+
+	/**
 	 * Every read goes through OpenRegister with RBAC on, newest first.
 	 *
 	 * @return void

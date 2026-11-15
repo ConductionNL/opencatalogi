@@ -16,6 +16,7 @@
 ## 3. Specs, seed data, docs and strings
 
 - [x] 3.1 Mark tasks of `dashboard-consume-or-aggregations` that wait on the `attachment` schema as superseded by this change (REQ-PUO-002). Verify: `openspec validate dashboard-consume-or-aggregations --strict` still passes.
-- [ ] 3.2 Add a third seed publication with a future `publicationDate` (REQ-PUO-001). Verify: a fresh install lists it in the widget and does not list the withdrawn second seed publication.
-  - Open: `lib/Settings/publication_register.json` holds no seed publications (its objects are a catalog, pages and a menu); the publication rows live in `opencatalogi_mock_register.json` and the example sets. Which of those is "the" seed needs deciding before a third one is added.
-- [ ] 3.3 Update `docs/` and `l10n/` (English and Dutch) for the new titles and empty states. Verify: `npm run lint` and the l10n check.
+- [x] 3.2 Add a third seed publication with a future `publicationDate` (REQ-PUO-001). Verify: a fresh install lists it in the widget and does not list the withdrawn second seed publication.
+  - Built: the seed is the demo data, as `publications-publish-and-withdraw-action` already decided for the second publication: `publication_register.json` carries no example rows (ADR-111, pinned by `PublicationStateServiceTest`). `lib/Settings/opencatalogi_mock_register.json` now has `example-municipality-council-agenda` with `publicationDate` 2030-01-01, far enough ahead to stay scheduled. `UnpublishedOverviewServiceTest::testTheDemoDataListsItsScheduledExampleButNotTheWithdrawnOne` runs the three example publications through the service: the agenda is listed, the public annual report and the withdrawn quarterly report are not. A live install of the demo data is not run here.
+- [x] 3.3 Update `docs/` and `l10n/` (English and Dutch) for the new titles and empty states. Verify: `npm run lint` and the l10n check.
+  - Built: `docs/features/dashboard.md` names the Unpublished documents widget and describes what both widgets list, the row link, the empty states, the 200-publication window and the demo row; the English and Dutch strings came with 2.1/2.2.
