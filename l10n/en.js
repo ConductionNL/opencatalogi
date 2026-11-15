@@ -1611,6 +1611,7 @@ OC.L10N.register(
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
         "Planning (does not publish)": "Planning (does not publish)",
+        "Open at the source": "Open at the source",
         "Plain language summary": "Plain language summary",
         "What this publication is about, in plain words for every reader.": "What this publication is about, in plain words for every reader.",
         "Reading level": "Reading level",
