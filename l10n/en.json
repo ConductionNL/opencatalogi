@@ -1575,7 +1575,22 @@
         "{donl} of {feed} datasets on data.overheid.nl, checked on {date}.": "{donl} of {feed} datasets on data.overheid.nl, checked on {date}.",
         "The data.overheid.nl registration could not be saved: %s": "The data.overheid.nl registration could not be saved: %s",
         "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on.": "Whether this catalog publishes its datasets as a DCAT-AP-NL feed (GET /api/catalogs/{slug}/dcat) and is listed in the instance document (GET /api/dcat). Read by DcatService and by DirectoryService to advertise dcatEndpoint. Without this declaration the catalog schema's hardValidation strips the key and the feed cannot be switched on.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "DCAT feed validation": "DCAT feed validation",
+        "Check the DCAT feed of each catalogue against DCAT-AP-NL and against what data.overheid.nl accepts.": "Check the DCAT feed of each catalogue against DCAT-AP-NL and against what data.overheid.nl accepts.",
+        "No catalogue publishes a DCAT feed yet.": "No catalogue publishes a DCAT feed yet.",
+        "Validate DCAT feed": "Validate DCAT feed",
+        "Mandatory properties checked on every dataset: {properties}": "Mandatory properties checked on every dataset: {properties}",
+        "Every dataset carries every checked property.": "Every dataset carries every checked property.",
+        "data.overheid.nl would accept this feed.": "data.overheid.nl would accept this feed.",
+        "data.overheid.nl would reject:": "data.overheid.nl would reject:",
+        "Harvest source address: {url}": "Harvest source address: {url}",
+        "The catalogues could not be loaded.": "The catalogues could not be loaded.",
+        "The DCAT feed could not be validated.": "The DCAT feed could not be validated.",
+        "Checked against DCAT-AP-NL {version}.": "Checked against DCAT-AP-NL {version}.",
+        "The feed declares DCAT-AP-NL {declared}, while {published} is the published version.": "The feed declares DCAT-AP-NL {declared}, while {published} is the published version.",
+        "{dataset}: the theme is not a data-theme from the controlled list.": "{dataset}: the theme is not a data-theme from the controlled list.",
+        "{dataset}: missing {properties}": "{dataset}: missing {properties}"
     },
     "plurals": {}
 }

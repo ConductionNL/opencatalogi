@@ -51,6 +51,15 @@ class DcatService implements DcatServiceInterface {
 	public const MAX_PER_PAGE = 1000;
 
 	/**
+	 * The DCAT-AP-NL properties every dataset must carry, in the order they are checked.
+	 *
+	 * Named so the validation report can say what it checked, not only what failed (DCAT-010).
+	 *
+	 * @var array<int, string>
+	 */
+	public const MANDATORY_DATASET_PROPERTIES = ['dct:title', 'dct:publisher', 'dcat:landingPage'];
+
+	/**
 	 * DcatService constructor.
 	 *
 	 * @param OpenRegisterLookup $openRegister The guarded OpenRegister services.
@@ -860,9 +869,8 @@ class DcatService implements DcatServiceInterface {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md#requirement-admin-configuration-and-feed-validation-dcat-010
 	 */
 	public function mandatoryViolations(array $node): array {
-		$required = ['dct:title', 'dct:publisher', 'dcat:landingPage'];
 		$missing = [];
-		foreach ($required as $property) {
+		foreach (self::MANDATORY_DATASET_PROPERTIES as $property) {
 			if (isset($node[$property]) === false || $node[$property] === '' || $node[$property] === []) {
 				$missing[] = $property;
 			}

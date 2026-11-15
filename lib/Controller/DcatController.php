@@ -31,6 +31,7 @@ use OCA\OpenCatalogi\Contract\DcatServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\StandardsVersionServiceInterface;
 use OCA\OpenCatalogi\Http\DcatResponse;
+use OCA\OpenCatalogi\Service\DcatService;
 use OCA\OpenCatalogi\Service\DonlRegistrationService;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -234,6 +235,7 @@ class DcatController extends Controller {
 					'valid' => empty($violations),
 					'violations' => $violations,
 					'profile' => $this->standardsVersions->dcatApNlVersion(),
+					'checked' => DcatService::MANDATORY_DATASET_PROPERTIES,
 				],
 				200
 			);
