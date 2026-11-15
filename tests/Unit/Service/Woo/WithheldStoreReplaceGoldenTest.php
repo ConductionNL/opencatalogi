@@ -33,6 +33,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Golden test for WithheldDocumentStore::replace.
@@ -211,7 +213,9 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 				return ['results' => $rows];
 			}
 
-			public function saveObject(array $object, $register = null, $schema = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saves++;
 				$object['recordedAt'] = (preg_match('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d$/', (string)$object['recordedAt']) === 1) ? '<now>' : $object['recordedAt'];
 				$this->log[] = ['save', $object, $register, $schema, $_rbac, $_multitenancy];
@@ -236,7 +240,10 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 				return array_filter(array_merge($object, ['id' => $id]), static fn ($value): bool => $value !== null);
 			}
 
-			public function deleteObject(string $uuid, $register = null, $schema = null, bool $_rbac = true, bool $_multitenancy = true): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
+				$uuid = $deletion->uuid;
+				$register = $deletion->target->register;
+				$schema = $deletion->target->schema;
 				$this->log[] = ['delete', $uuid, $register, $schema, $_rbac, $_multitenancy];
 				if (in_array($uuid, ($this->world['failDelete'] ?? []), true) === true) {
 					throw new RuntimeException('delete of ' . $uuid . ' failed');

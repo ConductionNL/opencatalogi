@@ -1636,7 +1636,8 @@ OC.L10N.register(
         "What would have been sent.": "What would have been sent.",
         "When the hand-over was held.": "When the hand-over was held.",
         "Who started the hand-over, or empty for a background job.": "Who started the hand-over, or empty for a background job.",
-        "Why it was held: staging, or a mode that could not be read.": "Why it was held: staging, or a mode that could not be read."
+        "Why it was held: staging, or a mode that could not be read.": "Why it was held: staging, or a mode that could not be read.",
+        "Open at the source": "Open at the source"
     },
     "nplurals=2; plural=(n != 1);"
 )

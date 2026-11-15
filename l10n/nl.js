@@ -1591,7 +1591,8 @@ OC.L10N.register(
         "What would have been sent.": "Wat er verstuurd zou zijn.",
         "When the hand-over was held.": "Wanneer de overdracht werd vastgehouden.",
         "Who started the hand-over, or empty for a background job.": "Wie de overdracht startte, of leeg voor een achtergrondtaak.",
-        "Why it was held: staging, or a mode that could not be read.": "Waarom die werd vastgehouden: staging, of een modus die niet kon worden gelezen."
+        "Why it was held: staging, or a mode that could not be read.": "Waarom die werd vastgehouden: staging, of een modus die niet kon worden gelezen.",
+        "Open at the source": "Openen bij de bron"
     },
     "nplurals=2; plural=(n != 1);"
 )
