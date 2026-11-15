@@ -30,8 +30,8 @@
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\HandoverStateInterface;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -52,7 +52,7 @@ class WooReadinessController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param HarvesterReadinessServiceInterface $wooReadinessService The readiness self-check service.
 	 * @param ConnectionReporterInterface|null $connectionReporter Tells integriq what a check met, or nothing when absent.
-	 * @param WooHandoverState|null $handover What the hand-over of the Woo requests to dossiq left, or nothing when absent.
+	 * @param HandoverStateInterface|null $handover What the hand-over of the Woo requests to dossiq left, or nothing when absent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -61,7 +61,7 @@ class WooReadinessController extends Controller {
 		IRequest $request,
 		private readonly HarvesterReadinessServiceInterface $wooReadinessService,
 		private readonly ?ConnectionReporterInterface $connectionReporter = null,
-		private readonly ?WooHandoverState $handover = null,
+		private readonly ?HandoverStateInterface $handover = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 

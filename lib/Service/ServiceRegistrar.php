@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\IntakeForwardInterface;
 use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;
@@ -48,6 +49,7 @@ use OCA\OpenCatalogi\Contract\IndexRegistrationServiceInterface;
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestIntakeInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestServiceInterface;
+use OCA\OpenCatalogi\Contract\HandoverStateInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
 use OCA\OpenCatalogi\Contract\MarkupRenderServiceInterface;
@@ -80,6 +82,7 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCA\OpenCatalogi\Service\Table\PublishedTableService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
@@ -103,6 +106,7 @@ use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
 use OCA\OpenCatalogi\Service\Publication\PublishedRecordView;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
+use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
 use OCA\OpenCatalogi\Service\Woo\WooRequestIntake;
@@ -169,6 +173,8 @@ class ServiceRegistrar {
 		DemoDataServiceInterface::class => DemoDataService::class,
 		WithheldFromPublicationInterface::class => WithheldFromPublication::class,
 		InformationRequestStoreInterface::class => WooRequestStore::class,
+		HandoverStateInterface::class => HandoverState::class,
+		IntakeForwardInterface::class => DossiqWooForward::class,
 		PlooiDeliveryServiceInterface::class => PlooiDeliveryService::class,
 		MarkupRenderServiceInterface::class => MarkupRenderService::class,
 		DepublicationServiceInterface::class => DepublicationService::class,

@@ -8,7 +8,14 @@
 			{{ t('opencatalogi', 'Woo requests') }}
 		</h3>
 		<NcNoteCard v-if="missing" type="warning" data-testid="dossiq-missing">
-			<p>{{ t('opencatalogi', 'Woo requests are handled by dossiq, which is not installed.') }}</p>
+			<p>
+				{{
+					t(
+						'opencatalogi',
+						'Woo requests are handled by dossiq, which is not installed.',
+					)
+				}}
+			</p>
 			<a :href="appStoreUrl" target="_blank" rel="noopener noreferrer">
 				{{ t('opencatalogi', 'Install dossiq from the app store') }}
 			</a>
@@ -27,7 +34,11 @@
 import axios from '@nextcloud/axios'
 import { generateUrl } from '@nextcloud/router'
 import { NcNoteCard } from '@nextcloud/vue'
-import { DOSSIQ_APP_STORE_URL, dossiqMissing, wooRequestHandoverLines } from './wooRequestHandover.js'
+import {
+	DOSSIQ_APP_STORE_URL,
+	dossiqMissing,
+	wooRequestHandoverLines,
+} from './recordHandover.js'
 
 /**
  * The Woo requests in the Woo section of the admin settings: without dossiq a
@@ -35,7 +46,7 @@ import { DOSSIQ_APP_STORE_URL, dossiqMissing, wooRequestHandoverLines } from './
  * hand-over of the stored requests left (REQ-WHD-003).
  */
 export default {
-	name: 'WooRequestHandover',
+	name: 'RecordHandover',
 
 	components: { NcNoteCard },
 
@@ -54,7 +65,9 @@ export default {
 
 		/** @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-3.2 */
 		lines() {
-			return wooRequestHandoverLines(this.state, this.t, (value) => new Date(value).toLocaleString())
+			return wooRequestHandoverLines(this.state, this.t, (value) =>
+				new Date(value).toLocaleString(),
+			)
 		},
 	},
 
@@ -71,7 +84,9 @@ export default {
 		 */
 		async load() {
 			try {
-				const { data } = await axios.get(generateUrl('/apps/opencatalogi/api/woo/readiness'))
+				const { data } = await axios.get(
+					generateUrl('/apps/opencatalogi/api/woo/readiness'),
+				)
 				this.state = data?.wooRequests ?? null
 			} catch {
 				this.state = null

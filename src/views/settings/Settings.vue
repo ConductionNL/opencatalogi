@@ -253,7 +253,7 @@
 
 				<PublishRightsLine />
 
-				<WooRequestHandover />
+				<RecordHandover />
 
 				<h3 class="woo-registration-heading">
 					{{ t('opencatalogi', 'National delivery channels') }}
@@ -547,8 +547,8 @@ import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
 import PublishRightsLine from './PublishRightsLine.vue'
+import RecordHandover from './RecordHandover.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
-import WooRequestHandover from './WooRequestHandover.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
 	directorySyncCounts,
@@ -654,7 +654,7 @@ export default defineComponent({
 		MinusCircle,
 		InformationOutline,
 		PublishRightsLine,
-		WooRequestHandover,
+		RecordHandover,
 		WooIndexConnection,
 		PubliccodeHarvest,
 	},

@@ -33,7 +33,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTime;
 use DOMDocument;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
@@ -125,7 +125,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @param SettingsService $settingsService The settings service, used to resolve WOO-enabled catalogs.
 	 * @param IAppConfig $config App configuration (report persistence + registration status).
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
-	 * @param WooHandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
+	 * @param HandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
@@ -134,7 +134,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		private readonly SettingsService $settingsService,
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
-		private readonly ?WooHandoverState $handover = null,
+		private readonly ?HandoverState $handover = null,
 	) {
 
 	}//end __construct()

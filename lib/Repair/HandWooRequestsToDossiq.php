@@ -42,8 +42,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Repair;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\HandoverStateInterface;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCP\App\IAppManager;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -87,14 +87,14 @@ class HandWooRequestsToDossiq implements IRepairStep {
 	 *
 	 * @param IAppManager $appManager Whether dossiq is enabled.
 	 * @param ContainerInterface $container Reaches dossiq's import, OpenRegister's timers and the stored requests.
-	 * @param WooHandoverState|null $state Keeps what the hand-over left; null keeps nothing.
+	 * @param HandoverStateInterface|null $state Keeps what the hand-over left; null keeps nothing.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly IAppManager $appManager,
 		private readonly ContainerInterface $container,
-		private readonly ?WooHandoverState $state = null,
+		private readonly ?HandoverStateInterface $state = null,
 	) {
 	}//end __construct()
 

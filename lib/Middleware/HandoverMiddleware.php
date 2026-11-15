@@ -1,7 +1,7 @@
 <?php
 
 /**
- * OpenCatalogi Woo Request Handover Middleware.
+ * OpenCatalogi Handover Middleware.
  *
  * The Woo request routes once dossiq handles the requests: without dossiq they
  * do not exist here (404), and once every stored request moved to dossiq a
@@ -24,8 +24,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Middleware;
 
-use OCA\OpenCatalogi\Controller\WooRequestController;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
+use OCA\OpenCatalogi\Contract\HandedOverRoutes;
+use OCA\OpenCatalogi\Contract\HandoverStateInterface;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -38,12 +38,7 @@ use RuntimeException;
  *
  * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-with-nothing-left-to-migrate-the-request-schema-is-read-only-req-whd-004
  */
-class WooRequestHandoverMiddleware extends Middleware {
-
-	/**
-	 * The routes that change a stored request.
-	 */
-	public const WRITE_METHODS = ['extend', 'pause', 'resume', 'attachBatch'];
+class HandoverMiddleware extends Middleware {
 
 	/**
 	 * The marker thrown when dossiq is not installed.
@@ -58,11 +53,11 @@ class WooRequestHandoverMiddleware extends Middleware {
 	/**
 	 * Constructor.
 	 *
-	 * @param WooHandoverState $state Whether dossiq is installed and the requests read-only.
+	 * @param HandoverStateInterface $state Whether dossiq is installed and the requests read-only.
 	 * @param IL10N $l10n Translates the answers.
 	 */
 	public function __construct(
-		private readonly WooHandoverState $state,
+		private readonly HandoverStateInterface $state,
 		private readonly IL10N $l10n,
 	) {
 	}//end __construct()
@@ -80,7 +75,7 @@ class WooRequestHandoverMiddleware extends Middleware {
 	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-without-dossiq-opencatalogi-takes-no-woo-requests-req-whd-005
 	 */
 	public function beforeController($controller, $methodName): void {
-		if (($controller instanceof WooRequestController) === false) {
+		if (($controller instanceof HandedOverRoutes) === false) {
 			return;
 		}
 
@@ -88,7 +83,7 @@ class WooRequestHandoverMiddleware extends Middleware {
 			throw new RuntimeException(self::NO_DOSSIQ);
 		}
 
-		if (in_array((string)$methodName, self::WRITE_METHODS, true) === true && $this->state->isReadOnly() === true) {
+		if (in_array((string)$methodName, $controller::WRITE_ROUTES, true) === true && $this->state->isReadOnly() === true) {
 			throw new RuntimeException(self::READ_ONLY);
 		}
 	}//end beforeController()

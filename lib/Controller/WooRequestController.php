@@ -34,8 +34,9 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\HandedOverRoutes;
+use OCA\OpenCatalogi\Contract\IntakeForwardInterface;
 use OCA\OpenCatalogi\Contract\StatutoryTermInterface;
-use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
@@ -57,7 +58,12 @@ use OCP\IUserSession;
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
-class WooRequestController extends Controller {
+class WooRequestController extends Controller implements HandedOverRoutes {
+
+	/**
+	 * The routes that change a stored request; the hand-over middleware answers them 410 once the requests are read-only.
+	 */
+	public const WRITE_ROUTES = ['extend', 'pause', 'resume', 'attachBatch'];
 
 	/**
 	 * The status a request moves to after its term is paused or resumed.
@@ -162,7 +168,7 @@ class WooRequestController extends Controller {
 		$dossiqForward = $this->records->dossiqForward();
 		if ($dossiqForward !== null) {
 			return $this->forwardedResponse(
-				answer: $dossiqForward->forward(answers: $this->intakeInput(), receivedAt: '', origin: DossiqWooForward::ORIGIN_OPENCATALOGI)
+				answer: $dossiqForward->forward(answers: $this->intakeInput(), receivedAt: '', origin: IntakeForwardInterface::ORIGIN_OPENCATALOGI)
 			);
 		}
 

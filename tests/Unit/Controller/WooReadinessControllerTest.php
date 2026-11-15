@@ -10,7 +10,7 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\WooReadinessController;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -61,7 +61,7 @@ class WooReadinessControllerTest extends TestCase {
 	public function testReportCarriesTheWooRequestHandover(): void {
 		$this->wooReadinessService->method('getPersistedReport')->willReturn(null);
 		$state = ['unmigrated' => 0, 'failed' => 0, 'checkedAt' => '2026-11-15T10:00:00+00:00', 'readOnly' => true, 'dossiqInstalled' => true];
-		$handover = $this->createMock(WooHandoverState::class);
+		$handover = $this->createMock(HandoverState::class);
 		$handover->expects($this->once())->method('report')->willReturn($state);
 
 		$controller = new WooReadinessController('opencatalogi', $this->request, $this->wooReadinessService, null, $handover);

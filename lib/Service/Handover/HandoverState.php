@@ -1,14 +1,14 @@
 <?php
 
 /**
- * OpenCatalogi Woo Handover State.
+ * OpenCatalogi Handover State.
  *
  * What the hand-over of the stored Woo requests to dossiq left behind: how many
  * requests are not moved yet, how many dossiq could not move, when that was
  * last counted, and whether the request schema is read-only here.
  *
  * @category Service
- * @package  OCA\OpenCatalogi\Service\Woo
+ * @package  OCA\OpenCatalogi\Service\Handover
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
@@ -21,8 +21,9 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenCatalogi\Service\Woo;
+namespace OCA\OpenCatalogi\Service\Handover;
 
+use OCA\OpenCatalogi\Contract\HandoverStateInterface;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 
@@ -34,7 +35,7 @@ use OCP\IAppConfig;
  *
  * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-every-stored-request-is-migrated-with-its-term-and-opencatalogis-timer-is-stopped-after-req-whd-003
  */
-class WooHandoverState {
+class HandoverState implements HandoverStateInterface {
 
 	/**
 	 * How many requests are not moved to dossiq.

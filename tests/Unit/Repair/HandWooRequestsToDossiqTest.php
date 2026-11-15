@@ -23,7 +23,7 @@ namespace Unit\Repair;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Repair\HandWooRequestsToDossiq;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -39,7 +39,7 @@ use RuntimeException;
  * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md
  */
 #[CoversClass(HandWooRequestsToDossiq::class)]
-#[UsesClass(WooHandoverState::class)]
+#[UsesClass(HandoverState::class)]
 class HandWooRequestsToDossiqTest extends TestCase {
 
 	/**
@@ -329,7 +329,7 @@ class HandWooRequestsToDossiqTest extends TestCase {
 			$seen->output[] = 'warning: ' . $message;
 		});
 
-		$state = new WooHandoverState(config: $config, appManager: $apps);
+		$state = new HandoverState(config: $config, appManager: $apps);
 		(new HandWooRequestsToDossiq(appManager: $apps, container: $container, state: $state))->run(output: $output);
 
 		return ['imported' => $seen->imported, 'cancelled' => $seen->cancelled, 'output' => $seen->output, 'config' => $seen->config];

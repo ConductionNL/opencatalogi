@@ -168,7 +168,7 @@ class ListenerRegistrar {
 	private function registerWriteGuards(IRegistrationContext $context): void {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
-		$context->registerEventListener(ObjectCreatingEvent::class, WooRequestReadOnlyListener::class);
-		$context->registerEventListener(ObjectUpdatingEvent::class, WooRequestReadOnlyListener::class);
+		$context->registerEventListener(ObjectCreatingEvent::class, HandedOverRecordsListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, HandedOverRecordsListener::class);
 	}//end registerWriteGuards()
 }//end class

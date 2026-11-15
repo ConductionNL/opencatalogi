@@ -26,12 +26,12 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
-use OCA\OpenCatalogi\Middleware\WooRequestHandoverMiddleware;
+use OCA\OpenCatalogi\Middleware\HandoverMiddleware;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
 use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
 use OCP\App\IAppManager;
@@ -937,16 +937,16 @@ class WooRequestControllerTest extends TestCase {
 	/**
 	 * Call a route the way Nextcloud's dispatcher does: the hand-over middleware first.
 	 *
-	 * @param WooHandoverState $state The hand-over state.
+	 * @param HandoverState $state The hand-over state.
 	 * @param string $method The route method.
 	 * @param array<string, mixed> $args Its arguments.
 	 *
 	 * @return \OCP\AppFramework\Http\Response The answer.
 	 */
-	private function dispatch(WooHandoverState $state, string $method, array $args = []): \OCP\AppFramework\Http\Response {
+	private function dispatch(HandoverState $state, string $method, array $args = []): \OCP\AppFramework\Http\Response {
 		$l10n = $this->createMock(IL10N::class);
 		$l10n->method('t')->willReturnArgument(0);
-		$middleware = new WooRequestHandoverMiddleware(state: $state, l10n: $l10n);
+		$middleware = new HandoverMiddleware(state: $state, l10n: $l10n);
 		try {
 			$middleware->beforeController($this->controller, $method);
 			return $this->controller->{$method}(...$args);
@@ -961,9 +961,9 @@ class WooRequestControllerTest extends TestCase {
 	 * @param bool $dossiq Whether dossiq is installed.
 	 * @param bool $readOnly Whether the requests are read-only here.
 	 *
-	 * @return WooHandoverState
+	 * @return HandoverState
 	 */
-	private function handover(bool $dossiq, bool $readOnly): WooHandoverState {
+	private function handover(bool $dossiq, bool $readOnly): HandoverState {
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isEnabledForAnyone')->with('dossiq')->willReturn($dossiq);
 		$config = $this->createMock(IAppConfig::class);
@@ -971,7 +971,7 @@ class WooRequestControllerTest extends TestCase {
 			static fn (string $app, string $key, string $default = ''): string => ($key === 'woo_requests_read_only' && $readOnly === true ? '1' : $default)
 		);
 
-		return new WooHandoverState(config: $config, appManager: $apps);
+		return new HandoverState(config: $config, appManager: $apps);
 	}//end handover()
 
 	/**
@@ -1033,7 +1033,7 @@ class WooRequestControllerTest extends TestCase {
 		$this->terms->expects(self::never())->method('resume');
 		$state = $this->handover(dossiq: true, readOnly: true);
 
-		foreach (WooRequestHandoverMiddleware::WRITE_METHODS as $route) {
+		foreach (WooRequestController::WRITE_ROUTES as $route) {
 			$response = $this->dispatch(state: $state, method: $route, args: ['requestId' => 'req-1']);
 			$this->assertSame(Http::STATUS_GONE, $response->getStatus(), $route);
 			$this->assertSame(
@@ -1063,8 +1063,9 @@ class WooRequestControllerTest extends TestCase {
 		$this->assertSame(Http::STATUS_OK, $this->dispatch(state: $state, method: 'attachBatch', args: ['requestId' => 'req-1'])->getStatus());
 
 		$l10n = $this->createMock(IL10N::class);
-		$middleware = new WooRequestHandoverMiddleware(state: $this->handover(dossiq: false, readOnly: true), l10n: $l10n);
+		$middleware = new HandoverMiddleware(state: $this->handover(dossiq: false, readOnly: true), l10n: $l10n);
 		$middleware->beforeController(new \stdClass(), 'extend');
+		$this->assertSame(['extend', 'pause', 'resume', 'attachBatch'], WooRequestController::WRITE_ROUTES);
 
 		$other = new \RuntimeException('something else');
 		$this->expectExceptionObject($other);

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for WooRequestReadOnlyListener.
+ * Unit tests for HandedOverRecordsListener.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests
@@ -20,8 +20,8 @@ declare(strict_types=1);
 
 namespace Unit\Listener;
 
-use OCA\OpenCatalogi\Listener\WooRequestReadOnlyListener;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
+use OCA\OpenCatalogi\Listener\HandedOverRecordsListener;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -37,9 +37,9 @@ use PHPUnit\Framework\TestCase;
  *
  * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-4.1
  */
-#[CoversClass(WooRequestReadOnlyListener::class)]
-#[UsesClass(WooHandoverState::class)]
-class WooRequestReadOnlyListenerTest extends TestCase {
+#[CoversClass(HandedOverRecordsListener::class)]
+#[UsesClass(HandoverState::class)]
+class HandedOverRecordsListenerTest extends TestCase {
 
 	private const SCHEMA = '17';
 
@@ -60,9 +60,9 @@ class WooRequestReadOnlyListenerTest extends TestCase {
 	 *
 	 * @param bool $readOnly Whether the schema is read-only.
 	 *
-	 * @return WooRequestReadOnlyListener The listener.
+	 * @return HandedOverRecordsListener The listener.
 	 */
-	private function listener(bool $readOnly): WooRequestReadOnlyListener {
+	private function listener(bool $readOnly): HandedOverRecordsListener {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			static fn (string $app, string $key, string $default = ''): string => match ($key) {
@@ -72,9 +72,9 @@ class WooRequestReadOnlyListenerTest extends TestCase {
 			}
 		);
 
-		return new WooRequestReadOnlyListener(
+		return new HandedOverRecordsListener(
 			config: $config,
-			state: new WooHandoverState(config: $config, appManager: $this->createMock(IAppManager::class))
+			state: new HandoverState(config: $config, appManager: $this->createMock(IAppManager::class))
 		);
 	}//end listener()
 
@@ -117,7 +117,7 @@ class WooRequestReadOnlyListenerTest extends TestCase {
 		$change = self::update(data: ['status' => 'closed'] + self::STORED);
 		$listener->handle(event: $change);
 		$this->assertTrue($change->isPropagationStopped());
-		$this->assertSame(['message' => WooRequestReadOnlyListener::REFUSAL], $change->getErrors());
+		$this->assertSame(['message' => HandedOverRecordsListener::REFUSAL], $change->getErrors());
 
 		$stamped = array_reverse(self::STORED, true);
 		$stamped['requester'] = ['email' => 'a@example.nl', 'name' => 'A. Jansen'];
@@ -142,7 +142,7 @@ class WooRequestReadOnlyListenerTest extends TestCase {
 		$this->listener(readOnly: true)->handle(event: $create);
 
 		$this->assertTrue($create->isPropagationStopped());
-		$this->assertSame(['message' => WooRequestReadOnlyListener::REFUSAL], $create->getErrors());
+		$this->assertSame(['message' => HandedOverRecordsListener::REFUSAL], $create->getErrors());
 	}//end testACreateIsRefused()
 
 	/**

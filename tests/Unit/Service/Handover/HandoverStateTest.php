@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Unit tests for WooHandoverState.
+ * Unit tests for HandoverState.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests
@@ -18,9 +18,9 @@
 
 declare(strict_types=1);
 
-namespace Unit\Service\Woo;
+namespace Unit\Service\Handover;
 
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -31,8 +31,8 @@ use PHPUnit\Framework\TestCase;
  *
  * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-3.2
  */
-#[CoversClass(WooHandoverState::class)]
-class WooHandoverStateTest extends TestCase {
+#[CoversClass(HandoverState::class)]
+class HandoverStateTest extends TestCase {
 
 	/**
 	 * The stored values, by key.
@@ -46,9 +46,9 @@ class WooHandoverStateTest extends TestCase {
 	 *
 	 * @param bool $dossiq Whether dossiq is enabled.
 	 *
-	 * @return WooHandoverState The state.
+	 * @return HandoverState The state.
 	 */
-	private function state(bool $dossiq = true): WooHandoverState {
+	private function state(bool $dossiq = true): HandoverState {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturnCallback(
 			fn (string $app, string $key, string $default = ''): string => ($this->stored[$key] ?? $default)
@@ -63,7 +63,7 @@ class WooHandoverStateTest extends TestCase {
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('isEnabledForAnyone')->with('dossiq')->willReturn($dossiq);
 
-		return new WooHandoverState(config: $config, appManager: $apps);
+		return new HandoverState(config: $config, appManager: $apps);
 	}//end state()
 
 	/**

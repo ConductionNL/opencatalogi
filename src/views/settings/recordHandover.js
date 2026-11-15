@@ -39,17 +39,35 @@ export function wooRequestHandoverLines(state, t, formatDate) {
 		return []
 	}
 	if (state.unmigrated === null || state.unmigrated === undefined) {
-		return [t('opencatalogi', 'The Woo requests stored here have not been handed to dossiq yet.')]
+		return [
+			t(
+				'opencatalogi',
+				'The Woo requests stored here have not been handed to dossiq yet.',
+			),
+		]
 	}
 	const lines = [
-		t('opencatalogi', 'Woo requests not yet moved to dossiq: {count}', { count: state.unmigrated }),
-		t('opencatalogi', 'Of those, dossiq could not move: {count}', { count: state.failed ?? 0 }),
+		t('opencatalogi', 'Woo requests not yet moved to dossiq: {count}', {
+			count: state.unmigrated,
+		}),
+		t('opencatalogi', 'Of those, dossiq could not move: {count}', {
+			count: state.failed ?? 0,
+		}),
 	]
 	if (state.checkedAt) {
-		lines.push(t('opencatalogi', 'Counted on {date}', { date: formatDate(state.checkedAt) }))
+		lines.push(
+			t('opencatalogi', 'Counted on {date}', {
+				date: formatDate(state.checkedAt),
+			}),
+		)
 	}
 	if (state.readOnly === true) {
-		lines.push(t('opencatalogi', 'Every Woo request has moved to dossiq; the requests stored here are read-only.'))
+		lines.push(
+			t(
+				'opencatalogi',
+				'Every Woo request has moved to dossiq; the requests stored here are read-only.',
+			),
+		)
 	}
 	return lines
 }

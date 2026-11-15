@@ -306,7 +306,7 @@ class ApplicationRegisterInvariantTest extends TestCase {
 
 		foreach (['ObjectCreatingEvent', 'ObjectUpdatingEvent'] as $event) {
 			$this->assertMatchesRegularExpression(
-				'/registerEventListener\(\s*' . $event . '::class,\s*WooRequestReadOnlyListener::class\s*\)/',
+				'/registerEventListener\(\s*' . $event . '::class,\s*HandedOverRecordsListener::class\s*\)/',
 				$body,
 				'the Woo request read-only guard must listen on ' . $event
 			);
@@ -314,7 +314,7 @@ class ApplicationRegisterInvariantTest extends TestCase {
 		}
 
 		$this->assertDoesNotMatchRegularExpression(
-			'/registerEventListener\(\s*Object(Created|Updated)Event::class,\s*WooRequestReadOnlyListener::class/',
+			'/registerEventListener\(\s*Object(Created|Updated)Event::class,\s*HandedOverRecordsListener::class/',
 			$body,
 			'on a post-save event the guard would refuse a write that already happened'
 		);
@@ -332,9 +332,9 @@ class ApplicationRegisterInvariantTest extends TestCase {
 	 */
 	public function testTheWooRequestRoutesAreGuardedByTheHandoverMiddleware(): void {
 		$this->assertMatchesRegularExpression(
-			'/registerMiddleware\(\s*\\\\?OCA\\\\OpenCatalogi\\\\Middleware\\\\WooRequestHandoverMiddleware::class\s*\)/',
-			$this->methodBody($this->source(), 'public function register('),
-			'Application::register() must register WooRequestHandoverMiddleware'
+			'/registerMiddleware\(\s*HandoverMiddleware::class\s*\)/',
+			$this->methodBody($this->source($this->registrars()['MiddlewareRegistrar']), 'public function register('),
+			'MiddlewareRegistrar::register() must register HandoverMiddleware'
 		);
 	}//end testTheWooRequestRoutesAreGuardedByTheHandoverMiddleware()
 }//end class

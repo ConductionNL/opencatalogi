@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Contract\IntakeForwardInterface;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -35,21 +36,12 @@ use Throwable;
  * and `caseUrl` unchanged. A throwing call, or an answer missing one of the
  * five keys or carrying a non-string in one, answers `unavailable`.
  */
-class DossiqWooForward {
+class DossiqWooForward implements IntakeForwardInterface {
 
 	/**
 	 * The dossiq class that receives a Woo request.
 	 */
 	public const INTAKE_CLASS = 'OCA\\Dossiq\\Woo\\WooRequestIntake';
-
-	/**
-	 * The five keys every answer carries, OpenCatalogi's `receiveWooRequest()` contract.
-	 */
-	public const ANSWER_KEYS = ['outcome', 'requestId', 'reference', 'dueAt', 'message'];
-
-	public const ORIGIN_PORTAL_FORM = 'portal-form';
-
-	public const ORIGIN_OPENCATALOGI = 'opencatalogi';
 
 	/**
 	 * Constructor.

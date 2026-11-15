@@ -6,7 +6,11 @@
  * (woo-request-intake-hands-over-to-dossiq, REQ-WHD-003 and REQ-WHD-005). Offline, no DOM.
  */
 import { describe, expect, it } from 'vitest'
-import { DOSSIQ_APP_STORE_URL, dossiqMissing, wooRequestHandoverLines } from '../../src/views/settings/wooRequestHandover.js'
+import {
+	DOSSIQ_APP_STORE_URL,
+	dossiqMissing,
+	wooRequestHandoverLines,
+} from '../../src/views/settings/recordHandover.js'
 
 /**
  * A translate double that fills `{name}` placeholders like Nextcloud's.
@@ -18,14 +22,28 @@ import { DOSSIQ_APP_STORE_URL, dossiqMissing, wooRequestHandoverLines } from '..
  */
 function t(app, text, vars = {}) {
 	expect(app).toBe('opencatalogi')
-	return text.replace(/\{(\w+)\}/g, (match, name) => (name in vars ? String(vars[name]) : match))
+	return text.replace(/\{(\w+)\}/g, (match, name) =>
+		name in vars ? String(vars[name]) : match,
+	)
 }
 
 const date = (value) => 'on ' + value.slice(0, 10)
 
 describe('wooRequestHandoverLines', () => {
 	it('says what the hand-over left, and when it was counted', () => {
-		expect(wooRequestHandoverLines({ unmigrated: 2, failed: 1, checkedAt: '2026-11-15T10:00:00+00:00', readOnly: false, dossiqInstalled: true }, t, date)).toEqual([
+		expect(
+			wooRequestHandoverLines(
+				{
+					unmigrated: 2,
+					failed: 1,
+					checkedAt: '2026-11-15T10:00:00+00:00',
+					readOnly: false,
+					dossiqInstalled: true,
+				},
+				t,
+				date,
+			),
+		).toEqual([
 			'Woo requests not yet moved to dossiq: 2',
 			'Of those, dossiq could not move: 1',
 			'Counted on on 2026-11-15',
@@ -33,7 +51,17 @@ describe('wooRequestHandoverLines', () => {
 	})
 
 	it('says the stored requests are read-only once every one moved', () => {
-		const lines = wooRequestHandoverLines({ unmigrated: 0, failed: 0, checkedAt: '', readOnly: true, dossiqInstalled: true }, t, date)
+		const lines = wooRequestHandoverLines(
+			{
+				unmigrated: 0,
+				failed: 0,
+				checkedAt: '',
+				readOnly: true,
+				dossiqInstalled: true,
+			},
+			t,
+			date,
+		)
 
 		expect(lines).toEqual([
 			'Woo requests not yet moved to dossiq: 0',
@@ -43,13 +71,37 @@ describe('wooRequestHandoverLines', () => {
 	})
 
 	it('says the hand-over has not run before it did', () => {
-		expect(wooRequestHandoverLines({ unmigrated: null, failed: null, checkedAt: '', readOnly: false, dossiqInstalled: true }, t, date)).toEqual([
+		expect(
+			wooRequestHandoverLines(
+				{
+					unmigrated: null,
+					failed: null,
+					checkedAt: '',
+					readOnly: false,
+					dossiqInstalled: true,
+				},
+				t,
+				date,
+			),
+		).toEqual([
 			'The Woo requests stored here have not been handed to dossiq yet.',
 		])
 	})
 
 	it('shows no counts without dossiq or without an answer', () => {
-		expect(wooRequestHandoverLines({ unmigrated: 2, failed: 0, checkedAt: '', readOnly: false, dossiqInstalled: false }, t, date)).toEqual([])
+		expect(
+			wooRequestHandoverLines(
+				{
+					unmigrated: 2,
+					failed: 0,
+					checkedAt: '',
+					readOnly: false,
+					dossiqInstalled: false,
+				},
+				t,
+				date,
+			),
+		).toEqual([])
 		expect(wooRequestHandoverLines(null, t, date)).toEqual([])
 	})
 })

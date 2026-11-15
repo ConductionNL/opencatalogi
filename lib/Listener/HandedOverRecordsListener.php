@@ -1,7 +1,7 @@
 <?php
 
 /**
- * OpenCatalogi Woo Request Read-Only Listener.
+ * OpenCatalogi Handed Over Records Listener.
  *
  * Once every stored Woo request has moved to dossiq, the request schema is
  * read-only here: no new request, and no change to a stored one, except the
@@ -23,7 +23,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Listener;
 
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
+use OCA\OpenCatalogi\Contract\HandoverStateInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Event\ObjectCreatingEvent;
 use OCA\OpenRegister\Event\ObjectUpdatingEvent;
@@ -37,7 +37,7 @@ use OCP\IAppConfig;
  * @template-implements IEventListener<Event>
  * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md#requirement-with-nothing-left-to-migrate-the-request-schema-is-read-only-req-whd-004
  */
-class WooRequestReadOnlyListener implements IEventListener {
+class HandedOverRecordsListener implements IEventListener {
 
 	/**
 	 * The refusal.
@@ -53,11 +53,11 @@ class WooRequestReadOnlyListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Names the Woo request schema.
-	 * @param WooHandoverState $state Whether the schema is read-only.
+	 * @param HandoverStateInterface $state Whether the schema is read-only.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly WooHandoverState $state,
+		private readonly HandoverStateInterface $state,
 	) {
 	}//end __construct()
 

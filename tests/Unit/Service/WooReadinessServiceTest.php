@@ -15,7 +15,7 @@ use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCA\OpenCatalogi\Service\SitemapStandards;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
-use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
+use OCA\OpenCatalogi\Service\Handover\HandoverState;
 use OCA\OpenCatalogi\Service\WooReadinessService;
 use OCP\App\IAppManager;
 use OCP\Http\Client\IClient;
@@ -32,7 +32,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
  * @covers \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses \OCA\OpenCatalogi\Service\CatalogReadinessChecks
- * @uses \OCA\OpenCatalogi\Service\Woo\WooHandoverState
+ * @uses \OCA\OpenCatalogi\Service\Handover\HandoverState
  */
 class WooReadinessServiceTest extends TestCase {
 
@@ -489,7 +489,7 @@ XML;
 			$this->settingsService,
 			$this->config,
 			$this->urlGenerator,
-			new WooHandoverState(config: $this->config, appManager: $apps)
+			new HandoverState(config: $this->config, appManager: $apps)
 		);
 
 		$report = $service->runCheck();
