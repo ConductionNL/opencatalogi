@@ -723,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Ajoutez un registre et un schéma au catalogue pour afficher ses publications ici.",
         "Open catalog": "Ouvrir le catalogue",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Créez votre premier catalogue. C'est le conteneur dans lequel vivront vos publications. Choisissez le registre Publication et le schéma Publication, afin que le catalogue affiche les publications que vous ajoutez.",
-        "Manage your publications and their status": "Gérez vos publications et leur statut"
+        "Manage your publications and their status": "Gérez vos publications et leur statut",
+        "Open at the source": "Ouvrir à la source"
     },
     "nplurals=2; plural=(n != 1);"
 )
