@@ -51,7 +51,7 @@
 			"publicationRule": {
 				"slug": "publicationRule",
 				"title": "Publication rule",
-				"version": "0.1.1",
+				"version": "0.1.2",
 				"authorization": {
 					"read": ["authenticated"],
 					"create": ["admin"],
@@ -64,7 +64,8 @@
 				"icon": null,
 				"required": [
 					"recordType",
-					"anonymousProperties"
+					"anonymousProperties",
+					"wooCategory"
 				],
 				"properties": {
 					"recordType": {
@@ -72,6 +73,32 @@
 						"title": "Record type",
 						"facetable": true,
 						"description": "The schema slug the rule governs."
+					},
+					"wooCategory": {
+						"type": "string",
+						"title": "Woo information category",
+						"facetable": true,
+						"enum": [
+							"infocat001",
+							"infocat002",
+							"infocat003",
+							"infocat004",
+							"infocat005",
+							"infocat006",
+							"infocat007",
+							"infocat008",
+							"infocat009",
+							"infocat010",
+							"infocat011",
+							"infocat012",
+							"infocat013",
+							"infocat014",
+							"infocat015",
+							"infocat016",
+							"infocat017",
+							"infocat018"
+						],
+						"description": "The Woo information category the records this rule publishes are filed under, so they land in that category's sitemap (REQ-CVS-003)."
 					},
 					"enabled": {
 						"type": "boolean",
@@ -379,7 +406,7 @@
 			"depublication": {
 				"slug": "depublication",
 				"title": "Depublication",
-				"version": "0.2.1",
+				"version": "0.2.2",
 				"authorization": {
 					"read": ["admin"],
 					"create": ["admin"],
@@ -455,6 +482,12 @@
 						"type": "string",
 						"title": "Document",
 						"description": "The one document that was taken down, when the depublication is about a single document rather than the whole publication."
+					},
+					"republished": {
+						"type": "boolean",
+						"title": "Put back",
+						"description": "This record puts the document back on purpose rather than taking it down; the reason says why.",
+						"default": false
 					}
 				}
 			},

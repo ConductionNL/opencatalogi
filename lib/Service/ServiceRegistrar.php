@@ -63,6 +63,7 @@ use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedCollectionsServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\QualityServiceInterface;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
@@ -100,6 +101,7 @@ use OCA\OpenCatalogi\Service\Publication\PlooiDeliveryService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
+use OCA\OpenCatalogi\Service\Publication\PublishedRecordView;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
@@ -180,6 +182,7 @@ class ServiceRegistrar {
 		DecisionPublicationValidatorInterface::class => DecisionPublicationValidator::class,
 		BannerServiceInterface::class => BannerService::class,
 		PublishedCollectionsServiceInterface::class => PublishedCollectionsService::class,
+		PublishedRecordViewInterface::class => PublishedRecordView::class,
 		SitemapServiceInterface::class => SitemapService::class,
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
 	];
