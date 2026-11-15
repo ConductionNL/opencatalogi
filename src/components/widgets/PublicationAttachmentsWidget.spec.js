@@ -7,6 +7,10 @@
  * again when that dialog closes.
  */
 
+// @nextcloud/auth ships ESM that Jest does not transform; the store only
+// needs the request token.
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'tok' }))
+
 import { flushPromises, mount } from '@vue/test-utils'
 import PublicationAttachmentsWidget from './PublicationAttachmentsWidget.vue'
 import { navigationStore, objectStore } from '../../store/store.js'
