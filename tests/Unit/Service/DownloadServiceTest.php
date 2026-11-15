@@ -32,6 +32,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionClass;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for the DownloadService class.
@@ -123,7 +124,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 		$entity = $this->createObjectEntityFromData($pubData);
 
 		$objectService->method('find')
-			->with('42')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '42',
+			]))
 			->willReturn($entity);
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['42', $objectService]);
@@ -140,7 +143,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testGetPublicationDataNotFound(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('999')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '999',
+			]))
 			->willThrowException(new DoesNotExistException('Publication not found'));
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['999', $objectService]);
@@ -295,7 +300,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testCreatePublicationFileFetchFails(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('99')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '99',
+			]))
 			->willThrowException(new DoesNotExistException('Not found'));
 
 		$result = $this->downloadService->createPublicationFile(
@@ -446,7 +453,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testGetPublicationDataReturnsErrorOnException(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('null-id')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'null-id',
+			]))
 			->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['null-id', $objectService]);
