@@ -26,6 +26,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use ReflectionClass;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Unit tests for DirectoryService.
@@ -3837,7 +3839,11 @@ class DirectoryServiceTest extends TestCase {
 
 		$savedUuid = null;
 		$objectService->method('saveObject')
-			->willReturnCallback(function ($data, $extend, $register, $schema, $uuid) use (&$savedUuid) {
+			->willReturnCallback(function ($data, ObjectSaveOptions $options = new ObjectSaveOptions()) use (&$savedUuid) {
+				$extend = $options->extend;
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$savedUuid = $uuid;
 			});
 
@@ -3864,7 +3870,11 @@ class DirectoryServiceTest extends TestCase {
 
 		$savedUuid = null;
 		$objectService->method('saveObject')
-			->willReturnCallback(function ($data, $extend, $register, $schema, $uuid) use (&$savedUuid) {
+			->willReturnCallback(function ($data, ObjectSaveOptions $options = new ObjectSaveOptions()) use (&$savedUuid) {
+				$extend = $options->extend;
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$savedUuid = $uuid;
 			});
 
@@ -4527,6 +4537,7 @@ class DirectoryServiceTest extends TestCase {
 		$calls = 0;
 		$objectService->method('saveObject')
 			->willReturnCallback(function (...$args) use (&$saved, &$calls, $failFirst) {
+				$args = LegacyObjectArgs::flatten(args: $args);
 				$calls++;
 				if ($calls <= $failFirst) {
 					throw new RuntimeException('Validation failed');
