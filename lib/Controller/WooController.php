@@ -193,6 +193,9 @@ class WooController extends Controller {
 				boardId: $boardId
 			);
 			return new JSONResponse($batch, Http::STATUS_CREATED);
+		} catch (\DomainException $e) {
+			// REQ-CVS-004: a Woo request that already has an open batch gets no second one.
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
 		} catch (\Throwable $e) {
 			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
 		}//end try
