@@ -9,5 +9,5 @@
 
 ## 2. Requirements not built yet
 
-- [ ] 2.1 `woo-rules`: add `wooCategory` to the `publicationRule` schema in `lib/Settings/register.d/publication-inspection-and-the-national-indexes.json`, refuse a rule without a served category, write it on the records the rule publishes and show it in the preview (REQ-CVS-003).
+- [x] 2.1 `woo-rules`: add `wooCategory` to the `publicationRule` schema in `lib/Settings/register.d/publication-inspection-and-the-national-indexes.json`, refuse a rule without a served category, write it on the records the rule publishes and show it in the preview (REQ-CVS-003).
 - [ ] 2.2 `wr-batch`: let Add on the Woo batches page take a case reference and create the batch through `WooService::createBatch()` with the documents delivered for that case, refusing a second open batch for the same reference (REQ-CVS-004). Today the page creates a bare batch through the generic form.

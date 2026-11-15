@@ -127,6 +127,12 @@ class ListenerRegistrar {
 		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
 		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
 
+		// A record a published collection publishes is filed under the collection's
+		// Woo category before it is written, so it lands in that category's sitemap
+		// (capability-rows-verify-scenarios, REQ-CVS-003).
+		$context->registerEventListener(ObjectCreatingEvent::class, RuleCategoryListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, RuleCategoryListener::class);
+
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
 		// installed after OpenCatalogi, its register event completes the scope
