@@ -295,6 +295,101 @@ class PublicationStateController extends Controller {
 	}//end withdrawFile()
 
 	/**
+	 * Put a withdrawn document of a publication back, on purpose, with a reason.
+	 *
+	 * Only this action reopens a withdrawn file (REQ-ATT-104): the file is
+	 * shared again through OpenRegister's file service (which finds it on THIS
+	 * publication or refuses), its own window's end is cleared and the reason
+	 * and editor are recorded as a depublication record marked `republished`.
+	 *
+	 * @param string $id     The publication id.
+	 * @param string $fileId The file id.
+	 *
+	 * @return JSONResponse The recorded republication, or the refusal.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	#[NoAdminRequired]
+	public function republishFile(string $id, string $fileId): JSONResponse {
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$reason = $this->reason();
+		if ($reason === '') {
+			return new JSONResponse(
+				data: ['error' => 'reason-missing', 'message' => $this->l10n->t('Say why it is being put back.')],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		$notShared = $this->registers->publishFile(publication: $publication, fileId: (int)$fileId);
+		if ($notShared !== null) {
+			return new JSONResponse(
+				data: ['error' => 'file-not-republished', 'message' => $notShared],
+				statusCode: Http::STATUS_NOT_FOUND
+			);
+		}
+
+		$windowNotOpen = $this->registers->reopenFileWindow(fileId: (int)$fileId);
+		if ($windowNotOpen !== null) {
+			return new JSONResponse(
+				data: ['error' => 'file-window-not-reopened', 'message' => $windowNotOpen],
+				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}
+
+		return $this->recordRepublication(
+			republication: [
+				'publication' => ['id' => $id],
+				'file' => $fileId,
+				'reason' => $reason,
+				'depublishedBy' => $this->actor(),
+				'depublishedAt' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('c'),
+				'withdrawals' => [],
+				'republished' => true,
+			]
+		);
+	}//end republishFile()
+
+	/**
+	 * Store a republication, past RBAC after guardWrite(), owned by the system.
+	 *
+	 * @param array<string, mixed> $republication The record.
+	 *
+	 * @return JSONResponse The stored record, or 503 when it could not be stored.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	private function recordRepublication(array $republication): JSONResponse {
+		try {
+			$configuration = $this->resolveRegisterConfiguration(
+				registerKey: 'publication_register',
+				schemaKey: 'depublication_schema'
+			);
+			$saved = $this->registers->getObjectService()->saveObject(
+				object: $republication,
+				extend: [],
+				register: $configuration['register'],
+				schema: $configuration['schema'],
+				_rbac: false,
+				_unowned: true
+			);
+		} catch (\Throwable $e) {
+			return new JSONResponse(
+				data: [
+					'error' => 'republication-unstored',
+					'message' => $this->l10n->t('It was put back, but the record of why could not be stored.'),
+				],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		}
+
+		return new JSONResponse(['republication' => $this->asArray(object: $saved)]);
+	}//end recordRepublication()
+
+	/**
 	 * Load the publication for a write, or the answer that refuses it.
 	 *
 	 * Refuses a caller without a session (401), a publication the caller
