@@ -1781,6 +1781,54 @@ class PublicationQueryServiceTest extends TestCase {
 	}
 
 	/**
+	 * REQ-PRS-003: the public search matches `sourceIdentifier` on public
+	 * entries only and drops the caller's own filter on the property.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testThePublicSearchMatchesASourceIdentifierOnPublicEntriesOnly(): void {
+		$fake = $this->wireHappyPath();
+		$this->service->assemblePublicSearchResults(
+			queryParams: $this->withDefaultCatalog([
+				'sourceIdentifier' => 'decos:Z-2026-0412',
+				'sourceIdentifiers' => ['contains' => ['system' => 'case', 'identifier' => 'Z-1']],
+			]),
+			objectService: $fake
+		);
+
+		$query = $fake->capturedCalls[0]['query'];
+		$this->assertSame(['contains' => ['system' => 'decos', 'identifier' => 'Z-2026-0412', 'public' => true]], $query['sourceIdentifiers']);
+		$this->assertArrayNotHasKey('sourceIdentifier', $query);
+	}
+
+	/**
+	 * REQ-PRS-003: the catalogue list drops a caller's own filter on
+	 * `sourceIdentifiers`, so a private identifier cannot be probed, and
+	 * matches `sourceIdentifier` on public entries only.
+	 *
+	 * @spec openspec/changes/publication-relations-place-and-source-ids/specs/publications/spec.md#requirement-a-publication-carries-its-source-identifiers-searchable-req-prs-003
+	 */
+	public function testTheCatalogListMatchesASourceIdentifierOnPublicEntriesOnly(): void {
+		$fake = new FakeSearchObjectService();
+		$catalog = ['registers' => [3], 'schemas' => [7]];
+
+		$probed = $this->service->buildCatalogSearchQuery(
+			catalog: $catalog,
+			queryParams: ['sourceIdentifiers' => ['contains' => ['system' => 'case', 'identifier' => 'Z-1']]],
+			objectService: $fake
+		);
+		$this->assertArrayNotHasKey('sourceIdentifiers', $probed);
+
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: $catalog,
+			queryParams: ['sourceIdentifier' => 'case:Z-1'],
+			objectService: $fake
+		);
+		$this->assertSame(['contains' => ['system' => 'case', 'identifier' => 'Z-1', 'public' => true]], $query['sourceIdentifiers']);
+		$this->assertArrayNotHasKey('sourceIdentifier', $query);
+	}
+
+	/**
 	 * Add `_catalog=default-catalog` to a query params array so tests reliably
 	 * hit the explicit-catalog scope resolution (bypassing the default-scope
 	 * enumeration that requires additional config plumbing).

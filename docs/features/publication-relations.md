@@ -56,4 +56,18 @@ Public answers carry only the entries with `public: true`: the detail, the catal
 
 ### Filtering for integrators
 
-Not built yet. The change also asks for a `sourceIdentifier=<system>:<identifier>` filter on the internal list, the ready list and the public list and search. The public filter would only match public entries.
+The public catalogue list (`GET /api/{catalogSlug}`) and the public search (`GET /api/search`) accept `sourceIdentifier=<system>:<identifier>`. The value splits at its first colon, so the identifier may hold colons itself. Both parts must match on the same entry, and only an entry with `public: true` matches:
+
+```
+GET /index.php/apps/opencatalogi/api/search?sourceIdentifier=decos:Z-2026-0412
+```
+
+A value without a colon matches nothing. A filter of the caller's own on `sourceIdentifiers` is dropped from these public queries, so an internal number cannot be tested from outside.
+
+Internally, an authenticated caller lists through OpenRegister's object API with its `contains` operator, which matches private entries too, under the caller's own access rights:
+
+```
+GET /index.php/apps/openregister/api/objects/{register}/{schema}?sourceIdentifiers[contains][system]=decos&sourceIdentifiers[contains][identifier]=Z-2026-0412
+```
+
+That operator ships with OpenRegister (pull request 10588); until an OpenRegister with it is installed, the filter matches nothing useful. The ready list (`GET /api/publications/ready`) does not exist yet and gets the filter when it does.
