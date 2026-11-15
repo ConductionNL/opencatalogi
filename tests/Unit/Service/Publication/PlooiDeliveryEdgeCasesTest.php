@@ -29,6 +29,7 @@ use OCA\OpenRegister\Service\ObjectService;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\Publication\PlooiDeliveryService
@@ -91,7 +92,15 @@ class PlooiDeliveryEdgeCasesTest extends TestCase {
 		$this->configured();
 		$this->catalogs([['registers' => ['7'], 'schemas' => ['12'], 'plooiDelivery' => true]]);
 		$this->objects->expects($this->once())->method('find')
-			->with('pub-gone', $this->anything(), $this->anything(), '7', '12', false, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-gone',
+				'_extend' => $this->anything(),
+				'files' => $this->anything(),
+				'register' => '7',
+				'schema' => '12',
+				'_rbac' => false,
+				'_multitenancy' => false,
+			]))
 			->willReturn(null);
 		$this->objects->expects($this->never())->method('saveObject');
 		$this->index->expects($this->never())->method('deliverToPlooi');

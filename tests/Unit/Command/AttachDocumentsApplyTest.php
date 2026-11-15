@@ -30,6 +30,8 @@ use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Pins what the command writes and reports when it moves files.
@@ -72,6 +74,7 @@ class AttachDocumentsApplyTest extends TestCase {
 			}
 
 			public function find(int|string $id, ...$rest): object {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				if (($this->fail['find'] ?? false) === true && $id === AttachDocumentsApplyTest::publication()) {
 					throw new RuntimeException('find broke');
 				}
@@ -79,8 +82,9 @@ class AttachDocumentsApplyTest extends TestCase {
 				return ($this->entity)((string)$id);
 			}
 
-			public function deleteObject(string $uuid, ...$rest): bool {
-				$this->calls[] = 'delete ' . $uuid . ' ' . json_encode($rest);
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false, ...$rest): bool {
+				$uuid = $deletion->uuid;
+				$this->calls[] = 'delete ' . $uuid . ' ' . json_encode(array_filter(['_rbac' => $_rbac, '_multitenancy' => $_multitenancy], static fn (bool $flag): bool => $flag === false) + $rest);
 				if (($this->fail['deleteObject'] ?? false) === true) {
 					throw new RuntimeException('delete broke');
 				}
@@ -151,7 +155,9 @@ class AttachDocumentsApplyTest extends TestCase {
 				$this->calls[] = 'labels ' . $fileId . ' ' . implode(',', $labels);
 			}
 
-			public function setPublicationWindowForFile(int $fileId, ?\DateTime $published, ?\DateTime $depublished): void {
+			public function setPublicationWindowForFile(int $fileId, \OCA\OpenRegister\Files\Db\PublicationWindow $window): void {
+				$published = $window->published;
+				$depublished = $window->depublished;
 				$this->calls[] = 'window ' . $fileId . ' ' . $published?->format('Y-m-d') . ' ' . $depublished?->format('Y-m-d');
 			}
 		};
