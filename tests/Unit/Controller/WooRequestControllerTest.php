@@ -41,6 +41,8 @@ use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A duck-typed fake of the consumed OpenRegister ObjectService.
@@ -53,6 +55,7 @@ class WooRequestFakeObjectService {
 	public int $counter = 0;
 
 	public function find(string $id, mixed ...$rest): array {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		if (isset($this->objects[$id]) === false) {
 			throw new \RuntimeException('not found');
 		}
@@ -62,14 +65,15 @@ class WooRequestFakeObjectService {
 
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		$register = null,
-		$schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_unowned = false,
+		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$_unowned = $options->actor->unowned ?? false;
 		$id = (string)($uuid ?? '');
 		if ($id === '') {
 			$id = (string)($object['id'] ?? '');

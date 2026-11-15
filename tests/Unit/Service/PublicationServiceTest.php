@@ -25,6 +25,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 class PublicationServiceTest extends TestCase {
 	private IAppConfig|MockObject $config;
@@ -375,7 +376,13 @@ class PublicationServiceTest extends TestCase {
 		// searchObjects returns all, but find returns the specific one
 		$objectService->method('searchObjects')->willReturn([]);
 		$objectService->expects($this->once())->method('find')
-			->with('catalog-42', [], false, 'register-1', 'schema-1')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'catalog-42',
+				'_extend' => [],
+				'files' => false,
+				'register' => 'register-1',
+				'schema' => 'schema-1',
+			]))
 			->willReturn($catalog);
 
 		$result = $this->service->getCatalogFilters('catalog-42');
@@ -707,7 +714,10 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1', 'title' => 'Found Publication']);
 		$objectService->method('find')
-			->with('pub-1', [])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => [],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([]);
@@ -755,7 +765,10 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.files'])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => ['@self.files'],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -780,7 +793,10 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.metadata'])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => ['@self.metadata'],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -803,7 +819,10 @@ class PublicationServiceTest extends TestCase {
 		// After filtering, only @self.files should remain; 'other.field' is stripped
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.files'])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => ['@self.files'],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -3031,7 +3050,10 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.attachments'])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => ['@self.attachments'],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([

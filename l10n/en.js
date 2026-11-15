@@ -825,6 +825,13 @@ OC.L10N.register(
         "Unnamed Object": "Unnamed Object",
         "Unpublished": "Unpublished",
         "unreachable": "unreachable",
+        "Only members of the group %s may publish or withdraw a publication.": "Only members of the group %s may publish or withdraw a publication.",
+        "Publish rights": "Publish rights",
+        "Only members of the group {group} and administrators may publish and withdraw publications.": "Only members of the group {group} and administrators may publish and withdraw publications.",
+        "The group does not exist yet. Create it in user management, or run the app's repair step.": "The group does not exist yet. Create it in user management, or run the app's repair step.",
+        "Members: {count}": "Members: {count}",
+        "The group has no members yet, so only administrators can publish.": "The group has no members yet, so only administrators can publish.",
+        "The publish rights could not be read.": "The publish rights could not be read.",
         "Untitled": "Untitled",
         "Put back": "Put back",
         "This record puts the document back on purpose rather than taking it down; the reason says why.": "This record puts the document back on purpose rather than taking it down; the reason says why.",
@@ -1607,7 +1614,8 @@ OC.L10N.register(
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "Open at the source": "Open at the source"
     },
     "nplurals=2; plural=(n != 1);"
 )

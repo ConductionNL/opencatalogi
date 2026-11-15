@@ -19,6 +19,7 @@ use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for the EventService class.
@@ -515,6 +516,7 @@ class EventServiceTest extends \PHPUnit\Framework\TestCase {
 		$mockObjectService->method('saveObject')
 			->willReturnCallback(
 				function (...$args) use (&$captured) {
+					$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 					// saveObject(object:, register:, schema:, uuid:) — named args.
 					$captured = func_get_args();
 					return new ObjectEntity();
