@@ -64,6 +64,29 @@ function open(properties) {
 	return mount(CaseTypeResyncDialog)
 }
 
+/**
+ * Open the dialog with an NcDialog that renders its actions, so the buttons can be pressed.
+ *
+ * @param {object} properties The dialog properties.
+ * @return {object} The wrapper.
+ */
+function openWithActions(properties) {
+	navigationStore.setDialog('caseTypeResync', properties)
+	return mount(CaseTypeResyncDialog, {
+		global: {
+			stubs: {
+				NcDialog: { template: '<div><slot /><footer><slot name="actions" /></footer></div>' },
+				NcButton: {
+					props: ['disabled'],
+					emits: ['click'],
+					template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot name="icon" /><slot /></button>',
+				},
+				NcLoadingIcon: { template: '<span class="applying" />' },
+			},
+		},
+	})
+}
+
 describe('CaseTypeResyncDialog', () => {
 	beforeEach(() => {
 		jest.spyOn(console, 'log').mockImplementation(() => {})
@@ -112,6 +135,45 @@ describe('CaseTypeResyncDialog', () => {
 		expect(url).toMatch(/\/case-types\/def-1\/resync$/)
 		expect(body).toEqual({ accepted: ['duration'] })
 		expect(wrapper.vm.state).toBe('done')
+	})
+
+	it('takes the choice made on a row', async () => {
+		const wrapper = open({ caseType: 'ZT-EVENEMENT' })
+		await flushPromises()
+
+		const radios = wrapper.find('tbody tr[data-property="duration"]').findAllComponents({ name: 'NcCheckboxRadioSwitch' })
+		expect(radios).toHaveLength(2)
+		await radios[0].vm.$emit('update:modelValue', 'keep')
+		expect(wrapper.vm.choices.duration).toBe('keep')
+
+		const description = wrapper.find('tbody tr[data-property="description"]').findAllComponents({ name: 'NcCheckboxRadioSwitch' })
+		await description[1].vm.$emit('update:modelValue', 'take')
+		expect(wrapper.vm.choices).toEqual({ duration: 'keep', description: 'take' })
+
+		await wrapper.vm.apply()
+		expect(axios.post.mock.calls[0][1]).toEqual({ accepted: ['description'] })
+	})
+
+	it('resyncs from its button, shows the spinner meanwhile, then offers only Close', async () => {
+		let answer
+		axios.post.mockImplementation(() => new Promise((resolve) => { answer = resolve }))
+		const setDialog = jest.spyOn(navigationStore, 'setDialog')
+		const wrapper = openWithActions({ caseType: 'ZT-EVENEMENT' })
+		await flushPromises()
+
+		expect(wrapper.findAll('footer button').map((button) => button.text())).toEqual(['Cancel', 'Resync'])
+		await wrapper.findAll('footer button')[1].trigger('click')
+		await wrapper.vm.$nextTick()
+		expect(wrapper.find('footer .applying').exists()).toBe(true)
+		expect(wrapper.findAll('footer button')[1].attributes('disabled')).toBeDefined()
+
+		answer({ data: definition })
+		await flushPromises()
+
+		const buttons = wrapper.findAll('footer button')
+		expect(buttons.map((button) => button.text())).toEqual(['Close'])
+		await buttons[0].trigger('click')
+		expect(setDialog).toHaveBeenCalledWith(false)
 	})
 
 	it('says an entry without a case type has nothing to resync', async () => {
