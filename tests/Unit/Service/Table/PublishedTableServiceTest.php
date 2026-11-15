@@ -105,6 +105,8 @@ class TableFakeOpenRegister {
 
 	public array $searchAnswer = ['results' => [], 'total' => 0];
 
+	public ?\Throwable $previewThrows = null;
+
 	/**
 	 * Constructor.
 	 */
@@ -153,6 +155,10 @@ class TableFakeOpenRegister {
 	/** Import preview. */
 	public function preview(array $params, mixed $user): TableFakeEntity {
 		$this->previews[] = [$params, $user];
+		if ($this->previewThrows !== null) {
+			throw $this->previewThrows;
+		}
+
 		return $this->preview;
 	}
 
@@ -436,4 +442,81 @@ class PublishedTableServiceTest extends TestCase {
 		$this->openRegister->found = new \RuntimeException('forbidden');
 		$this->assertFalse($this->service->canReadPublication(publicationId: 'p1'));
 	}//end testAPublicationIsReadableOnlyWhenFoundWithRbac()
+
+	/**
+	 * A failed preview is stored importing first, with who started it, and
+	 * then updated to failed: the notification fires on that update.
+	 *
+	 * @return void
+	 */
+	public function testAFailedPreviewGoesFromImportingToFailed(): void {
+		$this->openRegister->preview->fields['toRefuse'] = 1;
+		$this->openRegister->preview->fields['report'] = ['refusals' => [['row' => 12408, 'reason' => 'bedrag is not a number']]];
+		$editor = $this->createMock(\OCP\IUser::class);
+		$editor->method('getUID')->willReturn('anna');
+
+		$table = $this->service->createFromFile(
+			publication: ['id' => 'p1', 'slug' => 'speeltuinen'],
+			file: new TableFile(path: '/tmp/speeltuinen.csv', id: '77', name: 'speeltuinen.csv'),
+			user: $editor
+		);
+
+		$this->assertCount(2, $this->openRegister->saved);
+		$first = $this->openRegister->saved[0]['object'];
+		$this->assertSame('importing', $first['status']);
+		$this->assertSame('anna', $first['importedBy']);
+		$this->assertArrayNotHasKey('lastError', $first);
+		$second = $this->openRegister->saved[1]['object'];
+		$this->assertSame('t1', $second['id'], 'the second save updates the stored table');
+		$this->assertSame('failed', $second['status']);
+		$this->assertSame('Row 12408: bedrag is not a number', $second['lastError']);
+		$this->assertSame('anna', $second['importedBy']);
+		$this->assertSame($editor, $this->openRegister->previews[0][1]);
+		$this->assertSame('failed', $table['status']);
+	}//end testAFailedPreviewGoesFromImportingToFailed()
+
+	/**
+	 * An import that throws ends the table failed with the message, never importing.
+	 *
+	 * @return void
+	 */
+	public function testAThrowingImportEndsFailed(): void {
+		$this->openRegister->previewThrows = new \RuntimeException('  the reader gave up  ');
+
+		$table = $this->publish();
+
+		$this->assertSame(['importing', 'failed'], array_map(static fn (array $s): string => $s['object']['status'], $this->openRegister->saved));
+		$this->assertSame('the reader gave up', $table['lastError']);
+
+		$this->openRegister->saved = [];
+		$this->openRegister->previewThrows = new \RuntimeException(str_repeat('x', 2500));
+		$this->assertSame(2000, mb_strlen($this->publish()['lastError']));
+
+		$this->openRegister->previewThrows = new \RuntimeException('');
+		$this->assertSame('The import failed.', $this->publish()['lastError']);
+	}//end testAThrowingImportEndsFailed()
+
+	/**
+	 * A re-import of a stored table looks its schema up, keeps its id, clears
+	 * the old error and records who started it.
+	 *
+	 * @return void
+	 */
+	public function testAReimportOfAStoredTable(): void {
+		$this->openRegister->schema = new TableFakeEntity(['id' => 42]);
+
+		$table = $this->service->importTable(
+			table: ['id' => 't9', 'publication' => 'p1', 'file' => '77', 'schema' => '42', 'status' => 'failed', 'lastError' => 'Row 3: old', 'importedBy' => 'anna'],
+			file: new TableFile(path: '/tmp/speeltuinen.csv', id: '77', name: 'speeltuinen.csv'),
+			importedBy: 'bram'
+		);
+
+		$first = $this->openRegister->saved[0]['object'];
+		$this->assertSame(['t9', 'importing', 'bram'], [$first['id'], $first['status'], $first['importedBy']]);
+		$this->assertArrayNotHasKey('lastError', $first);
+		$this->assertSame(42, $this->openRegister->previews[0][0]['schema']);
+		$this->assertSame('ready', $table['status']);
+		$this->assertSame('bram', $table['importedBy']);
+		$this->assertArrayNotHasKey('lastError', $table);
+	}//end testAReimportOfAStoredTable()
 }//end class
