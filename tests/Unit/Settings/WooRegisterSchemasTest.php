@@ -70,6 +70,11 @@ class WooRegisterSchemasTest extends TestCase {
 		// (woo-batch-creates-publications, REQ-WBP-001).
 		'title',
 		'wooCategory',
+		// Written by RecordWooBatchRejectionAction on the `reject` transition
+		// (woo-review-surface REQ-WRV-002).
+		'assignee',
+		'rejections',
+		'lastRejectionReason',
 	];
 
 	/**

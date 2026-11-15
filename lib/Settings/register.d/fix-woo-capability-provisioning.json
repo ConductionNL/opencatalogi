@@ -26,7 +26,7 @@
       "wooBatch": {
         "slug": "wooBatch",
         "title": "WooBatch",
-        "version": "0.2.0",
+        "version": "0.3.0",
         "published": null,
         "summary": "A Woo disclosure batch grouping the documents released for one Woo-verzoek case",
         "description": "A Woo disclosure batch represents one Woo-verzoek (Wet open overheid request) case moving through document collection, per-document assessment, review and publication to the public reading room. It is the OpenRegister-backed storage WooService reads and writes; the document queue itself is provisioned as a Deck board via the consumed deck leaf (ADR-022) rather than a bespoke queue table.",
@@ -94,10 +94,11 @@
           },
           "status": {
             "type": "string",
-            "description": "Overall batch lifecycle status",
+            "description": "Batch lifecycle status, moved only through the declared transitions: submit (in_progress to ready_for_review), approve (ready_for_review to approved, behind the batchReview approval chain), reject (ready_for_review back to in_progress, with a reason) and publish (approved to published).",
             "enum": [
               "in_progress",
               "ready_for_review",
+              "approved",
               "published"
             ],
             "facetable": true,
@@ -185,10 +186,96 @@
             "description": "The user id that created this batch, or \"system\" when created without an active user session",
             "facetable": true,
             "title": "Created By"
+          },
+          "assignee": {
+            "type": "string",
+            "description": "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy).",
+            "facetable": true,
+            "title": "Assignee"
+          },
+          "rejections": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "reason": {
+                  "type": "string"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "at": {
+                  "type": "string",
+                  "format": "date-time"
+                }
+              }
+            },
+            "default": [],
+            "description": "Every rejection of the batch in review, oldest first: the reviewer's reason, who rejected it and when.",
+            "facetable": false,
+            "title": "Rejections"
+          },
+          "lastRejectionReason": {
+            "type": "string",
+            "description": "The reason of the most recent rejection, as the author's notification names it.",
+            "facetable": false,
+            "title": "Last rejection reason"
           }
         },
         "configuration": {
-          "autoPublish": false
+          "autoPublish": false,
+          "x-openregister-lifecycle": {
+            "field": "status",
+            "initial": "in_progress",
+            "transitions": {
+              "submit": {
+                "from": [
+                  "in_progress"
+                ],
+                "to": "ready_for_review"
+              },
+              "approve": {
+                "from": [
+                  "ready_for_review"
+                ],
+                "to": "approved"
+              },
+              "reject": {
+                "from": [
+                  "ready_for_review"
+                ],
+                "to": "in_progress",
+                "inputs": [
+                  {
+                    "field": "reason",
+                    "required": true
+                  }
+                ],
+                "actions": [
+                  {
+                    "action": "OCA\\OpenCatalogi\\Lifecycle\\RecordWooBatchRejectionAction"
+                  }
+                ]
+              },
+              "publish": {
+                "from": [
+                  "approved"
+                ],
+                "to": "published"
+              }
+            }
+          },
+          "x-openregister-approval-chains": {
+            "batchReview": {
+              "transition": "approve",
+              "approvers": [
+                {
+                  "role": "woo-reviewer",
+                  "min": 1
+                }
+              ]
+            }
+          }
         },
         "hardValidation": false,
         "searchable": false,
@@ -205,6 +292,28 @@
           "delete": [
             "admin"
           ]
+        },
+        "x-openregister-notifications": {
+          "batchRejected": {
+            "trigger": {
+              "type": "transition",
+              "action": "reject"
+            },
+            "enabled": true,
+            "channels": [
+              "nc-notification"
+            ],
+            "recipients": [
+              {
+                "kind": "field",
+                "field": "assignee"
+              }
+            ],
+            "subject": {
+              "nl": "Woo-batch {{caseReference}} is teruggestuurd: {{lastRejectionReason}}",
+              "en": "Woo batch {{caseReference}} was sent back: {{lastRejectionReason}}"
+            }
+          }
         }
       },
       "wooAssessment": {
@@ -307,12 +416,24 @@
             "items": {
               "type": "object",
               "properties": {
-                "relationId": {"type": "integer"},
-                "entityType": {"type": "string"},
-                "positionStart": {"type": "integer"},
-                "positionEnd": {"type": "integer"},
-                "value": {"type": "string"},
-                "grounds": {"type": "array"}
+                "relationId": {
+                  "type": "integer"
+                },
+                "entityType": {
+                  "type": "string"
+                },
+                "positionStart": {
+                  "type": "integer"
+                },
+                "positionEnd": {
+                  "type": "integer"
+                },
+                "value": {
+                  "type": "string"
+                },
+                "grounds": {
+                  "type": "array"
+                }
               }
             },
             "facetable": false,

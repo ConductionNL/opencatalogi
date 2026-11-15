@@ -17,6 +17,7 @@ parameters:
     # analysis reads those instead of excluding the two files.
     scanFiles:
         - tests/Stubs/OpenRegister/Mcp/Tool/ToolInterface.php
+        - tests/Stubs/OpenRegister/Lifecycle/LifecycleActionInterface.php
         - tests/Stubs/OpenRegister/Mcp/Db/Agent.php
         - tests/Stubs/AppHost/IMetricsProvider.php
         - tests/Stubs/AppHost/IHealthCheckProvider.php

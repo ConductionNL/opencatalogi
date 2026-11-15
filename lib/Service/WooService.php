@@ -111,7 +111,15 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 *
 	 * @var array<int, string>
 	 */
-	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'published'];
+	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'approved', 'published'];
+
+	/**
+	 * OpenRegister's lifecycle engine, which runs the declared `wooBatch`
+	 * transitions (woo-review-surface REQ-WRV-002).
+	 *
+	 * @var string
+	 */
+	public const TRANSITION_ENGINE = 'OCA\OpenRegister\Service\Lifecycle\TransitionEngine';
 
 	/**
 	 * Cached OpenRegister ObjectService instance.
@@ -133,6 +141,13 @@ class WooService implements TransparencyWorkflowServiceInterface {
 	 * @var object|null
 	 */
 	private ?object $taskSequenceMapper = null;
+
+	/**
+	 * Cached OpenRegister TransitionEngine instance.
+	 *
+	 * @var object|null
+	 */
+	private ?object $transitionEngine = null;
 
 	/**
 	 * Constructor.
@@ -218,6 +233,49 @@ class WooService implements TransparencyWorkflowServiceInterface {
 
 		return $this->taskSequenceMapper;
 	}//end getTaskSequenceMapper()
+
+	/**
+	 * Resolve OpenRegister's TransitionEngine from the container.
+	 *
+	 * @return object|null The engine, or null when OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 */
+	public function getTransitionEngine(): ?object {
+		if ($this->transitionEngine === null) {
+			try {
+				$this->transitionEngine = $this->bindings->service(self::TRANSITION_ENGINE);
+			} catch (\Throwable $e) {
+				$this->logger->warning('[WooService] OpenRegister TransitionEngine unavailable: ' . $e->getMessage());
+				return null;
+			}
+		}
+
+		return $this->transitionEngine;
+	}//end getTransitionEngine()
+
+	/**
+	 * Run a declared `wooBatch` transition through OpenRegister's engine,
+	 * which checks the batch's state, the approval chain and the inputs.
+	 *
+	 * @param string               $batchId The batch uuid.
+	 * @param string               $action  `submit`, `approve`, `reject` or `publish`.
+	 * @param array<string, mixed> $data    The transition's inputs.
+	 *
+	 * @return array<string, mixed> The batch after the transition.
+	 *
+	 * @throws RuntimeException When the engine is unavailable; whatever the engine refuses propagates.
+	 *
+	 * @spec openspec/changes/woo-review-surface/tasks.md#task-1.2
+	 */
+	public function runBatchTransition(string $batchId, string $action, array $data = []): array {
+		$engine = $this->getTransitionEngine();
+		if ($engine === null || method_exists($engine, 'transition') === false) {
+			throw new RuntimeException('OpenRegister lifecycle engine unavailable: the batch cannot change state');
+		}
+
+		return $this->plainArray(object: $engine->transition($batchId, $action, $data));
+	}//end runBatchTransition()
 
 	/**
 	 * The configured WOO register id/uuid (shared by batch + assessment objects).
@@ -1005,18 +1063,8 @@ class WooService implements TransparencyWorkflowServiceInterface {
 			throw new RuntimeException('All documents must be assessed before review');
 		}
 
-		$objectService = $this->getObjectService();
-		$register = $this->getRegister();
-		$batchSchema = $this->getBatchSchema();
-		if ($objectService === null || $register === null || $batchSchema === null) {
-			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
-		}
-
-		$batch = $this->plainArray(object: $objectService->find($batchId));
-		$batch['status'] = 'ready_for_review';
-		$batch['updatedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
-
-		return $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		// The declared `submit` transition moves in_progress to ready_for_review (REQ-WRV-002).
+		return $this->runBatchTransition(batchId: $batchId, action: 'submit');
 	}//end markReadyForReview()
 
 	/**
@@ -1120,8 +1168,15 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		}
 
 		$batch = $this->getBatch(batchId: $batchId);
-		if ((string)($batch['status'] ?? '') !== 'ready_for_review') {
-			throw new RuntimeException('Batch must be ready_for_review (passed the approval gate) before publishing');
+		// REQ-WRV-002: only an approved batch is published, whatever path calls this.
+		if ((string)($batch['status'] ?? '') !== 'approved') {
+			throw new RuntimeException('Batch must be approved before publishing');
+		}
+
+		// The status moves through the declared `publish` transition; without the
+		// engine nothing is published (fail closed).
+		if ($this->getTransitionEngine() === null) {
+			throw new RuntimeException('OpenRegister lifecycle engine unavailable: the batch cannot be published');
 		}
 
 		// The actual approval gate: status only says a review CAN start (fail closed).
@@ -1162,14 +1217,14 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$readingRoomCatalog = (string)($batch['readingRoomCatalog'] ?? $batchId);
 		$publicationMeta['readingRoomUrl'] = '/index.php/apps/opencatalogi/' . $readingRoomCatalog;
 
-		$batch['status'] = 'published';
 		$batch['publishedAt'] = $now;
 		$batch['publishedCount'] = $publishedCount;
 		$batch['updatedAt'] = $now;
 		$batch['wooPublication'] = $publicationMeta;
 		unset($batch['documentSummary']);
 
-		$saved = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch));
+		$this->save(objectService: $objectService, register: $register, schema: $batchSchema, data: $batch);
+		$saved = $this->runBatchTransition(batchId: $batchId, action: 'publish');
 		$saved['wooPublication'] = $publicationMeta;
 
 		return $saved;

@@ -1569,7 +1569,14 @@ OC.L10N.register(
         "What was removed from the partly public document and on which grounds, one entry per redacted passage. Internal: never part of a public response.": "Wat uit het deels openbare document is weggelakt en op welke gronden, één regel per gelakte passage. Intern: nooit onderdeel van een openbaar antwoord.",
         "The redaction log cannot be read. The document stays unpublished.": "Het laklogboek kan niet worden gelezen. Het document blijft ongepubliceerd.",
         "Publishing is blocked: the redaction log of these partly public documents is missing, empty or has a passage without a ground: %s": "Publiceren is geblokkeerd: het laklogboek van deze deels openbare documenten ontbreekt, is leeg of heeft een passage zonder grond: %s",
-        "Planning (does not publish)": "Planning (publiceert niet)"
+        "Planning (does not publish)": "Planning (publiceert niet)",
+        "Assignee": "Toegewezen aan",
+        "Rejections": "Afwijzingen",
+        "Last rejection reason": "Reden van de laatste afwijzing",
+        "Batch lifecycle status, moved only through the declared transitions: submit (in_progress to ready_for_review), approve (ready_for_review to approved, behind the batchReview approval chain), reject (ready_for_review back to in_progress, with a reason) and publish (approved to published).": "Levenscyclusstatus van de batch, alleen gewijzigd via de vastgelegde overgangen: indienen (in_progress naar ready_for_review), goedkeuren (ready_for_review naar approved, na de goedkeuringsketen batchReview), afwijzen (ready_for_review terug naar in_progress, met een reden) en publiceren (approved naar published).",
+        "Every rejection of the batch in review, oldest first: the reviewer's reason, who rejected it and when.": "Elke afwijzing van de batch in beoordeling, oudste eerst: de reden van de beoordelaar, wie afwees en wanneer.",
+        "The reason of the most recent rejection, as the author's notification names it.": "De reden van de meest recente afwijzing, zoals de melding aan de auteur die noemt.",
+        "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy).": "De gebruiker die als volgende iets met de batch moet doen. Een afwijzing wijst de batch terug toe aan de auteur (createdBy)."
     },
     "nplurals=2; plural=(n != 1);"
 )
