@@ -806,7 +806,7 @@ class SitemapServiceTest extends TestCase {
 				return ['results' => [$pubObject]];
 			});
 
-		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuidFollowingMerge']);
+		$organisations = $this->environmentAwareDouble(class: \OCA\OpenRegister\Db\OrganisationMapper::class, methods: ['findByUuidFollowingMerge']);
 		$organisations->method('findByUuidFollowingMerge')->willReturn(
 			$this->organisation(name: 'Gemeente Voorbeeld', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855')
 		);
