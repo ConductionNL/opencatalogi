@@ -1627,7 +1627,15 @@
         "This instance is in staging: nothing leaves it. Hand-overs are kept as dry runs.": "This instance is in staging: nothing leaves it. Hand-overs are kept as dry runs.",
         "Dry runs": "Dry runs",
         "Held at": "Held at",
-        "What would have left this instance while it was in staging": "What would have left this instance while it was in staging"
+        "What would have left this instance while it was in staging": "What would have left this instance while it was in staging",
+        "Dry-run delivery": "Dry-run delivery",
+        "Payload": "Payload",
+        "At": "At",
+        "The hand-over that was held.": "The hand-over that was held.",
+        "What would have been sent.": "What would have been sent.",
+        "When the hand-over was held.": "When the hand-over was held.",
+        "Who started the hand-over, or empty for a background job.": "Who started the hand-over, or empty for a background job.",
+        "Why it was held: staging, or a mode that could not be read.": "Why it was held: staging, or a mode that could not be read."
     },
     "plurals": {}
 }

@@ -1583,7 +1583,15 @@ OC.L10N.register(
         "This instance is in staging: nothing leaves it. Hand-overs are kept as dry runs.": "Deze instantie staat in staging: er verlaat niets de instantie. Overdrachten worden als proefrun bewaard.",
         "Dry runs": "Proefruns",
         "Held at": "Vastgehouden op",
-        "What would have left this instance while it was in staging": "Wat deze instantie zou hebben verlaten terwijl die in staging stond"
+        "What would have left this instance while it was in staging": "Wat deze instantie zou hebben verlaten terwijl die in staging stond",
+        "Dry-run delivery": "Proefrunlevering",
+        "Payload": "Inhoud",
+        "At": "Op",
+        "The hand-over that was held.": "De overdracht die werd vastgehouden.",
+        "What would have been sent.": "Wat er verstuurd zou zijn.",
+        "When the hand-over was held.": "Wanneer de overdracht werd vastgehouden.",
+        "Who started the hand-over, or empty for a background job.": "Wie de overdracht startte, of leeg voor een achtergrondtaak.",
+        "Why it was held: staging, or a mode that could not be read.": "Waarom die werd vastgehouden: staging, of een modus die niet kon worden gelezen."
     },
     "nplurals=2; plural=(n != 1);"
 )

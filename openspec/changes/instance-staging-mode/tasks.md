@@ -31,9 +31,13 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 5. Verification
 
-- [ ] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. The middleware sits on every public route: run the full unit suite once.
-- [ ] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
-- [ ] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
-- [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+- [x] 5.1 `TMPDIR` a sibling directory outside the clone. PHPUnit judged by the `Tests:` line or with `--no-coverage`. The middleware sits on every public route: run the full unit suite once.
+  - Ran: full unit suite with `--no-coverage` and `TMPDIR` outside the clone after merging development: 5723 tests, 2 failures, both inherited from development (`AppIdentityTest::testNoComponentImportsApplication` on `ApiContractMiddleware`, `WooControllerTest::testInventarislijstRouteIsAGet`).
+- [x] 5.2 `run-hydra-gates.sh --base origin/development`, counting the gates that ran.
+  - Ran: 101 gates against origin/development. 9 fail, none in a file this change touches and all present on development: no-admin-idor (`PublicationRulesController::publicSearch`), visual-coverage (`WooRedaction.vue`), spec-anchor-existence (`OpenApiParityTest`), schema-property-titles (`edepotTransfer`), orphaned-write-capability, icon-vocabulary (`Table`), public-endpoint-throttling (`PublishedTableController`), procedure-code, the score floor (php component_independence, already below on the base).
+- [x] 5.3 Once before push: `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict`, then `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`. The coverage guard needs a test for every added statement.
+  - Ran: `check:strict` fails on development already: phpmd (also on `NationalIndexService` complexity and coupling and `WooRegistrationService` coupling, which development reports too; the gates here raise those values a little) and psalm (UndefinedClass in files this change does not touch); lint and phpcs report nothing in touched files, phpstan passes. `npm run lint` has no error in touched files; `check:l10n` nothing missing or unused; `check:l10n-js` up to date; `check:manifest` passes; `check:schema-l10n` covers every string of the `dryRunDelivery` fragment.
+- [x] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
+  - PR #2699 to development; development merged in (one conflict in `Settings.vue`, both components kept), no rebase, no Co-Authored-By.
 
 Done when merged on `development` with CI green. Row 13.5 becomes `production` only once a store release ships it.
