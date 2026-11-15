@@ -26,7 +26,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 4. Docs
 
-- [ ] 4.1 Document staging for administrators in `docs/`, including what it does not stop, and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+- [x] 4.1 Document staging for administrators in `docs/`, including what it does not stop, and the strings in `l10n/` (en, nl). Verify: `npm run check:l10n` and a grep for U+2014 on the changed docs.
+  - Built: `docs/Administrator/staging.md` (Dutch, like the other administrator pages): turning it on, what it holds back, what it does not stop. The new strings are in `l10n/en.json` and `l10n/nl.json`, rebuilt into the `.js` catalogues; `check:l10n` reports nothing missing or unused, and the doc has no U+2014.
 
 ## 5. Verification
 
