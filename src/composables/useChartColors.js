@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Theme-aware chart color palette, resolved from Nextcloud CSS variables at
  * runtime instead of hardcoded hex literals — ApexCharts' `colors` option
  * needs concrete color strings, so this reads `getComputedStyle(documentElement)`

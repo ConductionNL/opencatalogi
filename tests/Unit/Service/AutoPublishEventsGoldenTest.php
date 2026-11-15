@@ -37,7 +37,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenRegister\Db\FileMapper;
+use OCA\OpenRegister\Files\Db\FileMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -47,6 +47,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for the auto-publish event handlers.
@@ -177,6 +178,7 @@ class AutoPublishEventsGoldenTest extends TestCase {
 		$objectService->method('searchObjects')->willReturn([$catalog]);
 		$objectService->method('saveObject')->willReturnCallback(
 			function (...$args) use (&$calls) {
+				$args = LegacyObjectArgs::flatten(args: $args);
 				$object = ($args['object'] ?? $args[0]);
 				unset($object['publicationDate']);
 				$calls[] = ['save' => $object, 'uuid' => ($args['uuid'] ?? null), 'register' => ($args['register'] ?? null), 'schema' => ($args['schema'] ?? null)];
@@ -236,7 +238,7 @@ class AutoPublishEventsGoldenTest extends TestCase {
 		$container->method('get')->willReturnCallback(
 			static fn (string $id) => match ($id) {
 				'OCA\OpenRegister\Service\FileService' => $fileService,
-				'OCA\OpenRegister\Db\FileMapper' => $fileMapper,
+				'OCA\OpenRegister\Files\Db\FileMapper' => $fileMapper,
 				default => $objectService,
 			}
 		);

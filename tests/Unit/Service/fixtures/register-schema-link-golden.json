@@ -1,0 +1,243 @@
+{
+    "import register, two new schemas": [
+        [
+            "setSchemas",
+            "publication",
+            [
+                28,
+                29,
+                30
+            ]
+        ],
+        [
+            "setConfiguration",
+            "publication",
+            {
+                "schemas": {
+                    "document": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    },
+                    "theme": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    }
+                }
+            }
+        ],
+        [
+            "update",
+            "publication"
+        ],
+        [
+            "ensureTable",
+            "publication",
+            29
+        ],
+        [
+            "ensureTable",
+            "publication",
+            30
+        ]
+    ],
+    "mapper register": [
+        [
+            "find",
+            "publication",
+            false,
+            false
+        ],
+        [
+            "setSchemas",
+            "publication",
+            [
+                28,
+                29,
+                30
+            ]
+        ],
+        [
+            "setConfiguration",
+            "publication",
+            {
+                "schemas": {
+                    "theme": {
+                        "magicMapping": false
+                    }
+                }
+            }
+        ],
+        [
+            "update",
+            "publication"
+        ],
+        [
+            "ensureTable",
+            "publication",
+            30
+        ]
+    ],
+    "no register anywhere": [
+        [
+            "find",
+            "publication",
+            false,
+            false
+        ]
+    ],
+    "every schema held": [],
+    "unusable schemas and duplicates": [
+        [
+            "setSchemas",
+            "publication",
+            [
+                31,
+                33
+            ]
+        ],
+        [
+            "setConfiguration",
+            "publication",
+            {
+                "other": 1,
+                "schemas": {
+                    "a": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    },
+                    "b": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    }
+                }
+            }
+        ],
+        [
+            "update",
+            "publication"
+        ],
+        [
+            "ensureTable",
+            "publication",
+            31
+        ],
+        [
+            "ensureTable",
+            "publication",
+            33
+        ]
+    ],
+    "one table fails to provision": [
+        [
+            "setSchemas",
+            "publication",
+            [
+                29,
+                30
+            ]
+        ],
+        [
+            "setConfiguration",
+            "publication",
+            {
+                "schemas": {
+                    "fails": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    },
+                    "theme": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    }
+                }
+            }
+        ],
+        [
+            "update",
+            "publication"
+        ],
+        [
+            "ensureTable",
+            "publication",
+            29
+        ],
+        [
+            "ensureTable",
+            "publication",
+            30
+        ]
+    ],
+    "update fails": [
+        [
+            "setSchemas",
+            "publication",
+            [
+                28,
+                29,
+                30
+            ]
+        ],
+        [
+            "setConfiguration",
+            "publication",
+            {
+                "schemas": {
+                    "publication": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    },
+                    "document": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    },
+                    "theme": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    }
+                }
+            }
+        ],
+        [
+            "update",
+            "publication"
+        ]
+    ],
+    "openregister not installed": [],
+    "other import registers before the mapper": [
+        [
+            "find",
+            "publication",
+            false,
+            false
+        ],
+        [
+            "setSchemas",
+            "publication",
+            [
+                40
+            ]
+        ],
+        [
+            "setConfiguration",
+            "publication",
+            {
+                "schemas": {
+                    "x": {
+                        "magicMapping": true,
+                        "autoCreateTable": true
+                    }
+                }
+            }
+        ],
+        [
+            "update",
+            "publication"
+        ],
+        [
+            "ensureTable",
+            "publication",
+            40
+        ]
+    ],
+    "no schemas in the import": []
+}

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:diwoo="https://standaarden.overheid.nl/diwoo/metadata/"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd   https://standaarden.overheid.nl/diwoo/metadata/ https://standaarden.overheid.nl/diwoo/metadata/0.9.8/xsd/diwoo-metadata.xsd">
+  <!--
+    Dit document bevat alleen de verplichte diwoo:eigenschappen. 
+  -->
+   <url>
+      <loc>https://www.juinen.nl/downloads/2020/Convenant_busvervoer_2020_juinen.pdf</loc>
+      <diwoo:Document>
+         <diwoo:DiWoo>
+            <diwoo:publisher resource="https://identifier.overheid.nl/tooi/id/gemeente/gm9999">gemeente Juinen</diwoo:publisher>
+            <diwoo:titelcollectie>
+               <diwoo:officieleTitel>Convenant busvervoer 2020 gemeente Juinen</diwoo:officieleTitel>
+            </diwoo:titelcollectie>
+            <diwoo:classificatiecollectie>
+               <diwoo:informatiecategorieen>
+                  <diwoo:informatiecategorie resource="https://identifier.overheid.nl/tooi/def/thes/kern/c_aab6bfc7">overig besluit van algemene strekking</diwoo:informatiecategorie>
+               </diwoo:informatiecategorieen>
+            </diwoo:classificatiecollectie>
+            <diwoo:documenthandelingen>
+               <diwoo:documenthandeling>
+                  <diwoo:soortHandeling resource="https://identifier.overheid.nl/tooi/def/thes/kern/c_e1ec050e">ondertekening</diwoo:soortHandeling>
+                  <diwoo:atTime>2020-09-10T09:35:59+01:00</diwoo:atTime>
+               </diwoo:documenthandeling>
+            </diwoo:documenthandelingen>
+         </diwoo:DiWoo>
+      </diwoo:Document>
+   </url>
+</urlset>

@@ -73,7 +73,6 @@
 
 <script>
 import axios from '@nextcloud/axios'
-import { loadState } from '@nextcloud/initial-state'
 import { translate as t } from '@nextcloud/l10n'
 import { generateUrl } from '@nextcloud/router'
 import {
@@ -85,6 +84,98 @@ import {
 	NcTextField,
 } from '@nextcloud/vue'
 import { navigationStore } from '../../store/store.js'
+import { configuredObjectUrl } from '../configuredObjects.js'
+
+/**
+ * The ids of the publications the caller asked for but did not hand over.
+ *
+ * @param {Array<object>} given The handed-over publications.
+ * @param {Array<string|number>|undefined} ids The publications asked for.
+ * @return {Array<string>} The ids to read.
+ */
+function missingIds(given, ids) {
+	const known = new Set(given.map((item) => String(item.id)))
+	return (ids || []).map(String).filter((id) => !known.has(id))
+}
+
+/**
+ * Read one publication by id, or null when it cannot be read.
+ *
+ * @param {string} id The publication.
+ * @return {Promise<object|null>} The publication.
+ */
+function readPublication(id) {
+	return axios
+		.get(
+			configuredObjectUrl(
+				{ register: 'publication_register', schema: 'publication_schema' },
+				id,
+			),
+		)
+		.then(({ data }) => data)
+		.catch(() => null)
+}
+
+/**
+ * The intro of an extension for a number of publications.
+ *
+ * @param {number} count The number of publications.
+ * @return {string} The intro.
+ */
+function extendIntro(count) {
+	return count === 1
+		? t(
+				'opencatalogi',
+				'Extend the retention term of 1 publication. The new end date counts from the current one.',
+			)
+		: t(
+				'opencatalogi',
+				'Extend the retention term of {count} publications. The new end date counts from the current one.',
+				{ count },
+			)
+}
+
+/**
+ * The intro of a depublication for a number of publications.
+ *
+ * @param {number} count The number of publications.
+ * @return {string} The intro.
+ */
+function depublishIntro(count) {
+	return count === 1
+		? t('opencatalogi', 'Take 1 publication off the public catalogue today.')
+		: t(
+				'opencatalogi',
+				'Take {count} publications off the public catalogue today.',
+				{ count },
+			)
+}
+
+/**
+ * The intro of an archival for a number of publications.
+ *
+ * @param {number} count The number of publications.
+ * @return {string} The intro.
+ */
+function archiveIntro(count) {
+	return count === 1
+		? t(
+				'opencatalogi',
+				'Archive 1 publication. It leaves the public catalogue today.',
+			)
+		: t(
+				'opencatalogi',
+				'Archive {count} publications. They leave the public catalogue today.',
+				{ count },
+			)
+}
+
+/** The intro of each decision. */
+const INTROS = {
+	extend: extendIntro,
+	depublish: depublishIntro,
+	archive: archiveIntro,
+}
 
 /**
  * RetentionDecisionDialog: extend the retention term of, depublish or archive
@@ -146,42 +237,7 @@ export default {
 
 		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
 		intro() {
-			const count = this.publications.length
-			const vars = { count }
-			if (this.decision === 'extend') {
-				return count === 1
-					? t(
-							'opencatalogi',
-							'Extend the retention term of 1 publication. The new end date counts from the current one.',
-						)
-					: t(
-							'opencatalogi',
-							'Extend the retention term of {count} publications. The new end date counts from the current one.',
-							vars,
-						)
-			}
-			if (this.decision === 'depublish') {
-				return count === 1
-					? t(
-							'opencatalogi',
-							'Take 1 publication off the public catalogue today.',
-						)
-					: t(
-							'opencatalogi',
-							'Take {count} publications off the public catalogue today.',
-							vars,
-						)
-			}
-			return count === 1
-				? t(
-						'opencatalogi',
-						'Archive 1 publication. It leaves the public catalogue today.',
-					)
-				: t(
-						'opencatalogi',
-						'Archive {count} publications. They leave the public catalogue today.',
-						vars,
-					)
+			return INTROS[this.decision](this.publications.length)
 		},
 
 		/** @spec openspec/specs/retention-review-queue/spec.md#requirement-a-retention-decision-is-taken-on-one-or-more-publications-with-a-note-rrq-001 */
@@ -227,33 +283,9 @@ export default {
 			const given = Array.isArray(this.properties.publications)
 				? this.properties.publications
 				: []
-			const known = new Set(given.map((item) => String(item.id)))
-			const missing = (this.properties.ids || [])
-				.map(String)
-				.filter((id) => !known.has(id))
 			const read = await Promise.all(
-				missing.map((id) =>
-					axios
-						.get(
-							generateUrl(
-								'/apps/openregister/api/objects/{register}/{schema}/{id}',
-								{
-									register: loadState(
-										'opencatalogi',
-										'publication_register',
-										'',
-									),
-									schema: loadState(
-										'opencatalogi',
-										'publication_schema',
-										'',
-									),
-									id,
-								},
-							),
-						)
-						.then(({ data }) => data)
-						.catch(() => null),
+				missingIds(given, this.properties.ids).map((id) =>
+					readPublication(id),
 				),
 			)
 			this.publications = [...given, ...read.filter(Boolean)]

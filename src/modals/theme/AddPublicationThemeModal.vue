@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
 </script>
@@ -115,16 +119,7 @@ export default {
 				return
 			}
 			try {
-				const updatedPublication = {
-					...publication,
-					theme: this.selectedTheme,
-				}
-				await objectStore.updateObject(
-					'publication',
-					publication.id,
-					updatedPublication,
-				)
-				await objectStore.fetchCollection('theme')
+				await this.storePublicationTheme(publication)
 				this.successState = true
 				this.errorState = null
 				setTimeout(this.closeModal, 1500)
@@ -134,6 +129,25 @@ export default {
 			} finally {
 				this.isSaving = false
 			}
+		},
+
+		/**
+		 * Save the selected theme on the publication and refresh the themes.
+		 *
+		 * @param {object} publication - The publication
+		 * @return {Promise<void>}
+		 */
+		async storePublicationTheme(publication) {
+			const updatedPublication = {
+				...publication,
+				theme: this.selectedTheme,
+			}
+			await objectStore.updateObject(
+				'publication',
+				publication.id,
+				updatedPublication,
+			)
+			await objectStore.fetchCollection('theme')
 		},
 	},
 }

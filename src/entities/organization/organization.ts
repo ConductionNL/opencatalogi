@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Organization entity class
  *
  * @module Entities
@@ -131,10 +135,6 @@ export class Organization implements TOrganization {
 			image: z.string(),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

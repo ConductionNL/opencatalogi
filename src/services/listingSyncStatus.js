@@ -25,13 +25,8 @@
 export function listingSyncStatus(listing) {
 	const source = listing || {}
 	const lastSuccessAt = source.lastSuccessAt || null
-	const lastSync = source.lastSync || null
-	const lastAttemptAt =
-		lastSync !== null && lastSync !== lastSuccessAt ? lastSync : null
-	const error =
-		lastAttemptAt !== null && typeof source.lastError === 'string'
-			? source.lastError
-			: ''
+	const lastAttemptAt = separateAttempt(source.lastSync || null, lastSuccessAt)
+	const error = attemptError(lastAttemptAt, source.lastError)
 
 	return {
 		lastSuccessAt,
@@ -39,4 +34,28 @@ export function listingSyncStatus(listing) {
 		error,
 		neverSucceeded: lastSuccessAt === null,
 	}
+}
+
+/**
+ * The last attempt, only when it differs from the last success.
+ *
+ * @param {string|null} lastSync The last attempt, or null
+ * @param {string|null} lastSuccessAt The last success, or null
+ * @return {string|null} The attempt, or null
+ * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+ */
+function separateAttempt(lastSync, lastSuccessAt) {
+	return lastSync !== null && lastSync !== lastSuccessAt ? lastSync : null
+}
+
+/**
+ * The error of the last attempt, only when that attempt failed.
+ *
+ * @param {string|null} lastAttemptAt The separate last attempt, or null
+ * @param {string|number|null|undefined} lastError The error the listing carries
+ * @return {string} The error, or an empty string
+ * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#requirement-the-directory-page-shows-when-each-connection-last-worked-req-fls-002
+ */
+function attemptError(lastAttemptAt, lastError) {
+	return lastAttemptAt !== null && typeof lastError === 'string' ? lastError : ''
 }

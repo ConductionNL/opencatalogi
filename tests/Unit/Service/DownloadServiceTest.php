@@ -14,6 +14,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @spec openspec/changes/migrate-share-links-to-shares-leaf/tasks.md#task-2
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -29,6 +32,7 @@ use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
 use PHPUnit\Framework\MockObject\MockObject;
 use ReflectionClass;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for the DownloadService class.
@@ -120,7 +124,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 		$entity = $this->createObjectEntityFromData($pubData);
 
 		$objectService->method('find')
-			->with('42')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '42',
+			]))
 			->willReturn($entity);
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['42', $objectService]);
@@ -137,7 +143,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testGetPublicationDataNotFound(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('999')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '999',
+			]))
 			->willThrowException(new DoesNotExistException('Publication not found'));
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['999', $objectService]);
@@ -292,7 +300,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testCreatePublicationFileFetchFails(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('99')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => '99',
+			]))
 			->willThrowException(new DoesNotExistException('Not found'));
 
 		$result = $this->downloadService->createPublicationFile(
@@ -436,18 +446,6 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	}//end testPublicationAttachmentsIntegerId()
 
 	/**
-	 * Skips test that requires real filesystem I/O.
-	 *
-	 * @return void
-	 */
-	public function testPrepareZipRequiresFilesystem(): void {
-		$this->markTestSkipped(
-			'prepareZip() relies on filesystem I/O (mkdir, file_get_contents, file_put_contents).'
-		);
-
-	}//end testPrepareZipRequiresFilesystem()
-
-	/**
 	 * Returns 500 error response when entity lookup throws exception.
 	 *
 	 * @return void
@@ -455,7 +453,9 @@ class DownloadServiceTest extends \PHPUnit\Framework\TestCase {
 	public function testGetPublicationDataReturnsErrorOnException(): void {
 		$objectService = $this->createObjectServiceMock();
 		$objectService->method('find')
-			->with('null-id')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'null-id',
+			]))
 			->willThrowException(new \OCP\AppFramework\Db\DoesNotExistException('Not found'));
 
 		$result = $this->invokePrivateMethod('getPublicationData', ['null-id', $objectService]);

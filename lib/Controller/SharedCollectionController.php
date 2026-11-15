@@ -47,10 +47,10 @@ class SharedCollectionController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                   $appName     The app name.
-	 * @param IRequest                 $request     The request.
+	 * @param string $appName The app name.
+	 * @param IRequest $request The request.
 	 * @param CollectionShareServiceInterface $shares The share links.
-	 * @param LoggerInterface          $logger      The logger.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		string $appName,
@@ -89,6 +89,5 @@ class SharedCollectionController extends Controller {
 		$response->addHeader('Cache-Control', 'no-store');
 		$response->addHeader('X-Robots-Tag', 'noindex');
 		return $response;
-
 	}//end show()
 }//end class

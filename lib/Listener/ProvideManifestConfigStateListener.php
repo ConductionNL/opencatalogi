@@ -3,6 +3,9 @@
 /**
  * OpenCatalogi Manifest-Config Initial-State Listener.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Surfaces the configured register/schema ids (and the national-directory URL)
  * as frontend initial state whenever the OpenCatalogi SPA `index` template is
  * rendered — regardless of which controller served the page.
@@ -26,9 +29,6 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

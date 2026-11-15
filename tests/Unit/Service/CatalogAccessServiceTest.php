@@ -75,17 +75,19 @@ class CatalogAccessServiceTest extends TestCase {
 			/**
 			 * @param array<int, array<string, mixed>> $rows The rows.
 			 */
-			public function __construct(private array $rows) {
+			public function __construct(
+				private array $rows,
+			) {
 			}
 
 			/**
-			 * @param array<string, mixed> $query         The query.
-			 * @param bool                 $_rbac         Ignored.
-			 * @param bool                 $_multitenancy Ignored.
+			 * @param array<string, mixed> $query The query.
+			 * @param bool $_rbac Ignored.
+			 * @param bool $_multitenancy Ignored.
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array {
+			public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
 				return ['results' => $this->rows];
 			}
 		};
@@ -94,13 +96,15 @@ class CatalogAccessServiceTest extends TestCase {
 			/**
 			 * @param CatalogAccessServiceTest $test The test holding the schema.
 			 */
-			public function __construct(private CatalogAccessServiceTest $test) {
+			public function __construct(
+				private CatalogAccessServiceTest $test,
+			) {
 			}
 
 			/**
 			 * @return object The schema.
 			 */
-			public function find(int $id, array $extend=[], bool $_rbac=true, bool $_multitenancy=true): object {
+			public function find(int $id, array $extend = [], bool $_rbac = true, bool $_multitenancy = true): object {
 				return $this->test->schema();
 			}
 
@@ -121,7 +125,6 @@ class CatalogAccessServiceTest extends TestCase {
 		);
 
 		return new CatalogAccessService($config, $container, $this->createMock(LoggerInterface::class));
-
 	}//end service()
 
 	/**
@@ -131,7 +134,6 @@ class CatalogAccessServiceTest extends TestCase {
 	 */
 	public function schema(): object {
 		return $this->schema;
-
 	}//end schema()
 
 	/**
@@ -183,9 +185,9 @@ class CatalogAccessServiceTest extends TestCase {
 		$service = $this->service(
 			[
 				[
-					'title'       => 'Woo-verzoeken',
-					'schemas'     => ['173'],
-					'filters'     => $filters,
+					'title' => 'Woo-verzoeken',
+					'schemas' => ['173'],
+					'filters' => $filters,
 					'staffAccess' => ['restricted' => true, 'readGroups' => ['juridisch'], 'editGroups' => ['woo-team']],
 				],
 			]

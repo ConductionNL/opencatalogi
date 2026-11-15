@@ -34,6 +34,10 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SavePolicy;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -82,7 +86,12 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		$objectService = $this->settingsService->getObjectService();
-		$entity = $objectService?->find(id: $uuid, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+		$entity = $objectService?->find(
+			id: $uuid,
+			options: new ObjectFindOptions(register: $register, schema: $schema),
+			_rbac: false,
+			_multitenancy: false
+		);
 		if ($entity === null) {
 			return null;
 		}
@@ -106,16 +115,16 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		unset($record['@self']);
 		$objectService->saveObject(
 			object: array_merge($record, $fields),
-			register: $register,
-			schema: $schema,
-			uuid: $uuid,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $register, schema: $schema),
+				uuid: $uuid,
+				policy: new SavePolicy(silent: true)
+			),
 			_rbac: false,
-			_multitenancy: false,
-			silent: true
+			_multitenancy: false
 		);
 
 		return $fields;
-
 	}//end deliver()
 
 	/**
@@ -161,7 +170,6 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		return false;
-
 	}//end isInPlooiCatalogue()
 
 	/**
@@ -188,7 +196,6 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		);
 
 		return ($result['results'] ?? []);
-
 	}//end plooiCatalogues()
 
 	/**
@@ -212,6 +219,5 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		$registers = array_map('strval', (array)($catalog['registers'] ?? []));
 		$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
 		return in_array($register, $registers, true) === true && in_array($schema, $schemas, true) === true;
-
 	}//end covers()
 }//end class

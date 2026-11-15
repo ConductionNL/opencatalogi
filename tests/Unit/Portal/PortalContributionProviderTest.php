@@ -132,6 +132,23 @@ class PortalContributionProviderTest extends TestCase {
 	/**
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-notice-reaches-the-resident-through-portaliq-and-a-crash-sends-late-not-never-req-ssa-004
 	 */
+	/**
+	 * The whole manifest, key order included, matches the recording in
+	 * fixtures/portal-contribution-golden.json.
+	 *
+	 * @return void
+	 */
+	public function testTheManifestMatchesTheRecording(): void {
+		$fixture = __DIR__ . '/fixtures/portal-contribution-golden.json';
+		$actual = $this->manifest('citizen');
+		if (getenv('GOLDEN_RECORD') === '1') {
+			file_put_contents($fixture, json_encode($actual, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+		}
+
+		$this->assertSame(json_decode((string)file_get_contents($fixture), true), $actual);
+
+	}//end testTheManifestMatchesTheRecording()
+
 	public function testTheSavedSearchNoticeIsADeclaredRuleKeyNotAChangeRule(): void {
 		// opencatalogi writes the match message itself; a change rule on the
 		// saved search would add portaliq's generic "has been updated" notice.
@@ -167,7 +184,7 @@ class PortalContributionProviderTest extends TestCase {
 	public function testTheDossierPageShowsTheSelectedDossier(): void {
 		$manifest = $this->manifest('citizen');
 		$blocks = $this->byId($manifest['pages'])['dossiers']['blocks'];
-		$types = array_map(static fn (array $block): string => $block['type'].':'.($block['collection'] ?? ($block['action'] ?? '')), $blocks);
+		$types = array_map(static fn (array $block): string => $block['type'] . ':' . ($block['collection'] ?? ($block['action'] ?? '')), $blocks);
 		$this->assertSame(['richText:', 'action:createDossier', 'collection:myDossiers', 'detail:myDossiers'], $types);
 
 		$dossiers = $this->byId($manifest['collections'])['myDossiers'];
@@ -203,7 +220,7 @@ class PortalContributionProviderTest extends TestCase {
 			$words = explode(' ', $label);
 			array_shift($words);
 			foreach ($words as $word) {
-				$this->assertFalse(ctype_upper(mb_substr($word, 0, 1)) && $word !== 'Woo', 'Title Case in: '.$label);
+				$this->assertFalse(ctype_upper(mb_substr($word, 0, 1)) && $word !== 'Woo', 'Title Case in: ' . $label);
 			}
 		}
 	}

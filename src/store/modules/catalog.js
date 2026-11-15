@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 import { buildHeaders } from '@conduction/nextcloud-vue'
 import { defineStore } from 'pinia'
 import { Catalogi } from '../../entities/catalogi/catalogi.ts'
@@ -37,14 +41,68 @@ function publicationSearchParams(params, pagination) {
  * @return {{results: Array, total: number, page: number, pages: number, limit: number, offset: number}} The page
  */
 function publicationsPage(data) {
-	return {
-		results: data.results || [],
-		total: data.total || 0,
-		page: data.page || 1,
-		pages: data.pages || 0,
-		limit: data.limit || 20,
-		offset: data.offset || 0,
+	return { results: data.results || [], ...withPageFallbacks(data) }
+}
+
+/**
+ * The slug-based publications endpoint (GET /api/{catalogSlug}) with the
+ * page's query.
+ *
+ * @param {{catalogId: string, params: object}} request - The catalog and the page parameters
+ * @param {object} pagination - The store's pagination
+ * @return {string} The url
+ */
+function publicationsUrl(request, pagination) {
+	const queryParams = new URLSearchParams(
+		publicationSearchParams(request.params, pagination),
+	)
+	return `/index.php/apps/opencatalogi/api/${request.catalogId}?${queryParams}`
+}
+
+/**
+ * Load a catalog's publications page into the store, with both loading flags
+ * on while it runs; a failure leaves an empty page.
+ *
+ * @param {object} store - The catalog store
+ * @param {{catalogId: string, params: object}} request - The catalog and the page parameters
+ * @return {Promise<void>}
+ */
+async function loadPublications(store, request) {
+	store.loading = true
+	objectStore.setLoading('publication', true)
+
+	const url = publicationsUrl(request, store.pagination)
+
+	try {
+		await store.loadPublicationsPage(url)
+	} catch (error) {
+		console.error('Error fetching publications:', error)
+		store.publications = publicationsPage({})
+	} finally {
+		store.loading = false
+		objectStore.setLoading('publication', false)
 	}
+}
+
+/**
+ * What a publications page falls back to, field by field, when a value is
+ * missing or falsy.
+ */
+const PAGE_FALLBACK = { total: 0, page: 1, pages: 0, limit: 20, offset: 0 }
+
+/**
+ * The paging fields of `values`, each falling back to PAGE_FALLBACK.
+ *
+ * @param {object} values - The page or API answer
+ * @return {{total: number, page: number, pages: number, limit: number, offset: number}} The fields
+ */
+function withPageFallbacks(values) {
+	return Object.fromEntries(
+		Object.entries(PAGE_FALLBACK).map(([key, fallback]) => [
+			key,
+			values[key] || fallback,
+		]),
+	)
 }
 
 /**
@@ -62,6 +120,65 @@ function resolveRef(ref, map) {
 
 	return map[String(ref)] || map[Number(ref)]
 }
+/**
+ * The schema and register references a publication carries: on `@self`, or
+ * on the publication itself in the older shape.
+ *
+ * @param {object} publication - The publication
+ * @return {{schemaRef: any, registerRef: any}} The references
+ */
+function publicationRefs(publication) {
+	return {
+		schemaRef: publication['@self']?.schema ?? publication.schema,
+		registerRef: publication['@self']?.register ?? publication.register,
+	}
+}
+
+/**
+ * The object type of a publication in a page: its schema slug and the schema
+ * and register ids, resolved through the page's `@self.schemas` and
+ * `@self.registers` maps. Null when the publication lacks either reference.
+ *
+ * @param {object} publication - The publication
+ * @param {object} data - The publications page from the API
+ * @return {{slug: string|undefined, schema: any, register: any}|null} The object type
+ */
+function publicationObjectType(publication, data) {
+	const refs = publicationRefs(publication)
+	if (!refs.schemaRef || !refs.registerRef) return null
+
+	return resolvedObjectType(refs, data['@self'] || {})
+}
+
+/**
+ * The id of a resolved schema or register, else the reference itself.
+ *
+ * @param {object|undefined} resolved - The resolved object
+ * @param {object|string|number} ref - The reference
+ * @return {object|string|number} The id
+ */
+function resolvedId(resolved, ref) {
+	return resolved?.id ?? ref
+}
+
+/**
+ * An object type from a publication's schema and register references,
+ * resolved through the page's schema and register maps.
+ *
+ * @param {{schemaRef: any, registerRef: any}} refs - The references
+ * @param {{schemas?: object, registers?: object}} maps - The page's `@self` maps
+ * @return {{slug: string|undefined, schema: any, register: any}} The object type
+ */
+function resolvedObjectType({ schemaRef, registerRef }, maps) {
+	const schemaObj = resolveRef(schemaRef, maps.schemas || {})
+	const registerObj = resolveRef(registerRef, maps.registers || {})
+	return {
+		slug: schemaObj?.slug,
+		schema: resolvedId(schemaObj, schemaRef),
+		register: resolvedId(registerObj, registerRef),
+	}
+}
+
 /** @typedef {{id: string, title: string, [key: string]: any}} ObjectEntity */
 
 /**
@@ -199,11 +316,7 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		async fetchPublications(params = {}, catalogId = null) {
-			const resolvedCatalogId =
-				catalogId
-				|| this.activeCatalog?.slug
-				|| this.activeCatalog?.id
-				|| this.lastCatalogId
+			const resolvedCatalogId = this.resolvePublicationsCatalog(catalogId)
 			if (!resolvedCatalogId) {
 				console.error(
 					'[CatalogStore#fetchPublications] No catalog ID provided and no active catalog exists',
@@ -213,40 +326,50 @@ export const useCatalogStore = defineStore('catalog', {
 
 			this.lastCatalogId = resolvedCatalogId
 
-			this.loading = true
-			objectStore.setLoading('publication', true)
+			await loadPublications(this, { catalogId: resolvedCatalogId, params })
+		},
 
-			const queryParams = new URLSearchParams(
-				publicationSearchParams(params, this.pagination),
+		/**
+		 * The catalog to list publications for: the given one, else the active
+		 * catalog's slug or id, else the last one listed.
+		 *
+		 * @param {string|null} catalogId - The requested catalog
+		 * @return {string|number|null} The catalog slug or id
+		 * @spec openspec/specs/catalogs/spec.md
+		 */
+		resolvePublicationsCatalog(catalogId) {
+			return (
+				catalogId
+				|| this.activeCatalog?.slug
+				|| this.activeCatalog?.id
+				|| this.lastCatalogId
 			)
+		},
 
-			try {
-				const catalogIdToUse = resolvedCatalogId
+		/**
+		 * GET one publications page and store it: the page, its pagination, the
+		 * object types it uses and the publication collection.
+		 *
+		 * @param {string} url - The page URL
+		 * @return {Promise<void>}
+		 * @spec openspec/specs/catalogs/spec.md
+		 */
+		async loadPublicationsPage(url) {
+			const response = await fetch(url, {
+				method: 'GET',
+				headers: buildHeaders(),
+			})
+			const data = await response.json()
 
-				// Use the slug-based publications endpoint (GET /api/{catalogSlug})
-				const url = `/index.php/apps/opencatalogi/api/${catalogIdToUse}?${queryParams}`
-				const response = await fetch(url, {
-					method: 'GET',
-					headers: buildHeaders(),
-				})
-				const data = await response.json()
-
-				this.publications = publicationsPage(data)
-				this.pagination = {
-					page: this.publications.page,
-					limit: this.publications.limit,
-				}
-
-				await this.registerPublicationTypes(data)
-
-				objectStore.setCollection('publication', data.results)
-			} catch (error) {
-				console.error('Error fetching publications:', error)
-				this.publications = publicationsPage({})
-			} finally {
-				this.loading = false
-				objectStore.setLoading('publication', false)
+			this.publications = publicationsPage(data)
+			this.pagination = {
+				page: this.publications.page,
+				limit: this.publications.limit,
 			}
+
+			await this.registerPublicationTypes(data)
+
+			objectStore.setCollection('publication', data.results)
 		},
 
 		/**
@@ -261,25 +384,15 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @spec openspec/specs/catalogs/spec.md
 		 */
 		async registerPublicationTypes(data) {
-			const schemasMap = data['@self']?.schemas || {}
-			const registersMap = data['@self']?.registers || {}
 			for (const publication of data.results || []) {
-				const schemaRef = publication['@self']?.schema ?? publication.schema
-				const registerRef =
-					publication['@self']?.register ?? publication.register
-				if (!schemaRef || !registerRef) continue
-
-				const schemaObj = resolveRef(schemaRef, schemasMap)
-				const registerObj = resolveRef(registerRef, registersMap)
-				const slug = schemaObj?.slug
-
-				if (slug && !this.registeredTypes.has(slug)) {
+				const type = publicationObjectType(publication, data)
+				if (type?.slug && !this.registeredTypes.has(type.slug)) {
 					await objectStore.registerObjectType(
-						slug,
-						schemaObj?.id ?? schemaRef,
-						registerObj?.id ?? registerRef,
+						type.slug,
+						type.schema,
+						type.register,
 					)
-					this.registeredTypes.add(slug)
+					this.registeredTypes.add(type.slug)
 				}
 			}
 		},
@@ -313,14 +426,7 @@ export const useCatalogStore = defineStore('catalog', {
 
 			this.activeCatalog = null
 			this.activePublication = null
-			this.publications = {
-				results: [],
-				total: 0,
-				page: 1,
-				pages: 0,
-				limit: 20,
-				offset: 0,
-			}
+			this.publications = publicationsPage({})
 		},
 	},
 
@@ -396,13 +502,10 @@ export const useCatalogStore = defineStore('catalog', {
 		 * @return {object} The pagination info
 		 */
 		publicationPagination: (state) => {
-			return {
-				page: state.publications.page || 1,
-				pages: state.publications.pages || 0,
-				total: state.publications.total || 0,
-				limit: state.publications.limit || 20,
-				offset: state.publications.offset || 0,
-			}
+			const { page, pages, total, limit, offset } = withPageFallbacks(
+				state.publications,
+			)
+			return { page, pages, total, limit, offset }
 		},
 	},
 })

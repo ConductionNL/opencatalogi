@@ -53,14 +53,13 @@ class ContractBindingsTest extends TestCase {
 		$this->assertNotEmpty($files);
 		foreach ($files as $file) {
 			$component = basename(dirname($file));
-			$class     = 'OCA\\OpenCatalogi\\' . $component . '\\' . basename($file, '.php');
-			$ctor      = (new ReflectionClass($class))->getConstructor();
+			$class = 'OCA\\OpenCatalogi\\' . $component . '\\' . basename($file, '.php');
+			$ctor = (new ReflectionClass($class))->getConstructor();
 			$registrar = $ctor !== null && $ctor->getNumberOfParameters() > 0 ? new $class('opencatalogi') : new $class();
 			$registrar->register($context);
 		}
 
 		return $aliases;
-
 	}//end boundAliases()
 
 	/**
@@ -77,7 +76,6 @@ class ContractBindingsTest extends TestCase {
 		$this->assertNotEmpty($names, 'no interfaces in lib/Contract: this test no longer watches anything');
 
 		return $names;
-
 	}//end contractInterfaces()
 
 	/**
@@ -110,11 +108,11 @@ class ContractBindingsTest extends TestCase {
 	 */
 	public function testContractDependsOnNoComponent(): void {
 		$allowed = ['Contract', 'Exception', 'Http', 'Event'];
-		$files   = glob(self::LIB . '/Contract/*.php');
+		$files = glob(self::LIB . '/Contract/*.php');
 		$this->assertNotEmpty($files, 'lib/Contract is empty: this test no longer watches anything');
 		foreach ($files as $file) {
 			$matches = [];
-			preg_match_all('/^use OCA\\\\OpenCatalogi\\\\(\w+)\\\\/m', (string) file_get_contents($file), $matches);
+			preg_match_all('/^use OCA\\\\OpenCatalogi\\\\(\w+)\\\\/m', (string)file_get_contents($file), $matches);
 			foreach ($matches[1] as $component) {
 				$this->assertContains($component, $allowed, basename($file) . ' imports from ' . $component);
 			}

@@ -49,6 +49,18 @@ describe('normaliseIdList', () => {
 		expect(normaliseIdList('[19, "173", "slug"]')).toEqual([19, 173])
 	})
 
+	it('drops zero and keeps padded or huge numeric strings', () => {
+		expect(normaliseIdList(['0', '00', '007', 7, '\t8\n', 8])).toEqual([7, 8])
+		expect(normaliseIdList(['1'.repeat(400)])).toEqual([Infinity])
+		expect(normaliseIdList([Infinity, 2 ** 53 + 2])).toEqual([2 ** 53 + 2])
+	})
+
+	it('answers an empty list for a JSON null or a JSON number', () => {
+		expect(normaliseIdList('null')).toEqual([])
+		expect(normaliseIdList('19')).toEqual([])
+		expect(normaliseIdList('[]')).toEqual([])
+	})
+
 	it('answers an empty list for anything that is not a list', () => {
 		expect(normaliseIdList(undefined)).toEqual([])
 		expect(normaliseIdList(null)).toEqual([])

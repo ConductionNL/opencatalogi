@@ -122,6 +122,11 @@ class ListenerRegistrar {
 			$context->registerEventListener($catalogAccessEvent, CatalogAccessListener::class);
 		}
 
+		// A statutory end date written through any API lands on a working day
+		// (inspection-period-rolls-on-the-calendar, REQ-IPR-002).
+		$context->registerEventListener(ObjectCreatingEvent::class, TermRollListener::class);
+		$context->registerEventListener(ObjectUpdatingEvent::class, TermRollListener::class);
+
 		// A seeded catalogue can name another app's register by slug (the
 		// applicatielandschap catalogue names stackiq's). When that app is
 		// installed after OpenCatalogi, its register event completes the scope

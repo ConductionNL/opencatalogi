@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Contract;
 
-
 /**
  * Contract of SavedSearchService, for callers in other components.
  *
@@ -32,7 +31,7 @@ interface SavedSearchServiceInterface {
 	/**
 	 * Save a search for this resident.
 	 *
-	 * @param string               $owner The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param array<string, mixed> $input title, query (object or JSON), frequency.
 	 *
 	 * @return array<string, mixed> The saved search.
@@ -46,7 +45,7 @@ interface SavedSearchServiceInterface {
 	/**
 	 * Stop the notices of a saved search: one click from the notice.
 	 *
-	 * @param string $owner         The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $savedSearchId The saved search.
 	 *
 	 * @return array{active: bool}
@@ -60,7 +59,7 @@ interface SavedSearchServiceInterface {
 	/**
 	 * Delete a saved search.
 	 *
-	 * @param string $owner         The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $savedSearchId The saved search.
 	 *
 	 * @return array{deleted: bool}

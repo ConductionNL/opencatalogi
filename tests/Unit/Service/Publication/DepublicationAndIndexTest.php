@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service\Publication;
@@ -44,7 +49,6 @@ class DepublicationAndIndexTest extends TestCase {
 	 */
 	private function at(string $when): DateTimeImmutable {
 		return new DateTimeImmutable($when, new DateTimeZone('UTC'));
-
 	}//end at()
 
 	/**
@@ -70,7 +74,6 @@ class DepublicationAndIndexTest extends TestCase {
 		);
 
 		return $index;
-
 	}//end answeringIndex()
 
 	public function testOneActionTakesItDownEverywhereAndRecordsWhoAndWhy(): void {

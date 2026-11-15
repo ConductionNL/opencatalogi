@@ -53,8 +53,8 @@ class SavedSearchNoticeWriter {
 	/**
 	 * Constructor.
 	 *
-	 * @param PortalObjectStore $store       Writes the message as the system.
-	 * @param IFactory          $l10nFactory The Dutch text, whatever the request's language.
+	 * @param PortalObjectStore $store Writes the message as the system.
+	 * @param IFactory $l10nFactory The Dutch text, whatever the request's language.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
@@ -66,9 +66,9 @@ class SavedSearchNoticeWriter {
 	/**
 	 * Write the message for one notice.
 	 *
-	 * @param array<string, mixed>             $saved The saved search.
+	 * @param array<string, mixed> $saved The saved search.
 	 * @param array<int, array<string, mixed>> $batch The publications in this notice (one, or at most twenty).
-	 * @param int                              $count How many publications matched in all.
+	 * @param int $count How many publications matched in all.
 	 *
 	 * @return bool Whether a message was written; false when the search has no owner to tell.
 	 *
@@ -98,16 +98,15 @@ class SavedSearchNoticeWriter {
 		);
 
 		return true;
-
 	}//end write()
 
 	/**
 	 * The subject: the publication by name when there is one, else the count.
 	 *
-	 * @param IL10N                            $l10n   The Dutch text.
-	 * @param string                           $search The search's title.
-	 * @param array<int, array<string, mixed>> $batch  The publications in this notice.
-	 * @param int                              $count  How many matched in all.
+	 * @param IL10N $l10n The Dutch text.
+	 * @param string $search The search's title.
+	 * @param array<int, array<string, mixed>> $batch The publications in this notice.
+	 * @param int $count How many matched in all.
 	 *
 	 * @return string
 	 */
@@ -117,16 +116,15 @@ class SavedSearchNoticeWriter {
 		}
 
 		return $l10n->t('%1$d new publications for your search "%2$s"', [$count, $search]);
-
 	}//end subject()
 
 	/**
 	 * The body: one line per publication with its link, and how many more.
 	 *
-	 * @param IL10N                            $l10n   The Dutch text.
-	 * @param string                           $search The search's title.
-	 * @param array<int, array<string, mixed>> $batch  The publications in this notice.
-	 * @param int                              $count  How many matched in all.
+	 * @param IL10N $l10n The Dutch text.
+	 * @param string $search The search's title.
+	 * @param array<int, array<string, mixed>> $batch The publications in this notice.
+	 * @param int $count How many matched in all.
 	 *
 	 * @return string
 	 */
@@ -138,15 +136,14 @@ class SavedSearchNoticeWriter {
 
 		$lines = [];
 		foreach ($batch as $match) {
-			$lines[] = '- '.(string)($match['title'] ?? '').': '.(string)($match['url'] ?? '');
+			$lines[] = '- ' . (string)($match['title'] ?? '') . ': ' . (string)($match['url'] ?? '');
 		}
 
-		$body = $opening."\n\n".implode("\n", $lines);
+		$body = $opening . "\n\n" . implode("\n", $lines);
 		if ($count > count($batch)) {
-			$body .= "\n\n".$l10n->t('And %1$d more. Search again to see them all.', [$count - count($batch)]);
+			$body .= "\n\n" . $l10n->t('And %1$d more. Search again to see them all.', [$count - count($batch)]);
 		}
 
 		return $body;
-
 	}//end body()
 }//end class

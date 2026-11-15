@@ -88,16 +88,28 @@
       if the aggregation call didn't resolve, e.g. unconfigured register/schema
       on a fresh install).
 - [ ] ~~Update `publicationsByCategoryData()` to use `countBySchema`~~ — NOT
-      DONE; blocked on the cross-schema groupBy gap above. Left on its
+      DONE; blocked on the cross-schema groupBy gap above (one `value` count
+      per schema would need the catalogs' register/schema pairs, which a
+      catalog lists as two unpaired id lists). Left on its
       existing client-side tally over the fetched page (same truncation
       exposure as before for catalogs with >1000 publications spanning many
       schemas — unresolved, needs upstream OR support or a redesign).
+- [x] Source `conceptPublicationCount` / `publishedPublicationCount` /
+      `depublishedPublicationCount` from OR's ad-hoc `value?metric=count`
+      endpoint — `src/services/publicationStatusCounts.js`. No null filter is
+      needed: three counts that only use `lte` (total; live =
+      `publicationDate ≤ now`; ended = live and `depublicationDate ≤ now`)
+      give concept = total − live, published = live − ended, depublished =
+      ended, matching `publicationStatus.js` exactly. `fetchPublicationAggregations()`
+      stores them in `statusCounts`; `kpis()` reads them and keeps the
+      list-derived counts only when the aggregation is unavailable (no
+      register/schema configured, or a count fails). Unit tests:
+      `tests/vitest/publicationStatusCounts.spec.js`,
+      `src/views/dashboard/DashboardStatusCounts.spec.js`.
 - [ ] `allPublications`/`conceptPublications`/`publishedPublications`/
       `depublishedPublications` getters — KEPT (not removed): they still back
-      the concept/published/depublished KPI sub-counts and the "recent
-      concepts" side panels, which remain list-derived because their
-      underlying status is a computed (not stored) value — see the note above
-      for why an aggregation-based replacement wasn't safe to guess at.
+      the "recent publications" side panels, the category chart and the
+      KPI fallback above.
 - [x] Right-sized `fetchAllPublications()`'s role — it is documented as no
       longer the source of the headline `publicationCount` KPI (that's
       `fetchPublicationAggregations()` now); it remains the source for the

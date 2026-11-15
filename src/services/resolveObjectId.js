@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Extract a routable id from an OpenRegister object row.
  *
  * Index-page rows arrive in variant shapes depending on which projection

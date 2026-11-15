@@ -205,7 +205,10 @@ class PublicationSearchGoldenTest extends TestCase {
 		$objectService->method('find')->willReturnCallback(
 			static function ($id) use (&$calls, $case, $entity) {
 				$calls[] = ['find' => $id];
-				return $entity($case['catalog'] ?? []);
+				$catalog = $entity($case['catalog'] ?? []);
+				$catalog->setRegister('catalog-register');
+				$catalog->setSchema('catalog-schema');
+				return $catalog;
 			}
 		);
 		$objectService->method('searchObjectsPaginated')->willReturnCallback(

@@ -57,7 +57,7 @@ class AvailabilityGoldenObjects {
 	/**
 	 * Record the call and answer with one stored object.
 	 *
-	 * @param string            $name The method.
+	 * @param string $name The method.
 	 * @param array<int, mixed> $args Its arguments.
 	 *
 	 * @return array<string, mixed>
@@ -73,6 +73,7 @@ class AvailabilityGoldenObjects {
  *
  * @covers \OCA\OpenCatalogi\Service\Woo\WooRequestStore
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\JsonList
  * @covers \OCA\OpenCatalogi\Service\Woo\WithheldDocumentStore
  * @covers \OCA\OpenCatalogi\Service\Portal\PortalObjectStore
  * @covers \OCA\OpenCatalogi\Service\Portal\PublicSearchRunner
@@ -105,7 +106,6 @@ class OpenRegisterAvailabilityGoldenTest extends TestCase {
 		}
 
 		return $cases;
-
 	}//end cases()
 
 	/**
@@ -189,8 +189,8 @@ class OpenRegisterAvailabilityGoldenTest extends TestCase {
 	/**
 	 * Build the store and make its call.
 	 *
-	 * @param string            $store The store.
-	 * @param array<int, mixed> $deps  The config, container, app manager and logger.
+	 * @param string $store The store.
+	 * @param array<int, mixed> $deps The config, container, app manager and logger.
 	 *
 	 * @return mixed The answer.
 	 */
@@ -231,6 +231,5 @@ class OpenRegisterAvailabilityGoldenTest extends TestCase {
 		}
 
 		return $value;
-
 	}//end describe()
 }//end class

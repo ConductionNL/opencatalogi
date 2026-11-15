@@ -26,6 +26,8 @@
  * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-daily-retention-evaluation-job-ret-005
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionRules
+ * @uses \OCA\OpenCatalogi\Service\RetentionQueue
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses \OCA\OpenCatalogi\Service\BomCsv
  * @uses \OCA\OpenCatalogi\Service\RetentionReport
@@ -44,6 +46,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A scripted OpenRegister ObjectService that records searches and saves.
@@ -70,7 +73,11 @@ class GoldenRetentionObjectService {
 		return ['results' => $this->objects];
 	}
 
-	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true) {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$this->calls[] = ['save' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 		return $object;
 	}

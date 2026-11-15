@@ -24,10 +24,13 @@ declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\DcatAssurance;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
 use OCA\OpenCatalogi\Service\DcatVocabularyService;
+use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\QualityService;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenRegister\Db\SchemaMapper;
@@ -46,7 +49,12 @@ use RuntimeException;
  * Golden test for DcatService::buildCatalogDocument.
  *
  * @covers \OCA\OpenCatalogi\Service\DcatService
+ * @uses \OCA\OpenCatalogi\Service\JsonList
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Service\InstanceSettings
+ * @uses \OCA\OpenCatalogi\Service\DcatAssurance
  * @uses \OCA\OpenCatalogi\Service\DcatMappingService
+ * @uses \OCA\OpenCatalogi\Service\DcatDistributionMapper
  * @uses \OCA\OpenCatalogi\Service\DcatVocabularyService
  * @uses \OCA\OpenCatalogi\Service\DcatDatasetSource
  * @uses \OCA\OpenCatalogi\Service\DcatMappingProfile
@@ -96,6 +104,33 @@ class DcatCatalogPagesGoldenTest extends TestCase {
 				'next' => null,
 			]],
 			'search rows as entities' => [['catalog' => $catalog, 'page' => 1, 'entities' => true, 'rows' => array_slice($rows, 0, 2), 'next' => null]],
+			'description, publisher and a string hvd default' => [[
+				'catalog' => $catalog + ['description' => 'Omschrijving', 'dcatPublisherName' => 'Gemeente', 'dcatPublisherUri' => 'https://gemeente', 'dcatHvdCategory' => 'http://data.europa.eu/bna/c_dd313021'],
+				'page' => 2,
+				'rows' => array_slice($rows, 0, 1),
+				'next' => null,
+			]],
+			'empty description, organisation publisher, hvd default not a string' => [[
+				'catalog' => $catalog + ['description' => '', 'organisation' => ['title' => 'Org', 'oin' => '0001'], 'dcatHvdCategory' => 7],
+				'page' => 1,
+				'rows' => array_slice($rows, 0, 1),
+				'next' => null,
+			]],
+			'lists as json text with non-numeric ids' => [[
+				'catalog' => ['registers' => '["20", "x", 21.0]', 'schemas' => '[28, "abc", "29"]', 'description' => null],
+				'page' => 1,
+				'rows' => array_slice($rows, 2, 1),
+				'next' => null,
+			]],
+			'lists as invalid json text' => [['catalog' => ['registers' => 'not json', 'schemas' => '"28"'], 'page' => 1, 'rows' => $rows, 'next' => null]],
+			'lists null' => [['catalog' => ['registers' => null, 'schemas' => null], 'page' => 1, 'rows' => $rows, 'next' => null]],
+			'first page with more pages' => [['catalog' => $catalog, 'page' => 1, 'rows' => array_slice($rows, 0, 1), 'next' => 'y']],
+			'a modified date before the epoch' => [[
+				'catalog' => $catalog,
+				'page' => 1,
+				'rows' => [['@self' => ['uuid' => 'u9', 'schema' => 28, 'updated' => '1960-01-01T00:00:00+00:00'], 'id' => 'u9', 'title' => 'Oud']],
+				'next' => null,
+			]],
 		];
 
 	}//end worlds()
@@ -164,7 +199,9 @@ class DcatCatalogPagesGoldenTest extends TestCase {
 				$rows = $world['rows'];
 				if (($world['entities'] ?? false) === true) {
 					$rows = array_map(static fn (array $row): object => new class($row) implements \JsonSerializable {
-						public function __construct(private array $row) {
+						public function __construct(
+							private array $row,
+						) {
 						}
 
 						public function jsonSerialize(): array {
@@ -220,15 +257,12 @@ class DcatCatalogPagesGoldenTest extends TestCase {
 		$quality->method('dqvMeasurements')->willReturnCallback(static fn (array $score) => [['dqv:value' => $score['score']]]);
 
 		return new DcatService(
-			$container,
-			$appManager,
+			new OpenRegisterLookup($container, $appManager),
 			new DcatMappingService(new DcatVocabularyService()),
 			new DcatSerializer(),
-			$urlGenerator,
-			$appConfig,
+			new InstanceSettings($urlGenerator, $appConfig),
 			$this->createMock(LoggerInterface::class),
-			$this->createMock(StandardsVersionService::class),
-			$quality
+			new DcatAssurance($this->createMock(StandardsVersionService::class), $quality)
 		);
 
 	}//end service()

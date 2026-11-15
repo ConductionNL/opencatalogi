@@ -29,9 +29,13 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
-use OCA\OpenCatalogi\Contract\WooRequestStoreInterface;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -40,7 +44,7 @@ use RuntimeException;
  *
  * @spec openspec/specs/woo-request-intake/spec.md#requirement-a-woo-request-is-a-record-of-its-own-req-wri-001
  */
-class WooRequestStore implements WooRequestStoreInterface {
+class WooRequestStore implements InformationRequestStoreInterface {
 	use ReadsObjectProperties;
 
 	/**
@@ -102,7 +106,6 @@ class WooRequestStore implements WooRequestStoreInterface {
 		}
 
 		return $this->objectService;
-
 	}//end objects()
 
 	/**
@@ -129,7 +132,6 @@ class WooRequestStore implements WooRequestStoreInterface {
 		}
 
 		return ['register' => $register, 'schema' => $schema];
-
 	}//end target()
 
 	/**
@@ -150,9 +152,11 @@ class WooRequestStore implements WooRequestStoreInterface {
 		return $this->asArray(
 			object: $this->objects()->saveObject(
 				object: $record,
-				register: $target['register'],
-				schema: $target['schema'],
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']),
+					uuid: $uuid,
+					actor: new SaveActor(unowned: true)
+				),
 				_rbac: false,
 				_multitenancy: false
 			)
@@ -178,8 +182,7 @@ class WooRequestStore implements WooRequestStoreInterface {
 			$found = $this->asArray(
 				object: $this->objects()->find(
 					id: $requestId,
-					register: $target['register'],
-					schema: $target['schema']
+					options: new ObjectFindOptions(register: $target['register'], schema: $target['schema'])
 				)
 			);
 		} catch (\Throwable $e) {
@@ -193,7 +196,6 @@ class WooRequestStore implements WooRequestStoreInterface {
 		$found['id'] = ($found['id'] ?? $requestId);
 
 		return $found;
-
 	}//end find()
 
 	/**
@@ -222,6 +224,5 @@ class WooRequestStore implements WooRequestStoreInterface {
 		}
 
 		return $requests;
-
 	}//end all()
 }//end class

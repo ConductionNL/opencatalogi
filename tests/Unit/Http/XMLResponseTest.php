@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Http;
@@ -202,8 +207,9 @@ class XMLResponseTest extends TestCase {
 		$response = new XMLResponse($data);
 		$xml = $response->render();
 
-		// @ prefix is stripped from element names.
-		$this->assertStringContainsString('<field>value</field>', $xml);
+		// A single-valued @name key is the attribute name.
+		$this->assertStringContainsString('<root field="value"', $xml);
+		$this->assertStringNotContainsString('<field>', $xml);
 	}
 
 	public function testRenderWithObjectWithToString(): void {

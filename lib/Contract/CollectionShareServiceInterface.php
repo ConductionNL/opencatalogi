@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Contract;
 
-
 /**
  * Contract of CollectionShareService, for callers in other components.
  *
@@ -35,7 +34,7 @@ interface CollectionShareServiceInterface {
 	 * Answers `url`, the JSON path, and `link`, the absolute address of the
 	 * page on the portal site that shows the shared dossier.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array{token: string, createdAt: string, url: string, link: string}
@@ -50,7 +49,7 @@ interface CollectionShareServiceInterface {
 	/**
 	 * Revoke the read-only link.
 	 *
-	 * @param string $owner        The subject reference.
+	 * @param string $owner The subject reference.
 	 * @param string $collectionId The dossier.
 	 *
 	 * @return array{shared: bool}

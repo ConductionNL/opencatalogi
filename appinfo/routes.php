@@ -1,6 +1,12 @@
 <?php
 
-return [
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
+// Every unversioned API route is also served under /api/v1/; see ApiPathAliases.
+return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases([
 	'routes' => [
 		/**
 		 * Here we have the private endpoints, the part of the API that is used by the backend and not publicly accessible
@@ -61,8 +67,9 @@ return [
 		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
 		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
 		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],
+		['name' => 'woo#verifyRedaction', 'url' => '/api/woo/batches/{batchId}/documents/{docId}/verify-redaction', 'verb' => 'POST'],
 		['name' => 'woo#markReadyForReview', 'url' => '/api/woo/batches/{batchId}/ready-for-review', 'verb' => 'POST'],
-		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'POST'],
+		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'GET'],
 		['name' => 'woo#publishBatch', 'url' => '/api/woo/batches/{batchId}/publish', 'verb' => 'POST'],
 		// Woo request intake and the statutory term (woo-request-intake). The
 		// citizen-facing form is portaliq's; this is the API it calls.
@@ -85,6 +92,8 @@ return [
 		['name' => 'publiccodeHarvest#run', 'url' => '/api/settings/publiccode-harvest/run', 'verb' => 'POST'],
 		// Woo-index registration and the root robots.txt rules (woo-index-harvester-connection).
 		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],
+		// The publishers group in the admin settings (operations-publish-rights, REQ-OPR-004).
+		['name' => 'publishRights#show', 'url' => '/api/settings/publish-rights', 'verb' => 'GET'],
 		['name' => 'wooRegistration#request', 'url' => '/api/woo/registration', 'verb' => 'POST'],
 		['name' => 'wooRegistration#confirm', 'url' => '/api/woo/registration/confirm', 'verb' => 'POST'],
 		// The public and community surface: the admin surfaces.
@@ -104,6 +113,7 @@ return [
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
+		['name' => 'publicationState#republishFile', 'url' => '/api/publications/{id}/files/{fileId}/republish', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationDisclosure#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
@@ -120,13 +130,6 @@ return [
 		 * CORS preflight OPTIONS routes for public endpoints
 		 */
 		
-		// Publications CORS (wildcard catalog-based endpoints)
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
-		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// DCAT-AP-NL CORS (public harvest endpoints)
 		['name' => 'dcat#preflightedCors', 'postfix' => '-dcat', 'url' => '/api/dcat', 'verb' => 'OPTIONS'],
 		['name' => 'dcat#preflightedCors', 'postfix' => '-catalogs-catalogslug-dcat', 'url' => '/api/catalogs/{catalogSlug}/dcat', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
@@ -173,7 +176,7 @@ return [
 		 * IMPORTANT: Routes are matched in order from top to bottom.
 		 * Specific routes MUST come BEFORE wildcard routes to avoid incorrect matching.
 		 */
-		// OpenAPI 3.1 self-documentation (public-api-openapi-document)
+		// OpenAPI 3.0 self-documentation (public-api-openapi-document)
 		['name' => 'apiDocumentation#index', 'url' => '/api/openapi.json', 'verb' => 'GET'],
 		// DCAT-AP-NL harvest endpoints (specific routes - MUST be before wildcard catalog routes)
 		['name' => 'dcat#instance', 'url' => '/api/dcat', 'verb' => 'GET'],
@@ -278,10 +281,22 @@ return [
 		['name' => 'portalSavedSearch#pause', 'url' => '/api/portal/saved-searches/pause', 'verb' => 'POST'],
 		['name' => 'portalSavedSearch#delete', 'url' => '/api/portal/saved-searches/delete', 'verb' => 'POST'],
 		['name' => 'sharedCollection#show', 'url' => '/api/collections/shared/{token}', 'verb' => 'GET', 'requirements' => ['token' => '[0-9a-f-]{36}\.[0-9a-f]{48}']],
+		// Publications CORS (wildcard catalog-based endpoints). Declared after every named OPTIONS route, which /api/{catalogSlug} would otherwise answer.
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug', 'url' => '/api/{catalogSlug}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publishedTable#preflightedCors', 'postfix' => '-table-dictionary', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publications#preflightedCors', 'postfix' => '-catalogslug-id-download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'OPTIONS', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		// Publications (wildcard catalog-based endpoints - MUST BE ABSOLUTE LAST to avoid catching any specific routes)
 		['name' => 'publications#index', 'url' => '/api/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#show', 'url' => '/api/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#uses', 'url' => '/api/{catalogSlug}/{id}/uses', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		// Published tables: rows and data dictionary of a CSV published as a table (REQ-ODT-002, REQ-ODT-003).
+		['name' => 'publishedTable#rows', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/rows', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
+		['name' => 'publishedTable#dictionary', 'url' => '/api/{catalogSlug}/{publicationId}/tables/{tableId}/dictionary', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#used', 'url' => '/api/{catalogSlug}/{id}/used', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#attachments', 'url' => '/api/{catalogSlug}/{id}/attachments', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'publications#download', 'url' => '/api/{catalogSlug}/{id}/download', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
@@ -292,6 +307,7 @@ return [
 		['name' => 'ui#publicationsIndex', 'url' => '/publications/{catalogSlug}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+']],
 		['name' => 'ui#publicationsPage', 'url' => '/publications/{catalogSlug}/{id}', 'verb' => 'GET', 'requirements' => ['catalogSlug' => '[A-Za-z0-9-]+', 'id' => '[A-Za-z0-9-]+']],
 		['name' => 'ui#search', 'url' => '/search', 'verb' => 'GET'],
+		['name' => 'ui#federatedPublication', 'url' => '/federation/publications/{id}', 'verb' => 'GET', 'requirements' => ['id' => '[A-Za-z0-9-]+']],
 		['name' => 'ui#organizations', 'url' => '/organizations', 'verb' => 'GET'],
 		['name' => 'ui#themes', 'url' => '/themes', 'verb' => 'GET'],
 		['name' => 'ui#glossary', 'url' => '/glossary', 'verb' => 'GET'],
@@ -303,4 +319,4 @@ return [
 		// (aliased in Application::register); a distinct name keeps it from shadowing the / index route.
 		['name' => 'OCA\OpenCatalogi\AppHost\Controller\GenericDashboard#catchAll', 'url' => '/{path}', 'verb' => 'GET', 'requirements' => ['path' => '.+'], 'defaults' => ['path' => '']],
 	]
-];
+]);

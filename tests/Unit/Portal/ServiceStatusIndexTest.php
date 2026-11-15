@@ -51,17 +51,19 @@ class ServiceStatusIndexTest extends TestCase {
 					/**
 					 * @param array<int, array<string, mixed>> $rows The rows.
 					 */
-					public function __construct(private array $rows) {
+					public function __construct(
+						private array $rows,
+					) {
 					}
 
 					/**
-					 * @param array<string, mixed> $query         The query.
-					 * @param bool                 $_rbac         Ignored.
-					 * @param bool                 $_multitenancy Ignored.
+					 * @param array<string, mixed> $query The query.
+					 * @param bool $_rbac Ignored.
+					 * @param bool $_multitenancy Ignored.
 					 *
 					 * @return array<string, mixed>
 					 */
-					public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array {
+					public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
 						return ['results' => $this->rows];
 					}
 				}
@@ -69,7 +71,6 @@ class ServiceStatusIndexTest extends TestCase {
 		}
 
 		return new ServiceStatusIndex($config, $container, new StatusPageService(), $this->createMock(LoggerInterface::class));
-
 	}//end index()
 
 	public function testEveryComponentIsAnItemWithItsCells(): void {

@@ -22,8 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Contract;
 
-use DomainException;
-
 /**
  * Contract of DecisionPublicationValidator, for callers in other components.
  *

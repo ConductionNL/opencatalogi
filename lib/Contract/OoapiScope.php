@@ -55,7 +55,6 @@ final class OoapiScope {
 	 */
 	public function catalogId(): string {
 		return (string)($this->catalog['id'] ?? '');
-
 	}//end catalogId()
 
 	/**
@@ -72,6 +71,5 @@ final class OoapiScope {
 		}
 
 		return $organisationId;
-
 	}//end organisationId()
 }//end class

@@ -46,6 +46,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Golden test for UsageCounterService::increment().
@@ -168,9 +169,9 @@ class UsageCountGoldenTest extends TestCase {
 					->getMock();
 				$entity->method('jsonSerialize')->willReturn($row['entity']);
 				$row = $entity;
-			} else if (isset($row['plain']) === true) {
+			} elseif (isset($row['plain']) === true) {
 				$row = (object)$row['plain'];
-			} else if (($row['date'] ?? null) === '<today>') {
+			} elseif (($row['date'] ?? null) === '<today>') {
 				$row['date'] = $today;
 			}
 
@@ -193,15 +194,11 @@ class UsageCountGoldenTest extends TestCase {
 			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			static function (
-				array|ObjectEntity $object,
-				?array $extend = [],
-				mixed $register = null,
-				mixed $schema = null,
-				?string $uuid = null,
-				bool $_rbac = true,
-				bool $_multitenancy = true
-			) use (&$calls, $case, $normalise): ObjectEntity {
+			static function (array|ObjectEntity $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true) use (&$calls, $case, $normalise): ObjectEntity {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$calls[] = ['saveObject', $normalise($object), $extend, $register, $schema, $uuid, $_rbac, $_multitenancy];
 				if (($case['saveFails'] ?? false) === true) {
 					throw new RuntimeException('save down');
@@ -236,6 +233,5 @@ class UsageCountGoldenTest extends TestCase {
 		$answer = $service->increment(new PublicationUsage($publicationId, $kind, $catalog), $userAgent);
 
 		return ['answer' => $answer, 'calls' => $calls];
-
 	}//end increment()
 }//end class

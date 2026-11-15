@@ -35,6 +35,8 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\CommentPeriodWithdrawalServiceInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -117,7 +119,6 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		}
 
 		return $this->objectService;
-
 	}//end getObjectService()
 
 	/**
@@ -153,7 +154,6 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		}
 
 		return $counts;
-
 	}//end withdrawClosedPeriods()
 
 	/**
@@ -282,9 +282,10 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 
 		$run->objectService->saveObject(
 			object: $period,
-			register: $run->register,
-			schema: $run->schema,
-			uuid: (string)($period['id'] ?? ''),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $run->register, schema: $run->schema),
+				uuid: (string)($period['id'] ?? '')
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -310,15 +311,13 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		$saved = $this->asArray(
 			object: $run->objectService->saveObject(
 				object: $depublication,
-				register: $run->register,
-				schema: $depublicationSchema,
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $run->register, schema: $depublicationSchema)),
 				_rbac: false,
 				_multitenancy: false
 			)
 		);
 
 		return (string)($saved['id'] ?? '');
-
 	}//end saveDepublication()
 
 	/**
@@ -350,6 +349,5 @@ class CommentPeriodWithdrawalService implements CommentPeriodWithdrawalServiceIn
 		}
 
 		return $channels;
-
 	}//end channels()
 }//end class

@@ -76,7 +76,7 @@ class CmsMigrationService implements CmsMigrationServiceInterface {
 	 * Wire the container and the logger.
 	 *
 	 * @param ContainerInterface $container Container, so OpenRegister is resolved lazily.
-	 * @param LoggerInterface    $logger    Logger.
+	 * @param LoggerInterface $logger Logger.
 	 *
 	 * @return void
 	 */
@@ -119,80 +119,133 @@ class CmsMigrationService implements CmsMigrationServiceInterface {
 	 * is how they rendered before.
 	 *
 	 * @param array<int, mixed> $blocks The stored content blocks.
-	 * @param string            $pageId A stable prefix for widget ids.
+	 * @param string $pageId A stable prefix for widget ids.
 	 *
 	 * @return array{body: array<string, mixed>, unmapped: array<int, string>, dropped: array<int, string>}
-	 *         The body, plus any block type with no mapping and any prop the
-	 *         target widget does not declare.
+	 *
+	 * Returns: The body, plus any block type with no mapping and any prop the target widget does not declare.
 	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
 	 */
 	public function bodyFor(array $blocks, string $pageId): array {
-		$widgets = [];
-		$unmapped = [];
-		$dropped = [];
-		$row = 0;
-
+		$layout = ['widgets' => [], 'unmapped' => [], 'dropped' => [], 'row' => 0];
 		foreach ($blocks as $index => $block) {
-			if (is_array($block) === false) {
-				continue;
+			if (is_array($block) === true) {
+				$layout = self::placeBlock(layout: $layout, entry: ['id' => $pageId . '-' . $index, 'block' => $block]);
 			}
-
-			$type = (string)($block['type'] ?? '');
-			$widgetKey = (self::WIDGET_FOR_BLOCK[$type] ?? null);
-			if ($widgetKey === null) {
-				$unmapped[] = $type;
-				continue;
-			}
-
-			$data = ($block['data'] ?? []);
-			if (is_array($data) === false) {
-				$data = [];
-			}
-
-			$props = $data;
-			if ($widgetKey === 'markdown') {
-				// Portaliq's markdown widget reads `markdown`, not `content`.
-				// Passing the block through unchanged would save fine and render
-				// an empty widget.
-				$props = ['markdown' => (string)($data['content'] ?? '')];
-			}
-
-			if ($widgetKey === 'hero' && ($data['subtitle'] ?? '') !== '') {
-				// Portaliq's hero declares no subtitle. It is carried in props so
-				// the text is not destroyed, and reported so nobody discovers it
-				// missing from the rendered page instead.
-				$dropped[] = 'hero.subtitle';
-			}
-
-			$height = self::WIDGET_HEIGHT[$widgetKey];
-			$widgets[] = [
-				'id' => $pageId . '-' . $index . '-' . $widgetKey,
-				'widgetKey' => $widgetKey,
-				'gridX' => 0,
-				'gridY' => $row,
-				'gridWidth' => 12,
-				'gridHeight' => $height,
-				'props' => $props,
-			];
-			$row += $height;
-		}//end foreach
+		}
 
 		return [
-			'body' => ['type' => 'grid', 'widgets' => $widgets],
-			'unmapped' => array_values(array_unique($unmapped)),
-			'dropped' => array_values(array_unique($dropped)),
+			'body' => ['type' => 'grid', 'widgets' => $layout['widgets']],
+			'unmapped' => array_values(array_unique($layout['unmapped'])),
+			'dropped' => array_values(array_unique($layout['dropped'])),
 		];
 	}//end bodyFor()
 
 	/**
+	 * The layout with one block placed below the others as its widget, or its type
+	 * listed as unmapped when no widget carries it.
+	 *
+	 * @param array{widgets: array, unmapped: array, dropped: array, row: int} $layout The layout so far.
+	 * @param array{id: string, block: array} $entry The block and its id prefix.
+	 *
+	 * @return array{widgets: array, unmapped: array, dropped: array, row: int}
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
+	 */
+	private static function placeBlock(array $layout, array $entry): array {
+		$type = (string)($entry['block']['type'] ?? '');
+		$widgetKey = (self::WIDGET_FOR_BLOCK[$type] ?? null);
+		if ($widgetKey === null) {
+			$layout['unmapped'][] = $type;
+			return $layout;
+		}
+
+		$data = self::blockData(block: $entry['block']);
+		$layout['dropped'] = array_merge($layout['dropped'], self::droppedFields(widgetKey: $widgetKey, data: $data));
+		$height = self::WIDGET_HEIGHT[$widgetKey];
+		$layout['widgets'][] = [
+			'id' => $entry['id'] . '-' . $widgetKey,
+			'widgetKey' => $widgetKey,
+			'gridX' => 0,
+			'gridY' => $layout['row'],
+			'gridWidth' => 12,
+			'gridHeight' => $height,
+			'props' => self::widgetProps(widgetKey: $widgetKey, data: $data),
+		];
+		$layout['row'] += $height;
+
+		return $layout;
+	}//end placeBlock()
+
+	/**
+	 * A block's data, or an empty array when it has none or it is not a map.
+	 *
+	 * @param array $block The block.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
+	 */
+	private static function blockData(array $block): array {
+		$data = ($block['data'] ?? []);
+		if (is_array($data) === false) {
+			return [];
+		}
+
+		return $data;
+	}//end blockData()
+
+	/**
+	 * The widget's props: the block data, except for markdown, which reads `markdown`, not `content`.
+	 *
+	 * Passing a text block through unchanged would save fine and render an empty widget.
+	 *
+	 * @param string $widgetKey The widget.
+	 * @param array $data The block data.
+	 *
+	 * @return array
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
+	 */
+	private static function widgetProps(string $widgetKey, array $data): array {
+		if ($widgetKey === 'markdown') {
+			return ['markdown' => (string)($data['content'] ?? '')];
+		}
+
+		return $data;
+	}//end widgetProps()
+
+	/**
+	 * The block fields the widget declares no prop for: a hero's subtitle.
+	 *
+	 * The subtitle stays in props so the text is not destroyed, and is reported so
+	 * nobody discovers it missing from the rendered page instead.
+	 *
+	 * @param string $widgetKey The widget.
+	 * @param array $data The block data.
+	 *
+	 * @return array<int, string>
+	 *
+	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-content-blocks-become-widgets-req-cms-102
+	 */
+	private static function droppedFields(string $widgetKey, array $data): array {
+		if ($widgetKey === 'hero' && ($data['subtitle'] ?? '') !== '') {
+			return ['hero.subtitle'];
+		}
+
+		return [];
+	}//end droppedFields()
+
+	/**
 	 * The Portaliq page one OpenCatalogi page becomes.
 	 *
-	 * @param array<string, mixed> $page   The source page's fields.
-	 * @param string               $portal The portal slug it belongs to.
+	 * @param array<string, mixed> $page The source page's fields.
+	 * @param string $portal The portal slug it belongs to.
 	 *
 	 * @return array{page: array<string, mixed>, unmapped: array<int, string>, dropped: array<int, string>}
-	 *         The page to write, and what could not be carried.
+	 *
+	 * Returns: The page to write, and what could not be carried.
 	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
@@ -234,8 +287,8 @@ class CmsMigrationService implements CmsMigrationServiceInterface {
 	 * `groups`, `hideBeforeLogin` and `icon` have no counterpart and are
 	 * reported by the caller rather than carried.
 	 *
-	 * @param array<string, mixed> $menu   The source menu's fields.
-	 * @param string               $portal The portal slug it belongs to.
+	 * @param array<string, mixed> $menu The source menu's fields.
+	 * @param string $portal The portal slug it belongs to.
 	 *
 	 * @return array{menu: array<string, mixed>, dropped: array<int, string>} The menu, and what is lost.
 	 *

@@ -1,0 +1,1724 @@
+{
+	"full": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[
+						{
+							"id": "p1"
+						},
+						{
+							"id": "p2"
+						}
+					]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 2,
+						"limit": 20,
+						"total": 61,
+						"pages": 4,
+						"offset": 20
+					}
+				]
+			],
+			[
+				"setFacets",
+				[
+					{
+						"status": {
+							"buckets": []
+						}
+					}
+				]
+			],
+			[
+				"setFacetable",
+				[
+					{
+						"@self": {
+							"register": {}
+						}
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			],
+			[
+				"Search completed:",
+				{
+					"total": 61,
+					"results": 2,
+					"page": 2
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [
+				{
+					"id": "p1"
+				},
+				{
+					"id": "p2"
+				}
+			],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 2,
+				"limit": 20,
+				"total": 61,
+				"pages": 4,
+				"offset": 20
+			},
+			"facets": {
+				"status": {
+					"buckets": []
+				}
+			},
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		}
+	},
+	"empty": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 1,
+						"limit": 20,
+						"total": 0,
+						"pages": 1,
+						"offset": 0
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			],
+			[
+				"Search completed:",
+				{
+					"results": 0
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 0,
+				"pages": 1,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		}
+	},
+	"zeros": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 1,
+						"limit": 20,
+						"total": 0,
+						"pages": 1,
+						"offset": 0
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			],
+			[
+				"Search completed:",
+				{
+					"total": 0,
+					"results": 0,
+					"page": 0
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 0,
+				"pages": 1,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		}
+	},
+	"pageAndLimit": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=3&_limit=50&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register&theme=x",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					{
+						"_page": 3,
+						"_limit": 50,
+						"theme": "x"
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{
+						"_page": 3,
+						"_limit": 50,
+						"theme": "x"
+					}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 3,
+						"_limit": 50,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						],
+						"theme": "x"
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[
+						{
+							"id": "p1"
+						},
+						{
+							"id": "p2"
+						}
+					]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 2,
+						"limit": 20,
+						"total": 61,
+						"pages": 4,
+						"offset": 20
+					}
+				]
+			],
+			[
+				"setFacets",
+				[
+					{
+						"status": {
+							"buckets": []
+						}
+					}
+				]
+			],
+			[
+				"setFacetable",
+				[
+					{
+						"@self": {
+							"register": {}
+						}
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=3&_limit=50&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register&theme=x"
+			],
+			[
+				"Search completed:",
+				{
+					"total": 61,
+					"results": 2,
+					"page": 2
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [
+				{
+					"id": "p1"
+				},
+				{
+					"id": "p2"
+				}
+			],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 2,
+				"limit": 20,
+				"total": 61,
+				"pages": 4,
+				"offset": 20
+			},
+			"facets": {
+				"status": {
+					"buckets": []
+				}
+			},
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		}
+	},
+	"zeroPageAndLimit": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=0&_limit=0&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					{
+						"_page": 0,
+						"_limit": 0
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{
+						"_page": 0,
+						"_limit": 0
+					}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 0,
+						"_limit": 0,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[
+						{
+							"id": "p1"
+						},
+						{
+							"id": "p2"
+						}
+					]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 2,
+						"limit": 20,
+						"total": 61,
+						"pages": 4,
+						"offset": 20
+					}
+				]
+			],
+			[
+				"setFacets",
+				[
+					{
+						"status": {
+							"buckets": []
+						}
+					}
+				]
+			],
+			[
+				"setFacetable",
+				[
+					{
+						"@self": {
+							"register": {}
+						}
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=0&_limit=0&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			],
+			[
+				"Search completed:",
+				{
+					"total": 61,
+					"results": 2,
+					"page": 2
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [
+				{
+					"id": "p1"
+				},
+				{
+					"id": "p2"
+				}
+			],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 2,
+				"limit": 20,
+				"total": 61,
+				"pages": 4,
+				"offset": 20
+			},
+			"facets": {
+				"status": {
+					"buckets": []
+				}
+			},
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		}
+	},
+	"pageOnly": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=2&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					{
+						"_page": "2"
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{
+						"_page": "2"
+					}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": "2",
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 1,
+						"limit": 20,
+						"total": 5,
+						"pages": 1,
+						"offset": 0
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=2&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			],
+			[
+				"Search completed:",
+				{
+					"total": 5,
+					"results": 0
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 5,
+				"pages": 1,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		}
+	},
+	"facetsOnly": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[
+						{
+							"id": "a"
+						}
+					]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 1,
+						"limit": 20,
+						"total": 0,
+						"pages": 1,
+						"offset": 0
+					}
+				]
+			],
+			[
+				"setFacets",
+				[
+					{
+						"a": 1
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			],
+			[
+				"Search completed:",
+				{
+					"results": 1
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [
+				{
+					"id": "a"
+				}
+			],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 0,
+				"pages": 1,
+				"offset": 0
+			},
+			"facets": {
+				"a": 1
+			},
+			"facetable": {}
+		}
+	},
+	"facetableOnly": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[
+						{
+							"id": "a"
+						}
+					]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 1,
+						"limit": 20,
+						"total": 0,
+						"pages": 1,
+						"offset": 0
+					}
+				]
+			],
+			[
+				"setFacetable",
+				[
+					{
+						"b": 2
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			],
+			[
+				"Search completed:",
+				{
+					"results": 1
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [
+				{
+					"id": "a"
+				}
+			],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 0,
+				"pages": 1,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {
+				"b": 2
+			}
+		}
+	},
+	"termAndFilters": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?q=park&_page=1&_limit=20&status=published&_order%5Btitle%5D=asc&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"q": "park",
+						"_page": 1,
+						"_limit": 20,
+						"status": "published",
+						"_order": {
+							"title": "asc"
+						},
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[
+						{
+							"id": "p1"
+						},
+						{
+							"id": "p2"
+						}
+					]
+				]
+			],
+			[
+				"setPagination",
+				[
+					{
+						"page": 2,
+						"limit": 20,
+						"total": 61,
+						"pages": 4,
+						"offset": 20
+					}
+				]
+			],
+			[
+				"setFacets",
+				[
+					{
+						"status": {
+							"buckets": []
+						}
+					}
+				]
+			],
+			[
+				"setFacetable",
+				[
+					{
+						"@self": {
+							"register": {}
+						}
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?q=park&_page=1&_limit=20&status=published&_order%5Btitle%5D=asc&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			],
+			[
+				"Search completed:",
+				{
+					"total": 61,
+					"results": 2,
+					"page": 2
+				}
+			]
+		],
+		"error": [],
+		"state": {
+			"searchResults": [
+				{
+					"id": "p1"
+				},
+				{
+					"id": "p2"
+				}
+			],
+			"isLoading": false,
+			"error": null,
+			"pagination": {
+				"page": 2,
+				"limit": 20,
+				"total": 61,
+				"pages": 4,
+				"offset": 20
+			},
+			"facets": {
+				"status": {
+					"buckets": []
+				}
+			},
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		}
+	},
+	"notOk": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setError",
+				[
+					"Search failed with status 503: Unavailable"
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[]
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			]
+		],
+		"error": [
+			[
+				"Search error:",
+				"Error: Search failed with status 503: Unavailable"
+			]
+		],
+		"state": {
+			"searchResults": [],
+			"isLoading": false,
+			"error": "Search failed with status 503: Unavailable",
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 0,
+				"pages": 0,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		}
+	},
+	"throws": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setError",
+				[
+					"network down"
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[]
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			]
+		],
+		"error": [
+			[
+				"Search error:",
+				"Error: network down"
+			]
+		],
+		"state": {
+			"searchResults": [],
+			"isLoading": false,
+			"error": "network down",
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 0,
+				"pages": 0,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		}
+	},
+	"throwsNonError": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setError",
+				[
+					"Failed to search publications"
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[]
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			]
+		],
+		"error": [
+			[
+				"Search error:",
+				"plain string"
+			]
+		],
+		"state": {
+			"searchResults": [],
+			"isLoading": false,
+			"error": "Failed to search publications",
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 0,
+				"pages": 0,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		}
+	},
+	"badJson": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					null
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 1,
+						"_limit": 20,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setError",
+				[
+					"bad json"
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[]
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			]
+		],
+		"error": [
+			[
+				"Search error:",
+				"SyntaxError: bad json"
+			]
+		],
+		"state": {
+			"searchResults": [],
+			"isLoading": false,
+			"error": "bad json",
+			"pagination": {
+				"page": 1,
+				"limit": 20,
+				"total": 0,
+				"pages": 0,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		}
+	},
+	"pageAndLimitThenFailure": {
+		"returned": null,
+		"fetchCalls": [
+			[
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=4&_limit=30&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json",
+						"Accept": "application/json"
+					}
+				}
+			]
+		],
+		"actions": [
+			[
+				"searchPublications",
+				[
+					{
+						"_page": 4,
+						"_limit": 30
+					}
+				]
+			],
+			[
+				"setLoading",
+				[
+					true
+				]
+			],
+			[
+				"setError",
+				[
+					null
+				]
+			],
+			[
+				"buildQueryParams",
+				[
+					{
+						"_page": 4,
+						"_limit": 30
+					}
+				]
+			],
+			[
+				"buildApiUrl",
+				[
+					"/apps/opencatalogi/api/federation/publications",
+					{
+						"_page": 4,
+						"_limit": 30,
+						"_facetable": true,
+						"_aggregate": true,
+						"_extend": [
+							"@self.schema",
+							"@self.register"
+						]
+					}
+				]
+			],
+			[
+				"setError",
+				[
+					"Search failed with status 500: Error"
+				]
+			],
+			[
+				"setSearchResults",
+				[
+					[]
+				]
+			],
+			[
+				"setLoading",
+				[
+					false
+				]
+			]
+		],
+		"info": [
+			[
+				"Searching publications with URL:",
+				"/ocs/v2.php/apps/opencatalogi/api/federation/publications?_page=4&_limit=30&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_extend%5B%5D=%40self.register"
+			]
+		],
+		"error": [
+			[
+				"Search error:",
+				"Error: Search failed with status 500: Error"
+			]
+		],
+		"state": {
+			"searchResults": [],
+			"isLoading": false,
+			"error": "Search failed with status 500: Error",
+			"pagination": {
+				"page": 4,
+				"limit": 30,
+				"total": 0,
+				"pages": 0,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		}
+	}
+}

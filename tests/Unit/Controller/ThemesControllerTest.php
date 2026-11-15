@@ -1,10 +1,16 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ThemesController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\JSONResponse;
@@ -15,6 +21,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use Unit\Support\ServerAwareRequest;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for ThemesController.
@@ -28,7 +36,7 @@ class ThemesControllerTest extends TestCase {
 	private ThemesController $controller;
 
 	protected function setUp(): void {
-		$this->request = $this->createMock(IRequest::class);
+		$this->request = $this->createMock(ServerAwareRequest::class);
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appManager = $this->createMock(IAppManager::class);
@@ -37,20 +45,19 @@ class ThemesControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
-			$this->appManager
+			new OpenRegisterLookup($this->container, $this->appManager)
 		);
 	}
 
 	/**
 	 * Build a test double for OpenRegister's (final) RegisterResolverService.
 	 *
-	 * Mirrors resolveRegisterId()/resolveSchemaId(): read the IAppConfig key and
+	 * Mirrors lookupId(ConfigLookup): read the IAppConfig key and
 	 * throw MissingConfigException when it is empty.
 	 *
 	 * @param IAppConfig $config The (mocked) app config the double reads from.
 	 *
-	 * @return object A double exposing resolveRegisterId / resolveSchemaId.
+	 * @return object A double exposing lookupId.
 	 */
 	private function makeResolverDouble(IAppConfig $config): object {
 		return new class($config) {
@@ -59,12 +66,8 @@ class ThemesControllerTest extends TestCase {
 			) {
 			}
 
-			public function resolveRegisterId(string $appId, string $key, ?string $default = null): string {
-				return $this->resolve($appId, $key);
-			}
-
-			public function resolveSchemaId(string $appId, string $key, ?string $default = null): string {
-				return $this->resolve($appId, $key);
+			public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+				return $this->resolve($lookup->appId, $lookup->configKey);
 			}
 
 			private function resolve(string $appId, string $key): string {
@@ -88,8 +91,8 @@ class ThemesControllerTest extends TestCase {
 		// keys (throwing MissingConfigException on empty) so tests keep driving
 		// behaviour through the getValueString map below.
 		// RegisterResolverService is declared final and cannot be mocked, so we
-		// pass a hand-rolled double that mirrors the real resolveRegisterId /
-		// resolveSchemaId contract (read app config; throw on empty).
+		// pass a hand-rolled double that mirrors the real lookupId(ConfigLookup)
+		// contract (read app config; throw on empty).
 		$resolver = $this->makeResolverDouble($this->config);
 
 		$this->container->method('get')
@@ -173,12 +176,12 @@ class ThemesControllerTest extends TestCase {
 				['opencatalogi', 'cors_allowed_origins', '*', '*'],
 			]);
 		$this->request->method('getParams')->willReturn([
-				'_schemas' => [56],
-				'_registers' => [99],
-				'_schema' => 56,
-				'schema' => 56,
-				'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
-			]);
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+		]);
 		$this->request->server = [];
 		$mockObjService->expects($this->once())
 			->method('searchObjectsPaginated')
@@ -353,7 +356,15 @@ class ThemesControllerTest extends TestCase {
 		// the identifier in any register on the instance, and this route is @PublicPage.
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('theme-1', [], false, '2', '10', true, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 'theme-1',
+					'_extend' => [],
+					'files' => false,
+					'register' => '2',
+					'schema' => '10',
+					'_rbac' => true,
+					'_multitenancy' => false,
+				]))
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -380,7 +391,15 @@ class ThemesControllerTest extends TestCase {
 
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with(5, [], false, '2', '10', true, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 5,
+					'_extend' => [],
+					'files' => false,
+					'register' => '2',
+					'schema' => '10',
+					'_rbac' => true,
+					'_multitenancy' => false,
+				]))
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -407,7 +426,15 @@ class ThemesControllerTest extends TestCase {
 
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('uuid-abc-123', [], false, '2', '10', true, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 'uuid-abc-123',
+					'_extend' => [],
+					'files' => false,
+					'register' => '2',
+					'schema' => '10',
+					'_rbac' => true,
+					'_multitenancy' => false,
+				]))
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -439,7 +466,15 @@ class ThemesControllerTest extends TestCase {
 		// lives in another register and raises DoesNotExistException.
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('an-object-in-another-register', [], false, '2', '10', true, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 'an-object-in-another-register',
+					'_extend' => [],
+					'files' => false,
+					'register' => '2',
+					'schema' => '10',
+					'_rbac' => true,
+					'_multitenancy' => false,
+				]))
 			->willThrowException(new DoesNotExistException('not found'));
 
 		$this->request->server = [];

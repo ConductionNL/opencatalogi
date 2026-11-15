@@ -33,6 +33,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @covers \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
  * @uses   \OCA\OpenCatalogi\Service\CatalogScopeLookups
+ * @uses   \OCA\OpenCatalogi\Service\SchemaSlugIndex
  */
 class CatalogScopeResolveGoldenTest extends TestCase {
 
@@ -74,7 +75,7 @@ class CatalogScopeResolveGoldenTest extends TestCase {
 	 * Replay a case and compare it to the recording.
 	 *
 	 * @param array<int, mixed> $registers The registers.
-	 * @param array<int, mixed> $schemas   The schemas.
+	 * @param array<int, mixed> $schemas The schemas.
 	 *
 	 * @return void
 	 */
@@ -102,7 +103,7 @@ class CatalogScopeResolveGoldenTest extends TestCase {
 	 * Resolve a scope against a small register/schema world.
 	 *
 	 * @param array<int, mixed> $registers The registers.
-	 * @param array<int, mixed> $schemas   The schemas.
+	 * @param array<int, mixed> $schemas The schemas.
 	 *
 	 * @return array<string, mixed> The resolved scope.
 	 */

@@ -11,6 +11,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -19,12 +22,16 @@ namespace Unit\Command;
 
 use OCA\OpenCatalogi\Command\AttachDocumentsToPublicationsCommand;
 use OCA\OpenCatalogi\Service\AttachmentMigrationService;
+use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Service\File\FileTransfer;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Pins what the command writes and reports when it moves files.
@@ -38,26 +45,28 @@ class AttachDocumentsApplyTest extends TestCase {
 	/**
 	 * Build a command over fakes; each failure flag makes one collaborator throw.
 	 *
-	 * @param array<int, mixed>   $documents The document rows.
-	 * @param array<int, int>     $fileIds   The ids of the files each document owns.
-	 * @param array<string, bool> $fail      Which collaborator throws: find, getFiles, moveFile, deleteObject.
+	 * @param array<int, mixed> $documents The document rows.
+	 * @param array<int, int> $fileIds The ids of the files each document owns.
+	 * @param array<string, bool> $fail Which collaborator throws: find, getFiles, moveFile, deleteObject.
 	 *
 	 * @return CommandTester The tester.
 	 */
 	private function commandOver(array $documents, array $fileIds, array $fail = []): CommandTester {
 		$calls = &$this->calls;
 
-		$entity = static fn (string $uuid): object => new class($uuid) {
-			public function __construct(private string $uuid) {
-			}
-
-			public function getUuid(): string {
-				return $this->uuid;
-			}
+		$entity = static function (string $uuid): ObjectEntity {
+			$object = new ObjectEntity();
+			$object->setUuid($uuid);
+			return $object;
 		};
 
 		$objectService = new class($documents, $fail, $entity, $calls) {
-			public function __construct(private array $documents, private array $fail, private $entity, private array &$calls) {
+			public function __construct(
+				private array $documents,
+				private array $fail,
+				private $entity,
+				private array &$calls,
+			) {
 			}
 
 			public function searchObjectsBySlug(string $register, string $schema, array $filters = [], bool $rbac = true, bool $multitenancy = true): array {
@@ -65,6 +74,7 @@ class AttachDocumentsApplyTest extends TestCase {
 			}
 
 			public function find(int|string $id, ...$rest): object {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				if (($this->fail['find'] ?? false) === true && $id === AttachDocumentsApplyTest::publication()) {
 					throw new RuntimeException('find broke');
 				}
@@ -72,8 +82,9 @@ class AttachDocumentsApplyTest extends TestCase {
 				return ($this->entity)((string)$id);
 			}
 
-			public function deleteObject(string $uuid, ...$rest): bool {
-				$this->calls[] = 'delete '.$uuid.' '.json_encode($rest);
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false, ...$rest): bool {
+				$uuid = $deletion->uuid;
+				$this->calls[] = 'delete ' . $uuid . ' ' . json_encode(array_filter(['_rbac' => $_rbac, '_multitenancy' => $_multitenancy], static fn (bool $flag): bool => $flag === false) + $rest);
 				if (($this->fail['deleteObject'] ?? false) === true) {
 					throw new RuntimeException('delete broke');
 				}
@@ -83,7 +94,11 @@ class AttachDocumentsApplyTest extends TestCase {
 		};
 
 		$fileService = new class($fileIds, $fail, $calls) {
-			public function __construct(private array $fileIds, private array $fail, private array &$calls) {
+			public function __construct(
+				private array $fileIds,
+				private array $fail,
+				private array &$calls,
+			) {
 			}
 
 			public function getFiles(object $object): array {
@@ -93,7 +108,9 @@ class AttachDocumentsApplyTest extends TestCase {
 
 				return array_map(
 					static fn (int $id): object => new class($id) {
-						public function __construct(private int $id) {
+						public function __construct(
+							private int $id,
+						) {
 						}
 
 						public function getId(): int {
@@ -104,14 +121,17 @@ class AttachDocumentsApplyTest extends TestCase {
 				);
 			}
 
-			public function moveFile(object $sourceObject, int $fileId, object $targetObject): object {
-				$this->calls[] = 'move '.$fileId.' from '.$sourceObject->getUuid().' to '.$targetObject->getUuid();
+			public function moveAttachedFile(FileTransfer $transfer): object {
+				$fileId = $transfer->fileId;
+				$this->calls[] = 'move ' . $fileId . ' from ' . $transfer->source->getUuid() . ' to ' . $transfer->target->getUuid();
 				if (($this->fail['moveFile'] ?? false) === true && $fileId === 8) {
 					throw new RuntimeException('move broke');
 				}
 
 				return new class($fileId + 100) {
-					public function __construct(private int $id) {
+					public function __construct(
+						private int $id,
+					) {
 					}
 
 					public function getId(): int {
@@ -122,19 +142,23 @@ class AttachDocumentsApplyTest extends TestCase {
 		};
 
 		$fileMapper = new class($calls) {
-			public function __construct(private array &$calls) {
+			public function __construct(
+				private array &$calls,
+			) {
 			}
 
 			public function setDescriptionForFile(int $fileId, string $description): void {
-				$this->calls[] = 'description '.$fileId.' '.$description;
+				$this->calls[] = 'description ' . $fileId . ' ' . $description;
 			}
 
 			public function setLabelsForFile(int $fileId, array $labels): void {
-				$this->calls[] = 'labels '.$fileId.' '.implode(',', $labels);
+				$this->calls[] = 'labels ' . $fileId . ' ' . implode(',', $labels);
 			}
 
-			public function setPublicationWindowForFile(int $fileId, ?\DateTime $published, ?\DateTime $depublished): void {
-				$this->calls[] = 'window '.$fileId.' '.$published?->format('Y-m-d').' '.$depublished?->format('Y-m-d');
+			public function setPublicationWindowForFile(int $fileId, \OCA\OpenRegister\Files\Db\PublicationWindow $window): void {
+				$published = $window->published;
+				$depublished = $window->depublished;
+				$this->calls[] = 'window ' . $fileId . ' ' . $published?->format('Y-m-d') . ' ' . $depublished?->format('Y-m-d');
 			}
 		};
 
@@ -156,7 +180,6 @@ class AttachDocumentsApplyTest extends TestCase {
 		$migration = new AttachmentMigrationService(container: $container, logger: $this->createMock(LoggerInterface::class));
 
 		return new CommandTester(new AttachDocumentsToPublicationsCommand(migration: $migration));
-
 	}//end commandOver()
 
 	/**
@@ -166,7 +189,6 @@ class AttachDocumentsApplyTest extends TestCase {
 	 */
 	public static function publication(): string {
 		return self::PUB;
-
 	}//end publication()
 
 	/**
@@ -192,11 +214,11 @@ class AttachDocumentsApplyTest extends TestCase {
 		$this->assertSame($this->expectedDisplay(tail: "  MIGRATED 2 file(s); document removed.\nDone. Migrated=1 documents, files moved=2, skipped=0, failed=0\n"), $tester->getDisplay());
 		$this->assertSame(
 			[
-				'move 7 from doc-1 to '.self::PUB,
+				'move 7 from doc-1 to ' . self::PUB,
 				'description 107 About it',
 				'labels 107 A Document',
 				'window 107 2024-01-01 ',
-				'move 8 from doc-1 to '.self::PUB,
+				'move 8 from doc-1 to ' . self::PUB,
 				'description 108 About it',
 				'labels 108 A Document',
 				'window 108 2024-01-01 ',
@@ -219,7 +241,7 @@ class AttachDocumentsApplyTest extends TestCase {
 
 		$this->assertSame(Command::FAILURE, $tester->execute(['--apply' => true]));
 		$this->assertStringContainsString("  FAILED to move file 8: move broke\nDone. Migrated=0 documents, files moved=0, skipped=0, failed=1\n", $tester->getDisplay());
-		$this->assertSame(['move 7 from doc-1 to '.self::PUB, 'description 107 About it', 'labels 107 A Document', 'window 107 2024-01-01 ', 'move 8 from doc-1 to '.self::PUB], $this->calls);
+		$this->assertSame(['move 7 from doc-1 to ' . self::PUB, 'description 107 About it', 'labels 107 A Document', 'window 107 2024-01-01 ', 'move 8 from doc-1 to ' . self::PUB], $this->calls);
 	}
 
 	public function testAFailedRemovalKeepsTheMovedCountAndNamesTheManualStep(): void {
@@ -228,8 +250,8 @@ class AttachDocumentsApplyTest extends TestCase {
 		$this->assertSame(Command::FAILURE, $tester->execute(['--apply' => true]));
 		$this->assertStringContainsString(
 			"  Files moved but the document could not be removed: delete broke\n"
-			."  doc-1 now has no files and a re-run will skip it as metadata-only. Remove it by hand: occ openregister:objects:delete doc-1\n"
-			."Done. Migrated=0 documents, files moved=1, skipped=0, failed=1\n",
+			. "  doc-1 now has no files and a re-run will skip it as metadata-only. Remove it by hand: occ openregister:objects:delete doc-1\n"
+			. "Done. Migrated=0 documents, files moved=1, skipped=0, failed=1\n",
 			$tester->getDisplay()
 		);
 	}
@@ -246,7 +268,46 @@ class AttachDocumentsApplyTest extends TestCase {
 		$tester = $this->commandOver(documents: [$this->document()], fileIds: [7], fail: ['find' => true]);
 
 		$this->assertSame(Command::SUCCESS, $tester->execute(['--apply' => true]));
-		$this->assertStringContainsString('SKIP doc-1 (A Document): its publication ('.self::PUB.') could not be found.', $tester->getDisplay());
+		$this->assertStringContainsString('SKIP doc-1 (A Document): its publication (' . self::PUB . ') could not be found.', $tester->getDisplay());
+	}
+
+	public function testADocumentWithoutMetadataMovesItsFileAndWritesNoMetadata(): void {
+		$bare = ['@self' => ['uuid' => 'doc-1'], 'publication' => self::PUB, 'summary' => '  '];
+		$tester = $this->commandOver(documents: [$bare], fileIds: [7]);
+
+		$this->assertSame(Command::SUCCESS, $tester->execute(['--apply' => true]));
+		$this->assertSame(['move 7 from doc-1 to ' . self::PUB, 'delete doc-1 {"_rbac":false,"_multitenancy":false}'], $this->calls);
+		$this->assertStringNotContainsString('window', $tester->getDisplay());
+	}
+
+	public function testADepublicationDateAloneWritesAWindowWithAnOpenStart(): void {
+		$document = $this->document();
+		unset($document['publicationDate']);
+		$document['depublicationDate'] = '2025-06-30T00:00:00+00:00';
+		$tester = $this->commandOver(documents: [$document], fileIds: [7]);
+
+		$this->assertSame(Command::SUCCESS, $tester->execute(['--apply' => true]));
+		$this->assertContains('window 107  2025-06-30', $this->calls);
+		$this->assertStringContainsString(', window unset to 2025-06-30', $tester->getDisplay());
+	}
+
+	public function testTheSummaryAndDescriptionBothBecomeTheFileDescription(): void {
+		$document = $this->document();
+		$document['summary'] = 'In short';
+		$document['depublicationDate'] = '2025-06-30T00:00:00+00:00';
+		$tester = $this->commandOver(documents: [$document], fileIds: [7]);
+
+		$this->assertSame(Command::SUCCESS, $tester->execute(['--apply' => true]));
+		$this->assertSame(
+			[
+				'move 7 from doc-1 to ' . self::PUB,
+				"description 107 In short\n\nAbout it",
+				'labels 107 A Document',
+				'window 107 2024-01-01 2025-06-30',
+				'delete doc-1 {"_rbac":false,"_multitenancy":false}',
+			],
+			$this->calls
+		);
 	}
 
 	public function testTheDryRunReportsWhatItWouldMove(): void {
@@ -265,7 +326,54 @@ class AttachDocumentsApplyTest extends TestCase {
 	 * @return string
 	 */
 	private function expectedDisplay(string $tail): string {
-		return 'doc-1 (A Document) -> publication '.self::PUB.", 2 file(s), window 2024-01-01T00:00:00+00:00 to open\n".$tail;
-
+		return 'doc-1 (A Document) -> publication ' . self::PUB . ", 2 file(s), window 2024-01-01T00:00:00+00:00 to open\n" . $tail;
 	}//end expectedDisplay()
+	/**
+	 * Mixed runs over several documents: the per-document lines, the tally and the exit code.
+	 *
+	 * @return array<string, array{0: array<string, mixed>, 1: array<string, bool>}>
+	 */
+	public static function mixedRuns(): array {
+		return [
+			'apply' => [['--apply' => true], []],
+			'apply, keep documents' => [['--apply' => true, '--keep-documents' => true], []],
+			'dry run' => [[], []],
+			'apply, a move fails' => [['--apply' => true], ['moveFile' => true]],
+			'apply, removal fails' => [['--apply' => true], ['deleteObject' => true]],
+			'apply, files cannot be listed' => [['--apply' => true], ['getFiles' => true]],
+			'dry run, publication lookup fails' => [[], ['find' => true]],
+		];
+
+	}//end mixedRuns()
+
+	/**
+	 * A run over a document without uuid, one without publication and two that migrate matches the recording.
+	 *
+	 * @param array<string, bool> $options The command options.
+	 * @param array<string, bool> $fail Which collaborator throws.
+	 *
+	 * @return void
+	 */
+	#[\PHPUnit\Framework\Attributes\DataProvider('mixedRuns')]
+	public function testAMixedRunMatchesTheRecording(array $options, array $fail): void {
+		$second = $this->document();
+		$second['@self']['uuid'] = 'doc-2';
+		$documents = [['title' => 'No uuid'], $this->document(), ['@self' => ['uuid' => 'doc-3'], 'title' => 'Orphan'], $second];
+		$tester = $this->commandOver(documents: $documents, fileIds: [7, 8], fail: $fail);
+		$actual = ['exit' => $tester->execute($options), 'display' => explode("\n", $tester->getDisplay()), 'calls' => $this->calls];
+
+		$fixture = __DIR__ . '/fixtures/attach-documents-mixed-run-golden.json';
+		$recorded = [];
+		if (file_exists($fixture) === true) {
+			$recorded = json_decode((string)file_get_contents($fixture), true);
+		}
+
+		if (getenv('GOLDEN_RECORD') === '1') {
+			$recorded[$this->dataName()] = $actual;
+			file_put_contents($fixture, json_encode($recorded, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+		}
+
+		$this->assertSame($recorded[$this->dataName()], $actual);
+
+	}//end testAMixedRunMatchesTheRecording()
 }//end class

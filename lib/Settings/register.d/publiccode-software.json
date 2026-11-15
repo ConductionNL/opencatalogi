@@ -24,7 +24,7 @@
           "objectDescriptionField": "description.nl.longDescription | description.en.longDescription"
         },
         "authorization": {
-          "read": ["public"]
+          "read": [{"group": "public", "crossOrganisation": true}]
         },
         "required": ["name", "url"],
         "properties": {

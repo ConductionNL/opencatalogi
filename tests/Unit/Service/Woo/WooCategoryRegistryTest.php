@@ -55,14 +55,14 @@ class WooCategoryRegistryTest extends TestCase {
 	 *
 	 * Same helper as RegisterSchemaLinkServiceTest::environmentAwareDouble().
 	 *
-	 * @param class-string         $class   The class to double.
-	 * @param array<int, string>   $methods The methods to configure.
+	 * @param class-string $class The class to double.
+	 * @param array<int, string> $methods The methods to configure.
 	 *
 	 * @return MockObject The double.
 	 */
 	private function environmentAwareDouble(string $class, array $methods): MockObject {
 		$existing = [];
-		$absent   = [];
+		$absent = [];
 		foreach ($methods as $method) {
 			if (method_exists($class, $method) === true) {
 				$existing[] = $method;
@@ -286,6 +286,20 @@ class WooCategoryRegistryTest extends TestCase {
 		$member = $registry->resolveForDocument('Aanbestedingen');
 		$this->assertNotNull($member);
 		$this->assertSame('Adviezen', $member['label']);
+	}
+
+	public function testALaterLocalCategoryResolvesPastAnEarlierOneThatDoesNotMatch(): void {
+		$registry = $this->registry(
+			[
+				['code' => 'aanbestedingen', 'title' => 'Aanbestedingen', 'mapsTo' => 'infocat018'],
+				['code' => 'adviesraad', 'title' => 'Adviesraad', 'mapsTo' => 'infocat010'],
+			]
+		);
+
+		$member = $registry->resolveForDocument('  ADVIESRAAD ');
+		$this->assertNotNull($member);
+		$this->assertSame('Adviezen', $member['label']);
+		$this->assertNull($registry->resolveForDocument('onbekend'));
 	}
 
 	public function testAStoredRowThatIsAPlainArrayIsReadToo(): void {

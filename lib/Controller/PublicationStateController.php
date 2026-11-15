@@ -33,10 +33,13 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
-use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\Publication\PublishRight;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -44,7 +47,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * The publication's visibility, and the three moves an editor makes on it.
@@ -58,26 +60,20 @@ class PublicationStateController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                  $appName      The app name.
-	 * @param IRequest                $request      The request.
-	 * @param IL10N                   $l10n         Localisation.
-	 * @param IUserSession            $userSession  The current session.
-	 * @param PublicationStateServiceInterface $states       The visibility state and the record per move.
-	 * @param PublicationRights       $rights       The update right on one publication.
-	 * @param DepublicationServiceInterface    $depublisher  Sends the withdrawals.
-	 * @param ContainerInterface      $container    Server container, for the register resolver and OpenRegister's file service.
-	 * @param ServiceCatalogueServiceInterface $objects      The OpenRegister reader.
+	 * @param string $appName The app name.
+	 * @param IRequest $request The request.
+	 * @param IL10N $l10n Localisation.
+	 * @param IUserSession $userSession The current session.
+	 * @param PublicationRights $rights The update right on one publication, and the publish right.
+	 * @param PublicationTransitions $registers The state per move, the withdrawals, a file's withdrawal, and the register pairs and ObjectService.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationStateServiceInterface $states,
 		private readonly PublicationRights $rights,
-		private readonly DepublicationServiceInterface $depublisher,
-		private readonly ContainerInterface $container,
-		private readonly ServiceCatalogueServiceInterface $objects,
+		private readonly PublicationTransitions $registers,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -88,9 +84,10 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse `{state}`, or 404 when the caller cannot read it.
+	 * @return JSONResponse `{state, canPublish}`, or 404 when the caller cannot read it.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
 	 */
 	#[NoAdminRequired]
 	public function visibility(string $id): JSONResponse {
@@ -109,8 +106,12 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
-		return new JSONResponse(['state' => $this->states->stateOf(publication: $this->asArray(object: $publication))]);
-
+		return new JSONResponse(
+			[
+				'state' => $this->registers->stateOf(publication: $this->asArray(object: $publication)),
+				'canPublish' => $this->rights->mayPublish(),
+			]
+		);
 	}//end visibility()
 
 	/**
@@ -118,31 +119,31 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse `{state: public}`, 403 without the update right, 409 when it is already public or archived.
+	 * @return JSONResponse `{state: public}`, 403 without the update right or the publish right, 409 when it is already public or archived.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-a-withdrawn-publication-can-be-published-again-req-ppw-003
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 */
 	#[NoAdminRequired]
 	public function publish(string $id): JSONResponse {
-		[$publication, $refusal] = $this->guardWrite(id: $id);
+		[$publication, $refusal] = $this->guardPublish(id: $id);
 		if ($refusal !== null) {
 			return $refusal;
 		}
 
 		$properties = $this->asArray(object: $publication);
-		$state = $this->states->stateOf(publication: $properties);
+		$state = $this->registers->stateOf(publication: $properties);
 		if ($state === PublicationStateServiceInterface::STATE_PUBLIC || $state === PublicationStateServiceInterface::STATE_ARCHIVED) {
 			return $this->conflict(state: $state);
 		}
 
 		try {
-			$this->save(id: $id, record: $this->states->publishedRecord(publication: $properties));
+			$this->save(id: $id, record: $this->registers->publishedRecord(publication: $properties));
 		} catch (\Throwable $e) {
 			return $this->refused(e: $e);
 		}
 
 		return new JSONResponse(['state' => PublicationStateServiceInterface::STATE_PUBLIC]);
-
 	}//end publish()
 
 	/**
@@ -150,53 +151,102 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse The stored depublication and the channels still outstanding.
+	 * @return JSONResponse The stored depublication and the channels still outstanding, 403 without the publish right.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
 	 */
 	#[NoAdminRequired]
 	public function withdraw(string $id): JSONResponse {
-		[$publication, $refusal] = $this->guardWrite(id: $id);
+		[$publication, $refusal] = $this->guardPublish(id: $id);
 		if ($refusal !== null) {
 			return $refusal;
 		}
 
-		$reason = trim((string)$this->request->getParam('reason', ''));
-		if ($reason === '') {
+		if ($this->reason() === '') {
 			return $this->reasonMissing();
 		}
 
-		$properties = $this->asArray(object: $publication);
-		$state = $this->states->stateOf(publication: $properties);
+		return $this->withdrawWithReason(id: $id, properties: $this->asArray(object: $publication));
+	}//end withdraw()
+
+	/**
+	 * Take a public or scheduled publication down, then tell every channel it reached.
+	 *
+	 * @param string $id The publication id.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return JSONResponse The stored depublication, or the refusal.
+	 */
+	private function withdrawWithReason(string $id, array $properties): JSONResponse {
+		$state = $this->takeDown(id: $id, properties: $properties);
+		if ($state instanceof JSONResponse) {
+			return $state;
+		}
+
+		return $this->record(
+			depublication: $this->registers->depublish(
+				withdrawal: [
+					'publication' => array_replace($properties, ['id' => $id]),
+					'reason' => $this->reason(),
+					'depublishedBy' => $this->actor(),
+					'channels' => $this->channelsFor(state: $state, properties: $properties),
+				]
+			)
+		);
+
+	}//end withdrawWithReason()
+
+	/**
+	 * Save the withdrawn record of a public or scheduled publication.
+	 *
+	 * Down first: the mistake leaves the public API now, whatever the
+	 * channels answer after.
+	 *
+	 * @param string $id The publication id.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return string|JSONResponse The state it was in, or 409 for another state, or the save refusal.
+	 */
+	private function takeDown(string $id, array $properties): string|JSONResponse {
+		$state = $this->registers->stateOf(publication: $properties);
 		if ($state !== PublicationStateServiceInterface::STATE_PUBLIC && $state !== PublicationStateServiceInterface::STATE_SCHEDULED) {
 			return $this->conflict(state: $state);
 		}
 
-		// Down first: the mistake leaves the public API now, whatever the
-		// channels answer after.
 		try {
-			$this->save(id: $id, record: $this->states->withdrawnRecord(publication: $properties));
+			$this->save(id: $id, record: $this->registers->withdrawnRecord(publication: $properties));
 		} catch (\Throwable $e) {
 			return $this->refused(e: $e);
 		}
 
-		$channels = [];
-		if ($state === PublicationStateServiceInterface::STATE_PUBLIC) {
-			$channels = $this->states->channelsReached(publication: $properties);
+		return $state;
+	}//end takeDown()
+
+	/**
+	 * The channels to tell: those a public publication reached, none for a scheduled one.
+	 *
+	 * @param string $state The state before the withdrawal.
+	 * @param array<string, mixed> $properties The publication's properties.
+	 *
+	 * @return array<int, string> The channels.
+	 */
+	private function channelsFor(string $state, array $properties): array {
+		if ($state !== PublicationStateServiceInterface::STATE_PUBLIC) {
+			return [];
 		}
 
-		$properties['id'] = $id;
+		return $this->registers->channelsReached(publication: $properties);
+	}//end channelsFor()
 
-		return $this->record(
-			depublication: $this->depublisher->depublish(
-				publication: $properties,
-				reason: $reason,
-				depublishedBy: $this->actor(),
-				channels: $channels
-			)
-		);
-
-	}//end withdraw()
+	/**
+	 * The withdrawal reason from the request, trimmed.
+	 *
+	 * @return string The reason, empty when none was given.
+	 */
+	private function reason(): string {
+		return trim((string)$this->request->getParam('reason', ''));
+	}//end reason()
 
 	/**
 	 * Withdraw one document of a publication with a reason.
@@ -205,7 +255,7 @@ class PublicationStateController extends Controller {
 	 * it leaves the public API and the DiWoo sitemap; the rest of the
 	 * publication stays public.
 	 *
-	 * @param string $id     The publication id.
+	 * @param string $id The publication id.
 	 * @param string $fileId The file id.
 	 *
 	 * @return JSONResponse The stored depublication naming the document.
@@ -219,31 +269,141 @@ class PublicationStateController extends Controller {
 			return $refusal;
 		}
 
-		$reason = trim((string)$this->request->getParam('reason', ''));
+		$reason = $this->reason();
 		if ($reason === '') {
 			return $this->reasonMissing();
 		}
 
-		try {
-			$this->container->get('OCA\OpenRegister\Service\FileService')->unpublishFile(object: $publication, filePath: (int)$fileId);
-		} catch (\Throwable $e) {
+		// The share removal resolves the file on THIS publication, so it runs
+		// first: only a file it found has its window ended.
+		$notWithdrawn = $this->registers->unpublishFile(publication: $publication, fileId: (int)$fileId);
+		if ($notWithdrawn !== null) {
 			return new JSONResponse(
-				data: ['error' => 'file-not-withdrawn', 'message' => $e->getMessage()],
+				data: ['error' => 'file-not-withdrawn', 'message' => $notWithdrawn],
 				statusCode: Http::STATUS_NOT_FOUND
 			);
 		}
 
-		$depublication = $this->depublisher->depublish(
-			publication: ['id' => $id],
-			reason: $reason,
-			depublishedBy: $this->actor(),
-			channels: []
+		// The withdrawal is kept on the file's own window, so no automatic
+		// path shares it again (REQ-ATT-103, REQ-ATT-104).
+		$windowNotEnded = $this->registers->endFileWindow(fileId: (int)$fileId);
+		if ($windowNotEnded !== null) {
+			return new JSONResponse(
+				data: ['error' => 'file-window-not-ended', 'message' => $windowNotEnded],
+				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}
+
+		$depublication = $this->registers->depublish(
+			withdrawal: [
+				'publication' => ['id' => $id],
+				'reason' => $reason,
+				'depublishedBy' => $this->actor(),
+				'channels' => [],
+			]
 		);
 		$depublication['file'] = $fileId;
 
 		return $this->record(depublication: $depublication);
-
 	}//end withdrawFile()
+
+	/**
+	 * Put a withdrawn document of a publication back, on purpose, with a reason.
+	 *
+	 * Only this action reopens a withdrawn file (REQ-ATT-104): the file is
+	 * shared again through OpenRegister's file service (which finds it on THIS
+	 * publication or refuses), its own window's end is cleared and the reason
+	 * and editor are recorded as a depublication record marked `republished`.
+	 *
+	 * @param string $id     The publication id.
+	 * @param string $fileId The file id.
+	 *
+	 * @return JSONResponse The recorded republication, or the refusal.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	#[NoAdminRequired]
+	public function republishFile(string $id, string $fileId): JSONResponse {
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		$reason = $this->reason();
+		if ($reason === '') {
+			return new JSONResponse(
+				data: ['error' => 'reason-missing', 'message' => $this->l10n->t('Say why it is being put back.')],
+				statusCode: Http::STATUS_BAD_REQUEST
+			);
+		}
+
+		$notShared = $this->registers->publishFile(publication: $publication, fileId: (int)$fileId);
+		if ($notShared !== null) {
+			return new JSONResponse(
+				data: ['error' => 'file-not-republished', 'message' => $notShared],
+				statusCode: Http::STATUS_NOT_FOUND
+			);
+		}
+
+		$windowNotOpen = $this->registers->reopenFileWindow(fileId: (int)$fileId);
+		if ($windowNotOpen !== null) {
+			return new JSONResponse(
+				data: ['error' => 'file-window-not-reopened', 'message' => $windowNotOpen],
+				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+			);
+		}
+
+		return $this->recordRepublication(
+			republication: [
+				'publication' => ['id' => $id],
+				'file' => $fileId,
+				'reason' => $reason,
+				'depublishedBy' => $this->actor(),
+				'depublishedAt' => (new \DateTimeImmutable('now', new \DateTimeZone('UTC')))->format('c'),
+				'withdrawals' => [],
+				'republished' => true,
+			]
+		);
+	}//end republishFile()
+
+	/**
+	 * Store a republication, past RBAC after guardWrite(), owned by the system.
+	 *
+	 * @param array<string, mixed> $republication The record.
+	 *
+	 * @return JSONResponse The stored record, or 503 when it could not be stored.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	private function recordRepublication(array $republication): JSONResponse {
+		try {
+			$configuration = $this->resolveRegisterConfiguration(
+				registerKey: 'publication_register',
+				schemaKey: 'depublication_schema'
+			);
+			$saved = $this->registers->getObjectService()->saveObject(
+				object: $republication,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+							register: $configuration['register'],
+							schema: $configuration['schema']
+						),
+					actor: new SaveActor(unowned: true)
+				),
+				_rbac: false
+			);
+		} catch (\Throwable $e) {
+			return new JSONResponse(
+				data: [
+					'error' => 'republication-unstored',
+					'message' => $this->l10n->t('It was put back, but the record of why could not be stored.'),
+				],
+				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+			);
+		}
+
+		return new JSONResponse(['republication' => $this->asArray(object: $saved)]);
+	}//end recordRepublication()
 
 	/**
 	 * Load the publication for a write, or the answer that refuses it.
@@ -277,11 +437,40 @@ class PublicationStateController extends Controller {
 		}
 
 		return [$publication, null];
-
 	}//end guardWrite()
 
 	/**
+	 * Load the publication for publishing or withdrawing, or the answer that refuses it.
+	 *
+	 * Every refusal of guardWrite() first, then 403 naming the publishers group
+	 * for a caller who may edit but not publish, before anything is sent or saved.
+	 *
+	 * @param string $id The publication id.
+	 *
+	 * @return array{0: object|null, 1: JSONResponse|null} The publication, or the refusal.
+	 *
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 */
+	private function guardPublish(string $id): array {
+		[$publication, $refusal] = $this->guardWrite(id: $id);
+		if ($refusal !== null) {
+			return [null, $refusal];
+		}
+
+		if ($this->rights->mayPublish() === false) {
+			return [null, $this->notAPublisher()];
+		}
+
+		return [$publication, null];
+	}//end guardPublish()
+
+	/**
 	 * Store the depublication and answer it with the outstanding channels.
+	 *
+	 * The depublication schema is writable by administrators only. Callers reach
+	 * this only after guardWrite() found the publication and the update right
+	 * on it, so the save skips RBAC and stores this one depublication. The system
+	 * owns the record, so the editor who wrote it cannot rewrite or delete it.
 	 *
 	 * @param array<string, mixed> $depublication The depublication.
 	 *
@@ -293,11 +482,16 @@ class PublicationStateController extends Controller {
 				registerKey: 'publication_register',
 				schemaKey: 'depublication_schema'
 			);
-			$saved = $this->objects->getObjectService()->saveObject(
-				object: $this->states->storable(depublication: $depublication),
-				extend: [],
-				register: $configuration['register'],
-				schema: $configuration['schema']
+			$saved = $this->registers->getObjectService()->saveObject(
+				object: $this->registers->storable(depublication: $depublication),
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(
+							register: $configuration['register'],
+							schema: $configuration['schema']
+						),
+					actor: new SaveActor(unowned: true)
+				),
+				_rbac: false
 			);
 		} catch (\Throwable $e) {
 			return new JSONResponse(
@@ -311,7 +505,7 @@ class PublicationStateController extends Controller {
 		}
 
 		$stored = $this->asArray(object: $saved);
-		$outstanding = $this->depublisher->outstandingChannels(depublication: $depublication);
+		$outstanding = $this->registers->outstandingChannels(depublication: $depublication);
 
 		return new JSONResponse(
 			[
@@ -338,10 +532,9 @@ class PublicationStateController extends Controller {
 		);
 
 		try {
-			return $this->objects->getObjectService()->find(
+			return $this->registers->getObjectService()->find(
 				id: $id,
-				register: $configuration['register'],
-				schema: $configuration['schema'],
+				options: new ObjectFindOptions(register: $configuration['register'], schema: $configuration['schema']),
 				_rbac: true
 			);
 		} catch (\Throwable $e) {
@@ -359,7 +552,7 @@ class PublicationStateController extends Controller {
 	/**
 	 * Save the publication's record, with RBAC on.
 	 *
-	 * @param string               $id     The publication id.
+	 * @param string $id The publication id.
 	 * @param array<string, mixed> $record The properties.
 	 *
 	 * @return void
@@ -371,11 +564,12 @@ class PublicationStateController extends Controller {
 		);
 		unset($record['id']);
 
-		$this->objects->getObjectService()->saveObject(
+		$this->registers->getObjectService()->saveObject(
 			object: $record,
-			register: $configuration['register'],
-			schema: $configuration['schema'],
-			uuid: $id,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $configuration['register'], schema: $configuration['schema']),
+				uuid: $id
+			),
 			_rbac: true
 		);
 
@@ -392,7 +586,6 @@ class PublicationStateController extends Controller {
 		}
 
 		return null;
-
 	}//end requireUser()
 
 	/**
@@ -407,7 +600,6 @@ class PublicationStateController extends Controller {
 		}
 
 		return $user->getUID();
-
 	}//end actor()
 
 	/**
@@ -424,13 +616,34 @@ class PublicationStateController extends Controller {
 	}//end forbidden()
 
 	/**
+	 * The answer for a caller who may edit the publication but not publish it.
+	 *
+	 * @return JSONResponse 403 naming the publishers group.
+	 *
+	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-publish-endpoints-refuse-a-caller-without-the-right-req-opr-003
+	 */
+	private function notAPublisher(): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'error' => 'not-a-publisher',
+				'group' => PublishRight::GROUP,
+				'message' => $this->l10n->t(
+					'Only members of the group %s may publish or withdraw a publication.',
+					[PublishRight::GROUP]
+				),
+			],
+			statusCode: Http::STATUS_FORBIDDEN
+		);
+
+	}//end notAPublisher()
+
+	/**
 	 * The answer for a publication the caller cannot read.
 	 *
 	 * @return JSONResponse 404.
 	 */
 	private function notFound(): JSONResponse {
 		return new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND);
-
 	}//end notFound()
 
 	/**
@@ -442,7 +655,6 @@ class PublicationStateController extends Controller {
 	 */
 	private function conflict(string $state): JSONResponse {
 		return new JSONResponse(data: ['error' => 'wrong-state', 'state' => $state], statusCode: Http::STATUS_CONFLICT);
-
 	}//end conflict()
 
 	/**
@@ -471,6 +683,5 @@ class PublicationStateController extends Controller {
 		}
 
 		return new JSONResponse(data: ['error' => 'not-saved', 'message' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
-
 	}//end refused()
 }//end class

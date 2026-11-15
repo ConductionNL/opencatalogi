@@ -1,0 +1,150 @@
+{
+    "no sources": {
+        "total": 0,
+        "published": 0,
+        "late": 0,
+        "outstanding": 0,
+        "unreadSources": [],
+        "obligations": [],
+        "sourcesRead": 0,
+        "sourcesRegistered": 0,
+        "dueThisWeek": 0,
+        "publishedThisMonth": 0,
+        "bySource": []
+    },
+    "nothing outstanding": {
+        "total": 1,
+        "published": 1,
+        "late": 0,
+        "outstanding": 0,
+        "unreadSources": [],
+        "obligations": [
+            {
+                "title": "published",
+                "dueDate": "2026-10-01T00:00:00+00:00",
+                "publishedAt": "2026-10-03T00:00:00+00:00",
+                "source": "dossiq",
+                "state": "published"
+            }
+        ],
+        "sourcesRead": 2,
+        "sourcesRegistered": 2,
+        "dueThisWeek": 0,
+        "publishedThisMonth": 1,
+        "bySource": [
+            {
+                "appId": "dossiq",
+                "title": "Woo-besluiten",
+                "outstanding": 0,
+                "late": 0,
+                "nextDue": null
+            },
+            {
+                "appId": "decos",
+                "title": "decos",
+                "outstanding": 0,
+                "late": 0,
+                "nextDue": null
+            }
+        ]
+    },
+    "week and month edges": {
+        "total": 10,
+        "published": 3,
+        "late": 1,
+        "outstanding": 7,
+        "unreadSources": [],
+        "obligations": [
+            {
+                "title": "late",
+                "dueDate": "2026-10-01T00:00:00+00:00",
+                "publishedAt": "",
+                "source": "dossiq",
+                "state": "late"
+            },
+            {
+                "title": "due at the week end",
+                "dueDate": "2026-10-15T09:00:00+00:00",
+                "publishedAt": "",
+                "source": "dossiq",
+                "state": "due"
+            },
+            {
+                "title": "due just after",
+                "dueDate": "2026-10-15T09:00:01+00:00",
+                "publishedAt": "",
+                "source": "dossiq",
+                "state": "due"
+            },
+            {
+                "title": "sooner",
+                "dueDate": "2026-10-20T00:00:00+00:00",
+                "publishedAt": "",
+                "source": "decos",
+                "state": "due"
+            },
+            {
+                "title": "later",
+                "dueDate": "2026-11-20T00:00:00+00:00",
+                "publishedAt": "",
+                "source": "decos",
+                "state": "due"
+            },
+            {
+                "title": "no due date",
+                "dueDate": "",
+                "publishedAt": "",
+                "source": "decos",
+                "state": "unknown"
+            },
+            {
+                "title": "unreadable due date",
+                "dueDate": "soon",
+                "publishedAt": "",
+                "source": "decos",
+                "state": "unknown"
+            },
+            {
+                "title": "published last month",
+                "dueDate": "2026-09-01T00:00:00+00:00",
+                "publishedAt": "2026-09-30T23:59:59+00:00",
+                "source": "dossiq",
+                "state": "published"
+            },
+            {
+                "title": "published at the month start",
+                "dueDate": "2026-10-01T00:00:00+00:00",
+                "publishedAt": "2026-10-01T00:00:00+00:00",
+                "source": "dossiq",
+                "state": "published"
+            },
+            {
+                "title": "unreadable publication",
+                "dueDate": "2026-10-02T00:00:00+00:00",
+                "publishedAt": "yesterday-ish",
+                "source": "decos",
+                "state": "published"
+            }
+        ],
+        "sourcesRead": 2,
+        "sourcesRegistered": 2,
+        "dueThisWeek": 1,
+        "publishedThisMonth": 1,
+        "bySource": [
+            {
+                "appId": "dossiq",
+                "title": "Woo-besluiten",
+                "outstanding": 3,
+                "late": 1,
+                "nextDue": "2026-10-01T00:00:00+00:00"
+            },
+            {
+                "appId": "decos",
+                "title": "decos",
+                "outstanding": 4,
+                "late": 0,
+                "nextDue": "2026-10-20T00:00:00+00:00"
+            }
+        ]
+    }
+}

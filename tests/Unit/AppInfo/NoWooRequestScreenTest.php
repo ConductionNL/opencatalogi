@@ -62,7 +62,7 @@ class NoWooRequestScreenTest extends TestCase {
 	 *
 	 * Keys that start with an underscore are notes for people and are skipped.
 	 *
-	 * @param mixed  $node The node to walk.
+	 * @param mixed $node The node to walk.
 	 * @param string $path The path of the node.
 	 *
 	 * @return list<string> One "path: value" line per hit.
@@ -137,8 +137,8 @@ class NoWooRequestScreenTest extends TestCase {
 	/**
 	 * Find the rows with the given ids anywhere in the matrix.
 	 *
-	 * @param mixed        $node The node to search.
-	 * @param list<string> $ids  The row ids wanted.
+	 * @param mixed $node The node to search.
+	 * @param list<string> $ids The row ids wanted.
 	 *
 	 * @return array<string, array<string, mixed>> The rows, keyed by id.
 	 */

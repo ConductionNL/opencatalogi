@@ -89,10 +89,10 @@ class SchemaOrgPublicationNodeGoldenTest extends TestCase {
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param array<string, mixed> $object  The publication.
+	 * @param array<string, mixed> $object The publication.
 	 * @param array<string, mixed> $catalog The catalog.
-	 * @param string               $slug    The catalog slug.
-	 * @param string               $world   Which OpenRegister services resolve.
+	 * @param string $slug The catalog slug.
+	 * @param string $world Which OpenRegister services resolve.
 	 *
 	 * @return void
 	 */
@@ -200,6 +200,5 @@ class SchemaOrgPublicationNodeGoldenTest extends TestCase {
 		);
 
 		return new SchemaOrgService($container, $dcat, $urls, $this->createMock(LoggerInterface::class));
-
 	}//end service()
 }//end class

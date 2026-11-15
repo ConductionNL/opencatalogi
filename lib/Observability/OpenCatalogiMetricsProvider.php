@@ -171,23 +171,56 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			return [];
 		}
 
-		$ids = [];
 		try {
-			foreach ($schemaMapper->findAll() as $schema) {
-				$data = $this->normalise(object: $schema);
-				$title = (string)($data['title'] ?? '');
-				$id = ($data['id'] ?? null);
-				if ($id !== null && $title !== '' && stripos($title, $needle) !== false) {
-					$ids[] = (int)$id;
-				}
-			}
+			return $this->titledSchemaIds(schemas: $schemaMapper->findAll(), needle: $needle);
 		} catch (\Exception $e) {
 			$this->logger->warning('[OpenCatalogiMetricsProvider] Failed to resolve schemas', ['needle' => $needle, 'error' => $e->getMessage()]);
 			return [];
 		}
+	}//end resolveSchemaIds()
+
+	/**
+	 * The ids of the schemas whose title contains the needle, in mapper order.
+	 *
+	 * @param iterable<mixed> $schemas The schemas (entities or arrays).
+	 * @param string $needle Case-insensitive substring to match against the titles.
+	 *
+	 * @return array<int, int> Matching schema IDs.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function titledSchemaIds(iterable $schemas, string $needle): array {
+		$ids = [];
+		foreach ($schemas as $schema) {
+			$id = $this->titledSchemaId(schema: $schema, needle: $needle);
+			if ($id !== null) {
+				$ids[] = $id;
+			}
+		}
 
 		return $ids;
-	}//end resolveSchemaIds()
+	}//end titledSchemaIds()
+
+	/**
+	 * The id of a schema whose title contains the needle.
+	 *
+	 * @param mixed $schema The schema (entity or array).
+	 * @param string $needle Case-insensitive substring to match against the title.
+	 *
+	 * @return int|null The schema id, or null without an id, a title or a match.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function titledSchemaId(mixed $schema, string $needle): ?int {
+		$data = $this->normalise(object: $schema);
+		$title = (string)($data['title'] ?? '');
+		$id = ($data['id'] ?? null);
+		if ($id === null || $title === '' || stripos($title, $needle) === false) {
+			return null;
+		}
+
+		return (int)$id;
+	}//end titledSchemaId()
 
 	/**
 	 * Build a map of schema ID → register IDs that contain it.
@@ -202,41 +235,92 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			return [];
 		}
 
-		$map = [];
 		try {
-			foreach ($registerMapper->findAll() as $register) {
-				$data = $this->normalise(object: $register);
-				$registerId = ($data['id'] ?? null);
-				if ($registerId === null) {
-					continue;
-				}
-
-				$schemas = ($data['schemas'] ?? []);
-				if (is_array($schemas) === false) {
-					continue;
-				}
-
-				foreach ($schemas as $schema) {
-					// Register schema lists may hold IDs or nested schema arrays.
-					$schemaId = $schema;
-					if (is_array($schema) === true) {
-						$schemaId = ($schema['id'] ?? null);
-					}
-
-					if (is_numeric($schemaId) === false) {
-						continue;
-					}
-
-					$map[(int)$schemaId][] = (int)$registerId;
-				}
-			}//end foreach
+			return $this->registerMap(registers: $registerMapper->findAll());
 		} catch (\Exception $e) {
 			$this->logger->warning('[OpenCatalogiMetricsProvider] Failed to map schemas to registers', ['error' => $e->getMessage()]);
 			return [];
-		}//end try
+		}
+	}//end buildSchemaRegisterMap()
+
+	/**
+	 * Map each schema id to the ids of the registers that list it.
+	 *
+	 * @param iterable<mixed> $registers The registers (entities or arrays).
+	 *
+	 * @return array<int, array<int, int>> Map of schema ID → register IDs.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function registerMap(iterable $registers): array {
+		$map = [];
+		foreach ($registers as $register) {
+			$map = $this->withRegister(map: $map, register: $this->normalise(object: $register));
+		}
 
 		return $map;
-	}//end buildSchemaRegisterMap()
+	}//end registerMap()
+
+	/**
+	 * Add a register's id under each schema id it lists.
+	 *
+	 * @param array<int, array<int, int>> $map Map of schema ID → register IDs so far.
+	 * @param array<string, mixed> $register The register's own fields.
+	 *
+	 * @return array<int, array<int, int>> The map with this register added.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function withRegister(array $map, array $register): array {
+		$registerId = ($register['id'] ?? null);
+		if ($registerId === null) {
+			return $map;
+		}
+
+		foreach ($this->registerSchemaIds(register: $register) as $schemaId) {
+			$map[$schemaId][] = (int)$registerId;
+		}
+
+		return $map;
+	}//end withRegister()
+
+	/**
+	 * The numeric schema ids a register lists.
+	 *
+	 * @param array<string, mixed> $register The register's own fields.
+	 *
+	 * @return array<int, int> The schema ids, in list order.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function registerSchemaIds(array $register): array {
+		$schemas = ($register['schemas'] ?? []);
+		if (is_array($schemas) === false) {
+			return [];
+		}
+
+		$ids = array_filter(array_map($this->schemaIdOf(...), $schemas), 'is_numeric');
+		return array_values(array_map('intval', $ids));
+	}//end registerSchemaIds()
+
+	/**
+	 * The id of one entry in a register's schema list.
+	 *
+	 * Register schema lists may hold IDs or nested schema arrays.
+	 *
+	 * @param mixed $schema The list entry.
+	 *
+	 * @return mixed The entry itself, or the `id` of a nested schema array.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function schemaIdOf(mixed $schema): mixed {
+		if (is_array($schema) === true) {
+			return ($schema['id'] ?? null);
+		}
+
+		return $schema;
+	}//end schemaIdOf()
 
 	/**
 	 * Fetch, via OpenRegister object aggregation, every object of the schemas whose
@@ -259,43 +343,62 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			return [];
 		}
 
-		$schemaRegisterMap = $this->buildSchemaRegisterMap();
 		$objects = [];
-
-		foreach ($schemaIds as $schemaId) {
-			$registerIds = ($schemaRegisterMap[$schemaId] ?? []);
-			foreach ($registerIds as $registerId) {
-				try {
-					$results = $objectService->searchObjects(
-						query: [
-							'@self' => [
-								'register' => $registerId,
-								'schema' => $schemaId,
-							],
-						],
-						_rbac: false,
-						_multitenancy: false,
-					);
-				} catch (\Exception $e) {
-					$this->logger->warning(
-						'[OpenCatalogiMetricsProvider] Object aggregation failed',
-						['schema' => $schemaId, 'register' => $registerId, 'error' => $e->getMessage()]
-					);
-					continue;
-				}
-
-				if (is_array($results) === false) {
-					continue;
-				}
-
-				foreach ($results as $result) {
-					$objects[] = $this->normalise(object: $result);
-				}
-			}//end foreach
-		}//end foreach
+		foreach ($this->schemaRegisterPairs(schemaIds: $schemaIds) as $self) {
+			array_push($objects, ...$this->searchSchemaObjects(objectService: $objectService, self: $self));
+		}
 
 		return $objects;
 	}//end fetchObjectsBySchemaNeedle()
+
+	/**
+	 * Every register and schema pair to search, by schema, then by register.
+	 *
+	 * @param array<int, int> $schemaIds The schema ids.
+	 *
+	 * @return array<int, array{register: int, schema: int}> The pairs.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function schemaRegisterPairs(array $schemaIds): array {
+		$schemaRegisterMap = $this->buildSchemaRegisterMap();
+		$pairs = [];
+		foreach ($schemaIds as $schemaId) {
+			foreach (($schemaRegisterMap[$schemaId] ?? []) as $registerId) {
+				$pairs[] = ['register' => $registerId, 'schema' => $schemaId];
+			}
+		}
+
+		return $pairs;
+	}//end schemaRegisterPairs()
+
+	/**
+	 * Every object of one register and schema, as plain field arrays.
+	 *
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param array{register: int, schema: int} $self The register and schema to search.
+	 *
+	 * @return array<int, array<string, mixed>> The objects, or none when the search fails or answers no list.
+	 *
+	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
+	 */
+	private function searchSchemaObjects(object $objectService, array $self): array {
+		try {
+			$results = $objectService->searchObjects(query: ['@self' => $self], _rbac: false, _multitenancy: false);
+		} catch (\Exception $e) {
+			$this->logger->warning(
+				'[OpenCatalogiMetricsProvider] Object aggregation failed',
+				['schema' => $self['schema'], 'register' => $self['register'], 'error' => $e->getMessage()]
+			);
+			return [];
+		}
+
+		if (is_array($results) === false) {
+			return [];
+		}
+
+		return array_values(array_map($this->normalise(...), $results));
+	}//end searchSchemaObjects()
 
 	/**
 	 * Produce OpenCatalogi's domain metric samples.
@@ -317,7 +420,8 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			help: 'Total catalogs',
 			value: $this->countObjectsBySchemaNeedle(needle: 'atalog')
 		);
-		$samples[] = $this->listingsSample();
+		$listings = $this->fetchObjectsBySchemaNeedle(needle: 'isting');
+		$samples[] = $this->listingsSample(listings: $listings);
 		$samples[] = MetricSample::single(
 			name: 'directory_entries_total',
 			type: 'gauge',
@@ -325,8 +429,57 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 			value: $this->countObjectsBySchemaNeedle(needle: 'irectory')
 		);
 
+		array_push($samples, ...$this->federationSamples(listings: $listings));
+
 		return array_merge($samples, $this->usageSamples());
 	}//end metrics()
+
+	/**
+	 * Federated listings split by the outcome of their last directory sync.
+	 *
+	 * A listing whose last sync answered 2xx is reachable; one whose last sync
+	 * recorded any other status code is unreachable. A listing never synced
+	 * (no statusCode) is in neither. Both gauges are always emitted, 0 when
+	 * there are no listings.
+	 *
+	 * @param array<int,array<string,mixed>> $listings The listing objects.
+	 *
+	 * @return array<int,MetricSample> The reachable and unreachable gauges.
+	 *
+	 * @spec openspec/changes/prometheus-metrics/specs/prometheus-metrics/spec.md
+	 */
+	private function federationSamples(array $listings): array {
+		$reachable = 0;
+		$unreachable = 0;
+		foreach ($listings as $listing) {
+			$code = ($listing['statusCode'] ?? null);
+			if (is_numeric($code) === false) {
+				continue;
+			}
+
+			if ((int)$code >= 200 && (int)$code < 300) {
+				$reachable++;
+				continue;
+			}
+
+			$unreachable++;
+		}
+
+		return [
+			MetricSample::single(
+				name: 'federation_reachable_total',
+				type: 'gauge',
+				help: 'Federated listings whose last directory sync succeeded',
+				value: $reachable
+			),
+			MetricSample::single(
+				name: 'federation_unreachable_total',
+				type: 'gauge',
+				help: 'Federated listings whose last directory sync failed',
+				value: $unreachable
+			),
+		];
+	}//end federationSamples()
 
 	/**
 	 * The publications total by status and catalog.
@@ -358,13 +511,15 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	/**
 	 * The listings total by status, with the historical zero fallback.
 	 *
+	 * @param array<int,array<string,mixed>> $listings The listing objects.
+	 *
 	 * @return MetricSample The `listings_total` family.
 	 *
 	 * @spec openspec/specs/adopt-apphost/spec.md
 	 */
-	private function listingsSample(): MetricSample {
+	private function listingsSample(array $listings): MetricSample {
 		$points = [];
-		foreach ($this->getListingCounts() as $row) {
+		foreach ($this->getListingCounts(listings: $listings) as $row) {
 			$points[] = [
 				'labels' => ['status' => (string)($row['status'] ?? '')],
 				'value' => (int)($row['cnt'] ?? 0),
@@ -470,13 +625,15 @@ class OpenCatalogiMetricsProvider implements IMetricsProvider {
 	/**
 	 * Get listing counts grouped by status, via OR aggregation.
 	 *
+	 * @param array<int,array<string,mixed>> $listings The listing objects.
+	 *
 	 * @return array<array{status: string, cnt: int}> Grouped counts.
 	 *
 	 * @spec openspec/specs/opencatalogi-adopt-or-abstractions/spec.md
 	 */
-	private function getListingCounts(): array {
+	private function getListingCounts(array $listings): array {
 		$grouped = [];
-		foreach ($this->fetchObjectsBySchemaNeedle(needle: 'isting') as $object) {
+		foreach ($listings as $object) {
 			$status = (string)($object['status'] ?? '');
 			if (isset($grouped[$status]) === false) {
 				$grouped[$status] = ['status' => $status, 'cnt' => 0];

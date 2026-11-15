@@ -45,6 +45,11 @@
         "psalm": "./vendor/bin/psalm --threads=1 --no-cache --memory-limit=2G",
         "phpstan": "./vendor/bin/phpstan analyse --memory-limit=1G",
         "test:unit": "phpunit tests -c phpunit.xml --colors=always --fail-on-warning --fail-on-risky",
+        "coverage:publish": [
+            "@putenv XDEBUG_MODE=coverage",
+            "@php -d pcov.enabled=1 -d pcov.directory=lib vendor/bin/phpunit -c phpunit-unit.xml --do-not-fail-on-risky --coverage-clover=coverage/clover.xml",
+            "@php scripts/coverage-publish.php"
+        ],
         "test:all": "if [ ! -f vendor/bin/phpunit ]; then echo 'SKIPPED: phpunit not installed - run composer install'; elif [ ! -f ../../lib/base.php ]; then echo 'SKIPPED: the unit suite needs a Nextcloud server tree (../../lib/base.php not found) - run from inside a Nextcloud checkout or in CI'; else ./vendor/bin/phpunit --colors=always --no-coverage; fi",
         "openapi": "generate-spec",
         "phpqa": "./vendor/bin/phpqa --report --analyzedDirs lib --buildDir phpqa",

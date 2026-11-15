@@ -35,6 +35,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for OoapiService.
@@ -45,6 +46,7 @@ class OoapiServiceTest extends TestCase {
 	private IAppManager|MockObject $appManager;
 	private IURLGenerator|MockObject $urlGenerator;
 	private IAppConfig|MockObject $appConfig;
+	private LoggerInterface|MockObject $logger;
 	private OoapiService $service;
 
 	protected function setUp(): void {
@@ -61,7 +63,7 @@ class OoapiServiceTest extends TestCase {
 			new OoapiMappingService(),
 			$this->urlGenerator,
 			$this->appConfig,
-			$this->createMock(LoggerInterface::class)
+			$this->logger = $this->createMock(LoggerInterface::class)
 		);
 	}
 
@@ -175,7 +177,7 @@ class OoapiServiceTest extends TestCase {
 					}
 				),
 				true,
-				false,
+				true,
 				false
 			)
 			->willReturn(
@@ -239,7 +241,7 @@ class OoapiServiceTest extends TestCase {
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$objectService->method('find')->willReturn(
-			$this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'schema' => 'schema-1'], 'catalog' => 'catalog-1', 'code' => 'INF101', 'name' => 'Course'])
+			$this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'register' => 'reg-1', 'schema' => 'schema-1'], 'catalog' => 'catalog-1', 'code' => 'INF101', 'name' => 'Course'])
 		);
 
 		$this->wireOpenRegister($objectService, $schemaMapper);
@@ -249,6 +251,46 @@ class OoapiServiceTest extends TestCase {
 		$this->assertNotNull($result);
 		$this->assertSame('course-1', $result['courseId']);
 		$this->assertSame('INF101', $result['code']);
+	}
+
+	/**
+	 * A single resource is served only for its own catalog, register and schema,
+	 * and never for a scope whose catalog has no id.
+	 *
+	 * @return void
+	 */
+	public function testASingleResourceOutsideTheRegisterOrWithoutACatalogIdReadsAsAbsent(): void {
+		$cases = [
+			'own register' => [['id' => 'catalog-1'], ['catalog' => 'catalog-1', 'register' => 'reg-1'], true],
+			'catalog id of another type' => [['id' => 7], ['catalog' => '7', 'register' => 'reg-1'], false],
+			'another register' => [['id' => 'catalog-1'], ['catalog' => 'catalog-1', 'register' => 'reg-9'], false],
+			'no register on the object' => [['id' => 'catalog-1'], ['catalog' => 'catalog-1', 'register' => null], false],
+			'catalog without id, object without catalog' => [['title' => 'x'], ['catalog' => null, 'register' => 'reg-1'], false],
+			'empty catalog id, empty object catalog' => [['id' => ''], ['catalog' => '', 'register' => 'reg-1'], false],
+			'null catalog id, object catalog null' => [['id' => null], ['catalog' => null, 'register' => 'reg-1'], false],
+		];
+		foreach ($cases as $name => [$catalog, $object, $served]) {
+			$this->setUp();
+			$schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
+			$schema->method('jsonSerialize')->willReturn(['x-ooapi' => ['resource' => 'course']]);
+			$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+			$schemaMapper->method('find')->willReturn($schema);
+			$data = ['@self' => ['uuid' => 'course-1', 'schema' => 'schema-1'], 'code' => 'INF101'];
+			if ($object['register'] !== null) {
+				$data['@self']['register'] = $object['register'];
+			}
+
+			if ($object['catalog'] !== null) {
+				$data['catalog'] = $object['catalog'];
+			}
+
+			$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+			$objectService->method('find')->willReturn($this->makeObjectEntity($data));
+			$this->wireOpenRegister($objectService, $schemaMapper);
+
+			$result = $this->service->getResource(new OoapiScope($catalog, 'reg-1', 'schema-1'), 'course-1', 'courseId');
+			$this->assertSame($served, $result !== null, $name);
+		}
 	}
 
 	public function testRenderOrganizationReturnsNullWhenCatalogHasNoOrganization(): void {
@@ -270,7 +312,10 @@ class OoapiServiceTest extends TestCase {
 		$schemaMapper->method('find')->willReturn($schema);
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-		$objectService->method('find')->with('org-1', [])->willReturn(
+		$objectService->method('find')->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'org-1',
+				'_extend' => [],
+			]))->willReturn(
 			$this->makeObjectEntity(['@self' => ['uuid' => 'org-1'], 'name' => 'Universiteit van Amsterdam'])
 		);
 
@@ -281,5 +326,87 @@ class OoapiServiceTest extends TestCase {
 		$this->assertNotNull($result);
 		$this->assertSame('org-1', $result['organizationId']);
 		$this->assertSame('Universiteit van Amsterdam', $result['name']);
+	}
+
+	/**
+	 * A course schema mapper, for the resource tests below.
+	 *
+	 * @return \OCA\OpenRegister\Db\SchemaMapper|MockObject
+	 */
+	private function courseSchemaMapper(): MockObject {
+		$schema = $this->createMock(\OCA\OpenRegister\Db\Schema::class);
+		$schema->method('jsonSerialize')->willReturn(['x-ooapi' => ['resource' => 'course']]);
+		$schemaMapper = $this->createMock(\OCA\OpenRegister\Db\SchemaMapper::class);
+		$schemaMapper->method('find')->willReturn($schema);
+
+		return $schemaMapper;
+	}
+
+	/**
+	 * The single read asks find() for the id with no extension and every other argument at its default.
+	 *
+	 * @return void
+	 */
+	public function testTheSingleReadPassesOnlyTheIdAndNoExtension(): void {
+		$calls = [];
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('find')->willReturnCallback(
+			function (...$arguments) use (&$calls): \OCA\OpenRegister\Db\ObjectEntity {
+				$arguments = LegacyObjectArgs::positional(method: 'find', args: $arguments);
+				$named = [];
+				foreach (LegacyObjectArgs::parameters(\OCA\OpenRegister\Service\ObjectService::class, 'find') as $index => $parameter) {
+					$passed = array_key_exists($index, $arguments);
+					if ($passed === true && ($parameter->isDefaultValueAvailable() === false || $arguments[$index] !== $parameter->getDefaultValue() || $parameter->getName() === '_extend')) {
+						$named[$parameter->getName()] = $arguments[$index];
+					}
+				}
+
+				$calls[] = $named;
+				return $this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'register' => 'reg-1', 'schema' => 'schema-1'], 'catalog' => 'catalog-1', 'code' => 'INF101']);
+			}
+		);
+		$this->wireOpenRegister($objectService, $this->courseSchemaMapper());
+
+		$this->assertNotNull($this->service->getResource(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'), 'course-1', 'courseId'));
+		$this->assertSame([['id' => 'course-1', '_extend' => []]], $calls);
+	}
+
+	/**
+	 * The catalog comparison is strict: an id that only matches after type juggling is another catalog.
+	 *
+	 * @return void
+	 */
+	public function testACatalogIdOfAnotherTypeIsAnotherCatalog(): void {
+		$cases = [
+			'int scope, string object' => [7, '7', false],
+			'string scope, int object' => ['7', 7, false],
+			'int scope, int object' => [7, 7, true],
+			'numeric string with spaces' => ['7', ' 7', false],
+		];
+		foreach ($cases as $name => [$scopeId, $objectCatalog, $served]) {
+			$this->setUp();
+			$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+			$objectService->method('find')->willReturn(
+				$this->makeObjectEntity(['@self' => ['uuid' => 'course-1', 'register' => 'reg-1', 'schema' => 'schema-1'], 'catalog' => $objectCatalog, 'code' => 'INF101'])
+			);
+			$this->wireOpenRegister($objectService, $this->courseSchemaMapper());
+
+			$result = $this->service->getResource(new OoapiScope(['id' => $scopeId], 'reg-1', 'schema-1'), 'course-1', 'courseId');
+			$this->assertSame($served, $result !== null, $name);
+		}
+	}
+
+	/**
+	 * A failing read is logged with the id and reads as absent.
+	 *
+	 * @return void
+	 */
+	public function testAFailingReadIsLoggedAndReadsAsAbsent(): void {
+		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('find')->willThrowException(new \RuntimeException('store down'));
+		$this->wireOpenRegister($objectService, $this->courseSchemaMapper());
+		$this->logger->expects($this->once())->method('debug')->with('[OoapiService] Resource not found', ['id' => 'course-1', 'error' => 'store down']);
+
+		$this->assertNull($this->service->getResource(new OoapiScope(['id' => 'catalog-1'], 'reg-1', 'schema-1'), 'course-1', 'courseId'));
 	}
 }

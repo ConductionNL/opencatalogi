@@ -22,7 +22,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Contract;
 
-use OCA\OpenRegister\Db\Agent;
+use OCA\OpenRegister\Mcp\Db\Agent;
 
 /**
  * Contract of CMSTool, for callers in other components.

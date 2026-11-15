@@ -1,0 +1,1460 @@
+{
+    "no file": {
+        "error": "RuntimeException: Failed to load settings: Configuration file not found: <root>/apps-extra/opencatalogi/lib/Settings/publication_register.json",
+        "log": {
+            "imported": [],
+            "reconciled": [],
+            "config": [],
+            "warnings": []
+        }
+    },
+    "invalid json": {
+        "error": "RuntimeException: Failed to load settings: Invalid JSON in configuration file: Syntax error",
+        "log": {
+            "imported": [],
+            "reconciled": [],
+            "config": [],
+            "warnings": []
+        }
+    },
+    "empty json object": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "json scalar": {
+        "error": "TypeError: OCA\\OpenCatalogi\\Service\\SettingsService::attachOrphanSchemasToPublicationRegister(): Argument #1 ($data) must be of type array, string given",
+        "log": {
+            "imported": [],
+            "reconciled": [],
+            "config": [],
+            "warnings": []
+        }
+    },
+    "monolith only, fallback path": {
+        "result": {
+            "registers": [
+                {
+                    "slug": "publication",
+                    "id": 20
+                },
+                {
+                    "slug": "other",
+                    "id": 21
+                }
+            ],
+            "schemas": [
+                {
+                    "slug": "publication",
+                    "id": 30
+                },
+                {
+                    "slug": "catalog",
+                    "uuid": "cat-uuid"
+                },
+                {
+                    "slug": "listing",
+                    "id": 32
+                },
+                {
+                    "id": 99
+                }
+            ]
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "openapi": "3.0.0",
+                        "components": {
+                            "registers": {
+                                "publication": {
+                                    "slug": "publication",
+                                    "schemas": [
+                                        "catalog",
+                                        "listing"
+                                    ],
+                                    "configuration": {
+                                        "schemas": {
+                                            "catalog": {
+                                                "magicMapping": false
+                                            }
+                                        }
+                                    }
+                                },
+                                "other": {
+                                    "slug": "other",
+                                    "schemas": [
+                                        "theme",
+                                        7
+                                    ]
+                                }
+                            },
+                            "schemas": {
+                                "catalog": {
+                                    "title": "Catalog"
+                                },
+                                "listing": {
+                                    "title": "Listing"
+                                },
+                                "theme": {
+                                    "title": "Theme"
+                                }
+                            }
+                        },
+                        "list": [
+                            "a",
+                            "b"
+                        ],
+                        "scalar": "base",
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [
+                        {
+                            "slug": "publication",
+                            "id": 20
+                        },
+                        {
+                            "slug": "other",
+                            "id": 21
+                        }
+                    ],
+                    "schemas": [
+                        {
+                            "slug": "publication",
+                            "id": 30
+                        },
+                        {
+                            "slug": "catalog",
+                            "uuid": "cat-uuid"
+                        },
+                        {
+                            "slug": "listing",
+                            "id": 32
+                        },
+                        {
+                            "id": 99
+                        }
+                    ]
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "catalog_schema",
+                    "cat-uuid"
+                ],
+                [
+                    "opencatalogi",
+                    "catalog_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_schema",
+                    "32"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_schema",
+                    "30"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "woo_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "service_catalogue_register",
+                    "20"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "apps-extra relative path": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "a": 1,
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/sub/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "apps relative path": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "a": 1,
+                        "x-openregister": {
+                            "sourceUrl": "apps/opencatalogi/sub/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "other relative path": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "a": 1,
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "source kept": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "x-openregister": {
+                            "sourceUrl": "kept/url",
+                            "sourceType": "remote",
+                            "other": 1
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "source type only": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "x-openregister": {
+                            "sourceType": "github",
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "source url only": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "x-openregister": {
+                            "sourceUrl": "u",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "fragments merged in order": {
+        "result": {
+            "registers": [
+                {
+                    "slug": "publication",
+                    "id": 20
+                },
+                {
+                    "slug": "other",
+                    "id": 21
+                }
+            ],
+            "schemas": [
+                {
+                    "slug": "publication",
+                    "id": 30
+                },
+                {
+                    "slug": "catalog",
+                    "uuid": "cat-uuid"
+                },
+                {
+                    "slug": "listing",
+                    "id": 32
+                },
+                {
+                    "id": 99
+                }
+            ]
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "openapi": "3.0.0",
+                        "components": {
+                            "registers": {
+                                "publication": {
+                                    "slug": "publication",
+                                    "schemas": [
+                                        "catalog",
+                                        "listing",
+                                        "course",
+                                        "program"
+                                    ],
+                                    "configuration": {
+                                        "schemas": {
+                                            "catalog": {
+                                                "magicMapping": false
+                                            },
+                                            "program": {
+                                                "magicMapping": false
+                                            },
+                                            "course": {
+                                                "magicMapping": true,
+                                                "autoCreateTable": true,
+                                                "comment": "Auto-attached: declared in components.schemas without a register reference."
+                                            }
+                                        }
+                                    }
+                                },
+                                "other": {
+                                    "slug": "other",
+                                    "schemas": [
+                                        "theme",
+                                        7
+                                    ]
+                                }
+                            },
+                            "schemas": {
+                                "catalog": {
+                                    "title": "Catalog",
+                                    "extra": true
+                                },
+                                "listing": {
+                                    "title": "Listing"
+                                },
+                                "theme": {
+                                    "title": "Theme"
+                                },
+                                "course": {
+                                    "title": "Course"
+                                },
+                                "program": {
+                                    "title": "Program"
+                                }
+                            }
+                        },
+                        "list": [
+                            "a",
+                            "b",
+                            "c"
+                        ],
+                        "scalar": "from-b",
+                        "map": {
+                            "k": "v"
+                        },
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": true
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [
+                        {
+                            "slug": "publication",
+                            "id": 20
+                        },
+                        {
+                            "slug": "other",
+                            "id": 21
+                        }
+                    ],
+                    "schemas": [
+                        {
+                            "slug": "publication",
+                            "id": 30
+                        },
+                        {
+                            "slug": "catalog",
+                            "uuid": "cat-uuid"
+                        },
+                        {
+                            "slug": "listing",
+                            "id": 32
+                        },
+                        {
+                            "id": 99
+                        }
+                    ]
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "catalog_schema",
+                    "cat-uuid"
+                ],
+                [
+                    "opencatalogi",
+                    "catalog_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_schema",
+                    "32"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_schema",
+                    "30"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "woo_register",
+                    "20"
+                ],
+                [
+                    "opencatalogi",
+                    "service_catalogue_register",
+                    "20"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "empty fragment dir": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "openapi": "3.0.0",
+                        "components": {
+                            "registers": {
+                                "publication": {
+                                    "slug": "publication",
+                                    "schemas": [
+                                        "catalog",
+                                        "listing"
+                                    ],
+                                    "configuration": {
+                                        "schemas": {
+                                            "catalog": {
+                                                "magicMapping": false
+                                            }
+                                        }
+                                    }
+                                },
+                                "other": {
+                                    "slug": "other",
+                                    "schemas": [
+                                        "theme",
+                                        7
+                                    ]
+                                }
+                            },
+                            "schemas": {
+                                "catalog": {
+                                    "title": "Catalog"
+                                },
+                                "listing": {
+                                    "title": "Listing"
+                                },
+                                "theme": {
+                                    "title": "Theme"
+                                }
+                            }
+                        },
+                        "list": [
+                            "a",
+                            "b"
+                        ],
+                        "scalar": "base",
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "fragment dir is a file": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "openapi": "3.0.0",
+                        "components": {
+                            "registers": {
+                                "publication": {
+                                    "slug": "publication",
+                                    "schemas": [
+                                        "catalog",
+                                        "listing"
+                                    ],
+                                    "configuration": {
+                                        "schemas": {
+                                            "catalog": {
+                                                "magicMapping": false
+                                            }
+                                        }
+                                    }
+                                },
+                                "other": {
+                                    "slug": "other",
+                                    "schemas": [
+                                        "theme",
+                                        7
+                                    ]
+                                }
+                            },
+                            "schemas": {
+                                "catalog": {
+                                    "title": "Catalog"
+                                },
+                                "listing": {
+                                    "title": "Listing"
+                                },
+                                "theme": {
+                                    "title": "Theme"
+                                }
+                            }
+                        },
+                        "list": [
+                            "a",
+                            "b"
+                        ],
+                        "scalar": "base",
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "orphans without publication register": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "components": {
+                            "schemas": {
+                                "s": []
+                            },
+                            "registers": {
+                                "other": {
+                                    "schemas": []
+                                }
+                            }
+                        },
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "publication register not an array": {
+        "result": {
+            "registers": [],
+            "schemas": []
+        },
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "components": {
+                            "schemas": {
+                                "s": []
+                            },
+                            "registers": {
+                                "publication": "no"
+                            }
+                        },
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [
+                {
+                    "registers": [],
+                    "schemas": []
+                }
+            ],
+            "config": [
+                [
+                    "opencatalogi",
+                    "catalog_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "listing_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "publication_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "theme_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "glossary_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_courses_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_programs_source",
+                    "openregister"
+                ],
+                [
+                    "opencatalogi",
+                    "ooapi_offerings_source",
+                    "openregister"
+                ]
+            ],
+            "warnings": [
+                "Schema slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\SchemaMapper",
+                "Register slug fallback lookup failed: not in the container: OCA\\OpenRegister\\Db\\RegisterMapper",
+                "OpenCatalogi: the shared organisation is unavailable, leaving organization_* unset"
+            ]
+        }
+    },
+    "no openregister": {
+        "error": "RuntimeException: Failed to load settings: Configuration service is not available.",
+        "log": {
+            "imported": [],
+            "reconciled": [],
+            "config": [],
+            "warnings": []
+        }
+    },
+    "import fails": {
+        "error": "RuntimeException: Failed to load settings: import broke",
+        "log": {
+            "imported": [
+                {
+                    "appId": "opencatalogi",
+                    "data": {
+                        "x-openregister": {
+                            "sourceUrl": "apps-extra/opencatalogi/lib/Settings/publication_register.json",
+                            "sourceType": "local"
+                        }
+                    },
+                    "version": "9.8.7",
+                    "force": false
+                }
+            ],
+            "reconciled": [],
+            "config": [],
+            "warnings": []
+        }
+    }
+}

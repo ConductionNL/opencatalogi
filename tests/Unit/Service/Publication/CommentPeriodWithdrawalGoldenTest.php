@@ -36,6 +36,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * An OpenRegister ObjectService stand-in that records what it is asked.
@@ -43,9 +44,9 @@ use Psr\Log\LoggerInterface;
 class WithdrawalGoldenObjects {
 
 	/**
-	 * @param array<int, mixed>                $rows  What a search answers.
+	 * @param array<int, mixed> $rows What a search answers.
 	 * @param array<int, array<string, mixed>> $calls The shared call log.
-	 * @param string                           $fail  Which call throws: '', 'search', 'save-depublication', 'save-period'.
+	 * @param string $fail Which call throws: '', 'search', 'save-depublication', 'save-period'.
 	 */
 	public function __construct(
 		private array $rows,
@@ -65,13 +66,14 @@ class WithdrawalGoldenObjects {
 
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		$register = null,
-		$schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$this->calls[] = ['save' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 		if ($uuid === null && $this->fail === 'save-depublication') {
 			throw new \RuntimeException('depublication save failed');
@@ -157,7 +159,6 @@ class CommentPeriodWithdrawalGoldenTest extends TestCase {
 		}
 
 		return $out;
-
 	}//end cases()
 
 	/**
@@ -256,6 +257,5 @@ class CommentPeriodWithdrawalGoldenTest extends TestCase {
 		$periods = new CommentPeriodService(new TermRoll($this->createMock(ContainerInterface::class), $appManager), $config, $urls);
 
 		return new CommentPeriodWithdrawalService($periods, $depublications, $config, $container, $logger);
-
 	}//end service()
 }//end class

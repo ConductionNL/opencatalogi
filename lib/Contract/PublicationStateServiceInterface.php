@@ -46,8 +46,8 @@ interface PublicationStateServiceInterface {
 	 * that has passed wins over a publication date, because that is how
 	 * OpenRegister's published predicate reads the pair.
 	 *
-	 * @param array<string, mixed>   $publication The publication's properties.
-	 * @param DateTimeInterface|null $now         The moment, now when omitted.
+	 * @param array<string, mixed> $publication The publication's properties.
+	 * @param DateTimeInterface|null $now The moment, now when omitted.
 	 *
 	 * @return string One of the STATE_ constants.
 	 *
@@ -63,8 +63,8 @@ interface PublicationStateServiceInterface {
 	 * null would be refused, and OpenRegister's update replaces the record, so
 	 * leaving it out clears it.
 	 *
-	 * @param array<string, mixed>   $publication The stored properties.
-	 * @param DateTimeInterface|null $now         The moment, now when omitted.
+	 * @param array<string, mixed> $publication The stored properties.
+	 * @param DateTimeInterface|null $now The moment, now when omitted.
 	 *
 	 * @return array<string, mixed> The properties to save.
 	 *
@@ -75,8 +75,8 @@ interface PublicationStateServiceInterface {
 	/**
 	 * The record once it is withdrawn now.
 	 *
-	 * @param array<string, mixed>   $publication The stored properties.
-	 * @param DateTimeInterface|null $now         The moment, now when omitted.
+	 * @param array<string, mixed> $publication The stored properties.
+	 * @param DateTimeInterface|null $now The moment, now when omitted.
 	 *
 	 * @return array<string, mixed> The properties to save.
 	 *

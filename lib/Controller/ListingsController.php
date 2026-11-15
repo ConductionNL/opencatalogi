@@ -32,8 +32,12 @@ namespace OCA\OpenCatalogi\Controller;
 
 use GuzzleHttp\Exception\GuzzleException;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
-use OCP\App\IAppManager;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -47,10 +51,8 @@ use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
 use Psr\Log\LoggerInterface;
-use RuntimeException;
 
 /**
  * Controller for handling Listing-related operations.
@@ -67,8 +69,7 @@ class ListingsController extends Controller {
 	 * @param string $appName The name of the app
 	 * @param IRequest $request The request object
 	 * @param IAppConfig $config The app configuration
-	 * @param ContainerInterface $container Server container for dependency injection
-	 * @param IAppManager $appManager App manager for checking installed apps
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param DirectoryServiceInterface $directoryService The directory service
 	 * @param IL10N $l10n Localization service
 	 * @param IUserSession $userSession The user session
@@ -78,8 +79,7 @@ class ListingsController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly DirectoryServiceInterface $directoryService,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
@@ -96,11 +96,7 @@ class ListingsController extends Controller {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 */
 	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		}
-
-		throw new RuntimeException('OpenRegister service is not available.');
+		return $this->registers->installedObjectService();
 	}//end getObjectService()
 
 	/**
@@ -267,7 +263,7 @@ class ListingsController extends Controller {
 		$listingSchema = $listingConfig['schema'];
 
 		// Fetch the listing object by its ID with register/schema context.
-		$object = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+		$object = $this->getObjectService()->find($id, new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
 
 		// Convert to array if it is an Entity.
 		$data = $object;
@@ -348,9 +344,7 @@ class ListingsController extends Controller {
 		// Save the new listing object.
 		$object = $this->getObjectService()->saveObject(
 			object: $allowed,
-			extend: [],
-			register: $listingRegister,
-			schema: $listingSchema
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema))
 		);
 
 		// Return the created object as a JSON response.
@@ -436,7 +430,7 @@ class ListingsController extends Controller {
 		// only the fields they want to change without losing the rest of the
 		// listing. The merge order is (existing, allowed) so allow-listed
 		// fields win over stored values.
-		$existing = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+		$existing = $this->getObjectService()->find($id, new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
 		if ($existing instanceof \OCP\AppFramework\Db\Entity) {
 			$existingData = $existing->jsonSerialize();
 		} else {
@@ -448,10 +442,10 @@ class ListingsController extends Controller {
 		// Save the merged listing object with the id as UUID for update.
 		$object = $this->getObjectService()->saveObject(
 			object: $merged,
-			extend: [],
-			register: $listingRegister,
-			schema: $listingSchema,
-			uuid: (string)$id
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema),
+				uuid: (string)$id
+			)
 		);
 
 		// Return the updated object as a JSON response.
@@ -509,9 +503,10 @@ class ListingsController extends Controller {
 		// catch it here and return 404 explicitly.
 		try {
 			$result = $this->getObjectService()->deleteObject(
-				uuid: (string)$id,
-				register: $listingRegister,
-				schema: $listingSchema
+				new ObjectDeletion(
+					uuid: (string)$id,
+					target: new ObjectFindTarget(register: $listingRegister, schema: $listingSchema)
+				)
 			);
 		} catch (DoesNotExistException $e) {
 			return new JSONResponse(
@@ -576,7 +571,7 @@ class ListingsController extends Controller {
 
 				$listingRegister = $listingConfig['register'];
 				$listingSchema = $listingConfig['schema'];
-				$object = $this->getObjectService()->find($id, [], false, $listingRegister, $listingSchema);
+				$object = $this->getObjectService()->find($id, new ObjectFindOptions(register: $listingRegister, schema: $listingSchema));
 				$objectData = $object;
 				if ($object instanceof \OCP\AppFramework\Db\Entity) {
 					$objectData = $object->jsonSerialize();

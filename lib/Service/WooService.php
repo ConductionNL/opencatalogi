@@ -3,6 +3,9 @@
 /**
  * Service for the WOO (Wet open overheid) transparency workflow.
  *
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Implements the WOO-specific domain logic described in
  * openspec/changes/woo-transparency. Per hydra ADR-022 this service builds NO
  * bespoke queue/board, NO bespoke state machine and NO bespoke audit store:
@@ -28,9 +31,6 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
- *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -43,13 +43,16 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
-use OCA\OpenCatalogi\Contract\WooServiceInterface;
+use Mpdf\Mpdf;
+use Mpdf\Output\Destination;
+use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
-use OCP\IAppConfig;
+use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IL10N;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 
@@ -60,7 +63,7 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.ExcessiveClassLength) Long workflow steps are split into small documented
  *   private methods; the docblocks of those steps push the class past the line threshold.
  */
-class WooService implements WooServiceInterface {
+class WooService implements TransparencyWorkflowServiceInterface {
 	use ReadsObjectProperties;
 
 	/**
@@ -112,7 +115,6 @@ class WooService implements WooServiceInterface {
 	 */
 	public const BATCH_STATUSES = ['in_progress', 'ready_for_review', 'published'];
 
-
 	/**
 	 * Cached OpenRegister ObjectService instance.
 	 *
@@ -137,22 +139,22 @@ class WooService implements WooServiceInterface {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container for resolving OpenRegister.
+	 * @param RegisterBindings $bindings The configured register ids and the OpenRegister services.
 	 * @param IUserSession $userSession Current user session (decision attribution).
 	 * @param LoggerInterface $logger Logger.
 	 * @param IL10N $l10n Translated refusal messages for the publish gate.
 	 * @param BatchPublicationWriter $publications Makes the batch's publication (woo-batch-creates-publications).
 	 * @param DocumentRedactor $redactor Redacts a partly public document through OpenRegister (woo-redaction-pipeline).
+	 * @param FileFacts|null $fileFacts Reads a document's type from its stored bytes (REQ-PFF-001).
 	 */
 	public function __construct(
-		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
+		private readonly RegisterBindings $bindings,
 		private readonly IUserSession $userSession,
 		private readonly LoggerInterface $logger,
 		private readonly IL10N $l10n,
 		private readonly BatchPublicationWriter $publications,
 		private readonly DocumentRedactor $redactor,
+		private readonly ?FileFacts $fileFacts = null,
 	) {
 
 	}//end __construct()
@@ -167,7 +169,7 @@ class WooService implements WooServiceInterface {
 	public function getObjectService(): ?object {
 		if ($this->objectService === null) {
 			try {
-				$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+				$this->objectService = $this->bindings->service('OCA\OpenRegister\Service\ObjectService');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister ObjectService unavailable: ' . $e->getMessage());
 				return null;
@@ -187,7 +189,7 @@ class WooService implements WooServiceInterface {
 	public function getDeckCardService(): ?object {
 		if ($this->deckCardService === null) {
 			try {
-				$this->deckCardService = $this->container->get('OCA\OpenRegister\Service\DeckCardService');
+				$this->deckCardService = $this->bindings->service('OCA\OpenRegister\Service\DeckCardService');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister DeckCardService unavailable: ' . $e->getMessage());
 				return null;
@@ -209,7 +211,7 @@ class WooService implements WooServiceInterface {
 	public function getTaskSequenceMapper(): ?object {
 		if ($this->taskSequenceMapper === null) {
 			try {
-				$this->taskSequenceMapper = $this->container->get('OCA\OpenRegister\Db\TaskSequenceMapper');
+				$this->taskSequenceMapper = $this->bindings->service('OCA\OpenRegister\Db\TaskSequenceMapper');
 			} catch (\Throwable $e) {
 				$this->logger->warning('[WooService] OpenRegister TaskSequenceMapper unavailable: ' . $e->getMessage());
 				return null;
@@ -227,12 +229,7 @@ class WooService implements WooServiceInterface {
 	 * @spec exclude pure config plumbing — reads the configured WOO register id.
 	 */
 	public function getRegister(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_BATCH_REGISTER, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_BATCH_REGISTER);
 	}//end getRegister()
 
 	/**
@@ -243,12 +240,7 @@ class WooService implements WooServiceInterface {
 	 * @spec exclude pure config plumbing — reads the configured WOO batch schema id.
 	 */
 	public function getBatchSchema(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_BATCH_SCHEMA, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_BATCH_SCHEMA);
 	}//end getBatchSchema()
 
 	/**
@@ -259,12 +251,7 @@ class WooService implements WooServiceInterface {
 	 * @spec exclude pure config plumbing — reads the configured WOO assessment schema id.
 	 */
 	public function getAssessmentSchema(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_ASSESSMENT_SCHEMA, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_ASSESSMENT_SCHEMA);
 	}//end getAssessmentSchema()
 
 	/**
@@ -371,18 +358,19 @@ class WooService implements WooServiceInterface {
 	/**
 	 * A new assessment object for one collected document, waiting to be assessed.
 	 *
-	 * @param array<string, mixed> $document      The collected document
-	 * @param string               $caseReference The case the batch belongs to
+	 * @param array<string, mixed> $document The collected document
+	 * @param string $caseReference The case the batch belongs to
 	 *
 	 * @return array<string, mixed> The assessment object data
 	 *
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-document-queue-consumes-the-openregister-deck-leaf
 	 */
 	private function newAssessment(array $document, string $caseReference): array {
+		$reference = (string)($document['documentReference'] ?? ($document['id'] ?? ''));
 		return [
-			'documentReference' => (string)($document['documentReference'] ?? ($document['id'] ?? '')),
+			'documentReference' => $reference,
 			'fileName' => (string)($document['fileName'] ?? ''),
-			'fileType' => (string)($document['fileType'] ?? ''),
+			...$this->assessedFileType(reference: $reference, claimed: (string)($document['fileType'] ?? '')),
 			'assessment' => 'te_beoordelen',
 			'weigeringsgronden' => [],
 			'redactionInstructions' => '',
@@ -395,10 +383,45 @@ class WooService implements WooServiceInterface {
 	}//end newAssessment()
 
 	/**
+	 * The assessment's `fileType` from the document's stored bytes, and the
+	 * caller's value as `fileTypeClaimed` when it differs (REQ-PFF-001).
+	 *
+	 * Bytes that cannot be read, or a document that cannot be found, give an
+	 * empty `fileType`: the caller's value is kept only as the claim, never
+	 * taken as the type.
+	 *
+	 * @param string $reference The document reference (file id or path).
+	 * @param string $claimed   The type the caller sent.
+	 *
+	 * @return array{fileType: string, fileTypeClaimed?: string} The assessment fields.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	private function assessedFileType(string $reference, string $claimed): array {
+		if ($this->fileFacts === null) {
+			return ['fileType' => $claimed];
+		}
+
+		$owner = (string)$this->userSession->getUser()?->getUID();
+		$file = $this->publications->resolve(reference: $reference, owner: $owner);
+		$detected = null;
+		if ($file !== null) {
+			$detected = $this->fileFacts->mimeTypeOf(file: $file);
+		}
+
+		$fields = ['fileType' => (string)$detected];
+		if ($claimed !== '' && $claimed !== $detected) {
+			$fields['fileTypeClaimed'] = $claimed;
+		}
+
+		return $fields;
+	}//end assessedFileType()
+
+	/**
 	 * A new batch object, in progress, for its saved assessments.
 	 *
 	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
-	 * @param array<string, mixed>             $batchContext   The case reference, Deck board, Deck availability and creation time
+	 * @param array<string, mixed> $batchContext The case reference, Deck board, Deck availability and creation time
 	 *
 	 * @return array<string, mixed> The batch object data
 	 *
@@ -432,7 +455,7 @@ class WooService implements WooServiceInterface {
 	 * A card that cannot be linked is logged and left out; the others still link.
 	 *
 	 * @param array<int, array<string, mixed>> $assessmentRefs The saved assessment objects
-	 * @param array<string, mixed>             $batchContext   The case reference, register and Deck board
+	 * @param array<string, mixed> $batchContext The case reference, register and Deck board
 	 *
 	 * @return array<int, array<string, mixed>> The deck links that were made
 	 *
@@ -477,7 +500,6 @@ class WooService implements WooServiceInterface {
 		}//end foreach
 
 		return $deckLinks;
-
 	}//end linkAssessmentCards()
 
 	/**
@@ -495,7 +517,6 @@ class WooService implements WooServiceInterface {
 		}
 
 		return 'Document';
-
 	}//end assessmentCardTitle()
 
 	/**
@@ -611,7 +632,9 @@ class WooService implements WooServiceInterface {
 		$data['assessedAt'] = $now;
 
 		// A partly public document is published only as its verified redacted version (woo-redaction-pipeline).
+		$before = $data;
 		$data = array_merge($data, $this->redactor->forAssessment(assessment: $data, batchId: $batchId, fallbackOwner: $assessedBy));
+		$data = self::withoutStaleVerification(before: $before, after: $data);
 
 		$saved = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
@@ -621,6 +644,113 @@ class WooService implements WooServiceInterface {
 
 		return $saved;
 	}//end updateAssessment()
+
+	/**
+	 * Clear a person's verification when the redaction it was given to changed.
+	 *
+	 * @param array<string, mixed> $before The assessment before this save's redaction.
+	 * @param array<string, mixed> $after The assessment with this save's redaction.
+	 *
+	 * @return array<string, mixed> The assessment to store.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private static function withoutStaleVerification(array $before, array $after): array {
+		foreach (['anonymizedDocument', 'anonymizedDocumentHash', 'redactionStatus'] as $field) {
+			if ((string)($before[$field] ?? '') !== (string)($after[$field] ?? '')) {
+				$after['redactionVerifiedBy'] = '';
+				$after['redactionVerifiedAt'] = null;
+				return $after;
+			}
+		}
+
+		return $after;
+	}//end withoutStaleVerification()
+
+	/**
+	 * Record that a person checked the redacted version of a partly public
+	 * document of this batch.
+	 *
+	 * Refused unless the redaction is mechanically verified and its redacted
+	 * file still carries the recorded hash; nothing is stored then.
+	 *
+	 * @param string $batchId The batch the document belongs to.
+	 * @param string $assessmentId The document-assessment object uuid.
+	 *
+	 * @return array<string, mixed> The updated assessment object.
+	 *
+	 * @throws RedactionNotVerifiableException When the redaction cannot be marked verified.
+	 * @throws RuntimeException When the batch or assessment is missing or OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function verifyRedaction(string $batchId, string $assessmentId): array {
+		$objectService = $this->getObjectService();
+		$register = $this->getRegister();
+		$assessmentSchema = $this->getAssessmentSchema();
+		if ($objectService === null || $register === null || $assessmentSchema === null) {
+			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
+		}
+
+		$data = $this->batchAssessment(objectService: $objectService, batchId: $batchId, assessmentId: $assessmentId);
+		$uid = $this->signedInUid();
+
+		$refusal = $this->redactor->verificationRefusal(assessment: $data, batchId: $batchId, fallbackOwner: $uid);
+		if ($refusal !== null) {
+			throw new RedactionNotVerifiableException(message: $refusal);
+		}
+
+		$data['redactionVerifiedBy'] = $uid;
+		$data['redactionVerifiedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
+
+		return $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
+	}//end verifyRedaction()
+
+	/**
+	 * An assessment of this batch, so a path cannot reach another batch's document.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $batchId The batch uuid.
+	 * @param string $assessmentId The assessment uuid.
+	 *
+	 * @return array<string, mixed> The assessment.
+	 *
+	 * @throws RuntimeException When either is missing, or the assessment is not the batch's.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function batchAssessment(object $objectService, string $batchId, string $assessmentId): array {
+		try {
+			$batch = $this->plainArray(object: $objectService->find($batchId));
+			$data = $this->plainArray(object: $objectService->find($assessmentId));
+		} catch (\Throwable $e) {
+			throw new RuntimeException('Assessment not found: ' . $assessmentId);
+		}
+
+		if (in_array($assessmentId, array_map('strval', (array)($batch['documents'] ?? [])), true) === false) {
+			throw new RuntimeException('Assessment not found: ' . $assessmentId);
+		}
+
+		return $data;
+	}//end batchAssessment()
+
+	/**
+	 * The signed-in officer's user id; a person's check needs a person.
+	 *
+	 * @return string
+	 *
+	 * @throws RuntimeException When nobody is signed in.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function signedInUid(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			throw new RuntimeException('Not logged in');
+		}
+
+		return $user->getUID();
+	}//end signedInUid()
 
 	/**
 	 * Ask the deck leaf to move the card(s) linked to an assessment object into
@@ -784,9 +914,8 @@ class WooService implements WooServiceInterface {
 	}//end renderInventarislijstCsv()
 
 	/**
-	 * Render the inventarislijst as a minimal, archival-oriented HTML document
-	 * (the print/PDF source). Conversion to PDF/A is delegated to Docudesk;
-	 * OpenCatalogi owns only the WOO-standard layout + header/footer.
+	 * Render the inventarislijst as a minimal, archival-oriented HTML document,
+	 * the source of the PDF/A export.
 	 *
 	 * @param string $batchId The batch uuid (for the header).
 	 * @param array<int, array<string, string>> $rows The inventory rows.
@@ -821,6 +950,26 @@ class WooService implements WooServiceInterface {
 			. '</body></html>';
 
 	}//end renderInventarislijstHtml()
+
+	/**
+	 * Render the inventarislijst as a PDF/A document.
+	 *
+	 * @param string $batchId The batch uuid (for the header).
+	 * @param array<int, array<string, string>> $rows The inventory rows.
+	 *
+	 * @return string The PDF bytes.
+	 *
+	 * @spec openspec/specs/woo-transparency/spec.md#requirement-inventarislijst-generation
+	 */
+	public function renderInventarislijstPdf(string $batchId, array $rows): string {
+		$mpdf = new Mpdf(config: ['tempDir' => sys_get_temp_dir() . '/mpdf']);
+		$mpdf->PDFA = true;
+		$mpdf->PDFAauto = true;
+		$mpdf->WriteHTML(html: $this->renderInventarislijstHtml(batchId: $batchId, rows: $rows));
+
+		return $mpdf->Output(name: '', dest: Destination::STRING_RETURN);
+
+	}//end renderInventarislijstPdf()
 
 	/**
 	 * Whether a batch is eligible to move to "ready_for_review": every document
@@ -882,12 +1031,7 @@ class WooService implements WooServiceInterface {
 	 * @spec openspec/specs/woo-transparency/spec.md#requirement-woo-batch-data-model
 	 */
 	public function getPublishApprovalChain(): ?string {
-		$value = (string)$this->config->getValueString('opencatalogi', self::CONFIG_APPROVAL_CHAIN, '');
-		if ($value === '') {
-			return null;
-		}
-
-		return $value;
+		return $this->bindings->configuredId(self::CONFIG_APPROVAL_CHAIN);
 	}//end getPublishApprovalChain()
 
 	/**
@@ -1051,11 +1195,12 @@ class WooService implements WooServiceInterface {
 	private function save(object $objectService, string $register, string $schema, array $data): mixed {
 		return $objectService->saveObject(
 			object: $data,
-			register: $register,
-			schema: $schema,
-			uuid: (string)($data['id'] ?? ($data['uuid'] ?? '')),
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $register, schema: $schema),
+				uuid: (string)($data['id'] ?? ($data['uuid'] ?? ''))
+			),
 			_rbac: false,
-			_multitenancy: false,
+			_multitenancy: false
 		);
 
 	}//end save()

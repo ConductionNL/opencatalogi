@@ -1,0 +1,715 @@
+{
+	"plain": {
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"state": {
+			"loading": false,
+			"error": null,
+			"searchResults": [
+				{
+					"id": "p1"
+				},
+				{
+					"id": "p2"
+				}
+			],
+			"pagination": {
+				"page": 2,
+				"pages": 4,
+				"total": 61,
+				"limit": 20,
+				"offset": 20
+			},
+			"facets": {
+				"status": {
+					"buckets": []
+				}
+			},
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		},
+		"log": [
+			[
+				"Searching publications with params:",
+				"_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema"
+			],
+			[
+				"Active facets before search:",
+				{}
+			],
+			[
+				"🏗️ buildFacetQuery() - Building from active facets:",
+				{}
+			],
+			[
+				"🎯 Final facet query built:",
+				{
+					"@self": {}
+				}
+			],
+			[
+				"Facet query built:",
+				{
+					"@self": {}
+				}
+			],
+			[
+				"API Response facets:",
+				{
+					"status": {
+						"buckets": []
+					}
+				}
+			],
+			[
+				"API Response facetable:",
+				{
+					"@self": {
+						"register": {}
+					}
+				}
+			],
+			[
+				"Stored facets after update:",
+				{
+					"status": {
+						"buckets": []
+					}
+				}
+			],
+			[
+				"Search completed successfully:",
+				{
+					"results": 2,
+					"pagination": {
+						"page": 2,
+						"pages": 4,
+						"total": 61,
+						"limit": 20,
+						"offset": 20
+					},
+					"facets": 1,
+					"facetable": 1,
+					"activeFacets": 0,
+					"ordering": {}
+				}
+			]
+		],
+		"error": []
+	},
+	"termFiltersOrderingFacets": {
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications?_search=park&_page=3&_limit=50&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&status=published&extra=true&_order%5Btitle%5D=asc&_order%5B%40self.updated%5D=desc&_facets%5B%40self%5D%5Bregister%5D%5Btype%5D=terms&_facets%5Btheme%5D%5Btype%5D=terms",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"state": {
+			"loading": false,
+			"error": null,
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		},
+		"log": [
+			[
+				"🏗️ buildFacetQuery() - Building from active facets:",
+				{
+					"@self.register": {
+						"type": "terms",
+						"config": {
+							"size": 5
+						}
+					},
+					"theme": {
+						"type": "terms",
+						"config": {}
+					}
+				}
+			],
+			[
+				"🔨 Processing field: \"@self.register\", config:",
+				{
+					"type": "terms",
+					"config": {
+						"size": 5
+					}
+				}
+			],
+			[
+				"📊 Adding metadata facet: \"register\" from field \"@self.register\""
+			],
+			[
+				"🔨 Processing field: \"theme\", config:",
+				{
+					"type": "terms",
+					"config": {}
+				}
+			],
+			[
+				"📦 Adding object field facet: \"theme\""
+			],
+			[
+				"🎯 Final facet query built:",
+				{
+					"@self": {
+						"register": {
+							"type": "terms",
+							"config": {
+								"size": 5
+							}
+						}
+					},
+					"theme": {
+						"type": "terms",
+						"config": {}
+					}
+				}
+			],
+			[
+				"🔗 Converting facet query to URL parameters..."
+			],
+			[
+				"🏷️ Processing category: \"@self\", facets:",
+				{
+					"register": {
+						"type": "terms",
+						"config": {
+							"size": 5
+						}
+					}
+				}
+			],
+			[
+				"🎛️ Processing @self field: \"register\", config:",
+				{
+					"type": "terms",
+					"config": {
+						"size": 5
+					}
+				}
+			],
+			[
+				"🔧 Adding metadata facet param: _facets[@self][register][type] = \"terms\""
+			],
+			[
+				"🏷️ Processing category: \"theme\", facets:",
+				{
+					"type": "terms",
+					"config": {}
+				}
+			],
+			[
+				"🎛️ Processing object field: \"theme\", config:",
+				{
+					"type": "terms",
+					"config": {}
+				}
+			],
+			[
+				"🔧 Adding object field facet param: _facets[theme][type] = \"terms\""
+			],
+			[
+				"🌐 Final search params string:",
+				"_search=park&_page=3&_limit=50&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&status=published&extra=true&_order%5Btitle%5D=asc&_order%5B%40self.updated%5D=desc&_facets%5B%40self%5D%5Bregister%5D%5Btype%5D=terms&_facets%5Btheme%5D%5Btype%5D=terms"
+			],
+			[
+				"Searching publications with params:",
+				"_search=park&_page=3&_limit=50&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&status=published&extra=true&_order%5Btitle%5D=asc&_order%5B%40self.updated%5D=desc&_facets%5B%40self%5D%5Bregister%5D%5Btype%5D=terms&_facets%5Btheme%5D%5Btype%5D=terms"
+			],
+			[
+				"Active facets before search:",
+				{
+					"@self.register": {
+						"type": "terms",
+						"config": {
+							"size": 5
+						}
+					},
+					"theme": {
+						"type": "terms",
+						"config": {}
+					}
+				}
+			],
+			[
+				"🏗️ buildFacetQuery() - Building from active facets:",
+				{
+					"@self.register": {
+						"type": "terms",
+						"config": {
+							"size": 5
+						}
+					},
+					"theme": {
+						"type": "terms",
+						"config": {}
+					}
+				}
+			],
+			[
+				"🔨 Processing field: \"@self.register\", config:",
+				{
+					"type": "terms",
+					"config": {
+						"size": 5
+					}
+				}
+			],
+			[
+				"📊 Adding metadata facet: \"register\" from field \"@self.register\""
+			],
+			[
+				"🔨 Processing field: \"theme\", config:",
+				{
+					"type": "terms",
+					"config": {}
+				}
+			],
+			[
+				"📦 Adding object field facet: \"theme\""
+			],
+			[
+				"🎯 Final facet query built:",
+				{
+					"@self": {
+						"register": {
+							"type": "terms",
+							"config": {
+								"size": 5
+							}
+						}
+					},
+					"theme": {
+						"type": "terms",
+						"config": {}
+					}
+				}
+			],
+			[
+				"Facet query built:",
+				{
+					"@self": {
+						"register": {
+							"type": "terms",
+							"config": {
+								"size": 5
+							}
+						}
+					},
+					"theme": {
+						"type": "terms",
+						"config": {}
+					}
+				}
+			],
+			[
+				"Building facet parameters from active facets:"
+			],
+			[
+				"  Field: \"@self.register\", Config:",
+				{
+					"type": "terms",
+					"config": {
+						"size": 5
+					}
+				}
+			],
+			[
+				"  Field: \"theme\", Config:",
+				{
+					"type": "terms",
+					"config": {}
+				}
+			],
+			[
+				"API Response facets:",
+				null
+			],
+			[
+				"API Response facetable:",
+				null
+			],
+			[
+				"Stored facets after update:",
+				{}
+			],
+			[
+				"Search completed successfully:",
+				{
+					"results": 0,
+					"pagination": {
+						"page": 1,
+						"pages": 1,
+						"total": 0,
+						"limit": 20,
+						"offset": 0
+					},
+					"facets": 0,
+					"facetable": 0,
+					"activeFacets": 2,
+					"ordering": {
+						"title": "asc",
+						"@self.updated": "desc"
+					}
+				}
+			]
+		],
+		"error": []
+	},
+	"everyFacetConfigShape": {
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_facets%5B%40self%5D%5Bcreated%5D%5Btype%5D=date_histogram&_facets%5B%40self%5D%5Bcreated%5D%5Binterval%5D=month&_facets%5B%40self%5D%5Bcreated%5D%5Bsize%5D=3&_facets%5Btheme%5D%5Btype%5D=terms&_facets%5Btheme%5D%5Bsize%5D=10&_facets%5Btheme%5D%5Bshown%5D=false",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"state": {
+			"loading": false,
+			"error": null,
+			"searchResults": [
+				{
+					"id": "p1"
+				},
+				{
+					"id": "p2"
+				}
+			],
+			"pagination": {
+				"page": 2,
+				"pages": 4,
+				"total": 61,
+				"limit": 20,
+				"offset": 20
+			},
+			"facets": {
+				"status": {
+					"buckets": []
+				}
+			},
+			"facetable": {
+				"@self": {
+					"register": {}
+				}
+			}
+		},
+		"log": [
+			[
+				"🔗 Converting facet query to URL parameters..."
+			],
+			[
+				"🏷️ Processing category: \"@self\", facets:",
+				{
+					"created": {
+						"type": "date_histogram",
+						"interval": "month",
+						"size": 3,
+						"nested": {
+							"a": 1
+						}
+					}
+				}
+			],
+			[
+				"🎛️ Processing @self field: \"created\", config:",
+				{
+					"type": "date_histogram",
+					"interval": "month",
+					"size": 3,
+					"nested": {
+						"a": 1
+					}
+				}
+			],
+			[
+				"🔧 Adding metadata facet param: _facets[@self][created][type] = \"date_histogram\""
+			],
+			[
+				"🔧 Adding metadata facet config: _facets[@self][created][interval] = \"month\""
+			],
+			[
+				"🔧 Adding metadata facet config: _facets[@self][created][size] = \"3\""
+			],
+			[
+				"🏷️ Processing category: \"theme\", facets:",
+				{
+					"type": "terms",
+					"size": 10,
+					"shown": false,
+					"deep": [
+						1
+					]
+				}
+			],
+			[
+				"🎛️ Processing object field: \"theme\", config:",
+				{
+					"type": "terms",
+					"size": 10,
+					"shown": false,
+					"deep": [
+						1
+					]
+				}
+			],
+			[
+				"🔧 Adding object field facet param: _facets[theme][type] = \"terms\""
+			],
+			[
+				"🔧 Adding object field facet config: _facets[theme][size] = \"10\""
+			],
+			[
+				"🔧 Adding object field facet config: _facets[theme][shown] = \"false\""
+			],
+			[
+				"🏷️ Processing category: \"nullCategory\", facets:",
+				null
+			],
+			[
+				"🏷️ Processing category: \"stringCategory\", facets:",
+				"skip me"
+			],
+			[
+				"🌐 Final search params string:",
+				"_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_facets%5B%40self%5D%5Bcreated%5D%5Btype%5D=date_histogram&_facets%5B%40self%5D%5Bcreated%5D%5Binterval%5D=month&_facets%5B%40self%5D%5Bcreated%5D%5Bsize%5D=3&_facets%5Btheme%5D%5Btype%5D=terms&_facets%5Btheme%5D%5Bsize%5D=10&_facets%5Btheme%5D%5Bshown%5D=false"
+			],
+			[
+				"Searching publications with params:",
+				"_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema&_facets%5B%40self%5D%5Bcreated%5D%5Btype%5D=date_histogram&_facets%5B%40self%5D%5Bcreated%5D%5Binterval%5D=month&_facets%5B%40self%5D%5Bcreated%5D%5Bsize%5D=3&_facets%5Btheme%5D%5Btype%5D=terms&_facets%5Btheme%5D%5Bsize%5D=10&_facets%5Btheme%5D%5Bshown%5D=false"
+			],
+			[
+				"Active facets before search:",
+				{
+					"theme": {
+						"type": "terms",
+						"config": {}
+					}
+				}
+			],
+			[
+				"Facet query built:",
+				{
+					"@self": {
+						"created": {
+							"type": "date_histogram",
+							"interval": "month",
+							"size": 3,
+							"nested": {
+								"a": 1
+							}
+						}
+					},
+					"theme": {
+						"type": "terms",
+						"size": 10,
+						"shown": false,
+						"deep": [
+							1
+						]
+					},
+					"nullCategory": null,
+					"stringCategory": "skip me"
+				}
+			],
+			[
+				"Building facet parameters from active facets:"
+			],
+			[
+				"  Field: \"theme\", Config:",
+				{
+					"type": "terms",
+					"config": {}
+				}
+			],
+			[
+				"API Response facets:",
+				{
+					"status": {
+						"buckets": []
+					}
+				}
+			],
+			[
+				"API Response facetable:",
+				{
+					"@self": {
+						"register": {}
+					}
+				}
+			],
+			[
+				"Stored facets after update:",
+				{
+					"status": {
+						"buckets": []
+					}
+				}
+			],
+			[
+				"Search completed successfully:",
+				{
+					"results": 2,
+					"pagination": {
+						"page": 2,
+						"pages": 4,
+						"total": 61,
+						"limit": 20,
+						"offset": 20
+					},
+					"facets": 1,
+					"facetable": 1,
+					"activeFacets": 1,
+					"ordering": {}
+				}
+			]
+		],
+		"error": []
+	},
+	"notOk": {
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"state": {
+			"loading": false,
+			"error": "HTTP error! status: 503",
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		},
+		"log": [
+			[
+				"Searching publications with params:",
+				"_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema"
+			],
+			[
+				"Active facets before search:",
+				{}
+			],
+			[
+				"🏗️ buildFacetQuery() - Building from active facets:",
+				{}
+			],
+			[
+				"🎯 Final facet query built:",
+				{
+					"@self": {}
+				}
+			],
+			[
+				"Facet query built:",
+				{
+					"@self": {}
+				}
+			]
+		],
+		"error": [
+			[
+				"Search failed:",
+				"Error: HTTP error! status: 503"
+			]
+		]
+	},
+	"thrownNonError": {
+		"fetchCalls": [
+			[
+				"/index.php/apps/opencatalogi/api/federation/publications?_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema",
+				{
+					"method": "GET",
+					"headers": {
+						"Content-Type": "application/json"
+					}
+				}
+			]
+		],
+		"state": {
+			"loading": false,
+			"error": "An error occurred while searching",
+			"searchResults": [],
+			"pagination": {
+				"page": 1,
+				"pages": 1,
+				"total": 0,
+				"limit": 20,
+				"offset": 0
+			},
+			"facets": {},
+			"facetable": {}
+		},
+		"log": [
+			[
+				"Searching publications with params:",
+				"_page=1&_limit=20&_facetable=true&_aggregate=true&_extend%5B%5D=%40self.schema"
+			],
+			[
+				"Active facets before search:",
+				{}
+			],
+			[
+				"🏗️ buildFacetQuery() - Building from active facets:",
+				{}
+			],
+			[
+				"🎯 Final facet query built:",
+				{
+					"@self": {}
+				}
+			],
+			[
+				"Facet query built:",
+				{
+					"@self": {}
+				}
+			]
+		],
+		"error": [
+			[
+				"Search failed:",
+				"boom"
+			]
+		]
+	}
+}
