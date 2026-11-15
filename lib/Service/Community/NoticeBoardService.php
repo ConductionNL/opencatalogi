@@ -88,7 +88,6 @@ class NoticeBoardService implements NoticeBoardServiceInterface {
 		}
 
 		return $board;
-
 	}//end validateBoard()
 
 	/**
@@ -142,7 +141,6 @@ class NoticeBoardService implements NoticeBoardServiceInterface {
 		}
 
 		return $notice;
-
 	}//end validateNotice()
 
 	/**
@@ -169,7 +167,6 @@ class NoticeBoardService implements NoticeBoardServiceInterface {
 		}
 
 		return ($moment >= $start && $moment <= $end);
-
 	}//end isCurrent()
 
 	/**
@@ -190,7 +187,6 @@ class NoticeBoardService implements NoticeBoardServiceInterface {
 		$schema = (string)($entry['@type'] ?? ($entry['schema'] ?? ($entry['recordType'] ?? '')));
 
 		return ($schema !== self::NOTICE_SCHEMA);
-
 	}//end belongsInSitemap()
 
 	/**

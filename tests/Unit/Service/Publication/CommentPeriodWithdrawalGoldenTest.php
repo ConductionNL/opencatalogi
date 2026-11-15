@@ -43,9 +43,9 @@ use Psr\Log\LoggerInterface;
 class WithdrawalGoldenObjects {
 
 	/**
-	 * @param array<int, mixed>                $rows  What a search answers.
+	 * @param array<int, mixed> $rows What a search answers.
 	 * @param array<int, array<string, mixed>> $calls The shared call log.
-	 * @param string                           $fail  Which call throws: '', 'search', 'save-depublication', 'save-period'.
+	 * @param string $fail Which call throws: '', 'search', 'save-depublication', 'save-period'.
 	 */
 	public function __construct(
 		private array $rows,
@@ -70,7 +70,7 @@ class WithdrawalGoldenObjects {
 		$schema = null,
 		?string $uuid = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true
+		bool $_multitenancy = true,
 	): array {
 		$this->calls[] = ['save' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 		if ($uuid === null && $this->fail === 'save-depublication') {
@@ -157,7 +157,6 @@ class CommentPeriodWithdrawalGoldenTest extends TestCase {
 		}
 
 		return $out;
-
 	}//end cases()
 
 	/**
@@ -256,6 +255,5 @@ class CommentPeriodWithdrawalGoldenTest extends TestCase {
 		$periods = new CommentPeriodService(new TermRoll($this->createMock(ContainerInterface::class), $appManager), $config, $urls);
 
 		return new CommentPeriodWithdrawalService($periods, $depublications, $config, $container, $logger);
-
 	}//end service()
 }//end class

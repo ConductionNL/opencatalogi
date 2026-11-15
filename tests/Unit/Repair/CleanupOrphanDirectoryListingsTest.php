@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Unit tests for the CleanupOrphanDirectoryListings repair step.
  *
@@ -41,113 +42,107 @@ use Psr\Container\ContainerInterface;
 /**
  * Unit tests for CleanupOrphanDirectoryListings.
  */
-class CleanupOrphanDirectoryListingsTest extends TestCase
-{
+class CleanupOrphanDirectoryListingsTest extends TestCase {
 
-    private IAppManager|MockObject $appManager;
+	private IAppManager|MockObject $appManager;
 
-    private IDBConnection|MockObject $db;
+	private IDBConnection|MockObject $db;
 
-    private ContainerInterface|MockObject $container;
+	private ContainerInterface|MockObject $container;
 
-    private CleanupOrphanDirectoryListings $step;
+	private CleanupOrphanDirectoryListings $step;
 
-    protected function setUp(): void
-    {
-        parent::setUp();
-        $this->appManager = $this->createMock(IAppManager::class);
-        $this->db         = $this->createMock(IDBConnection::class);
-        $this->container  = $this->createMock(ContainerInterface::class);
+	protected function setUp(): void {
+		parent::setUp();
+		$this->appManager = $this->createMock(IAppManager::class);
+		$this->db = $this->createMock(IDBConnection::class);
+		$this->container = $this->createMock(ContainerInterface::class);
 
-        $this->step = new CleanupOrphanDirectoryListings(
-            $this->appManager,
-            $this->db,
-            $this->container
-        );
+		$this->step = new CleanupOrphanDirectoryListings(
+			$this->appManager,
+			$this->db,
+			$this->container
+		);
 
-    }//end setUp()
+	}//end setUp()
 
-    public function testGetNameDescribesTheCleanup(): void
-    {
-        $this->assertSame(
-            'Clean up OpenCatalogi directory listings with a non-directory URL',
-            $this->step->getName()
-        );
+	public function testGetNameDescribesTheCleanup(): void {
+		$this->assertSame(
+			'Clean up OpenCatalogi directory listings with a non-directory URL',
+			$this->step->getName()
+		);
 
-    }//end testGetNameDescribesTheCleanup()
+	}//end testGetNameDescribesTheCleanup()
 
-    /**
-     * Without OpenRegister the step must warn and stop before touching the DB.
-     *
-     * The assertion is on the CONTAINER, not the warning text: the failure mode
-     * that matters is the step trying to resolve OpenRegister services that are
-     * not there, which on an upgrade would surface as a fatal rather than a
-     * skipped repair.
-     *
-     * @return void
-     */
-    public function testSkipsEntirelyWhenOpenRegisterIsAbsent(): void
-    {
-        $this->appManager->method('getInstalledApps')->willReturn(['opencatalogi']);
-        $this->container->expects($this->never())->method('get');
-        $this->db->expects($this->never())->method('getQueryBuilder');
+	/**
+	 * Without OpenRegister the step must warn and stop before touching the DB.
+	 *
+	 * The assertion is on the CONTAINER, not the warning text: the failure mode
+	 * that matters is the step trying to resolve OpenRegister services that are
+	 * not there, which on an upgrade would surface as a fatal rather than a
+	 * skipped repair.
+	 *
+	 * @return void
+	 */
+	public function testSkipsEntirelyWhenOpenRegisterIsAbsent(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['opencatalogi']);
+		$this->container->expects($this->never())->method('get');
+		$this->db->expects($this->never())->method('getQueryBuilder');
 
-        $output = $this->createMock(IOutput::class);
-        $output->expects($this->once())->method('warning');
+		$output = $this->createMock(IOutput::class);
+		$output->expects($this->once())->method('warning');
 
-        $this->step->run($output);
+		$this->step->run($output);
 
-    }//end testSkipsEntirelyWhenOpenRegisterIsAbsent()
+	}//end testSkipsEntirelyWhenOpenRegisterIsAbsent()
 
-    /**
-     * An unresolvable OpenRegister service is a skip, never a throw.
-     *
-     * This step runs inside `occ upgrade`. If it propagated, a half-installed
-     * OpenRegister would abort the whole upgrade instead of leaving a few stale
-     * listing rows behind — the cure being far worse than the disease is the
-     * reason the guard exists.
-     *
-     * @return void
-     */
-    public function testAnUnresolvableServiceIsSkippedNotThrown(): void
-    {
-        $this->appManager->method('getInstalledApps')->willReturn(['opencatalogi', 'openregister']);
-        $this->container->method('get')
-            ->willThrowException(new \RuntimeException('SchemaMapper is not registered'));
+	/**
+	 * An unresolvable OpenRegister service is a skip, never a throw.
+	 *
+	 * This step runs inside `occ upgrade`. If it propagated, a half-installed
+	 * OpenRegister would abort the whole upgrade instead of leaving a few stale
+	 * listing rows behind — the cure being far worse than the disease is the
+	 * reason the guard exists.
+	 *
+	 * @return void
+	 */
+	public function testAnUnresolvableServiceIsSkippedNotThrown(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['opencatalogi', 'openregister']);
+		$this->container->method('get')
+			->willThrowException(new \RuntimeException('SchemaMapper is not registered'));
 
-        $output = $this->createMock(IOutput::class);
-        $output->expects($this->once())->method('warning');
+		$output = $this->createMock(IOutput::class);
+		$output->expects($this->once())->method('warning');
 
-        // The assertion is that run() returns at all.
-        $this->step->run($output);
+		// The assertion is that run() returns at all.
+		$this->step->run($output);
 
-        $this->addToAssertionCount(1);
+		$this->addToAssertionCount(1);
 
-    }//end testAnUnresolvableServiceIsSkippedNotThrown()
+	}//end testAnUnresolvableServiceIsSkippedNotThrown()
 
-    /**
-     * With no listing schema there is nothing to clean, and nothing is queried.
-     *
-     * @return void
-     */
-    public function testNoListingSchemaMeansNoQuery(): void
-    {
-        $this->appManager->method('getInstalledApps')->willReturn(['opencatalogi', 'openregister']);
+	/**
+	 * With no listing schema there is nothing to clean, and nothing is queried.
+	 *
+	 * @return void
+	 */
+	public function testNoListingSchemaMeansNoQuery(): void {
+		$this->appManager->method('getInstalledApps')->willReturn(['opencatalogi', 'openregister']);
 
-        $schemaMapper = $this->getMockBuilder(\stdClass::class)
-            ->addMethods(['findByApplicationAndSlug'])
-            ->getMock();
-        $schemaMapper->method('findByApplicationAndSlug')->willReturn(null);
+		$schemaMapper = $this->getMockBuilder(\stdClass::class)
+			->addMethods(['findByApplicationAndSlug'])
+			->getMock();
+		$schemaMapper->method('findByApplicationAndSlug')->willReturn(null);
 
-        $this->container->method('get')->willReturn($schemaMapper);
+		$this->container->method('get')->willReturn($schemaMapper);
 
-        // The proof that it stopped: the per-register table scan never started.
-        $this->db->expects($this->never())->method('getQueryBuilder');
+		// The proof that it stopped: the per-register table scan never started.
+		$this->db->expects($this->never())->method('getQueryBuilder');
 
-        $output = $this->createMock(IOutput::class);
-        $output->expects($this->once())->method('info');
+		$output = $this->createMock(IOutput::class);
+		$output->expects($this->once())->method('info');
 
-        $this->step->run($output);
+		$this->step->run($output);
 
-    }//end testNoListingSchemaMeansNoQuery()
+	}//end testNoListingSchemaMeansNoQuery()
 }//end class

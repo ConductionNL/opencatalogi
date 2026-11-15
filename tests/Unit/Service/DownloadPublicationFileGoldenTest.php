@@ -141,7 +141,6 @@ class DownloadPublicationFileGoldenTest extends TestCase {
 		);
 
 		return $files;
-
 	}//end files()
 
 	/**
@@ -177,6 +176,5 @@ class DownloadPublicationFileGoldenTest extends TestCase {
 		);
 
 		return $objects;
-
 	}//end objects()
 }//end class

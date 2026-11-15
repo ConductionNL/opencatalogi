@@ -34,6 +34,7 @@ use DateTime;
 use DOMDocument;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
 use OCP\Http\Client\IClientService;
+use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 
@@ -76,6 +77,24 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	private const TIMEOUT_SECONDS = 10;
 
 	/**
+	 * Why the checks that depend on the sitemapindex are skipped, per sitemapindex failure other than a failed fetch.
+	 *
+	 * @var array<string, string>
+	 */
+	private const SITEMAPINDEX_SKIP_REASONS = ['invalid-xml' => 'sitemapindex-invalid'];
+
+	/**
+	 * The options of every outbound request: the timeout, no exception on an error status, no redirects.
+	 *
+	 * @var array<string, int|bool>
+	 */
+	private const FETCH_OPTIONS = [
+		'timeout' => self::TIMEOUT_SECONDS,
+		'http_errors' => false,
+		'allow_redirects' => false,
+	];
+
+	/**
 	 * Maximum number of category-sitemap pages sampled per catalog (D5).
 	 *
 	 * @var int
@@ -101,20 +120,18 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 *
 	 * @param IClientService $clientService The Nextcloud HTTP client factory used for outbound checks.
 	 * @param DirectoryService $directoryService The directory service, reused for its SSRF outbound-URL guard.
-	 * @param SitemapService $sitemapService The sitemap service, reused for DIWOO validation (D1).
+	 * @param SitemapStandards $sitemaps The sitemap files, their DIWOO validation (D1) and the published DiWoo version.
 	 * @param SettingsService $settingsService The settings service, used to resolve WOO-enabled catalogs.
 	 * @param IAppConfig $config App configuration (report persistence + registration status).
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
-	 * @param StandardsVersionService $standardsVersions Compares the emitted DiWoo version with the published one.
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
 		private readonly DirectoryService $directoryService,
-		private readonly SitemapService $sitemapService,
+		private readonly SitemapStandards $sitemaps,
 		private readonly SettingsService $settingsService,
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
-		private readonly StandardsVersionService $standardsVersions,
 	) {
 
 	}//end __construct()
@@ -151,7 +168,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		return $this->runCheck();
-
 	}//end runWhenEnabled()
 
 	/**
@@ -172,27 +188,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 
 		$catalogs = $this->getWooEnabledCatalogs();
 		$baseUrl = rtrim($this->urlGenerator->getBaseUrl(), '/');
-
-		$checks = [];
-		$checks[] = $this->checkDiwooStandardVersion();
-		$robotsOk = $this->checkRobotsTxt(baseUrl: $baseUrl, checks: $checks);
-
-		foreach ($catalogs as $catalog) {
-			$slug = $catalog->getSlug();
-			if (is_string($slug) === false || $slug === '') {
-				continue;
-			}
-
-			$catalogChecks = new CatalogReadinessChecks(slug: $slug);
-			if ($robotsOk === false) {
-				$this->skipCatalogChecks(catalog: $catalogChecks, reason: 'robots-txt-unreachable');
-				array_push($checks, ...$catalogChecks->all());
-				continue;
-			}
-
-			$this->checkCatalog(baseUrl: $baseUrl, catalog: $catalogChecks);
-			array_push($checks, ...$catalogChecks->all());
-		}
+		$checks = $this->instanceChecks(catalogs: $catalogs, baseUrl: $baseUrl);
 
 		$registration = $this->getRegistrationConfig();
 		$checks[] = $this->checkRegistration(registration: $registration, baseUrl: $baseUrl);
@@ -209,6 +205,58 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 
 		return $report;
 	}//end runCheck()
+
+	/**
+	 * The standard-version check, the robots.txt check and the checks of every catalog with a slug.
+	 *
+	 * When robots.txt fails, no catalog check fetches anything: they all report skipped.
+	 *
+	 * @param array<int, mixed> $catalogs The WOO-enabled catalogs.
+	 * @param string $baseUrl The instance's public base URL.
+	 *
+	 * @return array<int, array<string, mixed>> The checks, in order.
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 */
+	private function instanceChecks(array $catalogs, string $baseUrl): array {
+		$checks = [$this->checkDiwooStandardVersion()];
+		$reachableBaseUrl = null;
+		if ($this->checkRobotsTxt(baseUrl: $baseUrl, checks: $checks) === true) {
+			$reachableBaseUrl = $baseUrl;
+		}
+
+		foreach ($catalogs as $catalog) {
+			array_push($checks, ...$this->catalogCheckList(catalog: $catalog, reachableBaseUrl: $reachableBaseUrl));
+		}
+
+		return $checks;
+	}//end instanceChecks()
+
+	/**
+	 * The checks of one catalog: none without a slug, all skipped when robots.txt failed.
+	 *
+	 * @param mixed $catalog The catalog object.
+	 * @param string|null $reachableBaseUrl The base URL when robots.txt passed, null when it failed.
+	 *
+	 * @return array<int, array<string, string>> The catalog's checks.
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 */
+	private function catalogCheckList(mixed $catalog, ?string $reachableBaseUrl): array {
+		$slug = $catalog->getSlug();
+		if (is_string($slug) === false || $slug === '') {
+			return [];
+		}
+
+		$catalogChecks = new CatalogReadinessChecks(slug: $slug);
+		if ($reachableBaseUrl === null) {
+			$catalogChecks->skipAll(reason: 'robots-txt-unreachable');
+			return $catalogChecks->all();
+		}
+
+		$this->checkCatalog(baseUrl: $reachableBaseUrl, catalog: $catalogChecks);
+		return $catalogChecks->all();
+	}//end catalogCheckList()
 
 	/**
 	 * Return the persisted readiness report without performing any outbound request.
@@ -257,45 +305,43 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @spec exclude Local catalog-lookup plumbing shared by hasWooEnabledCatalogs() and runCheck(); no outbound behavior.
 	 */
 	public function getWooEnabledCatalogs(): array {
-		try {
-			$settings = $this->settingsService->getSettings();
-		} catch (\Throwable $e) {
-			return [];
-		}
-
-		$registerId = ($settings['configuration']['catalog_register'] ?? '');
-		$schemaId = ($settings['configuration']['catalog_schema'] ?? '');
-		if ($registerId === '' || $schemaId === '') {
+		$searchQuery = $this->wooCatalogQuery();
+		if ($searchQuery === null) {
 			return [];
 		}
 
 		try {
 			$objectService = $this->settingsService->getObjectService();
-		} catch (\Throwable $e) {
-			return [];
-		}
-
-		$searchQuery = [
-			'@self' => [
-				'register' => $registerId,
-				'schema' => $schemaId,
-			],
-			'hasWooSitemap' => true,
-		];
-
-		try {
-			$result = $objectService->searchObjectsPaginated(
-				query: $searchQuery,
-				_rbac: true,
-				_multitenancy: false,
-				deleted: false
-			);
+			$result = $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false, deleted: false);
 		} catch (\Throwable $e) {
 			return [];
 		}
 
 		return ($result['results'] ?? []);
 	}//end getWooEnabledCatalogs()
+
+	/**
+	 * The search for the configured catalog schema's catalogs with `hasWooSitemap: true`.
+	 *
+	 * @return array<string, mixed>|null The query, or null when the settings are unreadable or name no catalog register and schema.
+	 *
+	 * @spec exclude Local catalog-lookup plumbing for getWooEnabledCatalogs(); no outbound behavior.
+	 */
+	private function wooCatalogQuery(): ?array {
+		try {
+			$settings = $this->settingsService->getSettings();
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		$registerId = ($settings['configuration']['catalog_register'] ?? '');
+		$schemaId = ($settings['configuration']['catalog_schema'] ?? '');
+		if ($registerId === '' || $schemaId === '') {
+			return null;
+		}
+
+		return ['@self' => ['register' => $registerId, 'schema' => $schemaId], 'hasWooSitemap' => true];
+	}//end wooCatalogQuery()
 
 	/**
 	 * Check 1: robots.txt is publicly reachable and references at least one DIWOO sitemap.
@@ -340,29 +386,14 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 */
 	private function checkCatalog(string $baseUrl, CatalogReadinessChecks $catalog): void {
-		$slug = $catalog->slug;
-		$categoryCode = (string)array_key_first($this->sitemapService->sitemapFiles());
-		$sitemapIndexUrl = "$baseUrl/apps/opencatalogi/api/$slug/sitemaps/$categoryCode";
-		$checkId = "sitemapindex:$slug";
-
-		$response = $this->safeFetch(url: $sitemapIndexUrl);
-		if ($response['ok'] === false) {
-			$catalog->fail(id: $checkId, reason: $response['reason']);
-			$this->skipDependentChecks(catalog: $catalog, reason: 'sitemapindex-unreachable');
+		$categoryCode = (string)array_key_first($this->sitemaps->sitemapFiles());
+		$pageUrls = $this->sitemapPageUrls(catalog: $catalog, url: "$baseUrl/apps/opencatalogi/api/{$catalog->slug}/sitemaps/$categoryCode");
+		if ($pageUrls === null) {
 			return;
 		}
 
-		if ($this->isWellFormedXml(xml: $response['body']) === false) {
-			$catalog->fail(id: $checkId, reason: 'invalid-xml');
-			$this->skipDependentChecks(catalog: $catalog, reason: 'sitemapindex-invalid');
-			return;
-		}
-
-		$catalog->pass(id: $checkId);
-
-		$pageUrls = array_slice($this->extractLocs(xml: $response['body']), 0, self::MAX_SAMPLED_PAGES);
 		if (empty($pageUrls) === true) {
-			$this->skipDependentChecks(catalog: $catalog, reason: 'no-sitemap-pages');
+			$catalog->skipDependents(reason: 'no-sitemap-pages');
 			return;
 		}
 
@@ -371,6 +402,53 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		$this->checkPublicationSample(catalog: $catalog, publicationUrl: $firstDocumentUrl);
 
 	}//end checkCatalog()
+
+	/**
+	 * Check 2: the sitemapindex is reachable and well-formed; answer the page URLs to sample.
+	 *
+	 * When it is not, the check fails and the checks that depend on it are skipped.
+	 *
+	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
+	 * @param string $url The sitemapindex URL.
+	 *
+	 * @return array<int, string>|null Up to MAX_SAMPLED_PAGES page URLs, or null when the sitemapindex failed.
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 */
+	private function sitemapPageUrls(CatalogReadinessChecks $catalog, string $url): ?array {
+		$checkId = 'sitemapindex:' . $catalog->slug;
+		$response = $this->safeFetch(url: $url);
+		$failure = $this->xmlFailure(response: $response);
+		if ($failure !== null) {
+			$catalog->fail(id: $checkId, reason: $failure);
+			$catalog->skipDependents(reason: self::SITEMAPINDEX_SKIP_REASONS[$failure] ?? 'sitemapindex-unreachable');
+			return null;
+		}
+
+		$catalog->pass(id: $checkId);
+		return array_slice($this->extractLocs(xml: $response['body']), 0, self::MAX_SAMPLED_PAGES);
+	}//end sitemapPageUrls()
+
+	/**
+	 * Why a fetched XML document fails: the fetch failure, or `invalid-xml`.
+	 *
+	 * @param array{ok: bool, reason?: string, status?: int, body?: string} $response The fetch result.
+	 *
+	 * @return string|null The failure reason, or null when the body is well-formed XML.
+	 *
+	 * @spec exclude XML fetch-result helper; no independent domain behavior.
+	 */
+	private function xmlFailure(array $response): ?string {
+		if ($response['ok'] === false) {
+			return $response['reason'];
+		}
+
+		if ($this->isWellFormedXml(xml: $response['body']) === false) {
+			return 'invalid-xml';
+		}
+
+		return null;
+	}//end xmlFailure()
 
 	/**
 	 * Check 3: fetch up to MAX_SAMPLED_PAGES category-sitemap pages, verifying reachability,
@@ -389,32 +467,36 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		foreach ($pageUrls as $index => $pageUrl) {
 			$pageCheckId = 'category-sitemap:' . $catalog->slug . ':' . ($index + 1);
 			$response = $this->safeFetch(url: $pageUrl);
-
-			if ($response['ok'] === false) {
-				$catalog->fail(id: $pageCheckId, reason: $response['reason']);
-				continue;
-			}
-
-			if ($this->isWellFormedXml(xml: $response['body']) === false) {
-				$catalog->fail(id: $pageCheckId, reason: 'invalid-xml');
-				continue;
-			}
-
-			if (str_contains($response['body'], '<diwoo:Document') === false) {
-				$catalog->fail(id: $pageCheckId, reason: 'no-diwoo-elements');
+			$failure = $this->pageFailure(response: $response);
+			if ($failure !== null) {
+				$catalog->fail(id: $pageCheckId, reason: $failure);
 				continue;
 			}
 
 			$catalog->pass(id: $pageCheckId);
-
-			if ($firstDocumentUrl === null) {
-				$locs = $this->extractLocs(xml: $response['body']);
-				$firstDocumentUrl = ($locs[0] ?? null);
-			}
-		}//end foreach
+			$firstDocumentUrl ??= ($this->extractLocs(xml: $response['body'])[0] ?? null);
+		}
 
 		return $firstDocumentUrl;
 	}//end checkCategorySitemapPages()
+
+	/**
+	 * Why a fetched category-sitemap page fails: the XML failure, or `no-diwoo-elements`.
+	 *
+	 * @param array{ok: bool, reason?: string, status?: int, body?: string} $response The fetch result.
+	 *
+	 * @return string|null The failure reason, or null when the page holds `diwoo:Document` elements.
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 */
+	private function pageFailure(array $response): ?string {
+		$failure = $this->xmlFailure(response: $response);
+		if ($failure === null && str_contains($response['body'], '<diwoo:Document') === false) {
+			return 'no-diwoo-elements';
+		}
+
+		return $failure;
+	}//end pageFailure()
 
 	/**
 	 * Check 4: DIWOO metadata validation, reusing the existing admin DIWOO validator (D1)
@@ -439,11 +521,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		}
 
 		try {
-			$report = $this->sitemapService->validateDiwooOutput(
-				catalogSlug: $catalog->slug,
-				categoryCode: $categoryCode,
-				page: 1
-			);
+			$report = $this->sitemaps->validateFirstPage(catalogSlug: $catalog->slug, categoryCode: $categoryCode);
 		} catch (\Throwable $e) {
 			$catalog->fail(id: $checkId, reason: 'diwoo-validation-error');
 			return;
@@ -506,23 +584,15 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		$version = $this->resolveDiwooVersion();
 
 		if ($version['status'] === StandardsVersionService::STATUS_BEHIND) {
-			return $this->buildCheck(
-				id: 'diwoo-standard-version',
-				status: 'fail',
-				reason: 'declared-' . $version['declared'] . '-published-' . $version['published']
-			);
+			$reason = 'declared-' . $version['declared'] . '-published-' . $version['published'];
+			return $this->buildCheck(id: 'diwoo-standard-version', status: 'fail', reason: $reason);
 		}
 
 		if ($version['status'] === StandardsVersionService::STATUS_UNKNOWN) {
-			return $this->buildCheck(
-				id: 'diwoo-standard-version',
-				status: 'skipped',
-				reason: 'standard-version-unreadable'
-			);
+			return $this->buildCheck(id: 'diwoo-standard-version', status: 'skipped', reason: 'standard-version-unreadable');
 		}
 
 		return $this->buildCheck(id: 'diwoo-standard-version', status: 'pass');
-
 	}//end checkDiwooStandardVersion()
 
 	/**
@@ -534,11 +604,10 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 */
 	private function resolveDiwooVersion(): array {
 		if ($this->diwooVersion === null) {
-			$this->diwooVersion = $this->standardsVersions->diwooVersion();
+			$this->diwooVersion = $this->sitemaps->versionComparison();
 		}
 
 		return $this->diwooVersion;
-
 	}//end resolveDiwooVersion()
 
 	/**
@@ -568,43 +637,6 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		$catalog->pass(id: $checkId);
 
 	}//end checkPublicationSample()
-
-	/**
-	 * Append `skipped` entries for the sitemapindex + all its dependent checks (used when
-	 * robots.txt itself failed, so no per-catalog check even attempted a fetch).
-	 *
-	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
-	 * @param string $reason The skip reason shared by every entry.
-	 *
-	 * @return void
-	 *
-	 * @spec exclude Skip-bookkeeping helper — prerequisite-failed checks must report `skipped`,
-	 *       never `pass`, per WOO-HR-001; no independent domain behavior of its own.
-	 */
-	private function skipCatalogChecks(CatalogReadinessChecks $catalog, string $reason): void {
-		$catalog->skip(id: 'sitemapindex:' . $catalog->slug, reason: $reason);
-		$this->skipDependentChecks(catalog: $catalog, reason: $reason);
-
-	}//end skipCatalogChecks()
-
-	/**
-	 * Append `skipped` entries for the category-sitemap, DIWOO-validation, and
-	 * publication-sample checks of one catalog (used when the sitemapindex check itself failed).
-	 *
-	 * @param CatalogReadinessChecks $catalog The catalog and the checks recorded for it.
-	 * @param string $reason The skip reason shared by every entry.
-	 *
-	 * @return void
-	 *
-	 * @spec exclude Skip-bookkeeping helper — prerequisite-failed checks must report `skipped`,
-	 *       never `pass`, per WOO-HR-001; no independent domain behavior of its own.
-	 */
-	private function skipDependentChecks(CatalogReadinessChecks $catalog, string $reason): void {
-		foreach (['category-sitemap', 'diwoo-xsd', 'publication-sample'] as $check) {
-			$catalog->skip(id: $check . ':' . $catalog->slug, reason: $reason);
-		}
-
-	}//end skipDependentChecks()
 
 	/**
 	 * Check the tracked Woo-index registration status against the checked base URL (WOO-HR-003).
@@ -711,65 +743,67 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
 	 */
 	private function safeFetch(string $url): array {
-		if ($this->requestCount >= self::MAX_REQUESTS) {
-			return [
-				'ok' => false,
-				'reason' => 'request-cap-reached',
-			];
-		}
-
-		try {
-			$this->directoryService->validateOutboundUrl($url);
-		} catch (\InvalidArgumentException $e) {
-			return [
-				'ok' => false,
-				'reason' => 'ssrf-blocked',
-			];
+		$refusal = $this->fetchRefusal(url: $url);
+		if ($refusal !== null) {
+			return ['ok' => false, 'reason' => $refusal];
 		}
 
 		$this->requestCount++;
 
 		try {
-			$client = $this->clientService->newClient();
-			$response = $client->get(
-				$url,
-				[
-					'timeout' => self::TIMEOUT_SECONDS,
-					'http_errors' => false,
-					'allow_redirects' => false,
-				]
-			);
+			$response = $this->clientService->newClient()->get($url, self::FETCH_OPTIONS);
 		} catch (\Throwable $e) {
-			return [
-				'ok' => false,
-				'reason' => 'network-error',
-			];
+			return ['ok' => false, 'reason' => 'network-error'];
 		}
 
+		return $this->fetchResult(response: $response);
+	}//end safeFetch()
+
+	/**
+	 * Why a URL may not be fetched: the outbound-request cap is reached, or the SSRF guard rejects it.
+	 *
+	 * @param string $url The URL to fetch.
+	 *
+	 * @return string|null The refusal reason, or null when the fetch may go ahead.
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 */
+	private function fetchRefusal(string $url): ?string {
+		if ($this->requestCount >= self::MAX_REQUESTS) {
+			return 'request-cap-reached';
+		}
+
+		try {
+			$this->directoryService->validateOutboundUrl($url);
+		} catch (\InvalidArgumentException $e) {
+			return 'ssrf-blocked';
+		}
+
+		return null;
+	}//end fetchRefusal()
+
+	/**
+	 * The fetch result of a response: ok with its body on HTTP 200, otherwise the status as reason.
+	 *
+	 * @param IResponse $response The HTTP response.
+	 *
+	 * @return array{ok: bool, reason?: string, status: int, body: string} The fetch result.
+	 *
+	 * @spec exclude Response-shape helper for safeFetch(); no independent domain behavior.
+	 */
+	private function fetchResult(IResponse $response): array {
 		$status = $response->getStatusCode();
 		$body = $response->getBody();
 		if (is_resource($body) === true) {
 			$body = stream_get_contents($body);
 		}
 
-		$body = (string)$body;
-
 		if ($status !== 200) {
-			return [
-				'ok' => false,
-				'reason' => 'http-' . $status,
-				'status' => $status,
-				'body' => $body,
-			];
+			return ['ok' => false, 'reason' => 'http-' . $status, 'status' => $status, 'body' => (string)$body];
 		}
 
-		return [
-			'ok' => true,
-			'status' => $status,
-			'body' => $body,
-		];
-
-	}//end safeFetch()
+		return ['ok' => true, 'status' => $status, 'body' => (string)$body];
+	}//end fetchResult()
 
 	/**
 	 * Whether a string is well-formed XML.

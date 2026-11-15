@@ -13,6 +13,9 @@
  * @version GIT: <git-id>
  *
  * @link https://OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -35,9 +38,9 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 	/**
 	 * Build a command whose OpenRegister collaborators are fakes.
 	 *
-	 * @param array<int, mixed> $documents    The rows the reader returns.
-	 * @param array<int, mixed> $files        The files the document owns.
-	 * @param bool              $withServices Whether OpenRegister resolves at all.
+	 * @param array<int, mixed> $documents The rows the reader returns.
+	 * @param array<int, mixed> $files The files the document owns.
+	 * @param bool $withServices Whether OpenRegister resolves at all.
 	 *
 	 * @return CommandTester The tester.
 	 */
@@ -46,7 +49,9 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 			/**
 			 * @param array<int, mixed> $documents The rows to return.
 			 */
-			public function __construct(private array $documents) {
+			public function __construct(
+				private array $documents,
+			) {
 			}
 
 			/**
@@ -57,7 +62,7 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 				string $schema,
 				array $filters = [],
 				bool $rbac = true,
-				bool $multitenancy = true
+				bool $multitenancy = true,
 			): array {
 				return ($schema === 'document' ? $this->documents : []);
 			}
@@ -79,7 +84,9 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 			/**
 			 * @param array<int, mixed> $files The files to return.
 			 */
-			public function __construct(private array $files) {
+			public function __construct(
+				private array $files,
+			) {
 			}
 
 			/**
@@ -91,15 +98,14 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 		};
 
 		return $this->commandWith(objectService: $objectService, fileService: $fileService, withServices: $withServices);
-
 	}//end commandOver()
 
 	/**
 	 * Build a command over the given OpenRegister object and file services.
 	 *
 	 * @param object $objectService The ObjectService fake.
-	 * @param object $fileService   The FileService fake.
-	 * @param bool   $withServices  Whether OpenRegister resolves at all.
+	 * @param object $fileService The FileService fake.
+	 * @param bool $withServices Whether OpenRegister resolves at all.
 	 *
 	 * @return CommandTester The tester.
 	 */
@@ -132,14 +138,13 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 		);
 
 		return new CommandTester(new AttachDocumentsToPublicationsCommand(migration: $migration));
-
 	}//end commandWith()
 
 	/**
 	 * A document row.
 	 *
 	 * @param string $uuid The uuid.
-	 * @param mixed  $link The publication link.
+	 * @param mixed $link The publication link.
 	 *
 	 * @return array<string, mixed> The row.
 	 */

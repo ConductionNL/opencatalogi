@@ -51,8 +51,8 @@ class PublicationStateService implements PublicationStateServiceInterface {
 	 * that has passed wins over a publication date, because that is how
 	 * OpenRegister's published predicate reads the pair.
 	 *
-	 * @param array<string, mixed>   $publication The publication's properties.
-	 * @param DateTimeInterface|null $now         The moment, now when omitted.
+	 * @param array<string, mixed> $publication The publication's properties.
+	 * @param DateTimeInterface|null $now The moment, now when omitted.
 	 *
 	 * @return string One of the STATE_ constants.
 	 *
@@ -64,11 +64,36 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		}
 
 		$moment = $this->moment(now: $now);
-		$depublished = $this->parse(value: ($publication['depublicationDate'] ?? null));
-		if ($depublished !== null && $depublished <= $moment) {
+		if ($this->isWithdrawnBy(publication: $publication, moment: $moment) === true) {
 			return self::STATE_WITHDRAWN;
 		}
 
+		return $this->releaseState(publication: $publication, moment: $moment);
+	}//end stateOf()
+
+	/**
+	 * Whether the publication's withdrawal date has come.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param DateTimeImmutable $moment The moment.
+	 *
+	 * @return bool
+	 */
+	private function isWithdrawnBy(array $publication, DateTimeImmutable $moment): bool {
+		$depublished = $this->parse(value: ($publication['depublicationDate'] ?? null));
+
+		return $depublished !== null && $depublished <= $moment;
+	}//end isWithdrawnBy()
+
+	/**
+	 * Draft without a readable publication date, scheduled before it, public from it.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param DateTimeImmutable $moment The moment.
+	 *
+	 * @return string The state.
+	 */
+	private function releaseState(array $publication, DateTimeImmutable $moment): string {
 		$published = $this->parse(value: ($publication['publicationDate'] ?? null));
 		if ($published === null) {
 			return self::STATE_DRAFT;
@@ -79,8 +104,7 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		}
 
 		return self::STATE_PUBLIC;
-
-	}//end stateOf()
+	}//end releaseState()
 
 	/**
 	 * The record once it is published now.
@@ -90,8 +114,8 @@ class PublicationStateService implements PublicationStateServiceInterface {
 	 * null would be refused, and OpenRegister's update replaces the record, so
 	 * leaving it out clears it.
 	 *
-	 * @param array<string, mixed>   $publication The stored properties.
-	 * @param DateTimeInterface|null $now         The moment, now when omitted.
+	 * @param array<string, mixed> $publication The stored properties.
+	 * @param DateTimeInterface|null $now The moment, now when omitted.
 	 *
 	 * @return array<string, mixed> The properties to save.
 	 *
@@ -103,14 +127,13 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		$record['publicationDate'] = $this->moment(now: $now)->format(DateTimeInterface::ATOM);
 
 		return $record;
-
 	}//end publishedRecord()
 
 	/**
 	 * The record once it is withdrawn now.
 	 *
-	 * @param array<string, mixed>   $publication The stored properties.
-	 * @param DateTimeInterface|null $now         The moment, now when omitted.
+	 * @param array<string, mixed> $publication The stored properties.
+	 * @param DateTimeInterface|null $now The moment, now when omitted.
 	 *
 	 * @return array<string, mixed> The properties to save.
 	 *
@@ -121,7 +144,6 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		$record['depublicationDate'] = $this->moment(now: $now)->format(DateTimeInterface::ATOM);
 
 		return $record;
-
 	}//end withdrawnRecord()
 
 	/**
@@ -144,7 +166,6 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		}
 
 		return $channels;
-
 	}//end channelsReached()
 
 	/**
@@ -171,7 +192,6 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		$depublication['withdrawals'] = $withdrawals;
 
 		return array_filter($depublication, static fn ($value): bool => $value !== null);
-
 	}//end storable()
 
 	/**
@@ -185,7 +205,6 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		unset($publication['@self']);
 
 		return $publication;
-
 	}//end writable()
 
 	/**
@@ -201,7 +220,6 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		}
 
 		return new DateTimeImmutable($now->format('Y-m-d\TH:i:s.uP'));
-
 	}//end moment()
 
 	/**

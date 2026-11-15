@@ -37,7 +37,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\EventService;
 use OCA\OpenCatalogi\Service\SettingsService;
-use OCA\OpenRegister\Db\FileMapper;
+use OCA\OpenRegister\Files\Db\FileMapper;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\FileService;
 use OCA\OpenRegister\Service\ObjectService;
@@ -236,7 +236,7 @@ class AutoPublishEventsGoldenTest extends TestCase {
 		$container->method('get')->willReturnCallback(
 			static fn (string $id) => match ($id) {
 				'OCA\OpenRegister\Service\FileService' => $fileService,
-				'OCA\OpenRegister\Db\FileMapper' => $fileMapper,
+				'OCA\OpenRegister\Files\Db\FileMapper' => $fileMapper,
 				default => $objectService,
 			}
 		);

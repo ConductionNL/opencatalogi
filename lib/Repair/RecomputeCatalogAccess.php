@@ -43,8 +43,8 @@ class RecomputeCatalogAccess implements IRepairStep {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppManager          $appManager The app manager.
-	 * @param CatalogAccessServiceInterface $access     Writes the rules.
+	 * @param IAppManager $appManager The app manager.
+	 * @param CatalogAccessServiceInterface $access Writes the rules.
 	 */
 	public function __construct(
 		private readonly IAppManager $appManager,
@@ -62,7 +62,6 @@ class RecomputeCatalogAccess implements IRepairStep {
 	 */
 	public function getName(): string {
 		return 'Write the staff access of the catalogues onto the schemas they cover';
-
 	}//end getName()
 
 	/**
@@ -85,7 +84,7 @@ class RecomputeCatalogAccess implements IRepairStep {
 			$written += (int)$this->access->recompute(schemaId: $schemaId);
 		}
 
-		$output->info('Catalogue staff access written onto '.$written.' schema(s)');
+		$output->info('Catalogue staff access written onto ' . $written . ' schema(s)');
 
 	}//end run()
 }//end class

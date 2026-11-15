@@ -37,8 +37,8 @@ interface InformationCategoryRegistryInterface {
 	 * query that lists its publications.
 	 *
 	 * @return array<string, array<string, mixed>> The categories, each with `code`,
-	 *   `label`, `labelEn`, `tooiUri`, `tooiLabel`, `mapsTo`, `origin`,
-	 *   `sitemapFile` and `schemas`.
+	 *                                             `label`, `labelEn`, `tooiUri`, `tooiLabel`, `mapsTo`, `origin`,
+	 *                                             `sitemapFile` and `schemas`.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-information-categories-are-data-not-code-req-wic-001
 	 */

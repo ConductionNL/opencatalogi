@@ -55,7 +55,7 @@ final class SearchWindow {
 	/**
 	 * Constructor.
 	 *
-	 * @param DateTimeImmutable $from  The last run (exclusive).
+	 * @param DateTimeImmutable $from The last run (exclusive).
 	 * @param DateTimeImmutable $until The moment of the run (inclusive).
 	 */
 	public function __construct(
@@ -85,14 +85,13 @@ final class SearchWindow {
 		$params['_limit'] = self::SEARCH_LIMIT;
 		$params['_order'] = ['publicationDate' => 'asc'];
 		return $params;
-
 	}//end searchParams()
 
 	/**
 	 * This window, narrowed to a saved period.
 	 *
 	 * @param DateTimeImmutable|null $periodFrom The start of the period (inclusive), or null.
-	 * @param DateTimeImmutable|null $periodTo   The end of the period (inclusive), or null.
+	 * @param DateTimeImmutable|null $periodTo The end of the period (inclusive), or null.
 	 *
 	 * @return self
 	 *
@@ -103,7 +102,6 @@ final class SearchWindow {
 		$window->periodFrom = $periodFrom;
 		$window->periodTo = $periodTo;
 		return $window;
-
 	}//end narrowedTo()
 
 	/**
@@ -116,17 +114,35 @@ final class SearchWindow {
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-matching-finds-only-publications-the-resident-could-have-found-new-since-the-last-run-req-ssa-002
 	 */
 	public function contains(?DateTimeImmutable $date): bool {
-		if ($date === null || $date <= $this->from || $date > $this->until) {
+		if ($date === null) {
 			return false;
 		}
 
-		if ($this->periodFrom !== null && $date < $this->periodFrom) {
-			return false;
-		}
-
-		return $this->periodTo === null || $date <= $this->periodTo;
-
+		return $this->isInWindow(date: $date) === true && $this->isInPeriod(date: $date) === true;
 	}//end contains()
+
+	/**
+	 * Whether a date lies after the window's start, up to and including its end.
+	 *
+	 * @param DateTimeImmutable $date The publication date.
+	 *
+	 * @return bool
+	 */
+	private function isInWindow(DateTimeImmutable $date): bool {
+		return $date > $this->from && $date <= $this->until;
+	}//end isInWindow()
+
+	/**
+	 * Whether a date lies in the saved period, each open bound left out.
+	 *
+	 * @param DateTimeImmutable $date The publication date.
+	 *
+	 * @return bool
+	 */
+	private function isInPeriod(DateTimeImmutable $date): bool {
+		return ($this->periodFrom === null || $date >= $this->periodFrom)
+			&& ($this->periodTo === null || $date <= $this->periodTo);
+	}//end isInPeriod()
 
 	/**
 	 * A moment as ISO 8601 in UTC.
@@ -137,6 +153,5 @@ final class SearchWindow {
 	 */
 	private function utc(DateTimeImmutable $moment): string {
 		return $moment->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM);
-
 	}//end utc()
 }//end class

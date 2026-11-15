@@ -46,11 +46,11 @@ class SavedSearchMatchingJob extends TimedJob {
 	/**
 	 * Constructor.
 	 *
-	 * @param ITimeFactory       $time       The time factory.
-	 * @param SavedSearchMatcherInterface $matcher    The matching.
-	 * @param IAppManager        $appManager Whether portaliq is installed.
-	 * @param IConfig            $config     The instance time zone.
-	 * @param LoggerInterface    $logger     The logger.
+	 * @param ITimeFactory $time The time factory.
+	 * @param SavedSearchMatcherInterface $matcher The matching.
+	 * @param IAppManager $appManager Whether portaliq is installed.
+	 * @param IConfig $config The instance time zone.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		ITimeFactory $time,
@@ -87,7 +87,7 @@ class SavedSearchMatchingJob extends TimedJob {
 				$this->logger->info('[SavedSearchMatchingJob] run', $stats);
 			}
 		} catch (Throwable $e) {
-			$this->logger->error('[SavedSearchMatchingJob] the run failed: '.$e->getMessage(), ['exception' => $e]);
+			$this->logger->error('[SavedSearchMatchingJob] the run failed: ' . $e->getMessage(), ['exception' => $e]);
 		}
 
 	}//end run()

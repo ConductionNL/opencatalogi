@@ -44,18 +44,14 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 
 /**
- * A duck-typed stand-in for the engine's calendar.
- */
-class FakeWorkingCalendar {
-}//end class
-
-/**
  * A duck-typed stand-in for the engine's calendar service.
  */
 class FakeCalendarService {
 
-	public function resolve(?string $slug, ?string $organisation): FakeWorkingCalendar {
-		return new FakeWorkingCalendar();
+	public function resolve(?string $slug, ?string $organisation): ?object {
+		// The faked calculator ignores the calendar; the engine's RollRule takes a
+		// real WorkingCalendar or none, so the stand-in answers with none.
+		return null;
 	}//end resolve()
 }//end class
 
@@ -69,7 +65,7 @@ class FakeSlaCalculator {
 		return DateTimeImmutable::createFromInterface($from)->modify(sprintf('%+d days', (int)$value));
 	}//end add()
 
-	public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+	public function roll(\DateTimeInterface $moment, \OCA\OpenRegister\Service\Flow\Timer\RollRule $rule): array {
 		$at = DateTimeImmutable::createFromInterface($moment);
 		$day = (int)$at->format('N');
 		if ($day < 6) {
@@ -154,9 +150,7 @@ class CommentPeriodServiceTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return $appManager;
-
 	}//end appManager()
-
 
 	/**
 	 * A period opens with its computed end, its remedy and its form.
@@ -547,7 +541,7 @@ class CommentPeriodServiceTest extends TestCase {
 							return DateTimeImmutable::createFromInterface($from);
 						}
 
-						public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+						public function roll(\DateTimeInterface $moment, \OCA\OpenRegister\Service\Flow\Timer\RollRule $rule): array {
 							return ['at' => DateTimeImmutable::createFromInterface($moment), 'unrolledAt' => null, 'rolledBy' => null];
 						}
 					};
@@ -642,7 +636,7 @@ class CommentPeriodServiceTest extends TestCase {
 							return DateTimeImmutable::createFromInterface($from);
 						}
 
-						public function roll(\DateTimeInterface $moment, string $roll, ?object $calendar): array {
+						public function roll(\DateTimeInterface $moment, \OCA\OpenRegister\Service\Flow\Timer\RollRule $rule): array {
 							return ['at' => 'not a moment', 'unrolledAt' => null, 'rolledBy' => null];
 						}
 					};

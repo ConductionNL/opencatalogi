@@ -25,7 +25,8 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCP\App\IAppManager;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -34,9 +35,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use RuntimeException;
 
 /**
  * Controller for handling theme-related operations.
@@ -59,17 +58,17 @@ class ThemesController extends Controller {
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
 	 * @param IAppConfig $config App configuration interface.
-	 * @param ContainerInterface $container Server container for DI.
-	 * @param IAppManager $appManager App manager.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
+	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly CorsSettings $cors = new CorsSettings(),
+		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -83,11 +82,7 @@ class ThemesController extends Controller {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 */
 	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		}
-
-		throw new RuntimeException('OpenRegister service is not available.');
+		return $this->registers->installedObjectService();
 	}//end getObjectService()
 
 	/**
@@ -133,7 +128,10 @@ class ThemesController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
+	 *
 	 * @spec openspec/specs/content-management/spec.md
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
@@ -145,14 +143,17 @@ class ThemesController extends Controller {
 		}
 
 		$result = $this->getObjectService()->searchObjectsPaginated(
-			$this->scopedSearchQuery(objectConfig: $themeConfig),
+			$this->scopedSearchQuery(objectConfig: $themeConfig, appliedFilters: $this->appliedFilters),
 			_rbac: true,
 			_multitenancy: false
 		);
 
 		// Visibility governed by RBAC on the search above (_rbac: true); rbac=true
 		// enforces schema authorization, multi=false allows public theme access.
-		return $this->publicJsonResponse(data: $this->paginatedResponseData(result: $result));
+		$responseData = $this->paginatedResponseData(result: $result);
+		$responseData['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
+
+		return $this->publicJsonResponse(data: $responseData);
 	}//end index()
 
 	/**

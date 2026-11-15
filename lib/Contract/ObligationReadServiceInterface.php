@@ -47,5 +47,5 @@ interface ObligationReadServiceInterface {
 	 *
 	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
-	public function read(?DateTimeInterface $now=null): array;
+	public function read(?DateTimeInterface $now = null): array;
 }//end interface

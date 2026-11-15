@@ -1,12 +1,17 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCA\OpenCatalogi\Controller\SitemapController;
 use OCA\OpenCatalogi\Http\XMLResponse;
-use OCA\OpenCatalogi\Contract\SitemapServiceInterface;
 use OCP\IRequest;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;

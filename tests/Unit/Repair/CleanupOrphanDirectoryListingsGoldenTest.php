@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Golden test for the CleanupOrphanDirectoryListings repair step.
  *
@@ -25,6 +26,7 @@ namespace Unit\Repair;
 use OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings;
 use OCP\App\IAppManager;
 use OCP\DB\IResult;
+use OCP\DB\QueryBuilder\ICompositeExpression;
 use OCP\DB\QueryBuilder\IExpressionBuilder;
 use OCP\DB\QueryBuilder\IFunctionBuilder;
 use OCP\DB\QueryBuilder\IQueryBuilder;
@@ -41,338 +43,388 @@ use Psr\Container\ContainerInterface;
  * @covers \OCA\OpenCatalogi\Repair\ListingTable
  * @covers \OCA\OpenCatalogi\Repair\OrphanListingSweep
  */
-class CleanupOrphanDirectoryListingsGoldenTest extends TestCase
-{
+class CleanupOrphanDirectoryListingsGoldenTest extends TestCase {
 
-    private const FIXTURE = __DIR__.'/fixtures/cleanup-orphan-directory-listings-golden.json';
+	private const FIXTURE = __DIR__ . '/fixtures/cleanup-orphan-directory-listings-golden.json';
 
-    /**
-     * What the doubles did during one run.
-     *
-     * @var array<string, list<mixed>>
-     */
-    private array $log = [];
+	/**
+	 * What the doubles did during one run.
+	 *
+	 * @var array<string, list<mixed>>
+	 */
+	private array $log = [];
 
-    /**
-     * The recorded worlds.
-     *
-     * A world names the installed apps, which lookups fail, the registers
-     * (id => schema ids), the orphan rows and valid-row counts per table, and
-     * the uuids whose delete throws. A table missing from `orphans` fails its
-     * scan; a table missing from `valid` fails its count.
-     *
-     * @return array<string, array{0: array<string, mixed>}>
-     */
-    public static function worlds(): array
-    {
-        $tables = [
-            'orphans' => [
-                'openregister_table_1_7' => [
-                    ['_uuid' => 'a-1'],
-                    ['_uuid' => ''],
-                    ['_uuid' => 'boom'],
-                    ['_uuid' => 'a-2'],
-                ],
-                'openregister_table_3_7' => [['_uuid' => 'c-1']],
-            ],
-            'valid'   => [
-                'openregister_table_1_7' => 5,
-                'openregister_table_3_7' => 2,
-            ],
-        ];
+	/**
+	 * The SQL text of each composite predicate, by object id.
+	 *
+	 * @var array<int, string>
+	 */
+	private array $composites = [];
 
-        return [
-            'no openregister'               => [['apps' => ['opencatalogi']]],
-            'services unresolvable'         => [['fail' => 'container']],
-            'schema lookup throws'          => [['fail' => 'schema']],
-            'no listing schema'             => [['fail' => 'noSchema']],
-            'registers throw'               => [['fail' => 'registers']],
-            'no registers'                  => [['registers' => []]],
-            'no register carries the schema' => [['registers' => [1 => [2, 3], 2 => null]]],
-            'two registers, mixed rows'     => [array_merge($tables, ['registers' => [1 => ['7', 8], 2 => [9], 3 => [7]]])],
-            'scan of one table fails'       => [
-                [
-                    'registers' => [1 => [7], 3 => [7]],
-                    'orphans'   => ['openregister_table_3_7' => [['_uuid' => 'c-1']]],
-                    'valid'     => ['openregister_table_1_7' => 4, 'openregister_table_3_7' => 1],
-                ],
-            ],
-            'count fails'                   => [
-                [
-                    'registers' => [1 => [7]],
-                    'orphans'   => ['openregister_table_1_7' => [['_uuid' => 'a-1']]],
-                    'valid'     => [],
-                ],
-            ],
-            'clean table'                   => [
-                [
-                    'registers' => [1 => [7]],
-                    'orphans'   => ['openregister_table_1_7' => []],
-                    'valid'     => ['openregister_table_1_7' => 3],
-                ],
-            ],
-            'every delete fails'            => [
-                [
-                    'registers' => [1 => [7]],
-                    'orphans'   => ['openregister_table_1_7' => [['_uuid' => 'boom'], ['_uuid' => '0']]],
-                    'valid'     => ['openregister_table_1_7' => 0],
-                ],
-            ],
-        ];
+	/**
+	 * The recorded worlds.
+	 *
+	 * A world names the installed apps, which lookups fail, the registers
+	 * (id => schema ids), the orphan rows and valid-row counts per table, and
+	 * the uuids whose delete throws. A table missing from `orphans` fails its
+	 * scan; a table missing from `valid` fails its count.
+	 *
+	 * @return array<string, array{0: array<string, mixed>}>
+	 */
+	public static function worlds(): array {
+		$tables = [
+			'orphans' => [
+				'openregister_table_1_7' => [
+					['_uuid' => 'a-1'],
+					['_uuid' => ''],
+					['_uuid' => 'boom'],
+					['_uuid' => 'a-2'],
+				],
+				'openregister_table_3_7' => [['_uuid' => 'c-1']],
+			],
+			'valid' => [
+				'openregister_table_1_7' => 5,
+				'openregister_table_3_7' => 2,
+			],
+		];
 
-    }//end worlds()
+		return [
+			'no openregister' => [['apps' => ['opencatalogi']]],
+			'services unresolvable' => [['fail' => 'container']],
+			'schema lookup throws' => [['fail' => 'schema']],
+			'no listing schema' => [['fail' => 'noSchema']],
+			'registers throw' => [['fail' => 'registers']],
+			'no registers' => [['registers' => []]],
+			'no register carries the schema' => [['registers' => [1 => [2, 3], 2 => null]]],
+			'two registers, mixed rows' => [array_merge($tables, ['registers' => [1 => ['7', 8], 2 => [9], 3 => [7]]])],
+			'scan of one table fails' => [
+				[
+					'registers' => [1 => [7], 3 => [7]],
+					'orphans' => ['openregister_table_3_7' => [['_uuid' => 'c-1']]],
+					'valid' => ['openregister_table_1_7' => 4, 'openregister_table_3_7' => 1],
+				],
+			],
+			'count fails' => [
+				[
+					'registers' => [1 => [7]],
+					'orphans' => ['openregister_table_1_7' => [['_uuid' => 'a-1']]],
+					'valid' => [],
+				],
+			],
+			'clean table' => [
+				[
+					'registers' => [1 => [7]],
+					'orphans' => ['openregister_table_1_7' => []],
+					'valid' => ['openregister_table_1_7' => 3],
+				],
+			],
+			'another listing schema id' => [
+				[
+					'schemaId' => '12',
+					'registers' => [1 => [7], 4 => [12, 7]],
+					'orphans' => ['openregister_table_4_12' => [['_uuid' => 'd-1']]],
+					'valid' => ['openregister_table_4_12' => 1],
+				],
+			],
+			'every delete fails' => [
+				[
+					'registers' => [1 => [7]],
+					'orphans' => ['openregister_table_1_7' => [['_uuid' => 'boom'], ['_uuid' => '0']]],
+					'valid' => ['openregister_table_1_7' => 0],
+				],
+			],
+		];
 
-    /**
-     * Replay a world and compare it to the recording.
-     *
-     * @param array<string, mixed> $world The world.
-     *
-     * @return void
-     */
-    #[DataProvider('worlds')]
-    public function testRunMatchesTheRecording(array $world): void
-    {
-        $this->log = ['output' => [], 'deleted' => [], 'tables' => []];
-        $step      = new CleanupOrphanDirectoryListings(
-            $this->appManager($world),
-            $this->db($world),
-            $this->container($world)
-        );
-        $step->run($this->recordingOutput());
+	}//end worlds()
 
-        $recorded = [];
-        if (file_exists(self::FIXTURE) === true) {
-            $recorded = json_decode((string) file_get_contents(self::FIXTURE), true);
-        }
+	/**
+	 * Replay a world and compare it to the recording.
+	 *
+	 * @param array<string, mixed> $world The world.
+	 *
+	 * @return void
+	 */
+	#[DataProvider('worlds')]
+	public function testRunMatchesTheRecording(array $world): void {
+		$this->log = ['output' => [], 'deleted' => [], 'tables' => []];
+		$step = new CleanupOrphanDirectoryListings(
+			$this->appManager($world),
+			$this->db($world),
+			$this->container($world)
+		);
+		$step->run($this->recordingOutput());
 
-        $name = (string) $this->dataName();
-        if (getenv('GOLDEN_RECORD') === '1') {
-            $recorded[$name] = $this->log;
-            if (is_dir(dirname(self::FIXTURE)) === false) {
-                mkdir(dirname(self::FIXTURE));
-            }
+		$recorded = [];
+		if (file_exists(self::FIXTURE) === true) {
+			$recorded = json_decode((string)file_get_contents(self::FIXTURE), true);
+		}
 
-            file_put_contents(self::FIXTURE, json_encode($recorded, (JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES))."\n");
-        }
+		$name = (string)$this->dataName();
+		if (getenv('GOLDEN_RECORD') === '1') {
+			$recorded[$name] = $this->log;
+			if (is_dir(dirname(self::FIXTURE)) === false) {
+				mkdir(dirname(self::FIXTURE));
+			}
 
-        $this->assertArrayHasKey($name, $recorded, 'No recording for '.$name);
-        $this->assertSame($recorded[$name], $this->log);
+			file_put_contents(self::FIXTURE, json_encode($recorded, (JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) . "\n");
+		}
 
-    }//end testRunMatchesTheRecording()
+		$this->assertArrayHasKey($name, $recorded, 'No recording for ' . $name);
+		$this->assertSame($recorded[$name], $this->log);
 
-    /**
-     * The app manager of a world.
-     *
-     * @param array<string, mixed> $world The world.
-     *
-     * @return IAppManager
-     */
-    private function appManager(array $world): IAppManager
-    {
-        $appManager = $this->createMock(IAppManager::class);
-        $appManager->method('getInstalledApps')->willReturn($world['apps'] ?? ['opencatalogi', 'openregister']);
-        return $appManager;
+	}//end testRunMatchesTheRecording()
 
-    }//end appManager()
+	/**
+	 * The app manager of a world.
+	 *
+	 * @param array<string, mixed> $world The world.
+	 *
+	 * @return IAppManager
+	 */
+	private function appManager(array $world): IAppManager {
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('getInstalledApps')->willReturn($world['apps'] ?? ['opencatalogi', 'openregister']);
+		return $appManager;
+	}//end appManager()
 
-    /**
-     * An output that records every line.
-     *
-     * @return IOutput
-     */
-    private function recordingOutput(): IOutput
-    {
-        $output = $this->createMock(IOutput::class);
-        foreach (['info', 'warning'] as $level) {
-            $output->method($level)->willReturnCallback(
-                function (string $message) use ($level): void {
-                    $this->log['output'][] = [$level, $message];
-                }
-            );
-        }
+	/**
+	 * An output that records every line.
+	 *
+	 * @return IOutput
+	 */
+	private function recordingOutput(): IOutput {
+		$output = $this->createMock(IOutput::class);
+		foreach (['info', 'warning'] as $level) {
+			$output->method($level)->willReturnCallback(
+				function (string $message) use ($level): void {
+					$this->log['output'][] = [$level, $message];
+				}
+			);
+		}
 
-        return $output;
+		return $output;
+	}//end recordingOutput()
 
-    }//end recordingOutput()
+	/**
+	 * The container of a world, serving OpenRegister's mappers and object service.
+	 *
+	 * @param array<string, mixed> $world The world.
+	 *
+	 * @return ContainerInterface
+	 */
+	private function container(array $world): ContainerInterface {
+		$fail = ($world['fail'] ?? '');
+		$registers = ($world['registers'] ?? []);
+		$log = &$this->log;
 
-    /**
-     * The container of a world, serving OpenRegister's mappers and object service.
-     *
-     * @param array<string, mixed> $world The world.
-     *
-     * @return ContainerInterface
-     */
-    private function container(array $world): ContainerInterface
-    {
-        $fail      = ($world['fail'] ?? '');
-        $registers = ($world['registers'] ?? []);
-        $log       = &$this->log;
+		$schemaMapper = new class($fail, (string)($world['schemaId'] ?? '7')) {
+			public function __construct(
+				private string $fail,
+				private string $schemaId,
+			) {
+			}
 
-        $schemaMapper = new class($fail) {
-            public function __construct(private string $fail)
-            {
-            }
+			public function findByApplicationAndSlug(string $slug, string $app): ?object {
+				if ($this->fail === 'schema') {
+					throw new \RuntimeException('schema table locked');
+				}
 
-            public function findByApplicationAndSlug(string $slug, string $app): ?object
-            {
-                if ($this->fail === 'schema') {
-                    throw new \RuntimeException('schema table locked');
-                }
+				if ($this->fail === 'noSchema') {
+					return null;
+				}
 
-                if ($this->fail === 'noSchema') {
-                    return null;
-                }
+				return new class($slug . '@' . $app, $this->schemaId) {
+					public function __construct(
+						private string $key,
+						private string $id,
+					) {
+					}
 
-                return new class($slug.'@'.$app) {
-                    public function __construct(private string $key)
-                    {
-                    }
+					public function getId(): string {
+						return ($this->key === 'listing@opencatalogi') ? $this->id : '0';
+					}
+				};
+			}
+		};
 
-                    public function getId(): string
-                    {
-                        return ($this->key === 'listing@opencatalogi') ? '7' : '0';
-                    }
-                };
-            }
-        };
+		$registerMapper = new class($fail, $registers) {
+			public function __construct(
+				private string $fail,
+				private array $registers,
+			) {
+			}
 
-        $registerMapper = new class($fail, $registers) {
-            public function __construct(private string $fail, private array $registers)
-            {
-            }
+			public function findAll(): array {
+				if ($this->fail === 'registers') {
+					throw new \RuntimeException('register table locked');
+				}
 
-            public function findAll(): array
-            {
-                if ($this->fail === 'registers') {
-                    throw new \RuntimeException('register table locked');
-                }
+				$all = [];
+				foreach ($this->registers as $id => $schemas) {
+					$all[] = new class((string)$id, $schemas) {
+						public function __construct(
+							private string $id,
+							private ?array $schemas,
+						) {
+						}
 
-                $all = [];
-                foreach ($this->registers as $id => $schemas) {
-                    $all[] = new class((string) $id, $schemas) {
-                        public function __construct(private string $id, private ?array $schemas)
-                        {
-                        }
+						public function getId(): string {
+							return $this->id;
+						}
 
-                        public function getId(): string
-                        {
-                            return $this->id;
-                        }
+						public function getSchemas(): ?array {
+							return $this->schemas;
+						}
+					};
+				}
 
-                        public function getSchemas(): ?array
-                        {
-                            return $this->schemas;
-                        }
-                    };
-                }
+				return $all;
+			}
+		};
 
-                return $all;
-            }
-        };
+		$objectService = new class($log) {
+			public function __construct(
+				private array &$log,
+			) {
+			}
 
-        $objectService = new class($log) {
-            public function __construct(private array &$log)
-            {
-            }
+			public function deleteObject(string $uuid, string $register, string $schema, bool $_rbac, bool $_multitenancy): bool {
+				if ($uuid === 'boom') {
+					throw new \RuntimeException('locked row ' . $uuid);
+				}
 
-            public function deleteObject(string $uuid, string $register, string $schema, bool $_rbac, bool $_multitenancy): bool
-            {
-                if ($uuid === 'boom') {
-                    throw new \RuntimeException('locked row '.$uuid);
-                }
+				$this->log['deleted'][] = [$uuid, $register, $schema, $_rbac, $_multitenancy];
+				return true;
+			}
+		};
 
-                $this->log['deleted'][] = [$uuid, $register, $schema, $_rbac, $_multitenancy];
-                return true;
-            }
-        };
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturnCallback(
+			static function (string $id) use ($fail, $schemaMapper, $registerMapper, $objectService): object {
+				if ($fail === 'container') {
+					throw new \RuntimeException($id . ' is not registered');
+				}
 
-        $container = $this->createMock(ContainerInterface::class);
-        $container->method('get')->willReturnCallback(
-            static function (string $id) use ($fail, $schemaMapper, $registerMapper, $objectService): object {
-                if ($fail === 'container') {
-                    throw new \RuntimeException($id.' is not registered');
-                }
+				return match ($id) {
+					'OCA\OpenRegister\Db\SchemaMapper' => $schemaMapper,
+					'OCA\OpenRegister\Db\RegisterMapper' => $registerMapper,
+					'OCA\OpenRegister\Service\ObjectService' => $objectService,
+				};
+			}
+		);
 
-                return match ($id) {
-                    'OCA\OpenRegister\Db\SchemaMapper' => $schemaMapper,
-                    'OCA\OpenRegister\Db\RegisterMapper' => $registerMapper,
-                    'OCA\OpenRegister\Service\ObjectService' => $objectService,
-                };
-            }
-        );
+		return $container;
+	}//end container()
 
-        return $container;
+	/**
+	 * The database of a world: a query builder that answers per table.
+	 *
+	 * @param array<string, mixed> $world The world.
+	 *
+	 * @return IDBConnection
+	 */
+	private function db(array $world): IDBConnection {
+		$db = $this->createMock(IDBConnection::class);
+		$db->method('getQueryBuilder')->willReturnCallback(
+			function () use ($world): IQueryBuilder {
+				return $this->queryBuilder($world);
+			}
+		);
 
-    }//end container()
+		return $db;
+	}//end db()
 
-    /**
-     * The database of a world: a query builder that answers per table.
-     *
-     * @param array<string, mixed> $world The world.
-     *
-     * @return IDBConnection
-     */
-    private function db(array $world): IDBConnection
-    {
-        $db = $this->createMock(IDBConnection::class);
-        $db->method('getQueryBuilder')->willReturnCallback(
-            function () use ($world): IQueryBuilder {
-                return $this->queryBuilder($world);
-            }
-        );
+	/**
+	 * One query builder: remembers whether it counts and which table it reads.
+	 *
+	 * @param array<string, mixed> $world The world.
+	 *
+	 * @return IQueryBuilder
+	 */
+	private function queryBuilder(array $world): IQueryBuilder {
+		$query = ['count' => false, 'table' => '', 'where' => []];
+		$qb = $this->createMock(IQueryBuilder::class);
+		$qb->method('expr')->willReturn($this->recordingExpressions());
+		$qb->method('func')->willReturn($this->createMock(IFunctionBuilder::class));
+		$qb->method('createNamedParameter')->willReturnArgument(0);
+		$qb->method('select')->willReturnCallback(
+			static function (...$selects) use (&$query, $qb): IQueryBuilder {
+				$query['count'] = ($selects[0] !== '_uuid');
+				return $qb;
+			}
+		);
+		$qb->method('from')->willReturnCallback(
+			static function (string $table) use (&$query, $qb): IQueryBuilder {
+				$query['table'] = $table;
+				return $qb;
+			}
+		);
+		foreach (['where', 'andWhere'] as $method) {
+			$qb->method($method)->willReturnCallback(
+				function (...$predicates) use (&$query, $qb): IQueryBuilder {
+					foreach ($predicates as $predicate) {
+						$query['where'][] = $this->predicateText($predicate);
+					}
 
-        return $db;
+					return $qb;
+				}
+			);
+		}
+		$qb->method('executeQuery')->willReturnCallback(
+			function () use (&$query, $world): IResult {
+				$this->log['tables'][] = [$query['table'], ($query['count'] === true) ? 'count' : 'scan', implode(' AND ', $query['where'])];
+				$source = ($query['count'] === true) ? ($world['valid'] ?? []) : ($world['orphans'] ?? []);
+				if (array_key_exists($query['table'], $source) === false) {
+					throw new \RuntimeException('no table ' . $query['table']);
+				}
 
-    }//end db()
+				$result = $this->createMock(IResult::class);
+				if ($query['count'] === true) {
+					$result->method('fetch')->willReturn(['c' => (string)$source[$query['table']]]);
+					return $result;
+				}
 
-    /**
-     * One query builder: remembers whether it counts and which table it reads.
-     *
-     * @param array<string, mixed> $world The world.
-     *
-     * @return IQueryBuilder
-     */
-    private function queryBuilder(array $world): IQueryBuilder
-    {
-        $query = ['count' => false, 'table' => ''];
-        $qb    = $this->createMock(IQueryBuilder::class);
-        $qb->method('expr')->willReturn($this->createMock(IExpressionBuilder::class));
-        $qb->method('func')->willReturn($this->createMock(IFunctionBuilder::class));
-        $qb->method('createNamedParameter')->willReturnArgument(0);
-        $qb->method('select')->willReturnCallback(
-            static function (...$selects) use (&$query, $qb): IQueryBuilder {
-                $query['count'] = ($selects[0] !== '_uuid');
-                return $qb;
-            }
-        );
-        $qb->method('from')->willReturnCallback(
-            static function (string $table) use (&$query, $qb): IQueryBuilder {
-                $query['table'] = $table;
-                return $qb;
-            }
-        );
-        $qb->method('where')->willReturnSelf();
-        $qb->method('andWhere')->willReturnSelf();
-        $qb->method('executeQuery')->willReturnCallback(
-            function () use (&$query, $world): IResult {
-                $this->log['tables'][] = [$query['table'], ($query['count'] === true) ? 'count' : 'scan'];
-                $source = ($query['count'] === true) ? ($world['valid'] ?? []) : ($world['orphans'] ?? []);
-                if (array_key_exists($query['table'], $source) === false) {
-                    throw new \RuntimeException('no table '.$query['table']);
-                }
+				$result->method('fetchAll')->willReturn($source[$query['table']]);
+				return $result;
+			}
+		);
 
-                $result = $this->createMock(IResult::class);
-                if ($query['count'] === true) {
-                    $result->method('fetch')->willReturn(['c' => (string) $source[$query['table']]]);
-                    return $result;
-                }
+		return $qb;
+	}//end queryBuilder()
 
-                $result->method('fetchAll')->willReturn($source[$query['table']]);
-                return $result;
-            }
-        );
+	/**
+	 * An expression builder that answers each predicate as its SQL text.
+	 *
+	 * @return IExpressionBuilder
+	 */
+	private function recordingExpressions(): IExpressionBuilder {
+		$expr = $this->createMock(IExpressionBuilder::class);
+		$expr->method('isNull')->willReturnCallback(static fn ($x): string => $x . ' IS NULL');
+		$expr->method('like')->willReturnCallback(static fn ($x, $y): string => $x . " LIKE '" . $y . "'");
+		$expr->method('notLike')->willReturnCallback(static fn ($x, $y): string => $x . " NOT LIKE '" . $y . "'");
+		$expr->method('orX')->willReturnCallback(
+			function (...$parts): ICompositeExpression {
+				$composite = $this->createMock(ICompositeExpression::class);
+				$this->composites[spl_object_id($composite)] = '(' . implode(' OR ', array_map(fn ($p): string => $this->predicateText($p), $parts)) . ')';
+				return $composite;
+			}
+		);
 
-        return $qb;
+		return $expr;
+	}//end recordingExpressions()
 
-    }//end queryBuilder()
+	/**
+	 * The SQL text of a predicate built by the recording expression builder.
+	 *
+	 * @param mixed $predicate A string or a composite from orX().
+	 *
+	 * @return string
+	 */
+	private function predicateText(mixed $predicate): string {
+		if (is_object($predicate) === true) {
+			return ($this->composites[spl_object_id($predicate)] ?? 'unknown');
+		}
+
+		return (string)$predicate;
+	}//end predicateText()
 }//end class

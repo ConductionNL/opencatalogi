@@ -73,6 +73,7 @@ use ZipArchive;
  *
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+ * @spec openspec/changes/publications/tasks.md
  */
 class PublicationService implements PublicationServiceInterface {
 
@@ -374,7 +375,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * without querying, explicitly to refuse a platform-wide scan.
 	 *
 	 * @return array{register: string, schema: string}|null The configured pair,
-	 *         or null when either key is unset — the caller must then refuse.
+	 *                                                      or null when either key is unset — the caller must then refuse.
 	 *
 	 * @spec exclude Configuration plumbing — resolves and validates the two
 	 *       app-config keys that scope every publication query.
@@ -450,13 +451,8 @@ class PublicationService implements PublicationServiceInterface {
 			$cacheKey = (string)$catalogId;
 		}
 
-		// Return cached result if available.
 		if (isset($this->cachedCatalogFilters[$cacheKey]) === true) {
-			// Restore class properties from cache.
-			$cached = $this->cachedCatalogFilters[$cacheKey];
-			$this->availableRegisters = $cached['availableRegisters'];
-			$this->availableSchemas = $cached['availableSchemas'];
-			return $cached['result'];
+			return $this->restoredCatalogFilters(cached: $this->cachedCatalogFilters[$cacheKey]);
 		}
 
 		// FAIL CLOSED on an unconfigured catalog scope. See resolveCatalogScope().
@@ -470,26 +466,7 @@ class PublicationService implements PublicationServiceInterface {
 			];
 		}
 
-		// Setup the config array for searchObjects.
-		$query = [
-			'@self' => [
-				'register' => $scope['register'],
-				'schema' => $scope['schema'],
-			],
-		];
-
-		// Get all catalogs using searchObjects. Its declared return type is
-		// `array|int` — it yields an int when the query asks for a count. This query
-		// does not, but narrow explicitly so a count-shaped result can never reach
-		// the foreach below as a non-iterable.
-		$catalogs = $this->getObjectService()->searchObjects($query);
-		if (is_array($catalogs) === false) {
-			$catalogs = [];
-		}
-
-		if ($catalogId !== null) {
-			$catalogs = [$this->getObjectService()->find($catalogId)];
-		}
+		$catalogs = $this->scopeCatalogs(scope: $scope, catalogId: $catalogId);
 
 		// Remove duplicate values and assign to class properties.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
@@ -511,6 +488,82 @@ class PublicationService implements PublicationServiceInterface {
 
 		return $result;
 	}//end getCatalogFilters()
+
+	/**
+	 * Restore the scope properties from a cached lookup and return its result.
+	 *
+	 * @param array $cached The cached `result`, `availableRegisters` and `availableSchemas`.
+	 *
+	 * @return array The cached result.
+	 */
+	private function restoredCatalogFilters(array $cached): array {
+		$this->availableRegisters = $cached['availableRegisters'];
+		$this->availableSchemas = $cached['availableSchemas'];
+		return $cached['result'];
+	}//end restoredCatalogFilters()
+
+	/**
+	 * The catalogs that make up the scope: all catalogs in the configured
+	 * register and schema, or only the given catalog.
+	 *
+	 * The search runs even when a catalog id is given. Its declared return type is
+	 * `array|int` (an int for a count query); a count-shaped result reads as no catalogs.
+	 *
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
+	 *
+	 * @return array The catalog objects.
+	 */
+	private function scopeCatalogs(array $scope, null|string|int $catalogId): array {
+		$catalogs = $this->getObjectService()->searchObjects(
+			[
+				'@self' => [
+					'register' => $scope['register'],
+					'schema' => $scope['schema'],
+				],
+			]
+		);
+		if (is_array($catalogs) === false) {
+			$catalogs = [];
+		}
+
+		if ($catalogId !== null) {
+			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
+		}
+
+		return $catalogs;
+	}//end scopeCatalogs()
+
+	/**
+	 * Find one catalog, but only when it lives in the configured catalog register and schema.
+	 *
+	 * OpenRegister's find() falls back to a cross-table lookup for a UUID it cannot
+	 * place in the given schema, so the hint alone does not bound the result: the
+	 * found object's own register and schema are checked as well.
+	 *
+	 * @param string|integer $catalogId The catalog id, UUID or slug.
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 *
+	 * @return array<int, \OCA\OpenRegister\Db\ObjectEntity> The catalog, or an empty list when it is not a catalog.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function findCatalogInScope(string|int $catalogId, array $scope): array {
+		$catalog = $this->getObjectService()->find(
+			id: $catalogId,
+			register: $scope['register'],
+			schema: $scope['schema']
+		);
+
+		if ($catalog === null
+			|| (string)$catalog->getRegister() !== $scope['register']
+			|| (string)$catalog->getSchema() !== $scope['schema']
+		) {
+			return [];
+		}
+
+		return [$catalog];
+	}//end findCatalogInScope()
 
 	/**
 	 * Get the list of available registers.
@@ -749,28 +802,32 @@ class PublicationService implements PublicationServiceInterface {
 	 * (ConductionNL/opencatalogi#1783).
 	 *
 	 * @param \OCA\OpenRegister\Service\ObjectService $objectService The object service.
-	 * @param array<string, mixed>                    $query         The query, stripped of the caller's scope keys.
-	 * @param array<int, mixed>                       $registers     The register scope.
-	 * @param array<int, mixed>                       $schemas       The schema scope.
+	 * @param array<string, mixed> $query The query, stripped of the caller's scope keys.
+	 * @param array<int, mixed> $registers The register scope.
+	 * @param array<int, mixed> $schemas The schema scope.
 	 *
 	 * @return array<string, mixed> The paginated result.
 	 *
 	 * @throws RegisterNotFoundException When OpenRegister refuses a non-slug register entry (such as `'0'`);
 	 *                                   a plain unknown id is searched, not refused.
-	 * @throws SchemaNotFoundException   When OpenRegister refuses a non-slug schema entry the same way.
+	 * @throws SchemaNotFoundException When OpenRegister refuses a non-slug schema entry the same way.
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure function over the query (WOO-581)
 	 */
 	private function searchObjectsWithinScope($objectService, array $query, array $registers, array $schemas): array {
+		// The list is narrowed to the catalogue union; say so in the response (REQ-ASF-001).
+		$this->getQueryService()->recordCatalogScope(schemaIds: $schemas, registerIds: $registers);
+
 		try {
 			return $objectService->searchObjectsPaginated(
 				query: CallerScope::writeScope(query: $query, registers: $registers, schemas: $schemas),
 				_rbac: true,
 				_multitenancy: false
 			);
-		} catch (RegisterNotFoundException | SchemaNotFoundException $e) {
+		} catch (RegisterNotFoundException|SchemaNotFoundException $e) {
 			$registerIds = $this->withoutSlugs(entries: $registers);
 			$schemaIds = $this->withoutSlugs(entries: $schemas);
 			if (count($registerIds) === count($registers) && count($schemaIds) === count($schemas)) {
@@ -940,7 +997,6 @@ class PublicationService implements PublicationServiceInterface {
 		}
 
 		return $directoryBuckets;
-
 	}//end directoryFacetBuckets()
 
 	/**
@@ -981,7 +1037,6 @@ class PublicationService implements PublicationServiceInterface {
 		}
 
 		return $catalogBuckets;
-
 	}//end catalogFacetBuckets()
 
 	/**
@@ -1028,6 +1083,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @return JSONResponse A JSON response containing the list of objects
 	 *
+	 * @spec openspec/changes/search/tasks.md#task-2.3
 	 * @spec openspec/specs/publications/spec.md
 	 */
 	public function index(null|string|int $catalogId = null, ?array $customParams = null): JSONResponse {
@@ -1202,9 +1258,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Download all files of an object as a ZIP archive
 	 *
-	 * This method creates a ZIP file containing all files associated with a specific object
-	 * and returns it as a downloadable file. The ZIP file includes all files stored in the
-	 * object's folder with their original names.
+	 * This method creates a ZIP file containing the files of a specific object and returns
+	 * it as a downloadable file. A signed-in caller gets every file OpenRegister admits them
+	 * to; an anonymous caller gets the shared files only.
 	 *
 	 * @param string $id The identifier of the object to download files for
 	 *
@@ -1243,9 +1299,14 @@ class PublicationService implements PublicationServiceInterface {
 				return new JSONResponse(['error' => 'Not Found'], 404);
 			}
 
+			$sharedNames = $this->sharedFileNamesForAnonymousCaller(id: $id);
+
 			// Create the ZIP archive.
 			$fileService = $this->getFileService();
 			$zipInfo = $fileService->createObjectFilesZip($id);
+			if ($sharedNames !== null) {
+				$this->removeZipEntriesNotIn(zipPath: $zipInfo['path'], keepNames: $sharedNames);
+			}
 
 			// Render the publication metadata PDF and pipe it into the ZIP alongside the
 			// attachments streamed from OR's file service (DWN-OR-001 / DWN-OR-003).
@@ -1325,8 +1386,9 @@ class PublicationService implements PublicationServiceInterface {
 	 * @spec openspec/specs/download-service/spec.md
 	 */
 	private function addFileToZip(string $zipPath, string $entryName, string $content): void {
+		// CREATE: an archive whose every entry was removed no longer exists on disk.
 		$zip = new ZipArchive();
-		if ($zip->open($zipPath) !== true) {
+		if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
 			throw new Exception('Failed to open ZIP archive to add the publication metadata PDF');
 		}
 
@@ -1338,6 +1400,82 @@ class PublicationService implements PublicationServiceInterface {
 		$zip->close();
 
 	}//end addFileToZip()
+
+	/**
+	 * Names of the shared files of an object when the caller is anonymous.
+	 *
+	 * Anonymous callers may only receive shared files, as in attachments() and
+	 * OpenRegister's own file listing. Signed-in callers get null: their archive keeps
+	 * every file OpenRegister admits them to.
+	 *
+	 * @param string $id The object identifier.
+	 *
+	 * @return list<string>|null File names to keep, or null when nothing is filtered.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function sharedFileNamesForAnonymousCaller(string $id): ?array {
+		if ($this->isAnonymousCaller() === false) {
+			return null;
+		}
+
+		$sharedFiles = $this->getFileService()->getFiles(object: $id, sharedFilesOnly: true);
+
+		return array_values(array_map(static fn ($file): string => $file->getName(), $sharedFiles));
+
+	}//end sharedFileNamesForAnonymousCaller()
+
+	/**
+	 * Remove every entry from a ZIP archive whose file name is not in the keep list.
+	 *
+	 * Entries are matched on their base name, so files placed in a sub folder of the
+	 * archive are matched as well.
+	 *
+	 * @param string       $zipPath   Absolute path of the ZIP archive.
+	 * @param list<string> $keepNames File names that may stay in the archive.
+	 *
+	 * @return void
+	 *
+	 * @throws Exception When the archive cannot be opened or an entry cannot be removed.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function removeZipEntriesNotIn(string $zipPath, array $keepNames): void {
+		$zip = new ZipArchive();
+		if ($zip->open($zipPath) !== true) {
+			throw new Exception('Failed to open ZIP archive to remove unshared files');
+		}
+
+		$removeNames = [];
+		for ($index = 0; $index < $zip->numFiles; $index++) {
+			$entryName = (string) $zip->getNameIndex($index);
+			if (in_array(basename($entryName), $keepNames, true) === false) {
+				$removeNames[] = $entryName;
+			}
+		}
+
+		foreach ($removeNames as $entryName) {
+			if ($zip->deleteName($entryName) === false) {
+				$zip->close();
+				throw new Exception('Failed to remove an unshared file from the ZIP archive');
+			}
+		}
+
+		$zip->close();
+
+	}//end removeZipEntriesNotIn()
+
+	/**
+	 * Whether the current request has no signed-in user.
+	 *
+	 * @return bool True for an anonymous caller.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function isAnonymousCaller(): bool {
+		return $this->userSession === null || $this->userSession->getUser() === null;
+
+	}//end isAnonymousCaller()
 
 	/**
 	 * Filter out unwanted properties from objects
@@ -1364,7 +1502,7 @@ class PublicationService implements PublicationServiceInterface {
 		// Single source of truth for the anonymous strip list (authenticated-read-parity,
 		// CAT-AUTH-001) — see CatalogiService::UNWANTED_SELF_PROPERTIES.
 		$unwantedProperties = CatalogiService::UNWANTED_SELF_PROPERTIES;
-		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+		$isAnonymous = $this->isAnonymousCaller();
 
 		// Filter each object.
 		return array_map(
@@ -1565,6 +1703,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @spec openspec/changes/search/tasks.md#task-2.4
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array {
@@ -1593,9 +1732,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Resolve the clamped pagination and the switches of a listing request.
 	 *
-	 * @param array  $queryParams   The request query.
-	 * @param array  $requestParams The original request parameters, for the pagination links.
-	 * @param string $baseUrl       The base URL of the pagination links.
+	 * @param array $queryParams The request query.
+	 * @param array $requestParams The original request parameters, for the pagination links.
+	 * @param string $baseUrl The base URL of the pagination links.
 	 *
 	 * @return array Limit, page, offset, the listing switches, requestParams and baseUrl.
 	 *
@@ -1617,7 +1756,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * The local page of an aggregated listing, its results stamped as local.
 	 *
 	 * @param array $localData The decoded local index response.
-	 * @param array $context   Pagination, listing switches, request params and base URL.
+	 * @param array $context Pagination, listing switches, request params and base URL.
 	 *
 	 * @return array The listing response.
 	 *
@@ -1661,7 +1800,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * Write the resolved pagination back into the query as `_limit`, `_page` and `_offset`.
 	 *
 	 * @param array $queryParams The request query.
-	 * @param array $pagination  The resolved limit, page and offset.
+	 * @param array $pagination The resolved limit, page and offset.
 	 *
 	 * @return array The query with its pagination keys set.
 	 *
@@ -1705,7 +1844,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * Decide the ultra-fast path: on when nothing needs local enrichment, unless `_ultra_fast` says otherwise.
 	 *
 	 * @param array $queryParams The request query.
-	 * @param array $options     The other listing switches.
+	 * @param array $options The other listing switches.
 	 *
 	 * @return bool
 	 *
@@ -1746,7 +1885,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * Serve a listing from local publications only, on the ultra-fast or the fast path.
 	 *
 	 * @param array $queryParams The paginated request query.
-	 * @param array $context     Pagination, listing switches, request params and base URL.
+	 * @param array $context Pagination, listing switches, request params and base URL.
 	 *
 	 * @return array The listing response.
 	 *
@@ -1785,9 +1924,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Stamp local results with their origin: `@self.directory = local` and the local catalogs.
 	 *
-	 * @param array $results       The local results.
-	 * @param bool  $markDirectory Whether to set `@self.directory`.
-	 * @param bool  $withCatalogs  Whether to set `@self.catalogs` (only when there are local catalogs).
+	 * @param array $results The local results.
+	 * @param bool $markDirectory Whether to set `@self.directory`.
+	 * @param bool $withCatalogs Whether to set `@self.catalogs` (only when there are local catalogs).
 	 *
 	 * @return array The stamped results.
 	 *
@@ -1827,10 +1966,10 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Build the paginated envelope of a listing: results, totals and next/prev links.
 	 *
-	 * @param array     $results The results of this page.
-	 * @param int|float $total   The total number of results.
-	 * @param int       $offset  The offset reported for this page.
-	 * @param array     $context Holds limit, page, requestParams and baseUrl.
+	 * @param array $results The results of this page.
+	 * @param int|float $total The total number of results.
+	 * @param int $offset The offset reported for this page.
+	 * @param array $context Holds limit, page, requestParams and baseUrl.
 	 *
 	 * @return array The envelope.
 	 *
@@ -1909,9 +2048,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Set the response facets, adding the virtual directory and catalog facets when requested.
 	 *
-	 * @param array      $responseData The response.
-	 * @param mixed|null $facets       The facets to set, or null when the sources had none.
-	 * @param array      $context      Holds reqDirFacets and reqCatFacets.
+	 * @param array $responseData The response.
+	 * @param mixed|null $facets The facets to set, or null when the sources had none.
+	 * @param array $context Holds reqDirFacets and reqCatFacets.
 	 *
 	 * @return array The response.
 	 *
@@ -1940,8 +2079,8 @@ class PublicationService implements PublicationServiceInterface {
 	 * Set the merged facetable metadata of a local and a federated source.
 	 *
 	 * @param array $responseData The response.
-	 * @param array $sources      The local and the federated search response, in that order.
-	 * @param bool  $include      Whether facetable metadata was requested.
+	 * @param array $sources The local and the federated search response, in that order.
+	 * @param bool $include Whether facetable metadata was requested.
 	 *
 	 * @return array The response.
 	 *
@@ -1969,9 +2108,9 @@ class PublicationService implements PublicationServiceInterface {
 	 * de-duplicated and re-ordered, and then the requested page is sliced out. Asking
 	 * each source for the same page would give totals and pages that do not add up.
 	 *
-	 * @param array     $queryParams The paginated request query.
-	 * @param int|float $localTotal  The local total from the first local query.
-	 * @param array     $context     Pagination, listing switches, request params and base URL.
+	 * @param array $queryParams The paginated request query.
+	 * @param int|float $localTotal The local total from the first local query.
+	 * @param array $context Pagination, listing switches, request params and base URL.
 	 *
 	 * @return array The listing response.
 	 *
@@ -2015,7 +2154,7 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * The merged facets of the local and the federated source, or null when neither has facets.
 	 *
-	 * @param array $localData        The local search response.
+	 * @param array $localData The local search response.
 	 * @param array $federationResult The federated search response.
 	 *
 	 * @return mixed
@@ -2112,7 +2251,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * The `_performance` block of an aggregated listing.
 	 *
 	 * @param float $startTime The request start time.
-	 * @param bool  $federated Whether the federated sources answered.
+	 * @param bool $federated Whether the federated sources answered.
 	 *
 	 * @return array
 	 *
@@ -2142,7 +2281,7 @@ class PublicationService implements PublicationServiceInterface {
 	 * hands over to the ultra-fast path.
 	 *
 	 * @param array $queryParams The paginated request query.
-	 * @param array $context     Listing switches, request params and base URL.
+	 * @param array $context Listing switches, request params and base URL.
 	 *
 	 * @return array Response data containing publications, pagination info, and optionally facets
 	 *
@@ -2186,9 +2325,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * The fast-path listing envelope of a local index response.
 	 *
-	 * @param array $localData   The decoded local index response.
+	 * @param array $localData The decoded local index response.
 	 * @param array $queryParams The paginated request query.
-	 * @param array $context     Listing switches, request params and base URL.
+	 * @param array $context Listing switches, request params and base URL.
 	 *
 	 * @return array
 	 *
@@ -2236,10 +2375,10 @@ class PublicationService implements PublicationServiceInterface {
 	 * This method bypasses ALL middleware overhead and calls ObjectService directly.
 	 * Use when no catalog info, facets, or additional processing is needed.
 	 *
-	 * @param array  $queryParams   Query parameters
-	 * @param array  $requestParams Original request parameters for pagination links
-	 * @param string $baseUrl       Base URL for building pagination links
-	 * @param float  $startTime     Start time for performance monitoring
+	 * @param array $queryParams Query parameters
+	 * @param array $requestParams Original request parameters for pagination links
+	 * @param string $baseUrl Base URL for building pagination links
+	 * @param float $startTime Start time for performance monitoring
 	 *
 	 * @return array Minimal response with publications and pagination
 	 *
@@ -2335,7 +2474,7 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Search the catalog union directly on ObjectService, bypassing searchPublications().
 	 *
-	 * @param array $queryParams    The request query.
+	 * @param array $queryParams The request query.
 	 * @param array $catalogContext The guarded catalog register/schema union.
 	 *
 	 * @return array The ObjectService result.
@@ -2394,7 +2533,7 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Build the ultra-fast listing envelope from an ObjectService result.
 	 *
-	 * @param array $result      The ObjectService result.
+	 * @param array $result The ObjectService result.
 	 * @param array $queryParams The request query.
 	 * @param array $pageContext Pagination, request params and base URL.
 	 *
@@ -2430,8 +2569,8 @@ class PublicationService implements PublicationServiceInterface {
 	 * The `_performance` block of the ultra-fast path.
 	 *
 	 * @param array $queryParams The request query.
-	 * @param float $startTime   The request start time.
-	 * @param array $timings     The measured phase timings.
+	 * @param float $startTime The request start time.
+	 * @param array $timings The measured phase timings.
 	 *
 	 * @return array
 	 *
@@ -2469,63 +2608,24 @@ class PublicationService implements PublicationServiceInterface {
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	private function getLocalCatalogs(): array {
-		// Return cached result if available.
 		if ($this->cachedLocalCatalogs !== null) {
 			return $this->cachedLocalCatalogs;
 		}
 
 		try {
-			// Get catalog configuration from settings.
-			$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
-			$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
-
-			if (empty($catalogSchema) === true || empty($catalogRegister) === true) {
+			$query = $this->localCatalogQuery();
+			if ($query === null) {
 				return [];
 			}
 
-			// Setup query for finding catalogs.
-			$query = [
-				'@self' => [
-					'schema' => $catalogSchema,
-					'register' => $catalogRegister,
-				],
-			];
-
-			// Get all catalogs using ObjectService.
-			$objectService = $this->getObjectService();
-			$catalogs = $objectService->searchObjects($query);
-
-			// Convert catalog objects to arrays and filter for public use.
 			$catalogArray = [];
-			foreach ($catalogs as $catalog) {
-				$catalogData = $catalog;
-				if ($catalog instanceof \OCP\AppFramework\Db\Entity) {
-					$catalogData = $catalog->jsonSerialize();
-				}
-
-				// Extract the relevant catalog information. `slug` is
-				// authoritative for URL routing on both sides of the federation
-				// (see FederationSearch.onResultClick: `#/publications/<slug>/<id>`)
-				// — omitting it breaks click-through on any peer consuming this
-				// response because the client falls back to the peer app-root
-				// rather than the specific publication detail page (WOO-522).
-				$catalogInfo = [
-					'id' => ($catalogData['id'] ?? ''),
-					'slug' => ($catalogData['slug'] ?? $catalogData['@self']['slug'] ?? ''),
-					'title' => ($catalogData['title'] ?? 'Local Catalog'),
-					'summary' => ($catalogData['summary'] ?? 'Local catalog instance'),
-					'description' => $catalogData['description'] ?? null,
-					'organization' => $catalogData['organization'] ?? null,
-					'listed' => $catalogData['listed'] ?? false,
-				];
-
-				// Only include non-empty catalog info.
+			foreach ($this->getObjectService()->searchObjects($query) as $catalog) {
+				$catalogInfo = $this->localCatalogInfo(catalog: $catalog);
 				if (empty($catalogInfo['id']) === false) {
 					$catalogArray[] = $catalogInfo;
 				}
-			}//end foreach
+			}
 
-			// Cache the result before returning.
 			$this->cachedLocalCatalogs = $catalogArray;
 			return $catalogArray;
 		} catch (\Exception $e) {
@@ -2535,6 +2635,54 @@ class PublicationService implements PublicationServiceInterface {
 		}//end try
 
 	}//end getLocalCatalogs()
+
+	/**
+	 * The search query for this instance's catalogs.
+	 *
+	 * @return array|null The query, or null when the catalog schema or register is not configured.
+	 */
+	private function localCatalogQuery(): ?array {
+		$catalogSchema = $this->config->getValueString($this->appName, 'catalog_schema', '');
+		$catalogRegister = $this->config->getValueString($this->appName, 'catalog_register', '');
+		if (empty($catalogSchema) === true || empty($catalogRegister) === true) {
+			return null;
+		}
+
+		return [
+			'@self' => [
+				'schema' => $catalogSchema,
+				'register' => $catalogRegister,
+			],
+		];
+	}//end localCatalogQuery()
+
+	/**
+	 * The public summary of one local catalog.
+	 *
+	 * `slug` is authoritative for URL routing on both sides of the federation
+	 * (see FederationSearch.onResultClick: `#/publications/<slug>/<id>`); a peer
+	 * without it falls back to the app root instead of the publication (WOO-522).
+	 *
+	 * @param mixed $catalog The catalog entity or its data.
+	 *
+	 * @return array The catalog's id, slug, title, summary, description, organization and listed flag.
+	 */
+	private function localCatalogInfo(mixed $catalog): array {
+		$catalogData = $catalog;
+		if ($catalog instanceof \OCP\AppFramework\Db\Entity) {
+			$catalogData = $catalog->jsonSerialize();
+		}
+
+		return [
+			'id' => ($catalogData['id'] ?? ''),
+			'slug' => ($catalogData['slug'] ?? $catalogData['@self']['slug'] ?? ''),
+			'title' => ($catalogData['title'] ?? 'Local Catalog'),
+			'summary' => ($catalogData['summary'] ?? 'Local catalog instance'),
+			'description' => $catalogData['description'] ?? null,
+			'organization' => $catalogData['organization'] ?? null,
+			'listed' => $catalogData['listed'] ?? false,
+		];
+	}//end localCatalogInfo()
 
 	/**
 	 * Simple merge function for facets data from multiple sources.
@@ -2778,6 +2926,57 @@ class PublicationService implements PublicationServiceInterface {
 	}//end getFederatedPublication()
 
 	/**
+	 * The attachments of a publication, local first and otherwise read from the
+	 * instance that holds it.
+	 *
+	 * A local publication answers with its own attachments, exactly as
+	 * attachments() does. When it is not held here and `_aggregate` is not
+	 * false, the instance that holds it is asked through
+	 * DirectoryService::getRemoteAttachments(); each attachment keeps that
+	 * instance's download URL. With `_aggregate=false` (a peer asking us) the
+	 * local answer stands, so a lookup never fans out twice.
+	 *
+	 * @param string $id The ID of the publication
+	 * @param array $queryParams Query parameters including aggregation settings
+	 *
+	 * @return JSONResponse The attachments, or a 404 when no reachable source holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getFederatedAttachments(string $id, array $queryParams = []): JSONResponse {
+		$local = $this->attachments(id: $id);
+		if ($local->getStatus() !== 404) {
+			return $local;
+		}
+
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		if ($aggregate === 'false' || $aggregate === '0') {
+			return $local;
+		}
+
+		try {
+			$remote = $this->directoryService->getRemoteAttachments($id, $this->federationRequestConfig(queryParams: $queryParams));
+		} catch (\Exception $e) {
+			$remote = null;
+		}
+
+		if ($remote === null) {
+			return new JSONResponse(['error' => 'Not Found: no reachable source holds this publication'], 404);
+		}
+
+		$total = count($remote['results']);
+		return new JSONResponse(
+			[
+				'results' => $remote['results'],
+				'total' => $total,
+				'page' => 1,
+				'pages' => 1,
+				'sources' => $remote['source'],
+			]
+		);
+	}//end getFederatedAttachments()
+
+	/**
 	 * Add this instance's catalogs to the `@self.catalogs` of a local publication.
 	 *
 	 * @param array $publication The local publication.
@@ -2886,78 +3085,53 @@ class PublicationService implements PublicationServiceInterface {
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getFederatedUsed(string $id, array $queryParams = []): array {
-		// Check if aggregation is enabled (default: true, unless explicitly set to false).
-		$aggregate = ($queryParams['_aggregate'] ?? 'true');
-		$shouldAggregate = $aggregate !== 'false' && $aggregate !== '0';
-
-		// Get local results first.
-		$localResponse = $this->used(id: $id);
-		$localData = json_decode($localResponse->render(), true);
-
-		// If aggregation is disabled, return only local results.
-		if ($shouldAggregate === false) {
-			return [
-				'success' => true,
-				'data' => $localData,
-				'status' => 200,
-			];
+		$localData = json_decode($this->used(id: $id)->render(), true);
+		if ($this->aggregationRequested(queryParams: $queryParams) === false) {
+			return $this->successResult(data: $localData);
 		}
 
 		try {
-			// Get optional Guzzle configuration from query parameters.
-			$guzzleConfig = [];
-
-			// Allow timeout configuration via query parameter.
-			if (isset($queryParams['timeout']) === true) {
-				$timeout = (int)$queryParams['timeout'];
-				if ($timeout > 0 && $timeout <= 120) {
-					// Max 2 minutes.
-					$guzzleConfig['timeout'] = $timeout;
-				}
-			}
-
-			// Allow connect timeout configuration via query parameter.
-			if (isset($queryParams['connect_timeout']) === true) {
-				$connectTimeout = (int)$queryParams['connect_timeout'];
-				if ($connectTimeout > 0 && $connectTimeout <= 30) {
-					// Max 30 seconds.
-					$guzzleConfig['connect_timeout'] = $connectTimeout;
-				}
-			}
-
-			// Pass through current query parameters (DirectoryService will handle _aggregate and _extend).
-			$guzzleConfig['query_params'] = $queryParams;
-
-			// Get federated results from directory service.
-			$federatedResults = $this->directoryService->getUsed($id, $guzzleConfig);
-
-			// Merge local and federated results.
-			$mergedResults = [
-				'results' => array_merge(
-					($localData['results'] ?? []),
-					($federatedResults['results'] ?? [])
-				),
-				'sources' => array_merge(
-					['local' => 'Local OpenCatalogi instance'],
-					($federatedResults['sources'] ?? [])
-				),
-			];
-
-			return [
-				'success' => true,
-				'data' => $mergedResults,
-				'status' => 200,
-			];
+			$federatedResults = $this->directoryService->getUsed($id, $this->federationRequestConfig(queryParams: $queryParams));
 		} catch (\Exception $e) {
 			// If federation fails, return local results.
-			return [
-				'success' => true,
-				'data' => $localData,
-				'status' => 200,
-			];
-		}//end try
+			return $this->successResult(data: $localData);
+		}
+
+		return $this->successResult(
+			data: [
+				'results' => array_merge(($localData['results'] ?? []), ($federatedResults['results'] ?? [])),
+				'sources' => array_merge(['local' => 'Local OpenCatalogi instance'], ($federatedResults['sources'] ?? [])),
+			]
+		);
 
 	}//end getFederatedUsed()
+
+	/**
+	 * Whether the query asks for federated results: `_aggregate` is on unless it is `false` or `0`.
+	 *
+	 * @param array $queryParams The caller's query parameters.
+	 *
+	 * @return bool True when peers should be asked too.
+	 */
+	private function aggregationRequested(array $queryParams): bool {
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		return $aggregate !== 'false' && $aggregate !== '0';
+	}//end aggregationRequested()
+
+	/**
+	 * The successful result shape of a federated lookup.
+	 *
+	 * @param mixed $data The response data.
+	 *
+	 * @return array The result with status 200.
+	 */
+	private function successResult(mixed $data): array {
+		return [
+			'success' => true,
+			'data' => $data,
+			'status' => 200,
+		];
+	}//end successResult()
 
 	/**
 	 * Get publications that this publication uses with federation support

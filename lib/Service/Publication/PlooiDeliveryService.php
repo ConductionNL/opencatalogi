@@ -115,7 +115,6 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		);
 
 		return $fields;
-
 	}//end deliver()
 
 	/**
@@ -161,7 +160,6 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		return false;
-
 	}//end isInPlooiCatalogue()
 
 	/**
@@ -188,7 +186,6 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		);
 
 		return ($result['results'] ?? []);
-
 	}//end plooiCatalogues()
 
 	/**
@@ -212,6 +209,5 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		$registers = array_map('strval', (array)($catalog['registers'] ?? []));
 		$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
 		return in_array($register, $registers, true) === true && in_array($schema, $schemas, true) === true;
-
 	}//end covers()
 }//end class

@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { objectStore } from '../../store/store.js'
@@ -29,7 +33,7 @@ import { NcEmptyContent } from '@nextcloud/vue'
 import FileOutline from 'vue-material-design-icons/FileOutline.vue'
 // Icons
 import FolderIcon from 'vue-material-design-icons/Folder.vue'
-import { LIST_COLUMNS } from './widgetTable.js'
+import { LIST_WIDGET_OPTIONS } from './widgetTable.js'
 
 // The row's leading icon renders through CnDataTable's shared CnIcon
 // registry; MDI icons use currentColor, so light/dark theming is automatic
@@ -52,19 +56,7 @@ export default {
 		NcEmptyContent,
 	},
 
-	props: {
-		title: {
-			type: String,
-			required: true,
-		},
-	},
-
-	data() {
-		return {
-			loading: false,
-			columns: LIST_COLUMNS,
-		}
-	},
+	...LIST_WIDGET_OPTIONS,
 
 	computed: {
 		/** @spec openspec/changes/retrofit-2026-05-26-dashboard-widgets/tasks.md#task-3 */
@@ -78,10 +70,6 @@ export default {
 					subText: attachment.summary,
 				}))
 		},
-	},
-
-	mounted() {
-		this.fetchData()
 	},
 
 	methods: {

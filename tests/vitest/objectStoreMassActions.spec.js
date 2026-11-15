@@ -64,47 +64,63 @@ describe('object store mass actions', () => {
 		consoleError.mockRestore()
 	})
 
-	it.each(cases)('%s reports each object, records failures and trims the selection', async (mass, single, verb) => {
-		const act = failingOnC()
-		store[single] = act
-		const onProgress = vi.fn()
-		const a = { id: 'a' }
-		const b = { '@self': { id: 'b' } }
-		const c = { id: 'c' }
+	it.each(cases)(
+		'%s reports each object, records failures and trims the selection',
+		async (mass, single, verb) => {
+			const act = failingOnC()
+			store[single] = act
+			const onProgress = vi.fn()
+			const a = { id: 'a' }
+			const b = { '@self': { id: 'b' } }
+			const c = { id: 'c' }
 
-		const result = await store[mass]([a, b, c], onProgress)
+			const result = await store[mass]([a, b, c], onProgress)
 
-		expect(result).toEqual({
-			successful: [
-				{ success: true, id: 'a', object: a },
-				{ success: true, id: 'b', object: b },
-			],
-			failed: [{ success: false, id: 'c', object: c, error: 'nope' }],
-		})
-		expect(act).toHaveBeenCalledTimes(3)
-		expect(act.mock.calls[0][0]).toBe(a)
-		expect(onProgress.mock.calls).toEqual([
-			[a, true],
-			[b, true],
-			[c, false, 'nope'],
-		])
-		expect(store.objectErrors).toEqual({ c: 'nope' })
-		expect(store.selectedObjects).toEqual(['c', 'x'])
-		expect(consoleError).toHaveBeenCalledWith(`Failed to ${verb} object c:`, expect.any(Error))
-	})
+			expect(result).toEqual({
+				successful: [
+					{ success: true, id: 'a', object: a },
+					{ success: true, id: 'b', object: b },
+				],
+				failed: [{ success: false, id: 'c', object: c, error: 'nope' }],
+			})
+			expect(act).toHaveBeenCalledTimes(3)
+			expect(act.mock.calls[0][0]).toBe(a)
+			expect(onProgress.mock.calls).toEqual([
+				[a, true],
+				[b, true],
+				[c, false, 'nope'],
+			])
+			expect(store.objectErrors).toEqual({ c: 'nope' })
+			expect(store.selectedObjects).toEqual(['c', 'x'])
+			expect(consoleError).toHaveBeenCalledWith(
+				`Failed to ${verb} object c:`,
+				expect.any(Error),
+			)
+		},
+	)
 
-	it.each(cases)('%s keeps the selection when nothing succeeds and names an unknown error', async (mass, single) => {
-		store[single] = vi.fn(async () => {
-			throw new Error('')
-		})
+	it.each(cases)(
+		'%s keeps the selection when nothing succeeds and names an unknown error',
+		async (mass, single) => {
+			store[single] = vi.fn(async () => {
+				throw new Error('')
+			})
 
-		const result = await store[mass]([{ id: 'a' }])
+			const result = await store[mass]([{ id: 'a' }])
 
-		expect(result.successful).toEqual([])
-		expect(result.failed).toEqual([{ success: false, id: 'a', object: { id: 'a' }, error: 'Unknown error' }])
-		expect(store.selectedObjects).toEqual(['a', 'b', 'c', 'x'])
-		expect(store.objectErrors).toEqual({ a: 'Unknown error' })
-	})
+			expect(result.successful).toEqual([])
+			expect(result.failed).toEqual([
+				{
+					success: false,
+					id: 'a',
+					object: { id: 'a' },
+					error: 'Unknown error',
+				},
+			])
+			expect(store.selectedObjects).toEqual(['a', 'b', 'c', 'x'])
+			expect(store.objectErrors).toEqual({ a: 'Unknown error' })
+		},
+	)
 
 	it('massDeleteObjects accepts bare ids', async () => {
 		store.deleteObject = vi.fn(async (obj) => {
@@ -136,38 +152,49 @@ describe('object store mass actions', () => {
 			[c, 'review', 60],
 		])
 		expect(result.successful).toEqual([{ success: true, id: 'a', object: a }])
-		expect(result.failed).toEqual([{ success: false, id: 'c', object: c, error: 'nope' }])
+		expect(result.failed).toEqual([
+			{ success: false, id: 'c', object: c, error: 'nope' },
+		])
 		expect(onProgress.mock.calls).toEqual([
 			[a, true],
 			[c, false, 'nope'],
 		])
-		expect(consoleError).toHaveBeenCalledWith('Failed to lock object c:', expect.any(Error))
+		expect(consoleError).toHaveBeenCalledWith(
+			'Failed to lock object c:',
+			expect.any(Error),
+		)
 	})
 
 	it.each([
 		['massPublishAttachments', 'publishAttachment'],
 		['massDepublishAttachments', 'depublishAttachment'],
-	])('%s reports each file and trims the attachment selection', async (mass, single) => {
-		store.selectedAttachments = [1, 2, 3]
-		store[single] = vi.fn(async (fileId) => {
-			if (fileId === 2) {
-				throw new Error('locked')
-			}
-		})
-		const onProgress = vi.fn()
+	])(
+		'%s reports each file and trims the attachment selection',
+		async (mass, single) => {
+			store.selectedAttachments = [1, 2, 3]
+			store[single] = vi.fn(async (fileId) => {
+				if (fileId === 2) {
+					throw new Error('locked')
+				}
+			})
+			const onProgress = vi.fn()
 
-		expect(await store[mass]([], onProgress)).toEqual({ successful: [], failed: [] })
-		const result = await store[mass]([1, 2], onProgress)
+			expect(await store[mass]([], onProgress)).toEqual({
+				successful: [],
+				failed: [],
+			})
+			const result = await store[mass]([1, 2], onProgress)
 
-		expect(result).toEqual({
-			successful: [{ success: true, id: 1 }],
-			failed: [{ success: false, id: 2, error: 'locked' }],
-		})
-		expect(onProgress.mock.calls).toEqual([
-			[1, true],
-			[2, false, 'locked'],
-		])
-		expect(store.selectedAttachments).toEqual([2, 3])
-		expect(store.objectErrors).toEqual({ stale: 'old' })
-	})
+			expect(result).toEqual({
+				successful: [{ success: true, id: 1 }],
+				failed: [{ success: false, id: 2, error: 'locked' }],
+			})
+			expect(onProgress.mock.calls).toEqual([
+				[1, true],
+				[2, false, 'locked'],
+			])
+			expect(store.selectedAttachments).toEqual([2, 3])
+			expect(store.objectErrors).toEqual({ stale: 'old' })
+		},
+	)
 })

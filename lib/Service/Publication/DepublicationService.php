@@ -82,60 +82,123 @@ class DepublicationService implements DepublicationServiceInterface {
 		array $channels,
 		?DateTimeInterface $now = null,
 	): array {
+		$this->requireReason(reason: $reason);
+
+		$run = new DepublicationRun();
+		$run->publicationId = (string)($publication['id'] ?? '');
+		$run->reason = $reason;
+		$run->depublishedBy = $depublishedBy;
+		$run->takenDownAt = $this->takenDownAt(now: $now);
+
+		return $this->depublication(run: $run, withdrawals: $this->withdrawals(run: $run, channels: $channels));
+
+	}//end depublish()
+
+	/**
+	 * Refuse a depublication without a reason.
+	 *
+	 * @param string $reason Why it is coming down.
+	 *
+	 * @return void
+	 *
+	 * @throws DomainException When no reason is given.
+	 */
+	private function requireReason(string $reason): void {
 		if (trim($reason) === '') {
 			throw new DomainException(
 				message: 'A depublication records why. Taking something down without a reason leaves nobody able to answer for it.'
 			);
 		}
+	}//end requireReason()
 
+	/**
+	 * Withdraw the publication from each channel it reached, once each.
+	 *
+	 * @param DepublicationRun $run The depublication.
+	 * @param array<int, string> $channels The channels the publication reached.
+	 *
+	 * @return array<int, array<string, mixed>> The withdrawals.
+	 */
+	private function withdrawals(DepublicationRun $run, array $channels): array {
+		$withdrawals = [];
+		foreach (array_values(array_unique(array_map('strval', $channels))) as $channel) {
+			$withdrawals[] = $this->withdrawal(run: $run, channel: $channel);
+		}
+
+		return $withdrawals;
+	}//end withdrawals()
+
+	/**
+	 * The depublication to save.
+	 *
+	 * @param DepublicationRun $run The depublication.
+	 * @param array<int, array<string, mixed>> $withdrawals Its withdrawals.
+	 *
+	 * @return array<string, mixed> The depublication.
+	 */
+	private function depublication(DepublicationRun $run, array $withdrawals): array {
+		return [
+			'publication' => $run->publicationId,
+			'reason' => $run->reason,
+			'depublishedBy' => $run->depublishedBy,
+			'depublishedAt' => $run->takenDownAt,
+			'withdrawals' => $withdrawals,
+		];
+	}//end depublication()
+
+	/**
+	 * The moment of the depublication, ISO 8601: the given one, or now in UTC.
+	 *
+	 * @param DateTimeInterface|null $now The moment.
+	 *
+	 * @return string The moment.
+	 */
+	private function takenDownAt(?DateTimeInterface $now): string {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($now !== null) {
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
-		$takenDownAt = $moment->format(DateTimeInterface::ATOM);
 
-		$publicationId = (string)($publication['id'] ?? '');
-		$withdrawals = [];
+		return $moment->format(DateTimeInterface::ATOM);
+	}//end takenDownAt()
 
-		foreach (array_values(array_unique(array_map('strval', $channels))) as $channel) {
-			$withdrawal = [
-				'channel' => $channel,
-				'sentAt' => $takenDownAt,
-				'acknowledgedAt' => null,
-				'answer' => null,
-			];
-
-			try {
-				$answer = $this->indexService->withdraw(
-					channel: $channel,
-					publicationId: $publicationId,
-					reason: $reason
-				);
-				$withdrawal['acknowledgedAt'] = ($answer['acknowledgedAt'] ?? null);
-				$withdrawal['answer'] = ($answer['answer'] ?? null);
-			} catch (IndexUnreachableException $e) {
-				// Not acknowledged, and said so. The one thing this must never
-				// do is record an unreached channel as done, because the
-				// operator would then believe the document is gone from a
-				// harvester that still holds it.
-				$this->logger->warning(
-					'[DepublicationService] The withdrawal to "' . $channel . '" was not delivered: ' . $e->getMessage()
-				);
-				$withdrawal['answer'] = 'not delivered: ' . $e->getMessage();
-			}
-
-			$withdrawals[] = $withdrawal;
-		}
-
-		return [
-			'publication' => $publicationId,
-			'reason' => $reason,
-			'depublishedBy' => $depublishedBy,
-			'depublishedAt' => $takenDownAt,
-			'withdrawals' => $withdrawals,
+	/**
+	 * Withdraw the publication from one channel, and record what it answered.
+	 *
+	 * @param DepublicationRun $run The depublication.
+	 * @param string $channel The channel.
+	 *
+	 * @return array{channel: string, sentAt: string, acknowledgedAt: mixed, answer: mixed} The withdrawal.
+	 */
+	private function withdrawal(DepublicationRun $run, string $channel): array {
+		$withdrawal = [
+			'channel' => $channel,
+			'sentAt' => $run->takenDownAt,
+			'acknowledgedAt' => null,
+			'answer' => null,
 		];
 
-	}//end depublish()
+		try {
+			$answer = $this->indexService->withdraw(
+				channel: $channel,
+				publicationId: $run->publicationId,
+				reason: $run->reason
+			);
+			$withdrawal['acknowledgedAt'] = ($answer['acknowledgedAt'] ?? null);
+			$withdrawal['answer'] = ($answer['answer'] ?? null);
+		} catch (IndexUnreachableException $e) {
+			// Not acknowledged, and said so. The one thing this must never
+			// do is record an unreached channel as done, because the
+			// operator would then believe the document is gone from a
+			// harvester that still holds it.
+			$this->logger->warning(
+				'[DepublicationService] The withdrawal to "' . $channel . '" was not delivered: ' . $e->getMessage()
+			);
+			$withdrawal['answer'] = 'not delivered: ' . $e->getMessage();
+		}
+
+		return $withdrawal;
+	}//end withdrawal()
 
 	/**
 	 * The channels whose withdrawal is still outstanding.
@@ -159,7 +222,6 @@ class DepublicationService implements DepublicationServiceInterface {
 		}
 
 		return array_values(array_filter($outstanding, static fn (string $channel): bool => $channel !== ''));
-
 	}//end outstandingChannels()
 
 	/**
@@ -173,7 +235,6 @@ class DepublicationService implements DepublicationServiceInterface {
 	 */
 	public function isComplete(array $depublication): bool {
 		return ($this->outstandingChannels(depublication: $depublication) === []);
-
 	}//end isComplete()
 
 	/**
@@ -210,6 +271,5 @@ class DepublicationService implements DepublicationServiceInterface {
 		}
 
 		return $depublication;
-
 	}//end recordAcknowledgement()
 }//end class

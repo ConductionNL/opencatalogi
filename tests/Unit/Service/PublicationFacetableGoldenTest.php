@@ -58,7 +58,7 @@ class PublicationFacetableGoldenTest extends TestCase {
 	/**
 	 * Merge the world's blocks and compare with the recording.
 	 *
-	 * @param array<string, mixed> $local     The local facetable block.
+	 * @param array<string, mixed> $local The local facetable block.
 	 * @param array<string, mixed> $federated The federated facetable block.
 	 *
 	 * @return void

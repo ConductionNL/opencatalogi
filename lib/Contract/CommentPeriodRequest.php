@@ -63,6 +63,5 @@ final class CommentPeriodRequest {
 	 */
 	public function publicationId(): string {
 		return trim((string)($this->publication['id'] ?? ''));
-
 	}//end publicationId()
 }//end class

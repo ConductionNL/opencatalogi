@@ -51,7 +51,6 @@ trait AnswersCrossOriginRequests {
 	private function resolveAllowedOrigin(): string {
 		$allowlist = new CorsAllowlist($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
 		return $allowlist->allowedFor($this->request->getHeader('Origin'));
-
 	}//end resolveAllowedOrigin()
 
 	/**

@@ -44,9 +44,9 @@ interface SavedSearchMatcherInterface {
 	/**
 	 * Whether a saved search is due at this moment.
 	 *
-	 * @param string            $frequency immediate, daily or weekly.
+	 * @param string $frequency immediate, daily or weekly.
 	 * @param DateTimeImmutable $lastRunAt Its last run.
-	 * @param DateTimeImmutable $now       The moment of the run.
+	 * @param DateTimeImmutable $now The moment of the run.
 	 *
 	 * @return bool
 	 *

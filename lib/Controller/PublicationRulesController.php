@@ -3,6 +3,9 @@
 /**
  * OpenCatalogi Publication Rules Controller.
  *
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The admin side of active publication: the rules that decide what publishes
  * and what an anonymous reader may read of it, the preview that shows both
  * halves before a rule is saved, the walked process around a publication, and
@@ -30,9 +33,6 @@
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
- *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -44,8 +44,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
-use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -77,10 +75,7 @@ class PublicationRulesController extends Controller {
 	 * @param IAppConfig $config App configuration.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param PublicationRuleServiceInterface $ruleService The rule evaluator.
-	 * @param DecisionPublicationValidatorInterface $decisionValidator The decision type validation.
-	 *
-	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
+	 * @param PublicationRuleChecks $rules The rule evaluator and the decision type validation.
 	 */
 	public function __construct(
 		$appName,
@@ -88,8 +83,7 @@ class PublicationRulesController extends Controller {
 		private readonly IAppConfig $config,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly PublicationRuleServiceInterface $ruleService,
-		private readonly DecisionPublicationValidatorInterface $decisionValidator,
+		private readonly PublicationRuleChecks $rules,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -108,7 +102,6 @@ class PublicationRulesController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->readWritePreflight();
-
 	}//end preflightedCors()
 
 	/**
@@ -140,7 +133,7 @@ class PublicationRulesController extends Controller {
 		}
 
 		try {
-			$preview = $this->ruleService->preview(rule: $rule, sample: array_values(array_filter($sample, 'is_array')));
+			$preview = $this->rules->preview(rule: $rule, sample: $sample);
 		} catch (UnreadableRuleException $e) {
 			return new JSONResponse(
 				data: ['error' => 'unreadable-rule', 'message' => $e->getMessage()],
@@ -149,7 +142,6 @@ class PublicationRulesController extends Controller {
 		}
 
 		return new JSONResponse($preview);
-
 	}//end previewRule()
 
 	/**
@@ -185,7 +177,7 @@ class PublicationRulesController extends Controller {
 			);
 		}
 
-		$validation = $this->decisionValidator->validate(decision: $decision, decisionType: $decisionType);
+		$validation = $this->rules->validateDecision(decision: $decision, decisionType: $decisionType);
 
 		if ($validation['publishable'] === false) {
 			return new JSONResponse(
@@ -198,7 +190,6 @@ class PublicationRulesController extends Controller {
 		}
 
 		return new JSONResponse($validation);
-
 	}//end validateDecision()
 
 	/**
@@ -207,6 +198,10 @@ class PublicationRulesController extends Controller {
 	 * The search runs over the anonymous projections, never over the records,
 	 * so a word that occurs only in a withheld property cannot return the
 	 * record. Every result names the dossier the document belongs to.
+	 *
+	 * Without posted `records` the search reads the stored records of every
+	 * configured published collection, under that collection's conditions and
+	 * anonymous set. Posted records and rules are searched as before.
 	 *
 	 * @return JSONResponse The results.
 	 *
@@ -217,22 +212,16 @@ class PublicationRulesController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicSearch(): JSONResponse {
-		$records = $this->request->getParam('records', []);
+		$records = $this->request->getParam('records', null);
 		$rules = $this->request->getParam('rules', []);
 		$terms = (string)$this->request->getParam('q', '');
 
-		if (is_array($records) === false || is_array($rules) === false) {
+		if (is_array($records ?? []) === false || is_array($rules) === false) {
 			return new JSONResponse(data: ['error' => 'missing-parameters'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
-			$results = $this->ruleService->searchPublic(
-				records: array_values(array_filter($records, 'is_array')),
-				rulesByType: $this->ruleService->indexByRecordType(
-					rules: array_values(array_filter($rules, 'is_array'))
-				),
-				terms: $terms
-			);
+			$results = $this->rules->search(query: ['records' => $records, 'rules' => $rules, 'terms' => $terms]);
 		} catch (UnreadableRuleException $e) {
 			// A rule this app cannot evaluate refuses. Answering the empty set
 			// would read as "nothing published matches", which is a claim
@@ -247,6 +236,5 @@ class PublicationRulesController extends Controller {
 		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
 
 		return $response;
-
 	}//end publicSearch()
 }//end class

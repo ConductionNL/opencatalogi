@@ -52,7 +52,9 @@ class GoldenSearchEntity implements \JsonSerializable {
 	/**
 	 * @param array<string, mixed> $data The serialised row.
 	 */
-	public function __construct(private array $data) {
+	public function __construct(
+		private array $data,
+	) {
 	}
 
 	public function jsonSerialize(): array {
@@ -73,7 +75,9 @@ class GoldenSearchObjectService {
 	/**
 	 * @param array<string, mixed> $script Main result, refinements, slug scan, finds.
 	 */
-	public function __construct(private array $script) {
+	public function __construct(
+		private array $script,
+	) {
 	}
 
 	public function runAsAnonymous(callable $operation): mixed {
@@ -275,7 +279,7 @@ class PublicSearchGoldenTest extends TestCase {
 
 	/**
 	 * @param array<string, mixed> $params The request query.
-	 * @param array<string, mixed> $world  Catalogues and registers.
+	 * @param array<string, mixed> $world Catalogues and registers.
 	 * @param array<string, mixed> $script What the ObjectService double answers.
 	 */
 	#[DataProvider('scenarios')]
@@ -307,7 +311,9 @@ class PublicSearchGoldenTest extends TestCase {
 		$logger = new GoldenSearchLogger();
 
 		$catalogi = new class($world) {
-			public function __construct(private array $world) {
+			public function __construct(
+				private array $world,
+			) {
 			}
 
 			public function getCatalogBySlug(string $slug): ?array {
@@ -319,7 +325,9 @@ class PublicSearchGoldenTest extends TestCase {
 
 			public function getObjectService(): object {
 				return new class(array_values($this->world['catalogs'] ?? [])) {
-					public function __construct(private array $catalogs) {
+					public function __construct(
+						private array $catalogs,
+					) {
 					}
 
 					public function searchObjects(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
@@ -337,7 +345,9 @@ class PublicSearchGoldenTest extends TestCase {
 				throw new \RuntimeException("schema $id missing");
 			}
 			return new class(self::SCHEMAS[$id]) {
-				public function __construct(private array $schema) {
+				public function __construct(
+					private array $schema,
+				) {
 				}
 
 				public function getSlug(): string {
@@ -350,7 +360,9 @@ class PublicSearchGoldenTest extends TestCase {
 			};
 		};
 		$schemaMapper = new class($schemaFor) {
-			public function __construct(private \Closure $schemaFor) {
+			public function __construct(
+				private \Closure $schemaFor,
+			) {
 			}
 
 			public function find(int|string $id): object {
@@ -358,7 +370,9 @@ class PublicSearchGoldenTest extends TestCase {
 			}
 		};
 		$registerMapper = new class(is_array($world['registers'] ?? null) ? $world['registers'] : []) {
-			public function __construct(private array $registers) {
+			public function __construct(
+				private array $registers,
+			) {
 			}
 
 			public function find(int $id): object {
@@ -366,7 +380,9 @@ class PublicSearchGoldenTest extends TestCase {
 					throw new \RuntimeException("register $id missing");
 				}
 				return new class($this->registers[$id]) {
-					public function __construct(private array $schemas) {
+					public function __construct(
+						private array $schemas,
+					) {
 					}
 
 					public function getSchemas(): array {

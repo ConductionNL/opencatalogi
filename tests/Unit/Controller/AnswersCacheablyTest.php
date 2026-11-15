@@ -38,9 +38,9 @@ class CacheablyHost {
 	use AnswersCacheably;
 
 	/**
-	 * @param IRequest           $request   The request.
+	 * @param IRequest $request The request.
 	 * @param ContainerInterface $container The container the controllers resolve from.
-	 * @param string             $appName   The app name.
+	 * @param string $appName The app name.
 	 */
 	public function __construct(
 		public IRequest $request,
@@ -69,11 +69,11 @@ class AnswersCacheablyTest extends TestCase {
 	/**
 	 * Build a host for a caller.
 	 *
-	 * @param boolean     $signedIn     Whether the caller is signed in.
-	 * @param string      $ifNoneMatch  The If-None-Match header.
+	 * @param boolean $signedIn Whether the caller is signed in.
+	 * @param string $ifNoneMatch The If-None-Match header.
 	 * @param string|null $cacheSeconds The configured cache time, or null for the default.
-	 * @param boolean     $brokenConfig Whether the container cannot answer.
-	 * @param array       $headers      Further request headers, by lower-case name.
+	 * @param boolean $brokenConfig Whether the container cannot answer.
+	 * @param array $headers Further request headers, by lower-case name.
 	 *
 	 * @return CacheablyHost The host.
 	 */

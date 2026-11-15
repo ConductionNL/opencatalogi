@@ -36,6 +36,8 @@ use Psr\Log\LoggerInterface;
  * Golden test for RetentionService::getQueueSummary.
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionRun
+ * @uses \OCA\OpenCatalogi\Service\RetentionRules
  * @uses \OCA\OpenCatalogi\Service\RetentionQueue
  * @uses \OCA\OpenCatalogi\Service\RetentionPolicyTable
  */
@@ -138,18 +140,21 @@ class RetentionQueueSummaryGoldenTest extends TestCase {
 		};
 		$objectService = new class($world, $record) {
 			/**
-			 * @param array<string, mixed> $world  The world.
-			 * @param \Closure             $record Records a search.
+			 * @param array<string, mixed> $world The world.
+			 * @param \Closure $record Records a search.
 			 */
-			public function __construct(private array $world, private \Closure $record) {
+			public function __construct(
+				private array $world,
+				private \Closure $record,
+			) {
 			}
 
 			/**
 			 * Record the search and answer with the world's rows.
 			 *
-			 * @param array<string, mixed> $query         The query.
-			 * @param boolean              $_rbac         RBAC flag.
-			 * @param boolean              $_multitenancy Multitenancy flag.
+			 * @param array<string, mixed> $query The query.
+			 * @param boolean $_rbac RBAC flag.
+			 * @param boolean $_multitenancy Multitenancy flag.
 			 *
 			 * @return array<string, mixed>
 			 */
@@ -171,7 +176,9 @@ class RetentionQueueSummaryGoldenTest extends TestCase {
 						/**
 						 * @param array<string, mixed> $row The row.
 						 */
-						public function __construct(private array $row) {
+						public function __construct(
+							private array $row,
+						) {
 						}
 
 						/**
@@ -206,6 +213,5 @@ class RetentionQueueSummaryGoldenTest extends TestCase {
 		);
 
 		return new RetentionService($config, $container, $this->createMock(IUserSession::class), $logger);
-
 	}//end service()
 }//end class

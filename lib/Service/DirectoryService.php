@@ -43,6 +43,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Service\Connection\ConnectionReporter;
+use OCA\OpenCatalogi\Service\Federation\OutboundUrlGuard;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Db\MultipleObjectsReturnedException;
@@ -91,6 +92,13 @@ class DirectoryService implements DirectoryServiceInterface {
 	private readonly Client $client;
 
 	/**
+	 * Parses, resolves and classifies outbound URLs.
+	 *
+	 * @var OutboundUrlGuard|null
+	 */
+	private ?OutboundUrlGuard $urlGuard = null;
+
+	/**
 	 * Cached unique directory URLs for cross-directory checks.
 	 *
 	 * @var array<string>
@@ -108,6 +116,17 @@ class DirectoryService implements DirectoryServiceInterface {
 		'unchanged' => 'listings_unchanged',
 		'skipped_outdated' => 'listings_skipped',
 		'skipped_other_directory' => 'listings_skipped',
+	];
+
+	/**
+	 * The per-catalog harvest endpoints: the catalog flag that enables one, the
+	 * listing field that advertises it and its path under the catalog.
+	 *
+	 * @var array<string, array{0: string, 1: string}>
+	 */
+	private const HARVEST_ENDPOINTS = [
+		'hasDcat' => ['dcatEndpoint', 'dcat'],
+		'hasOoapi' => ['ooapiEndpoint', 'ooapi/v5'],
 	];
 
 	/**
@@ -216,49 +235,53 @@ class DirectoryService implements DirectoryServiceInterface {
 			$this->uniqueDirectories[] = $defaultDirectory;
 		}
 
-		$uniqueDirectoryUrls = $this->uniqueDirectories;
-
 		$results = [
-			'total_directories' => count($uniqueDirectoryUrls),
+			'total_directories' => count($this->uniqueDirectories),
 			'synced_directories' => 0,
 			'failed_directories' => 0,
 			'errors' => [],
 		];
 
-		// Create promises for async directory synchronization.
-		$syncPromises = [];
-		foreach ($uniqueDirectoryUrls as $directoryUrl) {
-			$syncPromises[] = new Promise(
-				function ($resolve) use ($directoryUrl) {
-					try {
-						$syncResult = $this->syncDirectory(directoryUrl: $directoryUrl);
-
-						// Directory sync completed successfully.
-						$resolve(
-							[
-								'success' => true,
-								'directory' => $directoryUrl,
-								'result' => $syncResult,
-							]
-						);
-					} catch (\Exception $e) {
-						// Removed redundant logging (error handled silently).
-						$resolve(
-							[
-								'success' => false,
-								'directory' => $directoryUrl,
-								'error' => $e->getMessage(),
-							]
-						);
-					}//end try
-				}
-			);
-		}//end foreach
-
 		// Execute all directory sync promises concurrently.
-		$syncResults = \React\Async\await(\React\Promise\all($syncPromises));
+		$syncPromises = array_map(
+			fn (string $directoryUrl): Promise => $this->directorySyncPromise(directoryUrl: $directoryUrl),
+			$this->uniqueDirectories
+		);
+		$results = $this->tallyDirectorySyncs(results: $results, syncResults: \React\Async\await(\React\Promise\all($syncPromises)));
 
-		// Process results.
+		$this->connectionReporter?->reportDirectorySync(results: $results);
+
+		return $results;
+	}//end doCronSync()
+
+	/**
+	 * A promise that syncs one directory and resolves to its outcome; a failure resolves too.
+	 *
+	 * @param string $directoryUrl The directory to sync.
+	 *
+	 * @return Promise Resolves to `success` and `directory`, plus `result` or `error`.
+	 */
+	private function directorySyncPromise(string $directoryUrl): Promise {
+		return new Promise(
+			function ($resolve) use ($directoryUrl) {
+				try {
+					$resolve(['success' => true, 'directory' => $directoryUrl, 'result' => $this->syncDirectory(directoryUrl: $directoryUrl)]);
+				} catch (\Exception $e) {
+					$resolve(['success' => false, 'directory' => $directoryUrl, 'error' => $e->getMessage()]);
+				}
+			}
+		);
+	}//end directorySyncPromise()
+
+	/**
+	 * Count the synced and failed directories, and collect the failures.
+	 *
+	 * @param array $results The cron sync results so far.
+	 * @param array $syncResults The outcome of each directory sync.
+	 *
+	 * @return array The results with the counts and errors added.
+	 */
+	private function tallyDirectorySyncs(array $results, array $syncResults): array {
 		foreach ($syncResults as $syncResult) {
 			if ($syncResult['success'] === true) {
 				$results['synced_directories']++;
@@ -272,10 +295,8 @@ class DirectoryService implements DirectoryServiceInterface {
 			];
 		}
 
-		$this->connectionReporter?->reportDirectorySync(results: $results);
-
 		return $results;
-	}//end doCronSync()
+	}//end tallyDirectorySyncs()
 
 	/**
 	 * Get unique directory URLs from stored listings
@@ -293,7 +314,6 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @psalm-suppress InvalidArgument
 	 *
 	 * @SuppressWarnings(PHPMD.BooleanArgumentFlag)
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
 	 *
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
@@ -312,66 +332,10 @@ class DirectoryService implements DirectoryServiceInterface {
 		// Get ObjectService from container..
 		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
 
-		// Get listing configuration.
-		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
-		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
-
-		// Removed redundant logging.
-		$uniqueDirectoryUrls = [];
-
-		// Get listings if configuration is available.
-		if (empty($listingSchema) === false && empty($listingRegister) === false) {
-			try {
-				$query = [
-					'@self' => [
-						'register' => $listingRegister,
-						'schema' => $listingSchema,
-					],
-				];
-
-				// Directory data is public by design — listings/catalogs have authorization.read=["public"].
-				// RBAC is disabled so public directory discovery works without user context (see ADR-002).
-				// Multitenancy is NOT bypassed: each tenant sees only its own listing objects.
-				// Cross-instance federation uses the explicit URL-based remote-fetch path instead.
-				$listings = $objectService->searchObjects($query, _rbac: false);
-
-				// Build unique directory URLs using URL as key to automatically handle duplicates.
-				foreach ($listings as $listing) {
-					$listingData = $listing->jsonSerialize();
-					$objectData = ($listingData['object'] ?? $listingData);
-
-					$available = ($objectData['integrationLevel'] ?? null) === 'search';
-					$default = $objectData['default'] ?? false;
-
-					// Removed redundant logging.
-					// Apply post-query filtering for nested object properties.
-					if ($availableOnly === true && $available === false) {
-						// Skip unavailable listings.
-						continue;
-					}
-
-					if ($defaultOnly === true && $default === false) {
-						// Skip non-default listings.
-						continue;
-					}
-
-					// Check for publications URL in the object data.
-					// This method historically returns publications URLs — every caller that
-					// fetches publications (PublicationService::getPublications, getUsed,
-					// getPublication, the aggregated federation search) treats each returned
-					// URL as a publications endpoint. The BFS sync flow uses the sibling
-					// method getKnownDirectoryUrls() below to walk `directory` URLs instead.
-					if (isset($objectData['publications']) === true && empty($objectData['publications']) === false) {
-						$uniqueDirectoryUrls[$objectData['publications']] = $objectData['publications'];
-					}
-				}//end foreach
-			} catch (\Exception $e) {
-				// Removed redundant logging.
-			}//end try
-		}//end if
-
-		// Return just the unique URLs as an indexed array.
-		$result = array_values($uniqueDirectoryUrls);
+		$result = $this->publicationsUrls(
+			objectService: $objectService,
+			flags: ['available' => $availableOnly, 'default' => $defaultOnly]
+		);
 
 		// Cache the result with current timestamp.
 		$this->cachedUniqueDirs = $result;
@@ -379,6 +343,82 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		return $result;
 	}//end getUniqueDirectories()
+
+	/**
+	 * The unique publications URLs of the stored listings that pass the filters.
+	 *
+	 * Every caller treats each returned URL as a publications endpoint;
+	 * getKnownDirectoryUrls() returns the peers' directory URLs instead.
+	 *
+	 * @param mixed $objectService The OpenRegister object service.
+	 * @param array{available: bool, default: bool} $flags Which filters apply.
+	 *
+	 * @return array<int, mixed> The URLs, in the order they were first found.
+	 */
+	private function publicationsUrls(mixed $objectService, array $flags): array {
+		$urls = [];
+		foreach ($this->storedListingObjects(objectService: $objectService) as $objectData) {
+			if ($this->isSelectedListing(objectData: $objectData, flags: $flags) === true
+				&& empty($objectData['publications']) === false
+			) {
+				$urls[$objectData['publications']] = $objectData['publications'];
+			}
+		}
+
+		return array_values($urls);
+	}//end publicationsUrls()
+
+	/**
+	 * The object data of every stored listing, for getUniqueDirectories().
+	 *
+	 * Directory data is public by design: listings and catalogs have
+	 * authorization.read=["public"]. RBAC is disabled so public directory
+	 * discovery works without user context (see ADR-002). Multitenancy is NOT
+	 * bypassed: each tenant sees only its own listing objects. Cross-instance
+	 * federation uses the explicit URL-based remote-fetch path instead.
+	 *
+	 * @param mixed $objectService The OpenRegister object service.
+	 *
+	 * @return array<int, mixed> The listings' object data; empty when the listing
+	 *                           register or schema is not configured. A failing
+	 *                           search or serialisation ends the list early.
+	 */
+	private function storedListingObjects(mixed $objectService): array {
+		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
+		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
+		if (empty($listingSchema) === true || empty($listingRegister) === true) {
+			return [];
+		}
+
+		$objects = [];
+		try {
+			$query = ['@self' => ['register' => $listingRegister, 'schema' => $listingSchema]];
+			foreach ($objectService->searchObjects($query, _rbac: false) as $listing) {
+				$listingData = $listing->jsonSerialize();
+				$objects[] = ($listingData['object'] ?? $listingData);
+			}
+		} catch (\Exception $e) {
+			// A listing store that cannot be read yields what was read so far.
+		}
+
+		return $objects;
+	}//end storedListingObjects()
+
+	/**
+	 * Whether a stored listing passes the available-only and default-only filters.
+	 *
+	 * @param mixed $objectData The listing's object data.
+	 * @param array{available: bool, default: bool} $flags Which filters apply.
+	 *
+	 * @return bool True when no applying filter rejects the listing.
+	 */
+	private function isSelectedListing(mixed $objectData, array $flags): bool {
+		if ($flags['available'] === true && ($objectData['integrationLevel'] ?? null) !== 'search') {
+			return false;
+		}
+
+		return $flags['default'] === false || ($objectData['default'] ?? false) !== false;
+	}//end isSelectedListing()
 
 	/**
 	 * Get the set of known peer `/api/directory` URLs to sync with.
@@ -409,8 +449,26 @@ class DirectoryService implements DirectoryServiceInterface {
 			throw new RuntimeException('OpenRegister service is not available.');
 		}
 
-		$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+		$urls = [];
+		foreach ($this->knownListings(objectService: $this->container->get('OCA\OpenRegister\Service\ObjectService')) as $listing) {
+			$dir = $this->peerDirectoryUrl(listing: $listing);
+			if ($dir !== null) {
+				$urls[$dir] = $dir;
+			}
+		}
 
+		return array_values($urls);
+	}//end getKnownDirectoryUrls()
+
+	/**
+	 * The stored listings, searched without RBAC, for getKnownDirectoryUrls().
+	 *
+	 * @param mixed $objectService The OpenRegister object service.
+	 *
+	 * @return mixed The listings; empty when the listing register or schema is
+	 *               not configured or the search fails.
+	 */
+	private function knownListings(mixed $objectService): mixed {
 		$listingSchema = $this->config->getValueString($this->appName, 'listing_schema', '');
 		$listingRegister = $this->config->getValueString($this->appName, 'listing_register', '');
 		if (empty($listingSchema) === true || empty($listingRegister) === true) {
@@ -418,7 +476,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		try {
-			$listings = $objectService->searchObjects(
+			return $objectService->searchObjects(
 				query: [
 					'@self' => [
 						'register' => $listingRegister,
@@ -430,32 +488,31 @@ class DirectoryService implements DirectoryServiceInterface {
 		} catch (\Throwable $e) {
 			return [];
 		}
+	}//end knownListings()
 
-		$urls = [];
-		foreach ($listings as $listing) {
-			$listingData = $listing->jsonSerialize();
-			$objectData = ($listingData['object'] ?? $listingData);
+	/**
+	 * The peer `/api/directory` URL a stored listing names, if it is one to sync with.
+	 *
+	 * @param mixed $listing The stored listing.
+	 *
+	 * @return string|null The URL, or null when it is empty, not an `/api/directory`
+	 *                     endpoint, or this instance itself (so cron does not sync
+	 *                     our own directory back to us).
+	 */
+	private function peerDirectoryUrl(mixed $listing): ?string {
+		$listingData = $listing->jsonSerialize();
+		$objectData = ($listingData['object'] ?? $listingData);
 
-			$dir = ($objectData['directory'] ?? null);
-			if (empty($dir) === true) {
-				continue;
-			}
+		$dir = ($objectData['directory'] ?? null);
+		if (empty($dir) === true
+			|| strpos($dir, '/api/directory') === false
+			|| $this->isSelfInstance(url: $dir) === true
+		) {
+			return null;
+		}
 
-			// Only real /api/directory endpoints belong in the sync set.
-			if (strpos($dir, '/api/directory') === false) {
-				continue;
-			}
-
-			// Skip self so cron doesn't sync our own /api/directory back to us.
-			if ($this->isSelfInstance(url: $dir) === true) {
-				continue;
-			}
-
-			$urls[$dir] = $dir;
-		}//end foreach
-
-		return array_values($urls);
-	}//end getKnownDirectoryUrls()
+		return $dir;
+	}//end peerDirectoryUrl()
 
 	/**
 	 * Synchronize a specific directory (asynchronous)
@@ -595,8 +652,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * Listings that point at this instance or at a local address are not synced.
 	 *
-	 * @param array  $results      The sync results so far.
-	 * @param array  $listings     The listings the peer returned.
+	 * @param array $results The sync results so far.
+	 * @param array $listings The listings the peer returned.
 	 * @param string $directoryUrl The peer directory URL.
 	 *
 	 * @return array The sync results.
@@ -644,7 +701,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Sync listings concurrently; when the batch fails, every listing gets a failed result.
 	 *
-	 * @param array  $listings     The listings to sync.
+	 * @param array $listings The listings to sync.
 	 * @param string $directoryUrl The peer directory URL.
 	 *
 	 * @return array The per-listing sync results.
@@ -685,7 +742,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Count one listing sync result into the directory sync results.
 	 *
-	 * @param array $results       The directory sync results.
+	 * @param array $results The directory sync results.
 	 * @param array $listingResult The result of one listing sync.
 	 *
 	 * @return array
@@ -744,8 +801,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * The rethrown RequestException carries the original request and response, or a
 	 * synthetic GET of the directory URL when the failure had no request.
 	 *
-	 * @param string          $directoryUrl The directory URL.
-	 * @param GuzzleException $exception    The fetch failure.
+	 * @param string $directoryUrl The directory URL.
+	 * @param GuzzleException $exception The fetch failure.
 	 *
 	 * @return RequestException
 	 *
@@ -833,7 +890,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Whether a listing belongs to another directory that is synced as a source of its own.
 	 *
-	 * @param mixed  $listingDirectory   The directory the listing names.
+	 * @param mixed $listingDirectory The directory the listing names.
 	 * @param string $sourceDirectoryUrl The directory being synced.
 	 *
 	 * @return bool
@@ -849,7 +906,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * The sync result of a listing that is skipped because its own directory is synced separately.
 	 *
-	 * @param array $result           The initial sync result.
+	 * @param array $result The initial sync result.
 	 * @param mixed $listingDirectory The directory the listing names.
 	 *
 	 * @return array
@@ -896,9 +953,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Normalise an incoming listing to the local listing schema.
 	 *
-	 * @param array  $listingData        The listing as the peer sent it.
+	 * @param array $listingData The listing as the peer sent it.
 	 * @param string $sourceDirectoryUrl The directory being synced.
-	 * @param mixed  $listingDirectory   The directory the listing names.
+	 * @param mixed $listingDirectory The directory the listing names.
 	 *
 	 * @return array The listing to store.
 	 *
@@ -1021,9 +1078,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function withSyncStamps(array $listingData): array {
-		$listingData['lastSync']      = (new DateTime())->format('c');
+		$listingData['lastSync'] = (new DateTime())->format('c');
 		$listingData['lastSuccessAt'] = $listingData['lastSync'];
-		$listingData['lastError']     = '';
+		$listingData['lastError'] = '';
 
 		$originalPublished = ($listingData['published'] ?? null);
 		$listingData['published'] = (new DateTime())->format('c');
@@ -1041,7 +1098,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Set the status fields of a newly seen listing; an update later keeps the stored ones.
 	 *
-	 * @param array  $listingData        The listing.
+	 * @param array $listingData The listing.
 	 * @param string $sourceDirectoryUrl The directory being synced.
 	 *
 	 * @return array
@@ -1064,7 +1121,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * the same logical catalog, and the directory URL tells those peers apart while
 	 * repeated syncs of the same peer still find the same listing.
 	 *
-	 * @param array $target      The ObjectService and listing register/schema.
+	 * @param array $target The ObjectService and listing register/schema.
 	 * @param array $listingData The prepared listing.
 	 *
 	 * @return mixed The matching listings.
@@ -1087,9 +1144,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Create the listing, or update the stored one when the incoming data is newer and differs.
 	 *
-	 * @param array $listingData      The prepared listing.
+	 * @param array $listingData The prepared listing.
 	 * @param mixed $existingListings The stored listings that match it.
-	 * @param array $target           The ObjectService, listing register/schema and new uuid.
+	 * @param array $target The ObjectService, listing register/schema and new uuid.
 	 *
 	 * @return array The outcome: action, success and, for a skip, the reason.
 	 *
@@ -1123,9 +1180,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	/**
 	 * Save a listing object in the listing register/schema.
 	 *
-	 * @param array $target      The ObjectService and listing register/schema.
+	 * @param array $target The ObjectService and listing register/schema.
 	 * @param array $listingData The listing object.
-	 * @param mixed $uuid        The uuid to save it under.
+	 * @param mixed $uuid The uuid to save it under.
 	 *
 	 * @return void
 	 *
@@ -1147,9 +1204,9 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * Does nothing when the failure came before a stored listing was found. A failure
 	 * to record is ignored.
 	 *
-	 * @param array|null $target           The ObjectService and listing register/schema, or null.
-	 * @param mixed      $existingListings The stored listings found so far.
-	 * @param \Exception $exception        The sync failure.
+	 * @param array|null $target The ObjectService and listing register/schema, or null.
+	 * @param mixed $existingListings The stored listings found so far.
+	 * @param \Exception $exception The sync failure.
 	 *
 	 * @return void
 	 *
@@ -1164,8 +1221,8 @@ class DirectoryService implements DirectoryServiceInterface {
 			$existingListingData = $existingListings[0]->jsonSerialize();
 			$errorData = ($existingListingData['object'] ?? []);
 			$errorData['statusCode'] = 500;
-			$errorData['lastSync']   = (new DateTime())->format('c');
-			$errorData['lastError']  = self::sanitizeSyncError(message: $exception->getMessage());
+			$errorData['lastSync'] = (new DateTime())->format('c');
+			$errorData['lastError'] = self::sanitizeSyncError(message: $exception->getMessage());
 
 			$this->saveListing(target: $target, listingData: $errorData, uuid: $existingListingData['id']);
 		} catch (\Exception $updateException) {
@@ -1216,7 +1273,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
 		return $this->mergePeerPublications(targets: $targets, answers: $answers);
-
 	}//end getPublications()
 
 	/**
@@ -1246,7 +1302,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		return null;
-
 	}//end parsePeerPublications()
 
 	/**
@@ -1266,7 +1321,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			'facets' => [],
 			'total' => 0,
 		];
-		$seenIds  = [];
+		$seenIds = [];
 
 		foreach ($answers as $index => $answer) {
 			if ($answer === null || empty($answer['results']) === true) {
@@ -1284,7 +1339,7 @@ class DirectoryService implements DirectoryServiceInterface {
 				}
 
 				$combined['results'][] = $this->tagWithDirectory(item: $item, directoryName: $target['name']);
-				$seenIds[$itemId]      = true;
+				$seenIds[$itemId] = true;
 			}
 
 			if (empty($answer['facets']) === false) {
@@ -1293,13 +1348,12 @@ class DirectoryService implements DirectoryServiceInterface {
 		}//end foreach
 
 		return $combined;
-
 	}//end mergePeerPublications()
 
 	/**
 	 * Record on a federated publication which directory it came from, for faceting.
 	 *
-	 * @param array  $item          The publication
+	 * @param array $item The publication
 	 * @param string $directoryName The host name of the peer directory
 	 *
 	 * @return array The publication with `@self.directory` set
@@ -1313,7 +1367,6 @@ class DirectoryService implements DirectoryServiceInterface {
 
 		$item['@self']['directory'] = $directoryName;
 		return $item;
-
 	}//end tagWithDirectory()
 
 	/**
@@ -1623,15 +1676,15 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * the directory sync fails at the HTTP level.
 	 *
 	 * @param string $directoryUrl The directory URL that failed
-	 * @param integer $statusCode   The HTTP status code of the error
-	 * @param string  $errorMessage The error text; stored without credentials or query strings
+	 * @param integer $statusCode The HTTP status code of the error
+	 * @param string $errorMessage The error text; stored without credentials or query strings
 	 *
 	 * @return void
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
 	 * @spec openspec/changes/federation-connection-last-success/specs/federation/spec.md#REQ-FLS-001
 	 */
-	private function updateDirectoryStatusOnError(string $directoryUrl, int $statusCode, string $errorMessage=''): void {
+	private function updateDirectoryStatusOnError(string $directoryUrl, int $statusCode, string $errorMessage = ''): void {
 		try {
 			// Check if OpenRegister service is available.
 			if (in_array('openregister', $this->appManager->getInstalledApps()) === false) {
@@ -1669,8 +1722,8 @@ class DirectoryService implements DirectoryServiceInterface {
 
 				// Update with error status. lastSuccessAt is left as it was.
 				$errorData['statusCode'] = $statusCode;
-				$errorData['lastSync']   = (new DateTime())->format('c');
-				$errorData['lastError']  = self::sanitizeSyncError(message: $errorMessage);
+				$errorData['lastSync'] = (new DateTime())->format('c');
+				$errorData['lastError'] = self::sanitizeSyncError(message: $errorMessage);
 
 				// Use positional parameters for compatibility with different ObjectService versions.
 				$objectService->saveObject(
@@ -1705,7 +1758,7 @@ class DirectoryService implements DirectoryServiceInterface {
 		$clean = preg_replace_callback(
 			'~\b([a-z][a-z0-9+.-]*://)([^\s/?#`\'"<>]*@)?([^\s?#`\'"<>]*)(\?[^\s#`\'"<>]*)?(#[^\s`\'"<>]*)?~i',
 			static function (array $match): string {
-				return $match[1].$match[3];
+				return $match[1] . $match[3];
 			},
 			$message
 		);
@@ -1714,10 +1767,9 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		// Any query-looking fragment left outside a URL (for example "?token=abc").
-		$clean = (string) preg_replace('~\?[^\s`\'"<>]*=[^\s`\'"<>]*~', '', $clean);
+		$clean = (string)preg_replace('~\?[^\s`\'"<>]*=[^\s`\'"<>]*~', '', $clean);
 
 		return mb_substr($clean, 0, 1000);
-
 	}//end sanitizeSyncError()
 
 	/**
@@ -1914,24 +1966,11 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * @throws InvalidArgumentException When the URL or its resolved host is not safe.
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
-	 *
 	 * @spec exclude SSRF input-validation guard for outbound directory fetches; security
 	 *       plumbing that hardens an existing fetch, no new domain behavior.
 	 */
 	private function assertSafeOutboundUrl(string $url): void {
-		$parsed = parse_url($url);
-		if ($parsed === false || isset($parsed['scheme']) === false || isset($parsed['host']) === false) {
-			throw new InvalidArgumentException('Invalid directory URL provided');
-		}
-
-		$scheme = strtolower($parsed['scheme']);
-		if (in_array($scheme, ['http', 'https'], true) === false) {
-			throw new InvalidArgumentException('Directory URL scheme must be http or https');
-		}
-
-		$host = strtolower($parsed['host']);
+		$host = $this->urlGuard()->hostOf(url: $url, label: 'Directory');
 
 		// Dev-only: explicitly allowlisted hosts skip the local/private-address guard so
 		// two local instances on a private network can federate. Empty by default, so a
@@ -1940,56 +1979,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			return;
 		}
 
-		// Reject obvious local hostnames outright.
-		if ($host === 'localhost' || str_ends_with($host, '.local') === true
-			|| str_ends_with($host, '.localhost') === true
-		) {
-			throw new InvalidArgumentException('Directory URL host is not allowed');
-		}
-
-		// Collect the IPs to check: the literal host if it is already an IP,
-		// otherwise every address the host resolves to via DNS.
-		$ipsToCheck = [];
-		if (filter_var($host, FILTER_VALIDATE_IP) !== false) {
-			$ipsToCheck[] = $host;
-		}
-
-		if (empty($ipsToCheck) === true) {
-			// Strip IPv6 brackets if present.
-			$lookupHost = trim($host, '[]');
-			if (filter_var($lookupHost, FILTER_VALIDATE_IP) !== false) {
-				$ipsToCheck[] = $lookupHost;
-			}
-
-			if (empty($ipsToCheck) === true) {
-				$records = dns_get_record($lookupHost, (DNS_A | DNS_AAAA));
-				if ($records !== false) {
-					foreach ($records as $record) {
-						if (isset($record['ip']) === true) {
-							$ipsToCheck[] = $record['ip'];
-						}
-
-						if (isset($record['ipv6']) === true) {
-							$ipsToCheck[] = $record['ipv6'];
-						}
-					}
-				}
-
-				// Fallback to gethostbyname for A records when dns_get_record is empty.
-				if (empty($ipsToCheck) === true) {
-					$resolved = gethostbyname($lookupHost);
-					if ($resolved !== $lookupHost && filter_var($resolved, FILTER_VALIDATE_IP) !== false) {
-						$ipsToCheck[] = $resolved;
-					}
-				}
-			}//end if
-		}//end if
-
-		if (empty($ipsToCheck) === true) {
-			throw new InvalidArgumentException('Directory URL host could not be resolved');
-		}
-
-		foreach ($ipsToCheck as $ipAddress) {
+		foreach ($this->urlGuard()->addressesOf(host: $host, label: 'Directory') as $ipAddress) {
 			if ($this->isBlockedIp(ipAddress: $ipAddress) === true) {
 				throw new InvalidArgumentException('Directory URL resolves to a disallowed (internal) address');
 			}
@@ -2023,7 +2013,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 *
 	 * Blocks loopback (127.0.0.0/8, ::1), private RFC1918 ranges, link-local
 	 * (169.254.0.0/16 incl. the 169.254.169.254 metadata endpoint, fe80::/10),
-	 * unique-local IPv6 (fc00::/7), and other reserved ranges via PHP's range flags.
+	 * unique-local IPv6 (fc00::/7), and other reserved ranges, as classified by
+	 * {@see OutboundUrlGuard} after IPv4-in-IPv6 forms are normalised.
 	 *
 	 * @param string $ipAddress The IP address to evaluate.
 	 *
@@ -2032,39 +2023,17 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec exclude SSRF range check supporting assertSafeOutboundUrl(); security plumbing.
 	 */
 	private function isBlockedIp(string $ipAddress): bool {
-		if (filter_var($ipAddress, FILTER_VALIDATE_IP) === false) {
-			// Unparseable address — treat as blocked to fail safe.
-			return true;
-		}
-
 		// NEVER ALLOWED, whatever the configuration says. These are checked
 		// FIRST so the private-range allowance below cannot reach them: the
 		// cloud-metadata endpoint is the single most valuable SSRF target on a
 		// hosted instance, and it lives in a link-local range that a naive
 		// "allow internal" switch would open along with everything else.
-		$blockedExact = [
-			'169.254.169.254',
-			'::1',
-			'0.0.0.0',
-			'::',
-		];
-		if (in_array($ipAddress, $blockedExact, true) === true) {
+		// Unparseable addresses are refused here too, to fail safe.
+		if ($this->urlGuard()->isNeverAllowed(ipAddress: $ipAddress) === true) {
 			return true;
 		}
 
-		if ($this->isBlockedIpv6Prefix(ipAddress: $ipAddress) === true) {
-			return true;
-		}
-
-		// FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE returns false for
-		// private (RFC1918), loopback, link-local, and reserved ranges (IPv4 + IPv6).
-		$isPublic = filter_var(
-			value: $ipAddress,
-			filter: FILTER_VALIDATE_IP,
-			options: (FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)
-		);
-
-		if ($isPublic !== false) {
+		if ($this->urlGuard()->isInternal(ipAddress: $ipAddress) === false) {
 			return false;
 		}
 
@@ -2096,6 +2065,16 @@ class DirectoryService implements DirectoryServiceInterface {
 		return false;
 	}//end isBlockedIp()
 
+	/**
+	 * The outbound URL guard, created on first use.
+	 *
+	 * @return OutboundUrlGuard The guard.
+	 */
+	private function urlGuard(): OutboundUrlGuard {
+		$this->urlGuard ??= new OutboundUrlGuard();
+		return $this->urlGuard;
+	}//end urlGuard()
+
 
 	/**
 	 * Whether this instance may federate with directories on private addresses.
@@ -2116,32 +2095,6 @@ class DirectoryService implements DirectoryServiceInterface {
 	private function allowsInternalDirectories(): bool {
 		return $this->config->getValueString($this->appName, 'allow_internal_directories', 'no') === 'yes';
 	}//end allowsInternalDirectories()
-
-	/**
-	 * Determine whether an IPv6 address matches a blocked prefix range.
-	 *
-	 * Checks fc00::/7 (unique-local) and fe80::/10 (link-local) by inspecting
-	 * the lower-cased string prefix. Extracted from isBlockedIp() to reduce
-	 * cyclomatic complexity.
-	 *
-	 * @param string $ipAddress The IP address string to check.
-	 *
-	 * @return boolean True when the address has a blocked IPv6 prefix.
-	 *
-	 * @spec exclude SSRF range-check helper extracted from isBlockedIp(); security plumbing.
-	 */
-	private function isBlockedIpv6Prefix(string $ipAddress): bool {
-		$lower = strtolower($ipAddress);
-		// Match fc00::/7 (unique-local) and fe80::/10 (link-local) IPv6 prefixes.
-		if (str_starts_with($lower, 'fc') === true || str_starts_with($lower, 'fd') === true
-			|| str_starts_with($lower, 'fe8') === true || str_starts_with($lower, 'fe9') === true
-			|| str_starts_with($lower, 'fea') === true || str_starts_with($lower, 'feb') === true
-		) {
-			return true;
-		}
-
-		return false;
-	}//end isBlockedIpv6Prefix()
 
 	/**
 	 * Perform a GET request with SSRF-safe, per-hop-validated bounded redirects.
@@ -2300,14 +2253,14 @@ class DirectoryService implements DirectoryServiceInterface {
 		$lookup = [
 			'guzzleConfig' => $guzzleConfig,
 			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
-			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($uuid).'/used',
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl)
+				. '/' . urlencode($uuid) . '/used',
 			'parse' => $this->parsePeerResults(...),
 		];
 		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
 		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
 
 		return $this->mergePeerResults(targets: $targets, answers: $answers);
-
 	}//end getUsed()
 
 	/**
@@ -2329,7 +2282,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		return null;
-
 	}//end parsePeerResults()
 
 	/**
@@ -2344,8 +2296,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 */
 	private function mergePeerResults(array $targets, array $answers): array {
 		$combinedResults = [];
-		$seenIds         = [];
-		$sources         = [];
+		$seenIds = [];
+		$sources = [];
 		foreach ($answers as $index => $results) {
 			if (empty($results) === true) {
 				continue;
@@ -2356,7 +2308,7 @@ class DirectoryService implements DirectoryServiceInterface {
 				$itemId = ($item['id'] ?? $item['uuid'] ?? uniqid());
 				if (isset($seenIds[$itemId]) === false) {
 					$combinedResults[] = $item;
-					$seenIds[$itemId]  = true;
+					$seenIds[$itemId] = true;
 				}
 			}
 		}
@@ -2395,7 +2347,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		$lookup = [
 			'guzzleConfig' => $guzzleConfig,
 			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
-			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl).'/'.urlencode($publicationId),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl)
+				. '/' . urlencode($publicationId),
 			'parse' => static function (mixed $data): ?array {
 				if (empty($data) === true) {
 					return null;
@@ -2422,11 +2375,102 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end getPublication()
 
 	/**
+	 * The attachments of a publication another instance holds.
+	 *
+	 * Asks each available peer's `/api/federation/publications/{id}/attachments`
+	 * with `_aggregate=false`, so the peer answers with its own attachments and
+	 * never fans out again, and returns the first answer. A peer that does not
+	 * hold the publication answers 404 and is passed over. The peer addresses go
+	 * through the outbound URL guard in peerTargets(), so an address on a private
+	 * network is never called. Each attachment keeps the peer's download URL and
+	 * is marked with the instance it came from.
+	 *
+	 * @param string $publicationId The ID of the publication
+	 * @param array $guzzleConfig Optional Guzzle configuration for HTTP requests
+	 *
+	 * @return array|null The attachments (`results`) and the peer that answered (`source`),
+	 *                    or null when no reachable peer holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getRemoteAttachments(string $publicationId, array $guzzleConfig = []): ?array {
+		$directories = $this->getUniqueDirectories(availableOnly: true);
+		if (empty($directories) === true) {
+			return null;
+		}
+
+		$lookup = [
+			'guzzleConfig' => $guzzleConfig,
+			'query' => $this->peerQuery(guzzleConfig: $guzzleConfig, extraQuery: []),
+			'endpointFor' => static fn (string $directoryUrl): string => self::peerFederationPublicationsUrl(url: $directoryUrl)
+				. '/' . urlencode($publicationId) . '/attachments',
+			'parse' => $this->parsePeerResults(...),
+		];
+		$targets = $this->peerTargets(directories: $directories, lookup: $lookup);
+		$answers = $this->fetchFromPeers(targets: $targets, lookup: $lookup);
+
+		foreach ($answers as $index => $attachments) {
+			if ($attachments === null) {
+				continue;
+			}
+
+			$instance = self::peerOrigin(url: $targets[$index]['url']);
+			return [
+				'results' => array_map(
+					static fn (mixed $attachment): mixed => self::withAttachmentSource(attachment: $attachment, instance: $instance),
+					array_values($attachments)
+				),
+				'source' => [$targets[$index]['name'] => $targets[$index]['url']],
+			];
+		}
+
+		return null;
+	}//end getRemoteAttachments()
+
+	/**
+	 * One remote attachment, marked with the instance it was read from.
+	 *
+	 * @param mixed $attachment The attachment as the peer returned it
+	 * @param string $instance The peer's origin, `scheme://host[:port]`
+	 *
+	 * @return mixed The attachment with `source.instance`, or the value as it was when it is no attachment
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	private static function withAttachmentSource(mixed $attachment, string $instance): mixed {
+		if (is_array($attachment) === false) {
+			return $attachment;
+		}
+
+		$attachment['source'] = ['instance' => $instance];
+		return $attachment;
+	}//end withAttachmentSource()
+
+	/**
+	 * The origin of a peer URL: scheme, host and, when set, port.
+	 *
+	 * @param string $url A URL on the peer
+	 *
+	 * @return string The origin, e.g. `https://peer.example.org`
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	private static function peerOrigin(string $url): string {
+		$parts = parse_url($url);
+		$origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+		if (isset($parts['port']) === true) {
+			$origin .= ':' . $parts['port'];
+		}
+
+		return $origin;
+	}//end peerOrigin()
+
+	/**
 	 * The query every peer lookup sends: the caller's `query_params`, the extra
 	 * parameters, no fan-out on the peer's side and the schema and register extended.
 	 *
 	 * @param array $guzzleConfig The caller's Guzzle configuration
-	 * @param array $extraQuery   Parameters to add after `_aggregate`
+	 * @param array $extraQuery Parameters to add after `_aggregate`
 	 *
 	 * @return array The query parameters
 	 *
@@ -2447,14 +2491,13 @@ class DirectoryService implements DirectoryServiceInterface {
 		];
 
 		return $query;
-
 	}//end peerQuery()
 
 	/**
 	 * The requests to send for a peer lookup, skipping our own directory and any unsafe URL.
 	 *
 	 * @param array $directories The directory URLs to ask
-	 * @param array $lookup      The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
+	 * @param array $lookup The lookup: `query` to send and `endpointFor`, which maps a directory URL to the endpoint to call
 	 *
 	 * @return array<int, array{url: string, name: string}> One entry per peer to call
 	 *
@@ -2484,21 +2527,20 @@ class DirectoryService implements DirectoryServiceInterface {
 			}
 
 			$targets[] = [
-				'url' => $lookup['endpointFor']($directoryUrl).'?'.http_build_query($lookup['query']),
+				'url' => $lookup['endpointFor']($directoryUrl) . '?' . http_build_query($lookup['query']),
 				'name' => $host,
 			];
 		}//end foreach
 
 		return $targets;
-
 	}//end peerTargets()
 
 	/**
 	 * Call each peer and parse its answer.
 	 *
 	 * @param array $targets The peer requests, as built by peerTargets()
-	 * @param array $lookup  The lookup: the caller's `guzzleConfig`, merged over the defaults, and `parse`,
-	 *                       which turns a decoded answer into a result or null when unusable
+	 * @param array $lookup The lookup: the caller's `guzzleConfig`, merged over the defaults, and `parse`,
+	 *                      which turns a decoded answer into a result or null when unusable
 	 *
 	 * @return array<int, array|null> The parsed answers, indexed like $targets; null for a failed peer
 	 *
@@ -2522,14 +2564,13 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		return $answers;
-
 	}//end fetchFromPeers()
 
 	/**
 	 * Call one peer and parse its answer.
 	 *
-	 * @param string $url    The URL to call
-	 * @param array  $lookup The lookup: the HTTP `client` and `parse`, which turns a decoded answer into a result or null
+	 * @param string $url The URL to call
+	 * @param array $lookup The lookup: the HTTP `client` and `parse`, which turns a decoded answer into a result or null
 	 *
 	 * @return array|null The parsed answer, or null on a non-2xx status, invalid JSON or a failed request
 	 *
@@ -2541,7 +2582,7 @@ class DirectoryService implements DirectoryServiceInterface {
 			// that a federated peer cannot pivot to cloud-metadata via a 302 response.
 			// The URL is already validated by assertSafeOutboundUrl(); here we
 			// ensure Guzzle never silently follows a redirect to an unvalidated host.
-			$response   = $lookup['client']->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
+			$response = $lookup['client']->get($url, [RequestOptions::ALLOW_REDIRECTS => false]);
 			$statusCode = $response->getStatusCode();
 			if ($statusCode < 200 || $statusCode >= 300) {
 				return null;
@@ -2575,14 +2616,13 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#REQ-FOR-002
 	 */
 	private static function peerFederationPublicationsUrl(string $url): string {
-		$base = rtrim((string) strtok($url, '?#'), '/');
-		$pos  = strpos($base.'/', '/api/');
+		$base = rtrim((string)strtok($url, '?#'), '/');
+		$pos = strpos($base . '/', '/api/');
 		if ($pos === false) {
 			return $base;
 		}
 
-		return substr($base, 0, $pos).'/api/federation/publications';
-
+		return substr($base, 0, $pos) . '/api/federation/publications';
 	}//end peerFederationPublicationsUrl()
 
 	/**
@@ -2624,7 +2664,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * The discovered listings for the directory, filtered to our own unless the caller opts in.
 	 *
 	 * @param object $objectService The OpenRegister ObjectService
-	 * @param array  $requestParams The directory request parameters
+	 * @param array $requestParams The directory request parameters
 	 *
 	 * @return array The listings, or an empty array when unconfigured or the search fails
 	 *
@@ -2646,38 +2686,12 @@ class DirectoryService implements DirectoryServiceInterface {
 				$this->directoryQuery(scope: ['schema' => $listingSchema, 'register' => $listingRegister], requestParams: $requestParams)
 			);
 
-			// Get our directory URL to identify locally-created listings.
-			$ourDirectoryUrl = $this->urlGenerator->getAbsoluteURL(
-				$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-			);
-
 			// BFS-discovery opt-in: sync-code passes `?include-federated=1` so peers
-			// can transitively learn about each other's known directories. Public
-			// consumers (search UI, browsers) get the default filtered view — only
-			// catalogs that originate from THIS instance — to preserve the historical
-			// "no cross-broadcast" contract.
-			$includeFederated = filter_var(
-				($requestParams['include-federated'] ?? false),
-				FILTER_VALIDATE_BOOLEAN
+			// can transitively learn about each other's known directories.
+			return $this->servedListings(
+				listingResult: $listingResult,
+				includeFederated: filter_var(($requestParams['include-federated'] ?? false), FILTER_VALIDATE_BOOLEAN)
 			);
-
-			$listings = [];
-			foreach ($listingResult as $object) {
-				$listingData = $object;
-				if ($object instanceof \OCP\AppFramework\Db\Entity) {
-					$listingData = $object->jsonSerialize();
-				}
-
-				if ($includeFederated === false
-					&& $this->isFromOtherDirectory(listingData: $listingData, ourDirectoryUrl: $ourDirectoryUrl) === true
-				) {
-					continue;
-				}
-
-				$listings[] = $this->filterListingProperties(listing: $listingData);
-			}
-
-			return $listings;
 		} catch (\Exception $e) {
 			return [];
 		}//end try
@@ -2685,12 +2699,68 @@ class DirectoryService implements DirectoryServiceInterface {
 	}//end directoryListings()
 
 	/**
+	 * The stored listings this instance serves, without their internal properties.
+	 *
+	 * Public consumers (search UI, browsers) get only the listings that originate
+	 * from THIS instance, which preserves the historical "no cross-broadcast"
+	 * contract; `includeFederated` also serves the listings learnt from peers.
+	 *
+	 * @param mixed $listingResult The stored listing entities or their data.
+	 * @param bool $includeFederated Whether listings of other directories are served too.
+	 *
+	 * @return array<int, array<string, mixed>> The served listings.
+	 */
+	private function servedListings(mixed $listingResult, bool $includeFederated): array {
+		$ourDirectoryUrl = $this->localRouteUrl(route: 'opencatalogi.directory.index');
+
+		$listings = [];
+		foreach ($listingResult as $object) {
+			$listingData = $this->entityData(object: $object);
+			if ($includeFederated === false
+				&& $this->isFromOtherDirectory(listingData: $listingData, ourDirectoryUrl: $ourDirectoryUrl) === true
+			) {
+				continue;
+			}
+
+			$listings[] = $this->filterListingProperties(listing: $listingData);
+		}
+
+		return $listings;
+	}//end servedListings()
+
+	/**
+	 * The serialised data of an entity; any other value as it is.
+	 *
+	 * @param mixed $object The entity or its data.
+	 *
+	 * @return mixed The data.
+	 */
+	private function entityData(mixed $object): mixed {
+		if ($object instanceof \OCP\AppFramework\Db\Entity) {
+			return $object->jsonSerialize();
+		}
+
+		return $object;
+	}//end entityData()
+
+	/**
+	 * The absolute URL of one of this app's routes.
+	 *
+	 * @param string $route The route name.
+	 *
+	 * @return string The absolute URL.
+	 */
+	private function localRouteUrl(string $route): string {
+		return $this->urlGenerator->getAbsoluteURL($this->urlGenerator->linkToRoute($route));
+	}//end localRouteUrl()
+
+	/**
 	 * Whether a listing was synced from another directory.
 	 *
 	 * Such a listing's `directory` field points at the peer's own /api/directory
 	 * URL, not ours, and the default directory view does not re-broadcast it.
 	 *
-	 * @param array  $listingData     The listing
+	 * @param array $listingData The listing
 	 * @param string $ourDirectoryUrl Our own directory URL
 	 *
 	 * @return boolean True when the listing names a directory other than ours
@@ -2702,14 +2772,13 @@ class DirectoryService implements DirectoryServiceInterface {
 		$listingDir = ($objectData['directory'] ?? '');
 
 		return empty($listingDir) === false && $listingDir !== $ourDirectoryUrl;
-
 	}//end isFromOtherDirectory()
 
 	/**
 	 * Our local catalogs, converted to listings with their schemas expanded.
 	 *
 	 * @param object $objectService The OpenRegister ObjectService
-	 * @param array  $requestParams The directory request parameters
+	 * @param array $requestParams The directory request parameters
 	 *
 	 * @return array The catalogs as listings, or an empty array when unconfigured or the search fails
 	 *
@@ -2740,8 +2809,8 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * The search query for one part of the directory: its scope, the request's
 	 * filters (except schema and register) and its pagination.
 	 *
-	 * @param array{schema: string, register: string} $scope         The schema and register to search
-	 * @param array                                   $requestParams The directory request parameters
+	 * @param array{schema: string, register: string} $scope The schema and register to search
+	 * @param array $requestParams The directory request parameters
 	 *
 	 * @return array The OpenRegister search query
 	 *
@@ -2771,7 +2840,6 @@ class DirectoryService implements DirectoryServiceInterface {
 		}
 
 		return $query;
-
 	}//end directoryQuery()
 
 	/**
@@ -2787,78 +2855,72 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @spec openspec/specs/dashboard/spec.md
 	 */
 	private function convertCatalogToListing($catalogObject): array {
-		// Extract catalog data.
-		$catalogData = $catalogObject;
-		if ($catalogObject instanceof \OCP\AppFramework\Db\Entity) {
-			$catalogData = $catalogObject->jsonSerialize();
-		}
-
+		$catalogData = $this->entityData(object: $catalogObject);
 		$catalog = ($catalogData['object'] ?? $catalogData);
 
-		// Get our directory URL for the listing.
-		$directoryUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
-		);
+		// The publications URL is the federation endpoint (publications.index requires a catalogSlug).
+		$endpoints = [
+			'directory' => $this->localRouteUrl(route: 'opencatalogi.directory.index'),
+			'search' => $this->localRouteUrl(route: 'opencatalogi.search.index'),
+			'publications' => $this->localRouteUrl(route: 'opencatalogi.federation.publications'),
+			'version' => $this->appManager->getAppInfo('opencatalogi')['version'],
+			// Publication date from catalog, default to now for public visibility.
+			'published' => ($catalog['published'] ?? (new DateTime())->format('c')),
+		];
 
-		// Get our search and publications URLs.
-		// Use federation endpoint (not publications.index which requires catalogSlug).
-		$searchUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.search.index')
-		);
-		$publicationsUrl = $this->urlGenerator->getAbsoluteURL(
-			$this->urlGenerator->linkToRoute('opencatalogi.federation.publications')
-		);
-
-		// Create listing object from catalog - only core API fields.
 		$catalogId = ($catalog['id'] ?? $catalogData['id'] ?? '');
-		$listing = [
-			// Required fields for listing.
+		$listing = array_merge($this->catalogListingFields(catalog: $catalog, catalogId: $catalogId), $endpoints);
+
+		return array_merge($listing, $this->catalogHarvestEndpoints(catalog: $catalog));
+	}//end convertCatalogToListing()
+
+	/**
+	 * The core API fields a listing takes from its catalog.
+	 *
+	 * @param mixed $catalog The catalog data.
+	 * @param mixed $catalogId The catalog id, used as the listing id too.
+	 *
+	 * @return array<string, mixed> The fields, in listing order.
+	 */
+	private function catalogListingFields(mixed $catalog, mixed $catalogId): array {
+		return [
 			'id' => $catalogId,
 			'catalog' => $catalogId,
 			'catalogusId' => $catalogId,
 			'title' => ($catalog['title'] ?? 'Unknown Catalog'),
 			'summary' => ($catalog['summary'] ?? $catalog['description'] ?? 'Local catalog'),
 			'status' => ($catalog['status'] ?? 'development'),
-
-			// Optional fields from catalog.
 			'description' => $catalog['description'] ?? null,
 			'organization' => $catalog['organization'] ?? null,
 			'schemas' => ($catalog['schemas'] ?? []),
-
-			// Directory-specific fields.
-			'directory' => $directoryUrl,
-			'search' => $searchUrl,
-			'publications' => $publicationsUrl,
-			'version' => $this->appManager->getAppInfo('opencatalogi')['version'],
-
-			// Publication date from catalog, default to now for public visibility.
-			'published' => ($catalog['published'] ?? (new DateTime())->format('c')),
 		];
+	}//end catalogListingFields()
 
-		// Federation discovery (DCAT-009): advertise the per-catalog DCAT harvest endpoint
-		// when the catalog is DCAT-enabled, so remote instances and aggregators learn where
-		// to harvest. Disabled catalogs carry no dcatEndpoint. Extends the existing directory
-		// machinery with one field — no new broadcast channel or cron (FED-OR-001/002).
-		$hasDcat = filter_var(($catalog['hasDcat'] ?? false), FILTER_VALIDATE_BOOLEAN);
+	/**
+	 * The per-catalog harvest endpoints a listing advertises.
+	 *
+	 * Federation discovery: a catalog with a slug advertises its DCAT harvest
+	 * endpoint when DCAT is enabled (DCAT-009) and its OOAPI 5.0 base endpoint
+	 * when OOAPI publication is enabled (OOAPI-009), so remote instances and the
+	 * national directory learn where to harvest. No new broadcast channel or cron
+	 * (FED-OR-001/002).
+	 *
+	 * @param mixed $catalog The catalog data.
+	 *
+	 * @return array<string, string> `dcatEndpoint` and/or `ooapiEndpoint`, when enabled.
+	 */
+	private function catalogHarvestEndpoints(mixed $catalog): array {
 		$catalogSlug = ($catalog['slug'] ?? '');
-		if ($hasDcat === true && $catalogSlug !== '') {
-			$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
-			$listing['dcatEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/dcat";
+		$endpoints = [];
+		foreach (self::HARVEST_ENDPOINTS as $flag => [$field, $path]) {
+			if (filter_var(($catalog[$flag] ?? false), FILTER_VALIDATE_BOOLEAN) === true && $catalogSlug !== '') {
+				$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
+				$endpoints[$field] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/$path";
+			}
 		}
 
-		// Federation discovery (OOAPI-009): advertise the per-catalog OOAPI 5.0 base
-		// endpoint when the catalog has OOAPI publication enabled, so remote instances
-		// and the national directory discover where to reach an institution's course
-		// catalog. Rides the same listing-projection helper as dcatEndpoint above — no
-		// new broadcast channel or cron (FED-OR-001/002).
-		$hasOoapi = filter_var(($catalog['hasOoapi'] ?? false), FILTER_VALIDATE_BOOLEAN);
-		if ($hasOoapi === true && $catalogSlug !== '') {
-			$base = rtrim($this->urlGenerator->getBaseUrl(), '/');
-			$listing['ooapiEndpoint'] = "$base/apps/opencatalogi/api/catalogs/$catalogSlug/ooapi/v5";
-		}
-
-		return $listing;
-	}//end convertCatalogToListing()
+		return $endpoints;
+	}//end catalogHarvestEndpoints()
 
 	/**
 	 * Filter listing object to remove properties not meant for external API

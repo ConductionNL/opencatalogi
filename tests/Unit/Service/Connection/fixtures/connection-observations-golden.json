@@ -1,0 +1,114 @@
+{
+    "directorySync": {
+        "none": [
+            "unconfigured",
+            "No directory is known yet, so the last sync had nothing to read."
+        ],
+        "one ok": [
+            "configured",
+            "The directory answered the last sync."
+        ],
+        "three ok": [
+            "configured",
+            "All 3 directories answered the last sync."
+        ],
+        "all failed": [
+            "error",
+            "No directory answered the last sync. dir.example.org did not."
+        ],
+        "some failed": [
+            "limited",
+            "2 of 3 directories answered the last sync. b.example.org did not."
+        ],
+        "failed without errors": [
+            "limited",
+            "1 of 2 directories answered the last sync. A directory did not."
+        ],
+        "failed with a bad url": [
+            "error",
+            "No directory answered the last sync. A directory did not."
+        ]
+    },
+    "broadcast": {
+        "none": [
+            "unconfigured",
+            "No peer directory is known yet, so the last broadcast told nobody."
+        ],
+        "one ok": [
+            "configured",
+            "peer.example.org accepted the last broadcast."
+        ],
+        "one ok, no host": [
+            "configured",
+            "The peer directory accepted the last broadcast."
+        ],
+        "two ok": [
+            "configured",
+            "All 2 peer directories accepted the last broadcast."
+        ],
+        "one refused": [
+            "error",
+            "a.example.org did not accept the last broadcast."
+        ],
+        "two refused": [
+            "error",
+            "No peer directory accepted the last broadcast. a.example.org did not."
+        ],
+        "one of three refused": [
+            "limited",
+            "2 of 3 peer directories accepted the last broadcast. b.example.org did not."
+        ]
+    },
+    "wooReadiness": {
+        "empty": [
+            "limited",
+            "Every readiness check passed. This instance is not registered with the Woo-index yet."
+        ],
+        "checks not a list": [
+            "limited",
+            "Every readiness check passed. This instance is not registered with the Woo-index yet."
+        ],
+        "all failed": [
+            "error",
+            "No readiness check passed. The Woo-index section lists what failed."
+        ],
+        "some failed": [
+            "limited",
+            "1 of 2 readiness checks failed. The Woo-index section lists which."
+        ],
+        "registered": [
+            "configured",
+            "Every readiness check passed, and the Woo-index registration matches this address."
+        ],
+        "registration failing does not count": [
+            "limited",
+            "Every readiness check passed. The registered Woo-index URL does not match this address."
+        ],
+        "pending": [
+            "limited",
+            "Every readiness check passed. The Woo-index registration is requested and not confirmed yet."
+        ],
+        "not registered": [
+            "limited",
+            "Every readiness check passed. This instance is not registered with the Woo-index yet."
+        ],
+        "no registration check": [
+            "limited",
+            "Every readiness check passed. This instance is not registered with the Woo-index yet."
+        ]
+    },
+    "fixed": [
+        [
+            "unconfigured",
+            "This instance advertises a local address, so no peer directory is told about it. Set overwrite.cli.url to an address peers can reach."
+        ],
+        [
+            "unconfigured",
+            "No catalog has Woo sitemaps switched on, so the harvester has nothing to read. Switch them on for a catalog first."
+        ],
+        [
+            "error",
+            "The last readiness check stopped before it finished."
+        ]
+    ]
+}

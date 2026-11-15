@@ -1,0 +1,370 @@
+{
+    "openregister missing": [
+        {
+            "startProgress": [
+                2
+            ]
+        },
+        {
+            "warning": [
+                "OpenRegister app is not installed - skipping configuration import"
+            ]
+        },
+        {
+            "advance": [
+                2,
+                ""
+            ]
+        },
+        {
+            "finishProgress": []
+        }
+    ],
+    "imported and configured": [
+        {
+            "startProgress": [
+                2
+            ]
+        },
+        {
+            "info": [
+                "Loading OpenCatalogi configuration..."
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "container": "OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+        },
+        {
+            "loadSettings": false
+        },
+        {
+            "info": [
+                "Configuration loaded: 2 registers, 3 schemas, 1 objects"
+            ]
+        },
+        {
+            "getValueString": [
+                "opencatalogi",
+                "publication_register",
+                ""
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "finishProgress": []
+        }
+    ],
+    "imported, nothing configured": [
+        {
+            "startProgress": [
+                2
+            ]
+        },
+        {
+            "info": [
+                "Loading OpenCatalogi configuration..."
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "container": "OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+        },
+        {
+            "loadSettings": false
+        },
+        {
+            "info": [
+                "Configuration loaded: 2 registers, 3 schemas, 1 objects"
+            ]
+        },
+        {
+            "getValueString": [
+                "opencatalogi",
+                "publication_register",
+                ""
+            ]
+        },
+        {
+            "warning": [
+                "OpenCatalogi configuration did not land; the app has no register or schema configuration. Run `occ opencatalogi:settings:load --force`, or use Settings -> OpenCatalogi -> Reload configuration."
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi install completed with no register configuration \u2014 publication_register is still empty after the import repair step.",
+                {
+                    "app": "opencatalogi"
+                }
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "finishProgress": []
+        }
+    ],
+    "an empty result": [
+        {
+            "startProgress": [
+                2
+            ]
+        },
+        {
+            "info": [
+                "Loading OpenCatalogi configuration..."
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "container": "OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+        },
+        {
+            "loadSettings": false
+        },
+        {
+            "info": [
+                "Configuration loaded: 0 registers, 0 schemas, 0 objects"
+            ]
+        },
+        {
+            "getValueString": [
+                "opencatalogi",
+                "publication_register",
+                ""
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "finishProgress": []
+        }
+    ],
+    "the import throws": [
+        {
+            "startProgress": [
+                2
+            ]
+        },
+        {
+            "info": [
+                "Loading OpenCatalogi configuration..."
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "container": "OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+        },
+        {
+            "loadSettings": false
+        },
+        {
+            "warning": [
+                "Failed to load configuration: import refused"
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi configuration import threw during the install repair step",
+                {
+                    "app": "opencatalogi",
+                    "exception": "RuntimeException: import refused"
+                }
+            ]
+        },
+        {
+            "getValueString": [
+                "opencatalogi",
+                "publication_register",
+                ""
+            ]
+        },
+        {
+            "warning": [
+                "OpenCatalogi configuration did not land; the app has no register or schema configuration. Run `occ opencatalogi:settings:load --force`, or use Settings -> OpenCatalogi -> Reload configuration."
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi install completed with no register configuration \u2014 publication_register is still empty after the import repair step.",
+                {
+                    "app": "opencatalogi"
+                }
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "finishProgress": []
+        }
+    ],
+    "the service is unresolvable": [
+        {
+            "startProgress": [
+                2
+            ]
+        },
+        {
+            "info": [
+                "Loading OpenCatalogi configuration..."
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "container": "OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+        },
+        {
+            "warning": [
+                "Failed to load configuration: not bound: OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi configuration import threw during the install repair step",
+                {
+                    "app": "opencatalogi",
+                    "exception": "RuntimeException: not bound: OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+                }
+            ]
+        },
+        {
+            "getValueString": [
+                "opencatalogi",
+                "publication_register",
+                ""
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "finishProgress": []
+        }
+    ],
+    "an error, not an exception": [
+        {
+            "startProgress": [
+                2
+            ]
+        },
+        {
+            "info": [
+                "Loading OpenCatalogi configuration..."
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "container": "OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+        },
+        {
+            "loadSettings": false
+        },
+        {
+            "thrown": "Error: import crashed"
+        }
+    ],
+    "a plain exception": [
+        {
+            "startProgress": [
+                2
+            ]
+        },
+        {
+            "info": [
+                "Loading OpenCatalogi configuration..."
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "container": "OCA\\OpenCatalogi\\Contract\\SettingsServiceInterface"
+        },
+        {
+            "loadSettings": false
+        },
+        {
+            "warning": [
+                "Failed to load configuration: import stopped"
+            ]
+        },
+        {
+            "error": [
+                "OpenCatalogi configuration import threw during the install repair step",
+                {
+                    "app": "opencatalogi",
+                    "exception": "Exception: import stopped"
+                }
+            ]
+        },
+        {
+            "getValueString": [
+                "opencatalogi",
+                "publication_register",
+                ""
+            ]
+        },
+        {
+            "advance": [
+                1,
+                ""
+            ]
+        },
+        {
+            "finishProgress": []
+        }
+    ]
+}

@@ -14,6 +14,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -108,7 +111,7 @@ class DirectorySyncListingTest extends TestCase {
 	 * Assert the time-stamped keys are ISO 8601 and replace them with a marker.
 	 *
 	 * @param array $object The saved object.
-	 * @param array $keys   The keys holding "now".
+	 * @param array $keys The keys holding "now".
 	 *
 	 * @return array
 	 */

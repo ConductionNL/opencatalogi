@@ -32,8 +32,8 @@ class ObligationReadServiceTest extends TestCase {
 	/**
 	 * The service over the given sources and listeners.
 	 *
-	 * @param array<int, array<string, mixed>> $sources   The obligationSource rows.
-	 * @param array<string, callable>          $listeners Per app id, what its listener does with the event.
+	 * @param array<int, array<string, mixed>> $sources The obligationSource rows.
+	 * @param array<string, callable> $listeners Per app id, what its listener does with the event.
 	 *
 	 * @return ObligationReadService The service.
 	 */
@@ -51,17 +51,19 @@ class ObligationReadServiceTest extends TestCase {
 			/**
 			 * @param array<int, array<string, mixed>> $sources The rows to answer.
 			 */
-			public function __construct(private array $sources) {
+			public function __construct(
+				private array $sources,
+			) {
 			}
 
 			/**
-			 * @param array<string, mixed> $query         The query.
-			 * @param bool                 $_rbac         Ignored.
-			 * @param bool                 $_multitenancy Ignored.
+			 * @param array<string, mixed> $query The query.
+			 * @param bool $_rbac Ignored.
+			 * @param bool $_multitenancy Ignored.
 			 *
 			 * @return array<string, mixed> The rows.
 			 */
-			public function searchObjectsPaginated(array $query, bool $_rbac=true, bool $_multitenancy=true): array {
+			public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
 				return ['results' => $this->sources];
 			}
 		};
@@ -79,7 +81,6 @@ class ObligationReadServiceTest extends TestCase {
 		);
 
 		return new ObligationReadService($dispatcher, new ObligationOverviewService(), $config, $container, $this->appManager(installed: true));
-
 	}//end service()
 
 	/**
@@ -215,6 +216,5 @@ class ObligationReadServiceTest extends TestCase {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('isInstalled')->willReturn($installed);
 		return $appManager;
-
 	}//end appManager()
 }//end class

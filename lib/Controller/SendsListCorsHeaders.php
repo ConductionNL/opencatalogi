@@ -27,8 +27,8 @@ use OCP\AppFramework\Http\Response;
 /**
  * Add the CORS headers built from the controller's own methods, headers and max age.
  *
- * Consuming controllers MUST expose a `CorsSettings $cors` property and a
- * `resolveAllowedOrigin()` method.
+ * Consuming controllers MUST expose a `$cors` property (CorsSettings or
+ * ListCorsPolicy) and a `resolveAllowedOrigin()` method.
  *
  * @spec openspec/specs/cross-origin-api-access/spec.md#requirement-answer-cors-preflight-requests-on-public-api-controllers-cor-001
  */

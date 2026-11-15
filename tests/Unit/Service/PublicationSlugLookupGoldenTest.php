@@ -149,7 +149,9 @@ class PublicationSlugLookupGoldenTest extends TestCase {
 					/**
 					 * @param array<string, mixed> $data The serialised row.
 					 */
-					public function __construct(private array $data) {
+					public function __construct(
+						private array $data,
+					) {
 					}
 
 					/**
@@ -181,7 +183,10 @@ class PublicationSlugLookupGoldenTest extends TestCase {
 				 * @param array<string, mixed> $answer The scan answer.
 				 * @param bool $fails Whether the scan throws.
 				 */
-				public function __construct(private array $answer, private bool $fails) {
+				public function __construct(
+					private array $answer,
+					private bool $fails,
+				) {
 				}
 
 				/**
@@ -221,7 +226,10 @@ class PublicationSlugLookupGoldenTest extends TestCase {
 				 * @param array<string, mixed> $answer The scan answer.
 				 * @param bool $fails Whether the scan throws.
 				 */
-				public function __construct(private array $answer, private bool $fails) {
+				public function __construct(
+					private array $answer,
+					private bool $fails,
+				) {
 				}
 
 				/**
@@ -263,6 +271,5 @@ class PublicationSlugLookupGoldenTest extends TestCase {
 		}
 
 		return ['answers' => $answers, 'calls' => $store->calls, 'log' => $log];
-
 	}//end lookup()
 }//end class

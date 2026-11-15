@@ -48,6 +48,19 @@ trait FlattensObjectRows {
 			return [];
 		}
 
+		$row['uuid'] = $this->flattenedRowUuid(row: $row);
+
+		return $row;
+	}//end toFields()
+
+	/**
+	 * A row's uuid: from its `@self` block first, then from the row itself.
+	 *
+	 * @param array<string, mixed> $row The row.
+	 *
+	 * @return string The uuid, or an empty string when the row carries none.
+	 */
+	private function flattenedRowUuid(array $row): string {
 		$self = ($row['@self'] ?? []);
 		$uuid = '';
 		if (is_array($self) === true) {
@@ -58,8 +71,6 @@ trait FlattensObjectRows {
 			$uuid = (string)($row['uuid'] ?? ($row['id'] ?? ''));
 		}
 
-		$row['uuid'] = $uuid;
-
-		return $row;
-	}//end toFields()
+		return $uuid;
+	}//end flattenedRowUuid()
 }//end trait

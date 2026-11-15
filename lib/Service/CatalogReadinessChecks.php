@@ -94,6 +94,39 @@ final class CatalogReadinessChecks {
 	}//end skip()
 
 	/**
+	 * Record the sitemapindex check and every check that depends on it as skipped.
+	 *
+	 * @param string $reason Why they were skipped.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 */
+	public function skipAll(string $reason): void {
+		$this->skip(id: 'sitemapindex:' . $this->slug, reason: $reason);
+		$this->skipDependents(reason: $reason);
+
+	}//end skipAll()
+
+	/**
+	 * Record the category-sitemap, DIWOO-validation and publication-sample checks as skipped.
+	 *
+	 * A check whose prerequisite failed reports `skipped`, never `pass` (WOO-HR-001).
+	 *
+	 * @param string $reason Why they were skipped.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md
+	 */
+	public function skipDependents(string $reason): void {
+		foreach (['category-sitemap', 'diwoo-xsd', 'publication-sample'] as $check) {
+			$this->skip(id: $check . ':' . $this->slug, reason: $reason);
+		}
+
+	}//end skipDependents()
+
+	/**
 	 * The checks, in the order they were recorded.
 	 *
 	 * @return list<array<string, string>> The checks.

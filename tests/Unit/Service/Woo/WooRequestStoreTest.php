@@ -42,7 +42,9 @@ class WooRequestSerialisableResult implements JsonSerializable {
 	 *
 	 * @param array<string, mixed> $payload What it serialises to.
 	 */
-	public function __construct(private readonly array $payload) {
+	public function __construct(
+		private readonly array $payload,
+	) {
 	}//end __construct()
 
 	/**
@@ -65,6 +67,9 @@ class WooRequestShapedObjectService {
 
 	public bool $findThrows = false;
 
+	/** @var array<string, mixed> The named arguments of the last save. */
+	public array $lastSave = [];
+
 	public function find(string $id, mixed ...$rest): mixed {
 		if ($this->findThrows === true) {
 			throw new RuntimeException('not found');
@@ -74,6 +79,8 @@ class WooRequestShapedObjectService {
 	}//end find()
 
 	public function saveObject(array $object, mixed ...$rest): mixed {
+		$this->lastSave = $rest;
+
 		return $this->answer;
 	}//end saveObject()
 
@@ -100,18 +107,32 @@ class WooRequestStoreTest extends TestCase {
 	}//end setUp()
 
 	/**
+	 * The system owns a stored request, so whoever registered it cannot rewrite or delete it.
+	 *
+	 * @return void
+	 */
+	public function testAStoredRequestIsOwnedByTheSystem(): void {
+		$this->objects->answer = ['id' => 'request-1'];
+
+		$this->build()->save(record: ['reference' => 'R-1']);
+
+		$this->assertTrue($this->objects->lastSave['_unowned']);
+		$this->assertFalse($this->objects->lastSave['_rbac']);
+	}//end testAStoredRequestIsOwnedByTheSystem()
+
+	/**
 	 * Build the store.
 	 *
 	 * @param string $configured What the register and schema keys answer.
-	 * @param bool   $installed  Whether OpenRegister is installed.
-	 * @param bool   $bound      Whether the container binds the ObjectService.
+	 * @param bool $installed Whether OpenRegister is installed.
+	 * @param bool $bound Whether the container binds the ObjectService.
 	 *
 	 * @return WooRequestStore The store.
 	 */
 	private function build(
 		string $configured = '42',
 		bool $installed = true,
-		bool $bound = true
+		bool $bound = true,
 	): WooRequestStore {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn($configured);
@@ -131,7 +152,6 @@ class WooRequestStoreTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager));
-
 	}//end build()
 
 	/**

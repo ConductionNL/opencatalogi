@@ -28,6 +28,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenCatalogi\Service\UsageCsvRollUp;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -48,6 +49,7 @@ use Psr\Log\LoggerInterface;
  * @spec openspec/specs/publication-quality/spec.md
  */
 class StatsController extends Controller {
+
 	/**
 	 * StatsController constructor.
 	 *
@@ -220,24 +222,14 @@ class StatsController extends Controller {
 			return $catalog;
 		}
 
-		$worst = (int)($this->request->getParam('worst', 5));
-		if ($worst < 1) {
-			$worst = 5;
-		}
+		$worst = $this->worstCount();
 
 		try {
 			$dcatService = $this->container->get(\OCA\OpenCatalogi\Contract\DcatServiceInterface::class);
 			$qualityService = $this->container->get(\OCA\OpenCatalogi\Contract\QualityServiceInterface::class);
 
 			$document = $dcatService->buildCatalogDocument(catalog: $catalog, catalogSlug: $slug, page: 1);
-			$nodes = [];
-			foreach (($document['@graph'] ?? []) as $node) {
-				if (($node['@type'] ?? '') === 'dcat:Dataset') {
-					$nodes[] = $node;
-				}
-			}
-
-			$rollup = $qualityService->rollup($nodes, $worst);
+			$rollup = $qualityService->rollup($this->datasetNodes(document: $document), $worst);
 			$rollup['catalog'] = $slug;
 			return new JSONResponse($rollup, 200);
 		} catch (\Throwable $e) {
@@ -246,6 +238,38 @@ class StatsController extends Controller {
 		}
 
 	}//end quality()
+
+	/**
+	 * How many worst datasets the quality roll-up lists: the `worst` parameter, else 5.
+	 *
+	 * @return int
+	 */
+	private function worstCount(): int {
+		$worst = (int)($this->request->getParam('worst', 5));
+		if ($worst < 1) {
+			return 5;
+		}
+
+		return $worst;
+	}//end worstCount()
+
+	/**
+	 * The dataset nodes of a DCAT catalog document.
+	 *
+	 * @param array<string, mixed> $document The document.
+	 *
+	 * @return list<array<string, mixed>>
+	 */
+	private function datasetNodes(array $document): array {
+		$nodes = [];
+		foreach (($document['@graph'] ?? []) as $node) {
+			if (($node['@type'] ?? '') === 'dcat:Dataset') {
+				$nodes[] = $node;
+			}
+		}
+
+		return $nodes;
+	}//end datasetNodes()
 
 	/**
 	 * Export per-catalog usage as a UTF-8 (BOM) CSV for WOO annual reporting.
@@ -293,48 +317,17 @@ class StatsController extends Controller {
 	 *
 	 * @return string The CSV document including a UTF-8 BOM.
 	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) UsageCsvRollUp::rollUp() is a pure function
+	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function buildCsv(array $rows): string {
-		// Roll counter rows up to one entry per publication.
-		$byPub = [];
-		foreach ($rows as $row) {
-			$pub = (string)($row['publication'] ?? '');
-			if ($pub === '') {
-				continue;
-			}
-
-			if (isset($byPub[$pub]) === false) {
-				$byPub[$pub] = [
-					'publication' => $pub,
-					'category' => (string)($row['category'] ?? ''),
-					'published' => (string)($row['published'] ?? ''),
-					'views' => 0,
-					'downloads' => 0,
-				];
-			}
-
-			$count = max(0, (int)($row['count'] ?? 0));
-			if (($row['kind'] ?? '') === UsageCounterServiceInterface::KIND_VIEW) {
-				$byPub[$pub]['views'] += $count;
-			} elseif (($row['kind'] ?? '') === UsageCounterServiceInterface::KIND_DOWNLOAD) {
-				$byPub[$pub]['downloads'] += $count;
-			}
-		}//end foreach
+		$byPub = UsageCsvRollUp::rollUp(rows: $rows);
 
 		$handle = fopen('php://temp', 'r+');
 		fputcsv($handle, ['Publication', 'Category', 'Published date', 'Views', 'Downloads']);
 		foreach ($byPub as $entry) {
-			fputcsv(
-				$handle,
-				[
-					$entry['publication'],
-					$entry['category'],
-					$entry['published'],
-					$entry['views'],
-					$entry['downloads'],
-				]
-			);
+			fputcsv($handle, $this->csvRow(entry: $entry));
 		}
 
 		rewind($handle);
@@ -346,6 +339,23 @@ class StatsController extends Controller {
 	}//end buildCsv()
 
 	/**
+	 * One publication's CSV row: publication, category, published date, views, downloads.
+	 *
+	 * @param array<string, mixed> $entry The rolled-up publication.
+	 *
+	 * @return array<int, mixed>
+	 */
+	private function csvRow(array $entry): array {
+		return [
+			$entry['publication'],
+			$entry['category'],
+			$entry['published'],
+			$entry['views'],
+			$entry['downloads'],
+		];
+	}//end csvRow()
+
+	/**
 	 * Read and normalise the from/to/granularity query parameters.
 	 *
 	 * @return array{0:?string,1:?string,2:string} [from, to, granularity].
@@ -354,23 +364,41 @@ class StatsController extends Controller {
 	 *       range/granularity contract is asserted through publication()/catalog().
 	 */
 	private function readRange(): array {
-		$from = $this->request->getParam('from');
-		$to = $this->request->getParam('to');
+		$from = $this->textParam(name: 'from');
+		$to = $this->textParam(name: 'to');
+
+		return [$from, $to, $this->granularity()];
+	}//end readRange()
+
+	/**
+	 * A request parameter as non-empty text, or null.
+	 *
+	 * @param string $name The parameter.
+	 *
+	 * @return string|null
+	 */
+	private function textParam(string $name): ?string {
+		$value = $this->request->getParam($name);
+		if (is_string($value) === false || $value === '') {
+			return null;
+		}
+
+		return $value;
+	}//end textParam()
+
+	/**
+	 * The requested granularity: day, week or month, else day.
+	 *
+	 * @return string
+	 */
+	private function granularity(): string {
 		$granularity = (string)($this->request->getParam('granularity', 'day'));
 		if (in_array($granularity, ['day', 'week', 'month'], true) === false) {
-			$granularity = 'day';
+			return 'day';
 		}
 
-		if (is_string($from) === false || $from === '') {
-			$from = null;
-		}
-
-		if (is_string($to) === false || $to === '') {
-			$to = null;
-		}
-
-		return [$from, $to, $granularity];
-	}//end readRange()
+		return $granularity;
+	}//end granularity()
 
 	/**
 	 * Require an authenticated user; return the user id, or null when absent.

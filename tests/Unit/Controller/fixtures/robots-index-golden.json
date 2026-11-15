@@ -1,0 +1,361 @@
+{
+    "no settings": {
+        "answer": {
+            "status": 500,
+            "text": "T:Could not fetch settings",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": []
+    },
+    "no register": {
+        "answer": {
+            "status": 500,
+            "text": "T:Could not fetch settings",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": []
+    },
+    "no schema": {
+        "answer": {
+            "status": 500,
+            "text": "T:Could not fetch settings",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": []
+    },
+    "register null": {
+        "answer": {
+            "status": 500,
+            "text": "T:Could not fetch settings",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": []
+    },
+    "configuration a string": {
+        "answer": {
+            "status": 500,
+            "text": "T:Could not fetch settings",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": []
+    },
+    "no results key": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "no catalogues": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "one catalogue, two categories": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/woo/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/woo/sitemaps/c2\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "no categories": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "trailing slashes on the base url": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.org/apps/opencatalogi/api/woo/sitemaps/c1\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "empty base url": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: /apps/opencatalogi/api/woo/sitemaps/c1\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "slug null": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/ok/sitemaps/c1\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "slug empty": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "slug an int": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "no getObject": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/ok/sitemaps/c1\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "hasWooSitemap false": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "hasWooSitemap as text": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "hasWooSitemap as one": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "hasWooSitemap missing": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "object as an object": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/obj/sitemaps/c1\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "three catalogues": {
+        "answer": {
+            "status": 200,
+            "text": "User-agent: *\nAllow: /apps/opencatalogi/api/\nAllow: /index.php/apps/opencatalogi/api/\nSitemap: https://example.com/apps/opencatalogi/api/a/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/a/sitemaps/c2\nSitemap: https://example.com/apps/opencatalogi/api/c/sitemaps/c1\nSitemap: https://example.com/apps/opencatalogi/api/c/sitemaps/c2\n",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": [
+            {
+                "query": {
+                    "@self": {
+                        "register": "reg-1",
+                        "schema": "sch-1"
+                    },
+                    "hasWooSitemap": true
+                },
+                "_multitenancy": false
+            }
+        ]
+    },
+    "openregister missing": {
+        "answer": {
+            "threw": "RuntimeException",
+            "message": "OpenRegister service is not available."
+        },
+        "searched": []
+    },
+    "openregister missing, no settings": {
+        "answer": {
+            "status": 500,
+            "text": "T:Could not fetch settings",
+            "type": "text/plain; charset=utf-8"
+        },
+        "searched": []
+    }
+}

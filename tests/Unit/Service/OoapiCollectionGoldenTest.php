@@ -79,6 +79,7 @@ class OoapiCollectionGoldenTest extends TestCase {
 			'resource found' => ['getResource', [$cat, 'reg-1', '11', 'course-1', 'courseId']],
 			'resource of another catalog' => ['getResource', [$cat, 'reg-1', '11', 'course-foreign', 'courseId']],
 			'resource of another schema' => ['getResource', [$cat, 'reg-1', '11', 'course-otherschema', 'courseId']],
+			'resource in another register' => ['getResource', [$cat, 'reg-1', '11', 'course-otherregister', 'courseId']],
 			'resource on unannotated schema' => ['getResource', [$cat, 'reg-1', '15', 'course-plain', 'courseId']],
 			'resource missing' => ['getResource', [$cat, 'reg-1', '11', 'missing', 'courseId']],
 			'resource lookup fails' => ['getResource', [$cat, 'reg-1', '11', 'broken', 'courseId']],
@@ -101,8 +102,8 @@ class OoapiCollectionGoldenTest extends TestCase {
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param string            $method The service method.
-	 * @param array<int, mixed> $args   Its arguments.
+	 * @param string $method The service method.
+	 * @param array<int, mixed> $args Its arguments.
 	 *
 	 * @return void
 	 */
@@ -129,8 +130,8 @@ class OoapiCollectionGoldenTest extends TestCase {
 	/**
 	 * Call a read with the case's arguments.
 	 *
-	 * @param string            $method The service method.
-	 * @param array<int, mixed> $args   Its arguments.
+	 * @param string $method The service method.
+	 * @param array<int, mixed> $args Its arguments.
 	 *
 	 * @return mixed The answer.
 	 */
@@ -183,12 +184,13 @@ class OoapiCollectionGoldenTest extends TestCase {
 			function (string|int $id, array $_extend): ?\OCA\OpenRegister\Db\ObjectEntity {
 				$this->calls[] = ['find' => $id];
 				$known = [
-					'course-1' => [['catalog' => 'catalog-1', 'code' => 'INF101', 'name' => 'Course'], '11'],
-					'course-foreign' => [['catalog' => 'catalog-2', 'code' => 'X'], '11'],
-					'course-otherschema' => [['catalog' => 'catalog-1', 'code' => 'Y'], '12'],
-					'course-plain' => [['catalog' => 'catalog-1', 'code' => 'Z'], '15'],
-					'course-nocat' => [['code' => 'N'], '11'],
-					'org-1' => [['name' => 'Universiteit'], '14'],
+					'course-1' => [['catalog' => 'catalog-1', 'code' => 'INF101', 'name' => 'Course'], '11', 'reg-1'],
+					'course-foreign' => [['catalog' => 'catalog-2', 'code' => 'X'], '11', 'reg-1'],
+					'course-otherschema' => [['catalog' => 'catalog-1', 'code' => 'Y'], '12', 'reg-1'],
+					'course-otherregister' => [['catalog' => 'catalog-1', 'code' => 'R'], '11', 'reg-9'],
+					'course-plain' => [['catalog' => 'catalog-1', 'code' => 'Z'], '15', 'reg-1'],
+					'course-nocat' => [['code' => 'N'], '11', 'reg-1'],
+					'org-1' => [['name' => 'Universiteit'], '14', 'reg-org'],
 				];
 				if ($id === 'broken') {
 					throw new \RuntimeException('lookup failed');
@@ -202,6 +204,7 @@ class OoapiCollectionGoldenTest extends TestCase {
 				$entity->setObject($known[$id][0]);
 				$entity->setUuid((string)$id);
 				$entity->setSchema($known[$id][1]);
+				$entity->setRegister($known[$id][2]);
 
 				return $entity;
 			}

@@ -50,8 +50,8 @@ class RetentionQueue {
 	/**
 	 * The search for publications whose term ends within the warning window.
 	 *
-	 * @param array $scope      The publication register and schema.
-	 * @param int   $windowDays The warning window in days.
+	 * @param array $scope The publication register and schema.
+	 * @param int $windowDays The warning window in days.
 	 *
 	 * @return array<string, mixed> The query.
 	 *

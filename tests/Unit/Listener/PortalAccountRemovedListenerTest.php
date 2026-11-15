@@ -19,7 +19,7 @@ declare(strict_types=1);
 
 namespace Unit\Listener;
 
-require_once __DIR__.'/../Service/Portal/FakePortalObjectStore.php';
+require_once __DIR__ . '/../Service/Portal/FakePortalObjectStore.php';
 
 use OCA\OpenCatalogi\Listener\PortalAccountRemovedListener;
 use OCA\OpenCatalogi\Service\Portal\CitizenCollectionService;
@@ -68,8 +68,8 @@ class PortalAccountRemovedListenerTest extends TestCase {
 	/**
 	 * A real OpenRegister entity.
 	 *
-	 * @param string               $schema The schema id.
-	 * @param array<string, mixed> $data   The object.
+	 * @param string $schema The schema id.
+	 * @param array<string, mixed> $data The object.
 	 *
 	 * @return ObjectEntity
 	 */
@@ -90,6 +90,25 @@ class PortalAccountRemovedListenerTest extends TestCase {
 
 		$this->assertSame(['c3'], array_keys($this->store->objects['collection']));
 		$this->assertSame([], $this->store->objects['savedSearch']);
+	}
+
+	public function testARemovalThatChangesTheSubjectDeletesNothing(): void {
+		$this->listener->handle(new ObjectUpdatedEvent(
+			$this->entity('41', ['subjectRef' => 'subject-2', 'status' => 'removed']),
+			$this->entity('41', ['subjectRef' => 'subject-1', 'status' => 'active'])
+		));
+
+		$this->assertCount(3, $this->store->objects['collection']);
+		$this->assertCount(1, $this->store->objects['savedSearch']);
+	}
+
+	public function testARemovalWithoutASubjectUsesTheStoredOne(): void {
+		$this->listener->handle(new ObjectUpdatedEvent(
+			$this->entity('41', ['status' => 'removed']),
+			$this->entity('41', ['subjectRef' => 'subject-1', 'status' => 'active'])
+		));
+
+		$this->assertSame(['c3'], array_keys($this->store->objects['collection']));
 	}
 
 	public function testOtherUpdatesChangeNothing(): void {

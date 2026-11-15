@@ -28,7 +28,12 @@ use DateTimeInterface;
 use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\DepublicationController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -44,6 +49,12 @@ use RuntimeException;
  *
  * @covers \OCA\OpenCatalogi\Controller\DepublicationController
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses   \OCA\OpenCatalogi\Controller\ForwardsRegisterAccess
+ * @uses   \OCA\OpenCatalogi\Controller\PublicationTransitions
+ * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
+ * @uses   \OCA\OpenCatalogi\Service\ObjectInPair
+ * @uses   \OCA\OpenCatalogi\Service\Publication\PublicationStateService
  */
 class DepublicationGoldenTest extends TestCase {
 
@@ -66,7 +77,7 @@ class DepublicationGoldenTest extends TestCase {
 		$ack = ['depublication' => ' d-1 ', 'channel' => ' plooi ', 'answer' => ' gone '];
 
 		return [
-			'depublish' => [['action' => 'depublish', 'params' => ['publication' => $publication, 'channels' => ['plooi', 7], 'reason' => '  wrong  ']]],
+			'depublish' => [['action' => 'depublish', 'stored' => $publication + ['depublicationDate' => '2021-01-01T00:00:00+00:00'], 'params' => ['publication' => $publication, 'channels' => ['plooi', 7], 'reason' => '  wrong  ']]],
 			'depublish ignores a forged depublishedBy' => [['action' => 'depublish', 'params' => ['publication' => $publication, 'depublishedBy' => 'mallory', 'requestedBy' => 'mallory', 'userId' => 'mallory']]],
 			'depublish ignores a depublishedBy inside the publication' => [['action' => 'depublish', 'params' => ['publication' => $publication + ['depublishedBy' => 'mallory'], 'depublishedBy' => 'mallory', 'userId' => 'mallory']]],
 			'depublish without a session user' => [['action' => 'depublish', 'user' => null, 'params' => ['publication' => $publication]]],
@@ -136,6 +147,24 @@ class DepublicationGoldenTest extends TestCase {
 	}//end testActionMatchesTheRecording()
 
 	/**
+	 * An unset register answers 503 with a detail that names the setting and holds no server path.
+	 *
+	 * @return void
+	 */
+	public function testAnUnsetRegisterAnswersWithoutAServerPath(): void {
+		$case = ['action' => 'depublish', 'fail' => 'config', 'params' => ['publication' => ['id' => 'p-1']]];
+		$response = $this->controller(case: $case)->depublish();
+		$detail = (string)($response->getData()['detail'] ?? '');
+
+		$this->assertSame(expected: 503, actual: $response->getStatus());
+		$this->assertSame(expected: 'register_not_configured', actual: $response->getData()['error']);
+		$this->assertStringContainsString(needle: 'publication_register', haystack: $detail);
+		$this->assertStringNotContainsString(needle: '.php', haystack: $detail);
+		$this->assertStringNotContainsString(needle: dirname(path: __DIR__, levels: 3), haystack: $detail);
+
+	}//end testAnUnsetRegisterAnswersWithoutAServerPath()
+
+	/**
 	 * The controller over recording doubles for one case.
 	 *
 	 * @param array<string, mixed> $case The case.
@@ -186,7 +215,12 @@ class DepublicationGoldenTest extends TestCase {
 			}
 		);
 
-		return new DepublicationController('opencatalogi', $request, $l10n, $session, $this->service(case: $case), $container, $objects);
+		$service = $this->service(case: $case);
+		$registers = new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $objects);
+
+		$transitions = new PublicationTransitions(new PublicationStateService(), $service, $container, $registers);
+
+		return new DepublicationController('opencatalogi', $request, $l10n, $session, $service, $transitions);
 	}//end controller()
 
 	/**
@@ -206,8 +240,8 @@ class DepublicationGoldenTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, mixed $register = null, mixed $schema = null): array {
-				$this->log[] = ['find' => [$id, $register, $schema]];
+			public function find(string $id, mixed $register = null, mixed $schema = null, bool $_rbac = true): array {
+				$this->log[] = ['find' => [$id, $register, $schema, $_rbac]];
 				if (($this->case['fail'] ?? null) === 'find') {
 					throw new RuntimeException('no such object');
 				}
@@ -219,8 +253,8 @@ class DepublicationGoldenTest extends TestCase {
 				return ($this->case['stored'] ?? ['id' => $id, 'withdrawals' => [['channel' => 'koop2'], ['channel' => 'plooi']]]);
 			}
 
-			public function saveObject(array $object, array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null): array {
-				$this->log[] = ['save' => [$object, $extend, $register, $schema, $uuid]];
+			public function saveObject(array $object, array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_unowned = false): array {
+				$this->log[] = ['save' => [$object, $extend, $register, $schema, $uuid, $_rbac, $_unowned]];
 				if (($this->case['fail'] ?? null) === 'save') {
 					throw new RuntimeException('save broke');
 				}
