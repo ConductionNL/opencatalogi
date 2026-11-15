@@ -690,6 +690,146 @@ class SitemapServiceTest extends TestCase {
 		$this->assertArrayNotHasKey('diwoo:titelcollectie', $doc);
 	}
 
+	/**
+	 * Woo-compliance 4.3: a file with neither a modified nor a published time
+	 * takes the publication's update as its lastmod.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 */
+	public function testAFileWithoutTimesTakesThePublicationsUpdateAsLastmod(): void {
+		$publication = ['id' => 'pub-4', 'title' => 'Besluit', '@self' => ['updated' => '2024-07-01 09:00:00']];
+		$file = ['downloadUrl' => 'https://example.com/files/b.pdf', 'extension' => 'pdf'];
+
+		$result = $this->getPrivateMethod(methodName: 'mapDiwooDocument')->invoke($this->service, $publication, $file);
+
+		$this->assertSame(expected: '2024-07-01T09:00:00+00:00', actual: $result['lastmod']);
+	}
+
+	/**
+	 * Woo-compliance 4.4, as the publisher is now drawn: the publication's owner
+	 * and the file's owner never become the publisher; without an organisation the
+	 * publisher text is empty and the gap is reported.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 */
+	public function testNoOwnerEverBecomesThePublisher(): void {
+		$publication = ['id' => 'pub-5', 'title' => 'Besluit', '@self' => ['owner' => 'alice']];
+		$file = ['downloadUrl' => 'https://example.com/files/c.pdf', 'extension' => 'pdf', 'owner' => 'bob'];
+
+		$violations = [];
+		$result = $this->getPrivateMethod(methodName: 'mapDiwooDocument')->invokeArgs($this->service, [$publication, $file, &$violations]);
+
+		$publisher = $result['diwoo:Document']['diwoo:DiWoo']['diwoo:publisher'];
+		$this->assertSame(expected: '', actual: $publisher['#text']);
+		$this->assertArrayNotHasKey(key: '@resource', array: $publisher);
+		$this->assertContains(
+			needle: ['documentLoc' => 'https://example.com/files/c.pdf', 'axis' => 'publisher', 'reason' => 'organisation has no name'],
+			haystack: $violations
+		);
+	}
+
+	/**
+	 * Woo-compliance 4.5: a file without a download URL maps to an empty loc
+	 * rather than throwing; the sitemap page itself lists only files that have one.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 */
+	public function testAFileWithoutADownloadUrlMapsToAnEmptyLoc(): void {
+		$publication = ['id' => 'pub-6', 'title' => 'Besluit', '@self' => ['updated' => '2024-07-01 09:00:00']];
+
+		$result = $this->getPrivateMethod(methodName: 'mapDiwooDocument')->invoke($this->service, $publication, ['extension' => 'pdf']);
+
+		$this->assertSame(expected: '', actual: $result['loc']);
+		$this->assertSame(expected: ['loc', 'lastmod', 'diwoo:Document'], actual: array_keys($result));
+	}
+
+	/**
+	 * Woo-compliance 4.7: the format text is the lowercase extension and its
+	 * resource the uppercase EU file type, whatever case the file carries.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 */
+	public function testTheFormatTextIsTheLowercaseExtension(): void {
+		$publication = ['id' => 'pub-7', 'title' => 'Besluit', '@self' => []];
+		$file = ['downloadUrl' => 'https://example.com/files/D.PDF', 'extension' => 'PDF'];
+
+		$document = $this->getPrivateMethod(methodName: 'mapDiwooDocument')->invoke($this->service, $publication, $file);
+		$format = $document['diwoo:Document']['diwoo:DiWoo']['diwoo:format'];
+
+		$this->assertSame(expected: 'pdf', actual: $format['#text']);
+		$this->assertSame(expected: 'http://publications.europa.eu/resource/authority/file-type/PDF', actual: $format['@resource']);
+	}
+
+	/**
+	 * Woo-compliance 4.8: a publication with three downloadable files gives three
+	 * documents on its sitemap page, one per file, in file order.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-compliance/specs/woo-compliance/spec.md
+	 */
+	public function testEachFileOfAPublicationIsOneDocument(): void {
+		$this->setupValidSitemapContext(registerId: 'reg-woo', schemaId: 'sch-1');
+		$catalogObj = $this->createCatalogObj(schemas: ['sch-1']);
+		$pubObject = $this->createSerializableObject(data: [
+			'id' => 'pub-8',
+			'title' => 'Besluit met bijlagen',
+			'@self' => ['created' => '2024-01-01', 'updated' => '2024-06-01'],
+		]);
+
+		$files = [];
+		foreach (['besluit', 'bijlage-1', 'bijlage-2'] as $name) {
+			$files[] = ['downloadUrl' => "https://example.com/files/$name.pdf", 'extension' => 'pdf', 'published' => '2024-03-01'];
+		}
+
+		$fileService = $this->createMock(originalClassName: \OCA\OpenRegister\Service\FileService::class);
+		$fileService->method('getFiles')->willReturn(['some-file-data']);
+		$fileService->method('formatFiles')->willReturn(['results' => $files]);
+
+		$objectService = $this->createMock(originalClassName: \OCA\OpenRegister\Service\ObjectService::class);
+		$objectService->method('searchObjectsPaginated')
+			->willReturnCallback(static function (array $query = []) use ($pubObject, $catalogObj): array {
+				if (isset($query['slug']) === true) {
+					return ['results' => [$catalogObj]];
+				}
+
+				return ['results' => [$pubObject]];
+			});
+
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+		$this->container->method('get')
+			->willReturnCallback(static function ($id) use ($objectService, $fileService) {
+				return match ($id) {
+					'OCA\OpenRegister\Service\ObjectService' => $objectService,
+					'OCA\OpenRegister\Service\FileService' => $fileService,
+					default => null,
+				};
+			});
+
+		$result = $this->service->buildSitemap('my-catalog', 'sitemapindex-diwoo-infocat001.xml', 1);
+
+		$dom = new \DOMDocument();
+		$dom->loadXML($result->render());
+		$locs = [];
+		foreach ($dom->getElementsByTagNameNS(StandardsVersionService::SITEMAP_NAMESPACE, 'url') as $url) {
+			$locs[] = $url->getElementsByTagNameNS(StandardsVersionService::SITEMAP_NAMESPACE, 'loc')->item(0)->textContent;
+		}
+
+		$this->assertSame(
+			expected: ['https://example.com/files/besluit.pdf', 'https://example.com/files/bijlage-1.pdf', 'https://example.com/files/bijlage-2.pdf'],
+			actual: $locs
+		);
+		$this->assertSame(expected: 3, actual: $dom->getElementsByTagName('DiWoo')->length);
+	}
+
 	// ──────────────────────────────────────────────────────────
 	// buildSitemapIndex
 	// ──────────────────────────────────────────────────────────

@@ -48,6 +48,7 @@ use Mpdf\Output\Destination;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
 use OCA\OpenCatalogi\Service\Woo\BatchPublicationWriter;
 use OCA\OpenCatalogi\Service\Woo\DocumentRedactor;
+use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
 use OCP\IL10N;
 use OCP\IUserSession;
 use Psr\Log\LoggerInterface;
@@ -591,7 +592,9 @@ class WooService implements TransparencyWorkflowServiceInterface {
 		$data['assessedAt'] = $now;
 
 		// A partly public document is published only as its verified redacted version (woo-redaction-pipeline).
+		$before = $data;
 		$data = array_merge($data, $this->redactor->forAssessment(assessment: $data, batchId: $batchId, fallbackOwner: $assessedBy));
+		$data = self::withoutStaleVerification(before: $before, after: $data);
 
 		$saved = $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
 
@@ -601,6 +604,113 @@ class WooService implements TransparencyWorkflowServiceInterface {
 
 		return $saved;
 	}//end updateAssessment()
+
+	/**
+	 * Clear a person's verification when the redaction it was given to changed.
+	 *
+	 * @param array<string, mixed> $before The assessment before this save's redaction.
+	 * @param array<string, mixed> $after The assessment with this save's redaction.
+	 *
+	 * @return array<string, mixed> The assessment to store.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private static function withoutStaleVerification(array $before, array $after): array {
+		foreach (['anonymizedDocument', 'anonymizedDocumentHash', 'redactionStatus'] as $field) {
+			if ((string)($before[$field] ?? '') !== (string)($after[$field] ?? '')) {
+				$after['redactionVerifiedBy'] = '';
+				$after['redactionVerifiedAt'] = null;
+				return $after;
+			}
+		}
+
+		return $after;
+	}//end withoutStaleVerification()
+
+	/**
+	 * Record that a person checked the redacted version of a partly public
+	 * document of this batch.
+	 *
+	 * Refused unless the redaction is mechanically verified and its redacted
+	 * file still carries the recorded hash; nothing is stored then.
+	 *
+	 * @param string $batchId The batch the document belongs to.
+	 * @param string $assessmentId The document-assessment object uuid.
+	 *
+	 * @return array<string, mixed> The updated assessment object.
+	 *
+	 * @throws RedactionNotVerifiableException When the redaction cannot be marked verified.
+	 * @throws RuntimeException When the batch or assessment is missing or OpenRegister is unavailable.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function verifyRedaction(string $batchId, string $assessmentId): array {
+		$objectService = $this->getObjectService();
+		$register = $this->getRegister();
+		$assessmentSchema = $this->getAssessmentSchema();
+		if ($objectService === null || $register === null || $assessmentSchema === null) {
+			throw new RuntimeException('OpenRegister WOO register/schema unavailable');
+		}
+
+		$data = $this->batchAssessment(objectService: $objectService, batchId: $batchId, assessmentId: $assessmentId);
+		$uid = $this->signedInUid();
+
+		$refusal = $this->redactor->verificationRefusal(assessment: $data, batchId: $batchId, fallbackOwner: $uid);
+		if ($refusal !== null) {
+			throw new RedactionNotVerifiableException(message: $refusal);
+		}
+
+		$data['redactionVerifiedBy'] = $uid;
+		$data['redactionVerifiedAt'] = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
+
+		return $this->plainArray(object: $this->save(objectService: $objectService, register: $register, schema: $assessmentSchema, data: $data));
+	}//end verifyRedaction()
+
+	/**
+	 * An assessment of this batch, so a path cannot reach another batch's document.
+	 *
+	 * @param object $objectService The OR ObjectService.
+	 * @param string $batchId The batch uuid.
+	 * @param string $assessmentId The assessment uuid.
+	 *
+	 * @return array<string, mixed> The assessment.
+	 *
+	 * @throws RuntimeException When either is missing, or the assessment is not the batch's.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function batchAssessment(object $objectService, string $batchId, string $assessmentId): array {
+		try {
+			$batch = $this->plainArray(object: $objectService->find($batchId));
+			$data = $this->plainArray(object: $objectService->find($assessmentId));
+		} catch (\Throwable $e) {
+			throw new RuntimeException('Assessment not found: ' . $assessmentId);
+		}
+
+		if (in_array($assessmentId, array_map('strval', (array)($batch['documents'] ?? [])), true) === false) {
+			throw new RuntimeException('Assessment not found: ' . $assessmentId);
+		}
+
+		return $data;
+	}//end batchAssessment()
+
+	/**
+	 * The signed-in officer's user id; a person's check needs a person.
+	 *
+	 * @return string
+	 *
+	 * @throws RuntimeException When nobody is signed in.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	private function signedInUid(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			throw new RuntimeException('Not logged in');
+		}
+
+		return $user->getUID();
+	}//end signedInUid()
 
 	/**
 	 * Ask the deck leaf to move the card(s) linked to an assessment object into

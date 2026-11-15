@@ -286,6 +286,11 @@
     ],
     [
         "alias",
+        "OCA\\OpenCatalogi\\Contract\\PublishedRecordViewInterface",
+        "OCA\\OpenCatalogi\\Service\\Publication\\PublishedRecordView"
+    ],
+    [
+        "alias",
         "OCA\\OpenCatalogi\\Contract\\SitemapServiceInterface",
         "OCA\\OpenCatalogi\\Service\\SitemapService"
     ],
