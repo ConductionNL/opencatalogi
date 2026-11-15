@@ -23,6 +23,7 @@ namespace Unit\Service\Portal;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Portal\PortalObjectStore;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\UsesClass;
@@ -250,10 +251,14 @@ final class PortalObjectStoreTest extends TestCase {
 		$service = $this->service(['deleteObject' => 1]);
 
 		self::assertTrue($this->store($service)->delete('collection', 'c-1'));
-		self::assertSame(
-			['uuid' => 'c-1', 'register' => 'publication', 'schema' => 'collection', '_rbac' => false, '_multitenancy' => false],
-			$service->calls[0][1]
-		);
+		$args = $service->calls[0][1];
+		self::assertSame(['deletion', '_rbac', '_multitenancy'], array_keys($args));
+		self::assertInstanceOf(ObjectDeletion::class, $args['deletion']);
+		self::assertSame('c-1', $args['deletion']->uuid);
+		self::assertSame('publication', $args['deletion']->target->register);
+		self::assertSame('collection', $args['deletion']->target->schema);
+		self::assertFalse($args['_rbac']);
+		self::assertFalse($args['_multitenancy']);
 		self::assertFalse($this->store($this->service(['deleteObject' => null]))->delete('collection', 'c-1'));
 	}//end testDeleteAnswersABoolean()
 
