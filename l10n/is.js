@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Útgefandi",
         "The metadata quality could not be loaded": "Ekki tókst að hlaða gæðum lýsigagna",
         "{score} of 100": "{score} af 100",
-        "Could not compute the metadata quality.": "Ekki tókst að reikna gæði lýsigagna."
+        "Could not compute the metadata quality.": "Ekki tókst að reikna gæði lýsigagna.",
+        "Open at the source": "Opna hjá upprunanum"
     },
     "nplurals=2; plural=(n != 1);"
 )

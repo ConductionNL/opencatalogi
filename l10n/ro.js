@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Editor",
         "The metadata quality could not be loaded": "Calitatea metadatelor nu a putut fi încărcată",
         "{score} of 100": "{score} din 100",
-        "Could not compute the metadata quality.": "Calitatea metadatelor nu a putut fi calculată."
+        "Could not compute the metadata quality.": "Calitatea metadatelor nu a putut fi calculată.",
+        "Open at the source": "Deschide la sursă"
     },
     "nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100>0 && n%100<20)) ? 1 : 2);"
 )

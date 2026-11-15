@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Izdajatelj",
         "The metadata quality could not be loaded": "Kakovosti metapodatkov ni bilo mogoče naložiti",
         "{score} of 100": "{score} od 100",
-        "Could not compute the metadata quality.": "Kakovosti metapodatkov ni bilo mogoče izračunati."
+        "Could not compute the metadata quality.": "Kakovosti metapodatkov ni bilo mogoče izračunati.",
+        "Open at the source": "Odpri pri viru"
     },
     "nplurals=2; plural=(n != 1);"
 )

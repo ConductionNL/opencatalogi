@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Julkaisija",
         "The metadata quality could not be loaded": "Metatietojen laatua ei voitu ladata",
         "{score} of 100": "{score}/100",
-        "Could not compute the metadata quality.": "Metatietojen laatua ei voitu laskea."
+        "Could not compute the metadata quality.": "Metatietojen laatua ei voitu laskea.",
+        "Open at the source": "Avaa lähteessä"
     },
     "nplurals=2; plural=(n != 1);"
 )

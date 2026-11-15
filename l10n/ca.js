@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Editor",
         "The metadata quality could not be loaded": "No s'ha pogut carregar la qualitat de les metadades",
         "{score} of 100": "{score} de 100",
-        "Could not compute the metadata quality.": "No s'ha pogut calcular la qualitat de les metadades."
+        "Could not compute the metadata quality.": "No s'ha pogut calcular la qualitat de les metadades.",
+        "Open at the source": "Obre a l'origen"
     },
     "nplurals=2; plural=(n != 1);"
 )

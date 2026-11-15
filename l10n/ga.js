@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Foilsitheoir",
         "The metadata quality could not be loaded": "Níorbh fhéidir cáilíocht na meiteashonraí a lódáil",
         "{score} of 100": "{score} as 100",
-        "Could not compute the metadata quality.": "Níorbh fhéidir cáilíocht na meiteashonraí a ríomh."
+        "Could not compute the metadata quality.": "Níorbh fhéidir cáilíocht na meiteashonraí a ríomh.",
+        "Open at the source": "Oscail ag an bhfoinse"
     },
     "nplurals=2; plural=(n != 1);"
 )

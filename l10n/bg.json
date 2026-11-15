@@ -760,7 +760,8 @@
         "Publisher": "Издател",
         "The metadata quality could not be loaded": "Качеството на метаданните не можа да бъде заредено",
         "{score} of 100": "{score} от 100",
-        "Could not compute the metadata quality.": "Качеството на метаданните не можа да бъде изчислено."
+        "Could not compute the metadata quality.": "Качеството на метаданните не можа да бъде изчислено.",
+        "Open at the source": "Отваряне при източника"
     },
     "plurals": {}
 }

@@ -1603,7 +1603,8 @@ OC.L10N.register(
         "Publisher": "Uitgever",
         "The metadata quality could not be loaded": "De kwaliteit van de metadata kon niet worden geladen",
         "{score} of 100": "{score} van 100",
-        "Could not compute the metadata quality.": "De kwaliteit van de metadata kon niet worden berekend."
+        "Could not compute the metadata quality.": "De kwaliteit van de metadata kon niet worden berekend.",
+        "Open at the source": "Openen bij de bron"
     },
     "nplurals=2; plural=(n != 1);"
 )

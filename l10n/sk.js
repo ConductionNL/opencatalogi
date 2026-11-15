@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Vydavateľ",
         "The metadata quality could not be loaded": "Kvalitu metadát sa nepodarilo načítať",
         "{score} of 100": "{score} zo 100",
-        "Could not compute the metadata quality.": "Kvalitu metadát sa nepodarilo vypočítať."
+        "Could not compute the metadata quality.": "Kvalitu metadát sa nepodarilo vypočítať.",
+        "Open at the source": "Otvoriť pri zdroji"
     },
     "nplurals=2; plural=(n != 1);"
 )

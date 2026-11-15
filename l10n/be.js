@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Выдавец",
         "The metadata quality could not be loaded": "Не ўдалося загрузіць якасць метаданых",
         "{score} of 100": "{score} са 100",
-        "Could not compute the metadata quality.": "Не ўдалося вылічыць якасць метаданых."
+        "Could not compute the metadata quality.": "Не ўдалося вылічыць якасць метаданых.",
+        "Open at the source": "Адкрыць у крыніцы"
     },
     "nplurals=2; plural=(n != 1);"
 )

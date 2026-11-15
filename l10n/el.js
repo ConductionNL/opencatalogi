@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Εκδότης",
         "The metadata quality could not be loaded": "Δεν ήταν δυνατή η φόρτωση της ποιότητας των μεταδεδομένων",
         "{score} of 100": "{score} στα 100",
-        "Could not compute the metadata quality.": "Δεν ήταν δυνατός ο υπολογισμός της ποιότητας των μεταδεδομένων."
+        "Could not compute the metadata quality.": "Δεν ήταν δυνατός ο υπολογισμός της ποιότητας των μεταδεδομένων.",
+        "Open at the source": "Άνοιγμα στην πηγή"
     },
     "nplurals=2; plural=(n != 1);"
 )

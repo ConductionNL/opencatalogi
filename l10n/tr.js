@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Yayıncı",
         "The metadata quality could not be loaded": "Üst veri kalitesi yüklenemedi",
         "{score} of 100": "{score} / 100",
-        "Could not compute the metadata quality.": "Üst veri kalitesi hesaplanamadı."
+        "Could not compute the metadata quality.": "Üst veri kalitesi hesaplanamadı.",
+        "Open at the source": "Kaynakta aç"
     },
     "nplurals=2; plural=(n != 1);"
 )

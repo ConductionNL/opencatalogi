@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Editur",
         "The metadata quality could not be loaded": "La qualitad da las metadatas n'ha betg pudì vegnir chargiada",
         "{score} of 100": "{score} da 100",
-        "Could not compute the metadata quality.": "La qualitad da las metadatas n'ha betg pudì vegnir calculada."
+        "Could not compute the metadata quality.": "La qualitad da las metadatas n'ha betg pudì vegnir calculada.",
+        "Open at the source": "Avrir tar la funtauna"
     },
     "nplurals=2; plural=(n != 1);"
 )

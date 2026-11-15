@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Pubblikatur",
         "The metadata quality could not be loaded": "Il-kwalità tal-metadata ma setgħetx titgħabba",
         "{score} of 100": "{score} minn 100",
-        "Could not compute the metadata quality.": "Il-kwalità tal-metadata ma setgħetx tiġi kkalkulata."
+        "Could not compute the metadata quality.": "Il-kwalità tal-metadata ma setgħetx tiġi kkalkulata.",
+        "Open at the source": "Iftaħ fis-sors"
     },
     "nplurals=2; plural=(n != 1);"
 )

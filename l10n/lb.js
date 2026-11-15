@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Editeur",
         "The metadata quality could not be loaded": "D'Metadatequalitéit konnt net geluede ginn",
         "{score} of 100": "{score} vun 100",
-        "Could not compute the metadata quality.": "D'Metadatequalitéit konnt net berechent ginn."
+        "Could not compute the metadata quality.": "D'Metadatequalitéit konnt net berechent ginn.",
+        "Open at the source": "Bei der Quell opmaachen"
     },
     "nplurals=2; plural=(n != 1);"
 )

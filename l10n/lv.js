@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Izdevējs",
         "The metadata quality could not be loaded": "Metadatu kvalitāti neizdevās ielādēt",
         "{score} of 100": "{score} no 100",
-        "Could not compute the metadata quality.": "Metadatu kvalitāti neizdevās aprēķināt."
+        "Could not compute the metadata quality.": "Metadatu kvalitāti neizdevās aprēķināt.",
+        "Open at the source": "Atvērt avotā"
     },
     "nplurals=2; plural=(n != 1);"
 )

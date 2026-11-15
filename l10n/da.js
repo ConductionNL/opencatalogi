@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Udgiver",
         "The metadata quality could not be loaded": "Metadatakvaliteten kunne ikke indlæses",
         "{score} of 100": "{score} af 100",
-        "Could not compute the metadata quality.": "Metadatakvaliteten kunne ikke beregnes."
+        "Could not compute the metadata quality.": "Metadatakvaliteten kunne ikke beregnes.",
+        "Open at the source": "Åbn ved kilden"
     },
     "nplurals=2; plural=(n != 1);"
 )

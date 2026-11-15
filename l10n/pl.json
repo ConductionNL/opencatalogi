@@ -760,7 +760,8 @@
         "Publisher": "Wydawca",
         "The metadata quality could not be loaded": "Nie udało się wczytać jakości metadanych",
         "{score} of 100": "{score} na 100",
-        "Could not compute the metadata quality.": "Nie udało się obliczyć jakości metadanych."
+        "Could not compute the metadata quality.": "Nie udało się obliczyć jakości metadanych.",
+        "Open at the source": "Otwórz u źródła"
     },
     "plurals": {}
 }

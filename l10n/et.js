@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Väljaandja",
         "The metadata quality could not be loaded": "Metaandmete kvaliteeti ei õnnestunud laadida",
         "{score} of 100": "{score} / 100",
-        "Could not compute the metadata quality.": "Metaandmete kvaliteeti ei õnnestunud arvutada."
+        "Could not compute the metadata quality.": "Metaandmete kvaliteeti ei õnnestunud arvutada.",
+        "Open at the source": "Ava allikas"
     },
     "nplurals=2; plural=(n != 1);"
 )

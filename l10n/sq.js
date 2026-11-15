@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Botuesi",
         "The metadata quality could not be loaded": "Cilësia e meta të dhënave nuk mund të ngarkohej",
         "{score} of 100": "{score} nga 100",
-        "Could not compute the metadata quality.": "Cilësia e meta të dhënave nuk mund të llogaritej."
+        "Could not compute the metadata quality.": "Cilësia e meta të dhënave nuk mund të llogaritej.",
+        "Open at the source": "Hap në burim"
     },
     "nplurals=2; plural=(n != 1);"
 )

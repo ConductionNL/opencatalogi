@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Издавач",
         "The metadata quality could not be loaded": "Квалитет метаподатака није могуће учитати",
         "{score} of 100": "{score} од 100",
-        "Could not compute the metadata quality.": "Квалитет метаподатака није могуће израчунати."
+        "Could not compute the metadata quality.": "Квалитет метаподатака није могуће израчунати.",
+        "Open at the source": "Отвори на извору"
     },
     "nplurals=2; plural=(n != 1);"
 )

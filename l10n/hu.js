@@ -761,7 +761,8 @@ OC.L10N.register(
         "Publisher": "Kiadó",
         "The metadata quality could not be loaded": "A metaadat-minőséget nem sikerült betölteni",
         "{score} of 100": "{score} / 100",
-        "Could not compute the metadata quality.": "A metaadat-minőséget nem sikerült kiszámítani."
+        "Could not compute the metadata quality.": "A metaadat-minőséget nem sikerült kiszámítani.",
+        "Open at the source": "Megnyitás a forrásnál"
     },
     "nplurals=2; plural=(n != 1);"
 )
