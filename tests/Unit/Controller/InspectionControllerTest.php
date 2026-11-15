@@ -44,6 +44,8 @@ use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Unit tests for InspectionController.
@@ -155,7 +157,9 @@ class InspectionControllerTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				$this->reads[] = ['id' => $id, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac];
 				if ($this->inspection === null) {
 					throw new \RuntimeException('Object not found');
@@ -461,13 +465,15 @@ class InspectionControllerTest extends TestCase {
 			 */
 			public function saveObject(
 				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
-				bool $_unowned = false,
+				bool $_multitenancy = true
 			): array {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
+				$uuid = $options->uuid ?? '';
+				$_unowned = $options->actor->unowned ?? false;
 				$object['id'] = 'inspection-1';
 				$this->saved[] = $object;
 
@@ -725,7 +731,11 @@ class InspectionControllerTest extends TestCase {
 			 *
 			 * @return array<string, mixed> The envelope.
 			 */
-			public function saveObject(array $object, array $extend = [], string $register = '', string $schema = '', bool $_rbac = true, bool $_unowned = false): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
+				$_unowned = $options->actor->unowned ?? false;
 				return ['id' => 'inspection-7', 'object' => ['termDays' => $object['termDays']]];
 			}
 		};

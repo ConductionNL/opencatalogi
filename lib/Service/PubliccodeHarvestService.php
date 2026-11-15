@@ -41,6 +41,9 @@ use OCA\OpenRegister\Db\FlowRunFilter;
 use OCA\OpenRegister\Db\FlowRunListing;
 use OCA\OpenRegister\Db\FlowRunMapper;
 use OCA\OpenRegister\Db\FlowRunViewer;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
@@ -201,7 +204,13 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function saveShard(array $shard, array $context): string {
 		$synchronization = self::synchronizationFor(definitions: $context['definitions'], shard: $shard);
 		$existing = $this->findIntegriqObject(schema: 'synchronization', slug: (string)$synchronization['slug']);
-		$context['objects']->saveObject(object: $synchronization, register: self::INTEGRIQ_REGISTER, schema: 'synchronization', uuid: $existing);
+		$context['objects']->saveObject(
+			object: $synchronization,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::INTEGRIQ_REGISTER, schema: 'synchronization'),
+				uuid: $existing
+			)
+		);
 
 		if ($existing === null) {
 			return 'created';
@@ -406,7 +415,11 @@ class PubliccodeHarvestService implements PubliccodeHarvestServiceInterface {
 	private function findIntegriqEntity(string $schema, string $slug): ?object {
 		try {
 			$objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
-			$object = $objectService->find(id: $slug, register: self::INTEGRIQ_REGISTER, schema: $schema, _multitenancy: false);
+			$object = $objectService->find(
+				id: $slug,
+				options: new ObjectFindOptions(register: self::INTEGRIQ_REGISTER, schema: $schema),
+				_multitenancy: false
+			);
 		} catch (Throwable) {
 			return null;
 		}

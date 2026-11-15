@@ -35,6 +35,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for OoapiService.
@@ -311,7 +312,10 @@ class OoapiServiceTest extends TestCase {
 		$schemaMapper->method('find')->willReturn($schema);
 
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
-		$objectService->method('find')->with('org-1', [])->willReturn(
+		$objectService->method('find')->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'org-1',
+				'_extend' => [],
+			]))->willReturn(
 			$this->makeObjectEntity(['@self' => ['uuid' => 'org-1'], 'name' => 'Universiteit van Amsterdam'])
 		);
 
@@ -348,8 +352,9 @@ class OoapiServiceTest extends TestCase {
 		$objectService = $this->createMock(\OCA\OpenRegister\Service\ObjectService::class);
 		$objectService->method('find')->willReturnCallback(
 			function (...$arguments) use (&$calls): \OCA\OpenRegister\Db\ObjectEntity {
+				$arguments = LegacyObjectArgs::positional(method: 'find', args: $arguments);
 				$named = [];
-				foreach ((new \ReflectionMethod(\OCA\OpenRegister\Service\ObjectService::class, 'find'))->getParameters() as $index => $parameter) {
+				foreach (LegacyObjectArgs::parameters(\OCA\OpenRegister\Service\ObjectService::class, 'find') as $index => $parameter) {
 					$passed = array_key_exists($index, $arguments);
 					if ($passed === true && ($parameter->isDefaultValueAvailable() === false || $arguments[$index] !== $parameter->getDefaultValue() || $parameter->getName() === '_extend')) {
 						$named[$parameter->getName()] = $arguments[$index];
