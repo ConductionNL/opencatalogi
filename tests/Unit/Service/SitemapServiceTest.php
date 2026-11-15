@@ -782,7 +782,9 @@ class SitemapServiceTest extends TestCase {
 		$pubObject = $this->createSerializableObject(data: [
 			'id' => 'pub-8',
 			'title' => 'Besluit met bijlagen',
-			'@self' => ['created' => '2024-01-01', 'updated' => '2024-06-01'],
+			// A category and a publisher with a TOOI identifier, or every document is held back (REQ-DWP-004).
+			'wooCategory' => 'infocat001',
+			'@self' => ['created' => '2024-01-01', 'updated' => '2024-06-01', 'organisation' => 'org-uuid-1'],
 		]);
 
 		$files = [];
@@ -804,12 +806,18 @@ class SitemapServiceTest extends TestCase {
 				return ['results' => [$pubObject]];
 			});
 
+		$organisations = $this->environmentAwareDouble(\OCA\OpenRegister\Db\OrganisationMapper::class, ['findByUuidFollowingMerge']);
+		$organisations->method('findByUuidFollowingMerge')->willReturn(
+			$this->organisation(name: 'Gemeente Voorbeeld', tooi: 'https://identifier.overheid.nl/tooi/id/gemeente/gm0855')
+		);
+
 		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
 		$this->container->method('get')
-			->willReturnCallback(static function ($id) use ($objectService, $fileService) {
+			->willReturnCallback(static function ($id) use ($objectService, $fileService, $organisations) {
 				return match ($id) {
 					'OCA\OpenRegister\Service\ObjectService' => $objectService,
 					'OCA\OpenRegister\Service\FileService' => $fileService,
+					'OCA\OpenRegister\Db\OrganisationMapper' => $organisations,
 					default => null,
 				};
 			});
