@@ -47,6 +47,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for the auto-publish event handlers.
@@ -177,6 +178,7 @@ class AutoPublishEventsGoldenTest extends TestCase {
 		$objectService->method('searchObjects')->willReturn([$catalog]);
 		$objectService->method('saveObject')->willReturnCallback(
 			function (...$args) use (&$calls) {
+				$args = LegacyObjectArgs::flatten(args: $args);
 				$object = ($args['object'] ?? $args[0]);
 				unset($object['publicationDate']);
 				$calls[] = ['save' => $object, 'uuid' => ($args['uuid'] ?? null), 'register' => ($args['register'] ?? null), 'schema' => ($args['schema'] ?? null)];
