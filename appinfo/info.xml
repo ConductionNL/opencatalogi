@@ -225,6 +225,14 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 			-->
 			<step>OCA\OpenCatalogi\Repair\RecomputeCatalogAccess</step>
 			<!--
+				Writes who may read the OOAPI course, program and offering objects
+				(integration-feed-consumer-credentials 3.1): the enabled feed consumers
+				of the object's catalogue and the instance-wide consumer list. After the
+				register import and the staff access, which may reset the bundled rule.
+				Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\ApplyFeedReadRule</step>
+			<!--
 				Written but never registered, so it had never run once: a class that
 				exists is not a class that runs. gate-98 found it.
 
