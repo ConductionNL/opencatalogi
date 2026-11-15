@@ -13,6 +13,9 @@
  * @version GIT: <git-id>
  *
  * @link https://OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -26,6 +29,8 @@ use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Tester\CommandTester;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Drives the command's reporting, and above all its refusals.
@@ -65,6 +70,7 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 			}
 
 			public function find(int|string $id, ...$rest): object {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				return new class {
 					public function getUuid(): string {
 						return 'entity';
@@ -72,7 +78,8 @@ class AttachDocumentsToPublicationsCommandTest extends TestCase {
 				};
 			}
 
-			public function deleteObject(string $uuid, ...$rest): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false, ...$rest): bool {
+				$uuid = $deletion->uuid;
 				return true;
 			}
 		};

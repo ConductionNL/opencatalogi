@@ -90,20 +90,9 @@ class SetupDemoDataSteps {
 	 * @spec openspec/changes/wizard-dataset-card-load/specs/first-time-setup/spec.md
 	 */
 	public function loadDataset(IRequest $request): JSONResponse {
-		$picked = $this->config->getValueString(AppIdentity::APP_ID, self::DATASET_KEY, '');
-
-		// The card's Load button names its dataset in the body. An older wizard
-		// posts nothing and relies on the pick stored a step earlier. Nothing is
-		// stored before the load succeeds: a failed load must leave the step
-		// open for an operator who asked for data and got none.
-		$posted = $request->getParam('dataset');
-		if ($posted !== null) {
-			$refusal = $this->refuseDataset(value: $posted);
-			if ($refusal !== null) {
-				return $refusal;
-			}
-
-			$picked = (string)$posted;
+		$picked = $this->pickedDataset(request: $request);
+		if ($picked instanceof JSONResponse) {
+			return $picked;
 		}
 
 		// 🔴 NO SILENT DEFAULT. Importing here because the operator clicked Run
@@ -116,16 +105,53 @@ class SetupDemoDataSteps {
 		}
 
 		if ($picked === DemoDataServiceInterface::NONE_DATASET) {
-			$this->config->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
-			$this->config->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
-
-			return new JSONResponse(
-				['success' => true, 'message' => $this->l10n->t('No example data was loaded.')]
-			);
+			return $this->skipExampleData();
 		}
 
 		return $this->installDemoData(dataset: $picked);
 	}//end loadDataset()
+
+	/**
+	 * The dataset to load: the one the card posted, else the stored pick; or
+	 * the refusal of a posted value that is no dataset.
+	 *
+	 * @param IRequest $request The request, for the dataset a card posts.
+	 *
+	 * @return string|JSONResponse The dataset (empty when none is picked), or the refusal.
+	 */
+	private function pickedDataset(IRequest $request): string|JSONResponse {
+		$picked = $this->config->getValueString(AppIdentity::APP_ID, self::DATASET_KEY, '');
+
+		// The card's Load button names its dataset in the body. An older wizard
+		// posts nothing and relies on the pick stored a step earlier. Nothing is
+		// stored before the load succeeds: a failed load must leave the step
+		// open for an operator who asked for data and got none.
+		$posted = $request->getParam('dataset');
+		if ($posted === null) {
+			return $picked;
+		}
+
+		$refusal = $this->refuseDataset(value: $posted);
+		if ($refusal !== null) {
+			return $refusal;
+		}
+
+		return (string)$posted;
+	}//end pickedDataset()
+
+	/**
+	 * Record that the operator chose no example data, and say so.
+	 *
+	 * @return JSONResponse The outcome.
+	 */
+	private function skipExampleData(): JSONResponse {
+		$this->config->setValueString(AppIdentity::APP_ID, self::DATASET_KEY, DemoDataServiceInterface::NONE_DATASET);
+		$this->config->setValueString(AppIdentity::APP_ID, self::DEMO_DATA_DECIDED_KEY, 'skipped');
+
+		return new JSONResponse(
+			['success' => true, 'message' => $this->l10n->t('No example data was loaded.')]
+		);
+	}//end skipExampleData()
 
 	/**
 	 * Refuse a posted dataset id no dataset answers to.

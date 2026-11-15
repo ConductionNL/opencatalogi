@@ -33,7 +33,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
-use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
@@ -46,6 +45,19 @@ use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 class InspectionService implements InspectionServiceInterface {
+
+	/**
+	 * Constructor.
+	 *
+	 * @param TermRoll $roll Rolls the end date off a non-working day, through OpenRegister.
+	 *
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
+	 */
+	public function __construct(
+		private readonly TermRoll $roll,
+	) {
+
+	}//end __construct()
 
 	/**
 	 * Open an inspection on a record, for the term its type declares.
@@ -63,8 +75,10 @@ class InspectionService implements InspectionServiceInterface {
 	 * @return array<string, mixed> The inspection to save.
 	 *
 	 * @throws DomainException When the type declares no term, or no document was chosen.
+	 * @throws TermRollUnavailableException When the end date cannot be rolled off a non-working day.
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
 	 */
 	public function open(
 		array $record,
@@ -73,6 +87,58 @@ class InspectionService implements InspectionServiceInterface {
 		string $openedBy,
 		?DateTimeInterface $start = null,
 	): array {
+		$termDays = $this->termDays(recordType: $recordType);
+		$chosen = $this->chosenDocuments(documents: $documents);
+		$startsAt = $this->windowStart(start: $start);
+		$end = $this->roll->endDate(start: $startsAt, days: $termDays);
+
+		$inspection = [
+			'record' => (string)($record['id'] ?? ''),
+			'recordType' => (string)($recordType['slug'] ?? ($recordType['recordType'] ?? '')),
+			'documents' => $chosen,
+			'startDate' => $startsAt->format(DateTimeInterface::ATOM),
+			'endDate' => $end['at']->format(DateTimeInterface::ATOM),
+			'termDays' => $termDays,
+			'token' => bin2hex(random_bytes(16)),
+			'openedBy' => $openedBy,
+		];
+
+		return $this->withRoll(inspection: $inspection, end: $end);
+
+	}//end open()
+
+	/**
+	 * Add where the end date landed before the roll, and why it moved, when the roll moved it.
+	 *
+	 * @param array<string, mixed> $inspection The inspection.
+	 * @param array{at: DateTimeImmutable, unrolledAt: ?DateTimeImmutable, rolledBy: ?string} $end The rolled end.
+	 *
+	 * @return array<string, mixed> The inspection.
+	 *
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
+	 */
+	private function withRoll(array $inspection, array $end): array {
+		if ($end['unrolledAt'] !== null) {
+			$inspection['unrolledEndDate'] = $end['unrolledAt']->format(DateTimeInterface::ATOM);
+		}
+
+		if ($end['rolledBy'] !== null) {
+			$inspection['rolledBy'] = $end['rolledBy'];
+		}
+
+		return $inspection;
+	}//end withRoll()
+
+	/**
+	 * The inspection term the record type declares.
+	 *
+	 * @param array<string, mixed> $recordType The type, declaring `inspectionTermDays`.
+	 *
+	 * @return int The term in days.
+	 *
+	 * @throws DomainException When the type declares no term.
+	 */
+	private function termDays(array $recordType): int {
 		$termDays = (int)($recordType['inspectionTermDays'] ?? 0);
 		if ($termDays <= 0) {
 			throw new DomainException(
@@ -80,6 +146,19 @@ class InspectionService implements InspectionServiceInterface {
 			);
 		}
 
+		return $termDays;
+	}//end termDays()
+
+	/**
+	 * The chosen documents, each once, as strings.
+	 *
+	 * @param array<int, mixed> $documents The documents chosen for the inspection.
+	 *
+	 * @return array<int, string> The documents.
+	 *
+	 * @throws DomainException When no document was chosen.
+	 */
+	private function chosenDocuments(array $documents): array {
 		$chosen = array_values(array_unique(array_map('strval', $documents)));
 		if ($chosen === []) {
 			throw new DomainException(
@@ -87,24 +166,23 @@ class InspectionService implements InspectionServiceInterface {
 			);
 		}
 
-		$startsAt = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		if ($start !== null) {
-			$startsAt = new DateTimeImmutable($start->format('Y-m-d\\TH:i:s.uP'));
+		return $chosen;
+	}//end chosenDocuments()
+
+	/**
+	 * When the window opens: the given moment, or now in UTC.
+	 *
+	 * @param DateTimeInterface|null $start When the window opens.
+	 *
+	 * @return DateTimeImmutable The start.
+	 */
+	private function windowStart(?DateTimeInterface $start): DateTimeImmutable {
+		if ($start === null) {
+			return new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		}
-		$endsAt = $startsAt->add(new DateInterval('P' . $termDays . 'D'));
 
-		return [
-			'record' => (string)($record['id'] ?? ''),
-			'recordType' => (string)($recordType['slug'] ?? ($recordType['recordType'] ?? '')),
-			'documents' => $chosen,
-			'startDate' => $startsAt->format(DateTimeInterface::ATOM),
-			'endDate' => $endsAt->format(DateTimeInterface::ATOM),
-			'termDays' => $termDays,
-			'token' => bin2hex(random_bytes(16)),
-			'openedBy' => $openedBy,
-		];
-
-	}//end open()
+		return new DateTimeImmutable($start->format('Y-m-d\\TH:i:s.uP'));
+	}//end windowStart()
 
 	/**
 	 * Whether the window is open at a moment.
@@ -159,38 +237,69 @@ class InspectionService implements InspectionServiceInterface {
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
 	 */
 	public function resolveLink(array $inspection, string $token, ?DateTimeInterface $now = null): array {
-		$expected = (string)($inspection['token'] ?? '');
-		if ($expected === '' || hash_equals($expected, $token) === false) {
-			return [
-				'readable' => false,
-				'documents' => [],
-				'reason' => 'unknown-inspection',
-				'endDate' => null,
-			];
+		if ($this->tokenMatches(inspection: $inspection, token: $token) === false) {
+			return $this->unreadable(reason: 'unknown-inspection', endDate: null);
 		}
 
 		$endDate = (string)($inspection['endDate'] ?? '');
 
 		if ($this->isOpen(inspection: $inspection, now: $now) === false) {
-			return [
-				'readable' => false,
-				'documents' => [],
-				'reason' => 'window-closed',
-				'endDate' => $endDate,
-			];
-		}
-
-		$documents = ($inspection['documents'] ?? []);
-		if (is_array($documents) === false) {
-			$documents = [];
+			return $this->unreadable(reason: 'window-closed', endDate: $endDate);
 		}
 
 		return [
 			'readable' => true,
-			'documents' => array_values(array_map('strval', $documents)),
+			'documents' => $this->inspectionDocuments(inspection: $inspection),
 			'reason' => null,
 			'endDate' => $endDate,
 		];
 
 	}//end resolveLink()
+
+	/**
+	 * Whether a presented token is the inspection's own. An inspection without
+	 * a token opens for nobody.
+	 *
+	 * @param array<string, mixed> $inspection The inspection.
+	 * @param string $token The token from the link.
+	 *
+	 * @return bool
+	 */
+	private function tokenMatches(array $inspection, string $token): bool {
+		$expected = (string)($inspection['token'] ?? '');
+		return $expected !== '' && hash_equals($expected, $token) === true;
+	}//end tokenMatches()
+
+	/**
+	 * A link answer that reads nothing.
+	 *
+	 * @param string $reason Why: unknown-inspection or window-closed.
+	 * @param string|null $endDate The window's end, when the link was genuine.
+	 *
+	 * @return array{readable: boolean, documents: array<int, string>, reason: string|null, endDate: string|null}
+	 */
+	private function unreadable(string $reason, ?string $endDate): array {
+		return [
+			'readable' => false,
+			'documents' => [],
+			'reason' => $reason,
+			'endDate' => $endDate,
+		];
+	}//end unreadable()
+
+	/**
+	 * The inspection's chosen documents, as a list of strings.
+	 *
+	 * @param array<string, mixed> $inspection The inspection.
+	 *
+	 * @return array<int, string> The documents.
+	 */
+	private function inspectionDocuments(array $inspection): array {
+		$documents = ($inspection['documents'] ?? []);
+		if (is_array($documents) === false) {
+			return [];
+		}
+
+		return array_values(array_map('strval', $documents));
+	}//end inspectionDocuments()
 }//end class

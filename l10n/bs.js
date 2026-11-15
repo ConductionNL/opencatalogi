@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Kartice",
         "Catalog not found": "Katalog nije pronađen",
         "Catalogs": "Katalozi",
+        "catalogs": "katalozi",
         "Check server logs for more details.": "Provjerite zapisnike servera za više detalja.",
         "Choose sorting": "Odaberite sortiranje",
         "Clear": "Očisti",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Prilog uspješno objavljen",
         "Attachment successfully updated": "Prilog uspješno ažuriran",
         "Attachments": "Prilozi",
+        "attachments": "prilozi",
         "Attachments are loading": "Prilozi se učitavaju",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Prilozi će biti objavljeni s trenutnim datumom i vremenom. Ako neki prilozi imaju postavljen datum depublikovanja, bit će uklonjen kako bi bili potpuno objavljeni.",
         "Auto publish attachments": "Automatski objavi priloge",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Dodajte registar i shemu katalogu da bi se ovdje prikazale njegove objave.",
         "Open catalog": "Otvori katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Napravite svoj prvi katalog. To je spremnik u kojem će biti vaše objave. Odaberite registar Publication i shemu Publication kako bi katalog prikazivao objave koje dodate.",
-        "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom"
+        "Manage your publications and their status": "Upravljajte svojim publikacijama i njihovim statusom",
+        "Open at the source": "Otvori na izvoru"
     },
     "nplurals=2; plural=(n != 1);"
 )

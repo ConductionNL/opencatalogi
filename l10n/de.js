@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Karten",
         "Catalog not found": "Katalog nicht gefunden",
         "Catalogs": "Kataloge",
+        "catalogs": "Kataloge",
         "Check server logs for more details.": "Überprüfen Sie die Serverprotokolle für weitere Details.",
         "Choose sorting": "Sortierung auswählen",
         "Clear": "Leeren",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Anhang erfolgreich veröffentlicht",
         "Attachment successfully updated": "Anhang erfolgreich aktualisiert",
         "Attachments": "Anhänge",
+        "attachments": "Anhänge",
         "Attachments are loading": "Anhänge werden geladen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Anhänge werden mit dem aktuellen Datum und der aktuellen Uhrzeit veröffentlicht. Wenn für Anhänge ein Depublikationsdatum festgelegt ist, wird dieses entfernt, um sie vollständig zu veröffentlichen.",
         "Auto publish attachments": "Anhänge automatisch veröffentlichen",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Fügen Sie dem Katalog ein Register und ein Schema hinzu, um seine Veröffentlichungen hier anzuzeigen.",
         "Open catalog": "Katalog öffnen",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Erstellen Sie Ihren ersten Katalog. Er ist der Behälter, in dem Ihre Veröffentlichungen liegen. Wählen Sie das Register Publication und das Schema Publication, damit der Katalog die Veröffentlichungen anzeigt, die Sie hinzufügen.",
-        "Manage your publications and their status": "Verwalten Sie Ihre Veröffentlichungen und deren Status"
+        "Manage your publications and their status": "Verwalten Sie Ihre Veröffentlichungen und deren Status",
+        "Open at the source": "An der Quelle öffnen"
     },
     "nplurals=2; plural=(n != 1);"
 )

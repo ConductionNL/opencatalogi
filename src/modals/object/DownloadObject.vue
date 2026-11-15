@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { navigationStore, objectStore } from '../../store/store.js'
 
@@ -10,10 +14,7 @@ import '../../css/json-highlight.css'
 		:name="
 			t('opencatalogi', 'Download {name}', {
 				name:
-					objectStore.objectItem?.['@self']?.name
-					|| objectStore.objectItem?.name
-					|| objectStore.objectItem?.['@self']?.title
-					|| objectStore.objectItem?.id
+					objectDisplayName(objectStore.objectItem)
 					|| t('opencatalogi', 'Publication'),
 			})
 		"
@@ -63,6 +64,7 @@ import { NcButton, NcDialog, NcNoteCard } from '@nextcloud/vue'
 import CodeMirror from 'vue-codemirror6'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
 import { getTheme } from '../../services/getTheme.js'
+import { objectDisplayName } from '../../services/objectDisplayName.js'
 
 /**
  * @spec openspec/specs/generic-object-modals/spec.md
@@ -100,6 +102,7 @@ export default {
 	},
 
 	methods: {
+		objectDisplayName,
 		json,
 		jsonParseLinter,
 		getTheme,
@@ -112,6 +115,20 @@ export default {
 			this.error = false
 		},
 
+		/**
+		 * Show whether the download worked, and close two seconds after it did.
+		 *
+		 * @param {Response} response The download response.
+		 * @return {void}
+		 */
+		showDownloadResult(response) {
+			this.success = response.ok
+			this.error = false
+			if (response.ok) {
+				this.closeModalTimeout = setTimeout(this.closeModal, 2000)
+			}
+		},
+
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-5 */
 		async downloadObject() {
 			this.loading = true
@@ -120,11 +137,7 @@ export default {
 				const response = await objectStore.downloadObject(
 					objectStore.objectItem,
 				)
-				this.success = response.ok
-				this.error = false
-				if (response.ok) {
-					this.closeModalTimeout = setTimeout(this.closeModal, 2000)
-				}
+				this.showDownloadResult(response)
 			} catch (error) {
 				this.success = false
 				this.error =

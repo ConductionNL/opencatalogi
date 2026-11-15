@@ -64,11 +64,36 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		}
 
 		$moment = $this->moment(now: $now);
-		$depublished = $this->parse(value: ($publication['depublicationDate'] ?? null));
-		if ($depublished !== null && $depublished <= $moment) {
+		if ($this->isWithdrawnBy(publication: $publication, moment: $moment) === true) {
 			return self::STATE_WITHDRAWN;
 		}
 
+		return $this->releaseState(publication: $publication, moment: $moment);
+	}//end stateOf()
+
+	/**
+	 * Whether the publication's withdrawal date has come.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param DateTimeImmutable $moment The moment.
+	 *
+	 * @return bool
+	 */
+	private function isWithdrawnBy(array $publication, DateTimeImmutable $moment): bool {
+		$depublished = $this->parse(value: ($publication['depublicationDate'] ?? null));
+
+		return $depublished !== null && $depublished <= $moment;
+	}//end isWithdrawnBy()
+
+	/**
+	 * Draft without a readable publication date, scheduled before it, public from it.
+	 *
+	 * @param array<string, mixed> $publication The publication.
+	 * @param DateTimeImmutable $moment The moment.
+	 *
+	 * @return string The state.
+	 */
+	private function releaseState(array $publication, DateTimeImmutable $moment): string {
 		$published = $this->parse(value: ($publication['publicationDate'] ?? null));
 		if ($published === null) {
 			return self::STATE_DRAFT;
@@ -79,7 +104,7 @@ class PublicationStateService implements PublicationStateServiceInterface {
 		}
 
 		return self::STATE_PUBLIC;
-	}//end stateOf()
+	}//end releaseState()
 
 	/**
 	 * The record once it is published now.

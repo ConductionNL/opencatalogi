@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
@@ -210,94 +214,117 @@ export default {
 		deleteObject() {
 			this.loading = true
 			if (this.isMultiple) {
-				const selectedObjects = objectStore.getSelectedObjects(
-					this.objectType,
-				)
-				if (!selectedObjects?.length) return
+				this.deleteSelected()
+				return
+			}
+			this.deleteActive()
+		},
 
-				const deletePromises = selectedObjects.map((obj) =>
-					objectStore
-						.deleteObject(this.objectType, obj.id)
-						.catch((err) => {
-							if (
-								this.objectType === 'publication'
-								&& typeof err.message === 'string'
-								&& err.message.includes(
-									'Invalid configuration for object type: publication',
-								)
-							) {
-								objectStore.setState(this.objectType, {
-									success: true,
-									error: null,
-								})
-								return {}
-							}
-							return Promise.reject(err)
-						}),
-				)
+		/**
+		 * Delete every selected object of the type.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+		 */
+		deleteSelected() {
+			const selectedObjects = objectStore.getSelectedObjects(this.objectType)
+			if (!selectedObjects?.length) return
 
-				Promise.all(deletePromises)
-					.then((responses) => {
-						this.closeTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-						this.loading = false
-					})
-					.catch((err) => {
-						console.error('Error deleting multiple objects:', err)
-						this.loading = false
-					})
-					.finally(() => {
-						this.refreshObjectList(this.objectType)
-						this.closeDialog()
-						this.loading = false
-					})
-			} else {
-				const activeObject = objectStore.getActiveObject(this.objectType)
-				if (!activeObject?.id) return
+			const deletePromises = selectedObjects.map((obj) =>
+				objectStore
+					.deleteObject(this.objectType, obj.id)
+					.catch((err) => this.forgiveUnconfiguredPublication(err)),
+			)
 
-				const publicationData = {
+			Promise.all(deletePromises)
+				.then(() => this.scheduleClose())
+				.catch((err) => {
+					console.error('Error deleting multiple objects:', err)
+					this.loading = false
+				})
+				.finally(() => {
+					this.refreshObjectList(this.objectType)
+					this.closeDialog()
+					this.loading = false
+				})
+		},
+
+		/**
+		 * Delete the active object of the type, in its register and schema.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+		 */
+		deleteActive() {
+			const activeObject = objectStore.getActiveObject(this.objectType)
+			if (!activeObject?.id) return
+
+			objectStore
+				.deleteObject({
+					type: this.dialogProperties.objectType,
+					id: activeObject.id,
 					schema: activeObject['@self']?.schema,
 					register: activeObject['@self']?.register,
-				}
+				})
+				.catch((err) => this.forgiveUnconfiguredPublication(err))
+				.then(() => this.scheduleClose())
+				.catch((err) => {
+					console.error('Error deleting one object:', err)
+					this.loading = false
+				})
+				.finally(() => {
+					this.refreshObjectList(this.objectType)
+					this.closeDialog()
+				})
+		},
 
-				objectStore
-					.deleteObject({
-						type: this.dialogProperties.objectType,
-						id: activeObject.id,
-						...publicationData,
-					})
-					.catch((err) => {
-						if (
-							this.objectType === 'publication'
-							&& typeof err.message === 'string'
-							&& err.message.includes(
-								'Invalid configuration for object type: publication',
-							)
-						) {
-							objectStore.setState(this.objectType, {
-								success: true,
-								error: null,
-							})
-							return {}
-						}
-						return Promise.reject(err)
-					})
-					.then((response) => {
-						this.closeTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-						this.loading = false
-					})
-					.catch((err) => {
-						console.error('Error deleting one object:', err)
-						this.loading = false
-					})
-					.finally(() => {
-						this.refreshObjectList(this.objectType)
-						this.closeDialog()
-					})
+		/**
+		 * Count a deletion that failed only because the publication type has no
+		 * configuration as done; pass any other failure on.
+		 *
+		 * @param {Error} err The failure.
+		 * @return {Promise<object>|object} {} when forgiven, else the rejection.
+		 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+		 */
+		forgiveUnconfiguredPublication(err) {
+			if (this.isUnconfiguredPublication(err)) {
+				objectStore.setState(this.objectType, {
+					success: true,
+					error: null,
+				})
+				return {}
 			}
+			return Promise.reject(err)
+		},
+
+		/**
+		 * Whether a failure is the publication type's missing configuration.
+		 *
+		 * @param {Error} err The failure.
+		 * @return {boolean} True for that failure on a publication.
+		 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+		 */
+		isUnconfiguredPublication(err) {
+			return (
+				this.objectType === 'publication'
+				&& typeof err.message === 'string'
+				&& err.message.includes(
+					'Invalid configuration for object type: publication',
+				)
+			)
+		},
+
+		/**
+		 * Close the dialog in two seconds, so the outcome can be read.
+		 *
+		 * @return {void}
+		 * @spec openspec/changes/retrofit-2026-05-26-generic-dialogs/tasks.md#task-1
+		 */
+		scheduleClose() {
+			this.closeTimeout = setTimeout(() => {
+				this.closeDialog()
+			}, 2000)
+			this.loading = false
 		},
 
 		/**

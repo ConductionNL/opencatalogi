@@ -50,15 +50,32 @@ final class SearchRangeGuard {
 				continue;
 			}
 
-			foreach (['gte', 'lte', 'gt', 'lt'] as $operator) {
-				if (array_key_exists($operator, $value) === true && self::isRangeBound(value: $value[$operator]) === false) {
-					return $name . '[' . $operator . ']';
-				}
+			$operator = self::malformedOperator(bounds: $value);
+			if ($operator !== null) {
+				return $name . '[' . $operator . ']';
 			}
 		}
 
 		return null;
 	}//end malformedParameter()
+
+	/**
+	 * The first range operator of a parameter whose bound OpenRegister cannot
+	 * compare on.
+	 *
+	 * @param array<string, mixed> $bounds The parameter's operators and bounds.
+	 *
+	 * @return string|null The operator, or null when every bound is fine.
+	 */
+	private static function malformedOperator(array $bounds): ?string {
+		foreach (['gte', 'lte', 'gt', 'lt'] as $operator) {
+			if (array_key_exists($operator, $bounds) === true && self::isRangeBound(value: $bounds[$operator]) === false) {
+				return $operator;
+			}
+		}
+
+		return null;
+	}//end malformedOperator()
 
 	/**
 	 * Whether a range bound is an ISO date, an ISO date-time or a number.

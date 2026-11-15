@@ -12,7 +12,7 @@
 
 		<div class="publication-visibility__actions">
 			<NcButton
-				v-if="state === 'draft' || state === 'scheduled'"
+				v-if="actions.publishNow"
 				variant="primary"
 				:disabled="busy"
 				data-testid="publication-publish-now"
@@ -20,7 +20,7 @@
 				{{ t('opencatalogi', 'Publish now') }}
 			</NcButton>
 			<NcButton
-				v-if="state === 'withdrawn'"
+				v-if="actions.publishAgain"
 				variant="primary"
 				:disabled="busy"
 				data-testid="publication-publish-again"
@@ -28,7 +28,7 @@
 				{{ t('opencatalogi', 'Publish again') }}
 			</NcButton>
 			<NcButton
-				v-if="state === 'public' || state === 'scheduled'"
+				v-if="actions.withdraw"
 				variant="error"
 				:disabled="busy"
 				data-testid="publication-withdraw"
@@ -61,14 +61,30 @@ import WithdrawPublicationDialog from '../../dialogs/publication/WithdrawPublica
 import {
 	documentOptions,
 	filesRouteParams,
+	publishRefusalMessage,
+	visibilityActions,
 } from '../../services/publicationVisibility.js'
+import { injectedObjectContext } from './objectContext.js'
+
+/**
+ * The withdraw endpoint's path: one document's, or the whole publication's.
+ *
+ * @param {{fileId: string}} answer What the dialog collected.
+ * @return {string} The path after the publication id.
+ */
+function withdrawPath(answer) {
+	return answer.fileId
+		? 'files/' + encodeURIComponent(answer.fileId) + '/withdraw'
+		: 'withdraw'
+}
 
 /**
  * Publish now, withdraw with a reason, and publish again (REQ-PPW-002/003/004).
  *
  * The state comes from the server, which reads the same dates OpenRegister's
  * published predicate reads, so the page never works it out from dates in the
- * browser. Each button shows only when its move applies.
+ * browser. Each button shows only when its move applies, and only to a caller
+ * the server says may publish (REQ-OPR-002).
  */
 export default {
 	name: 'PublicationVisibilityWidget',
@@ -88,6 +104,7 @@ export default {
 	data() {
 		return {
 			state: '',
+			canPublish: false,
 			documents: [],
 			busy: false,
 			dialogOpen: false,
@@ -97,14 +114,14 @@ export default {
 	},
 
 	computed: {
+		/** @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002 */
+		actions() {
+			return visibilityActions(this.state, this.canPublish)
+		},
+
 		/** @spec exclude presentational widget adapter; resolves the object context from inject. */
 		ctx() {
-			const inj =
-				this.cnObjectContext
-				&& (this.cnObjectContext.value || this.cnObjectContext)
-			const holder =
-				this.cnDetailObjectContext && this.cnDetailObjectContext.value
-			return inj || holder || {}
+			return injectedObjectContext(this)
 		},
 
 		/** @spec exclude presentational widget adapter; derives the object id. */
@@ -177,8 +194,10 @@ export default {
 			try {
 				const { data } = await axios.get(this.url('visibility'))
 				this.state = data.state || ''
+				this.canPublish = data.canPublish === true
 			} catch {
 				this.state = ''
+				this.canPublish = false
 			}
 
 			try {
@@ -236,41 +255,54 @@ export default {
 		async withdraw(answer) {
 			this.busy = true
 			try {
-				const path = answer.fileId
-					? 'files/' + encodeURIComponent(answer.fileId) + '/withdraw'
-					: 'withdraw'
-				const { data } = await axios.post(this.url(path), {
+				const { data } = await axios.post(this.url(withdrawPath(answer)), {
 					reason: answer.reason,
 				})
 				this.dialogOpen = false
 				if (answer.fileId) {
-					this.messageType = 'success'
-					this.message = this.t(
-						'opencatalogi',
-						'The document was withdrawn. The rest of the publication stays public.',
-					)
+					this.showDocumentWithdrawn()
 					return
 				}
 				this.state = 'withdrawn'
-				const outstanding = data.outstandingChannels || []
-				this.messageType = outstanding.length > 0 ? 'warning' : 'success'
-				this.message =
-					outstanding.length > 0
-						? this.t(
-								'opencatalogi',
-								'Withdrawn. These channels have not confirmed yet: {channels}',
-								{ channels: outstanding.join(', ') },
-							)
-						: this.t(
-								'opencatalogi',
-								'Withdrawn, and every channel confirmed.',
-							)
+				this.showWithdrawn(data.outstandingChannels || [])
 			} catch (error) {
 				this.dialogOpen = false
 				this.showError(error)
 			} finally {
 				this.busy = false
 			}
+		},
+
+		/** @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002 */
+		showDocumentWithdrawn() {
+			this.messageType = 'success'
+			this.message = this.t(
+				'opencatalogi',
+				'The document was withdrawn. The rest of the publication stays public.',
+			)
+		},
+
+		/**
+		 * Say the publication was withdrawn, and which channels have not confirmed.
+		 *
+		 * @param {Array<string>} outstanding The channels still to confirm.
+		 * @spec openspec/specs/publications/spec.md#requirement-an-editor-publishes-or-withdraws-a-publication-in-one-action-req-ppw-002
+		 */
+		showWithdrawn(outstanding) {
+			if (outstanding.length > 0) {
+				this.messageType = 'warning'
+				this.message = this.t(
+					'opencatalogi',
+					'Withdrawn. These channels have not confirmed yet: {channels}',
+					{ channels: outstanding.join(', ') },
+				)
+				return
+			}
+			this.messageType = 'success'
+			this.message = this.t(
+				'opencatalogi',
+				'Withdrawn, and every channel confirmed.',
+			)
 		},
 
 		/**
@@ -283,7 +315,7 @@ export default {
 			const status = error && error.response ? error.response.status : 0
 			this.messageType = 'error'
 			if (status === 403) {
-				this.message = this.t(
+				this.message = publishRefusalMessage(error) || this.t(
 					'opencatalogi',
 					'You may not change this publication.',
 				)

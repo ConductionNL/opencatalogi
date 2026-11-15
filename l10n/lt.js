@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Kortelės",
         "Catalog not found": "Katalogas nerastas",
         "Catalogs": "Katalogai",
+        "catalogs": "katalogai",
         "Check server logs for more details.": "Norėdami gauti daugiau informacijos, patikrinkite serverio žurnalus.",
         "Choose sorting": "Pasirinkite rūšiavimą",
         "Clear": "Išvalyti",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Priedas sėkmingai publikuotas",
         "Attachment successfully updated": "Priedas sėkmingai atnaujintas",
         "Attachments": "Priedai",
+        "attachments": "priedai",
         "Attachments are loading": "Priedai kraunami",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Priedai bus publikuoti su esama data ir laiku. Jei kuriems nors priedams nustatyta nepublikavimo data, ji bus pašalinta, kad jie būtų visiškai publikuoti.",
         "Auto publish attachments": "Automatiškai publikuoti priedus",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Pridėkite registrą ir schemą prie katalogo, kad čia būtų rodomos jo publikacijos.",
         "Open catalog": "Atverti katalogą",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Sukurkite pirmąjį katalogą. Tai talpykla, kurioje bus jūsų publikacijos. Pasirinkite registrą Publication ir schemą Publication, kad katalogas rodytų jūsų pridedamas publikacijas.",
-        "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną"
+        "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną",
+        "Open at the source": "Atidaryti šaltinyje"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1,0 +1,8 @@
+{
+	"label": "Accessibility",
+	"position": 8,
+	"link": {
+		"type": "generated-index",
+		"description": "How OpenCatalogi is checked for accessibility, and the published results of those checks."
+	}
+}

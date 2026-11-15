@@ -214,32 +214,54 @@ class DownloadService {
 	 * @spec openspec/specs/download-service/spec.md
 	 */
 	public function publicationAttachments(string|int $id, ObjectService $objectService): array|JSONResponse {
-		// Fetch attachment objects.
 		try {
 			// Fetch the publication object by its ID.
-			$entity = $objectService->find($id);
-			$object = null;
-			if ($entity !== null) {
-				$object = $entity->jsonSerialize();
-			}
-
+			$object = $this->serialised(entity: $objectService->find($id));
 			if ($object === null) {
 				return new JSONResponse(data: ['error' => 'Publication not found'], statusCode: 500);
 			}
 
-			// Fetch attachment objects by their IDs.
-			$attachments = [];
-			foreach (($object['attachments'] ?? []) as $attId) {
-				$attEntity = $objectService->find($attId);
-				if ($attEntity !== null) {
-					$attachments[] = $attEntity->jsonSerialize();
-				}
-			}
-
-			return $attachments;
+			return $this->attachmentsOf(object: $object, objectService: $objectService);
 		} catch (ContainerExceptionInterface|MultipleObjectsReturnedException|DoesNotExistException $e) {
 			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: 500);
-		}//end try
+		}
 
 	}//end publicationAttachments()
+
+	/**
+	 * A found entity serialised, or null when nothing was found.
+	 *
+	 * @param mixed $entity What find() answered.
+	 *
+	 * @return mixed The serialised entity, or null.
+	 */
+	private function serialised(mixed $entity): mixed {
+		if ($entity === null) {
+			return null;
+		}
+
+		return $entity->jsonSerialize();
+	}//end serialised()
+
+	/**
+	 * The attachment objects a publication lists, read by their ids; one that is not found is skipped.
+	 *
+	 * @param mixed $object The serialised publication.
+	 * @param ObjectService $objectService The objectService.
+	 *
+	 * @return array<int, mixed> The attachments.
+	 *
+	 * @throws ContainerExceptionInterface|MultipleObjectsReturnedException|DoesNotExistException When a lookup fails.
+	 */
+	private function attachmentsOf(mixed $object, ObjectService $objectService): array {
+		$attachments = [];
+		foreach (($object['attachments'] ?? []) as $attId) {
+			$attEntity = $objectService->find($attId);
+			if ($attEntity !== null) {
+				$attachments[] = $attEntity->jsonSerialize();
+			}
+		}
+
+		return $attachments;
+	}//end attachmentsOf()
 }//end class

@@ -1,0 +1,320 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`a selection of catalogs asks before it copies 1`] = `
+"<section class="nc-dialog-stub" data-name="Copy Catalogs" data-can-close="false">
+  <!--v-if-->
+  <!--v-if-->
+  <p>Do you want to copy the selected catalogs?</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="ContentCopy"><span class="material-design-icon-stub"></span> Copy</button></footer>
+</section>"
+`;
+
+exports[`a selection of catalogs copies, refreshes the list, then clears the state and closes after two seconds 1`] = `
+[
+  [
+    [
+      "catalog",
+      "catalog-1",
+      null,
+    ],
+    [
+      "catalog",
+      "catalog-2",
+      null,
+    ],
+  ],
+  [
+    [
+      "catalog",
+    ],
+  ],
+  0,
+]
+`;
+
+exports[`a selection of catalogs copies, refreshes the list, then clears the state and closes after two seconds 2`] = `
+[
+  "copyObject",
+  {
+    "error": "kept",
+    "success": true,
+  },
+]
+`;
+
+exports[`a selection of catalogs copies, refreshes the list, then clears the state and closes after two seconds 3`] = `
+[
+  false,
+  {
+    "error": null,
+    "success": null,
+  },
+]
+`;
+
+exports[`a selection of catalogs shows a success with only a close button 1`] = `
+"<section class="nc-dialog-stub" data-name="Copy Catalogs" data-can-close="false">
+  <div>
+    <div class="nc-note-card-stub nc-note-card-stub--success">
+      <p>Catalogs successfully copied</p>
+    </div>
+    <!--v-if-->
+    <!--v-if-->
+  </div>
+  <!--v-if-->
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`a selection of catalogs shows an error beside the question 1`] = `
+"<section class="nc-dialog-stub" data-name="Copy Catalogs" data-can-close="false">
+  <div>
+    <!--v-if-->
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Something went wrong while copying catalogs</p>
+    </div>
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Boom</p>
+    </div>
+  </div>
+  <!--v-if-->
+  <p>Do you want to copy the selected catalogs?</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="ContentCopy"><span class="material-design-icon-stub"></span> Copy</button></footer>
+</section>"
+`;
+
+exports[`a selection of catalogs shows that it is copying 1`] = `
+"<section class="nc-dialog-stub" data-name="Copy Catalogs" data-can-close="false">
+  <!--v-if-->
+  <div class="loading-status"><span class="nc-loading-icon-stub"></span><span>Catalogs are being copied...</span></div>
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`one publication asks before it copies 1`] = `
+"<section class="nc-dialog-stub" data-name="Copy Publication" data-can-close="false">
+  <!--v-if-->
+  <!--v-if-->
+  <p>Do you want to copy Besluit?</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="ContentCopy"><span class="material-design-icon-stub"></span> Copy</button></footer>
+</section>"
+`;
+
+exports[`one publication copies, refreshes the list, then clears the state and closes after two seconds 1`] = `
+[
+  [
+    [
+      "publication",
+      "p-1",
+      null,
+    ],
+  ],
+  [],
+  1,
+]
+`;
+
+exports[`one publication copies, refreshes the list, then clears the state and closes after two seconds 2`] = `
+[
+  "copyObject",
+  {
+    "error": "kept",
+    "success": true,
+  },
+]
+`;
+
+exports[`one publication copies, refreshes the list, then clears the state and closes after two seconds 3`] = `
+[
+  false,
+  {
+    "error": null,
+    "success": null,
+  },
+]
+`;
+
+exports[`one publication shows a success with only a close button 1`] = `
+"<section class="nc-dialog-stub" data-name="Copy Publication" data-can-close="false">
+  <div>
+    <div class="nc-note-card-stub nc-note-card-stub--success">
+      <p>Publication successfully copied</p>
+    </div>
+    <!--v-if-->
+    <!--v-if-->
+  </div>
+  <!--v-if-->
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`one publication shows an error beside the question 1`] = `
+"<section class="nc-dialog-stub" data-name="Copy Publication" data-can-close="false">
+  <div>
+    <!--v-if-->
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Something went wrong while copying publication</p>
+    </div>
+    <div class="nc-note-card-stub nc-note-card-stub--error">
+      <p>Boom</p>
+    </div>
+  </div>
+  <!--v-if-->
+  <p>Do you want to copy Besluit?</p>
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Cancel</button><button class="nc-button-stub" icon="ContentCopy"><span class="material-design-icon-stub"></span> Copy</button></footer>
+</section>"
+`;
+
+exports[`one publication shows that it is copying 1`] = `
+"<section class="nc-dialog-stub" data-name="Copy Publication" data-can-close="false">
+  <!--v-if-->
+  <div class="loading-status"><span class="nc-loading-icon-stub"></span><span>Publication is being copied...</span></div>
+  <!--v-if-->
+  <footer><button class="nc-button-stub" icon=""><span class="material-design-icon-stub"></span> Close</button></footer>
+</section>"
+`;
+
+exports[`renames the schema's name field when the schema configures one 1`] = `
+[
+  [
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+    [
+      "/apps/openregister/api/schemas/7",
+      {
+        "headers": {
+          "Content-Type": "application/json",
+        },
+        "method": "GET",
+      },
+    ],
+  ],
+  [
+    [
+      "publication",
+      "p-1",
+      "contact.naam",
+    ],
+  ],
+]
+`;
+
+exports[`renders nothing while another dialog is open 1`] = `"<!--v-if-->"`;

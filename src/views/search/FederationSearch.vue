@@ -19,6 +19,12 @@ import { resultClickTarget } from '../../services/federationResultTarget.js'
 import { useSearchStore } from '../../store/modules/search.ts'
 import { objectStore } from '../../store/store.js'
 
+/**
+ * What CnPagination gets for a pagination value the search store has not
+ * set (or set to a falsy value), in the order it is passed.
+ */
+const PAGINATION_FALLBACK = { page: 1, pages: 1, total: 0, limit: 20 }
+
 export default {
 	name: 'FederationSearch',
 	components: { CnSearchPage, CnPagination },
@@ -70,12 +76,12 @@ export default {
 		 */
 		paginationState() {
 			const p = this.searchStore.pagination || {}
-			return {
-				page: p.page || 1,
-				pages: p.pages || 1,
-				total: p.total || 0,
-				limit: p.limit || 20,
-			}
+			return Object.fromEntries(
+				Object.entries(PAGINATION_FALLBACK).map(([key, fallback]) => [
+					key,
+					p[key] || fallback,
+				]),
+			)
 		},
 	},
 
@@ -146,22 +152,20 @@ export default {
 		},
 
 		/**
-		 * Navigate to a search result's detail. Federated results (carrying
-		 * `@self.directory`) open the source instance in a new tab so the
-		 * publication is viewed on the authoritative peer; local results
-		 * route internally to PublicationDetail.
+		 * Navigate to a search result's detail inside the app: a local result
+		 * to PublicationDetail, a federated one (carrying `@self.directory`)
+		 * to FederatedPublication, which reads it from its source. No new tab
+		 * opens.
 		 *
 		 * @param {object} result Result payload emitted by CnSearchPage.
 		 * @return {void}
-		 * @spec exclude presentation-only click-through
+		 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-a-federated-result-opens-inside-the-app-req-for-001
 		 */
 		onResultClick(result) {
 			const target = resultClickTarget(result, () =>
 				objectStore.getCollection('catalog'),
 			)
-			if (target?.open) {
-				window.open(target.open, '_blank', 'noopener,noreferrer')
-			} else if (target?.route) {
+			if (target?.route) {
 				this.$router.push(target.route)
 			}
 		},

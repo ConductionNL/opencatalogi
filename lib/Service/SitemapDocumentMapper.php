@@ -60,11 +60,13 @@ class SitemapDocumentMapper {
 	 * @param TooiVocabularyService $tooiVocabulary Resolves organisations and handling types to TOOI.
 	 * @param WooCategoryRegistry $categories Resolves a publication's category.
 	 * @param OpenRegisterLookup $openRegister Reaches OpenRegister for the organisation lookup.
+	 * @param FileFacts|null $fileFacts Reads each file's type from its bytes (REQ-PFF-001); without it no format is emitted.
 	 */
 	public function __construct(
 		private readonly TooiVocabularyService $tooiVocabulary,
 		private readonly WooCategoryRegistry $categories,
 		private readonly OpenRegisterLookup $openRegister,
+		private readonly ?FileFacts $fileFacts = null,
 	) {
 	}//end __construct()
 
@@ -84,39 +86,97 @@ class SitemapDocumentMapper {
 	 * @param array $publication The publication as returned from ObjectService
 	 * @param array $file The file metadata belonging to that publication
 	 * @param array<int, array<string, string>> $violations Per-document unresolved-axis report (by reference)
+	 * @param array<string, array<string, mixed>> $relations The document's `isPartOf` or `hasParts` element, if any ({@see SitemapDocumentRelations}).
 	 *
 	 * @return array{loc: string, lastmod: string, 'diwoo:Document': array} The url entry, ready for XMLResponse.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 * @spec openspec/changes/diwoo-sitemap-structure/specs/woo-compliance/spec.md
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md
 	 */
-	public function map(array $publication, array $file, array &$violations = []): array {
+	public function map(array $publication, array $file, array &$violations = [], array $relations = []): array {
 		$loc = ($file['downloadUrl'] ?? '');
 		$diwoo = $this->diwooCore(publication: $publication, file: $file);
-		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
-			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no TOOI identifier');
+		$format = $this->formatOf(file: $file);
+		if ($format['element'] !== null) {
+			$diwoo['diwoo:format'] = $format['element'];
 		}
 
-		if ($diwoo['diwoo:publisher']['#text'] === '') {
-			$this->addViolation(violations: $violations, loc: $loc, axis: 'publisher', reason: 'organisation has no name');
+		if ($format['reason'] !== null) {
+			$this->addViolation(violations: $violations, loc: $loc, axis: 'format', reason: $format['reason']);
 		}
 
 		// Each optional axis is its element, or null with the violation that omits it.
-		foreach ($this->optionalAxes(publication: $publication, file: $file) as $key => $element) {
-			if ($element !== null) {
-				$diwoo[$key] = $element;
-				continue;
-			}
-
-			$this->addViolation(violations: $violations, loc: $loc, axis: self::OPTIONAL_AXES[$key][0], reason: self::OPTIONAL_AXES[$key][1]);
+		$elements = $this->optionalAxes(publication: $publication, file: $file);
+		foreach ($this->axisGaps(diwoo: $diwoo, elements: $elements) as $gap) {
+			$this->addViolation(violations: $violations, loc: $loc, axis: $gap[0], reason: $gap[1]);
 		}
+
+		$diwoo = array_merge($diwoo, array_filter($elements, static fn (?array $element): bool => $element !== null), $relations);
 
 		return [
 			'loc' => $loc,
-			'lastmod' => self::utcDateTime(value: ($file['published'] ?? $publication['@self']['updated'] ?? 'now')),
+			'lastmod' => self::lastModified(publication: $publication, file: $file),
 			'diwoo:Document' => ['diwoo:DiWoo' => $diwoo],
 		];
 	}//end map()
+
+	/**
+	 * When the document last changed: the latest of the file's modified time,
+	 * the file's published time and the publication's last update, so a change
+	 * to the publication's metadata alone moves every document's `lastmod`
+	 * (REQ-WSD-001). With none of the three, now.
+	 *
+	 * @param array $publication The publication.
+	 * @param array $file The file.
+	 *
+	 * @return string The moment in DATE_ATOM form, UTC.
+	 *
+	 * @spec openspec/changes/woo-sitemap-document-signals/specs/woo-compliance/spec.md#requirement-a-documents-lastmod-follows-its-metadata-as-well-as-its-file-req-wsd-001
+	 */
+	private static function lastModified(array $publication, array $file): string {
+		$moments = [];
+		foreach ([($file['modified'] ?? null), ($file['published'] ?? null), ($publication['@self']['updated'] ?? null)] as $value) {
+			// A stored value that is not a date still counts, as the epoch (utcDateTime()).
+			if ($value !== null && $value !== '') {
+				$moments[] = self::utcDateTime(value: $value);
+			}
+		}
+
+		if ($moments === []) {
+			return self::utcDateTime(value: 'now');
+		}
+
+		// DATE_ATOM in UTC sorts as text in time order.
+		return max($moments);
+	}//end lastModified()
+
+	/**
+	 * What the document is missing, as axis and reason pairs: the publisher's
+	 * gaps first, then each optional axis that resolved to nothing, in order.
+	 *
+	 * @param array<string, mixed> $diwoo The core DiWoo element.
+	 * @param array<string, array|null> $elements The optional axes' elements, null when omitted.
+	 *
+	 * @return array<int, array{0: string, 1: string}> The gaps.
+	 */
+	private function axisGaps(array $diwoo, array $elements): array {
+		$gaps = [];
+		if (isset($diwoo['diwoo:publisher']['@resource']) === false) {
+			$gaps[] = ['publisher', 'organisation has no TOOI identifier'];
+		}
+
+		if ($diwoo['diwoo:publisher']['#text'] === '') {
+			$gaps[] = ['publisher', 'organisation has no name'];
+		}
+
+		foreach (array_keys(array_filter($elements, static fn (?array $element): bool => $element === null)) as $key) {
+			$gaps[] = self::OPTIONAL_AXES[$key];
+		}
+
+		return $gaps;
+
+	}//end axisGaps()
 
 	/**
 	 * The DiWoo creation date, publisher and format of one file's document.
@@ -134,12 +194,47 @@ class SitemapDocumentMapper {
 		return [
 			'diwoo:creatiedatum' => date('Y-m-d', strtotime($created)),
 			'diwoo:publisher' => $this->publisherElement(publication: $publication),
-			'diwoo:format' => [
-				'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . strtoupper($file['extension']),
-				'#text' => strtolower($file['extension']),
-			],
 		];
 	}//end diwooCore()
+
+	/**
+	 * The DiWoo format of a file, taken from its bytes, never from its name
+	 * (REQ-PFF-001), and why it is missing or doubtful.
+	 *
+	 * Unreadable bytes give no format and the reason `type-unreadable`. A
+	 * format that differs from the one the file's extension claims is still
+	 * emitted, with the reason `type-mismatch`.
+	 *
+	 * @param array $file The file metadata, with its Nextcloud `id`.
+	 *
+	 * @return array{element: array{'@resource': string, '#text': string}|null, reason: string|null}
+	 *
+	 * @SuppressWarnings(PHPMD.StaticAccess) FileFacts::diwooFormat() is a pure lookup.
+	 *
+	 * @spec openspec/changes/published-file-carries-its-facts/specs/woo-compliance/spec.md#requirement-a-files-type-comes-from-its-bytes-req-pff-001
+	 */
+	private function formatOf(array $file): array {
+		$mimeType = $this->fileFacts?->mimeTypeOfListedFile(file: $file);
+		if ($mimeType === null) {
+			return ['element' => null, 'reason' => 'type-unreadable'];
+		}
+
+		$code = FileFacts::diwooFormat(mimeType: $mimeType);
+		if ($code === null) {
+			return ['element' => null, 'reason' => 'type-unlisted'];
+		}
+
+		$element = [
+			'@resource' => 'http://publications.europa.eu/resource/authority/file-type/' . $code,
+			'#text' => strtolower($code),
+		];
+		$claimed = strtolower(trim((string)($file['extension'] ?? '')));
+		if ($claimed !== strtolower($code)) {
+			return ['element' => $element, 'reason' => 'type-mismatch'];
+		}
+
+		return ['element' => $element, 'reason' => null];
+	}//end formatOf()
 
 	/**
 	 * The optional axes of one file's document, each its element or null.

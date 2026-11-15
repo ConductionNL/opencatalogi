@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Tarjetas",
         "Catalog not found": "Catálogo no encontrado",
         "Catalogs": "Catálogos",
+        "catalogs": "catálogos",
         "Check server logs for more details.": "Consulte los registros del servidor para obtener más detalles.",
         "Choose sorting": "Elija la ordenación",
         "Clear": "Borrar",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Adjunto publicado correctamente",
         "Attachment successfully updated": "Adjunto actualizado correctamente",
         "Attachments": "Adjuntos",
+        "attachments": "adjuntos",
         "Attachments are loading": "Se están cargando los adjuntos",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Los adjuntos se publicarán con la fecha y hora actuales. Si algún adjunto tiene una fecha de despublicación establecida, esta se eliminará para que queden completamente publicados.",
         "Auto publish attachments": "Publicar adjuntos automáticamente",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Añada un registro y un esquema al catálogo para mostrar aquí sus publicaciones.",
         "Open catalog": "Abrir catálogo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cree su primer catálogo. Es el contenedor donde estarán sus publicaciones. Elija el registro Publication y el esquema Publication para que el catálogo muestre las publicaciones que añada.",
-        "Manage your publications and their status": "Gestione sus publicaciones y su estado"
+        "Manage your publications and their status": "Gestione sus publicaciones y su estado",
+        "Open at the source": "Abrir en el origen"
     },
     "nplurals=2; plural=(n != 1);"
 )

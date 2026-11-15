@@ -173,4 +173,86 @@ class PublicationTransitions {
 
 		return null;
 	}//end unpublishFile()
+
+	/**
+	 * End a file's own publication window now, keeping its start.
+	 *
+	 * The withdrawal of one attachment is recorded on the file itself
+	 * (OpenRegister's file publication window), so no automatic path shares
+	 * it again. An OpenRegister without file publication windows is left as
+	 * it was.
+	 *
+	 * @param int $fileId The file id.
+	 *
+	 * @return string|null Null when the window ended (or there is none to end), else why it did not.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+	 */
+	public function endFileWindow(int $fileId): ?string {
+		try {
+			$files = $this->container->get('OCA\OpenRegister\Files\Db\FileMapper');
+			if (is_object($files) === false || method_exists($files, 'setPublicationWindowForFile') === false) {
+				return null;
+			}
+
+			$current = ($files->findByFileIds([$fileId])[$fileId] ?? null);
+			$window = 'OCA\OpenRegister\Files\Db\PublicationWindow';
+			$files->setPublicationWindowForFile($fileId, new $window($current?->getPublished(), new \DateTime()));
+		} catch (\Throwable $e) {
+			return $e->getMessage();
+		}
+
+		return null;
+	}//end endFileWindow()
+
+	/**
+	 * Share a file of this publication again through OpenRegister's file service.
+	 *
+	 * The file service resolves the file on THIS publication, so a file of
+	 * another object is refused here and nothing else changes.
+	 *
+	 * @param mixed $publication The publication the file belongs to.
+	 * @param int   $fileId      The file id.
+	 *
+	 * @return string|null Null when the file is shared again, else why it is not.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	public function publishFile(mixed $publication, int $fileId): ?string {
+		try {
+			$this->container->get('OCA\OpenRegister\Service\FileService')->publishFile(object: $publication, file: $fileId);
+		} catch (\Throwable $e) {
+			return $e->getMessage();
+		}
+
+		return null;
+	}//end publishFile()
+
+	/**
+	 * Reopen a file's own publication window: clear its end, keep its start.
+	 *
+	 * An OpenRegister without file publication windows is left as it was.
+	 *
+	 * @param int $fileId The file id.
+	 *
+	 * @return string|null Null when the window is open again (or there is none), else why it is not.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-stays-withdrawn-req-att-104
+	 */
+	public function reopenFileWindow(int $fileId): ?string {
+		try {
+			$files = $this->container->get('OCA\OpenRegister\Files\Db\FileMapper');
+			if (is_object($files) === false || method_exists($files, 'setPublicationWindowForFile') === false) {
+				return null;
+			}
+
+			$current = ($files->findByFileIds([$fileId])[$fileId] ?? null);
+			$window = 'OCA\OpenRegister\Files\Db\PublicationWindow';
+			$files->setPublicationWindowForFile($fileId, new $window($current?->getPublished(), null));
+		} catch (\Throwable $e) {
+			return $e->getMessage();
+		}
+
+		return null;
+	}//end reopenFileWindow()
 }//end class

@@ -94,12 +94,36 @@ class ObligationReadService implements ObligationReadServiceInterface {
 	 * @spec openspec/changes/woo-obligation-overview/specs/woo-compliance/spec.md#requirement-the-overview-reads-every-registered-source-and-shows-the-ones-it-could-not-read-req-woo-001
 	 */
 	public function read(?DateTimeInterface $now = null): array {
-		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
-		if ($now !== null) {
-			$moment = new DateTimeImmutable($now->format(DateTimeInterface::ATOM));
+		$moment = $this->moment(now: $now);
+		$sources = $this->loadSources();
+		$overview = $this->overview->assemble(sources: $sources, obligationsBySource: $this->answersOf(sources: $sources), now: $moment);
+
+		return $this->summarise(overview: $overview, sources: $sources, now: $moment);
+	}//end read()
+
+	/**
+	 * The given moment, else now, in UTC.
+	 *
+	 * @param DateTimeInterface|null $now The moment.
+	 *
+	 * @return DateTimeImmutable
+	 */
+	private function moment(?DateTimeInterface $now): DateTimeImmutable {
+		if ($now === null) {
+			return new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		}
 
-		$sources = $this->loadSources();
+		return new DateTimeImmutable($now->format(DateTimeInterface::ATOM));
+	}//end moment()
+
+	/**
+	 * What every enabled source answers, keyed by app id.
+	 *
+	 * @param array<int, array<string, mixed>> $sources The registered sources.
+	 *
+	 * @return array<string, array<int, array<string, mixed>>|\Throwable> The obligations, or why there are none.
+	 */
+	private function answersOf(array $sources): array {
 		$answers = [];
 		foreach ($sources as $source) {
 			if ((bool)($source['enabled'] ?? true) === false) {
@@ -110,10 +134,8 @@ class ObligationReadService implements ObligationReadServiceInterface {
 			$answers[$appId] = $this->ask(appId: $appId);
 		}
 
-		$overview = $this->overview->assemble(sources: $sources, obligationsBySource: $answers, now: $moment);
-
-		return $this->summarise(overview: $overview, sources: $sources, now: $moment);
-	}//end read()
+		return $answers;
+	}//end answersOf()
 
 	/**
 	 * Ask one source for its obligations.
@@ -143,39 +165,104 @@ class ObligationReadService implements ObligationReadServiceInterface {
 	 * @return array<string, mixed> The overview with its summaries.
 	 */
 	private function summarise(array $overview, array $sources, DateTimeImmutable $now): array {
-		$weekEnd = $now->add(new DateInterval('P7D'));
-		$monthStart = $now->setDate((int)$now->format('Y'), (int)$now->format('m'), 1)->setTime(0, 0);
+		$obligations = $overview['obligations'];
+		$bySource = $this->outstandingBySource(obligations: $obligations, sources: $sources);
 
-		$dueThisWeek = 0;
-		$publishedThisMonth = 0;
-		$bySource = $this->sourceRows(sources: $sources);
-		foreach ($overview['obligations'] as $obligation) {
-			$state = $obligation['state'];
-			if ($state === 'published') {
-				$publishedAt = $this->dateOf(value: $obligation['publishedAt'] ?? '');
-				$publishedThisMonth += (int)($publishedAt !== null && $publishedAt >= $monthStart);
-				continue;
-			}
-
-			$due = $this->dateOf(value: $obligation['dueDate'] ?? '');
-			$dueThisWeek += (int)($state === 'due' && $due !== null && $due <= $weekEnd);
-			$source = $obligation['source'];
-			$bySource[$source] = $this->countInto(row: $bySource[$source], state: $state, due: $due);
-		}
-
-		$order = ['late' => 0, 'due' => 1, 'unknown' => 2, 'published' => 3];
-		usort(
-			$overview['obligations'],
-			fn (array $a, array $b): int => [$order[$a['state']] ?? 4, (string)($a['dueDate'] ?? '')]
-				<=> [$order[$b['state']] ?? 4, (string)($b['dueDate'] ?? '')]
+		$overview['obligations'] = $this->byUrgency(obligations: $obligations);
+		$overview['dueThisWeek'] = $this->dueBy(obligations: $obligations, weekEnd: $now->add(new DateInterval('P7D')));
+		$overview['publishedThisMonth'] = $this->publishedSince(
+			obligations: $obligations,
+			monthStart: $now->setDate((int)$now->format('Y'), (int)$now->format('m'), 1)->setTime(0, 0)
 		);
-
-		$overview['dueThisWeek'] = $dueThisWeek;
-		$overview['publishedThisMonth'] = $publishedThisMonth;
 		$overview['bySource'] = array_values($bySource);
 
 		return $overview;
 	}//end summarise()
+
+	/**
+	 * How many obligations are due, not late, by the end of the week.
+	 *
+	 * @param array<int, array<string, mixed>> $obligations The obligations.
+	 * @param DateTimeImmutable $weekEnd Seven days from now.
+	 *
+	 * @return int
+	 */
+	private function dueBy(array $obligations, DateTimeImmutable $weekEnd): int {
+		$count = 0;
+		foreach ($obligations as $obligation) {
+			if ($obligation['state'] !== 'due') {
+				continue;
+			}
+
+			$due = $this->dateOf(value: $obligation['dueDate'] ?? '');
+			$count += (int)($due !== null && $due <= $weekEnd);
+		}
+
+		return $count;
+	}//end dueBy()
+
+	/**
+	 * How many obligations were published since the start of the month.
+	 *
+	 * @param array<int, array<string, mixed>> $obligations The obligations.
+	 * @param DateTimeImmutable $monthStart The first of this month, at midnight.
+	 *
+	 * @return int
+	 */
+	private function publishedSince(array $obligations, DateTimeImmutable $monthStart): int {
+		$count = 0;
+		foreach ($obligations as $obligation) {
+			if ($obligation['state'] !== 'published') {
+				continue;
+			}
+
+			$publishedAt = $this->dateOf(value: $obligation['publishedAt'] ?? '');
+			$count += (int)($publishedAt !== null && $publishedAt >= $monthStart);
+		}
+
+		return $count;
+	}//end publishedSince()
+
+	/**
+	 * The row of every enabled source with its outstanding obligations counted in.
+	 *
+	 * @param array<int, array<string, mixed>> $obligations The obligations.
+	 * @param array<int, array<string, mixed>> $sources The registered sources.
+	 *
+	 * @return array<string, array<string, mixed>> The rows, keyed by app id.
+	 */
+	private function outstandingBySource(array $obligations, array $sources): array {
+		$bySource = $this->sourceRows(sources: $sources);
+		foreach ($obligations as $obligation) {
+			if ($obligation['state'] === 'published') {
+				continue;
+			}
+
+			$source = $obligation['source'];
+			$due = $this->dateOf(value: $obligation['dueDate'] ?? '');
+			$bySource[$source] = $this->countInto(row: $bySource[$source], state: $obligation['state'], due: $due);
+		}
+
+		return $bySource;
+	}//end outstandingBySource()
+
+	/**
+	 * The obligations late first, then due, unknown and published, each by due date.
+	 *
+	 * @param array<int, array<string, mixed>> $obligations The obligations.
+	 *
+	 * @return array<int, array<string, mixed>>
+	 */
+	private function byUrgency(array $obligations): array {
+		$order = ['late' => 0, 'due' => 1, 'unknown' => 2, 'published' => 3];
+		usort(
+			$obligations,
+			fn (array $a, array $b): int => [$order[$a['state']] ?? 4, (string)($a['dueDate'] ?? '')]
+				<=> [$order[$b['state']] ?? 4, (string)($b['dueDate'] ?? '')]
+		);
+
+		return $obligations;
+	}//end byUrgency()
 
 	/**
 	 * An empty row per enabled source, keyed by app id.
@@ -192,17 +279,29 @@ class ObligationReadService implements ObligationReadServiceInterface {
 			}
 
 			$appId = (string)($source['appId'] ?? '');
-			$rows[$appId] = [
-				'appId' => $appId,
-				'title' => (string)($source['title'] ?? $appId),
-				'outstanding' => 0,
-				'late' => 0,
-				'nextDue' => null,
-			];
+			$rows[$appId] = $this->emptySourceRow(appId: $appId, title: (string)($source['title'] ?? $appId));
 		}
 
 		return $rows;
 	}//end sourceRows()
+
+	/**
+	 * A source's row before any obligation is counted in.
+	 *
+	 * @param string $appId The source's app id.
+	 * @param string $title The source's title.
+	 *
+	 * @return array<string, mixed> The row.
+	 */
+	private function emptySourceRow(string $appId, string $title): array {
+		return [
+			'appId' => $appId,
+			'title' => $title,
+			'outstanding' => 0,
+			'late' => 0,
+			'nextDue' => null,
+		];
+	}//end emptySourceRow()
 
 	/**
 	 * Count one outstanding obligation into its source's row.

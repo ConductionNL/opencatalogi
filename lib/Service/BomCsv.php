@@ -55,14 +55,36 @@ final class BomCsv {
 		fwrite($handle, "\xEF\xBB\xBF");
 		fputcsv($handle, array_values($this->columns));
 		foreach ($rows as $row) {
-			$line = [];
-			foreach (array_keys($this->columns) as $key) {
-				$line[] = (string)($row[$key] ?? '');
-			}
-
-			fputcsv($handle, $line);
+			fputcsv($handle, $this->lineOf(row: $row));
 		}
 
+		return $this->drain(handle: $handle);
+	}//end render()
+
+	/**
+	 * One row as CSV cells, in column order, a missing value as an empty cell.
+	 *
+	 * @param array<string, mixed>|\ArrayAccess $row The row.
+	 *
+	 * @return array<int, string> The cells.
+	 */
+	private function lineOf(mixed $row): array {
+		$line = [];
+		foreach (array_keys($this->columns) as $key) {
+			$line[] = (string)($row[$key] ?? '');
+		}
+
+		return $line;
+	}//end lineOf()
+
+	/**
+	 * Everything written to the stream, which is closed afterwards.
+	 *
+	 * @param resource $handle The stream.
+	 *
+	 * @return string The CSV, or an empty string when it cannot be read back.
+	 */
+	private function drain(mixed $handle): string {
 		rewind($handle);
 		$csv = stream_get_contents($handle);
 		fclose($handle);
@@ -72,5 +94,5 @@ final class BomCsv {
 		}
 
 		return $csv;
-	}//end render()
+	}//end drain()
 }//end class

@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 // No `eslint-disable import/export`: the flat config does not register that
 // rule, so the comment was ITSELF the error.
 export * from './attachment/index.js'

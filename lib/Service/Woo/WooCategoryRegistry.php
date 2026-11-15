@@ -3,6 +3,9 @@
 /**
  * The set of Woo information categories a catalogue can publish under.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The categories used to be two PHP constants: a list of 17 codes in
  * `WooCategory::ALL` and a map of 17 sitemap file names in
  * `SitemapService::INFO_CAT`. An eighteenth category therefore needed a code
@@ -29,9 +32,6 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  *
  * @version GIT: <git_id>
  *

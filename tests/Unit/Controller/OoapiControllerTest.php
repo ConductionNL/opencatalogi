@@ -144,11 +144,13 @@ class OoapiControllerTest extends TestCase {
 			static function (string $id) {
 				if ($id === 'OCA\OpenRegister\Service\RegisterResolverService') {
 					return new class {
-						public function resolveRegisterId(string $a, string $k): string {
-							throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException($a, $k);
-						}
+						public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+							if (str_ends_with($lookup->configKey, '_register') === true) {
+								$a = $lookup->appId;
+								$k = $lookup->configKey;
+								throw new \OCA\OpenRegister\Service\Resolver\Exception\MissingConfigException($a, $k);
+							}
 
-						public function resolveSchemaId(string $a, string $k): string {
 							return '0';
 						}
 					};
@@ -266,11 +268,11 @@ class OoapiControllerTest extends TestCase {
 						) {
 						}
 
-						public function resolveRegisterId(string $a, string $k): string {
-							return $this->register;
-						}
+						public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+							if (str_ends_with($lookup->configKey, '_register') === true) {
+								return $this->register;
+							}
 
-						public function resolveSchemaId(string $a, string $k): string {
 							return $this->schema;
 						}
 					};
@@ -515,12 +517,14 @@ class OoapiControllerTest extends TestCase {
 				) {
 				}
 
-				public function resolveRegisterId(string $a, string $k): string {
-					$this->keys[] = $k;
-					return '3';
-				}
+				public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+					if (str_ends_with($lookup->configKey, '_register') === true) {
+						$k = $lookup->configKey;
+						$this->keys[] = $k;
+						return '3';
+					}
 
-				public function resolveSchemaId(string $a, string $k): string {
+					$k = $lookup->configKey;
 					$this->keys[] = $k;
 					return '5';
 				}

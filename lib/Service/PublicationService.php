@@ -46,6 +46,7 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -73,6 +74,7 @@ use ZipArchive;
  *
  * @spec openspec/specs/publications/spec.md
  * @spec openspec/changes/authenticated-read-parity/specs/catalogs/spec.md
+ * @spec openspec/changes/publications/tasks.md
  */
 class PublicationService implements PublicationServiceInterface {
 
@@ -450,13 +452,8 @@ class PublicationService implements PublicationServiceInterface {
 			$cacheKey = (string)$catalogId;
 		}
 
-		// Return cached result if available.
 		if (isset($this->cachedCatalogFilters[$cacheKey]) === true) {
-			// Restore class properties from cache.
-			$cached = $this->cachedCatalogFilters[$cacheKey];
-			$this->availableRegisters = $cached['availableRegisters'];
-			$this->availableSchemas = $cached['availableSchemas'];
-			return $cached['result'];
+			return $this->restoredCatalogFilters(cached: $this->cachedCatalogFilters[$cacheKey]);
 		}
 
 		// FAIL CLOSED on an unconfigured catalog scope. See resolveCatalogScope().
@@ -470,26 +467,7 @@ class PublicationService implements PublicationServiceInterface {
 			];
 		}
 
-		// Setup the config array for searchObjects.
-		$query = [
-			'@self' => [
-				'register' => $scope['register'],
-				'schema' => $scope['schema'],
-			],
-		];
-
-		// Get all catalogs using searchObjects. Its declared return type is
-		// `array|int` — it yields an int when the query asks for a count. This query
-		// does not, but narrow explicitly so a count-shaped result can never reach
-		// the foreach below as a non-iterable.
-		$catalogs = $this->getObjectService()->searchObjects($query);
-		if (is_array($catalogs) === false) {
-			$catalogs = [];
-		}
-
-		if ($catalogId !== null) {
-			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
-		}
+		$catalogs = $this->scopeCatalogs(scope: $scope, catalogId: $catalogId);
 
 		// Remove duplicate values and assign to class properties.
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
@@ -513,6 +491,51 @@ class PublicationService implements PublicationServiceInterface {
 	}//end getCatalogFilters()
 
 	/**
+	 * Restore the scope properties from a cached lookup and return its result.
+	 *
+	 * @param array $cached The cached `result`, `availableRegisters` and `availableSchemas`.
+	 *
+	 * @return array The cached result.
+	 */
+	private function restoredCatalogFilters(array $cached): array {
+		$this->availableRegisters = $cached['availableRegisters'];
+		$this->availableSchemas = $cached['availableSchemas'];
+		return $cached['result'];
+	}//end restoredCatalogFilters()
+
+	/**
+	 * The catalogs that make up the scope: all catalogs in the configured
+	 * register and schema, or only the given catalog.
+	 *
+	 * The search runs even when a catalog id is given. Its declared return type is
+	 * `array|int` (an int for a count query); a count-shaped result reads as no catalogs.
+	 *
+	 * @param array{register: string, schema: string} $scope The configured catalog register and schema.
+	 * @param string|int|null $catalogId The catalog to narrow to, or null for all.
+	 *
+	 * @return array The catalog objects.
+	 */
+	private function scopeCatalogs(array $scope, null|string|int $catalogId): array {
+		$catalogs = $this->getObjectService()->searchObjects(
+			[
+				'@self' => [
+					'register' => $scope['register'],
+					'schema' => $scope['schema'],
+				],
+			]
+		);
+		if (is_array($catalogs) === false) {
+			$catalogs = [];
+		}
+
+		if ($catalogId !== null) {
+			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
+		}
+
+		return $catalogs;
+	}//end scopeCatalogs()
+
+	/**
 	 * Find one catalog, but only when it lives in the configured catalog register and schema.
 	 *
 	 * OpenRegister's find() falls back to a cross-table lookup for a UUID it cannot
@@ -529,8 +552,7 @@ class PublicationService implements PublicationServiceInterface {
 	private function findCatalogInScope(string|int $catalogId, array $scope): array {
 		$catalog = $this->getObjectService()->find(
 			id: $catalogId,
-			register: $scope['register'],
-			schema: $scope['schema']
+			options: new ObjectFindOptions(register: $scope['register'], schema: $scope['schema'])
 		);
 
 		if ($catalog === null
@@ -792,9 +814,13 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 * @spec openspec/changes/publish-from-stackiq/specs/publish-from-stackiq/spec.md#requirement-req-pfs-001-opencatalogi-seeds-an-unpublished-applicatielandschap-catalogue-over-stackiq
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::writeScope() is a pure function over the query (WOO-581)
 	 */
 	private function searchObjectsWithinScope($objectService, array $query, array $registers, array $schemas): array {
+		// The list is narrowed to the catalogue union; say so in the response (REQ-ASF-001).
+		$this->getQueryService()->recordCatalogScope(schemaIds: $schemas, registerIds: $registers);
+
 		try {
 			return $objectService->searchObjectsPaginated(
 				query: CallerScope::writeScope(query: $query, registers: $registers, schemas: $schemas),
@@ -1057,6 +1083,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @return JSONResponse A JSON response containing the list of objects
 	 *
+	 * @spec openspec/changes/search/tasks.md#task-2.3
 	 * @spec openspec/specs/publications/spec.md
 	 */
 	public function index(null|string|int $catalogId = null, ?array $customParams = null): JSONResponse {
@@ -1127,7 +1154,7 @@ class PublicationService implements PublicationServiceInterface {
 			// Use positional parameters for compatibility with different ObjectService versions.
 			// find() enforces OpenRegister RBAC: anonymous callers only receive objects the
 			// public group may read (e.g. published publications via the $now conditional rule).
-			$object = $this->getObjectService()->find($id, $extend);
+			$object = $this->getObjectService()->find($id, new ObjectFindOptions(extend: $extend));
 
 			return new JSONResponse($object);
 		} catch (DoesNotExistException $exception) {
@@ -1203,7 +1230,7 @@ class PublicationService implements PublicationServiceInterface {
 
 		// Validate existence and enforce RBAC: find() denies objects the caller may not read
 		// (anonymous callers are limited to public-group reads).
-		$object = $objectService->find(id: $id, _extend: []);
+		$object = $objectService->find(id: $id);
 		if ($object === null) {
 			return new JSONResponse(['error' => 'Not Found'], 404);
 		}
@@ -1231,9 +1258,9 @@ class PublicationService implements PublicationServiceInterface {
 	/**
 	 * Download all files of an object as a ZIP archive
 	 *
-	 * This method creates a ZIP file containing all files associated with a specific object
-	 * and returns it as a downloadable file. The ZIP file includes all files stored in the
-	 * object's folder with their original names.
+	 * This method creates a ZIP file containing the files of a specific object and returns
+	 * it as a downloadable file. A signed-in caller gets every file OpenRegister admits them
+	 * to; an anonymous caller gets the shared files only.
 	 *
 	 * @param string $id The identifier of the object to download files for
 	 *
@@ -1267,14 +1294,19 @@ class PublicationService implements PublicationServiceInterface {
 
 			// Validate existence and enforce RBAC before serving any file content: find()
 			// denies objects the caller may not read (anonymous → public-group reads only).
-			$object = $objectService->find(id: $id, _extend: []);
+			$object = $objectService->find(id: $id);
 			if ($object === null) {
 				return new JSONResponse(['error' => 'Not Found'], 404);
 			}
 
+			$sharedNames = $this->sharedFileNamesForAnonymousCaller(id: $id);
+
 			// Create the ZIP archive.
 			$fileService = $this->getFileService();
 			$zipInfo = $fileService->createObjectFilesZip($id);
+			if ($sharedNames !== null) {
+				$this->removeZipEntriesNotIn(zipPath: $zipInfo['path'], keepNames: $sharedNames);
+			}
 
 			// Render the publication metadata PDF and pipe it into the ZIP alongside the
 			// attachments streamed from OR's file service (DWN-OR-001 / DWN-OR-003).
@@ -1354,8 +1386,9 @@ class PublicationService implements PublicationServiceInterface {
 	 * @spec openspec/specs/download-service/spec.md
 	 */
 	private function addFileToZip(string $zipPath, string $entryName, string $content): void {
+		// CREATE: an archive whose every entry was removed no longer exists on disk.
 		$zip = new ZipArchive();
-		if ($zip->open($zipPath) !== true) {
+		if ($zip->open($zipPath, ZipArchive::CREATE) !== true) {
 			throw new Exception('Failed to open ZIP archive to add the publication metadata PDF');
 		}
 
@@ -1367,6 +1400,82 @@ class PublicationService implements PublicationServiceInterface {
 		$zip->close();
 
 	}//end addFileToZip()
+
+	/**
+	 * Names of the shared files of an object when the caller is anonymous.
+	 *
+	 * Anonymous callers may only receive shared files, as in attachments() and
+	 * OpenRegister's own file listing. Signed-in callers get null: their archive keeps
+	 * every file OpenRegister admits them to.
+	 *
+	 * @param string $id The object identifier.
+	 *
+	 * @return list<string>|null File names to keep, or null when nothing is filtered.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function sharedFileNamesForAnonymousCaller(string $id): ?array {
+		if ($this->isAnonymousCaller() === false) {
+			return null;
+		}
+
+		$sharedFiles = $this->getFileService()->getFiles(object: $id, sharedFilesOnly: true);
+
+		return array_values(array_map(static fn ($file): string => $file->getName(), $sharedFiles));
+
+	}//end sharedFileNamesForAnonymousCaller()
+
+	/**
+	 * Remove every entry from a ZIP archive whose file name is not in the keep list.
+	 *
+	 * Entries are matched on their base name, so files placed in a sub folder of the
+	 * archive are matched as well.
+	 *
+	 * @param string       $zipPath   Absolute path of the ZIP archive.
+	 * @param list<string> $keepNames File names that may stay in the archive.
+	 *
+	 * @return void
+	 *
+	 * @throws Exception When the archive cannot be opened or an entry cannot be removed.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function removeZipEntriesNotIn(string $zipPath, array $keepNames): void {
+		$zip = new ZipArchive();
+		if ($zip->open($zipPath) !== true) {
+			throw new Exception('Failed to open ZIP archive to remove unshared files');
+		}
+
+		$removeNames = [];
+		for ($index = 0; $index < $zip->numFiles; $index++) {
+			$entryName = (string) $zip->getNameIndex($index);
+			if (in_array(basename($entryName), $keepNames, true) === false) {
+				$removeNames[] = $entryName;
+			}
+		}
+
+		foreach ($removeNames as $entryName) {
+			if ($zip->deleteName($entryName) === false) {
+				$zip->close();
+				throw new Exception('Failed to remove an unshared file from the ZIP archive');
+			}
+		}
+
+		$zip->close();
+
+	}//end removeZipEntriesNotIn()
+
+	/**
+	 * Whether the current request has no signed-in user.
+	 *
+	 * @return bool True for an anonymous caller.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function isAnonymousCaller(): bool {
+		return $this->userSession === null || $this->userSession->getUser() === null;
+
+	}//end isAnonymousCaller()
 
 	/**
 	 * Filter out unwanted properties from objects
@@ -1393,7 +1502,7 @@ class PublicationService implements PublicationServiceInterface {
 		// Single source of truth for the anonymous strip list (authenticated-read-parity,
 		// CAT-AUTH-001) — see CatalogiService::UNWANTED_SELF_PROPERTIES.
 		$unwantedProperties = CatalogiService::UNWANTED_SELF_PROPERTIES;
-		$isAnonymous = ($this->userSession === null || $this->userSession->getUser() === null);
+		$isAnonymous = $this->isAnonymousCaller();
 
 		// Filter each object.
 		return array_map(
@@ -1472,7 +1581,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			// The find() call enforces OpenRegister RBAC: an anonymous caller can only
 			// traverse the relation graph of objects the public group may read (C-3 / wave-7).
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 
 			// Object not found or not readable by the caller — return 404 before traversal.
 			if ($rootObject === null) {
@@ -1529,7 +1638,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			// The find() call enforces OpenRegister RBAC: an anonymous caller can only
 			// traverse the relation graph of objects the public group may read (C-3 / wave-7).
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 
 			// Object not found or not readable by the caller — return 404 before traversal.
 			if ($rootObject === null) {
@@ -1594,6 +1703,7 @@ class PublicationService implements PublicationServiceInterface {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @spec openspec/changes/search/tasks.md#task-2.4
 	 * @spec openspec/specs/federation/spec.md
 	 */
 	public function getAggregatedPublications(array $queryParams = [], array $requestParams = [], string $baseUrl = ''): array {
@@ -2814,6 +2924,57 @@ class PublicationService implements PublicationServiceInterface {
 
 		return $this->fetchFederatedPublication(id: $id, queryParams: $queryParams);
 	}//end getFederatedPublication()
+
+	/**
+	 * The attachments of a publication, local first and otherwise read from the
+	 * instance that holds it.
+	 *
+	 * A local publication answers with its own attachments, exactly as
+	 * attachments() does. When it is not held here and `_aggregate` is not
+	 * false, the instance that holds it is asked through
+	 * DirectoryService::getRemoteAttachments(); each attachment keeps that
+	 * instance's download URL. With `_aggregate=false` (a peer asking us) the
+	 * local answer stands, so a lookup never fans out twice.
+	 *
+	 * @param string $id The ID of the publication
+	 * @param array $queryParams Query parameters including aggregation settings
+	 *
+	 * @return JSONResponse The attachments, or a 404 when no reachable source holds the publication
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function getFederatedAttachments(string $id, array $queryParams = []): JSONResponse {
+		$local = $this->attachments(id: $id);
+		if ($local->getStatus() !== 404) {
+			return $local;
+		}
+
+		$aggregate = ($queryParams['_aggregate'] ?? 'true');
+		if ($aggregate === 'false' || $aggregate === '0') {
+			return $local;
+		}
+
+		try {
+			$remote = $this->directoryService->getRemoteAttachments($id, $this->federationRequestConfig(queryParams: $queryParams));
+		} catch (\Exception $e) {
+			$remote = null;
+		}
+
+		if ($remote === null) {
+			return new JSONResponse(['error' => 'Not Found: no reachable source holds this publication'], 404);
+		}
+
+		$total = count($remote['results']);
+		return new JSONResponse(
+			[
+				'results' => $remote['results'],
+				'total' => $total,
+				'page' => 1,
+				'pages' => 1,
+				'sources' => $remote['source'],
+			]
+		);
+	}//end getFederatedAttachments()
 
 	/**
 	 * Add this instance's catalogs to the `@self.catalogs` of a local publication.

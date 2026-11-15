@@ -14,6 +14,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -31,6 +34,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 class DirectorySyncListingTest extends TestCase {
 	private ObjectService|MockObject $objectService;
@@ -57,9 +61,10 @@ class DirectorySyncListingTest extends TestCase {
 		$this->objectService = $this->createMock(ObjectService::class);
 		$this->objectService->method('saveObject')->willReturnCallback(
 			function (...$args) {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$names = array_map(
 					static fn (\ReflectionParameter $param): string => $param->getName(),
-					(new \ReflectionMethod(ObjectService::class, 'saveObject'))->getParameters()
+					LegacyObjectArgs::parameters(ObjectService::class, 'saveObject')
 				);
 				$named = array_combine(array_slice($names, 0, count($args)), $args);
 				$this->saved[] = array_intersect_key($named, array_flip(['object', 'extend', 'register', 'schema', 'uuid']));

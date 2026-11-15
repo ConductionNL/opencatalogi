@@ -26,6 +26,7 @@
         "Cards": "Kaardid",
         "Catalog not found": "Kataloogi ei leitud",
         "Catalogs": "Kataloogid",
+        "catalogs": "kataloogid",
         "Check server logs for more details.": "Lisateabe saamiseks vaadake serveri logisid.",
         "Choose sorting": "Vali sortimine",
         "Clear": "Tühjenda",
@@ -238,6 +239,7 @@
         "Attachment successfully published": "Manus edukalt avaldatud",
         "Attachment successfully updated": "Manus edukalt uuendatud",
         "Attachments": "Manused",
+        "attachments": "manused",
         "Attachments are loading": "Manuseid laaditakse",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Manused avaldatakse praeguse kuupäeva ja kellaajaga. Kui mõnel manusel on määratud avaldamisest eemaldamise kuupäev, eemaldatakse see, et manus oleks täielikult avaldatud.",
         "Auto publish attachments": "Avalda manused automaatselt",
@@ -720,7 +722,8 @@
         "Add a register and a schema to the catalog to list its publications here.": "Lisa kataloogile register ja skeem, et selle väljaanded siin kuvataks.",
         "Open catalog": "Ava kataloog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Loo oma esimene kataloog. See on konteiner, kus sinu väljaanded asuvad. Vali register Publication ja skeem Publication, et kataloog näitaks väljaandeid, mida sa lisad.",
-        "Manage your publications and their status": "Hallake oma väljaandeid ja nende olekut"
+        "Manage your publications and their status": "Hallake oma väljaandeid ja nende olekut",
+        "Open at the source": "Ava allikas"
     },
     "plurals": {}
 }

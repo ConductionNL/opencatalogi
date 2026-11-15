@@ -41,6 +41,8 @@ use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\AppIdentity;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -179,6 +181,7 @@ class SettingsService implements SettingsServiceInterface {
 			'schemas' => [
 				'woo_request_schema' => 'wooRequest',
 				'comment_period_schema' => 'commentPeriod',
+				'published_table_schema' => 'publishedTable',
 			],
 		],
 		[
@@ -1982,11 +1985,12 @@ class SettingsService implements SettingsServiceInterface {
 		try {
 			$run->objectService->saveObject(
 				object: $patch['object'],
-				register: $run->catalogRegister,
-				schema: $run->catalogSchema,
-				uuid: $patch['uuid'],
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $run->catalogRegister, schema: $run->catalogSchema),
+					uuid: $patch['uuid']
+				),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 			if ($patch['publishedSlug'] !== null) {
 				$this->markSeedPublished(slug: $patch['publishedSlug']);

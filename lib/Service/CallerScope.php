@@ -75,17 +75,73 @@ final class CallerScope {
 	 * function over the query array, with no state and no collaborators, so every
 	 * reader calls the same code without a constructor change.
 	 *
+	 * With a collector, the names of the keys it removed are recorded as
+	 * `callerScopeIgnored` (REQ-ASF-002); their values are never echoed. Nothing is
+	 * recorded when no key was removed.
+	 *
 	 * @param array $query A search query built from request parameters.
+	 * @param AppliedFilters|null $appliedFilters The request's collector, to report the removed keys.
 	 *
 	 * @return array The query without any caller-supplied register/schema scope.
 	 *
 	 * @spec openspec/changes/archive/2026-08-28-fix-fts-catalog-model-alignment/specs/search/spec.md
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 */
-	public static function strip(array $query): array {
+	public static function strip(array $query, ?AppliedFilters $appliedFilters = null): array {
+		$removed = self::removedKeys(query: $query);
 		foreach (self::CALLER_SCOPE_KEYS as $key) {
 			unset($query[$key]);
 		}
 
+		if ($appliedFilters !== null && $removed !== []) {
+			$appliedFilters->record(
+				name: AppliedFilters::CALLER_SCOPE_IGNORED,
+				value: $removed,
+				reason: 'A public list sets its own register and schema scope; these query keys were ignored.'
+			);
+		}
+
+		return self::withoutSelfScope(query: $query);
+	}//end strip()
+
+	/**
+	 * The names of the scope keys {@see strip()} removes from a query, `@self`
+	 * sub-keys as `@self.<key>` and a non-array `@self` as `@self`.
+	 *
+	 * @param array $query A search query built from request parameters.
+	 *
+	 * @return array<int, string> The key names, in the order strip() checks them.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public static function removedKeys(array $query): array {
+		$removed = array_values(array_filter(self::CALLER_SCOPE_KEYS, static fn (string $key): bool => array_key_exists($key, $query)));
+		if (array_key_exists('@self', $query) === false) {
+			return $removed;
+		}
+
+		if (is_array($query['@self']) === false) {
+			$removed[] = '@self';
+			return $removed;
+		}
+
+		foreach (self::CALLER_SELF_SCOPE_KEYS as $key) {
+			if (array_key_exists($key, $query['@self']) === true) {
+				$removed[] = '@self.' . $key;
+			}
+		}
+
+		return $removed;
+	}//end removedKeys()
+
+	/**
+	 * Remove the scope sub-keys of `@self`, and an `@self` that is not an array.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array The query without caller-supplied `@self` scope.
+	 */
+	private static function withoutSelfScope(array $query): array {
 		if (array_key_exists('@self', $query) === true && is_array($query['@self']) === false) {
 			unset($query['@self']);
 		}
@@ -97,7 +153,7 @@ final class CallerScope {
 		}
 
 		return $query;
-	}//end strip()
+	}//end withoutSelfScope()
 
 	/**
 	 * Write the server's register/schema scope into a search query.
@@ -162,18 +218,8 @@ final class CallerScope {
 			throw new InvalidArgumentException('Refusing to write an empty register or schema scope; the caller must fail closed first.');
 		}
 
-		if (isset($query['@self']) === false || is_array($query['@self']) === false) {
-			$query['@self'] = [];
-		}
-
-		$query['@self']['register'] = $registers;
-		if (count($registers) === 1) {
-			$query['@self']['register'] = $registers[0];
-		}
-
-		if (count($registers) > 1) {
-			$query['_registers'] = $registers;
-		}
+		$query['@self'] = self::selfBlock(query: $query);
+		$query = self::withRegisters(query: $query, registers: $registers);
 
 		$query['@self']['schema'] = $schemas;
 		$query['_schemas'] = $schemas;
@@ -184,5 +230,42 @@ final class CallerScope {
 
 		return $query;
 	}//end writeScope()
+
+	/**
+	 * The query's `@self` block, or an empty one when it has none or it is not an array.
+	 *
+	 * @param array $query The search query.
+	 *
+	 * @return array The `@self` block.
+	 */
+	private static function selfBlock(array $query): array {
+		if (isset($query['@self']) === true && is_array($query['@self']) === true) {
+			return $query['@self'];
+		}
+
+		return [];
+	}//end selfBlock()
+
+	/**
+	 * Write the register scope: a scalar `@self.register` for one register, else
+	 * the list there and in the top-level `_registers` both routers read.
+	 *
+	 * @param array $query The search query with its `@self` block.
+	 * @param array<int, int|string> $registers The register ids of the scope (non-empty).
+	 *
+	 * @return array The query with the register scope written.
+	 */
+	private static function withRegisters(array $query, array $registers): array {
+		$query['@self']['register'] = $registers;
+		if (count($registers) === 1) {
+			$query['@self']['register'] = $registers[0];
+		}
+
+		if (count($registers) > 1) {
+			$query['_registers'] = $registers;
+		}
+
+		return $query;
+	}//end withRegisters()
 
 }//end class

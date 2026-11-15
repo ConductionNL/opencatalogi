@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Karty",
         "Catalog not found": "Katalog nenalezen",
         "Catalogs": "Katalogy",
+        "catalogs": "katalogy",
         "Check server logs for more details.": "Pro více podrobností zkontrolujte protokoly serveru.",
         "Choose sorting": "Vyberte řazení",
         "Clear": "Vymazat",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Příloha úspěšně zveřejněna",
         "Attachment successfully updated": "Příloha úspěšně aktualizována",
         "Attachments": "Přílohy",
+        "attachments": "přílohy",
         "Attachments are loading": "Přílohy se načítají",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Přílohy budou zveřejněny s aktuálním datem a časem. Pokud mají některé přílohy nastaveno datum zrušení zveřejnění, bude odstraněno, aby byly plně zveřejněny.",
         "Auto publish attachments": "Automaticky zveřejňovat přílohy",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Přidejte do katalogu registr a schéma, aby se zde zobrazovaly jeho publikace.",
         "Open catalog": "Otevřít katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvořte svůj první katalog. Je to kontejner, ve kterém budou vaše publikace. Vyberte registr Publication a schéma Publication, aby katalog zobrazoval publikace, které přidáte.",
-        "Manage your publications and their status": "Spravujte své publikace a jejich stav"
+        "Manage your publications and their status": "Spravujte své publikace a jejich stav",
+        "Open at the source": "Otevřít u zdroje"
     },
     "nplurals=2; plural=(n != 1);"
 )

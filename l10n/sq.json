@@ -26,6 +26,7 @@
         "Cards": "Karta",
         "Catalog not found": "Katalogu nuk u gjet",
         "Catalogs": "Katalogët",
+        "catalogs": "katalogët",
         "Check server logs for more details.": "Kontrolloni regjistrat e serverit për më shumë detaje.",
         "Choose sorting": "Zgjidhni renditjen",
         "Clear": "Pastro",
@@ -238,6 +239,7 @@
         "Attachment successfully published": "Bashkëngjitja u botua me sukses",
         "Attachment successfully updated": "Bashkëngjitja u përditësua me sukses",
         "Attachments": "Bashkëngjitjet",
+        "attachments": "bashkëngjitjet",
         "Attachments are loading": "Bashkëngjitjet po ngarkohen",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Bashkëngjitjet do të botohen me datën dhe orën aktuale. Nëse ndonjë bashkëngjitje ka një datë çbotimi të caktuar, ajo do të hiqet për t'i bërë ato plotësisht të botuara.",
         "Auto publish attachments": "Boto automatikisht bashkëngjitjet",
@@ -720,7 +722,8 @@
         "Add a register and a schema to the catalog to list its publications here.": "Shtoni një regjistër dhe një skemë në katalog që botimet e tij të shfaqen këtu.",
         "Open catalog": "Hap katalogun",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Krijoni katalogun tuaj të parë. Është kontejneri ku do të jenë botimet tuaja. Zgjidhni regjistrin Publication dhe skemën Publication, që katalogu të shfaqë botimet që shtoni.",
-        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre"
+        "Manage your publications and their status": "Menaxhoni publikimet tuaja dhe statusin e tyre",
+        "Open at the source": "Hap në burim"
     },
     "plurals": {}
 }

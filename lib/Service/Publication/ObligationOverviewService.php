@@ -69,19 +69,61 @@ class ObligationOverviewService {
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-one-overview-of-what-must-be-published-fed-from-every-source-req-pin-110
 	 */
 	public function assemble(array $sources, array $obligationsBySource, ?DateTimeInterface $now = null): array {
+		$tally = ['obligations' => [], 'unread' => [], 'read' => 0, 'registered' => 0, 'now' => $this->momentOf(now: $now)];
+		foreach ($this->enabledAnswers(sources: $sources, obligationsBySource: $obligationsBySource) as $answered) {
+			$tally = $this->readSource(tally: $tally, answered: $answered);
+		}
+
+		return $this->summarise(tally: $tally);
+
+	}//end assemble()
+
+	/**
+	 * The moment the overview is judged at: the given one, or now in UTC.
+	 *
+	 * @param DateTimeInterface|null $now The moment, or null for now.
+	 *
+	 * @return DateTimeImmutable The moment.
+	 */
+	private function momentOf(?DateTimeInterface $now): DateTimeImmutable {
 		$moment = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($now !== null) {
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
-		$tally = ['obligations' => [], 'unread' => [], 'read' => 0, 'registered' => 0, 'now' => $moment];
+		return $moment;
+
+	}//end momentOf()
+
+	/**
+	 * Each enabled source paired with what it answered, in source order.
+	 *
+	 * @param array<int, array<string, mixed>> $sources The registered sources.
+	 * @param array<string, mixed> $obligationsBySource What each source answered, by app id.
+	 *
+	 * @return array<int, array{appId: string, answer: mixed}>
+	 */
+	private function enabledAnswers(array $sources, array $obligationsBySource): array {
+		$answers = [];
 		foreach ($sources as $source) {
 			if ((bool)($source['enabled'] ?? true) === true) {
 				$appId = (string)($source['appId'] ?? '');
-				$tally = $this->readSource(tally: $tally, answered: ['appId' => $appId, 'answer' => ($obligationsBySource[$appId] ?? null)]);
+				$answers[] = ['appId' => $appId, 'answer' => ($obligationsBySource[$appId] ?? null)];
 			}
 		}
 
+		return $answers;
+
+	}//end enabledAnswers()
+
+	/**
+	 * The overview's counts and lists from the finished tally.
+	 *
+	 * @param array{obligations: array, unread: array, read: int, registered: int, now: DateTimeInterface} $tally The tally.
+	 *
+	 * @return array<string, mixed> The overview, shaped as assemble() documents.
+	 */
+	private function summarise(array $tally): array {
 		$obligations = $tally['obligations'];
 		$published = count(array_filter($obligations, static fn (array $row): bool => $row['state'] === 'published'));
 
@@ -96,7 +138,7 @@ class ObligationOverviewService {
 			'sourcesRegistered' => $tally['registered'],
 		];
 
-	}//end assemble()
+	}//end summarise()
 
 	/**
 	 * The tally with one registered source read: its obligations with their state, or
@@ -111,26 +153,60 @@ class ObligationOverviewService {
 	 */
 	private function readSource(array $tally, array $answered): array {
 		$tally['registered']++;
-		$answer = $answered['answer'];
-		if ($answer instanceof \Throwable) {
-			$tally['unread'][] = ['appId' => $answered['appId'], 'reason' => $answer->getMessage()];
-			return $tally;
-		}
-
-		if (is_array($answer) === false) {
-			$tally['unread'][] = ['appId' => $answered['appId'], 'reason' => 'This source was never asked.'];
+		$unreadReason = $this->unreadReason(answer: $answered['answer']);
+		if ($unreadReason !== null) {
+			$tally['unread'][] = ['appId' => $answered['appId'], 'reason' => $unreadReason];
 			return $tally;
 		}
 
 		$tally['read']++;
-		foreach (array_filter($answer, 'is_array') as $obligation) {
-			$obligation['source'] = $answered['appId'];
-			$obligation['state'] = $this->stateOf(obligation: $obligation, now: $tally['now']);
-			$tally['obligations'][] = $obligation;
-		}
+		$tally['obligations'] = array_merge(
+			$tally['obligations'],
+			$this->statedObligations(answered: $answered, now: $tally['now'])
+		);
 
 		return $tally;
 	}//end readSource()
+
+	/**
+	 * A read source's obligations, each stamped with its source and its state.
+	 *
+	 * @param array{appId: string, answer: array} $answered The source and the list it answered.
+	 * @param DateTimeInterface $now The moment.
+	 *
+	 * @return array<int, array<string, mixed>> The obligations, in the order answered.
+	 */
+	private function statedObligations(array $answered, DateTimeInterface $now): array {
+		$obligations = [];
+		foreach (array_filter($answered['answer'], 'is_array') as $obligation) {
+			$obligation['source'] = $answered['appId'];
+			$obligation['state'] = $this->stateOf(obligation: $obligation, now: $now);
+			$obligations[] = $obligation;
+		}
+
+		return $obligations;
+
+	}//end statedObligations()
+
+	/**
+	 * Why a source's answer cannot be read: its failure, or that it was never asked.
+	 *
+	 * @param mixed $answer What the source answered.
+	 *
+	 * @return string|null The reason, or null when the answer is a list to read.
+	 */
+	private function unreadReason(mixed $answer): ?string {
+		if ($answer instanceof \Throwable) {
+			return $answer->getMessage();
+		}
+
+		if (is_array($answer) === false) {
+			return 'This source was never asked.';
+		}
+
+		return null;
+
+	}//end unreadReason()
 
 	/**
 	 * Where one obligation stands.
@@ -150,14 +226,8 @@ class ObligationOverviewService {
 			return 'published';
 		}
 
-		$due = trim((string)($obligation['dueDate'] ?? ''));
-		if ($due === '') {
-			return 'unknown';
-		}
-
-		try {
-			$dueDate = new DateTimeImmutable($due);
-		} catch (\Throwable $e) {
+		$dueDate = $this->dueDateOf(obligation: $obligation);
+		if ($dueDate === null) {
 			return 'unknown';
 		}
 
@@ -167,4 +237,25 @@ class ObligationOverviewService {
 
 		return 'due';
 	}//end stateOf()
+
+	/**
+	 * An obligation's due date, or null when it has none or it cannot be read.
+	 *
+	 * @param array<string, mixed> $obligation The obligation.
+	 *
+	 * @return DateTimeImmutable|null The due date.
+	 */
+	private function dueDateOf(array $obligation): ?DateTimeImmutable {
+		$due = trim((string)($obligation['dueDate'] ?? ''));
+		if ($due === '') {
+			return null;
+		}
+
+		try {
+			return new DateTimeImmutable($due);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+	}//end dueDateOf()
 }//end class

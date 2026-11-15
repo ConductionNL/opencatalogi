@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 import { translatePlural as n, translate as t } from '@nextcloud/l10n'
 /**
  * Dashboard bundle entry-point registering the unpublished-publications widget.

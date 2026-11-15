@@ -26,6 +26,7 @@
         "Cards": "Cartes",
         "Catalog not found": "Catalogue introuvable",
         "Catalogs": "Catalogues",
+        "catalogs": "catalogues",
         "Check server logs for more details.": "Consultez les journaux du serveur pour plus de détails.",
         "Choose sorting": "Choisir le tri",
         "Clear": "Effacer",
@@ -238,6 +239,7 @@
         "Attachment successfully published": "Pièce jointe publiée avec succès",
         "Attachment successfully updated": "Pièce jointe mise à jour avec succès",
         "Attachments": "Pièces jointes",
+        "attachments": "pièces jointes",
         "Attachments are loading": "Les pièces jointes sont en cours de chargement",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Les pièces jointes seront publiées avec la date et l'heure actuelles. Si certaines pièces jointes ont une date de dépublication définie, celle-ci sera supprimée pour les publier intégralement.",
         "Auto publish attachments": "Publier automatiquement les pièces jointes",
@@ -720,7 +722,8 @@
         "Add a register and a schema to the catalog to list its publications here.": "Ajoutez un registre et un schéma au catalogue pour afficher ses publications ici.",
         "Open catalog": "Ouvrir le catalogue",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Créez votre premier catalogue. C'est le conteneur dans lequel vivront vos publications. Choisissez le registre Publication et le schéma Publication, afin que le catalogue affiche les publications que vous ajoutez.",
-        "Manage your publications and their status": "Gérez vos publications et leur statut"
+        "Manage your publications and their status": "Gérez vos publications et leur statut",
+        "Open at the source": "Ouvrir à la source"
     },
     "plurals": {}
 }
