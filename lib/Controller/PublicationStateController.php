@@ -271,14 +271,9 @@ class PublicationStateController extends Controller {
 			);
 		}
 
-		// The withdrawal is kept on the file's own window, so no automatic
-		// path shares it again (REQ-ATT-103, REQ-ATT-104).
-		$windowNotEnded = $this->registers->endFileWindow(fileId: (int)$fileId);
-		if ($windowNotEnded !== null) {
-			return new JSONResponse(
-				data: ['error' => 'file-window-not-ended', 'message' => $windowNotEnded],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+		$notKept = $this->keepWithdrawalOnFile(fileId: (int)$fileId, reason: $reason);
+		if ($notKept !== null) {
+			return $notKept;
 		}
 
 		$depublication = $this->registers->depublish(
@@ -293,6 +288,47 @@ class PublicationStateController extends Controller {
 
 		return $this->record(depublication: $depublication);
 	}//end withdrawFile()
+
+	/**
+	 * Keep a withdrawal on the file itself: its own window ends now, so no
+	 * automatic path shares it again, and its labels name the reason and the
+	 * editor (REQ-ATT-103, REQ-ATT-104).
+	 *
+	 * @param int    $fileId The file id.
+	 * @param string $reason Why the file is withdrawn.
+	 *
+	 * @return JSONResponse|null Null when both are kept, else the 500 that says which failed.
+	 *
+	 * @spec openspec/changes/attachments-are-files/specs/publication-attachments/spec.md#requirement-a-withdrawn-attachment-carries-its-withdrawal-on-the-file-req-att-103
+	 */
+	private function keepWithdrawalOnFile(int $fileId, string $reason): ?JSONResponse {
+		$windowNotEnded = $this->registers->endFileWindow(fileId: $fileId);
+		if ($windowNotEnded !== null) {
+			return $this->fileStepFailed(error: 'file-window-not-ended', message: $windowNotEnded);
+		}
+
+		$notRecorded = $this->registers->recordFileWithdrawal(fileId: $fileId, reason: $reason, editor: $this->actor());
+		if ($notRecorded !== null) {
+			return $this->fileStepFailed(error: 'file-withdrawal-not-recorded', message: $notRecorded);
+		}
+
+		return null;
+	}//end keepWithdrawalOnFile()
+
+	/**
+	 * The 500 for a step on a file that failed after its share already changed.
+	 *
+	 * @param string $error   The machine-readable error.
+	 * @param string $message Why the step failed.
+	 *
+	 * @return JSONResponse The 500.
+	 */
+	private function fileStepFailed(string $error, string $message): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => $error, 'message' => $message],
+			statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end fileStepFailed()
 
 	/**
 	 * Put a withdrawn document of a publication back, on purpose, with a reason.
@@ -334,10 +370,12 @@ class PublicationStateController extends Controller {
 
 		$windowNotOpen = $this->registers->reopenFileWindow(fileId: (int)$fileId);
 		if ($windowNotOpen !== null) {
-			return new JSONResponse(
-				data: ['error' => 'file-window-not-reopened', 'message' => $windowNotOpen],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->fileStepFailed(error: 'file-window-not-reopened', message: $windowNotOpen);
+		}
+
+		$notCleared = $this->registers->clearFileWithdrawal(fileId: (int)$fileId);
+		if ($notCleared !== null) {
+			return $this->fileStepFailed(error: 'file-withdrawal-not-cleared', message: $notCleared);
 		}
 
 		return $this->recordRepublication(
