@@ -142,13 +142,14 @@ class PublishedCollectionsService implements PublishedCollectionsServiceInterfac
 	 *
 	 * @param array<string, mixed> $collection The collection.
 	 *
-	 * @return array{recordType: mixed, anonymousProperties: mixed, conditions: mixed}
+	 * @return array{recordType: mixed, anonymousProperties: mixed, conditions: mixed, wooCategory: mixed}
 	 */
 	private function ruleOf(array $collection): array {
 		return [
 			'recordType' => ($collection['recordType'] ?? ''),
 			'anonymousProperties' => ($collection['anonymousProperties'] ?? []),
 			'conditions' => ($collection['conditions'] ?? []),
+			'wooCategory' => ($collection['wooCategory'] ?? null),
 		];
 
 	}//end ruleOf()

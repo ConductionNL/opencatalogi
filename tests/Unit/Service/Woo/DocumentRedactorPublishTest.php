@@ -151,6 +151,7 @@ class DocumentRedactorPublishTest extends TestCase {
 			'document' => 'gelakt.pdf',
 			'redactionStatus' => DocumentRedactor::VERIFIED,
 			'redactionHash' => $hash,
+			'redactionVerifiedBy' => 'bob',
 		];
 	}//end listing()
 
