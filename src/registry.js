@@ -49,6 +49,7 @@ import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import CatalogPublicationsIndex from './views/publications/CatalogPublicationsIndex.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
+import WooRedactionView from './views/woo/WooRedaction.vue'
 import { createCaseTypeActionHandlers } from './services/caseTypeActions.js'
 import { createConnectionHandlers } from './services/connectionRegistry.js'
 import { createPublicationActionHandlers } from './services/publicationActions.js'
@@ -96,6 +97,7 @@ export default {
 	CatalogDetailPageView,
 	CatalogPublicationsIndex,
 	WooBatchDetailView,
+	WooRedactionView,
 	CnFederationStatus,
 	FederationDirectory,
 	FederationSearch,
