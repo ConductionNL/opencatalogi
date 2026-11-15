@@ -723,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Добавьте в каталог реестр и схему, чтобы здесь отображались его публикации.",
         "Open catalog": "Открыть каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Создайте свой первый каталог. Это контейнер, в котором будут ваши публикации. Выберите реестр Publication и схему Publication, чтобы каталог показывал добавляемые вами публикации.",
-        "Manage your publications and their status": "Управляйте своими публикациями и их статусом"
+        "Manage your publications and their status": "Управляйте своими публикациями и их статусом",
+        "Open at the source": "Открыть в источнике"
     },
     "nplurals=2; plural=(n != 1);"
 )

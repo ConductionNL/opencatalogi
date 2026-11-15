@@ -12,14 +12,40 @@
             "outstandingChannels": [
                 "koop"
             ],
-            "complete": false
+            "complete": false,
+            "publicationState": "withdrawn",
+            "publicationDepublicationDate": "2021-01-01T00:00:00+00:00"
         },
         "log": [
+            {
+                "get": "OCA\\OpenRegister\\Service\\RegisterResolverService"
+            },
+            {
+                "get": "OCP\\IAppConfig"
+            },
+            {
+                "config": "publication_register"
+            },
+            {
+                "config": "publication_schema"
+            },
+            {
+                "objects": "getObjectService"
+            },
+            {
+                "find": [
+                    "p-1",
+                    "publication_register-id",
+                    "publication_schema-id",
+                    false
+                ]
+            },
             {
                 "depublish": [
                     {
                         "id": "p-1",
-                        "title": "Besluit"
+                        "title": "Besluit",
+                        "depublicationDate": "2021-01-01T00:00:00+00:00"
                     },
                     "wrong",
                     "ambtenaar",

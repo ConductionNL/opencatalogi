@@ -94,6 +94,8 @@ class AutoPublishListenersGoldenTest extends TestCase {
 			'updated, still future, objects only' => [['listener' => 'updated', 'options' => $objectsOnly, 'new' => $future, 'old' => $future, 'answer' => $ok]],
 			'updated, depublished now, attachments only' => [['listener' => 'updated', 'options' => $attachmentsOnly, 'new' => $depublished, 'old' => $live, 'answer' => $ok]],
 			'updated, live, attachments only' => [['listener' => 'updated', 'options' => $attachmentsOnly, 'new' => $live, 'old' => $live, 'answer' => $ok]],
+			'updated, no uuid' => [['listener' => 'updated', 'options' => $both, 'new' => $live, 'uuid' => null, 'answer' => $ok]],
+			'updated, future, attachments only' => [['listener' => 'updated', 'options' => $attachmentsOnly, 'new' => $future, 'old' => $live, 'answer' => $ok]],
 		];
 		return $cases;
 	}//end cases()
@@ -143,7 +145,7 @@ class AutoPublishListenersGoldenTest extends TestCase {
 			return $this->createMock(Event::class);
 		}
 
-		$new = $this->entity('new-uuid', $case['new']);
+		$new = $this->entity((array_key_exists('uuid', $case) === true ? $case['uuid'] : 'new-uuid'), $case['new']);
 		if ($case['listener'] === 'created') {
 			$event = $this->createMock(ObjectCreatedEvent::class);
 			$event->method('getObject')->willReturn($new);
@@ -165,7 +167,7 @@ class AutoPublishListenersGoldenTest extends TestCase {
 	 *
 	 * @return ObjectEntity
 	 */
-	private function entity(string $uuid, array $data): ObjectEntity {
+	private function entity(?string $uuid, array $data): ObjectEntity {
 		$entity = $this->getMockBuilder(ObjectEntity::class)
 			->disableOriginalConstructor()
 			->onlyMethods(['jsonSerialize', 'getUuid', 'getRegister', 'getSchema'])

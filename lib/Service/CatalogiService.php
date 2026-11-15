@@ -34,6 +34,7 @@ namespace OCA\OpenCatalogi\Service;
 use Exception;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\JSONResponse;
@@ -990,8 +991,7 @@ class CatalogiService implements CatalogiServiceInterface {
 
 		$catalog = $this->getObjectService()->find(
 			id: $catalogId,
-			register: $register,
-			schema: $schema
+			options: new ObjectFindOptions(register: $register, schema: $schema)
 		);
 
 		return ($catalog->jsonSerialize()['slug'] ?? null);

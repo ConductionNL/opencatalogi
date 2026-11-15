@@ -27,6 +27,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * An archive decision starts an e-depot transfer, and the daily pass records how it ended.
@@ -80,7 +81,10 @@ class RetentionEdepotTransferTest extends TestCase {
 				};
 			}
 
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null, string $uuid = '', bool $_rbac = true, bool $_multitenancy = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid ?? '';
 				$this->calls[] = ['save' => $object, 'uuid' => $uuid];
 				return $object;
 			}
