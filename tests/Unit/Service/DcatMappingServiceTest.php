@@ -265,6 +265,33 @@ class DcatMappingServiceTest extends TestCase {
 
 	}//end testNoHvdTriplesWhenNoCategory()
 
+	/**
+	 * REQ-ATT-103: a file whose window has ended is left out; one ending later, or never, stays.
+	 *
+	 * @return void
+	 */
+	public function testAWithdrawnFileIsNotADistribution(): void {
+		$files = [
+			['downloadUrl' => 'https://host/d/1/download', 'extension' => 'pdf', 'title' => 'besluit.pdf', 'published' => '2026-01-01T00:00:00+00:00', 'depublished' => null],
+			['downloadUrl' => 'https://host/d/2/download', 'extension' => 'pdf', 'title' => 'bijlage.pdf', 'published' => '2026-01-01T00:00:00+00:00', 'depublished' => '2026-02-01T09:00:00+00:00'],
+			['downloadUrl' => 'https://host/d/3/download', 'extension' => 'pdf', 'title' => 'later.pdf', 'depublished' => '2999-01-01T00:00:00+00:00'],
+			['downloadUrl' => 'https://host/d/4/download', 'extension' => 'pdf', 'title' => 'odd.pdf', 'depublished' => 'not a date'],
+		];
+
+		$dataset = $this->mapDataset(
+			publication: ['id' => 'u', '@self' => ['uuid' => 'u']],
+			mapping: DcatMappingService::DEFAULT_MAPPING,
+			files: $files,
+			datasetIri: 'https://host/api/cat/u',
+			defaults: []
+		);
+
+		$urls = array_map(static fn (array $node): string => $node['dcat:downloadURL']['@id'], $dataset['dcat:distribution']);
+		$this->assertSame(['https://host/d/1/download', 'https://host/d/3/download', 'https://host/d/4/download'], $urls);
+		$this->assertTrue(DcatMappingService::windowEnded(['depublished' => '2026-02-01T09:00:00+00:00']));
+		$this->assertFalse(DcatMappingService::windowEnded(['depublished' => '']));
+	}//end testAWithdrawnFileIsNotADistribution()
+
 	public function testDistributionsMappedFromAttachments(): void {
 		$files = [
 			['downloadUrl' => 'https://host/d/1/download', 'accessUrl' => 'https://host/d/1', 'extension' => 'pdf', 'title' => 'doc.pdf', 'size' => 1234],

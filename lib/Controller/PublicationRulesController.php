@@ -199,6 +199,10 @@ class PublicationRulesController extends Controller {
 	 * so a word that occurs only in a withheld property cannot return the
 	 * record. Every result names the dossier the document belongs to.
 	 *
+	 * Without posted `records` the search reads the stored records of every
+	 * configured published collection, under that collection's conditions and
+	 * anonymous set. Posted records and rules are searched as before.
+	 *
 	 * @return JSONResponse The results.
 	 *
 	 * @NoCSRFRequired
@@ -208,16 +212,16 @@ class PublicationRulesController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 60, period: 60)]
 	public function publicSearch(): JSONResponse {
-		$records = $this->request->getParam('records', []);
+		$records = $this->request->getParam('records', null);
 		$rules = $this->request->getParam('rules', []);
 		$terms = (string)$this->request->getParam('q', '');
 
-		if (is_array($records) === false || is_array($rules) === false) {
+		if (is_array($records ?? []) === false || is_array($rules) === false) {
 			return new JSONResponse(data: ['error' => 'missing-parameters'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
 		try {
-			$results = $this->rules->searchPublic(query: ['records' => $records, 'rules' => $rules, 'terms' => $terms]);
+			$results = $this->rules->search(query: ['records' => $records, 'rules' => $rules, 'terms' => $terms]);
 		} catch (UnreadableRuleException $e) {
 			// A rule this app cannot evaluate refuses. Answering the empty set
 			// would read as "nothing published matches", which is a claim
