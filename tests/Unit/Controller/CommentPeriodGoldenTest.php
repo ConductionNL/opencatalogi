@@ -43,6 +43,8 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A recording double of the consumed OpenRegister ObjectService.
@@ -70,7 +72,9 @@ class CommentPeriodGoldenObjects {
 	 *
 	 * @return mixed The stored period.
 	 */
-	public function find(string $id, mixed $register = null, mixed $schema = null): mixed {
+	public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$register = $options?->register;
+		$schema = $options?->schema;
 		($this->record)(['find' => [$id, $register, $schema]]);
 		if (($this->case['fail'] ?? null) === 'find') {
 			throw new RuntimeException('not found');
@@ -92,12 +96,13 @@ class CommentPeriodGoldenObjects {
 	 */
 	public function saveObject(
 		array $object,
-		mixed $register = null,
-		mixed $schema = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_unowned = false,
+		bool $_multitenancy = true
 	): mixed {
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$_unowned = $options->actor->unowned ?? false;
 		($this->record)(['saveObject' => [$object, $register, $schema, $_rbac, $_multitenancy, $_unowned]]);
 		if (($this->case['fail'] ?? null) === 'save') {
 			throw new RuntimeException('register write failed');
