@@ -20,7 +20,7 @@ namespace Unit\Service\Portal;
 
 use OCA\OpenCatalogi\Service\Portal\PortalObjectStore;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;

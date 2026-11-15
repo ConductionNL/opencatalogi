@@ -93,7 +93,7 @@ class ObjectService {
 	 * Save an object.
 	 *
 	 * @param array<string,mixed>|ObjectEntity $object The object.
-	 * @param \OCA\OpenRegister\Service\Object\ObjectSaveOptions $options Target, uuid, extend, files, policy and actor.
+	 * @param \OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions $options Target, uuid, extend, files, policy and actor.
 	 * @param boolean $_rbac Apply RBAC.
 	 * @param boolean $_multitenancy Apply multitenancy.
 	 *
@@ -101,7 +101,7 @@ class ObjectService {
 	 */
 	public function saveObject(
 		array|ObjectEntity $object,
-		\OCA\OpenRegister\Service\Object\ObjectSaveOptions $options = new \OCA\OpenRegister\Service\Object\ObjectSaveOptions(),
+		\OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions $options = new \OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true,
 	): ObjectEntity {

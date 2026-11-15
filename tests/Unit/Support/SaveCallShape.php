@@ -15,7 +15,7 @@ declare(strict_types=1);
 
 namespace Unit\Support;
 
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * saveObject() now takes `options: ObjectSaveOptions` for register, schema,

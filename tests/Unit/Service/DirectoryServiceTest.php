@@ -12,7 +12,7 @@ use GuzzleHttp\Psr7\Response;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCA\OpenCatalogi\Service\DirectoryService;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IRequest;

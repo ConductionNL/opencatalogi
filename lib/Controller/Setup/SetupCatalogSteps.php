@@ -25,8 +25,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller\Setup;
 
 use OCA\OpenCatalogi\Contract\AppIdentity;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\IAppConfig;
 use OCP\IL10N;

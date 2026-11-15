@@ -30,7 +30,7 @@ namespace Unit\Service;
 
 use OCA\OpenCatalogi\Service\RegisterBindings;
 use OCA\OpenCatalogi\Service\WooService;
-use OCA\OpenRegister\Service\Object\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IUser;
