@@ -32,6 +32,7 @@ namespace OCA\OpenCatalogi\Controller;
 use InvalidArgumentException;
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Service\InstanceModeSwitch;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -56,6 +57,7 @@ class SettingsController extends Controller {
 	 * @param IL10N $l10n The localization service.
 	 * @param IUserSession $userSession The user session.
 	 * @param ConnectionReporterInterface|null $connectionReporter Asks integriq to look again after a save, or nothing when absent.
+	 * @param InstanceModeSwitch|null $instanceModes Reads and changes the instance mode.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-002-a-save-asks-integriq-to-look-again
 	 */
@@ -66,6 +68,9 @@ class SettingsController extends Controller {
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
 		private readonly ?ConnectionReporterInterface $connectionReporter = null,
+		// Instance mode (instance-staging-mode REQ-STG-001). Nullable and last,
+		// so every existing construction site keeps working.
+		private readonly ?InstanceModeSwitch $instanceModes = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -393,4 +398,50 @@ class SettingsController extends Controller {
 		}//end try
 
 	}//end manualImport()
+	/**
+	 * The instance mode, and the OpenRegister webhooks and integriq synchronisations
+	 * OpenCatalogi does not stop in staging.
+	 *
+	 * @return JSONResponse `{mode, outside: {webhooks, synchronisations}}`.
+	 *
+	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function getInstanceMode(): JSONResponse {
+		if ($this->instanceModes === null) {
+			return new JSONResponse(data: ['error' => 'The instance mode is not available.'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
+		}
+
+		return new JSONResponse($this->instanceModes->current());
+	}//end getInstanceMode()
+
+	/**
+	 * Change the instance mode. The body carries `mode` (production or staging) and
+	 * `confirmed: true`; the change is written to Nextcloud's audit log.
+	 *
+	 * CSRF is enforced, as for {@see update()}.
+	 *
+	 * @return JSONResponse The new and previous mode; 400 for an unknown mode or a missing confirmation.
+	 *
+	 * @spec openspec/changes/instance-staging-mode/specs/admin-settings/spec.md#requirement-an-administrator-puts-the-instance-in-staging-req-stg-001
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function updateInstanceMode(): JSONResponse {
+		$user = $this->userSession->getUser();
+		if ($user === null || $this->instanceModes === null) {
+			return new JSONResponse(data: ['error' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
+		}
+
+		try {
+			$result = $this->instanceModes->change(
+				mode: (string)$this->request->getParam('mode', ''),
+				confirmed: filter_var($this->request->getParam('confirmed', false), FILTER_VALIDATE_BOOLEAN),
+				userId: $user->getUID()
+			);
+		} catch (InvalidArgumentException $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+		return new JSONResponse($result);
+	}//end updateInstanceMode()
 }//end class

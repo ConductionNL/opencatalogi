@@ -4,8 +4,10 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 1. Mode
 
-- [ ] 1.1 Add `instance_mode` to the admin settings with confirmation and an audit entry (REQ-STG-001). Verify: `tests/Unit/Controller/SettingsControllerTest.php::testChangingTheInstanceModeIsAudited`.
+- [x] 1.1 Add `instance_mode` to the admin settings with confirmation and an audit entry (REQ-STG-001). Verify: `tests/Unit/Controller/SettingsControllerTest.php::testChangingTheInstanceModeIsAudited`.
+  - Built: `InstanceModeSwitch` (writes `instance_mode` only with `confirmed: true`, dispatches a `CriticalActionPerformedEvent` with the old value, the new value and the user for Nextcloud's audit log; switching back replays nothing), `GET`/`POST /api/settings/instance-mode` on `SettingsController` behind `#[AuthorizedAdminSetting]`, and the Instance mode section in the admin settings with `InstanceModeConfirmDialog`. Unit: `SettingsControllerTest::testChangingTheInstanceModeIsAudited`, `::testTheInstanceModeEndpointsNeedTheSwitch`; jest `InstanceModeRequests.spec.js`.
 - [ ] 1.2 Show the staging banner on every page: import the `nextcloud-vue` environment banner when the installed version exports it, otherwise an OpenCatalogi notice; list enabled OpenRegister webhooks and integriq synchronisations in the settings (REQ-STG-001). Verify: `tests/e2e/instance-staging-mode.spec.ts` "an administrator turns staging on", carrying `@e2e` REQ-STG-001.
+  - Built, code part: `StagingBanner` on every page (`App.vue`), fed by the `instance_mode` initial state the SPA listener provides (anything but production reads as staging); `OutsideReach` names the enabled OpenRegister webhooks and the integriq synchronisations that are not disabled, listed in the Instance mode section. The banner is an OpenCatalogi notice: the installed `@conduction/nextcloud-vue` does not export the environment banner yet. Unit: `OutsideReachTest`, `ProvideManifestConfigStateListenerTest::testProvidesTheInstanceMode`, jest `StagingBanner.spec.js`. Open: the e2e spec "an administrator turns staging on" (needs a browser).
 
 ## 2. Outbound gate
 

@@ -1554,7 +1554,22 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "Instance mode": "Instance mode",
+        "In staging nothing leaves this instance: every hand-over to the national index, PLOOI and federation partners is kept as a dry run, and the public pages answer only to signed-in users.": "In staging nothing leaves this instance: every hand-over to the national index, PLOOI and federation partners is kept as a dry run, and the public pages answer only to signed-in users.",
+        "Production": "Production",
+        "Staging": "Staging",
+        "OpenCatalogi does not stop these": "OpenCatalogi does not stop these",
+        "Enabled OpenRegister webhooks": "Enabled OpenRegister webhooks",
+        "Enabled integriq synchronisations": "Enabled integriq synchronisations",
+        "None": "None",
+        "The instance mode could not be read.": "The instance mode could not be read.",
+        "The instance mode could not be saved.": "The instance mode could not be saved.",
+        "Change the instance mode": "Change the instance mode",
+        "Put this instance in staging? Hand-overs are kept as dry runs and the public pages close to anonymous visitors until you switch back.": "Put this instance in staging? Hand-overs are kept as dry runs and the public pages close to anonymous visitors until you switch back.",
+        "Put this instance back in production? Hand-overs leave again from now on. Dry runs are kept and are not sent.": "Put this instance back in production? Hand-overs leave again from now on. Dry runs are kept and are not sent.",
+        "Confirm": "Confirm",
+        "This instance is in staging: nothing leaves it. Hand-overs are kept as dry runs.": "This instance is in staging: nothing leaves it. Hand-overs are kept as dry runs."
     },
     "plurals": {}
 }

@@ -1509,7 +1509,22 @@
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "De groepen waarvan de leden de ongepubliceerde publicaties van deze catalogus zien. Alleen gebruikt als de toegang is afgeschermd.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "De groepen waarvan de leden de publicaties van deze catalogus zien, aanmaken, bewerken en verwijderen. Alleen gebruikt als de toegang is afgeschermd.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Welke medewerkers de publicaties van deze catalogus zien en bewerken. OpenRegister dwingt dit af via de regels die OpenCatalogi schrijft op de schema's die de catalogus omvat. Alleen een beheerder mag dit wijzigen.",
-        "Planning (does not publish)": "Planning (publiceert niet)"
+        "Planning (does not publish)": "Planning (publiceert niet)",
+        "Instance mode": "Instantiemodus",
+        "In staging nothing leaves this instance: every hand-over to the national index, PLOOI and federation partners is kept as a dry run, and the public pages answer only to signed-in users.": "In staging verlaat niets deze instantie: elke overdracht aan de landelijke index, PLOOI en federatiepartners wordt als proefrun bewaard, en de openbare pagina's zijn alleen toegankelijk voor ingelogde gebruikers.",
+        "Production": "Productie",
+        "Staging": "Staging",
+        "OpenCatalogi does not stop these": "Deze stopt OpenCatalogi niet",
+        "Enabled OpenRegister webhooks": "Ingeschakelde OpenRegister-webhooks",
+        "Enabled integriq synchronisations": "Ingeschakelde integriq-synchronisaties",
+        "None": "Geen",
+        "The instance mode could not be read.": "De instantiemodus kon niet worden gelezen.",
+        "The instance mode could not be saved.": "De instantiemodus kon niet worden opgeslagen.",
+        "Change the instance mode": "Instantiemodus wijzigen",
+        "Put this instance in staging? Hand-overs are kept as dry runs and the public pages close to anonymous visitors until you switch back.": "Deze instantie in staging zetten? Overdrachten worden als proefrun bewaard en de openbare pagina's sluiten voor anonieme bezoekers tot u terugschakelt.",
+        "Put this instance back in production? Hand-overs leave again from now on. Dry runs are kept and are not sent.": "Deze instantie terugzetten naar productie? Overdrachten gaan vanaf nu weer de deur uit. Proefruns blijven bewaard en worden niet verstuurd.",
+        "Confirm": "Bevestigen",
+        "This instance is in staging: nothing leaves it. Hand-overs are kept as dry runs.": "Deze instantie staat in staging: er verlaat niets de instantie. Overdrachten worden als proefrun bewaard."
     },
     "plurals": {}
 }
