@@ -48,6 +48,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for the create-first-catalog setup action.
@@ -174,6 +175,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 		);
 		$objects->method('saveObject')->willReturnCallback(
 			function (...$args) use ($case): mixed {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$this->log[] = ['save' => self::passedArguments(method: 'saveObject', args: $args)];
 				if (($case['fail'] ?? null) === 'save') {
 					throw new RuntimeException('save broke');
@@ -234,7 +236,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 	 */
 	private static function passedArguments(string $method, array $args): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}

@@ -18,6 +18,7 @@ use OCP\IUser;
 use OCP\IUserSession;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 class CMSToolTest extends TestCase {
 	private CMSTool $tool;
@@ -82,14 +83,14 @@ class CMSToolTest extends TestCase {
 		$pageObj = $this->createObjectEntity('uuid-1', 'Test Page');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['owner'] === 'agent-user';
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($pageObj);
 
 		$result = $this->tool->createPage(['title' => 'Test Page']);
@@ -251,14 +252,14 @@ class CMSToolTest extends TestCase {
 		$pageObj = $this->createObjectEntity('uuid-1', 'Hello World');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['slug'] === 'hello-world';
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($pageObj);
 
 		$result = $this->tool->createPage(['title' => 'Hello World']);
@@ -269,14 +270,14 @@ class CMSToolTest extends TestCase {
 		$pageObj = $this->createObjectEntity('uuid-1', 'Test');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['slug'] === 'custom-slug';
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($pageObj);
 
 		$result = $this->tool->createPage(['title' => 'Test', 'slug' => 'custom-slug']);
@@ -288,14 +289,14 @@ class CMSToolTest extends TestCase {
 		$pageObj = $this->createObjectEntity('uuid-1', 'Minimal');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['summary'] === '' && $data['description'] === '';
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($pageObj);
 
 		$this->tool->createPage(['title' => 'Minimal']);
@@ -453,14 +454,14 @@ class CMSToolTest extends TestCase {
 		$menuObj = $this->createObjectEntity('uuid-m', 'Menu');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return isset($data['groups']) && $data['groups'] === ['admin', 'editors'];
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($menuObj);
 
 		$this->tool->createMenu([
@@ -474,14 +475,14 @@ class CMSToolTest extends TestCase {
 		$menuObj = $this->createObjectEntity('uuid-m', 'Menu');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['hideBeforeLogin'] === true;
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($menuObj);
 
 		$this->tool->createMenu([
@@ -495,14 +496,14 @@ class CMSToolTest extends TestCase {
 		$menuObj = $this->createObjectEntity('uuid-m', 'Menu');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['position'] === 5;
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($menuObj);
 
 		$result = $this->tool->createMenu([
@@ -567,17 +568,17 @@ class CMSToolTest extends TestCase {
 		$itemObj = $this->createObjectEntity('uuid-item', 'About');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['name'] === 'About'
 						&& $data['menu'] === 'menu-123'
 						&& $data['link'] === '/about'
 						&& $data['page'] === null;
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($itemObj);
 
 		$result = $this->tool->addMenuItem([
@@ -596,14 +597,14 @@ class CMSToolTest extends TestCase {
 		$itemObj = $this->createObjectEntity('uuid-item', 'Home');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['page'] === 'page-uuid-1' && $data['link'] === null;
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($itemObj);
 
 		$result = $this->tool->addMenuItem([
@@ -638,14 +639,14 @@ class CMSToolTest extends TestCase {
 		$itemObj = $this->createObjectEntity('uuid-item', 'Test');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['order'] === 0;
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($itemObj);
 
 		$this->tool->addMenuItem([
@@ -659,14 +660,14 @@ class CMSToolTest extends TestCase {
 		$itemObj = $this->createObjectEntity('uuid-item', 'Test');
 		$this->objectService->expects($this->once())
 			->method('saveObject')
-			->with(
-				$this->callback(function ($data) {
+			->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+					'object' => $this->callback(function ($data) {
 					return $data['order'] === 5;
 				}),
-				$this->anything(),
-				$this->anything(),
-				$this->anything()
-			)
+					'extend' => $this->anything(),
+					'register' => $this->anything(),
+					'schema' => $this->anything(),
+				]))
 			->willReturn($itemObj);
 
 		$this->tool->addMenuItem([
