@@ -995,6 +995,8 @@ class WooServiceTest extends TestCase {
 		$this->assertSame('verified', $assessed['redactionStatus']);
 		$this->assertSame('4', $assessed['anonymizedDocument']);
 
+		// A person checks the new redaction before it can go out (REQ-WDA-004).
+		$this->service->verifyRedaction('batch-1', 'a3');
 		$this->service->publishBatch('batch-1');
 		$this->assertSame(['a.pdf', 'b.pdf', 'c-gelakt.pdf'], $this->attachedNames());
 	}//end testAVerifiedRedactionIsWhatGetsPublished()
@@ -1089,6 +1091,86 @@ class WooServiceTest extends TestCase {
 	}//end testAssessingAwayFromPartlyPublicDropsTheRedaction()
 
 	/**
+	 * REQ-WDA-004: a new assessment that changes the redaction clears the
+	 * person's verification, and the batch cannot go out until it is given again.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testVerifyRedactionIsClearedByANewAssessment(): void {
+		$this->approvedBatch();
+		$this->documents['id:4'] = $this->documents['/alice/files/doc-c-anon'];
+		$this->files->redacted = $this->documents['/alice/files/doc-c-anon'];
+
+		$assessed = $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$this->assertSame('verified', $assessed['redactionStatus']);
+		$this->assertSame('', $assessed['redactionVerifiedBy']);
+		$this->assertNull($assessed['redactionVerifiedAt']);
+
+		$refusal = null;
+		try {
+			$this->service->publishBatch('batch-1');
+		} catch (\RuntimeException $e) {
+			$refusal = $e->getMessage();
+		}
+
+		$this->assertSame('Publishing is blocked, redaction not checked by a person: c.pdf', $refusal);
+		$this->assertSame([], $this->files->added);
+		$this->assertSame(
+			[['fileName' => 'c.pdf', 'reason' => 'Redaction not checked by a person.']],
+			$this->service->getBatch('batch-1')['documentSummary']['unredacted']
+		);
+
+		$verified = $this->service->verifyRedaction('batch-1', 'a3');
+		$this->assertSame('alice', $verified['redactionVerifiedBy']);
+		$this->assertMatchesRegularExpression('/^\d{4}-\d{2}-\d{2}T/', (string)$verified['redactionVerifiedAt']);
+		$this->assertSame([], $this->service->getBatch('batch-1')['documentSummary']['unredacted']);
+	}//end testVerifyRedactionIsClearedByANewAssessment()
+
+	/**
+	 * REQ-WDA-004: an assessment save that leaves the redaction as it was keeps the verification.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testAnUnchangedRedactionKeepsItsVerification(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->files->redacted = null;
+
+		// A failing redaction changes the status, so the verification goes.
+		$this->assertSame('', $this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1')['redactionVerifiedBy']);
+
+		$this->seedBatchWithAssessments(false);
+		$saved = $this->service->updateAssessment('a1', 'openbaar', [], 'batch-1');
+		$this->assertArrayNotHasKey('redactionVerifiedBy', $saved);
+	}//end testAnUnchangedRedactionKeepsItsVerification()
+
+	/**
+	 * REQ-WDA-004: a failed redaction, or a document of another batch, cannot be marked verified.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testVerifyRedactionRefusesAFailedRedactionAndAForeignDocument(): void {
+		$this->seedBatchWithAssessments(false);
+		$this->files->redacted = null;
+		$this->service->updateAssessment('a3', 'deels_openbaar', ['5.2.e'], 'batch-1');
+		$saves = count($this->objects->saveTargets);
+
+		$refusal = null;
+		try {
+			$this->service->verifyRedaction('batch-1', 'a3');
+		} catch (\OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException $e) {
+			$refusal = $e->getMessage();
+		}
+
+		$this->assertSame('The redaction status is failed, not verified.', $refusal);
+		$this->assertSame($saves, count($this->objects->saveTargets));
+
+		$this->objects->objects[] = ['id' => 'batch-2', 'documents' => []];
+		$this->expectException(\RuntimeException::class);
+		$this->expectExceptionMessage('Assessment not found: a3');
+		$this->service->verifyRedaction('batch-2', 'a3');
+	}//end testVerifyRedactionRefusesAFailedRedactionAndAForeignDocument()
+
+	/**
 	 * REQ-WRP-001: without a batch the acting officer owns relative references.
 	 *
 	 * @spec openspec/changes/woo-redaction-pipeline/specs/woo-transparency/spec.md#requirement-a-partly-public-document-is-published-only-as-a-verified-redacted-version-req-wrp-001
@@ -1125,6 +1207,8 @@ class WooServiceTest extends TestCase {
 				'anonymizedDocument' => 'doc-c-anon',
 				'anonymizedDocumentHash' => hash('sha256', 'inhoud van c-gelakt.pdf'),
 				'redactionStatus' => 'verified',
+				'redactionVerifiedBy' => 'bob',
+				'redactionVerifiedAt' => '2026-11-01T10:00:00+00:00',
 				'weigeringsgronden' => ['5.2.e'],
 			],
 			$fourth,
