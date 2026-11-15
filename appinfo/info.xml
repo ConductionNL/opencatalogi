@@ -245,6 +245,12 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 				the step is idempotent either way.
 			-->
 			<step>OCA\OpenCatalogi\Repair\CleanupOrphanDirectoryListings</step>
+			<!--
+				Creates the group opencatalogi-publishers when it is missing, without
+				members (operations-publish-rights, REQ-OPR-004). Until someone is added,
+				only administrators can publish. Idempotent.
+			-->
+			<step>OCA\OpenCatalogi\Repair\CreatePublishersGroup</step>
 		</post-migration>
 		<!--
 			Nextcloud runs migrateSchemaOnly() on a FIRST install, so NEITHER
@@ -259,6 +265,7 @@ Doe een [featureverzoek](https://github.com/OpenCatalogi/.github/issues/new/choo
 		-->
 		<install>
 			<step>OCA\OpenCatalogi\Repair\InitializeSettings</step>
+			<step>OCA\OpenCatalogi\Repair\CreatePublishersGroup</step>
 		</install>
 	</repair-steps>
 

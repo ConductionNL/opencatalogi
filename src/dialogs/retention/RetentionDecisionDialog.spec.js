@@ -48,6 +48,29 @@ function open(properties) {
 	return mount(RetentionDecisionDialog)
 }
 
+/**
+ * Open the dialog with an NcDialog that renders its actions, so the buttons can be pressed.
+ *
+ * @param {object} properties The dialog properties.
+ * @return {object} The wrapper.
+ */
+function openWithActions(properties) {
+	navigationStore.setDialog('retentionDecision', properties)
+	return mount(RetentionDecisionDialog, {
+		global: {
+			stubs: {
+				NcDialog: { template: '<div><slot /><footer><slot name="actions" /></footer></div>' },
+				NcButton: {
+					props: ['disabled'],
+					emits: ['click'],
+					template: '<button :disabled="disabled" @click="$emit(\'click\')"><slot name="icon" /><slot /></button>',
+				},
+				NcLoadingIcon: { template: '<span class="saving" />' },
+			},
+		},
+	})
+}
+
 describe('RetentionDecisionDialog', () => {
 	beforeEach(() => {
 		jest.spyOn(console, 'log').mockImplementation(() => {})
@@ -158,5 +181,87 @@ describe('RetentionDecisionDialog', () => {
 		wrapper.vm.months = '0'
 
 		expect(wrapper.vm.canSubmit).toBe(false)
+	})
+
+	it('says it takes one publication off the catalogue for a single depublish', async () => {
+		const wrapper = open({ decision: 'depublish', ids: ['p1'], publications: [parking] })
+		await flushPromises()
+
+		expect(wrapper.text()).toContain('Take 1 publication off the public catalogue today.')
+		expect(wrapper.text()).not.toContain('Extra months')
+	})
+
+	it('leaves out a selected publication it cannot read', async () => {
+		axios.get.mockRejectedValue(new Error('404'))
+		const wrapper = open({ decision: 'archive', ids: ['p1', 'p2'], publications: [parking] })
+		await flushPromises()
+
+		expect(axios.get).toHaveBeenCalledTimes(1)
+		expect(wrapper.findAll('li').map((li) => li.attributes('data-id'))).toEqual(['p1'])
+		expect(wrapper.text()).toContain('Archive 1 publication. It leaves the public catalogue today.')
+	})
+
+	it('shows the new dates of an extension, and none for a publication without an end date', async () => {
+		const undated = { id: 'p3', title: 'Raadsvoorstel zonder termijn' }
+		const wrapper = open({ decision: 'extend', ids: ['p1', 'p3'], publications: [parking, undated] })
+		await flushPromises()
+
+		const dates = wrapper.findAll('.retention-decision__dates').map((span) => span.text())
+		expect(dates).toHaveLength(2)
+		expect(dates[0]).toMatch(/2026.* to .*2027/)
+		expect(dates[1]).toBe('')
+		expect(wrapper.vm.dateRange(undated)).toBe('')
+	})
+
+	it('takes the note and the months as they are typed', async () => {
+		const wrapper = open({ decision: 'extend', ids: ['p1'], publications: [parking] })
+		await flushPromises()
+
+		await wrapper.findComponent({ name: 'NcTextArea' }).vm.$emit('update:modelValue', 'Beroep loopt.')
+		await wrapper.findComponent({ name: 'NcTextField' }).vm.$emit('update:modelValue', '6')
+
+		expect(wrapper.vm.note).toBe('Beroep loopt.')
+		expect(wrapper.vm.monthsValue).toBe(6)
+		expect(wrapper.vm.canSubmit).toBe(true)
+	})
+
+	it('saves from its button, shows the spinner while saving, then offers only Close', async () => {
+		let answer
+		axios.post.mockImplementation(() => new Promise((resolve) => { answer = resolve }))
+		const setDialog = jest.spyOn(navigationStore, 'setDialog')
+		const wrapper = openWithActions({ decision: 'archive', ids: ['p1'], publications: [parking] })
+		await flushPromises()
+
+		let buttons = wrapper.findAll('footer button')
+		expect(buttons.map((button) => button.text())).toEqual(['Cancel', 'Archive'])
+		expect(buttons[1].attributes('disabled')).toBeDefined()
+
+		wrapper.vm.note = 'Termijn verstreken.'
+		await wrapper.vm.$nextTick()
+		await wrapper.findAll('footer button')[1].trigger('click')
+		await wrapper.vm.$nextTick()
+		expect(wrapper.find('footer .saving').exists()).toBe(true)
+
+		answer({ data: {} })
+		await flushPromises()
+
+		buttons = wrapper.findAll('footer button')
+		expect(buttons.map((button) => button.text())).toEqual(['Close'])
+		expect(wrapper.text()).toContain('Archived.')
+
+		await buttons[0].trigger('click')
+		expect(setDialog).toHaveBeenCalledWith(false)
+	})
+
+	it('clears the dialog when it is closed', async () => {
+		const setDialog = jest.spyOn(navigationStore, 'setDialog')
+		const wrapper = open({ decision: 'archive', ids: ['p1'], publications: [parking] })
+		await flushPromises()
+
+		wrapper.vm.onOpenChange(true)
+		expect(setDialog).not.toHaveBeenCalledWith(false)
+
+		wrapper.vm.onOpenChange(false)
+		expect(setDialog).toHaveBeenCalledWith(false)
 	})
 })

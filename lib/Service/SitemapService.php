@@ -82,12 +82,6 @@ class SitemapService implements SitemapServiceInterface {
 	 */
 	private const CONFIG_MAX_PER_PAGE = 'sitemap_max_per_page';
 
-	/**
-	 * The DiWoo document mapper, made on first use; it caches TOOI lookups for the request.
-	 *
-	 * @var SitemapDocumentMapper|null
-	 */
-	private ?SitemapDocumentMapper $documentMapper = null;
 
 	/**
 	 * Constructor for SitemapService.
@@ -95,7 +89,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param OpenRegisterLookup $openRegister The guarded OpenRegister services
 	 * @param SettingsService $settingsService The settings service
 	 * @param InstanceSettings $instance The base URL and app configuration (operator-tunable page size)
-	 * @param TooiVocabularyService $tooiVocabulary The TOOI value-list resolver
+	 * @param SitemapDocumentMapper $documentMapper Maps a file of a publication to its DiWoo document
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
 	 */
@@ -103,7 +97,7 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly OpenRegisterLookup $openRegister,
 		private readonly SettingsService $settingsService,
 		private readonly InstanceSettings $instance,
-		private readonly TooiVocabularyService $tooiVocabulary,
+		private readonly SitemapDocumentMapper $documentMapper,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
 	) {
@@ -284,14 +278,6 @@ class SitemapService implements SitemapServiceInterface {
 	 * @spec openspec/specs/woo-compliance/spec.md
 	 */
 	private function mapDiwooDocument(array $publication, array $file, array &$violations = [], array $relations = []): array {
-		if ($this->documentMapper === null) {
-			$this->documentMapper = new SitemapDocumentMapper(
-				tooiVocabulary: $this->tooiVocabulary,
-				categories: $this->categories,
-				openRegister: $this->openRegister
-			);
-		}
-
 		return $this->documentMapper->map(publication: $publication, file: $file, violations: $violations, relations: $relations);
 	}//end mapDiwooDocument()
 

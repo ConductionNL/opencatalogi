@@ -35,6 +35,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\PublicationUsage;
 use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
@@ -681,7 +682,7 @@ class PublicationsController extends Controller {
 			queryParams: $this->publicListParams(),
 			objectService: $objectService
 		);
-		$result = $this->withoutEmptyValues(
+		$result = $this->publicPage(
 			result: $objectService->searchObjectsPaginated(query: $searchQuery, _rbac: true, _multitenancy: false)
 		);
 
@@ -746,6 +747,77 @@ class PublicationsController extends Controller {
 
 		return $result;
 	}//end withoutEmptyValues()
+
+	/**
+	 * An anonymous caller's view of one rendered publication under the configured published collections.
+	 *
+	 * A signed-in caller, or a type no published collection covers, gets the
+	 * rendered publication unchanged. A covered record that fails its
+	 * collection's conditions is not public (null); otherwise only its
+	 * collection's anonymous set is present, beside `id` and `@self`.
+	 *
+	 * @param mixed $result The rendered publication.
+	 *
+	 * @return mixed The view, or null when the record is not public.
+	 *
+	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read; the read
+	 *                                                                     then fails rather than serving the record.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 */
+	private function anonymousView(mixed $result): mixed {
+		if (is_array($result) === false || $this->queryService->isAnonymous() === false) {
+			return $result;
+		}
+
+		return $this->container->get(PublishedRecordViewInterface::class)->view(record: $result);
+
+	}//end anonymousView()
+
+	/**
+	 * A page of publications as the caller may read it: without empty values, then under the published collections.
+	 *
+	 * @param array<string, mixed> $result The search result.
+	 *
+	 * @return array<string, mixed> The page.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 */
+	private function publicPage(array $result): array {
+		return $this->anonymousResults(result: $this->withoutEmptyValues(result: $result));
+
+	}//end publicPage()
+
+	/**
+	 * An anonymous caller's view of a page of publications under the configured published collections.
+	 *
+	 * Records a covering collection does not publish leave the page, and the
+	 * total drops by as many; the rest carry only their collection's anonymous
+	 * set. A signed-in caller gets the page unchanged.
+	 *
+	 * @param array<string, mixed> $result The search result, with `results` and `total`.
+	 *
+	 * @return array<string, mixed> The result as an anonymous reader may read it.
+	 *
+	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When the configuration cannot be read.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 */
+	private function anonymousResults(array $result): array {
+		if (is_array($result['results'] ?? null) === false || $this->queryService->isAnonymous() === false) {
+			return $result;
+		}
+
+		$views = $this->container->get(PublishedRecordViewInterface::class)->viewList(records: array_values($result['results']));
+		if (is_numeric($result['total'] ?? null) === true) {
+			$result['total'] = max(0, ((int)$result['total'] - (count($result['results']) - count($views))));
+		}
+
+		$result['results'] = $views;
+
+		return $result;
+
+	}//end anonymousResults()
 
 	/**
 	 * One search result as an array without empty values; anything else unchanged.
@@ -1171,16 +1243,10 @@ class PublicationsController extends Controller {
 	 * @spec openspec/specs/structured-data-discoverability/spec.md
 	 */
 	private function renderedPublication(PublicationRead $read, FoundPublication $found): JSONResponse {
-		$result = $read->objectService->renderEntity(
-			entity: $found->object,
-			_extend: $read->extend,
-			depth: 0,
-			filter: [],
-			fields: [],
-			unset: [],
-			_rbac: true,
-			_multitenancy: false,
-		);
+		$result = $this->rendered(read: $read, found: $found);
+		if ($result === null) {
+			return $this->publicationNotAccessible(query: $read->query);
+		}
 
 		if ($this->wantsSchemaOrg() === true) {
 			$response = $this->schemaOrgResponse(read: $read, result: $result);
@@ -1200,6 +1266,32 @@ class PublicationsController extends Controller {
 
 		return $this->countedView(response: $response, publicationId: $found->publicationId, catalogSlug: $read->query->catalogSlug);
 	}//end renderedPublication()
+
+	/**
+	 * The found publication rendered by OpenRegister, as the caller may read it.
+	 *
+	 * @param PublicationRead $read The detail read.
+	 * @param FoundPublication $found The resolved publication.
+	 *
+	 * @return mixed The rendered publication, or null when an anonymous reader may not read it.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
+	 */
+	private function rendered(PublicationRead $read, FoundPublication $found): mixed {
+		return $this->anonymousView(
+			result: $read->objectService->renderEntity(
+				entity: $found->object,
+				_extend: $read->extend,
+				depth: 0,
+				filter: [],
+				fields: [],
+				unset: [],
+				_rbac: true,
+				_multitenancy: false,
+			)
+		);
+
+	}//end rendered()
 
 	/**
 	 * The schema.org JSON-LD answer for a rendered publication (SDD-001/SDD-003).
@@ -1484,7 +1576,7 @@ class PublicationsController extends Controller {
 			// this older per-catalog route. An anonymous caller must not be able to enumerate
 			// the relation graph of an unpublished object by guessing its UUID.
 			// Return 404 (not 401) to avoid leaking object existence.
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 			if ($rootObject === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
 			}
@@ -1603,7 +1695,7 @@ class PublicationsController extends Controller {
 			// this older per-catalog route. An anonymous caller must not be able to enumerate
 			// the incoming-relation graph of an unpublished object by guessing its UUID.
 			// Return 404 (not 401) to avoid leaking object existence.
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 			if ($rootObject === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Not Found')], 404);
 			}

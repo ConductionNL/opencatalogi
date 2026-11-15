@@ -36,6 +36,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
+use OCA\OpenCatalogi\Service\WooCategory;
 
 /**
  * Decides what publishes and what an anonymous reader may read of it.
@@ -97,8 +98,43 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 			$errors[] = 'A publication rule must name the properties an anonymous reader may read, even if that is none.';
 		}
 
+		if (self::categoryOf(rule: $rule) === null) {
+			$errors[] = 'A publication rule must name, in wooCategory, one of the Woo information categories this app serves.';
+		}
+
 		return $errors;
 	}//end ruleErrors()
+
+	/**
+	 * The Woo information category a rule files its records under, or null when it names none this app serves.
+	 *
+	 * @param array<string, mixed> $rule The publication rule.
+	 *
+	 * @return string|null The category code, such as `infocat004`.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 */
+	public static function categoryOf(array $rule): ?string {
+		$code = ($rule['wooCategory'] ?? null);
+		if (is_string($code) === false || array_key_exists($code, WooCategory::ALL) === false) {
+			return null;
+		}
+
+		return $code;
+	}//end categoryOf()
+
+	/**
+	 * How a preview names a rule's category: its Dutch name with the code, as in "Adviezen (infocat010)".
+	 *
+	 * @param string $code The category code.
+	 *
+	 * @return string The label.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 */
+	public static function categoryLabel(string $code): string {
+		return WooCategory::ALL[$code]['nl'] . ' (' . $code . ')';
+	}//end categoryLabel()
 
 	/**
 	 * The errors of every condition, in order.
@@ -276,6 +312,12 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 			$projected['publicationText'] = $publicationText;
 		}
 
+		// REQ-CVS-003: a record the rule publishes is filed under the rule's category.
+		$category = self::categoryOf(rule: $rule);
+		if ($category !== null) {
+			$projected['wooCategory'] = $category;
+		}
+
 		return $projected;
 	}//end projectForAnonymous()
 
@@ -350,8 +392,11 @@ class PublicationRuleService implements PublicationRuleServiceInterface {
 			$wouldPublish[] = $this->projectForAnonymous(record: $record, rule: $rule);
 		}
 
+		// REQ-CVS-003: each record is shown with the category it would be filed under.
+		$label = self::categoryLabel(code: (string)self::categoryOf(rule: $rule));
+
 		return [
-			'wouldPublish' => $wouldPublish,
+			'wouldPublish' => array_map(static fn (array $view): array => $view + ['wooCategoryLabel' => $label], $wouldPublish),
 			'wouldNotPublish' => $wouldNot,
 			'exposedProperties' => $this->exposedProperties(projections: $wouldPublish),
 			'sampleSize' => count($sample),

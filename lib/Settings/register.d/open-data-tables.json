@@ -29,7 +29,7 @@
 			"publishedTable": {
 				"slug": "publishedTable",
 				"title": "Published table",
-				"version": "0.1.0",
+				"version": "0.2.0",
 				"published": "2026-11-13T00:00:00+00:00",
 				"summary": "A CSV attachment whose rows can be queried",
 				"description": "A CSV attachment of a publication whose rows were imported into the open-data-tables register, so anyone who may read the publication can query them and read their data dictionary.",
@@ -109,6 +109,46 @@
 						"title": "Last error",
 						"description": "The first row the import refused, and why.",
 						"maxLength": 2000
+					},
+					"importedBy": {
+						"type": "string",
+						"title": "Imported by",
+						"description": "The user who started the last import: who published the table, retried it, or replaced its file. A failed import notifies this user.",
+						"maxLength": 64
+					}
+				},
+				"x-openregister-notifications": {
+					"table-import-failed": {
+						"trigger": {
+							"type": "updated",
+							"condition": {
+								"field": "status",
+								"operator": "equals",
+								"value": "failed"
+							}
+						},
+						"enabled": true,
+						"channels": [
+							"nc-notification"
+						],
+						"recipients": [
+							{
+								"kind": "field",
+								"field": "importedBy"
+							},
+							{
+								"kind": "object-acl",
+								"permission": "manage"
+							}
+						],
+						"subject": {
+							"nl": "Tabel {{title}} kon niet worden ingelezen",
+							"en": "Table {{title}} could not be imported"
+						},
+						"message": {
+							"nl": "{{lastError}}",
+							"en": "{{lastError}}"
+						}
 					}
 				}
 			}
