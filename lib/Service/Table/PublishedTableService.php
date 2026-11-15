@@ -133,11 +133,76 @@ class PublishedTableService implements PublishedTableServiceInterface {
 			'title' => $file->name,
 			'schema' => (string)$schema->getId(),
 			'rowCount' => 0,
-			'status' => self::STATUS_IMPORTING,
 		];
 
-		return $this->tables()->save(object: array_merge($table, $this->import(register: $register, schema: $schema, file: $file, user: $user)));
+		return $this->lifecycle(table: $table, file: $file, user: $user, importedBy: null, schema: $schema);
 	}//end createFromFile()
+
+	/**
+	 * Import a table's file into its row schema, from importing to ready or failed.
+	 *
+	 * The table is stored as `importing` first, with the user who started it in
+	 * `importedBy`, and then updated to `ready` or `failed`: the failed-import
+	 * notification fires on an update to `failed`, so a table is never created
+	 * as `failed`. An exception during the import ends the table `failed` with
+	 * its message instead of leaving it `importing`.
+	 *
+	 * @param array<string, mixed> $table      The table record, new or stored.
+	 * @param TableFile            $file       The CSV on disk and its identity.
+	 * @param IUser|null           $user       The editor, handed to the importer.
+	 * @param string|null          $importedBy Who started it, when not the editor (a queued re-import).
+	 *
+	 * @return array<string, mixed> The stored table record.
+	 *
+	 * @spec openspec/changes/data-file-import-failure-alert/specs/open-data-tables/spec.md
+	 */
+	public function importTable(array $table, TableFile $file, ?IUser $user = null, ?string $importedBy = null): array {
+		return $this->lifecycle(table: $table, file: $file, user: $user, importedBy: $importedBy, schema: null);
+	}//end importTable()
+
+	/**
+	 * Store the table importing, import, and store it ready or failed.
+	 *
+	 * @param array<string, mixed> $table      The table record.
+	 * @param TableFile            $file       The CSV.
+	 * @param IUser|null           $user       The editor.
+	 * @param string|null          $importedBy Who started it, when not the editor.
+	 * @param object|null          $schema     The row schema when just created, else looked up from the table.
+	 *
+	 * @return array<string, mixed> The stored table record.
+	 */
+	private function lifecycle(array $table, TableFile $file, ?IUser $user, ?string $importedBy, ?object $schema): array {
+		$table['status'] = self::STATUS_IMPORTING;
+		$table['importedBy'] = ($importedBy ?? ($user?->getUID() ?? (string)($table['importedBy'] ?? '')));
+		unset($table['lastError']);
+		$stored = (array)self::plain(value: $this->tables()->save(object: $table));
+
+		try {
+			$register = $this->service(class: 'OCA\OpenRegister\Db\RegisterMapper')->find(self::ROWS_REGISTER);
+			$schema ??= $this->service(class: 'OCA\OpenRegister\Db\SchemaMapper')->find((string)$table['schema']);
+			$outcome = $this->import(register: $register, schema: $schema, file: $file, user: $user);
+		} catch (\Throwable $e) {
+			$outcome = ['status' => self::STATUS_FAILED, 'lastError' => self::errorText(message: $e->getMessage())];
+		}
+
+		return (array)self::plain(value: $this->tables()->save(object: array_merge($stored, $outcome)));
+	}//end lifecycle()
+
+	/**
+	 * An exception's message as a table's last error.
+	 *
+	 * @param string $message The message.
+	 *
+	 * @return string The error, never empty, at most the property's 2000 characters.
+	 */
+	private static function errorText(string $message): string {
+		$message = trim($message);
+		if ($message === '') {
+			$message = 'The import failed.';
+		}
+
+		return mb_substr($message, 0, 2000);
+	}//end errorText()
 
 	/**
 	 * Create the schema that holds one table's rows and attach it to the rows register.
