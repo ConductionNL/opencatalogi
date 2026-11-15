@@ -28,7 +28,7 @@ Read `openspec/woo-build-rules.md` first. Start only once `dossiq/woo-request-ta
 
 - [x] 5.1 Answer 404 on the request routes and `unavailable` from `receiveWooRequest()` without dossiq (REQ-WHD-005). Verify: `WooRequestControllerTest::testEveryRequestRouteIs404WithoutDossiq` (fails today: they answer) and `PortalContributionProviderTest::testWithoutDossiqTheIntakeIsUnavailable`.
 - [ ] 5.2 Add the dossiq notice with the install link to the Woo settings section (REQ-WHD-005). Verify: `tests/e2e/woo-request-handover.spec.ts` "an installation without dossiq", carrying `@e2e` REQ-WHD-005, on a CI instance without dossiq.
-- [ ] 5.3 Write the release notes of the proposal in `CHANGELOG.md` and `docs/`, following the writing skill. Verify: a grep for U+2014 on the changed files.
+- [x] 5.3 Write the release notes of the proposal in `CHANGELOG.md` and `docs/`, following the writing skill. Verify: a grep for U+2014 on the changed files.
 - [ ] 5.4 Verification for the first PR: `TMPDIR` a sibling directory outside the clone; PHPUnit by the `Tests:` line or `--no-coverage`, full suite once (the intake is central); `run-hydra-gates.sh --base origin/development` counting the gates that ran; once before push `COMPOSER_PROCESS_TIMEOUT=0 composer check:strict` and `npm run lint`, `format`, `check:l10n`, `check:l10n-js`, `check:manifest`, `check:schema-l10n`; one PR with `--base development`, merge development in, never rebase, no `Co-Authored-By`.
 
 ## 6. Removal (second PR, the release after)
