@@ -47,6 +47,8 @@ use OCP\IRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Golden test for the case type resynchronisation endpoints.
@@ -201,7 +203,9 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema, bool $_rbac = true): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				if ($_rbac === true) {
 					throw new \LogicException('The resynchronisation reads without RBAC');
 				}
@@ -218,7 +222,11 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, array $extend, string $register, string $schema, string $uuid, bool $_rbac = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$extend = $options->extend;
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				if ($_rbac === true) {
 					throw new \LogicException('The resynchronisation saves without RBAC');
 				}

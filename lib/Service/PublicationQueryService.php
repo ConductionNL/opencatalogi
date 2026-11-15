@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\IAppConfig;
 use OCP\IUserSession;
@@ -2063,10 +2064,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 				objectService: $objectService,
 				operation: static fn (): mixed => $objectService->find(
 					id: $publicationId,
-					_extend: [],
-					files: false,
-					register: $registerId,
-					schema: $publicationSchemaId,
+					options: new ObjectFindOptions(register: $registerId, schema: $publicationSchemaId),
 					_rbac: true,
 					_multitenancy: false
 				)
@@ -2328,10 +2326,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 		try {
 			$object = $objectService->find(
 				id: $lookup['id'],
-				_extend: [],
-				files: false,
-				register: $lookup['register'],
-				schema: $lookup['schema'],
+				options: new ObjectFindOptions(register: $lookup['register'], schema: $lookup['schema']),
 				_rbac: false,
 				_multitenancy: false
 			);
@@ -2736,10 +2731,7 @@ class PublicationQueryService implements PublicationQueryServiceInterface {
 				try {
 					$object = $objectService->find(
 						id: $id,
-						_extend: [],
-						files: false,
-						register: $register,
-						schema: $schemaId,
+						options: new ObjectFindOptions(register: $register, schema: $schemaId),
 						_rbac: true,
 						_multitenancy: false
 					);
