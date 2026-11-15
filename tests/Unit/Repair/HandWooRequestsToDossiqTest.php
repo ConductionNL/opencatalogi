@@ -20,11 +20,15 @@ declare(strict_types=1);
 
 namespace Unit\Repair;
 
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Repair\HandWooRequestsToDossiq;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
+use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCP\App\IAppManager;
+use OCP\IAppConfig;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\UsesClass;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
@@ -35,6 +39,7 @@ use RuntimeException;
  * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md
  */
 #[CoversClass(HandWooRequestsToDossiq::class)]
+#[UsesClass(WooHandoverState::class)]
 class HandWooRequestsToDossiqTest extends TestCase {
 
 	/**
@@ -137,15 +142,109 @@ class HandWooRequestsToDossiqTest extends TestCase {
 	}//end testTheTimerSubjectTypeIsTheStatutoryTermsOwn()
 
 	/**
+	 * A request dossiq moved on its own upgrade answers as already imported; its stamp stops its timer.
+	 *
+	 * @return void
+	 */
+	public function testARequestDossiqMovedEarlierHasItsTimerCancelledByItsStamp(): void {
+		$answer = ['imports' => [[
+			'key' => 'opencatalogi-woo-requests',
+			'alreadyImported' => 2,
+			'unmigrated' => 1,
+			'migrated' => [['requestId' => 'r-1', 'caseId' => 'c-1']],
+			'failed' => [['requestId' => 'r-4', 'reason' => 'no date']],
+		]]];
+		$stored = [
+			['id' => 'r-1', 'migratedTo' => 'c-1'],
+			['id' => 'r-5', 'migratedTo' => 'c-5', 'migratedAt' => '2026-11-01T10:00:00+00:00'],
+			['id' => 'r-4'],
+			['id' => '', 'migratedTo' => 'c-9'],
+		];
+
+		$run = $this->runStep(enabled: true, answer: $answer, stored: $stored);
+
+		$this->assertSame(
+			expected: [
+				['object', 'r-1', 'Handed over to dossiq case c-1'],
+				['object', 'r-5', 'Handed over to dossiq case c-5'],
+			],
+			actual: $run['cancelled']
+		);
+		$this->assertSame(
+			expected: ['info: Woo requests handed to dossiq: 1 moved, 2 already moved, 1 not moved; 2 timers cancelled.'],
+			actual: $run['output']
+		);
+	}//end testARequestDossiqMovedEarlierHasItsTimerCancelledByItsStamp()
+
+	/**
+	 * The counts are stored with the moment; with one left the schema stays writable.
+	 *
+	 * @return void
+	 */
+	public function testTheCountsAreStoredAndAnUnmovedRequestKeepsTheSchemaWritable(): void {
+		$answer = ['imports' => [[
+			'key' => 'opencatalogi-woo-requests',
+			'unmigrated' => 1,
+			'migrated' => [],
+			'failed' => [['requestId' => 'r-4', 'reason' => 'no date']],
+		]]];
+
+		$config = $this->runStep(enabled: true, answer: $answer)['config'];
+
+		$this->assertSame('1', $config['opencatalogi:woo_requests_unmigrated']);
+		$this->assertSame('1', $config['opencatalogi:woo_requests_failed']);
+		$this->assertNotFalse(\DateTimeImmutable::createFromFormat(DATE_ATOM, $config['opencatalogi:woo_requests_migration_checked_at']));
+		$this->assertArrayNotHasKey('opencatalogi:woo_requests_read_only', $config);
+	}//end testTheCountsAreStoredAndAnUnmovedRequestKeepsTheSchemaWritable()
+
+	/**
+	 * With nothing left to move the schema becomes read-only; an unusable answer stores nothing.
+	 *
+	 * @return void
+	 */
+	public function testNothingLeftMakesTheSchemaReadOnly(): void {
+		$answer = ['imports' => [['key' => 'opencatalogi-woo-requests', 'unmigrated' => 0, 'migrated' => [], 'failed' => []]]];
+
+		$config = $this->runStep(enabled: true, answer: $answer)['config'];
+		$this->assertSame('0', $config['opencatalogi:woo_requests_unmigrated']);
+		$this->assertSame('1', $config['opencatalogi:woo_requests_read_only']);
+
+		$this->assertSame([], $this->runStep(enabled: true, answer: ['imports' => 'x'])['config']);
+		$this->assertSame([], $this->runStep(enabled: false, answer: $answer)['config']);
+	}//end testNothingLeftMakesTheSchemaReadOnly()
+
+	/**
+	 * A store that cannot be read keeps the import's own cancellations and says why the rest waited.
+	 *
+	 * @return void
+	 */
+	public function testAnUnreadableStoreKeepsTheImportsCancellations(): void {
+		$answer = ['imports' => [['key' => 'opencatalogi-woo-requests', 'migrated' => [['requestId' => 'r-1', 'caseId' => 'c-1']], 'failed' => []]]];
+
+		$run = $this->runStep(enabled: true, answer: $answer, stored: new RuntimeException('register down'));
+
+		$this->assertSame([['object', 'r-1', 'Handed over to dossiq case c-1']], $run['cancelled']);
+		$this->assertSame(
+			[
+				'warning: The stored Woo requests could not be read to stop the timers of requests dossiq moved earlier: register down',
+				'info: Woo requests handed to dossiq: 1 moved, 0 already moved, 0 not moved; 1 timers cancelled.',
+			],
+			$run['output']
+		);
+		$this->assertSame('0', $run['config']['opencatalogi:woo_requests_unmigrated']);
+	}//end testAnUnreadableStoreKeepsTheImportsCancellations()
+
+	/**
 	 * Run the step over doubles of dossiq's import and OpenRegister's timers.
 	 *
 	 * @param bool $enabled Whether dossiq is enabled.
 	 * @param mixed $answer The import's answer, or a Throwable it throws.
+	 * @param array<int, array<string, mixed>>|\Throwable $stored The stored requests, or what reading them throws.
 	 *
-	 * @return array{imported: array, cancelled: array, output: array}
+	 * @return array{imported: array, cancelled: array, output: array, config: array<string, string>}
 	 */
-	private function runStep(bool $enabled, mixed $answer): array {
-		$seen = (object)['imported' => [], 'cancelled' => [], 'output' => []];
+	private function runStep(bool $enabled, mixed $answer, array|\Throwable $stored = []): array {
+		$seen = (object)['imported' => [], 'cancelled' => [], 'output' => [], 'config' => []];
 
 		$import = new class($answer, $seen) {
 			/**
@@ -200,6 +299,13 @@ class HandWooRequestsToDossiqTest extends TestCase {
 			}
 		};
 
+		$store = $this->createMock(originalClassName: InformationRequestStoreInterface::class);
+		if ($stored instanceof \Throwable) {
+			$store->method('all')->willThrowException($stored);
+		} else {
+			$store->method('all')->willReturn($stored);
+		}
+
 		$apps = $this->createMock(originalClassName: IAppManager::class);
 		$apps->method('isEnabledForAnyone')->with('dossiq')->willReturn($enabled);
 		$container = $this->createMock(originalClassName: ContainerInterface::class);
@@ -207,8 +313,14 @@ class HandWooRequestsToDossiqTest extends TestCase {
 			static fn (string $id): object => match ($id) {
 				HandWooRequestsToDossiq::IMPORT_CLASS => $import,
 				HandWooRequestsToDossiq::TIMER_CLASS => $timers,
+				InformationRequestStoreInterface::class => $store,
 			}
 		);
+		$config = $this->createMock(originalClassName: IAppConfig::class);
+		$config->method('setValueString')->willReturnCallback(static function (string $app, string $key, string $value) use ($seen): bool {
+			$seen->config[$app . ':' . $key] = $value;
+			return true;
+		});
 		$output = $this->createMock(originalClassName: IOutput::class);
 		$output->method('info')->willReturnCallback(static function (string $message) use ($seen): void {
 			$seen->output[] = 'info: ' . $message;
@@ -217,8 +329,9 @@ class HandWooRequestsToDossiqTest extends TestCase {
 			$seen->output[] = 'warning: ' . $message;
 		});
 
-		(new HandWooRequestsToDossiq(appManager: $apps, container: $container))->run(output: $output);
+		$state = new WooHandoverState(config: $config, appManager: $apps);
+		(new HandWooRequestsToDossiq(appManager: $apps, container: $container, state: $state))->run(output: $output);
 
-		return ['imported' => $seen->imported, 'cancelled' => $seen->cancelled, 'output' => $seen->output];
+		return ['imported' => $seen->imported, 'cancelled' => $seen->cancelled, 'output' => $seen->output, 'config' => $seen->config];
 	}//end runStep()
 }//end class

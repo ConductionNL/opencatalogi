@@ -19,6 +19,12 @@
  * keeps its timer, and so does every request when dossiq answers in a shape
  * this step does not know.
  *
+ * Dossiq also runs the import on its own upgrade, so a request may already
+ * carry the `migratedTo` stamp before this step sees it; such a request
+ * answers as already imported, and the step stops its timer by the stamp.
+ * The step stores what is left (`woo_requests_unmigrated`,
+ * `woo_requests_failed`) and makes the request schema read-only once nothing is.
+ *
  * @category Repair
  * @package  OCA\OpenCatalogi\Repair
  *
@@ -35,6 +41,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Repair;
 
+use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
+use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCP\App\IAppManager;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -77,13 +86,15 @@ class HandWooRequestsToDossiq implements IRepairStep {
 	 * Constructor.
 	 *
 	 * @param IAppManager $appManager Whether dossiq is enabled.
-	 * @param ContainerInterface $container Reaches dossiq's import and OpenRegister's timers.
+	 * @param ContainerInterface $container Reaches dossiq's import, OpenRegister's timers and the stored requests.
+	 * @param WooHandoverState|null $state Keeps what the hand-over left; null keeps nothing.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly IAppManager $appManager,
 		private readonly ContainerInterface $container,
+		private readonly ?WooHandoverState $state = null,
 	) {
 	}//end __construct()
 
@@ -118,9 +129,71 @@ class HandWooRequestsToDossiq implements IRepairStep {
 			return;
 		}
 
-		$cancelled = $this->cancelTimers(rows: array_merge($import['migrated'], $import['duplicates']));
+		$moved = array_merge($import['migrated'], $import['duplicates']);
+		$cancelled = $this->cancelTimers(rows: $moved);
+		$cancelled += $this->cancelStampedTimers(skip: self::requestIds(rows: $moved), output: $output);
+		$this->state?->record(
+			unmigrated: (int)($import['unmigrated'] ?? count($import['failed'])),
+			failed: count($import['failed']),
+			checkedAt: (new DateTimeImmutable())->format(DATE_ATOM)
+		);
 		$output->info(self::summary(import: $import, cancelled: $cancelled));
 	}//end run()
+
+	/**
+	 * Cancel the timer of every stored request dossiq stamped before this run.
+	 *
+	 * Dossiq runs the same import on its own upgrade, and a request it moved
+	 * there answers here as already imported. Its stamp names the case.
+	 * Cancelling an already cancelled timer cancels nothing, so this is safe to
+	 * run again.
+	 *
+	 * @param array<int, string> $skip The requests this run already handled.
+	 * @param IOutput $output Where the step reports a failed read.
+	 *
+	 * @return int How many timers were cancelled.
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-3.2
+	 */
+	private function cancelStampedTimers(array $skip, IOutput $output): int {
+		try {
+			$requests = $this->container->get(InformationRequestStoreInterface::class)->all();
+		} catch (Throwable $e) {
+			$output->warning('The stored Woo requests could not be read to stop the timers of requests dossiq moved earlier: ' . $e->getMessage());
+			return 0;
+		}
+
+		$stamped = [];
+		foreach ($requests as $request) {
+			$requestId = (string)($request['id'] ?? $request['uuid'] ?? '');
+			$caseId = (string)($request['migratedTo'] ?? '');
+			if ($requestId === '' || $caseId === '' || in_array($requestId, $skip, true) === true) {
+				continue;
+			}
+
+			$stamped[] = ['requestId' => $requestId, 'caseId' => $caseId];
+		}
+
+		return $this->cancelTimers(rows: $stamped);
+	}//end cancelStampedTimers()
+
+	/**
+	 * The request ids of moved rows.
+	 *
+	 * @param array<int, mixed> $rows The rows.
+	 *
+	 * @return array<int, string> The ids.
+	 */
+	private static function requestIds(array $rows): array {
+		$ids = [];
+		foreach ($rows as $row) {
+			if (is_array($row) === true && is_string($row['requestId'] ?? null) === true) {
+				$ids[] = $row['requestId'];
+			}
+		}
+
+		return $ids;
+	}//end requestIds()
 
 	/**
 	 * The line the step reports after the import.

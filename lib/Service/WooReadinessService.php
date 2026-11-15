@@ -33,6 +33,7 @@ namespace OCA\OpenCatalogi\Service;
 use DateTime;
 use DOMDocument;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
+use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
 use OCP\IAppConfig;
@@ -124,6 +125,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 	 * @param SettingsService $settingsService The settings service, used to resolve WOO-enabled catalogs.
 	 * @param IAppConfig $config App configuration (report persistence + registration status).
 	 * @param IURLGenerator $urlGenerator The Nextcloud URL generator (public base URL).
+	 * @param WooHandoverState|null $handover What the hand-over of the Woo requests to dossiq left; null reports nothing.
 	 */
 	public function __construct(
 		private readonly IClientService $clientService,
@@ -132,6 +134,7 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 		private readonly SettingsService $settingsService,
 		private readonly IAppConfig $config,
 		private readonly IURLGenerator $urlGenerator,
+		private readonly ?WooHandoverState $handover = null,
 	) {
 
 	}//end __construct()
@@ -200,6 +203,11 @@ class WooReadinessService implements HarvesterReadinessServiceInterface {
 			'checks' => $checks,
 			'registration' => $registration,
 		];
+		// The Woo requests not yet handed to dossiq (REQ-WHD-003). Reported, not
+		// a check: they say nothing about whether the index can harvest.
+		if ($this->handover !== null) {
+			$report['wooRequests'] = $this->handover->report();
+		}
 
 		$this->persistReport(report: $report);
 

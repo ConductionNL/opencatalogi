@@ -31,6 +31,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\HarvesterReadinessServiceInterface;
+use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -51,6 +52,7 @@ class WooReadinessController extends Controller {
 	 * @param IRequest $request The request.
 	 * @param HarvesterReadinessServiceInterface $wooReadinessService The readiness self-check service.
 	 * @param ConnectionReporterInterface|null $connectionReporter Tells integriq what a check met, or nothing when absent.
+	 * @param WooHandoverState|null $handover What the hand-over of the Woo requests to dossiq left, or nothing when absent.
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -59,6 +61,7 @@ class WooReadinessController extends Controller {
 		IRequest $request,
 		private readonly HarvesterReadinessServiceInterface $wooReadinessService,
 		private readonly ?ConnectionReporterInterface $connectionReporter = null,
+		private readonly ?WooHandoverState $handover = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -70,15 +73,25 @@ class WooReadinessController extends Controller {
 	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). Performs no
 	 * outbound requests — reads the appconfig-persisted report only.
 	 *
+	 * With it, `wooRequests`: what the hand-over of the stored Woo requests to
+	 * dossiq left and whether dossiq is installed, which the Woo settings show
+	 * whether or not a readiness check ran.
+	 *
 	 * @return JSONResponse The persisted report (or `{"report": null}` when none exists yet).
 	 *
 	 * @NoCSRFRequired
 	 *
 	 * @spec openspec/changes/woo-index-harvester-readiness/specs/woo-compliance/spec.md#requirement-readiness-report-is-persisted-and-retrievable-woo-hr-002
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-3.2
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function report(): JSONResponse {
-		return new JSONResponse(['report' => $this->wooReadinessService->getPersistedReport()]);
+		$data = ['report' => $this->wooReadinessService->getPersistedReport()];
+		if ($this->handover !== null) {
+			$data['wooRequests'] = $this->handover->report();
+		}
+
+		return new JSONResponse($data);
 	}//end report()
 
 	/**

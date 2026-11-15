@@ -15,7 +15,9 @@ use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
 use OCA\OpenCatalogi\Service\SitemapStandards;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
+use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCA\OpenCatalogi\Service\WooReadinessService;
+use OCP\App\IAppManager;
 use OCP\Http\Client\IClient;
 use OCP\Http\Client\IClientService;
 use OCP\Http\Client\IResponse;
@@ -30,6 +32,7 @@ use PHPUnit\Framework\TestCase;
  * @covers \OCA\OpenCatalogi\Service\WooReadinessService
  * @covers \OCA\OpenCatalogi\Service\SitemapStandards
  * @uses \OCA\OpenCatalogi\Service\CatalogReadinessChecks
+ * @uses \OCA\OpenCatalogi\Service\Woo\WooHandoverState
  */
 class WooReadinessServiceTest extends TestCase {
 
@@ -457,6 +460,46 @@ XML;
 			$this->config,
 			$this->urlGenerator
 		);
+	}
+
+	/**
+	 * The readiness report carries what the hand-over to dossiq left, without it deciding the verdict.
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-3.2
+	 */
+	public function testUnmigratedRequestsAreReported(): void {
+		$this->settingsService->method('getSettings')->willReturn(['configuration' => []]);
+		$this->client->method('get')->willReturn($this->mockResponse(200, "Sitemap: /sitemaps/x\n"));
+		$this->config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => match ($key) {
+				'woo_requests_unmigrated' => '2',
+				'woo_requests_failed' => '1',
+				'woo_requests_migration_checked_at' => '2026-11-15T10:00:00+00:00',
+				default => $default,
+			}
+		);
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isEnabledForAnyone')->with('dossiq')->willReturn(true);
+		$versions = $this->createMock(StandardsVersionService::class);
+		$versions->method('diwooVersion')->willReturn(['declared' => '0.9.8', 'published' => '0.9.8', 'status' => StandardsVersionService::STATUS_CURRENT]);
+		$service = new WooReadinessService(
+			$this->clientService,
+			$this->directoryService,
+			new SitemapStandards($this->sitemapService, $versions),
+			$this->settingsService,
+			$this->config,
+			$this->urlGenerator,
+			new WooHandoverState(config: $this->config, appManager: $apps)
+		);
+
+		$report = $service->runCheck();
+
+		$this->assertSame(
+			['unmigrated' => 2, 'failed' => 1, 'checkedAt' => '2026-11-15T10:00:00+00:00', 'readOnly' => false, 'dossiqInstalled' => true],
+			$report['wooRequests']
+		);
+		$this->assertNotContains('woo-requests', array_column($report['checks'], 'id'));
+		$this->assertArrayNotHasKey('wooRequests', $this->service->runCheck());
 	}
 
 	public function testBeingBehindTheDiwooStandardFailsTheReport(): void {
