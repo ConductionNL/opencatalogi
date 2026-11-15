@@ -32,6 +32,10 @@ namespace OCA\OpenCatalogi\Service\Woo;
 use OCA\OpenCatalogi\Contract\InformationRequestStoreInterface;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\IAppConfig;
 use RuntimeException;
 
@@ -102,7 +106,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return $this->objectService;
-
 	}//end objects()
 
 	/**
@@ -129,7 +132,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return ['register' => $register, 'schema' => $schema];
-
 	}//end target()
 
 	/**
@@ -150,9 +152,11 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		return $this->asArray(
 			object: $this->objects()->saveObject(
 				object: $record,
-				register: $target['register'],
-				schema: $target['schema'],
-				uuid: $uuid,
+				options: new ObjectSaveOptions(
+					target: new ObjectFindTarget(register: $target['register'], schema: $target['schema']),
+					uuid: $uuid,
+					actor: new SaveActor(unowned: true)
+				),
 				_rbac: false,
 				_multitenancy: false
 			)
@@ -178,8 +182,7 @@ class WooRequestStore implements InformationRequestStoreInterface {
 			$found = $this->asArray(
 				object: $this->objects()->find(
 					id: $requestId,
-					register: $target['register'],
-					schema: $target['schema']
+					options: new ObjectFindOptions(register: $target['register'], schema: $target['schema'])
 				)
 			);
 		} catch (\Throwable $e) {
@@ -193,7 +196,6 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		$found['id'] = ($found['id'] ?? $requestId);
 
 		return $found;
-
 	}//end find()
 
 	/**
@@ -222,6 +224,5 @@ class WooRequestStore implements InformationRequestStoreInterface {
 		}
 
 		return $requests;
-
 	}//end all()
 }//end class

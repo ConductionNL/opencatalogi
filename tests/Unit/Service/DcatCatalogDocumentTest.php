@@ -15,16 +15,22 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\DcatAssurance;
 use OCA\OpenCatalogi\Service\DcatMappingService;
 use OCA\OpenCatalogi\Service\DcatSerializer;
 use OCA\OpenCatalogi\Service\DcatService;
 use OCA\OpenCatalogi\Service\DcatVocabularyService;
+use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\QualityService;
 use OCA\OpenCatalogi\Service\StandardsVersionService;
 use OCA\OpenRegister\Db\SchemaMapper;
@@ -128,15 +134,12 @@ class DcatCatalogDocumentTest extends TestCase {
 		$quality->method('dqvMeasurements')->willReturnCallback(static fn (array $score) => [['dqv:value' => $score['score']]]);
 
 		return new DcatService(
-			$container,
-			$appManager,
+			new OpenRegisterLookup($container, $appManager),
 			new DcatMappingService(new DcatVocabularyService()),
 			new DcatSerializer(),
-			$urlGenerator,
-			$appConfig,
+			new InstanceSettings($urlGenerator, $appConfig),
 			$this->createMock(LoggerInterface::class),
-			$this->createMock(StandardsVersionService::class),
-			$quality
+			new DcatAssurance($this->createMock(StandardsVersionService::class), $quality)
 		);
 	}
 
@@ -173,14 +176,12 @@ class DcatCatalogDocumentTest extends TestCase {
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('getInstalledApps')->willReturn([]);
 		$service = new DcatService(
-			$this->createMock(ContainerInterface::class),
-			$appManager,
+			new OpenRegisterLookup($this->createMock(ContainerInterface::class), $appManager),
 			new DcatMappingService(new DcatVocabularyService()),
 			new DcatSerializer(),
-			$this->createMock(IURLGenerator::class),
-			$this->createMock(IAppConfig::class),
+			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
 			$this->createMock(LoggerInterface::class),
-			$this->createMock(StandardsVersionService::class)
+			new DcatAssurance($this->createMock(StandardsVersionService::class))
 		);
 
 		$this->expectException(RuntimeException::class);

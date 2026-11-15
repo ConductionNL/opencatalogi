@@ -179,7 +179,6 @@ class DirectoryListingShapeGoldenTest extends TestCase {
 		}
 
 		return $listing;
-
 	}//end withNow()
 
 	/**
@@ -288,6 +287,5 @@ class DirectoryListingShapeGoldenTest extends TestCase {
 			->getMock();
 		$object->method('jsonSerialize')->willReturn($data);
 		return $object;
-
 	}//end stored()
 }//end class

@@ -137,5 +137,30 @@
             "window 108 2024-01-01 ",
             "delete doc-2 {\"_rbac\":false,\"_multitenancy\":false}"
         ]
+    },
+    "apply, files cannot be listed": {
+        "exit": 1,
+        "display": [
+            "  SKIP a document with no uuid.",
+            "FAILED doc-1: could not list its files: list broke",
+            "SKIP doc-3 (Orphan): it names no publication, so there is nowhere to attach it.",
+            "FAILED doc-2: could not list its files: list broke",
+            "Done. Migrated=0 documents, files moved=0, skipped=2, failed=2",
+            ""
+        ],
+        "calls": []
+    },
+    "dry run, publication lookup fails": {
+        "exit": 0,
+        "display": [
+            "Running in DRY-RUN mode. Nothing is moved and nothing is removed. Re-run with --apply to migrate.",
+            "  SKIP a document with no uuid.",
+            "SKIP doc-1 (A Document): its publication (11111111-2222-4333-8444-555555555555) could not be found.",
+            "SKIP doc-3 (Orphan): it names no publication, so there is nowhere to attach it.",
+            "SKIP doc-2 (A Document): its publication (11111111-2222-4333-8444-555555555555) could not be found.",
+            "Done. Migrated=0 documents, files moved=0, skipped=4, failed=0 (dry run, nothing written)",
+            ""
+        ],
+        "calls": []
     }
 }

@@ -146,7 +146,6 @@ class ReadRulesRepairGoldenTest extends TestCase {
 		}
 
 		return $output;
-
 	}//end recordingOutput()
 
 	/**
@@ -227,6 +226,5 @@ class ReadRulesRepairGoldenTest extends TestCase {
 		);
 
 		return new WOO536RepairReadRules($apps, $container, $logger);
-
 	}//end step()
 }//end class

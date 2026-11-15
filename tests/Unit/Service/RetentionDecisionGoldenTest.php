@@ -35,11 +35,14 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Golden test for RetentionService::recordHumanDecision.
  *
  * @covers \OCA\OpenCatalogi\Service\RetentionService
+ * @uses \OCA\OpenCatalogi\Service\RetentionRules
+ * @uses \OCA\OpenCatalogi\Service\EdepotHandover
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses   \OCA\OpenCatalogi\Service\RetentionPolicyTable
  * @uses   \OCA\OpenCatalogi\Service\RetentionRun
@@ -122,8 +125,8 @@ class RetentionDecisionGoldenTest extends TestCase {
 	/**
 	 * Replace moments relative to the run with `<now>` or `<now+NM>`.
 	 *
-	 * @param mixed             $value The value.
-	 * @param DateTimeImmutable $now   The moment the case started.
+	 * @param mixed $value The value.
+	 * @param DateTimeImmutable $now The moment the case started.
 	 *
 	 * @return mixed The value.
 	 */
@@ -145,7 +148,6 @@ class RetentionDecisionGoldenTest extends TestCase {
 		}
 
 		return $value;
-
 	}//end relative()
 
 	/**
@@ -182,7 +184,10 @@ class RetentionDecisionGoldenTest extends TestCase {
 				return $this->object;
 			}
 
-			public function saveObject(array $object, ?string $register = null, ?string $schema = null, string $uuid = '', bool $_rbac = true, bool $_multitenancy = true): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid ?? '';
 				$this->log[] = ['save' => $object, 'register' => $register, 'schema' => $schema, 'uuid' => $uuid, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 				return array_merge($object, ['saved' => true]);
 			}
@@ -203,6 +208,5 @@ class RetentionDecisionGoldenTest extends TestCase {
 		}
 
 		return new RetentionService($config, $container, $session, $this->createMock(LoggerInterface::class));
-
 	}//end service()
 }//end class

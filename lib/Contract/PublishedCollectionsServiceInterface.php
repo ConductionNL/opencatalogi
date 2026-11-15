@@ -22,7 +22,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Contract;
 
-
 /**
  * Contract of PublishedCollectionsService, for callers in other components.
  *

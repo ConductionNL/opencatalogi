@@ -60,10 +60,10 @@ class CatalogAccessListener implements IEventListener {
 	/**
 	 * Constructor.
 	 *
-	 * @param CatalogAccessServiceInterface $access       Writes the rules.
-	 * @param IAppConfig           $config       App configuration.
-	 * @param IUserSession         $userSession  The session.
-	 * @param IGroupManager        $groupManager For the administrator check.
+	 * @param CatalogAccessServiceInterface $access Writes the rules.
+	 * @param IAppConfig $config App configuration.
+	 * @param IUserSession $userSession The session.
+	 * @param IGroupManager $groupManager For the administrator check.
 	 */
 	public function __construct(
 		private readonly CatalogAccessServiceInterface $access,
@@ -118,8 +118,8 @@ class CatalogAccessListener implements IEventListener {
 	 * A write without a session (a background job, an import) is the system's own.
 	 *
 	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The pre-save event.
-	 * @param ObjectEntity                            $new   The object as it would be written.
-	 * @param ObjectEntity|null                       $old   The object as stored.
+	 * @param ObjectEntity $new The object as it would be written.
+	 * @param ObjectEntity|null $old The object as stored.
 	 *
 	 * @return void
 	 */
@@ -193,7 +193,6 @@ class CatalogAccessListener implements IEventListener {
 		}
 
 		return [];
-
 	}//end savedObjects()
 
 	/**

@@ -35,11 +35,17 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
+use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -48,10 +54,13 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use Psr\Container\ContainerInterface;
 
 /**
  * Serves the published service catalogue and the case type catalogue.
+ *
+ * The case type schema's writes and its stored snapshot name group admin, which
+ * leaves out the delegated administrators the admin-setting check lets in. That
+ * check is the gate, so the import and the resynchronisation skip RBAC.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
@@ -69,7 +78,7 @@ class ServiceCatalogueController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localisation.
 	 * @param ServiceCatalogueServiceInterface $catalogueService The catalogue reader.
 	 * @param CaseTypeCatalogueServiceInterface $caseTypeService The case type importer.
@@ -81,7 +90,7 @@ class ServiceCatalogueController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly IL10N $l10n,
 		private readonly ServiceCatalogueServiceInterface $catalogueService,
 		private readonly CaseTypeCatalogueServiceInterface $caseTypeService,
@@ -100,7 +109,6 @@ class ServiceCatalogueController extends Controller {
 	 */
 	private function withCors(JSONResponse $response): JSONResponse {
 		return $this->withListPreflightHeaders(response: $response);
-
 	}//end withCors()
 
 	/**
@@ -116,7 +124,6 @@ class ServiceCatalogueController extends Controller {
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
 		return $this->withListPreflightHeaders(response: new Response());
-
 	}//end preflightedCors()
 
 	/**
@@ -262,8 +269,10 @@ class ServiceCatalogueController extends Controller {
 			$objectService = $this->catalogueService->getObjectService();
 			$found = $objectService->find(
 				id: $id,
-				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				options: new ObjectFindOptions(
+					register: $caseTypeConfig['register'],
+					schema: $caseTypeConfig['schema']
+				)
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
@@ -329,9 +338,11 @@ class ServiceCatalogueController extends Controller {
 			$objectService = $this->catalogueService->getObjectService();
 			$saved = $objectService->saveObject(
 				object: $definition,
-				extend: [],
-				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(
+						register: $caseTypeConfig['register'],
+						schema: $caseTypeConfig['schema']
+					)),
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -341,7 +352,6 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end importCaseType()
 
 	/**
@@ -373,7 +383,6 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		return new JSONResponse($diff);
-
 	}//end previewResync()
 
 	/**
@@ -414,14 +423,17 @@ class ServiceCatalogueController extends Controller {
 
 		$saved = $target['objectService']->saveObject(
 			object: $updated,
-			extend: [],
-			register: $target['config']['register'],
-			schema: $target['config']['schema'],
-			uuid: $id
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(
+						register: $target['config']['register'],
+						schema: $target['config']['schema']
+					),
+				uuid: $id
+			),
+			_rbac: false
 		);
 
 		return new JSONResponse($this->asArray(object: $saved));
-
 	}//end applyResync()
 
 	/**
@@ -440,14 +452,22 @@ class ServiceCatalogueController extends Controller {
 			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
 			$objectService = $this->catalogueService->getObjectService();
 			$local = $this->asArray(
-				object: $objectService->find(
-					id: $id,
-					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema']
+				object: ObjectInPair::require(
+					found: $objectService->find(
+						id: $id,
+						options: new ObjectFindOptions(
+							register: $caseTypeConfig['register'],
+							schema: $caseTypeConfig['schema']
+						),
+						_rbac: false
+					),
+					config: $caseTypeConfig
 				)
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
+		} catch (DoesNotExistException $e) {
+			return new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND);
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}

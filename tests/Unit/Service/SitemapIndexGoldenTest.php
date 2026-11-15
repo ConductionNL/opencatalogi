@@ -28,6 +28,10 @@
  * @spec openspec/specs/woo-compliance/spec.md
  *
  * @covers \OCA\OpenCatalogi\Service\SitemapService
+ * @uses \OCA\OpenCatalogi\Service\SitemapDocumentMapper
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Service\FileFacts
+ * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\SitemapIndexBuilder
  * @uses \OCA\OpenCatalogi\Http\XMLResponse
  * @uses \OCA\OpenCatalogi\Service\SitemapRequest
@@ -39,6 +43,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
 
+require_once __DIR__ . '/Support/FileFactsByExtension.php';
+
+use OCA\OpenCatalogi\Service\InstanceSettings;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\SitemapService;
@@ -156,7 +164,9 @@ class SitemapIndexGoldenTest extends TestCase {
 			/**
 			 * @param array<string, mixed> $data The row.
 			 */
-			public function __construct(private array $data) {
+			public function __construct(
+				private array $data,
+			) {
 			}
 
 			/**
@@ -204,7 +214,9 @@ class SitemapIndexGoldenTest extends TestCase {
 				/**
 				 * @param array<string, mixed> $object The catalog data.
 				 */
-				public function __construct(private array $object) {
+				public function __construct(
+					private array $object,
+				) {
 				}
 
 				/**
@@ -262,19 +274,16 @@ class SitemapIndexGoldenTest extends TestCase {
 		$config->method('getValueInt')->willReturn(2);
 
 		$service = new SitemapService(
-			$container,
-			$apps,
+			new OpenRegisterLookup($container, $apps),
 			$settings,
-			$urls,
-			$config,
-			new TooiVocabularyService(),
+			new InstanceSettings($urls, $config),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($container, $apps), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$queryService,
 			$categories
 		);
 		$response = $service->buildSitemapIndex('the-catalog', 'sitemapindex-diwoo-infocat001.xml');
 
 		return ['status' => $response->getStatus(), 'body' => $response->render(), 'calls' => $calls];
-
 	}//end index()
 
 	/**

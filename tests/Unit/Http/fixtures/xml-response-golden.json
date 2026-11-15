@@ -21,7 +21,7 @@
         "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <line>een&#xD;\ntwee</line>\n</r>\n"
     },
     "at-prefixed keys": {
-        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <id>7</id>\n  <type>t</type>\n</r>\n"
+        "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r id=\"7\">\n  <type>t</type>\n</r>\n"
     },
     "numeric string keys": {
         "xml": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<r>\n  <item5>vijf</item5>\n  <x>\n    <item12>twaalf</item12>\n  </x>\n</r>\n"

@@ -44,10 +44,12 @@ import CatalogDetailPageView from './views/catalogi/CatalogDetailPage.vue'
 import CatalogsIndexView from './views/catalogi/CatalogiIndex.vue'
 import DashboardView from './views/dashboard/Dashboard.vue'
 import FederationDirectory from './views/directory/FederationDirectory.vue'
+import FederatedPublicationView from './views/federation/FederatedPublicationView.vue'
 import FlowDetailSidebar from './views/flows/FlowDetailSidebar.vue'
 import CatalogPublicationsIndex from './views/publications/CatalogPublicationsIndex.vue'
 import FederationSearch from './views/search/FederationSearch.vue'
 import WooBatchDetailView from './views/woo/WooBatchDetail.vue'
+import WooRedactionView from './views/woo/WooRedaction.vue'
 import { createCaseTypeActionHandlers } from './services/caseTypeActions.js'
 import { createConnectionHandlers } from './services/connectionRegistry.js'
 import { createPublicationActionHandlers } from './services/publicationActions.js'
@@ -84,8 +86,8 @@ export default {
 	}),
 
 	// --- Flows (ADR-110 Decision 4). Only the SIDEBAR is an app component;
-	//     the list and the canvas are the shared `flows` / `flow-detail`
-	//     manifest page types. CnFlowSidebar has to mount in the NC app
+	//     the list is an index over the `flows` source, the canvas the shared
+	//     `flow` page type. CnFlowSidebar has to mount in the NC app
 	//     sidebar for the canvas to keep full width. ---
 	FlowDetailSidebar,
 
@@ -95,9 +97,11 @@ export default {
 	CatalogDetailPageView,
 	CatalogPublicationsIndex,
 	WooBatchDetailView,
+	WooRedactionView,
 	CnFederationStatus,
 	FederationDirectory,
 	FederationSearch,
+	FederatedPublicationView,
 
 	// --- Detail-page widgets (referenced by `widgetKey` in manifest pages). ---
 	// NOTE: this map is passed to CnAppRoot as the `customComponents` prop,

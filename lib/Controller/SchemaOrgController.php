@@ -28,9 +28,6 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Contract\CatalogiServiceInterface;
-use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
-use OCA\OpenCatalogi\Contract\SchemaOrgServiceInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
@@ -55,9 +52,7 @@ class SchemaOrgController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request object.
-	 * @param SchemaOrgServiceInterface $schemaOrgService The schema.org JSON-LD renderer.
-	 * @param CatalogiServiceInterface $catalogiService Catalog resolution (slug → catalog).
-	 * @param PublicationQueryServiceInterface $queryService SCH-PFTS-CAT-002 read-rule guard (WOO-581).
+	 * @param SchemaOrgCatalogDocument $document The read-rule guarded DataCatalog node of a catalog.
 	 * @param IL10N $l10n Localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
 	 * @param IAppConfig|null $appConfig App config for the CORS allowlist.
@@ -65,9 +60,7 @@ class SchemaOrgController extends Controller {
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly SchemaOrgServiceInterface $schemaOrgService,
-		private readonly CatalogiServiceInterface $catalogiService,
-		private readonly PublicationQueryServiceInterface $queryService,
+		private readonly SchemaOrgCatalogDocument $document,
 		private readonly IL10N $l10n,
 		private readonly LoggerInterface $logger,
 		private readonly ?IAppConfig $appConfig = null,
@@ -110,17 +103,11 @@ class SchemaOrgController extends Controller {
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function catalog(string $catalogSlug): JSONResponse {
 		try {
-			$catalog = $this->catalogiService->getCatalogBySlug($catalogSlug);
-			if ($catalog === null) {
+			$node = $this->document->node(catalogSlug: $catalogSlug);
+			if ($node === null) {
 				return new JSONResponse(['error' => $this->l10n->t('Catalog not found')], 404);
 			}
 
-			// SCH-PFTS-CAT-002 (WOO-581): same guard as `/api/{catalogSlug}` since
-			// WOO-580 — an anonymous caller must not see a schema without
-			// `authorization.read` rules listed in this DataCatalog.
-			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
-
-			$node = $this->schemaOrgService->buildCatalogNode($catalog, $catalogSlug);
 			$response = new JSONResponse($node, 200);
 			$response->addHeader('Content-Type', 'application/ld+json');
 			return $this->withCorsHeaders(response: $response);

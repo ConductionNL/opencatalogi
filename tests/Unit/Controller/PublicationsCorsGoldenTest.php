@@ -106,7 +106,6 @@ class PublicationsCorsGoldenTest extends TestCase {
 		(new ReflectionMethod(PublicationsController::class, 'addCorsHeaders'))->invoke($controller, $response);
 
 		return $response;
-
 	}//end answer()
 
 	/**
@@ -158,6 +157,5 @@ class PublicationsCorsGoldenTest extends TestCase {
 		}
 
 		return new PublicationsController(...$args);
-
 	}//end build()
 }//end class

@@ -115,7 +115,6 @@ class CatalogSchemaEventListener implements IEventListener {
 		}
 
 		return $this->catalogiService->computeRewrittenRegistersAndSchemas($objectEntity->getObject() ?? []);
-
 	}//end catalogRewrites()
 
 	/**

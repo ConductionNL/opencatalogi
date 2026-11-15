@@ -104,20 +104,7 @@ class CatalogCacheEventListener implements IEventListener {
 	 */
 	public function handle(Event $event): void {
 		try {
-			$objectEntity = $this->extractObjectFromEvent(event: $event);
-			if ($objectEntity === null || $this->isCatalogObject(objectEntity: $objectEntity) === false) {
-				return;
-			}
-
-			$catalogData = $objectEntity->jsonSerialize();
-			if (isset($catalogData['slug']) === false) {
-				return;
-			}
-
-			$this->refreshCatalogCache(
-				event: $event,
-				catalog: ['entity' => $objectEntity, 'slug' => $catalogData['slug']]
-			);
+			$this->refreshIfCatalog(event: $event);
 		} catch (\Exception $e) {
 			// Log unexpected errors and continue gracefully.
 			$this->logger->error(
@@ -127,6 +114,33 @@ class CatalogCacheEventListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Refresh the cache of the catalog the event is about; any other object, or
+	 * a catalog without a slug, is left alone.
+	 *
+	 * @param Event $event The object event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/catalogs/spec.md
+	 */
+	private function refreshIfCatalog(Event $event): void {
+		$objectEntity = $this->extractObjectFromEvent(event: $event);
+		if ($objectEntity === null || $this->isCatalogObject(objectEntity: $objectEntity) === false) {
+			return;
+		}
+
+		$catalogData = $objectEntity->jsonSerialize();
+		if (isset($catalogData['slug']) === false) {
+			return;
+		}
+
+		$this->refreshCatalogCache(
+			event: $event,
+			catalog: ['entity' => $objectEntity, 'slug' => $catalogData['slug']]
+		);
+	}//end refreshIfCatalog()
 
 	/**
 	 * Whether an object sits in the configured catalog schema and register.

@@ -33,6 +33,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Golden test for WithheldDocumentStore::replace.
@@ -164,7 +166,6 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 		}
 
 		return new WithheldDocumentStore($config, new OpenRegisterLookup($container, $appManager), $logger);
-
 	}//end store()
 
 	/**
@@ -177,10 +178,12 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 	private function objects(array $world): object {
 		$log = &$this->log;
 		return new class($world, $log) {
-
 			private int $saves = 0;
 
-			public function __construct(private array $world, private array &$log) {
+			public function __construct(
+				private array $world,
+				private array &$log,
+			) {
 			}
 
 			public function searchObjectsPaginated(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
@@ -196,7 +199,9 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 				$rows = ($this->world['rows'] ?? []);
 				if (($this->world['entities'] ?? false) === true) {
 					$rows = array_map(static fn (array $row): object => new class($row) implements \JsonSerializable {
-						public function __construct(private array $row) {
+						public function __construct(
+							private array $row,
+						) {
 						}
 
 						public function jsonSerialize(): array {
@@ -208,7 +213,9 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 				return ['results' => $rows];
 			}
 
-			public function saveObject(array $object, $register = null, $schema = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->saves++;
 				$object['recordedAt'] = (preg_match('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d[+-]\d\d:\d\d$/', (string)$object['recordedAt']) === 1) ? '<now>' : $object['recordedAt'];
 				$this->log[] = ['save', $object, $register, $schema, $_rbac, $_multitenancy];
@@ -219,7 +226,9 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 				$id = (array_key_exists('ids', $this->world) === true) ? ($this->world['ids'][$this->saves - 1] ?? null) : 'w-' . $this->saves;
 				if ($id === 'object') {
 					return new class('e-' . $this->saves) implements \JsonSerializable {
-						public function __construct(private string $id) {
+						public function __construct(
+							private string $id,
+						) {
 						}
 
 						public function jsonSerialize(): array {
@@ -231,7 +240,10 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 				return array_filter(array_merge($object, ['id' => $id]), static fn ($value): bool => $value !== null);
 			}
 
-			public function deleteObject(string $uuid, $register = null, $schema = null, bool $_rbac = true, bool $_multitenancy = true): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
+				$uuid = $deletion->uuid;
+				$register = $deletion->target->register;
+				$schema = $deletion->target->schema;
 				$this->log[] = ['delete', $uuid, $register, $schema, $_rbac, $_multitenancy];
 				if (in_array($uuid, ($this->world['failDelete'] ?? []), true) === true) {
 					throw new RuntimeException('delete of ' . $uuid . ' failed');

@@ -81,9 +81,9 @@ class PublicationSlugLookupGoldenTest extends TestCase {
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param string                       $slug      The URL id.
-	 * @param array<int, mixed>            $registers The catalogue's registers.
-	 * @param array<int, mixed>            $schemas   The catalogue's schemas.
+	 * @param string $slug The URL id.
+	 * @param array<int, mixed> $registers The catalogue's registers.
+	 * @param array<int, mixed> $schemas The catalogue's schemas.
 	 * @param array<string, list<string>|string> $stored The stored slugs per register:schema:slug.
 	 *
 	 * @return void
@@ -112,8 +112,8 @@ class PublicationSlugLookupGoldenTest extends TestCase {
 	/**
 	 * Call the private lookup on a controller over doubles.
 	 *
-	 * @param object            $objectService The ObjectService double.
-	 * @param array<int, mixed> $args          Slug, catalog slug, registers, schemas.
+	 * @param object $objectService The ObjectService double.
+	 * @param array<int, mixed> $args Slug, catalog slug, registers, schemas.
 	 *
 	 * @return object|null The match.
 	 */
@@ -142,7 +142,6 @@ class PublicationSlugLookupGoldenTest extends TestCase {
 		$method = new ReflectionMethod(PublicationsController::class, 'findBySlugInCatalogScope');
 
 		return $method->invoke($controller, $objectService, new CatalogSlugQuery($slug, $catalogSlug, $registers, $schemas));
-
 	}//end lookup()
 
 	/**

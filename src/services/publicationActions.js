@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Named action handlers for the Publications index.
  *
  * CnIndexPage resolves a manifest action's `handler` string against the
@@ -32,17 +36,35 @@ export function createPublicationActionHandlers({
 	 * @spec openspec/changes/publications-selection-actions/specs/publication-selection-actions/spec.md#requirement-the-selection-bar-opens-the-mass-dialogs-on-the-selected-publications-psa-001
 	 */
 	function openSelectionDialog({ objects = [], props = {} }) {
-		const target = props?.modal || props?.dialog
-		if (!target || objects.length === 0) {
+		if (!names(props) || objects.length === 0) {
 			return false
 		}
 		objectStore.setSelectedObjects([...objects])
+		openNamed(props)
+		return true
+	}
+
+	/**
+	 * Whether `props` names a modal or a dialog.
+	 *
+	 * @param {{dialog?: string, modal?: string}|null} props The action props.
+	 * @return {boolean} True when one of them is set.
+	 */
+	function names(props) {
+		return Boolean(props?.modal || props?.dialog)
+	}
+
+	/**
+	 * Open the modal `props` names, or else its dialog.
+	 *
+	 * @param {{dialog?: string, modal?: string}} props The action props.
+	 */
+	function openNamed(props) {
 		if (props.modal) {
 			navigationStore.setModal(props.modal)
 		} else {
 			navigationStore.setDialog(props.dialog)
 		}
-		return true
 	}
 
 	return {

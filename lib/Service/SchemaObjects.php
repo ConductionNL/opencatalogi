@@ -22,6 +22,10 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
+
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 /**
  * OpenRegister's ObjectService bound to one register and schema, without
  * RBAC or multitenancy.
@@ -47,8 +51,8 @@ final class SchemaObjects {
 	/**
 	 * Constructor.
 	 *
-	 * @param object                    $objects OpenRegister's ObjectService.
-	 * @param array{0: string, 1: string} $target  The register and the schema.
+	 * @param object $objects OpenRegister's ObjectService.
+	 * @param array{0: string, 1: string} $target The register and the schema.
 	 */
 	public function __construct(
 		private readonly object $objects,
@@ -88,8 +92,7 @@ final class SchemaObjects {
 	public function save(array $object): mixed {
 		return $this->objects->saveObject(
 			object: $object,
-			register: $this->register,
-			schema: $this->schema,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $this->register, schema: $this->schema)),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -106,7 +109,11 @@ final class SchemaObjects {
 	 * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-dossiq-records-the-withheld-documents-through-one-named-method-req-wdw-002
 	 */
 	public function delete(string $id): void {
-		$this->objects->deleteObject(uuid: $id, register: $this->register, schema: $this->schema, _rbac: false, _multitenancy: false);
+		$this->objects->deleteObject(
+			new ObjectDeletion(uuid: $id, target: new ObjectFindTarget(register: $this->register, schema: $this->schema)),
+			_rbac: false,
+			_multitenancy: false
+		);
 
 	}//end delete()
 }//end class

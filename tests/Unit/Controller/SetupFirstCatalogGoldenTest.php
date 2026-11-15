@@ -25,9 +25,17 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
 use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
 use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
 use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Controller\Setup\SetupActions;
+use OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep;
+use OCA\OpenCatalogi\Controller\Setup\SetupStatusReport;
+use OCA\OpenCatalogi\Controller\Setup\SetupStepRunner;
 use OCA\OpenCatalogi\Controller\SetupController;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
@@ -40,11 +48,19 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for the create-first-catalog setup action.
  *
  * @covers \OCA\OpenCatalogi\Controller\SetupController
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupActions
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupStatusReport
+ * @covers \OCA\OpenCatalogi\Controller\Setup\SetupStepRunner
  */
 class SetupFirstCatalogGoldenTest extends TestCase {
 
@@ -159,6 +175,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 		);
 		$objects->method('saveObject')->willReturnCallback(
 			function (...$args) use ($case): mixed {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$this->log[] = ['save' => self::passedArguments(method: 'saveObject', args: $args)];
 				if (($case['fail'] ?? null) === 'save') {
 					throw new RuntimeException('save broke');
@@ -189,7 +206,7 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 			}
 		);
 
-		return new SetupController(
+		return self::setupController(
 			'opencatalogi',
 			$this->createMock(IRequest::class),
 			$config,
@@ -212,14 +229,14 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 	 * would record that class's signature: the test stub's locally and OpenRegister's
 	 * own in CI. Named and without defaults, the record is what the controller passed.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return array<string, mixed> The passed arguments by name.
 	 */
 	private static function passedArguments(string $method, array $args): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}
@@ -232,6 +249,59 @@ class SetupFirstCatalogGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
+
+	/**
+	 * A SetupController wired over the given collaborators the way the container wires it.
+	 *
+	 * @param string $appName The app id.
+	 * @param IRequest $request The request.
+	 * @param IAppConfig $config App configuration.
+	 * @param SettingsServiceInterface $settings Settings service.
+	 * @param DemoDataServiceInterface $demo Demo data service.
+	 * @param DirectoryServiceInterface $directory Directory service.
+	 * @param BroadcastServiceInterface $broadcast Broadcast service.
+	 * @param ContainerInterface $container Container.
+	 * @param IL10N $l10n Localization.
+	 * @param LoggerInterface $logger Logger.
+	 * @param IUserSession $session User session.
+	 * @param ConnectionReporterInterface|null $reporter Connection reporter.
+	 *
+	 * @return SetupController The controller.
+	 */
+	private static function setupController(
+		string $appName,
+		IRequest $request,
+		IAppConfig $config,
+		SettingsServiceInterface $settings,
+		DemoDataServiceInterface $demo,
+		DirectoryServiceInterface $directory,
+		BroadcastServiceInterface $broadcast,
+		ContainerInterface $container,
+		IL10N $l10n,
+		LoggerInterface $logger,
+		IUserSession $session,
+		?ConnectionReporterInterface $reporter = null,
+	): SetupController {
+		$catalog = new SetupCatalogSteps($config, $container, $l10n, $logger);
+		return new SetupController(
+			$appName,
+			$request,
+			$l10n,
+			$session,
+			new SetupStatusReport($config, $demo, $directory, $catalog),
+			new SetupActions(
+				$config,
+				$l10n,
+				new SetupStepRunner(
+					new SetupDemoDataSteps($config, $demo, $l10n, $logger),
+					new SetupSettingsStep($settings, $catalog, $l10n, $logger),
+					$catalog,
+					new SetupFederationSteps($directory, $broadcast, $l10n, $logger)
+				),
+				$reporter
+			)
+		);
+
+	}//end setupController()
 }//end class

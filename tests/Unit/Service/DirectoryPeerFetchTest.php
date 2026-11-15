@@ -15,6 +15,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -35,11 +38,11 @@ use PHPUnit\Framework\TestCase;
 use ReflectionClass;
 
 class DirectoryPeerFetchTest extends TestCase {
-	private const OWN   = 'https://me.example.org/apps/opencatalogi/api/directory';
-	private const PEER  = 'https://peer.example.org/apps/opencatalogi/api/publications';
+	private const OWN = 'https://me.example.org/apps/opencatalogi/api/directory';
+	private const PEER = 'https://peer.example.org/apps/opencatalogi/api/publications';
 	private const OTHER = 'https://other.example.org/apps/opencatalogi/api/federation/publications';
-	private const DOWN  = 'https://down.example.org/api/publications';
-	private const LAN   = 'http://10.1.2.3/api/publications';
+	private const DOWN = 'https://down.example.org/api/publications';
+	private const LAN = 'http://10.1.2.3/api/publications';
 
 	private DirectoryService $service;
 

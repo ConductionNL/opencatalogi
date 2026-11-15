@@ -191,8 +191,8 @@ class SettingsLoadGoldenTest extends TestCase {
 	/**
 	 * Build the service around the world's doubles.
 	 *
-	 * @param array<string, mixed> $world   The world.
-	 * @param string               $appPath The app directory.
+	 * @param array<string, mixed> $world The world.
+	 * @param string $appPath The app directory.
 	 *
 	 * @return SettingsService
 	 */
@@ -251,7 +251,6 @@ class SettingsLoadGoldenTest extends TestCase {
 		);
 
 		return new SettingsService($config, $container, $apps, $logger, $link);
-
 	}//end service()
 
 	/**

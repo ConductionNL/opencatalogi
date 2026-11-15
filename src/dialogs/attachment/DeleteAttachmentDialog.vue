@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
@@ -52,6 +56,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 
 <script>
 import { dispatchObjectsChanged } from '@conduction/nextcloud-vue'
+import { getRequestToken } from '@nextcloud/auth'
 import { generateUrl } from '@nextcloud/router'
 import { NcButton, NcDialog, NcLoadingIcon, NcNoteCard } from '@nextcloud/vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
@@ -102,6 +107,7 @@ export default {
 				),
 				{
 					method: 'DELETE',
+					headers: { requesttoken: getRequestToken() },
 				},
 			)
 				.then((response) => {

@@ -8,7 +8,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -53,7 +56,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -110,7 +116,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -170,7 +179,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -215,7 +227,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -272,7 +287,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/publish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -476,7 +494,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -521,7 +542,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -578,7 +602,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -638,7 +665,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -683,7 +713,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -740,7 +773,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/depublish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -944,7 +980,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -992,7 +1031,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -1049,7 +1091,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -1109,7 +1154,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -1157,7 +1205,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -1214,7 +1265,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/unlock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -1928,7 +1982,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -1976,7 +2033,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -2033,7 +2093,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -2093,7 +2156,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -2141,7 +2207,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -2198,7 +2267,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1/lock",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -2404,7 +2476,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\"}"
 				}
@@ -2456,7 +2529,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\"}"
 				}
@@ -2517,7 +2591,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\"}"
 				}
@@ -2581,7 +2656,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\"}"
 				}
@@ -2633,7 +2709,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\"}"
 				}
@@ -2694,7 +2771,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\"}"
 				}
@@ -2902,7 +2980,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"duration\":600}"
 				}
@@ -2954,7 +3033,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"duration\":600}"
 				}
@@ -3015,7 +3095,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"duration\":600}"
 				}
@@ -3079,7 +3160,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"duration\":600}"
 				}
@@ -3131,7 +3213,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"duration\":600}"
 				}
@@ -3192,7 +3275,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"duration\":600}"
 				}
@@ -3400,7 +3484,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\",\"duration\":600}"
 				}
@@ -3452,7 +3537,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\",\"duration\":600}"
 				}
@@ -3513,7 +3599,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\",\"duration\":600}"
 				}
@@ -3577,7 +3664,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\",\"duration\":600}"
 				}
@@ -3629,7 +3717,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\",\"duration\":600}"
 				}
@@ -3690,7 +3779,8 @@
 				{
 					"method": "POST",
 					"headers": {
-						"Content-Type": "application/json"
+						"Content-Type": "application/json",
+						"requesttoken": "test-request-token"
 					},
 					"body": "{\"process\":\"review\",\"duration\":600}"
 				}
@@ -3893,7 +3983,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1",
 				{
-					"method": "DELETE"
+					"method": "DELETE",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -3937,7 +4030,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1",
 				{
-					"method": "DELETE"
+					"method": "DELETE",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -3994,7 +4090,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1",
 				{
-					"method": "DELETE"
+					"method": "DELETE",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -4051,7 +4150,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1",
 				{
-					"method": "DELETE"
+					"method": "DELETE",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -4095,7 +4197,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1",
 				{
-					"method": "DELETE"
+					"method": "DELETE",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -4152,7 +4257,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1",
 				{
-					"method": "DELETE"
+					"method": "DELETE",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -4353,7 +4461,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o1",
 				{
-					"method": "DELETE"
+					"method": "DELETE",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],
@@ -4448,7 +4559,10 @@
 			[
 				"/index.php/apps/openregister/api/objects/7/9/o3/publish",
 				{
-					"method": "POST"
+					"method": "POST",
+					"headers": {
+						"requesttoken": "test-request-token"
+					}
 				}
 			]
 		],

@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 
@@ -270,13 +274,7 @@ export default {
 		async uploadObject() {
 			this.loading = true
 
-			const newObject = {
-				object: JSON.parse(this.object) || '',
-				register: this.registers.value.id || '',
-				schema: this.schemas.value.id || '',
-				mapping: this.mappings?.value?.id || null,
-				schemas: '',
-			}
+			const newObject = this.uploadPayload()
 
 			objectStore
 				.saveObject(newObject)
@@ -294,6 +292,22 @@ export default {
 				.finally(() => {
 					this.loading = false
 				})
+		},
+
+		/**
+		 * The object to save: the parsed JSON with the chosen register, schema
+		 * and mapping ('' or null when one is not chosen).
+		 *
+		 * @return {object} The object to save.
+		 */
+		uploadPayload() {
+			return {
+				object: JSON.parse(this.object) || '',
+				register: this.registers.value.id || '',
+				schema: this.schemas.value.id || '',
+				mapping: this.mappings?.value?.id || null,
+				schemas: '',
+			}
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-object-modals/tasks.md#task-3 */

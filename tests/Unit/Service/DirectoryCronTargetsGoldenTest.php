@@ -137,8 +137,8 @@ class DirectoryCronTargetsGoldenTest extends TestCase {
 	/**
 	 * Record one ObjectService call by parameter name, without arguments left at their default.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return void
 	 */
@@ -241,7 +241,6 @@ class DirectoryCronTargetsGoldenTest extends TestCase {
 		);
 
 		return $service;
-
 	}//end service()
 
 	/**
@@ -261,7 +260,9 @@ class DirectoryCronTargetsGoldenTest extends TestCase {
 			/**
 			 * @param array<string, mixed> $data The serialised listing.
 			 */
-			public function __construct(private array $data) {
+			public function __construct(
+				private array $data,
+			) {
 			}
 
 			/**

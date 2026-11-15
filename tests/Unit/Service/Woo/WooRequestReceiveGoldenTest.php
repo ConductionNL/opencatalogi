@@ -75,9 +75,9 @@ class WooRequestReceiveGoldenTest extends TestCase {
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
-	 * @param array<string, mixed> $input      The intake input.
-	 * @param string               $receivedBy Who received it.
-	 * @param string|null          $now        When, or null for now.
+	 * @param array<string, mixed> $input The intake input.
+	 * @param string $receivedBy Who received it.
+	 * @param string|null $now When, or null for now.
 	 *
 	 * @return void
 	 */

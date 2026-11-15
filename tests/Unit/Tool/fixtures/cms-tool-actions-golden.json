@@ -1,0 +1,677 @@
+{
+    "page with title only": {
+        "answer": {
+            "success": true,
+            "message": "Page created successfully",
+            "data": {
+                "pageId": "saved-1",
+                "title": "Hello World!",
+                "slug": "hello-world"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "Hello World!",
+                        "slug": "hello-world",
+                        "summary": "",
+                        "description": "",
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "page"
+                }
+            }
+        ]
+    },
+    "page with slug, summary, description": {
+        "answer": {
+            "success": true,
+            "message": "Page created successfully",
+            "data": {
+                "pageId": "saved-1",
+                "title": "T",
+                "slug": "own"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "T",
+                        "slug": "own",
+                        "summary": "s",
+                        "description": "d",
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "page"
+                }
+            }
+        ]
+    },
+    "page with an odd title": {
+        "answer": {
+            "success": true,
+            "message": "Page created successfully",
+            "data": {
+                "pageId": "saved-1",
+                "title": "--Über  Uns 2026--",
+                "slug": "ber-uns-2026"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "--Über  Uns 2026--",
+                        "slug": "ber-uns-2026",
+                        "summary": "",
+                        "description": "",
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "page"
+                }
+            }
+        ]
+    },
+    "page without title": {
+        "answer": {
+            "success": false,
+            "error": "Title is required",
+            "code": 400
+        },
+        "calls": []
+    },
+    "page with empty title": {
+        "answer": {
+            "success": false,
+            "error": "Title is required",
+            "code": 400
+        },
+        "calls": []
+    },
+    "page without agent": {
+        "answer": {
+            "success": true,
+            "message": "Page created successfully",
+            "data": {
+                "pageId": "saved-1",
+                "title": "A",
+                "slug": "a"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "A",
+                        "slug": "a",
+                        "summary": "",
+                        "description": "",
+                        "owner": "session-user",
+                        "organisation": null
+                    },
+                    "register": "publication",
+                    "schema": "page"
+                }
+            }
+        ]
+    },
+    "pages default limit": {
+        "answer": {
+            "success": true,
+            "message": "Pages retrieved successfully",
+            "data": {
+                "count": 2,
+                "pages": [
+                    {
+                        "id": "p-1",
+                        "title": "Home",
+                        "slug": "home",
+                        "summary": "Start"
+                    },
+                    {
+                        "id": "p-2",
+                        "title": "",
+                        "slug": "",
+                        "summary": ""
+                    }
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": "org-1"
+                        },
+                        "limit": 50
+                    }
+                }
+            }
+        ]
+    },
+    "pages with a limit": {
+        "answer": {
+            "success": true,
+            "message": "Pages retrieved successfully",
+            "data": {
+                "count": 0,
+                "pages": []
+            }
+        },
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": "org-1"
+                        },
+                        "limit": 5
+                    }
+                }
+            }
+        ]
+    },
+    "menus": {
+        "answer": {
+            "success": true,
+            "message": "Menus retrieved successfully",
+            "data": {
+                "count": 2,
+                "menus": [
+                    {
+                        "id": "m-1",
+                        "title": "Main",
+                        "position": 2,
+                        "itemCount": 2
+                    },
+                    {
+                        "id": "m-2",
+                        "title": "Untitled",
+                        "position": 0,
+                        "itemCount": 0
+                    }
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": "org-1"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "menus without agent": {
+        "answer": {
+            "success": true,
+            "message": "Menus retrieved successfully",
+            "data": {
+                "count": 0,
+                "menus": []
+            }
+        },
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": null
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "item with link": {
+        "answer": {
+            "success": true,
+            "message": "Menu item added successfully",
+            "data": {
+                "menuItemId": "saved-1",
+                "name": "Over",
+                "menuId": "m-1"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "name": "Over",
+                        "menu": "m-1",
+                        "link": "/over",
+                        "page": null,
+                        "order": 0,
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "menuItem"
+                }
+            }
+        ]
+    },
+    "item with page and order": {
+        "answer": {
+            "success": true,
+            "message": "Menu item added successfully",
+            "data": {
+                "menuItemId": "saved-1",
+                "name": "Over",
+                "menuId": "m-1"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "name": "Over",
+                        "menu": "m-1",
+                        "link": null,
+                        "page": "p-1",
+                        "order": 4,
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "menuItem"
+                }
+            }
+        ]
+    },
+    "item with link and page": {
+        "answer": {
+            "success": true,
+            "message": "Menu item added successfully",
+            "data": {
+                "menuItemId": "saved-1",
+                "name": "Both",
+                "menuId": "m-1"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "name": "Both",
+                        "menu": "m-1",
+                        "link": "/x",
+                        "page": "p-1",
+                        "order": 0,
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "menuItem"
+                }
+            }
+        ]
+    },
+    "item without menu": {
+        "answer": {
+            "success": false,
+            "error": "Menu ID is required",
+            "code": 400
+        },
+        "calls": []
+    },
+    "item without name": {
+        "answer": {
+            "success": false,
+            "error": "Menu item name is required",
+            "code": 400
+        },
+        "calls": []
+    },
+    "item without link or page": {
+        "answer": {
+            "success": false,
+            "error": "Either link or pageId must be provided",
+            "code": 400
+        },
+        "calls": []
+    },
+    "item with empty link and page": {
+        "answer": {
+            "success": false,
+            "error": "Either link or pageId must be provided",
+            "code": 400
+        },
+        "calls": []
+    },
+    "dispatch create page": {
+        "answer": {
+            "success": true,
+            "message": "Page created successfully",
+            "data": {
+                "pageId": "saved-1",
+                "title": "P",
+                "slug": "p"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "P",
+                        "slug": "p",
+                        "summary": "",
+                        "description": "",
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "page"
+                }
+            }
+        ]
+    },
+    "dispatch list pages": {
+        "answer": {
+            "success": true,
+            "message": "Pages retrieved successfully",
+            "data": {
+                "count": 2,
+                "pages": [
+                    {
+                        "id": "p-1",
+                        "title": "Home",
+                        "slug": "home",
+                        "summary": "Start"
+                    },
+                    {
+                        "id": "p-2",
+                        "title": "",
+                        "slug": "",
+                        "summary": ""
+                    }
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": "org-1"
+                        },
+                        "limit": 1
+                    }
+                }
+            }
+        ]
+    },
+    "dispatch create menu": {
+        "answer": {
+            "success": true,
+            "message": "Menu created successfully",
+            "data": {
+                "menuId": "saved-1",
+                "title": "M",
+                "position": 0,
+                "itemCount": 1
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "M",
+                        "position": 0,
+                        "items": [
+                            {
+                                "order": 1,
+                                "name": "a",
+                                "link": "/"
+                            }
+                        ],
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "menu"
+                }
+            }
+        ]
+    },
+    "dispatch list menus": {
+        "answer": {
+            "success": true,
+            "message": "Menus retrieved successfully",
+            "data": {
+                "count": 2,
+                "menus": [
+                    {
+                        "id": "m-1",
+                        "title": "Main",
+                        "position": 2,
+                        "itemCount": 2
+                    },
+                    {
+                        "id": "m-2",
+                        "title": "Untitled",
+                        "position": 0,
+                        "itemCount": 0
+                    }
+                ]
+            }
+        },
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": "org-1"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "dispatch add item": {
+        "answer": {
+            "success": true,
+            "message": "Menu item added successfully",
+            "data": {
+                "menuItemId": "saved-1",
+                "name": "n",
+                "menuId": "m"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "name": "n",
+                        "menu": "m",
+                        "link": "/",
+                        "page": null,
+                        "order": 0,
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "menuItem"
+                }
+            }
+        ]
+    },
+    "dispatch with a user id": {
+        "answer": {
+            "success": true,
+            "message": "Menus retrieved successfully",
+            "data": {
+                "count": 0,
+                "menus": []
+            }
+        },
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": "org-1"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "dispatch unknown": {
+        "answer": {
+            "success": false,
+            "error": "Unknown function: cms_delete_all",
+            "code": 404
+        },
+        "calls": []
+    },
+    "dispatch failing save": {
+        "answer": {
+            "success": false,
+            "error": "store down",
+            "code": 500
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "P",
+                        "slug": "p",
+                        "summary": "",
+                        "description": "",
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "page"
+                }
+            }
+        ]
+    },
+    "magic create page": {
+        "answer": "{\"success\":true,\"message\":\"Page created successfully\",\"data\":{\"pageId\":\"saved-1\",\"title\":\"Magic\",\"slug\":\"magic\"}}",
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "Magic",
+                        "slug": "magic",
+                        "summary": "",
+                        "description": "",
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "page"
+                }
+            }
+        ]
+    },
+    "magic list menus": {
+        "answer": "{\"success\":true,\"message\":\"Menus retrieved successfully\",\"data\":{\"count\":2,\"menus\":[{\"id\":\"m-1\",\"title\":\"Main\",\"position\":2,\"itemCount\":2},{\"id\":\"m-2\",\"title\":\"Untitled\",\"position\":0,\"itemCount\":0}]}}",
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": "org-1"
+                        }
+                    }
+                }
+            }
+        ]
+    },
+    "magic list pages with a string list": {
+        "answer": "{\"success\":true,\"message\":\"Pages retrieved successfully\",\"data\":{\"count\":0,\"pages\":[]}}",
+        "calls": [
+            {
+                "findAll": {
+                    "config": {
+                        "filters": {
+                            "organisation": "org-1"
+                        },
+                        "limit": 50
+                    }
+                }
+            }
+        ]
+    },
+    "magic generate slug": {
+        "answer": "a-b",
+        "calls": []
+    },
+    "magic unknown": {
+        "answer": {
+            "thrown": "BadMethodCallException",
+            "message": "Method cms_drop_menu (or dropMenu) does not exist"
+        },
+        "calls": []
+    },
+    "page with a forged owner": {
+        "answer": {
+            "success": true,
+            "message": "Page created successfully",
+            "data": {
+                "pageId": "saved-1",
+                "title": "F",
+                "slug": "f"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "title": "F",
+                        "slug": "f",
+                        "summary": "",
+                        "description": "",
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "page"
+                }
+            }
+        ]
+    },
+    "item with a forged owner": {
+        "answer": {
+            "success": true,
+            "message": "Menu item added successfully",
+            "data": {
+                "menuItemId": "saved-1",
+                "name": "n",
+                "menuId": "m"
+            }
+        },
+        "calls": [
+            {
+                "saveObject": {
+                    "object": {
+                        "name": "n",
+                        "menu": "m",
+                        "link": "/",
+                        "page": null,
+                        "order": 0,
+                        "owner": "session-user",
+                        "organisation": "org-1"
+                    },
+                    "register": "publication",
+                    "schema": "menuItem"
+                }
+            }
+        ]
+    }
+}

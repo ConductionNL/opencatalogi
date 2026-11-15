@@ -38,13 +38,17 @@ use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Service\CaseTypeCatalogueService;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Golden test for the case type resynchronisation endpoints.
@@ -199,7 +203,13 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options?->register;
+				$schema = $options?->schema;
+				if ($_rbac === true) {
+					throw new \LogicException('The resynchronisation reads without RBAC');
+				}
+
 				if ($this->stored === null) {
 					throw new \RuntimeException('no such object: ' . $id);
 				}
@@ -212,7 +222,15 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			 *
 			 * @return array<string, mixed>
 			 */
-			public function saveObject(array $object, array $extend, string $register, string $schema, string $uuid): array {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): array {
+				$extend = $options->extend;
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
+				if ($_rbac === true) {
+					throw new \LogicException('The resynchronisation saves without RBAC');
+				}
+
 				$this->log[] = ['save' => [$object, [$register, $schema, $uuid]]];
 				return $object;
 			}
@@ -253,7 +271,7 @@ class CaseTypeResyncGoldenTest extends TestCase {
 			'opencatalogi',
 			$request,
 			$config,
-			$container,
+			new OpenRegisterLookup($container, $this->createMock(IAppManager::class)),
 			$l10n,
 			$catalogue,
 			$caseTypes

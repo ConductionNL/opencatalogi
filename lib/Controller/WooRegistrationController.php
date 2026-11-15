@@ -46,8 +46,8 @@ class WooRegistrationController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                 $appName      The app name.
-	 * @param IRequest               $request      The request.
+	 * @param string $appName The app name.
+	 * @param IRequest $request The request.
 	 * @param IndexRegistrationServiceInterface $registration The registration service.
 	 */
 	public function __construct(
@@ -93,7 +93,6 @@ class WooRegistrationController extends Controller {
 		}
 
 		return new JSONResponse($result);
-
 	}//end request()
 
 	/**
@@ -106,6 +105,5 @@ class WooRegistrationController extends Controller {
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function confirm(): JSONResponse {
 		return new JSONResponse(['registration' => $this->registration->confirm()]);
-
 	}//end confirm()
 }//end class

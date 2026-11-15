@@ -28,7 +28,7 @@ use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
  * Resolve a schema in the publication register and read every object of it.
  *
  * Consuming controllers MUST also use ResolvesRegisterConfiguration and
- * ReadsOpenRegisterResults, and expose a `ServiceCatalogueServiceInterface $objects`.
+ * ReadsOpenRegisterResults, and expose a `RegisterAccess $registers`.
  *
  * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md
  */
@@ -64,7 +64,7 @@ trait ReadsPublicationRegister {
 		$query['@self'] = ['register' => $config['register'], 'schema' => $config['schema']];
 		$query['_limit'] = ($filters['_limit'] ?? 500);
 
-		$result = $this->objects->getObjectService()->searchObjectsPaginated($query, _rbac: false, _multitenancy: false);
+		$result = $this->registers->getObjectService()->searchObjectsPaginated($query, _rbac: false, _multitenancy: false);
 
 		$objects = [];
 		foreach (($result['results'] ?? []) as $object) {

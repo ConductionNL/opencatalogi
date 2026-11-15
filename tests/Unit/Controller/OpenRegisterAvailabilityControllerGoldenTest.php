@@ -44,6 +44,7 @@ use Psr\Log\LoggerInterface;
  * Golden test for how the robots and search controllers reach OpenRegister.
  *
  * @covers \OCA\OpenCatalogi\Controller\RobotsController
+ * @covers \OCA\OpenCatalogi\Controller\SitemapDirectives
  * @covers \OCA\OpenCatalogi\Controller\SearchController
  * @uses   \OCA\OpenCatalogi\Controller\AnswersCacheably
  * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
@@ -78,14 +79,13 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 		}
 
 		return $cases;
-
 	}//end cases()
 
 	/**
 	 * Replay a case and compare it to the recording.
 	 *
 	 * @param string $endpoint The endpoint.
-	 * @param string $world    The OpenRegister world.
+	 * @param string $world The OpenRegister world.
 	 *
 	 * @return void
 	 */
@@ -113,7 +113,7 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 	 * Run one endpoint: its response, or what it threw.
 	 *
 	 * @param string $endpoint The endpoint.
-	 * @param string $world    The OpenRegister world.
+	 * @param string $world The OpenRegister world.
 	 *
 	 * @return array<string, mixed> The outcome.
 	 */
@@ -179,14 +179,13 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 		}
 
 		return $response->render();
-
 	}//end body()
 
 	/**
 	 * Build the controller and call the endpoint.
 	 *
-	 * @param string            $endpoint The endpoint.
-	 * @param array<int, mixed> $deps     The container and app manager.
+	 * @param string $endpoint The endpoint.
+	 * @param array<int, mixed> $deps The container and app manager.
 	 *
 	 * @return mixed The response.
 	 */
@@ -230,7 +229,8 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 			$this->createMock(LoggerInterface::class),
 			new \OCA\OpenCatalogi\Service\Woo\LocalCategoryAdmission(new \OCA\OpenCatalogi\Service\TooiVocabularyService()),
 		);
-		$robots = new RobotsController('opencatalogi', $request, $settings, new OpenRegisterLookup($container, $appManager), $urls, $l10n, $categories);
+		$sitemaps = new \OCA\OpenCatalogi\Controller\SitemapDirectives(new OpenRegisterLookup($container, $appManager), $categories);
+		$robots = new RobotsController('opencatalogi', $request, $settings, $urls, $l10n, $sitemaps);
 		if ($endpoint === 'robots-accessor') {
 			$first = $robots->getObjectService();
 			$second = $robots->getObjectService();
@@ -238,6 +238,5 @@ class OpenRegisterAvailabilityControllerGoldenTest extends TestCase {
 		}
 
 		return $robots->index();
-
 	}//end call()
 }//end class

@@ -28,9 +28,13 @@ use OCA\OpenCatalogi\Contract\DepublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Controller\PublicationStateController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
+use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
@@ -39,12 +43,16 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for PublicationStateController::withdraw().
  *
  * @covers \OCA\OpenCatalogi\Controller\PublicationStateController
+ * @covers \OCA\OpenCatalogi\Controller\PublicationTransitions
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses   \OCA\OpenCatalogi\Controller\RegisterAccess
  */
 class PublicationWithdrawGoldenTest extends TestCase {
 
@@ -139,7 +147,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 	/**
 	 * The controller over recording doubles.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls, filled by the doubles.
 	 *
 	 * @return PublicationStateController The controller.
@@ -160,7 +168,9 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($user);
 
-		$rights = $this->getMockBuilder(PublicationRights::class)->disableOriginalConstructor()->onlyMethods(['mayUpdate'])->getMock();
+		$rights = $this->getMockBuilder(PublicationRights::class)->disableOriginalConstructor()->onlyMethods(['mayUpdate', 'mayPublish'])->getMock();
+		// The recorded withdrawals were made by publishers.
+		$rights->method('mayPublish')->willReturn(true);
 		$rights->method('mayUpdate')->willReturnCallback(
 			static function (object $publication) use (&$calls, $session, $case): bool {
 				$calls[] = ['mayUpdate', $publication->jsonSerialize()];
@@ -168,20 +178,17 @@ class PublicationWithdrawGoldenTest extends TestCase {
 			}
 		);
 
+		$container = $this->container(case: $case, calls: $calls);
 		$controller = new PublicationStateController(
 			'opencatalogi',
 			$request,
 			$this->l10n(),
 			$session,
-			$this->states(case: $case, calls: $calls),
 			$rights,
-			$this->depublisher(case: $case, calls: $calls),
-			$this->container(case: $case, calls: $calls),
-			$this->objects(case: $case, calls: $calls)
+			new PublicationTransitions($this->states(case: $case, calls: $calls), $this->depublisher(case: $case, calls: $calls), $container, new RegisterAccess(new OpenRegisterLookup($container, $this->createMock(IAppManager::class)), $this->objects(case: $case, calls: $calls)))
 		);
 
 		return $controller;
-
 	}//end controller()
 
 	/**
@@ -194,13 +201,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$l10n->method('t')->willReturnCallback(static fn (string $text): string => 'T:' . $text);
 
 		return $l10n;
-
 	}//end l10n()
 
 	/**
 	 * A state service double answering the case's state.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return PublicationStateServiceInterface The double.
@@ -233,13 +239,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		);
 
 		return $states;
-
 	}//end states()
 
 	/**
 	 * A depublication service double that echoes what it was given.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return DepublicationServiceInterface The double.
@@ -260,13 +265,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		);
 
 		return $depublisher;
-
 	}//end depublisher()
 
 	/**
 	 * A container double with the app config, or without it, and a file service.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return ContainerInterface The double.
@@ -286,18 +290,30 @@ class PublicationWithdrawGoldenTest extends TestCase {
 					return $this->fileService(case: $case, calls: $calls);
 				}
 
+				if ($id === 'OCA\\OpenRegister\\Files\\Db\\FileMapper') {
+					// Ending the file's window is pinned in PublicationStateControllerTest.
+					return new class {
+						public function findByFileIds(array $fileIds): array {
+							return [];
+						}
+
+						public function setPublicationWindowForFile(int $fileId, object $window): object {
+							return $window;
+						}
+					};
+				}
+
 				throw new \RuntimeException('not available: ' . $id);
 			}
 		);
 
 		return $container;
-
 	}//end container()
 
 	/**
 	 * A file service double that records unpublishFile() into the call log.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return object The double.
@@ -310,9 +326,12 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		return new class($record, ($case['unpublishFails'] ?? false)) {
 			/**
 			 * @param \Closure $record Appends to the call log.
-			 * @param bool     $fails  Whether unpublishing fails.
+			 * @param bool $fails Whether unpublishing fails.
 			 */
-			public function __construct(private \Closure $record, private bool $fails) {
+			public function __construct(
+				private \Closure $record,
+				private bool $fails,
+			) {
 			}
 
 			/**
@@ -331,7 +350,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 	/**
 	 * An OpenRegister reader double over a recording ObjectService.
 	 *
-	 * @param array<string, mixed>          $case  The case.
+	 * @param array<string, mixed> $case The case.
 	 * @param array<int, array<int, mixed>> $calls The ordered calls.
 	 *
 	 * @return ServiceCatalogueServiceInterface The double.
@@ -341,6 +360,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$objectService = $this->createMock(ObjectService::class);
 		$objectService->method('find')->willReturnCallback(
 			function (...$args) use (&$calls, $found): ?ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'find', args: $args);
 				$calls[] = ['find', self::passedArguments(method: 'find', args: $args)];
 				if (is_string($found) === true) {
 					throw self::failure(kind: $found);
@@ -351,6 +371,7 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		);
 		$objectService->method('saveObject')->willReturnCallback(
 			function (...$args) use (&$calls, $case): ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$named = self::passedArguments(method: 'saveObject', args: $args);
 				$calls[] = ['saveObject', $named];
 				$fails = ($case['saveFails'][$named['schema'] ?? ''] ?? null);
@@ -366,7 +387,6 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$objects->method('getObjectService')->willReturn($objectService);
 
 		return $objects;
-
 	}//end objects()
 
 	/**
@@ -381,7 +401,6 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$entity->method('jsonSerialize')->willReturn($properties);
 
 		return $entity;
-
 	}//end entity()
 
 	/**
@@ -407,14 +426,14 @@ class PublicationWithdrawGoldenTest extends TestCase {
 	 * would record that class's signature: the test stub's locally and OpenRegister's
 	 * own in CI. Named and without defaults, the record is what the controller passed.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return array<string, mixed> The passed arguments by name.
 	 */
 	private static function passedArguments(string $method, array $args): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}
@@ -427,7 +446,6 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
 }//end class
 

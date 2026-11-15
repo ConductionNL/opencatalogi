@@ -73,8 +73,8 @@ class PortalAccountRemovedListener implements IEventListener {
 	 * Constructor.
 	 *
 	 * @param CitizenCollectionServiceInterface $collections Deletes the resident's objects.
-	 * @param ContainerInterface       $container   Resolves OpenRegister's mappers.
-	 * @param LoggerInterface          $logger      The logger.
+	 * @param ContainerInterface $container Resolves OpenRegister's mappers.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		private readonly CitizenCollectionServiceInterface $collections,
@@ -141,8 +141,18 @@ class PortalAccountRemovedListener implements IEventListener {
 			return null;
 		}
 
-		$newData = $new->getObject();
-		$oldData = $old->getObject();
+		return $this->removedSubject(newData: $new->getObject(), oldData: $old->getObject());
+	}//end removedAccountOwner()
+
+	/**
+	 * The subject of an account whose status this update moved to removed.
+	 *
+	 * @param array<string, mixed> $newData The account after the update.
+	 * @param array<string, mixed> $oldData The account before it.
+	 *
+	 * @return string|null The subjectRef, or null when the update is no removal or the subject is not kept.
+	 */
+	private function removedSubject(array $newData, array $oldData): ?string {
 		if ($this->isRemoval(newData: $newData, oldData: $oldData) === false) {
 			return null;
 		}
@@ -154,8 +164,7 @@ class PortalAccountRemovedListener implements IEventListener {
 		}
 
 		return $subjectRef;
-
-	}//end removedAccountOwner()
+	}//end removedSubject()
 
 	/**
 	 * Whether the status moved to removed with this update.
@@ -167,7 +176,6 @@ class PortalAccountRemovedListener implements IEventListener {
 	 */
 	private function isRemoval(array $newData, array $oldData): bool {
 		return ($newData['status'] ?? null) === self::REMOVED && ($oldData['status'] ?? null) !== self::REMOVED;
-
 	}//end isRemoval()
 
 	/**
@@ -186,14 +194,13 @@ class PortalAccountRemovedListener implements IEventListener {
 		}
 
 		return $subjectRef;
-
 	}//end subjectRefOf()
 
 	/**
 	 * Whether a register and schema, as ids or slugs, are portaliq's accounts.
 	 *
 	 * @param string $register The object's register.
-	 * @param string $schema   The object's schema.
+	 * @param string $schema The object's schema.
 	 *
 	 * @return bool
 	 */
@@ -206,21 +213,14 @@ class PortalAccountRemovedListener implements IEventListener {
 	/**
 	 * The slug for an id, or the value itself when it already is one.
 	 *
-	 * @param string $map   `register` or `schema`.
+	 * @param string $map `register` or `schema`.
 	 * @param string $value The id or slug.
 	 *
 	 * @return string
 	 */
 	private function slugOf(string $map, string $value): string {
 		if ($this->slugs === null) {
-			$this->slugs = ['register' => [], 'schema' => []];
-			foreach (['register' => 'OCA\OpenRegister\Db\RegisterMapper', 'schema' => 'OCA\OpenRegister\Db\SchemaMapper'] as $key => $class) {
-				try {
-					$this->slugs[$key] = (array)$this->container->get($class)->getIdToSlugMap();
-				} catch (Throwable $e) {
-					$this->logger->debug('OpenCatalogi: no '.$key.' slugs', ['reason' => $e->getMessage()]);
-				}
-			}
+			$this->slugs = $this->readSlugs();
 		}
 
 		$slug = ($this->slugs[$map][$value] ?? null);
@@ -229,6 +229,23 @@ class PortalAccountRemovedListener implements IEventListener {
 		}
 
 		return $value;
-
 	}//end slugOf()
+
+	/**
+	 * OpenRegister's id-to-slug maps; a map that cannot be read stays empty.
+	 *
+	 * @return array{register: array<mixed>, schema: array<mixed>}
+	 */
+	private function readSlugs(): array {
+		$slugs = ['register' => [], 'schema' => []];
+		foreach (['register' => 'OCA\OpenRegister\Db\RegisterMapper', 'schema' => 'OCA\OpenRegister\Db\SchemaMapper'] as $key => $class) {
+			try {
+				$slugs[$key] = (array)$this->container->get($class)->getIdToSlugMap();
+			} catch (Throwable $e) {
+				$this->logger->debug('OpenCatalogi: no ' . $key . ' slugs', ['reason' => $e->getMessage()]);
+			}
+		}
+
+		return $slugs;
+	}//end readSlugs()
 }//end class

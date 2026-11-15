@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace Unit\Tool;
 
 use OCA\OpenCatalogi\Tool\CMSTool;
-use OCA\OpenRegister\Db\Agent;
+use OCA\OpenRegister\Mcp\Db\Agent;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
 use OCP\IUser;
@@ -33,6 +33,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for CMSTool::createMenu().
@@ -88,6 +89,7 @@ class CMSToolCreateMenuGoldenTest extends TestCase {
 		$objects = $this->createMock(ObjectService::class);
 		$objects->method('saveObject')->willReturnCallback(
 			static function (...$args) use (&$saved): ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$saved[] = self::passedArguments(method: 'saveObject', args: $args);
 				$menu = new ObjectEntity();
 				$menu->setUuid('menu-1');
@@ -136,14 +138,14 @@ class CMSToolCreateMenuGoldenTest extends TestCase {
 	 * would record that class's signature: the test stub's locally and OpenRegister's
 	 * own in CI. Named and without defaults, the record is what the tool passed.
 	 *
-	 * @param string            $method The ObjectService method.
-	 * @param array<int, mixed> $args   The arguments the mock received.
+	 * @param string $method The ObjectService method.
+	 * @param array<int, mixed> $args The arguments the mock received.
 	 *
 	 * @return array<string, mixed> The passed arguments by name.
 	 */
 	private static function passedArguments(string $method, array $args): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}
@@ -156,6 +158,5 @@ class CMSToolCreateMenuGoldenTest extends TestCase {
 		}
 
 		return $named;
-
 	}//end passedArguments()
 }//end class

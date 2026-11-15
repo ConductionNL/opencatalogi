@@ -38,7 +38,7 @@ class PublicSearchRunner {
 	/**
 	 * Constructor.
 	 *
-	 * @param PublicationQueryService $queries   The public search.
+	 * @param PublicationQueryService $queries The public search.
 	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 */
 	public function __construct(
@@ -69,6 +69,5 @@ class PublicSearchRunner {
 		);
 
 		return array_values(array_filter((array)($result['results'] ?? []), 'is_array'));
-
 	}//end search()
 }//end class

@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 /** The config keys whose entries carry a label the library renders as-is. */
 const LABELLED_ACTION_KEYS = ['actions', 'bulkActions']
 
@@ -16,12 +20,23 @@ function translateConfigActions(config, translate) {
 	const translated = { ...config }
 	for (const key of keys) {
 		translated[key] = config[key].map((action) =>
-			action && typeof action === 'object' && typeof action.label === 'string'
-				? { ...action, label: translate(action.label) }
-				: action,
+			translateAction(action, translate),
 		)
 	}
 	return translated
+}
+
+/**
+ * Translate one action's label, passing anything without a string label through.
+ *
+ * @param {unknown} action An action entry.
+ * @param {(key: string) => string} translate Maps a source string to its translation.
+ * @return {unknown} A copy with the translated label, or the entry unchanged.
+ */
+function translateAction(action, translate) {
+	return action && typeof action === 'object' && typeof action.label === 'string'
+		? { ...action, label: translate(action.label) }
+		: action
 }
 
 /**

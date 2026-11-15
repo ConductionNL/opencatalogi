@@ -48,12 +48,12 @@ class PortalCollectionController extends Controller {
 	/**
 	 * Constructor.
 	 *
-	 * @param string                   $appName     The app name.
-	 * @param IRequest                 $request     The request.
-	 * @param PortalAssertionVerifierInterface  $verifier    Verifies portaliq's assertion.
+	 * @param string $appName The app name.
+	 * @param IRequest $request The request.
+	 * @param PortalAssertionVerifierInterface $verifier Verifies portaliq's assertion.
 	 * @param CitizenCollectionServiceInterface $collections The dossiers.
-	 * @param CollectionShareServiceInterface   $shares      The share links.
-	 * @param LoggerInterface          $logger      The logger.
+	 * @param CollectionShareServiceInterface $shares The share links.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		string $appName,

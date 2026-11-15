@@ -152,7 +152,10 @@ class CatalogScopeResolutionGoldenTest extends TestCase {
 			 * @param array<string, array<string, mixed>> $catalogs The catalogues by slug.
 			 * @param bool $noObjectService Whether OpenRegister is missing.
 			 */
-			public function __construct(private array $catalogs, private bool $noObjectService) {
+			public function __construct(
+				private array $catalogs,
+				private bool $noObjectService,
+			) {
 			}
 
 			/**
@@ -181,7 +184,10 @@ class CatalogScopeResolutionGoldenTest extends TestCase {
 					 * @param list<array<string, mixed>> $catalogs The stored catalogues.
 					 * @param array<int, mixed> $calls The shared call log.
 					 */
-					public function __construct(private array $catalogs, private array &$calls) {
+					public function __construct(
+						private array $catalogs,
+						private array &$calls,
+					) {
 					}
 
 					/**
@@ -230,6 +236,5 @@ class CatalogScopeResolutionGoldenTest extends TestCase {
 		$scope = $method->invoke($service, $case['params']);
 
 		return ['scope' => $scope, 'calls' => $catalogi->calls, 'log' => $log];
-
 	}//end resolve()
 }//end class

@@ -29,6 +29,8 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Command;
 
 use OCA\OpenCatalogi\Contract\CmsMigrationServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
@@ -53,7 +55,9 @@ class MigrateCmsToPortaliqCommand extends Command {
 	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
-	public function __construct(private readonly CmsMigrationServiceInterface $migration) {
+	public function __construct(
+		private readonly CmsMigrationServiceInterface $migration,
+	) {
 		parent::__construct();
 	}//end __construct()
 
@@ -88,7 +92,7 @@ class MigrateCmsToPortaliqCommand extends Command {
 	/**
 	 * Read this app's pages and menus and move them.
 	 *
-	 * @param InputInterface  $input  Console input.
+	 * @param InputInterface $input Console input.
 	 * @param OutputInterface $output Console output stream.
 	 *
 	 * @return int Symfony command exit code.
@@ -204,9 +208,9 @@ class MigrateCmsToPortaliqCommand extends Command {
 	/**
 	 * Read one source schema's rows, or null when they cannot be read.
 	 *
-	 * @param object          $objectService The OpenRegister ObjectService.
-	 * @param string          $schema        The schema slug.
-	 * @param OutputInterface $output        Console output stream.
+	 * @param object $objectService The OpenRegister ObjectService.
+	 * @param string $schema The schema slug.
+	 * @param OutputInterface $output Console output stream.
 	 *
 	 * @return array<int, mixed>|null The rows, or null on failure.
 	 *
@@ -236,13 +240,13 @@ class MigrateCmsToPortaliqCommand extends Command {
 	/**
 	 * Map one source row onto its Portaliq shape.
 	 *
-	 * @param string               $kind   Either `page` or `menu`.
+	 * @param string $kind Either `page` or `menu`.
 	 * @param array<string, mixed> $fields The source row's fields.
-	 * @param string               $portal The target portal slug.
-	 * @param string               $name   The row's title, for the report line.
+	 * @param string $portal The target portal slug.
+	 * @param string $name The row's title, for the report line.
 	 *
 	 * @return array{0: array<string, mixed>, 1: string, 2: array<string, mixed>} The
-	 *         target object, the report label, and the mapping outcome.
+	 *                                                                            target object, the report label, and the mapping outcome.
 	 *
 	 * @spec openspec/changes/cms-moves-to-portaliq/specs/portal-content/spec.md#requirement-a-page-becomes-a-portal-page-req-cms-101
 	 */
@@ -339,10 +343,12 @@ class MigrateCmsToPortaliqCommand extends Command {
 			// nothing and reports eight failures.
 			$run['objectService']->saveObject(
 				object: $target,
-				register: CmsMigrationServiceInterface::TARGET_REGISTER,
-				schema: $run['kind'],
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(
+						register: CmsMigrationServiceInterface::TARGET_REGISTER,
+						schema: $run['kind']
+					)),
 				_rbac: false,
-				_multitenancy: false,
+				_multitenancy: false
 			);
 		} catch (Throwable $e) {
 			$run['output']->writeln(sprintf('  <error>FAILED: %s</error>', $e->getMessage()));

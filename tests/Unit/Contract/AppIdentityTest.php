@@ -58,7 +58,7 @@ class AppIdentityTest extends TestCase {
 		$this->assertNotFalse($lib);
 
 		$files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($lib, \FilesystemIterator::SKIP_DOTS));
-		$checked  = 0;
+		$checked = 0;
 		$offender = [];
 		foreach ($files as $file) {
 			$path = $file->getPathname();
@@ -67,7 +67,7 @@ class AppIdentityTest extends TestCase {
 			}
 
 			$checked++;
-			$source = (string) file_get_contents($path);
+			$source = (string)file_get_contents($path);
 			if (preg_match('/^use OCA\\\\OpenCatalogi\\\\AppInfo\\\\Application;/m', $source) === 1
 				|| str_contains($source, '\\OCA\\OpenCatalogi\\AppInfo\\Application::') === true
 			) {

@@ -26,7 +26,6 @@ use OCA\OpenRegister\Db\ObjectEntity;
 use OCP\AppFramework\Http\JSONResponse;
 use Psr\Container\ContainerExceptionInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use RuntimeException;
 
 /**
  * Contract of CatalogiService, for callers in other components.
@@ -157,6 +156,15 @@ interface CatalogiServiceInterface {
 	 * @spec openspec/specs/catalogs/spec.md
 	 */
 	public function getCatalogBySlug(string $slug): ?array;
+
+	/**
+	 * The slugs of every catalogue in the configured catalogue register and schema.
+	 *
+	 * @return array<int, string> The slugs, each once, in the order found; empty when unconfigured.
+	 *
+	 * @spec openspec/changes/integration-maintenance-commands/specs/maintenance-commands/spec.md
+	 */
+	public function getCatalogSlugs(): array;
 
 	/**
 	 * Invalidate the cache for a specific catalog.

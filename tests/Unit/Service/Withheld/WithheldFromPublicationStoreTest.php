@@ -27,6 +27,7 @@ use Unit\Service\PublicReadObjectService;
  * One publication's rows, its batch's assessments in order, and the catalogues holding it.
  *
  * @covers \OCA\OpenCatalogi\Service\Withheld\WithheldFromPublicationStore
+ * @uses \OCA\OpenCatalogi\Service\JsonList
  * @uses \OCA\OpenCatalogi\Service\ReadsObjectProperties
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */
@@ -39,8 +40,8 @@ class WithheldFromPublicationStoreTest extends TestCase {
 	}//end setUp()
 
 	/**
-	 * @param array<string, string> $config     The app config.
-	 * @param bool                  $installed  Whether OpenRegister is installed.
+	 * @param array<string, string> $config The app config.
+	 * @param bool $installed Whether OpenRegister is installed.
 	 */
 	private function store(array $config = ['publication_register' => 'r', 'withheld_document_schema' => 'w', 'catalog_register' => 'r', 'catalog_schema' => 'c', 'woo_register' => 'wr', 'woo_batch_schema' => 'b'], bool $installed = true): WithheldFromPublicationStore {
 		$appConfig = $this->createMock(IAppConfig::class);
@@ -135,4 +136,29 @@ class WithheldFromPublicationStoreTest extends TestCase {
 		$this->expectExceptionMessage('withheld_document_schema');
 		$this->store(config: ['publication_register' => 'r'])->storedEntries(publicationId: 'pub-1');
 	}//end testAMissingOpenRegisterOrConfigurationIsSaid()
+
+
+	/**
+	 * OpenRegister installed but without an object service is refused the same way as OpenRegister absent.
+	 *
+	 * @return void
+	 */
+	public function testAnInstalledOpenRegisterWithoutAnObjectServiceIsRefused(): void {
+		$appConfig = $this->createMock(IAppConfig::class);
+		$appConfig->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ($key === 'withheld_document_schema' ? 'w' : 'r')
+		);
+		$container = $this->createMock(ContainerInterface::class);
+		$container->method('get')->willReturn(null);
+		$appManager = $this->createMock(IAppManager::class);
+		$appManager->method('isInstalled')->willReturn(true);
+		$store = new WithheldFromPublicationStore(
+			config: $appConfig,
+			openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $appManager)
+		);
+
+		$this->expectException(RuntimeException::class);
+		$this->expectExceptionMessage('OpenRegister is not available, so the withheld documents cannot be read.');
+		$store->storedEntries(publicationId: 'pub-1');
+	}//end testAnInstalledOpenRegisterWithoutAnObjectServiceIsRefused()
 }//end class

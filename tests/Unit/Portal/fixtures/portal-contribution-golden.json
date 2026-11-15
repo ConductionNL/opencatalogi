@@ -1,0 +1,323 @@
+{
+    "label": "Openbare informatie",
+    "collections": [
+        {
+            "id": "myDossiers",
+            "register": "publication",
+            "schema": "collection",
+            "scopeField": "owner",
+            "label": "Mijn dossiers",
+            "listable": true,
+            "fields": [
+                "title",
+                "description",
+                "items",
+                "share",
+                "sourceOf"
+            ],
+            "columns": [
+                {
+                    "field": "title",
+                    "label": "Dossier"
+                },
+                {
+                    "field": "description",
+                    "label": "Notitie"
+                }
+            ],
+            "detail": {
+                "layout": "card",
+                "fields": [
+                    "title",
+                    "description"
+                ]
+            },
+            "rowActions": [
+                "removeFromDossier",
+                "shareDossier",
+                "unshareDossier",
+                "deleteDossier"
+            ],
+            "itemList": {
+                "label": "Documenten",
+                "provider": "dossierItems",
+                "removeAction": "removeFromDossier"
+            }
+        },
+        {
+            "id": "mySavedSearches",
+            "register": "publication",
+            "schema": "savedSearch",
+            "scopeField": "owner",
+            "label": "Mijn zoekopdrachten",
+            "listable": true,
+            "fields": [
+                "title",
+                "query",
+                "frequency",
+                "active",
+                "lastNotifiedAt",
+                "lastMatches",
+                "matchCount"
+            ],
+            "columns": [
+                {
+                    "field": "title",
+                    "label": "Zoekopdracht"
+                },
+                {
+                    "field": "frequency",
+                    "label": "Hoe vaak",
+                    "render": "badge",
+                    "valueLabels": {
+                        "immediate": "Direct",
+                        "daily": "Dagelijks",
+                        "weekly": "Wekelijks"
+                    }
+                },
+                {
+                    "field": "active",
+                    "label": "Actief",
+                    "render": "boolean"
+                },
+                {
+                    "field": "lastNotifiedAt",
+                    "label": "Laatste bericht",
+                    "render": "datetime"
+                }
+            ],
+            "detail": {
+                "layout": "card",
+                "fields": [
+                    "title",
+                    "frequency",
+                    "active",
+                    "lastNotifiedAt",
+                    "matchCount",
+                    "lastMatches"
+                ]
+            },
+            "rowActions": [
+                "pauseSavedSearch",
+                "deleteSavedSearch"
+            ]
+        }
+    ],
+    "actions": [
+        {
+            "id": "createDossier",
+            "type": "create",
+            "label": "Nieuw dossier",
+            "register": "publication",
+            "schema": "collection",
+            "scopeField": "owner",
+            "defaults": {
+                "items": [],
+                "sourceOf": []
+            },
+            "fields": [
+                "title",
+                "description"
+            ],
+            "fieldConfigs": {
+                "title": {
+                    "label": "Naam van het dossier",
+                    "required": true,
+                    "placeholder": "Bijvoorbeeld: windpark"
+                },
+                "description": {
+                    "label": "Notitie",
+                    "size": "full"
+                }
+            },
+            "submitLabel": "Dossier maken",
+            "successMessage": "Uw dossier is gemaakt"
+        },
+        {
+            "id": "addToDossier",
+            "label": "Bewaar in mijn dossier",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/collections/items",
+            "method": "POST",
+            "fields": [
+                "collection",
+                "title",
+                "publication",
+                "attachment",
+                "note"
+            ],
+            "successMessage": "Bewaard in uw dossier"
+        },
+        {
+            "id": "viewDossier",
+            "label": "Openen",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/collections/view",
+            "method": "POST",
+            "rowField": "collection",
+            "fields": []
+        },
+        {
+            "id": "removeFromDossier",
+            "label": "Uit dossier halen",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/collections/items/remove",
+            "method": "POST",
+            "rowField": "collection",
+            "fields": [
+                "itemId"
+            ]
+        },
+        {
+            "id": "noteOnDossier",
+            "label": "Notitie schrijven",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/collections/note",
+            "method": "POST",
+            "rowField": "collection",
+            "fields": [
+                "itemId",
+                "note"
+            ]
+        },
+        {
+            "id": "shareDossier",
+            "label": "Deellink maken",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/collections/share",
+            "method": "POST",
+            "rowField": "collection",
+            "fields": []
+        },
+        {
+            "id": "unshareDossier",
+            "label": "Deellink intrekken",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/collections/unshare",
+            "method": "POST",
+            "rowField": "collection",
+            "fields": []
+        },
+        {
+            "id": "deleteDossier",
+            "label": "Dossier verwijderen",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/collections/delete",
+            "method": "POST",
+            "rowField": "collection",
+            "fields": []
+        },
+        {
+            "id": "saveSearch",
+            "label": "Bewaar deze zoekopdracht",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/saved-searches",
+            "method": "POST",
+            "fields": [
+                "title",
+                "query",
+                "frequency"
+            ],
+            "successMessage": "Uw zoekopdracht is bewaard"
+        },
+        {
+            "id": "updateSavedSearch",
+            "type": "update",
+            "label": "Zoekopdracht wijzigen",
+            "register": "publication",
+            "schema": "savedSearch",
+            "scopeField": "owner",
+            "fields": [
+                "title",
+                "frequency",
+                "active"
+            ],
+            "fieldConfigs": {
+                "title": {
+                    "label": "Naam",
+                    "required": true
+                },
+                "frequency": {
+                    "label": "Hoe vaak wilt u bericht?"
+                },
+                "active": {
+                    "label": "Stuur mij berichten"
+                }
+            },
+            "optionsProviders": {
+                "frequency": {
+                    "type": "static",
+                    "options": [
+                        {
+                            "value": "immediate",
+                            "label": "Direct"
+                        },
+                        {
+                            "value": "daily",
+                            "label": "Dagelijks"
+                        },
+                        {
+                            "value": "weekly",
+                            "label": "Wekelijks"
+                        }
+                    ]
+                }
+            },
+            "submitLabel": "Opslaan",
+            "successMessage": "Uw zoekopdracht is gewijzigd"
+        },
+        {
+            "id": "pauseSavedSearch",
+            "label": "Geen berichten meer",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/saved-searches/pause",
+            "method": "POST",
+            "rowField": "savedSearch",
+            "fields": []
+        },
+        {
+            "id": "deleteSavedSearch",
+            "label": "Zoekopdracht verwijderen",
+            "endpoint": "/index.php/apps/opencatalogi/api/portal/saved-searches/delete",
+            "method": "POST",
+            "rowField": "savedSearch",
+            "fields": []
+        }
+    ],
+    "pages": [
+        {
+            "id": "dossiers",
+            "label": "Mijn dossiers",
+            "group": "Openbare informatie",
+            "icon": "FolderStar",
+            "blocks": [
+                {
+                    "type": "richText",
+                    "markdown": "Bewaar openbare documenten in uw eigen dossier. Alleen u ziet het, tot u een deellink maakt."
+                },
+                {
+                    "type": "action",
+                    "action": "createDossier"
+                },
+                {
+                    "type": "collection",
+                    "collection": "myDossiers"
+                },
+                {
+                    "type": "detail",
+                    "collection": "myDossiers"
+                }
+            ]
+        },
+        {
+            "id": "zoekopdrachten",
+            "label": "Mijn zoekopdrachten",
+            "group": "Openbare informatie",
+            "icon": "BellRing",
+            "blocks": [
+                {
+                    "type": "richText",
+                    "markdown": "U krijgt bericht als er nieuwe documenten zijn die bij uw zoekopdracht passen."
+                },
+                {
+                    "type": "collection",
+                    "collection": "mySavedSearches"
+                }
+            ]
+        }
+    ],
+    "notifications": [
+        "opencatalogi.savedSearch.matched"
+    ]
+}

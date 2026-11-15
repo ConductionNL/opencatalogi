@@ -66,9 +66,30 @@ final class RetentionReport {
 		}
 
 		$day = substr($pubDate, 0, 10);
-		return ($this->isSet(value: $this->filter['from']) === false || ($day < $this->filter['from']) === false)
-			&& ($this->isSet(value: $this->filter['to']) === false || ($day > $this->filter['to']) === false);
+		return $this->notBeforeFrom(day: $day) && $this->notAfterTo(day: $day);
 	}//end includes()
+
+	/**
+	 * Whether a publication day is on or after the filter's `from`, or there is none.
+	 *
+	 * @param string $day The publication day (Y-m-d).
+	 *
+	 * @return bool
+	 */
+	private function notBeforeFrom(string $day): bool {
+		return $this->isSet(value: $this->filter['from']) === false || ($day < $this->filter['from']) === false;
+	}//end notBeforeFrom()
+
+	/**
+	 * Whether a publication day is on or before the filter's `to`, or there is none.
+	 *
+	 * @param string $day The publication day (Y-m-d).
+	 *
+	 * @return bool
+	 */
+	private function notAfterTo(string $day): bool {
+		return $this->isSet(value: $this->filter['to']) === false || ($day > $this->filter['to']) === false;
+	}//end notAfterTo()
 
 	/**
 	 * One report row: the publication's retention fields and its last decision.

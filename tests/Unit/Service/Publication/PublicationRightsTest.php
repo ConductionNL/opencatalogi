@@ -11,6 +11,9 @@
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -18,6 +21,7 @@ declare(strict_types=1);
 namespace Unit\Service\Publication;
 
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
+use OCA\OpenCatalogi\Service\Publication\PublishRight;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Db\Schema;
@@ -36,7 +40,7 @@ class PublicationRightsTest extends TestCase {
 	/**
 	 * The rights service over the given mapper and handler.
 	 *
-	 * @param SchemaMapper      $mapper  The schema mapper.
+	 * @param SchemaMapper $mapper The schema mapper.
 	 * @param PermissionHandler $handler The permission handler.
 	 */
 	private function rights(SchemaMapper $mapper, PermissionHandler $handler): PublicationRights {
@@ -116,5 +120,24 @@ class PublicationRightsTest extends TestCase {
 		$handler->expects($this->never())->method('hasPermission');
 
 		$this->assertFalse($this->rights($mapper, $handler)->mayUpdate($this->publication('eigenaar')));
+	}
+
+	/**
+	 * The publish right answers through PublicationRights, and nobody may publish when it is not wired.
+	 *
+	 * @return void
+	 */
+	public function testMayPublishFollowsThePublishRightAndFailsClosedWithoutIt(): void {
+		$objects = $this->getMockBuilder(ServiceCatalogueService::class)->disableOriginalConstructor()->getMock();
+		$container = $this->createMock(ContainerInterface::class);
+		$logger = $this->createMock(LoggerInterface::class);
+
+		foreach ([true, false] as $holds) {
+			$publishRight = $this->createMock(PublishRight::class);
+			$publishRight->expects($this->once())->method('mayPublish')->willReturn($holds);
+			$this->assertSame($holds, (new PublicationRights($container, $objects, $logger, $publishRight))->mayPublish());
+		}
+
+		$this->assertFalse((new PublicationRights($container, $objects, $logger))->mayPublish());
 	}
 }

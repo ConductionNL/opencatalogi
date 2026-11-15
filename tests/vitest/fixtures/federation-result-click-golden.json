@@ -627,10 +627,16 @@
 			},
 			"effects": [
 				[
-					"open",
-					"http://localhost:9082/index.php/apps/opencatalogi/#/publications/my%20cat/p%2F1",
-					"_blank",
-					"noopener,noreferrer"
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p/1"
+						},
+						"query": {
+							"catalog": "my cat"
+						}
+					}
 				]
 			],
 			"error": null
@@ -648,10 +654,16 @@
 			},
 			"effects": [
 				[
-					"open",
-					"https://peer.example.org/index.php/apps/opencatalogi/#/publications/s/p",
-					"_blank",
-					"noopener,noreferrer"
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p"
+						},
+						"query": {
+							"catalog": "s"
+						}
+					}
 				]
 			],
 			"error": null
@@ -668,10 +680,16 @@
 			},
 			"effects": [
 				[
-					"open",
-					"https://peer.example/index.php/apps/opencatalogi/#/publications/s/p",
-					"_blank",
-					"noopener,noreferrer"
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p"
+						},
+						"query": {
+							"catalog": "s"
+						}
+					}
 				]
 			],
 			"error": null
@@ -686,7 +704,20 @@
 					"catalog": "s"
 				}
 			},
-			"effects": [],
+			"effects": [
+				[
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p"
+						},
+						"query": {
+							"catalog": "s"
+						}
+					}
+				]
+			],
 			"error": null
 		},
 		{
@@ -701,10 +732,16 @@
 			},
 			"effects": [
 				[
-					"open",
-					"https://Peer.Example/index.php/apps/opencatalogi/#/publications/s/p",
-					"_blank",
-					"noopener,noreferrer"
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p"
+						},
+						"query": {
+							"catalog": "s"
+						}
+					}
 				]
 			],
 			"error": null
@@ -720,10 +757,13 @@
 			},
 			"effects": [
 				[
-					"open",
-					"https://peer.example/index.php/apps/opencatalogi/",
-					"_blank",
-					"noopener,noreferrer"
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p"
+						}
+					}
 				]
 			],
 			"error": null
@@ -737,14 +777,7 @@
 					"catalog": "s"
 				}
 			},
-			"effects": [
-				[
-					"open",
-					"https://peer.example/index.php/apps/opencatalogi/",
-					"_blank",
-					"noopener,noreferrer"
-				]
-			],
+			"effects": [],
 			"error": null
 		},
 		{
@@ -767,10 +800,16 @@
 					"catalog"
 				],
 				[
-					"open",
-					"https://peer/index.php/apps/opencatalogi/#/publications/publications/p",
-					"_blank",
-					"noopener,noreferrer"
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p"
+						},
+						"query": {
+							"catalog": "publications"
+						}
+					}
 				]
 			],
 			"error": null
@@ -787,10 +826,16 @@
 			},
 			"effects": [
 				[
-					"open",
-					"https://5/index.php/apps/opencatalogi/#/publications/s/p",
-					"_blank",
-					"noopener,noreferrer"
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p"
+						},
+						"query": {
+							"catalog": "s"
+						}
+					}
 				]
 			],
 			"error": null
@@ -883,10 +928,16 @@
 			},
 			"effects": [
 				[
-					"open",
-					"null/index.php/apps/opencatalogi/#/publications/s/p",
-					"_blank",
-					"noopener,noreferrer"
+					"push",
+					{
+						"name": "FederatedPublication",
+						"params": {
+							"id": "p"
+						},
+						"query": {
+							"catalog": "s"
+						}
+					}
 				]
 			],
 			"error": null

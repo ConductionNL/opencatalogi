@@ -38,7 +38,6 @@ class ObligationControllerTest extends TestCase {
 		$l10n->method('t')->willReturnArgument(0);
 
 		return new ObligationController('opencatalogi', $this->createMock(IRequest::class), $l10n, $readService);
-
 	}//end controller()
 
 	public function testAnswersTheOverview(): void {

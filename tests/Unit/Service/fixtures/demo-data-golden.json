@@ -1,0 +1,253 @@
+{
+    "no descriptor": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            }
+        ],
+        "install": {
+            "thrown": "RuntimeException",
+            "message": "No demo dataset ships with this app (/lib/Settings/opencatalogi_mock_register.json not found)."
+        },
+        "imported": []
+    },
+    "not json": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            }
+        ],
+        "install": {
+            "thrown": "RuntimeException",
+            "message": "The demo dataset is not valid JSON: <app>/lib/Settings/opencatalogi_mock_register.json"
+        },
+        "imported": []
+    },
+    "json but not a map": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            }
+        ],
+        "install": {
+            "thrown": "RuntimeException",
+            "message": "The demo dataset is not valid JSON: <app>/lib/Settings/opencatalogi_mock_register.json"
+        },
+        "imported": []
+    },
+    "no components": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            },
+            {
+                "id": "demo",
+                "label": "Example data",
+                "description": "Sample values for every schema this app supplies, generated from the schemas themselves. It shows the lists, detail pages and dashboards working rather than telling a story. Safe to run more than once, and you can delete it afterwards.",
+                "objectCount": 0,
+                "icon": "DatabaseOutline"
+            }
+        ],
+        "install": {
+            "objects": 0,
+            "registers": 0,
+            "schemas": 1
+        },
+        "imported": [
+            {
+                "appId": "opencatalogi.demo",
+                "data": {
+                    "x": 1
+                },
+                "version": "9.9.9",
+                "force": true
+            }
+        ]
+    },
+    "components not a map": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            },
+            {
+                "id": "demo",
+                "label": "Example data",
+                "description": "Sample values for every schema this app supplies, generated from the schemas themselves. It shows the lists, detail pages and dashboards working rather than telling a story. Safe to run more than once, and you can delete it afterwards.",
+                "objectCount": 0,
+                "icon": "DatabaseOutline"
+            }
+        ],
+        "install": {
+            "objects": 0,
+            "registers": 0,
+            "schemas": 1
+        },
+        "imported": [
+            {
+                "appId": "opencatalogi.demo",
+                "data": {
+                    "components": "x"
+                },
+                "version": "9.9.9",
+                "force": true
+            }
+        ]
+    },
+    "objects not a list": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            },
+            {
+                "id": "demo",
+                "label": "Example data",
+                "description": "Sample values for every schema this app supplies, generated from the schemas themselves. It shows the lists, detail pages and dashboards working rather than telling a story. Safe to run more than once, and you can delete it afterwards.",
+                "objectCount": 0,
+                "icon": "DatabaseOutline"
+            }
+        ],
+        "install": {
+            "objects": 0,
+            "registers": 0,
+            "schemas": 1
+        },
+        "imported": [
+            {
+                "appId": "opencatalogi.demo",
+                "data": {
+                    "components": {
+                        "objects": "x"
+                    }
+                },
+                "version": "9.9.9",
+                "force": true
+            }
+        ]
+    },
+    "three objects": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            },
+            {
+                "id": "demo",
+                "label": "Example data",
+                "description": "Sample values for every schema this app supplies, generated from the schemas themselves. It shows the lists, detail pages and dashboards working rather than telling a story. Safe to run more than once, and you can delete it afterwards.",
+                "objectCount": 3,
+                "icon": "DatabaseOutline"
+            }
+        ],
+        "install": {
+            "objects": 3,
+            "registers": 1,
+            "schemas": 1
+        },
+        "imported": [
+            {
+                "appId": "opencatalogi.demo",
+                "data": {
+                    "components": {
+                        "objects": [
+                            [],
+                            [],
+                            []
+                        ],
+                        "registers": {
+                            "a": []
+                        }
+                    }
+                },
+                "version": "9.9.9",
+                "force": true
+            }
+        ]
+    },
+    "no objects key": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            },
+            {
+                "id": "demo",
+                "label": "Example data",
+                "description": "Sample values for every schema this app supplies, generated from the schemas themselves. It shows the lists, detail pages and dashboards working rather than telling a story. Safe to run more than once, and you can delete it afterwards.",
+                "objectCount": 0,
+                "icon": "DatabaseOutline"
+            }
+        ],
+        "install": {
+            "objects": 0,
+            "registers": 0,
+            "schemas": 1
+        },
+        "imported": [
+            {
+                "appId": "opencatalogi.demo",
+                "data": {
+                    "components": {
+                        "schemas": {
+                            "s": []
+                        }
+                    }
+                },
+                "version": "9.9.9",
+                "force": true
+            }
+        ]
+    },
+    "without OpenRegister": {
+        "choices": [
+            {
+                "id": "none",
+                "label": "None, I will set this up myself",
+                "description": "Nothing is imported. You start with an empty app and add your own data.",
+                "objectCount": 0,
+                "icon": "CloseCircleOutline"
+            },
+            {
+                "id": "demo",
+                "label": "Example data",
+                "description": "Sample values for every schema this app supplies, generated from the schemas themselves. It shows the lists, detail pages and dashboards working rather than telling a story. Safe to run more than once, and you can delete it afterwards.",
+                "objectCount": 1,
+                "icon": "DatabaseOutline"
+            }
+        ],
+        "install": {
+            "thrown": "RuntimeException",
+            "message": "Demo data needs OpenRegister, which is not installed."
+        },
+        "imported": []
+    }
+}

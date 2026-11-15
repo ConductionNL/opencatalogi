@@ -188,7 +188,6 @@ class InitializeSettings implements IRepairStep {
 
 	}//end verifyOutcome()
 
-
 	/**
 	 * Whether the register configuration this step produces is already present.
 	 *

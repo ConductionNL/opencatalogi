@@ -25,7 +25,7 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCP\App\IAppManager;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\JSONResponse;
@@ -34,9 +34,7 @@ use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use RuntimeException;
 
 /**
  * Class GlossaryController
@@ -60,8 +58,7 @@ class GlossaryController extends Controller {
 	 * @param string $appName The name of the app
 	 * @param IRequest $request The request object
 	 * @param IAppConfig $config App configuration interface
-	 * @param ContainerInterface $container Server container for dependency injection
-	 * @param IAppManager $appManager App manager for checking installed apps
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localization service
 	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
@@ -71,8 +68,7 @@ class GlossaryController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly IL10N $l10n,
 		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
@@ -87,11 +83,7 @@ class GlossaryController extends Controller {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 */
 	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		}
-
-		throw new RuntimeException('OpenRegister service is not available.');
+		return $this->registers->installedObjectService();
 	}//end getObjectService()
 
 	/**

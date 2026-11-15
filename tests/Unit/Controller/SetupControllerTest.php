@@ -20,6 +20,18 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
+use OCA\OpenCatalogi\Contract\ConnectionReporterInterface;
+use OCA\OpenCatalogi\Contract\DemoDataServiceInterface;
+use OCA\OpenCatalogi\Contract\DirectoryServiceInterface;
+use OCA\OpenCatalogi\Contract\SettingsServiceInterface;
+use OCA\OpenCatalogi\Controller\Setup\SetupActions;
+use OCA\OpenCatalogi\Controller\Setup\SetupCatalogSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupDemoDataSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupFederationSteps;
+use OCA\OpenCatalogi\Controller\Setup\SetupSettingsStep;
+use OCA\OpenCatalogi\Controller\Setup\SetupStatusReport;
+use OCA\OpenCatalogi\Controller\Setup\SetupStepRunner;
 use OCA\OpenCatalogi\Controller\SetupController;
 use OCA\OpenCatalogi\Service\BroadcastService;
 use OCA\OpenCatalogi\Service\DemoDataService;
@@ -42,10 +54,10 @@ use Psr\Log\LoggerInterface;
 class SetupControllerTest extends TestCase {
 
 	/**
-	 * The setup contract version, read from the controller rather than typed.
+	 * The setup contract version, read from the code rather than typed.
 	 *
-	 * These assertions used to hardcode `2`. This change bumped
-	 * SetupController::SETUP_VERSION to 3 and three literals in this file went
+	 * These assertions used to hardcode `2`. Bumping the setup version
+	 * to 3 left three literals in this file
 	 * stale at once — one asserting the reported version, one seeding the
 	 * `onboarding_completed_version` short-circuit (which then no longer
 	 * matched, so a step silently reported "not done"), and one asserting the
@@ -55,9 +67,7 @@ class SetupControllerTest extends TestCase {
 	 * @return int
 	 */
 	private static function setupVersion(): int {
-		$constant = (new \ReflectionClass(SetupController::class))->getConstant('SETUP_VERSION');
-
-		return (int)$constant;
+		return SetupCatalogSteps::SETUP_VERSION;
 	}//end setupVersion()
 	private $demoDataService;
 
@@ -117,7 +127,7 @@ class SetupControllerTest extends TestCase {
 		$this->directoryService->method('getDefaultDirectoryUrl')
 			->willReturn('https://directory.opencatalogi.nl/apps/opencatalogi/api/directory');
 
-		$this->controller = new SetupController(
+		$this->controller = self::setupController(
 			'opencatalogi',
 			$this->request,
 			$this->config,
@@ -139,7 +149,7 @@ class SetupControllerTest extends TestCase {
 	public function testStatusRejectsAnonymous(): void {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn(null);
-		$controller = new SetupController(
+		$controller = self::setupController(
 			'opencatalogi',
 			$this->request,
 			$this->config,
@@ -737,4 +747,58 @@ class SetupControllerTest extends TestCase {
 		$this->assertArrayNotHasKey('demo_dataset', $this->configValues);
 		$this->assertArrayNotHasKey('demo_data_decided', $this->configValues);
 	}
+
+	/**
+	 * A SetupController wired over the given collaborators the way the container wires it.
+	 *
+	 * @param string $appName The app id.
+	 * @param IRequest $request The request.
+	 * @param IAppConfig $config App configuration.
+	 * @param SettingsServiceInterface $settings Settings service.
+	 * @param DemoDataServiceInterface $demo Demo data service.
+	 * @param DirectoryServiceInterface $directory Directory service.
+	 * @param BroadcastServiceInterface $broadcast Broadcast service.
+	 * @param ContainerInterface $container Container.
+	 * @param IL10N $l10n Localization.
+	 * @param LoggerInterface $logger Logger.
+	 * @param IUserSession $session User session.
+	 * @param ConnectionReporterInterface|null $reporter Connection reporter.
+	 *
+	 * @return SetupController The controller.
+	 */
+	private static function setupController(
+		string $appName,
+		IRequest $request,
+		IAppConfig $config,
+		SettingsServiceInterface $settings,
+		DemoDataServiceInterface $demo,
+		DirectoryServiceInterface $directory,
+		BroadcastServiceInterface $broadcast,
+		ContainerInterface $container,
+		IL10N $l10n,
+		LoggerInterface $logger,
+		IUserSession $session,
+		?ConnectionReporterInterface $reporter = null,
+	): SetupController {
+		$catalog = new SetupCatalogSteps($config, $container, $l10n, $logger);
+		return new SetupController(
+			$appName,
+			$request,
+			$l10n,
+			$session,
+			new SetupStatusReport($config, $demo, $directory, $catalog),
+			new SetupActions(
+				$config,
+				$l10n,
+				new SetupStepRunner(
+					new SetupDemoDataSteps($config, $demo, $l10n, $logger),
+					new SetupSettingsStep($settings, $catalog, $l10n, $logger),
+					$catalog,
+					new SetupFederationSteps($directory, $broadcast, $l10n, $logger)
+				),
+				$reporter
+			)
+		);
+
+	}//end setupController()
 }//end class

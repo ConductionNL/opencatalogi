@@ -53,8 +53,8 @@ class ServiceStatusIndex {
 	 * What a visitor reads for each state.
 	 */
 	public const STATE_LABELS = [
-		'available'   => 'Werkt',
-		'degraded'    => 'Verstoring',
+		'available' => 'Werkt',
+		'degraded' => 'Verstoring',
 		'unavailable' => 'Niet bereikbaar',
 		'maintenance' => 'Onderhoud gepland',
 	];
@@ -63,8 +63,8 @@ class ServiceStatusIndex {
 	 * The tone of each state's note.
 	 */
 	private const STATE_TONES = [
-		'available'   => 'positive',
-		'degraded'    => 'warning',
+		'available' => 'positive',
+		'degraded' => 'warning',
 		'unavailable' => 'warning',
 		'maintenance' => 'neutral',
 	];
@@ -72,10 +72,10 @@ class ServiceStatusIndex {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppConfig         $config        App configuration.
-	 * @param ContainerInterface $container     For OpenRegister's ObjectService.
-	 * @param StatusPageServiceInterface  $statusService Renders the states with their staleness.
-	 * @param LoggerInterface    $logger        The logger.
+	 * @param IAppConfig $config App configuration.
+	 * @param ContainerInterface $container For OpenRegister's ObjectService.
+	 * @param StatusPageServiceInterface $statusService Renders the states with their staleness.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
@@ -95,11 +95,11 @@ class ServiceStatusIndex {
 	 */
 	public function kind(): array {
 		return [
-			'type'       => self::TYPE,
-			'label'      => 'Status van de dienstverlening',
+			'type' => self::TYPE,
+			'label' => 'Status van de dienstverlening',
 			'categories' => [],
-			'filters'    => [],
-			'columns'    => [
+			'filters' => [],
+			'columns' => [
 				['key' => 'service', 'label' => 'Dienst'],
 				['key' => 'message', 'label' => 'Toelichting'],
 				['key' => 'state', 'label' => 'Status'],
@@ -118,7 +118,7 @@ class ServiceStatusIndex {
 	 *
 	 * @spec openspec/changes/service-status-on-the-portal/specs/service-status-on-the-portal/spec.md#requirement-the-portal-index-carries-the-service-status-ssp-001
 	 */
-	public function items(?DateTimeInterface $now=null): array {
+	public function items(?DateTimeInterface $now = null): array {
 		$rendered = $this->statusService->render(
 			components: $this->components(),
 			stalenessHours: $this->config->getValueInt('opencatalogi', 'status_staleness_hours', StatusPageServiceInterface::DEFAULT_STALENESS_HOURS),
@@ -135,14 +135,13 @@ class ServiceStatusIndex {
 		}
 
 		return $items;
-
 	}//end items()
 
 	/**
 	 * One component as an index item.
 	 *
 	 * @param array<string, mixed> $component The rendered component.
-	 * @param int                  $position  Its place in the order.
+	 * @param int $position Its place in the order.
 	 *
 	 * @return array<string, mixed> The item.
 	 */
@@ -157,21 +156,21 @@ class ServiceStatusIndex {
 
 		$since = $this->since(setAt: $component['stateSetAt']);
 		if ($since !== '' && $state !== 'available') {
-			$message = trim($message.' Sinds '.$since.'.');
+			$message = trim($message . ' Sinds ' . $since . '.');
 		}
 
 		return [
-			'id'       => self::TYPE.'-'.$position,
-			'type'     => self::TYPE,
-			'kind'     => 'Dienst',
-			'title'    => $component['component'],
-			'summary'  => $message,
-			'badge'    => $label,
+			'id' => self::TYPE . '-' . $position,
+			'type' => self::TYPE,
+			'kind' => 'Dienst',
+			'title' => $component['component'],
+			'summary' => $message,
+			'badge' => $label,
 			'noteTone' => (self::STATE_TONES[$state] ?? 'neutral'),
-			'cells'    => [
+			'cells' => [
 				'service' => $component['component'],
 				'message' => $message,
-				'state'   => $label,
+				'state' => $label,
 			],
 		];
 
@@ -196,8 +195,7 @@ class ServiceStatusIndex {
 		}
 
 		$months = ['januari', 'februari', 'maart', 'april', 'mei', 'juni', 'juli', 'augustus', 'september', 'oktober', 'november', 'december'];
-		return $moment->format('j').' '.$months[((int)$moment->format('n') - 1)].', '.$moment->format('H:i');
-
+		return $moment->format('j') . ' ' . $months[((int)$moment->format('n') - 1)] . ', ' . $moment->format('H:i');
 	}//end since()
 
 	/**
@@ -215,19 +213,18 @@ class ServiceStatusIndex {
 		try {
 			$result = $this->container->get('OCA\OpenRegister\Service\ObjectService')->searchObjectsPaginated(
 				query: [
-					'@self'  => ['register' => $register, 'schema' => $schema],
+					'@self' => ['register' => $register, 'schema' => $schema],
 					'_limit' => 100,
 				],
 				_rbac: false,
 				_multitenancy: false
 			);
 		} catch (\Throwable $e) {
-			$this->logger->warning('[ServiceStatusIndex] the service status could not be read: '.$e->getMessage());
+			$this->logger->warning('[ServiceStatusIndex] the service status could not be read: ' . $e->getMessage());
 			return [];
 		}
 
 		return array_values(array_filter(array_map(fn (mixed $object): array => $this->asArray(object: $object), ($result['results'] ?? []))));
-
 	}//end components()
 
 	/**
@@ -251,6 +248,5 @@ class ServiceStatusIndex {
 		}
 
 		return $object;
-
 	}//end asArray()
 }//end class

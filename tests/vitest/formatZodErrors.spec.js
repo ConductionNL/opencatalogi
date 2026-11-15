@@ -143,7 +143,12 @@ describe('createZodErrorHandler on a real zod result', () => {
 		expect(h.success).toBe(false)
 		expect(h.getError('name')).toBe('naam is verplicht')
 		expect(h.fieldSpecificErrors).toEqual([
-			{ path: 'name', message: 'naam is verplicht', code: 'too_small', type: 'string' },
+			{
+				path: 'name',
+				message: 'naam is verplicht',
+				code: 'too_small',
+				type: 'string',
+			},
 		])
 	})
 })

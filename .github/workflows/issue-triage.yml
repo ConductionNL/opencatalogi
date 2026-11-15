@@ -13,8 +13,14 @@ on:
 # The callee needs `issues: write`; a caller capped at `contents: read` makes
 # the call unsatisfiable.
 
+permissions:
+  contents: read
+
 jobs:
   triage:
+    permissions:
+      issues: write
+      contents: read
     uses: ConductionNL/.github/.github/workflows/issue-triage.yml@main
     with:
       app-name: opencatalogi

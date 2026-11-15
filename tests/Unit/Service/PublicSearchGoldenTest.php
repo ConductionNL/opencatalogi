@@ -43,6 +43,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\AbstractLogger;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * A row OpenRegister hands back as an entity rather than an array.
@@ -52,7 +53,9 @@ class GoldenSearchEntity implements \JsonSerializable {
 	/**
 	 * @param array<string, mixed> $data The serialised row.
 	 */
-	public function __construct(private array $data) {
+	public function __construct(
+		private array $data,
+	) {
 	}
 
 	public function jsonSerialize(): array {
@@ -73,7 +76,9 @@ class GoldenSearchObjectService {
 	/**
 	 * @param array<string, mixed> $script Main result, refinements, slug scan, finds.
 	 */
-	public function __construct(private array $script) {
+	public function __construct(
+		private array $script,
+	) {
 	}
 
 	public function runAsAnonymous(callable $operation): mixed {
@@ -108,7 +113,11 @@ class GoldenSearchObjectService {
 		return $this->script['main'];
 	}
 
-	public function find(string $id, array $_extend = [], bool $files = false, ?int $register = null, ?int $schema = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+	public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
 		$this->calls[] = ['find' => $id, 'register' => $register, 'schema' => $schema, 'depth' => $this->depth];
 		$answer = ($this->script['finds'][$id] ?? 'throw');
 		if ($answer === 'throw') {
@@ -275,7 +284,7 @@ class PublicSearchGoldenTest extends TestCase {
 
 	/**
 	 * @param array<string, mixed> $params The request query.
-	 * @param array<string, mixed> $world  Catalogues and registers.
+	 * @param array<string, mixed> $world Catalogues and registers.
 	 * @param array<string, mixed> $script What the ObjectService double answers.
 	 */
 	#[DataProvider('scenarios')]
@@ -307,7 +316,9 @@ class PublicSearchGoldenTest extends TestCase {
 		$logger = new GoldenSearchLogger();
 
 		$catalogi = new class($world) {
-			public function __construct(private array $world) {
+			public function __construct(
+				private array $world,
+			) {
 			}
 
 			public function getCatalogBySlug(string $slug): ?array {
@@ -319,7 +330,9 @@ class PublicSearchGoldenTest extends TestCase {
 
 			public function getObjectService(): object {
 				return new class(array_values($this->world['catalogs'] ?? [])) {
-					public function __construct(private array $catalogs) {
+					public function __construct(
+						private array $catalogs,
+					) {
 					}
 
 					public function searchObjects(array $query, bool $_rbac = true, bool $_multitenancy = true): array {
@@ -337,7 +350,9 @@ class PublicSearchGoldenTest extends TestCase {
 				throw new \RuntimeException("schema $id missing");
 			}
 			return new class(self::SCHEMAS[$id]) {
-				public function __construct(private array $schema) {
+				public function __construct(
+					private array $schema,
+				) {
 				}
 
 				public function getSlug(): string {
@@ -350,7 +365,9 @@ class PublicSearchGoldenTest extends TestCase {
 			};
 		};
 		$schemaMapper = new class($schemaFor) {
-			public function __construct(private \Closure $schemaFor) {
+			public function __construct(
+				private \Closure $schemaFor,
+			) {
 			}
 
 			public function find(int|string $id): object {
@@ -358,7 +375,9 @@ class PublicSearchGoldenTest extends TestCase {
 			}
 		};
 		$registerMapper = new class(is_array($world['registers'] ?? null) ? $world['registers'] : []) {
-			public function __construct(private array $registers) {
+			public function __construct(
+				private array $registers,
+			) {
 			}
 
 			public function find(int $id): object {
@@ -366,7 +385,9 @@ class PublicSearchGoldenTest extends TestCase {
 					throw new \RuntimeException("register $id missing");
 				}
 				return new class($this->registers[$id]) {
-					public function __construct(private array $schemas) {
+					public function __construct(
+						private array $schemas,
+					) {
 					}
 
 					public function getSchemas(): array {

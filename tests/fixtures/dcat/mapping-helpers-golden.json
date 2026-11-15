@@ -1,0 +1,707 @@
+{
+    "annotation: annotation empty": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: annotation string": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: annotation true": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: empty schema": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: hvd empty": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: hvd not a list": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: hvd null": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: hvd set": {
+        "mapping": {
+            "dct:title": "naam"
+        },
+        "hvd": {
+            "categoryProperty": "hvd"
+        }
+    },
+    "annotation: hvd with legislation": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": {
+            "legislation": "https://eli/x"
+        }
+    },
+    "annotation: mapping empty": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: mapping not a list": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: mapping null": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: mapping set": {
+        "mapping": {
+            "dct:title": "naam"
+        },
+        "hvd": null
+    },
+    "annotation: no annotation": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: no schema": {
+        "mapping": {
+            "dct:title": "title",
+            "dct:description": "description",
+            "dcat:keyword": "tags[]",
+            "dcat:theme": "category",
+            "dct:license": "license"
+        },
+        "hvd": null
+    },
+    "annotation: opted out": {
+        "mapping": null,
+        "hvd": null
+    },
+    "dataset: catalog default only": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_ac64a52d"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: empty list on a plain path": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dct:relation": [
+                "a",
+                "b"
+            ],
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: empty lists left out": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd block without category property": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd custom legislation": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_ac64a52d"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "https://eli/x"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd from property": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_e1da4e07"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd property beats default": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_164e0bf5"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd property empty": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_b79e35eb"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd property missing, empty default": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd property not scalar": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_b79e35eb"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: hvd without category property": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: nested category property": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcatap:hvdCategory": {
+                "@id": "http://data.europa.eu/bna/c_a9135398"
+            },
+            "dcatap:applicableLegislation": {
+                "@id": "http://data.europa.eu/eli/reg_impl/2023/138/oj"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: numeric category": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: publisher array without name": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset",
+            "dct:publisher": {
+                "@type": "foaf:Agent",
+                "foaf:name": "Catalog org"
+            }
+        },
+        "violations": []
+    },
+    "dataset: publisher empty string": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset",
+            "dct:publisher": {
+                "@type": "foaf:Agent",
+                "foaf:name": "Default"
+            }
+        },
+        "violations": []
+    },
+    "dataset: publisher number": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset",
+            "dct:publisher": {
+                "@type": "foaf:Agent",
+                "@id": "https://d"
+            }
+        },
+        "violations": []
+    },
+    "dataset: publisher string": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset",
+            "dct:publisher": {
+                "@type": "foaf:Agent",
+                "foaf:name": "Gemeente X"
+            }
+        },
+        "violations": []
+    },
+    "dataset: theme list path with a scalar": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": {
+                "@id": "http://publications.europa.eu/resource/authority/data-theme/EDUC"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: theme not scalar": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": [
+            {
+                "iri": "https://host/api/cat/dataset",
+                "axis": "dcat:theme",
+                "reason": "theme does not resolve to a controlled data-theme authority URI"
+            }
+        ]
+    },
+    "dataset: theme on object not a url": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": {
+                "@id": "http://publications.europa.eu/resource/authority/data-theme/EDUC"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: theme through a list path": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": [
+                "Onderwijs",
+                "3"
+            ],
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: theme uri not a string": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": {
+                "@id": "http://publications.europa.eu/resource/authority/data-theme/EDUC"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: theme uri on object": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:theme": {
+                "@id": "http://x/theme"
+            },
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "dataset: unknown category": {
+        "dataset": {
+            "@id": "https://host/api/cat/dataset",
+            "@type": "dcat:Dataset",
+            "dcat:landingPage": {
+                "@id": "https://host/api/cat/dataset"
+            },
+            "dct:identifier": "https://host/api/cat/dataset"
+        },
+        "violations": []
+    },
+    "distribution: access only": {
+        "@id": "https://h/a",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/a"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/a"
+        },
+        "dct:title": "data.csv",
+        "dcat:mediaType": "text/csv",
+        "dct:format": {
+            "@id": "http://publications.europa.eu/resource/authority/file-type/CSV"
+        }
+    },
+    "distribution: empty download falls to access": {
+        "@id": "https://h/a",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/a"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/a"
+        }
+    },
+    "distribution: empty download url": null,
+    "distribution: empty mimetype": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:mediaType": "application/json",
+        "dct:format": {
+            "@id": "http://publications.europa.eu/resource/authority/file-type/JSON"
+        }
+    },
+    "distribution: float size": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/d"
+        },
+        "dct:title": "Sheet",
+        "dcat:mediaType": "application/vnd.oasis.opendocument.spreadsheet",
+        "dct:format": {
+            "@id": "http://publications.europa.eu/resource/authority/file-type/ODS"
+        },
+        "dcat:byteSize": 12
+    },
+    "distribution: full entry": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/a"
+        },
+        "dct:title": "Doc",
+        "dcat:mediaType": "application/pdf",
+        "dct:format": {
+            "@id": "http://publications.europa.eu/resource/authority/file-type/PDF"
+        },
+        "dcat:byteSize": 1234,
+        "dct:license": {
+            "@id": "https://licence"
+        }
+    },
+    "distribution: mimeType key": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:mediaType": "application/x-y",
+        "dct:format": {
+            "@id": "http://publications.europa.eu/resource/authority/file-type/XYZ"
+        }
+    },
+    "distribution: mimetype wins": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:mediaType": "text/x-custom",
+        "dct:format": {
+            "@id": "http://publications.europa.eu/resource/authority/file-type/PDF"
+        }
+    },
+    "distribution: no extension": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:byteSize": 0,
+        "dct:license": {
+            "@id": "https://licence"
+        }
+    },
+    "distribution: no url": null,
+    "distribution: numeric title": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/d"
+        },
+        "dct:title": "0",
+        "dcat:mediaType": "application/vnd.oasis.opendocument.text",
+        "dct:format": {
+            "@id": "http://publications.europa.eu/resource/authority/file-type/ODT"
+        }
+    },
+    "distribution: size null": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:mediaType": "application/zip",
+        "dct:format": {
+            "@id": "http://publications.europa.eu/resource/authority/file-type/ZIP"
+        }
+    },
+    "distribution: unknown extension": {
+        "@id": "https://h/d",
+        "@type": "dcat:Distribution",
+        "dcat:downloadURL": {
+            "@id": "https://h/d"
+        },
+        "dcat:accessURL": {
+            "@id": "https://h/d"
+        }
+    },
+    "distribution: url not a string": null,
+    "publisher: default name only": {
+        "@type": "foaf:Agent",
+        "foaf:name": "Default org"
+    },
+    "publisher: default uri only": {
+        "@type": "foaf:Agent",
+        "@id": "https://default/org"
+    },
+    "publisher: defaults only": {
+        "@type": "foaf:Agent",
+        "@id": "https://default/org",
+        "foaf:name": "Default org"
+    },
+    "publisher: empty organisation": null,
+    "publisher: empty strings": null,
+    "publisher: empty title falls to nothing": null,
+    "publisher: name and tooi": {
+        "@type": "foaf:Agent",
+        "@id": "https://tooi/b",
+        "foaf:name": "Gemeente B"
+    },
+    "publisher: name only": {
+        "@type": "foaf:Agent",
+        "foaf:name": "Gemeente D"
+    },
+    "publisher: nothing": null,
+    "publisher: null title uses name": {
+        "@type": "foaf:Agent",
+        "foaf:name": "Named"
+    },
+    "publisher: numeric values": {
+        "@type": "foaf:Agent",
+        "@id": "7",
+        "foaf:name": "42"
+    },
+    "publisher: organisation beats defaults": {
+        "@type": "foaf:Agent",
+        "@id": "https://default",
+        "foaf:name": "Org"
+    },
+    "publisher: title and oin": {
+        "@type": "foaf:Agent",
+        "@id": "000001",
+        "foaf:name": "Gemeente A"
+    },
+    "publisher: uri only": {
+        "@type": "foaf:Agent",
+        "@id": "https://org/c"
+    }
+}

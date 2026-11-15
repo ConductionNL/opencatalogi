@@ -314,7 +314,6 @@ class PublicationLocalCatalogsGoldenTest extends TestCase {
 		}
 
 		return $service;
-
 	}//end service()
 
 	/**
@@ -336,6 +335,5 @@ class PublicationLocalCatalogsGoldenTest extends TestCase {
 			->getMock();
 		$object->method('jsonSerialize')->willReturn($data);
 		return $object;
-
 	}//end catalog()
 }//end class

@@ -25,6 +25,7 @@ namespace Unit\Controller;
 
 require_once __DIR__ . '/WooRequestControllerTest.php';
 
+use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
@@ -46,6 +47,7 @@ use Psr\Container\ContainerInterface;
  * Golden test for WooRequestController::pause and ::resume.
  *
  * @covers \OCA\OpenCatalogi\Controller\WooRequestController
+ * @covers \OCA\OpenCatalogi\Controller\RequestRecords
  * @uses \OCA\OpenCatalogi\Service\Woo\WooRequestService
  * @uses \OCA\OpenCatalogi\Service\Woo\WooRequestStore
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
@@ -88,14 +90,13 @@ class WooRequestPauseResumeGoldenTest extends TestCase {
 		}
 
 		return $cases;
-
 	}//end worlds()
 
 	/**
 	 * Replay a world and compare it to the recording.
 	 *
-	 * @param string               $operation pause or resume.
-	 * @param array<string, mixed> $world     The world.
+	 * @param string $operation pause or resume.
+	 * @param array<string, mixed> $world The world.
 	 *
 	 * @return void
 	 */
@@ -144,7 +145,7 @@ class WooRequestPauseResumeGoldenTest extends TestCase {
 	/**
 	 * The controller of a world.
 	 *
-	 * @param array<string, mixed>        $world   The world.
+	 * @param array<string, mixed> $world The world.
 	 * @param WooRequestFakeObjectService $objects The register.
 	 *
 	 * @return WooRequestController
@@ -185,8 +186,7 @@ class WooRequestPauseResumeGoldenTest extends TestCase {
 			$request,
 			$l10n,
 			$userSession,
-			new WooRequestService(),
-			new WooRequestStore($config, new OpenRegisterLookup($container, $appManager)),
+			new RequestRecords(new WooRequestService(), new WooRequestStore($config, new OpenRegisterLookup($container, $appManager))),
 			$this->terms(engine: ($world['engine'] ?? 'works'))
 		);
 
@@ -222,6 +222,5 @@ class WooRequestPauseResumeGoldenTest extends TestCase {
 		}
 
 		return $terms;
-
 	}//end terms()
 }//end class
