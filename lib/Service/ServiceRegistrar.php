@@ -23,6 +23,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service;
 
 use OCA\OpenCatalogi\Contract\AtomFeedServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedTableServiceInterface;
 use OCA\OpenCatalogi\Contract\AttachmentMigrationServiceInterface;
 use OCA\OpenCatalogi\Contract\BannerServiceInterface;
 use OCA\OpenCatalogi\Contract\BroadcastServiceInterface;
@@ -62,6 +63,7 @@ use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Contract\PubliccodeHarvestServiceInterface;
 use OCA\OpenCatalogi\Contract\PublishedCollectionsServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 use OCA\OpenCatalogi\Contract\QualityServiceInterface;
 use OCA\OpenCatalogi\Contract\RetentionServiceInterface;
 use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
@@ -78,6 +80,7 @@ use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
 use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
 use OCA\OpenCatalogi\Service\Catalogue\GatewayCaseTypeSourceReader;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
+use OCA\OpenCatalogi\Service\Table\PublishedTableService;
 use OCA\OpenCatalogi\Service\Community\BannerService;
 use OCA\OpenCatalogi\Service\Community\MarkupRenderService;
 use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
@@ -98,6 +101,7 @@ use OCA\OpenCatalogi\Service\Publication\PlooiDeliveryService;
 use OCA\OpenCatalogi\Service\Publication\PublicationRuleService;
 use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
+use OCA\OpenCatalogi\Service\Publication\PublishedRecordView;
 use OCA\OpenCatalogi\Service\Withheld\WithheldFromPublication;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\WooCategoryRegistry;
@@ -147,6 +151,7 @@ class ServiceRegistrar {
 		CitizenCollectionServiceInterface::class => CitizenCollectionService::class,
 		PublicationRuleServiceInterface::class => PublicationRuleService::class,
 		CommentPeriodServiceInterface::class => CommentPeriodService::class,
+		PublishedTableServiceInterface::class => PublishedTableService::class,
 		CatalogAccessServiceInterface::class => CatalogAccessService::class,
 		ConnectionReporterInterface::class => ConnectionReporter::class,
 		CommentPeriodWithdrawalServiceInterface::class => CommentPeriodWithdrawalService::class,
@@ -177,6 +182,7 @@ class ServiceRegistrar {
 		DecisionPublicationValidatorInterface::class => DecisionPublicationValidator::class,
 		BannerServiceInterface::class => BannerService::class,
 		PublishedCollectionsServiceInterface::class => PublishedCollectionsService::class,
+		PublishedRecordViewInterface::class => PublishedRecordView::class,
 		SitemapServiceInterface::class => SitemapService::class,
 		OpenRegisterLookupInterface::class => OpenRegisterLookup::class,
 	];

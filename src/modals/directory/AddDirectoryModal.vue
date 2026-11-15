@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 /** * AddDirectoryModal.vue * Modal for synchronizing with external directories *
 @category Components * @package opencatalogi * @author Ruben Linde * @copyright 2024
 * @license EUPL-1.2 * @version 1.0.0 * @link

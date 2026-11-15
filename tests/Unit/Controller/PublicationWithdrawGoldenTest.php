@@ -168,7 +168,9 @@ class PublicationWithdrawGoldenTest extends TestCase {
 		$session = $this->createMock(IUserSession::class);
 		$session->method('getUser')->willReturn($user);
 
-		$rights = $this->getMockBuilder(PublicationRights::class)->disableOriginalConstructor()->onlyMethods(['mayUpdate'])->getMock();
+		$rights = $this->getMockBuilder(PublicationRights::class)->disableOriginalConstructor()->onlyMethods(['mayUpdate', 'mayPublish'])->getMock();
+		// The recorded withdrawals were made by publishers.
+		$rights->method('mayPublish')->willReturn(true);
 		$rights->method('mayUpdate')->willReturnCallback(
 			static function (object $publication) use (&$calls, $session, $case): bool {
 				$calls[] = ['mayUpdate', $publication->jsonSerialize()];
@@ -286,6 +288,19 @@ class PublicationWithdrawGoldenTest extends TestCase {
 
 				if ($id === 'OCA\\OpenRegister\\Service\\FileService') {
 					return $this->fileService(case: $case, calls: $calls);
+				}
+
+				if ($id === 'OCA\\OpenRegister\\Files\\Db\\FileMapper') {
+					// Ending the file's window is pinned in PublicationStateControllerTest.
+					return new class {
+						public function findByFileIds(array $fileIds): array {
+							return [];
+						}
+
+						public function setPublicationWindowForFile(int $fileId, object $window): object {
+							return $window;
+						}
+					};
 				}
 
 				throw new \RuntimeException('not available: ' . $id);

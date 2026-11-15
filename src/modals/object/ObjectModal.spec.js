@@ -9,6 +9,7 @@
 import { mount } from '@vue/test-utils'
 import ObjectModal from './ObjectModal.vue'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'test-request-token' }))
 jest.mock('@codemirror/lang-json', () => ({
 	json: () => ({}),
 	jsonParseLinter: () => () => [],

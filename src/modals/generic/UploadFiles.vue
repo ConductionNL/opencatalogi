@@ -1,4 +1,9 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
+import { getRequestToken } from '@nextcloud/auth'
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
 
@@ -344,6 +349,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
+import axios from '@nextcloud/axios'
 import {
 	NcButton,
 	NcCheckboxRadioSwitch,
@@ -352,7 +358,6 @@ import {
 	NcNoteCard,
 	NcSelect,
 } from '@nextcloud/vue'
-import axios from 'axios'
 import { isRef, ref } from 'vue'
 import AlphaXCircle from 'vue-material-design-icons/AlphaXCircle.vue'
 import Cancel from 'vue-material-design-icons/Cancel.vue'
@@ -442,7 +447,7 @@ function markUploadAnswer(file, { response, idMap }) {
 async function putFileTags(endpoint, editedTags) {
 	const response = await fetch(endpoint, {
 		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
+		headers: { requesttoken: getRequestToken(), 'Content-Type': 'application/json' },
 		body: JSON.stringify({ tags: editedTags }),
 	})
 

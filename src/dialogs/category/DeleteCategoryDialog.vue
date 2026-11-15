@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import Delete from 'vue-material-design-icons/Delete.vue'
 import { navigationStore, objectStore } from '../../store/store.js'

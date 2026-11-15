@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { t } from '@nextcloud/l10n'
 import {
@@ -500,7 +504,7 @@ watch(
 								getFieldDisplayName(
 									fieldName
 										.replace('@self.', '')
-										.replace('@self', 'metadata'),
+										.replace('@self', t('opencatalogi', 'Metadata')),
 								)
 							}}</label>
 							<NcSelect
