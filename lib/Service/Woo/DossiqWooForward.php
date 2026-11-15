@@ -54,15 +54,15 @@ class DossiqWooForward {
 	/**
 	 * Constructor.
 	 *
-	 * @param IAppManager        $appManager Tells whether dossiq is enabled.
 	 * @param ContainerInterface $container  Resolves dossiq's intake at call time.
+	 * @param IAppManager        $appManager Tells whether dossiq is enabled.
 	 * @param LoggerInterface    $logger     Logs why a forward failed.
 	 *
 	 * @return void
 	 */
 	public function __construct(
-		private readonly IAppManager $appManager,
 		private readonly ContainerInterface $container,
+		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,
 	) {
 	}//end __construct()

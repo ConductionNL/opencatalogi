@@ -166,6 +166,17 @@ class WooRequestController extends Controller {
 			);
 		}
 
+		return $this->storeAndArm();
+	}//end receive()
+
+	/**
+	 * Store a new request in OpenCatalogi and arm its statutory term.
+	 *
+	 * @return JSONResponse The receipt, or why the request was refused or not stored.
+	 *
+	 * @spec openspec/specs/woo-request-intake/spec.md#requirement-the-requester-is-told-the-reference-and-the-due-date-at-intake-req-wri-005
+	 */
+	private function storeAndArm(): JSONResponse {
 		try {
 			$record = $this->records->receive(input: $this->intakeInput(), receivedBy: $this->actor());
 		} catch (\DomainException $e) {
@@ -182,7 +193,7 @@ class WooRequestController extends Controller {
 		}
 
 		return $this->armReceivedRequest(saved: $saved);
-	}//end receive()
+	}//end storeAndArm()
 
 	/**
 	 * dossiq's answer to a forwarded request, with the HTTP status its outcome means.

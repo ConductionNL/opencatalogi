@@ -35,7 +35,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Repair;
 
-use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCP\App\IAppManager;
 use OCP\Migration\IOutput;
 use OCP\Migration\IRepairStep;
@@ -68,6 +67,11 @@ class HandWooRequestsToDossiq implements IRepairStep {
 	 * OpenRegister's timer service.
 	 */
 	public const TIMER_CLASS = 'OCA\OpenRegister\Service\Flow\Timer\FlowTimerService';
+
+	/**
+	 * The subject type the statutory term's timers are stored under (the same as StatutoryTerm::SUBJECT_TYPE).
+	 */
+	public const TIMER_SUBJECT_TYPE = 'object';
 
 	/**
 	 * Constructor.
@@ -109,30 +113,59 @@ class HandWooRequestsToDossiq implements IRepairStep {
 			return;
 		}
 
+		$import = $this->runImport(output: $output);
+		if ($import === null) {
+			return;
+		}
+
+		$cancelled = $this->cancelTimers(rows: array_merge($import['migrated'], $import['duplicates']));
+		$output->info(self::summary(import: $import, cancelled: $cancelled));
+	}//end run()
+
+	/**
+	 * The line the step reports after the import.
+	 *
+	 * @param array<string, mixed> $import The import's answer.
+	 * @param int $cancelled How many timers were cancelled.
+	 *
+	 * @return string The summary.
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md
+	 */
+	private static function summary(array $import, int $cancelled): string {
+		return sprintf(
+			'Woo requests handed to dossiq: %d moved, %d already moved, %d not moved; %d timers cancelled.',
+			count($import['migrated']),
+			(int)($import['alreadyImported'] ?? 0),
+			count($import['failed']),
+			$cancelled
+		);
+	}//end summary()
+
+	/**
+	 * Run dossiq's import, or report why it gave no usable answer.
+	 *
+	 * @param IOutput $output Where the step reports.
+	 *
+	 * @return array<string, mixed>|null The import's answer, or null when there is nothing to cancel.
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md
+	 */
+	private function runImport(IOutput $output): ?array {
 		try {
 			$answer = $this->container->get(self::IMPORT_CLASS)->run(caseType: self::CASE_TYPE, importKey: self::IMPORT_KEY);
 		} catch (Throwable $e) {
 			$output->warning('Dossiq could not import the Woo requests: ' . $e->getMessage());
-			return;
+			return null;
 		}
 
 		$import = self::importOf(answer: $answer);
 		if ($import === null) {
 			$output->warning('Dossiq answered the Woo request import in an unexpected shape; no timer was cancelled.');
-			return;
 		}
 
-		$cancelled = $this->cancelTimers(rows: array_merge($import['migrated'], $import['duplicates']));
-		$output->info(
-			sprintf(
-				'Woo requests handed to dossiq: %d moved, %d already moved, %d not moved; %d timers cancelled.',
-				count($import['migrated']),
-				(int)($import['alreadyImported'] ?? 0),
-				count($import['failed']),
-				$cancelled
-			)
-		);
-	}//end run()
+		return $import;
+	}//end runImport()
 
 	/**
 	 * The Woo request import's answer, or null when dossiq answered something else.
@@ -177,16 +210,28 @@ class HandWooRequestsToDossiq implements IRepairStep {
 				continue;
 			}
 
-			$requestId = $row['requestId'];
-
-			$cancelled += (int)$timers->cancelForSubject(
-				subjectType: StatutoryTerm::SUBJECT_TYPE,
-				subjectUuid: $requestId,
-				reason: 'Handed over to dossiq case ' . (string)($row['caseId'] ?? ''),
-				actor: null
-			);
+			$cancelled += $this->cancelTimer(timers: $timers, row: $row);
 		}
 
 		return $cancelled;
 	}//end cancelTimers()
+
+	/**
+	 * Cancel the OpenCatalogi timer of one moved request.
+	 *
+	 * @param object $timers OpenRegister's timer service.
+	 * @param array<string, mixed> $row The moved row, with a non-empty string `requestId`.
+	 *
+	 * @return int How many timers were cancelled.
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/specs/woo-request-intake/spec.md
+	 */
+	private function cancelTimer(object $timers, array $row): int {
+		return (int)$timers->cancelForSubject(
+			subjectType: self::TIMER_SUBJECT_TYPE,
+			subjectUuid: $row['requestId'],
+			reason: 'Handed over to dossiq case ' . (string)($row['caseId'] ?? ''),
+			actor: null
+		);
+	}//end cancelTimer()
 }//end class

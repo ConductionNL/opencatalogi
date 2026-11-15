@@ -21,6 +21,7 @@ declare(strict_types=1);
 namespace Unit\Repair;
 
 use OCA\OpenCatalogi\Repair\HandWooRequestsToDossiq;
+use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCP\App\IAppManager;
 use OCP\Migration\IOutput;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -125,6 +126,15 @@ class HandWooRequestsToDossiqTest extends TestCase {
 			actual: array_search(needle: HandWooRequestsToDossiq::class, haystack: $steps, strict: true)
 		);
 	}//end testTheStepIsRegisteredPostMigration()
+
+	/**
+	 * The step cancels timers under the subject type the statutory term stores them with.
+	 *
+	 * @return void
+	 */
+	public function testTheTimerSubjectTypeIsTheStatutoryTermsOwn(): void {
+		$this->assertSame(expected: StatutoryTerm::SUBJECT_TYPE, actual: HandWooRequestsToDossiq::TIMER_SUBJECT_TYPE);
+	}//end testTheTimerSubjectTypeIsTheStatutoryTermsOwn()
 
 	/**
 	 * Run the step over doubles of dossiq's import and OpenRegister's timers.
