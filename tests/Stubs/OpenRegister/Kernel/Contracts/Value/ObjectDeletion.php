@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Stub for OCA\OpenRegister\Service\Object\ObjectDeletion.
+ * Stub for OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion.
  *
  * @category Test
  * @package  OCA\OpenCatalogi\Tests\Stubs
@@ -13,7 +13,7 @@
 
 declare(strict_types=1);
 
-namespace OCA\OpenRegister\Service\Object;
+namespace OCA\OpenRegister\Kernel\Contracts\Value;
 
 /**
  * Mirrors the real value object: which object to delete, where, by whom, and whether permanently.

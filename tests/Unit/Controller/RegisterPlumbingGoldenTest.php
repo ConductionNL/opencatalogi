@@ -679,7 +679,7 @@ class RegisterPlumbingGoldenTest extends TestCase {
 	 * @return array<string, mixed> The arguments in the recorded shape.
 	 */
 	private static function spreadDeletion(array $named): array {
-		if (($named['deletion'] ?? null) instanceof \OCA\OpenRegister\Service\Object\ObjectDeletion === false) {
+		if (($named['deletion'] ?? null) instanceof \OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion === false) {
 			return $named;
 		}
 

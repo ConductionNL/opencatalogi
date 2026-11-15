@@ -22,8 +22,8 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service;
 
-use OCA\OpenRegister\Service\Object\ObjectDeletion;
-use OCA\OpenRegister\Service\Object\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
 
 /**
  * OpenRegister's ObjectService bound to one register and schema, without

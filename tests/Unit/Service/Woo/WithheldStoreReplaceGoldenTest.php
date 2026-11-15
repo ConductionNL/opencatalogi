@@ -236,7 +236,7 @@ class WithheldStoreReplaceGoldenTest extends TestCase {
 				return array_filter(array_merge($object, ['id' => $id]), static fn ($value): bool => $value !== null);
 			}
 
-			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true): bool {
+			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true): bool {
 				$uuid = $deletion->uuid;
 				$this->log[] = ['delete', $uuid, $deletion->target->register, $deletion->target->schema, $_rbac, $_multitenancy];
 				if (in_array($uuid, ($this->world['failDelete'] ?? []), true) === true) {

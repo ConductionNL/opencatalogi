@@ -706,7 +706,7 @@ class ListingsControllerTest extends TestCase {
 		$mockObjService = $this->mockObjectService();
 
 		$mockObjService->method('deleteObject')
-			->with($this->callback(static fn (\OCA\OpenRegister\Service\Object\ObjectDeletion $d): bool => $d->uuid === '123' && $d->target->register === '1' && $d->target->schema === '2'))
+			->with($this->callback(static fn (\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $d): bool => $d->uuid === '123' && $d->target->register === '1' && $d->target->schema === '2'))
 			->willReturn(true);
 
 		$response = $this->controller->destroy('123');
@@ -725,7 +725,7 @@ class ListingsControllerTest extends TestCase {
 		$mockObjService = $this->mockObjectService();
 
 		$mockObjService->method('deleteObject')
-			->with($this->callback(static fn (\OCA\OpenRegister\Service\Object\ObjectDeletion $d): bool => $d->uuid === 'nonexistent' && $d->target->register === '1' && $d->target->schema === '2'))
+			->with($this->callback(static fn (\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $d): bool => $d->uuid === 'nonexistent' && $d->target->register === '1' && $d->target->schema === '2'))
 			->willReturn(false);
 
 		$response = $this->controller->destroy('nonexistent');

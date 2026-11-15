@@ -288,7 +288,7 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase {
 			) {
 			}
 
-			public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion, bool $_rbac, bool $_multitenancy): bool {
+			public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion, bool $_rbac, bool $_multitenancy): bool {
 				$uuid = $deletion->uuid;
 				$register = $deletion->target->register;
 				$schema = $deletion->target->schema;

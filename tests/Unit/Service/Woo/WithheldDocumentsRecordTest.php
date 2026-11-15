@@ -90,7 +90,7 @@ class WithheldShapedObjectService {
 		return ['id' => $id, 'object' => $object];
 	}//end saveObject()
 
-	public function deleteObject(\OCA\OpenRegister\Service\Object\ObjectDeletion $deletion, mixed ...$rest): bool {
+	public function deleteObject(\OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion $deletion, mixed ...$rest): bool {
 		$this->deleted[] = $deletion->uuid;
 		unset($this->rows[$deletion->uuid]);
 
