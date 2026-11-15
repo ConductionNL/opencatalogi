@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -17,6 +22,8 @@ use Psr\Log\LoggerInterface;
  * Unit tests for ServiceCatalogueService.
  *
  * @covers \OCA\OpenCatalogi\Service\ServiceCatalogueService
+ * @uses \OCA\OpenCatalogi\Service\CallerScope
+ * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
  */
 class ServiceCatalogueServiceTest extends TestCase {
 
@@ -29,7 +36,7 @@ class ServiceCatalogueServiceTest extends TestCase {
 		$this->logger = $this->createMock(LoggerInterface::class);
 		$appManager = $this->createMock(IAppManager::class);
 		$appManager->method('isInstalled')->willReturn(true);
-		$this->service = new ServiceCatalogueService($this->container, $this->logger, $appManager);
+		$this->service = new ServiceCatalogueService(new \OCA\OpenCatalogi\Service\OpenRegisterLookup($this->container, $appManager), $this->logger);
 
 	}//end setUp()
 

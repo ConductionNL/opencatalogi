@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 import { useIsAdmin } from '../../composables/useIsAdmin.js'
@@ -98,6 +102,11 @@ import { NcButton } from '@nextcloud/vue'
 import ArrowLeft from 'vue-material-design-icons/ArrowLeft.vue'
 import OpenInApp from 'vue-material-design-icons/OpenInApp.vue'
 import Pencil from 'vue-material-design-icons/Pencil.vue'
+import {
+	catalogCountRows,
+	catalogFeatureRows,
+	catalogMetadataItems,
+} from '../../services/catalogMetadata.js'
 
 const DETAIL_LAYOUT = [
 	{ id: 1, widgetId: 'metadata', gridX: 0, gridY: 0, gridWidth: 6, gridHeight: 4 },
@@ -176,97 +185,26 @@ export default {
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		metadataItems() {
-			if (!this.catalog) return []
-			const self = this.catalog['@self'] || {}
-			return [
-				{
-					label: t('opencatalogi', 'Title'),
-					value: this.catalog.title || '-',
-				},
-				{
-					label: t('opencatalogi', 'Summary'),
-					value: this.catalog.summary || '-',
-				},
-				{
-					label: t('opencatalogi', 'Slug'),
-					value: this.catalog.slug || '-',
-				},
-				{
-					label: t('opencatalogi', 'Status'),
-					value: this.catalog.status || '-',
-				},
-				{
-					label: t('opencatalogi', 'Listed'),
-					value: this.catalog.listed
-						? t('opencatalogi', 'Public')
-						: t('opencatalogi', 'Private'),
-				},
-				{
-					label: t('opencatalogi', 'Created'),
-					value: self.created
-						? new Date(self.created).toLocaleString()
-						: '-',
-				},
-				{
-					label: t('opencatalogi', 'Updated'),
-					value: self.updated
-						? new Date(self.updated).toLocaleString()
-						: '-',
-				},
-				{
-					label: t('opencatalogi', 'ID'),
-					value: self.id || this.catalog.id || '-',
-				},
-			]
+			return catalogMetadataItems(this.catalog)
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		configItems() {
 			if (!this.catalog) return []
 			return [
-				{
-					label: t('opencatalogi', 'Registers'),
-					value: (this.catalog.registers || []).length,
-				},
-				{
-					label: t('opencatalogi', 'Schemas'),
-					value: (this.catalog.schemas || []).length,
-				},
-				{
-					label: t('opencatalogi', 'WOO Sitemap'),
-					value: this.catalog.hasWooSitemap
-						? t('opencatalogi', 'Yes')
-						: t('opencatalogi', 'No'),
-				},
-				{
-					label: t('opencatalogi', 'OOAPI 5.0 Publication'),
-					value: this.catalog.hasOoapi
-						? t('opencatalogi', 'Yes')
-						: t('opencatalogi', 'No'),
-				},
+				...catalogCountRows(this.catalog),
+				...catalogFeatureRows(this.catalog),
 			]
 		},
 
 		/** @spec openspec/changes/retrofit-2026-05-26-catalog-management/tasks.md#task-3 */
 		widgetDefs() {
 			return [
-				{
-					id: 'metadata',
-					title: t('opencatalogi', 'Metadata'),
-					type: 'custom',
-				},
-				{
-					id: 'configuration',
-					title: t('opencatalogi', 'Configuration'),
-					type: 'custom',
-				},
-				{
-					id: 'description',
-					title: t('opencatalogi', 'Description'),
-					type: 'custom',
-				},
-				{ id: 'raw-data', title: t('opencatalogi', 'Data'), type: 'custom' },
-			]
+				['metadata', t('opencatalogi', 'Metadata')],
+				['configuration', t('opencatalogi', 'Configuration')],
+				['description', t('opencatalogi', 'Description')],
+				['raw-data', t('opencatalogi', 'Data')],
+			].map(([id, title]) => ({ id, title, type: 'custom' }))
 		},
 	},
 

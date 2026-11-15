@@ -26,9 +26,12 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Portal;
 
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCP\App\IAppManager;
-use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
 use Throwable;
@@ -75,16 +78,14 @@ class PortalObjectStore {
 	/**
 	 * Constructor.
 	 *
-	 * @param ContainerInterface      $container    Resolves OpenRegister.
+	 * @param OpenRegisterLookup $openRegister Whether OpenRegister is installed, and its ObjectService.
 	 * @param PublicationQueryService $publications The public-ness rule.
-	 * @param LoggerInterface         $logger       The logger.
-	 * @param IAppManager             $appManager   Whether OpenRegister is installed.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookup $openRegister,
 		private readonly PublicationQueryService $publications,
 		private readonly LoggerInterface $logger,
-		private readonly IAppManager $appManager,
 	) {
 
 	}//end __construct()
@@ -93,7 +94,7 @@ class PortalObjectStore {
 	 * One object by id, as the system, or null.
 	 *
 	 * @param string $schema The schema slug.
-	 * @param string $id     The object uuid.
+	 * @param string $id The object uuid.
 	 *
 	 * @return array<string, mixed>|null
 	 *
@@ -107,8 +108,7 @@ class PortalObjectStore {
 		try {
 			$entity = $this->objectService()->find(
 				id: $id,
-				register: self::REGISTER,
-				schema: $schema,
+				options: new ObjectFindOptions(register: self::REGISTER, schema: $schema),
 				_rbac: false,
 				_multitenancy: false
 			);
@@ -118,27 +118,27 @@ class PortalObjectStore {
 		}
 
 		return $this->toArray(entity: $entity);
-
 	}//end find()
 
 	/**
 	 * Save an object as the system and return it as stored.
 	 *
-	 * @param string               $schema The schema slug.
-	 * @param array<string, mixed> $data   The object's own fields.
-	 * @param string|null          $id     The uuid of an existing object.
+	 * @param string $schema The schema slug.
+	 * @param array<string, mixed> $data The object's own fields.
+	 * @param string|null $id The uuid of an existing object.
 	 *
 	 * @return array<string, mixed>
 	 *
 	 * @spec openspec/changes/citizen-collections/specs/citizen-collections/spec.md#requirement-a-dossier-belongs-to-one-resident-and-answers-404-to-everyone-else-req-ccol-001
 	 */
-	public function save(string $schema, array $data, ?string $id=null): array {
+	public function save(string $schema, array $data, ?string $id = null): array {
 		unset($data['@self'], $data['id']);
 		$entity = $this->objectService()->saveObject(
 			object: $data,
-			register: self::REGISTER,
-			schema: $schema,
-			uuid: $id,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: self::REGISTER, schema: $schema),
+				uuid: $id
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -149,7 +149,6 @@ class PortalObjectStore {
 		}
 
 		return $saved;
-
 	}//end save()
 
 	/**
@@ -168,8 +167,10 @@ class PortalObjectStore {
 	public function writePortalMessage(array $message): void {
 		$entity = $this->objectService()->saveObject(
 			object: $message,
-			register: self::PORTAL_MESSAGE_REGISTER,
-			schema: self::PORTAL_MESSAGE_SCHEMA,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(
+					register: self::PORTAL_MESSAGE_REGISTER,
+					schema: self::PORTAL_MESSAGE_SCHEMA
+				)),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -184,7 +185,7 @@ class PortalObjectStore {
 	 * Delete an object as the system.
 	 *
 	 * @param string $schema The schema slug.
-	 * @param string $id     The uuid.
+	 * @param string $id The uuid.
 	 *
 	 * @return bool
 	 *
@@ -192,9 +193,10 @@ class PortalObjectStore {
 	 */
 	public function delete(string $schema, string $id): bool {
 		return (bool)$this->objectService()->deleteObject(
-			uuid: $id,
-			register: self::REGISTER,
-			schema: $schema,
+			new ObjectDeletion(
+				uuid: $id,
+				target: new ObjectFindTarget(register: self::REGISTER, schema: $schema)
+			),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -205,7 +207,7 @@ class PortalObjectStore {
 	 * Every object of a schema whose `owner` is this subject.
 	 *
 	 * @param string $schema The schema slug.
-	 * @param string $owner  The subject reference.
+	 * @param string $owner The subject reference.
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
@@ -217,15 +219,14 @@ class PortalObjectStore {
 		}
 
 		return $this->findWhere(schema: $schema, filters: ['owner' => $owner], limit: self::OWNER_LIMIT);
-
 	}//end findByOwner()
 
 	/**
 	 * Objects of a schema matching plain field filters, as the system.
 	 *
-	 * @param string               $schema  The schema slug.
+	 * @param string $schema The schema slug.
 	 * @param array<string, mixed> $filters Field filters.
-	 * @param int                  $limit   The most rows.
+	 * @param int $limit The most rows.
 	 *
 	 * @return array<int, array<string, mixed>>
 	 *
@@ -253,7 +254,6 @@ class PortalObjectStore {
 		}
 
 		return $out;
-
 	}//end findWhere()
 
 	/**
@@ -278,8 +278,7 @@ class PortalObjectStore {
 			try {
 				return $service->find(
 					id: $id,
-					register: self::REGISTER,
-					schema: self::PUBLICATION_SCHEMA,
+					options: new ObjectFindOptions(register: self::REGISTER, schema: self::PUBLICATION_SCHEMA),
 					_rbac: true,
 					_multitenancy: false
 				);
@@ -303,13 +302,12 @@ class PortalObjectStore {
 		}
 
 		return $publication;
-
 	}//end publicPublication()
 
 	/**
 	 * Whether a row carries every filter value (a guard on OpenRegister's filter).
 	 *
-	 * @param array<string, mixed> $row     The row.
+	 * @param array<string, mixed> $row The row.
 	 * @param array<string, mixed> $filters The filters.
 	 *
 	 * @return bool
@@ -322,7 +320,6 @@ class PortalObjectStore {
 		}
 
 		return true;
-
 	}//end matches()
 
 	/**
@@ -356,7 +353,6 @@ class PortalObjectStore {
 		}
 
 		return $entity;
-
 	}//end toArray()
 
 	/**
@@ -368,20 +364,18 @@ class PortalObjectStore {
 	 */
 	private function objectService(): object {
 		if ($this->objectService === null) {
-			// ADR-083: OpenRegister is optional for this app, so establish it
-			// first. The app id is written out: the checker reads the literal.
-			if ($this->appManager->isInstalled('openregister') === false) {
+			// ADR-083: OpenRegister is optional for this app, so establish it first.
+			if ($this->openRegister->isInstalled() === false) {
 				throw new RuntimeException('OpenRegister is not installed');
 			}
 
 			try {
-				$this->objectService = $this->container->get('OCA\OpenRegister\Service\ObjectService');
+				$this->objectService = $this->openRegister->objectService();
 			} catch (Throwable $e) {
-				throw new RuntimeException('OpenRegister is not available: '.$e->getMessage());
+				throw new RuntimeException('OpenRegister is not available: ' . $e->getMessage());
 			}
 		}
 
 		return $this->objectService;
-
 	}//end objectService()
 }//end class

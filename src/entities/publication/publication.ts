@@ -1,12 +1,53 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import type { SafeParseReturnType } from 'zod'
+import type { ZodSafeParseResult } from 'zod'
 import type { TCatalogi } from '../'
 import type { TPublication } from './publication.types'
 
 import { z } from 'zod'
+import { fillDefaults, objectOr } from '../fillDefaults.js'
+import { languageSchema } from '../languageSchema.js'
+import { publicationStatusSchema } from '../publicationStatus.js'
 
 type TStatus =
 	'Concept' | 'Published' | 'Withdrawn' | 'Archived' | 'Revised' | 'Rejected'
+
+/**
+ * Read the featured flag. The backend can send true and false as "1" and ""
+ * (not "0"), so a numeric string counts by its number.
+ *
+ * @param value - The featured value from the publication data
+ * @return Whether the publication is featured
+ */
+function featuredFlag(value: unknown): boolean {
+	return (
+		(typeof value === 'boolean' && value)
+		|| (typeof value === 'string' && !!parseInt(value))
+		|| false
+	)
+}
+
+/**
+ * The publication's text and status fields, with the value each takes when
+ * the data leaves it out or sends a falsy one. The featured flag holds its
+ * place in the field order here and is read by featuredFlag().
+ */
+const PUBLICATION_TEXT_DEFAULTS = {
+	title: '',
+	summary: '',
+	description: '',
+	reference: '',
+	image: '',
+	organization: '',
+	category: '',
+	portal: '',
+	featured: false,
+	source: '',
+	status: 'Concept' as TStatus,
+}
 
 /**
  * @spec openspec/specs/entity-typescript-models/spec.md
@@ -73,58 +114,62 @@ export class Publication implements TPublication {
 
 	/* istanbul ignore next */ // Jest does not recognize the code coverage of these 2 methods
 	private hydrate(data: TPublication) {
-		this.id = data.id?.toString()
-		this.title = data.title || ''
-		this.summary = data.summary || ''
-		this.description = data.description || ''
-		this.reference = data.reference || ''
-		this.image = data.image || ''
-		this.organization = data.organization || ''
-		this.category = data.category || ''
-		this.portal = data.portal || ''
-		this.featured =
-			(typeof data.featured === 'boolean' && data.featured)
-			// backend can send true and false back as "1" and "" (yes. not "0")
-			// FIXME: remove once bug is fixed
-			|| (typeof data.featured === 'string' && !!parseInt(data.featured))
-			|| false
-		this.source = data.source || ''
-		this.status = (data.status as TStatus) || 'Concept'
-		this.themes = data.themes || []
-		this.data = (!Array.isArray(data.data) && data.data) || {}
+		this.hydrateText(data)
+		this.hydrateStructure(data)
+	}
 
-		this.anonymization = (!Array.isArray(data.anonymization)
-			&& data.anonymization) || {
+	/**
+	 * Copy the identity, text and status fields, defaulting each to an empty value.
+	 *
+	 * @param data - The publication data
+	 */
+	private hydrateText(data: TPublication) {
+		this.id = data.id?.toString()
+		Object.assign(this, fillDefaults(data, PUBLICATION_TEXT_DEFAULTS))
+		this.featured = featuredFlag(data.featured)
+	}
+
+	/**
+	 * Copy the lists, nested objects and references; an array where an object
+	 * belongs counts as missing.
+	 *
+	 * @param data - The publication data
+	 */
+	private hydrateStructure(data: TPublication) {
+		this.themes = data.themes || []
+		this.data = objectOr(data.data, {})
+
+		this.anonymization = objectOr(data.anonymization, {
 			anonymized: false,
 			results: '',
-		}
+		})
 
-		this.language = (!Array.isArray(data.language) && data.language) || {
+		this.language = objectOr(data.language, {
 			code: '',
 			level: '',
-		}
+		})
 
 		this.published = data.published || ''
 		this.modified = data.modified || ''
 		this.license = data.license || ''
-		this.archive = (!Array.isArray(data.archive) && data.archive) || {
+		this.archive = objectOr(data.archive, {
 			date: '',
-		}
+		})
 
-		this.geo = (!Array.isArray(data.geo) && data.geo) || {
+		this.geo = objectOr(data.geo, {
 			type: 'Point',
 			coordinates: [0, 0],
-		}
+		})
 
-		this['@self'] = (!Array.isArray(data['@self']) && data['@self']) || {}
+		this['@self'] = objectOr(data['@self'], {})
 
-		this.catalog = (!Array.isArray(data.catalog) && data.catalog) || {}
+		this.catalog = objectOr(data.catalog, {})
 		this.register = data.register || null
 		this.schema = data.schema || null
 	}
 
 	/* istanbul ignore next */
-	public validate(): SafeParseReturnType<TPublication, unknown> {
+	public validate(): ZodSafeParseResult<unknown> {
 		// https://conduction.stoplight.io/docs/open-catalogi/jcrqsdtnjtx8v-create-publication
 		const schema = z.object({
 			title: z.string().min(1, 'is verplicht'), // .min(1) on a string functionally works the same as a nonEmpty check (SHOULD NOT BE COMBINED WITH .OPTIONAL())
@@ -137,37 +182,14 @@ export class Publication implements TPublication {
 			featured: z.boolean(),
 			source: z.string(),
 			organization: z.string(),
-			status: z.enum([
-				'Concept',
-				'Published',
-				'Withdrawn',
-				'Archived',
-				'Revised',
-				'Rejected',
-			]),
+			status: publicationStatusSchema(),
 			themes: z.array(z.union([z.string(), z.number()])),
 			data: z.record(z.string(), z.any()),
 			anonymization: z.object({
 				anonymized: z.boolean(),
 				results: z.string().max(2500, 'kan niet langer dan 2500 zijn'),
 			}),
-			language: z.object({
-				// this regex checks if the code has either 2 or 3 characters per group, and the -aaa after the first is optional
-				code: z
-					.string()
-					.regex(
-						/^([a-z]{2,3})(-[a-z]{2,3})?$/g,
-						'is niet een geldige ISO 639-1 code (e.g. en-us)',
-					)
-					.or(z.literal('')),
-				level: z
-					.string()
-					.regex(
-						/^(A|B|C)(1|2)$/g,
-						'is niet een geldige CEFRL level (e.g. A1)',
-					)
-					.or(z.literal('')),
-			}),
+			language: languageSchema(),
 			published: z.string().datetime({ offset: true }).or(z.literal('')),
 			modified: z.string().datetime({ offset: true }).or(z.literal('')),
 			license: z.string(),
@@ -195,10 +217,6 @@ export class Publication implements TPublication {
 				.refine((val) => val.toString().length > 0, 'schema is verplicht'),
 		})
 
-		const result = schema.safeParse({
-			...this,
-		})
-
-		return result
+		return schema.safeParse({ ...this })
 	}
 }

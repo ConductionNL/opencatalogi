@@ -49,7 +49,7 @@
 			}
 		},
 		{
-			"name": "Setup: create Alpha (archived)",
+			"name": "Setup: create Alpha (published, archived next)",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -66,7 +66,8 @@
 					"script": {
 						"type": "text/javascript",
 						"exec": [
-							"pm.test('created (200/201)', () => pm.expect([200, 201]).to.include(pm.response.code));",
+							"// The publication lifecycle starts in published; a create in another state is refused with 422.",
+							"pm.test('created (200/201)', () => pm.expect([200, 201], pm.response.text().slice(0, 300)).to.include(pm.response.code));",
 							"pm.collectionVariables.set('idAlpha', pm.response.json().id || '');"
 						]
 					}
@@ -79,8 +80,33 @@
 					{ "key": "Content-Type", "value": "application/json" },
 					{ "key": "Authorization", "value": "{{userAuth}}" }
 				],
-				"body": { "mode": "raw", "raw": "{\"title\": \"{{runId}} Alpha\", \"status\": \"archived\"}" },
+				"body": { "mode": "raw", "raw": "{\"title\": \"{{runId}} Alpha\", \"status\": \"published\"}" },
 				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication"] }
+			}
+		},
+		{
+			"name": "Setup: archive Alpha through the published → archived transition",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"type": "text/javascript",
+						"exec": [
+							"pm.test('archived (200)', () => pm.expect(pm.response.code, pm.response.text().slice(0, 300)).to.eql(200));",
+							"pm.test('status is archived', () => pm.expect(pm.response.json().status).to.eql('archived'));"
+						]
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{ "key": "Accept", "value": "application/json" },
+					{ "key": "Content-Type", "value": "application/json" },
+					{ "key": "Authorization", "value": "{{userAuth}}" }
+				],
+				"body": { "mode": "raw", "raw": "{\"title\": \"{{runId}} Alpha\", \"status\": \"archived\"}" },
+				"url": { "raw": "{{baseUrl}}/apps/openregister/api/objects/publication/publication/{{idAlpha}}", "host": ["{{baseUrl}}"], "path": ["apps", "openregister", "api", "objects", "publication", "publication", "{{idAlpha}}"] }
 			}
 		},
 		{

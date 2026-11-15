@@ -1,0 +1,194 @@
+{
+    "both empty": [],
+    "counts merge and sort": {
+        "type": [
+            {
+                "_id": "besluit",
+                "count": 7
+            },
+            {
+                "_id": "advies",
+                "count": 5
+            },
+            {
+                "_id": "nieuw",
+                "count": 2
+            }
+        ]
+    },
+    "duplicate incoming ids": {
+        "type": [
+            {
+                "_id": "a",
+                "count": 2
+            },
+            {
+                "_id": "b",
+                "count": 2
+            },
+            {
+                "_id": "b",
+                "count": 1
+            }
+        ]
+    },
+    "empty field lists": {
+        "type": []
+    },
+    "existing empty": {
+        "type": [
+            {
+                "_id": "besluit",
+                "count": 3
+            },
+            {
+                "_id": "advies",
+                "count": 5
+            }
+        ]
+    },
+    "existing field not an array": {
+        "type": "x",
+        "other": [
+            {
+                "_id": "besluit",
+                "count": 3
+            },
+            {
+                "_id": "advies",
+                "count": 5
+            }
+        ]
+    },
+    "existing without count is kept": {
+        "type": [
+            {
+                "_id": "advies",
+                "count": 1
+            },
+            {
+                "_id": "besluit"
+            }
+        ]
+    },
+    "incoming without count is appended": {
+        "type": [
+            {
+                "_id": "advies",
+                "count": 5
+            },
+            {
+                "_id": "besluit",
+                "count": 3
+            },
+            {
+                "_id": "besluit"
+            },
+            {
+                "_id": "zonder"
+            }
+        ]
+    },
+    "keyed buckets": {
+        "type": [
+            {
+                "_id": "a",
+                "count": 10
+            },
+            {
+                "_id": "b",
+                "count": 5
+            }
+        ]
+    },
+    "malformed buckets": {
+        "type": [
+            "loose",
+            {
+                "count": 9
+            },
+            {
+                "_id": "y",
+                "count": 7
+            },
+            {
+                "_id": "x",
+                "count": 3
+            }
+        ]
+    },
+    "new empty": {
+        "type": [
+            {
+                "_id": "besluit",
+                "count": 3
+            },
+            {
+                "_id": "advies",
+                "count": 5
+            }
+        ]
+    },
+    "new field": {
+        "type": [
+            {
+                "_id": "besluit",
+                "count": 3
+            },
+            {
+                "_id": "advies",
+                "count": 5
+            }
+        ],
+        "year": [
+            {
+                "_id": "2026",
+                "count": 1
+            }
+        ]
+    },
+    "new field not an array": {
+        "type": [
+            {
+                "_id": "advies",
+                "count": 5
+            },
+            {
+                "_id": "besluit",
+                "count": 4
+            }
+        ]
+    },
+    "string counts": {
+        "type": [
+            {
+                "_id": "a",
+                "count": "1"
+            },
+            {
+                "_id": "b",
+                "count": 1
+            },
+            {
+                "_id": "c",
+                "count": "1"
+            }
+        ]
+    },
+    "tie sorts by id": {
+        "type": [
+            {
+                "_id": "a",
+                "count": 2
+            },
+            {
+                "_id": "b",
+                "count": 2
+            },
+            {
+                "_id": "c",
+                "count": 2
+            }
+        ]
+    }
+}

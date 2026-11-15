@@ -24,6 +24,7 @@ declare(strict_types=1);
 
 namespace Unit\Controller;
 
+use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
@@ -40,6 +41,8 @@ use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A duck-typed fake of the consumed OpenRegister ObjectService.
@@ -52,6 +55,7 @@ class WooRequestFakeObjectService {
 	public int $counter = 0;
 
 	public function find(string $id, mixed ...$rest): array {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		if (isset($this->objects[$id]) === false) {
 			throw new \RuntimeException('not found');
 		}
@@ -61,13 +65,15 @@ class WooRequestFakeObjectService {
 
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		$register = null,
-		$schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
 		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$_unowned = $options->actor->unowned ?? false;
 		$id = (string)($uuid ?? '');
 		if ($id === '') {
 			$id = (string)($object['id'] ?? '');
@@ -147,8 +153,7 @@ class WooRequestControllerTest extends TestCase {
 			$this->request,
 			$l10n,
 			$userSession,
-			new WooRequestService(),
-			new WooRequestStore($config, $container, $this->appManager(installed: true)),
+			new RequestRecords(new WooRequestService(), new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $this->appManager(installed: true)))),
 			$this->terms
 		);
 
@@ -166,7 +171,6 @@ class WooRequestControllerTest extends TestCase {
 		$appManager->method('isInstalled')->willReturn($installed);
 
 		return $appManager;
-
 	}//end appManager()
 
 	/**
@@ -206,7 +210,6 @@ class WooRequestControllerTest extends TestCase {
 		$this->objects->objects['req-1'] = $record;
 
 		return 'req-1';
-
 	}//end storedRequest()
 
 	/**
@@ -502,16 +505,16 @@ class WooRequestControllerTest extends TestCase {
 	/**
 	 * Build a controller variant, over the same faked register.
 	 *
-	 * @param bool                 $signedIn   Whether a user is signed in.
-	 * @param string               $configured What the register and schema keys answer.
-	 * @param WooRequestStore|null $store      A store double, or null for the real store.
+	 * @param bool $signedIn Whether a user is signed in.
+	 * @param string $configured What the register and schema keys answer.
+	 * @param WooRequestStore|null $store A store double, or null for the real store.
 	 *
 	 * @return WooRequestController The controller.
 	 */
 	private function buildController(
 		bool $signedIn = true,
 		string $configured = '42',
-		?WooRequestStore $store = null
+		?WooRequestStore $store = null,
 	): WooRequestController {
 		$config = $this->createMock(IAppConfig::class);
 		$config->method('getValueString')->willReturn($configured);
@@ -544,7 +547,7 @@ class WooRequestControllerTest extends TestCase {
 		}
 
 		if ($store === null) {
-			$store = new WooRequestStore($config, $container, $this->appManager(installed: true));
+			$store = new WooRequestStore($config, new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $this->appManager(installed: true)));
 		}
 
 		return new WooRequestController(
@@ -552,8 +555,7 @@ class WooRequestControllerTest extends TestCase {
 			$this->request,
 			$l10n,
 			$userSession,
-			new WooRequestService(),
-			$store,
+			new RequestRecords(new WooRequestService(), $store),
 			$this->terms
 		);
 

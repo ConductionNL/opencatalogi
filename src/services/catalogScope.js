@@ -22,31 +22,54 @@
  * @spec openspec/specs/publications/spec.md#requirement-publication-list-endpoint-must-filter-by-the-catalogs-configured-registers-and-schemas-pub-003
  */
 export function normaliseIdList(raw) {
-	let list = raw
-	if (typeof list === 'string') {
-		try {
-			list = JSON.parse(list)
-		} catch {
-			return []
-		}
-	}
+	const list = parseIdList(raw)
 	if (!Array.isArray(list)) {
 		return []
 	}
 
-	const ids = []
-	for (const value of list) {
-		let id = null
-		if (typeof value === 'number' && Number.isInteger(value) && value > 0) {
-			id = value
-		} else if (typeof value === 'string' && /^\s*\d+\s*$/.test(value)) {
-			id = Number(value)
-		}
-		if (id !== null && id > 0 && !ids.includes(id)) {
-			ids.push(id)
-		}
+	const ids = list.map(toId).filter((id) => id !== null && id > 0)
+	return [...new Set(ids)]
+}
+
+/**
+ * Read a JSON-encoded list; anything that is not a string passes through.
+ *
+ * @param {unknown} raw The catalog field.
+ * @return {unknown} The parsed value, or null when the string is not JSON.
+ */
+function parseIdList(raw) {
+	if (typeof raw !== 'string') {
+		return raw
 	}
-	return ids
+	try {
+		return JSON.parse(raw)
+	} catch {
+		return null
+	}
+}
+
+/**
+ * One list entry as an id: a positive whole number or a string of digits.
+ *
+ * @param {unknown} value The entry.
+ * @return {number|null} The id, or null when the entry is not one.
+ */
+function toId(value) {
+	if (isPositiveInteger(value)) {
+		return value
+	}
+	if (typeof value === 'string' && /^\s*\d+\s*$/.test(value)) {
+		return Number(value)
+	}
+	return null
+}
+
+/**
+ * @param {unknown} value The entry.
+ * @return {boolean} Whether the entry is a positive whole number.
+ */
+function isPositiveInteger(value) {
+	return typeof value === 'number' && Number.isInteger(value) && value > 0
 }
 
 /**

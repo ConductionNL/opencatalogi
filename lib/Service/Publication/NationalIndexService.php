@@ -41,6 +41,7 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
 use OCP\EventDispatcher\Event;
 use OCP\EventDispatcher\IEventDispatcher;
 use OCP\IAppConfig;
@@ -52,7 +53,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-official-notices-reach-the-national-platform-and-the-local-channel-req-pin-107
  */
-class NationalIndexService {
+class NationalIndexService implements NationalIndexServiceInterface {
 
 	/**
 	 * The national publication platform, as a channel name.
@@ -225,7 +226,7 @@ class NationalIndexService {
 	 *
 	 * @throws IndexUnreachableException When no gateway is installed.
 	 */
-	private function gateway(array $services=self::GATEWAY_SERVICES): object {
+	private function gateway(array $services = self::GATEWAY_SERVICES): object {
 		foreach ($services as $service) {
 			try {
 				return $this->container->get($service);
@@ -284,7 +285,6 @@ class NationalIndexService {
 		}
 
 		return $result;
-
 	}//end deliver()
 
 	/**
@@ -308,7 +308,6 @@ class NationalIndexService {
 		}
 
 		return $sources;
-
 	}//end channelSources()
 
 	/**
@@ -329,7 +328,6 @@ class NationalIndexService {
 		}
 
 		return $slug;
-
 	}//end sourceSlugFor()
 
 	/**
@@ -350,7 +348,6 @@ class NationalIndexService {
 		}
 
 		return null;
-
 	}//end resolveDeliveryEvent()
 
 	/**
@@ -381,22 +378,47 @@ class NationalIndexService {
 		 */
 		$event = new $eventClass(
 			gatewayId: self::PUBLICATION_GATEWAY,
-			request: [
-				'reference' => [
-					'app' => 'opencatalogi',
-					'id' => (string)($notice['reference'] ?? ''),
-					'url' => (string)($notice['url'] ?? ''),
-				],
-				'instruction' => [
-					'publicationType' => (string)($notice['publicationType'] ?? ''),
-					'effectiveDate' => (string)($notice['effectiveDate'] ?? ''),
-				],
-			],
+			request: $this->publicationRequest(notice: $notice),
 			sourceApp: 'opencatalogi',
 			config: ['source' => $slug]
 		);
 		$this->dispatcher->dispatchTyped($event);
 
+		return $this->acknowledgedDelivery(event: $event);
+	}//end deliverThroughPublicationGateway()
+
+	/**
+	 * The `publicatie` gateway request: the notice by reference, and the
+	 * publication instruction.
+	 *
+	 * @param array<string, mixed> $notice The composed notice.
+	 *
+	 * @return array{reference: array{app: string, id: string, url: string}, instruction: array{publicationType: string, effectiveDate: string}}
+	 */
+	private function publicationRequest(array $notice): array {
+		return [
+			'reference' => [
+				'app' => 'opencatalogi',
+				'id' => (string)($notice['reference'] ?? ''),
+				'url' => (string)($notice['url'] ?? ''),
+			],
+			'instruction' => [
+				'publicationType' => (string)($notice['publicationType'] ?? ''),
+				'effectiveDate' => (string)($notice['effectiveDate'] ?? ''),
+			],
+		];
+	}//end publicationRequest()
+
+	/**
+	 * The delivery the gateway made, refusing anything that is not one.
+	 *
+	 * @param object $event The dispatched delivery request.
+	 *
+	 * @return array<string, mixed> The delivery integriq returned.
+	 *
+	 * @throws IndexUnreachableException When the gateway refused, nobody took the request, or it did not deliver.
+	 */
+	private function acknowledgedDelivery(object $event): array {
 		$refusal = $event->getRefusal();
 		if (is_array($refusal) === true) {
 			throw new IndexUnreachableException(
@@ -421,8 +443,7 @@ class NationalIndexService {
 		}
 
 		return $delivery;
-
-	}//end deliverThroughPublicationGateway()
+	}//end acknowledgedDelivery()
 
 	/**
 	 * Register this instance with the national Woo index.
@@ -483,7 +504,6 @@ class NationalIndexService {
 		}
 
 		return ['answer' => $answer, 'identifier' => $identifier];
-
 	}//end deliverToPlooi()
 
 	/**
@@ -539,6 +559,25 @@ class NationalIndexService {
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-hand-over-to-a-national-channel-calls-the-gateway-with-a-real-source-req-wnd-001
 	 */
 	private function handOver(string $channel, string $endpoint, array $payload): string {
+		$handOver = new ChannelHandOver();
+		$handOver->channel = $channel;
+		$handOver->endpoint = $endpoint;
+		$handOver->payload = $payload;
+		$handOver->source = $this->channelSource(channel: $channel);
+
+		return $this->acknowledgedAnswer(handOver: $handOver, response: $this->callGateway(handOver: $handOver));
+	}//end handOver()
+
+	/**
+	 * The integriq source object set for a channel.
+	 *
+	 * @param string $channel The channel.
+	 *
+	 * @return object The source.
+	 *
+	 * @throws IndexUnreachableException When the channel's source does not exist.
+	 */
+	private function channelSource(string $channel): object {
 		$slug = $this->sourceSlugFor(channel: $channel);
 		$source = $this->gateway(services: self::SOURCE_STORES)->findSourceBySlug(slug: $slug);
 		if ($source === null) {
@@ -547,39 +586,58 @@ class NationalIndexService {
 			);
 		}
 
+		return $source;
+	}//end channelSource()
+
+	/**
+	 * POST the payload to the channel's source through the gateway.
+	 *
+	 * @param ChannelHandOver $handOver The hand-over.
+	 *
+	 * @return mixed The gateway's call log.
+	 *
+	 * @throws IndexUnreachableException When the call failed.
+	 */
+	private function callGateway(ChannelHandOver $handOver): mixed {
 		$gateway = $this->gateway();
 
 		try {
-			$response = $gateway->call(
-				source: $source,
-				endpoint: $endpoint,
+			return $gateway->call(
+				source: $handOver->source,
+				endpoint: $handOver->endpoint,
 				method: 'POST',
 				config: [
-					'body' => json_encode($payload),
+					'body' => json_encode($handOver->payload),
 					'headers' => ['Content-Type' => 'application/json'],
 				]
 			);
 		} catch (\Throwable $e) {
-			$this->logger->warning('[NationalIndexService] The delivery to "' . $channel . '" failed: ' . $e->getMessage());
+			$this->logger->warning('[NationalIndexService] The delivery to "' . $handOver->channel . '" failed: ' . $e->getMessage());
 			throw new IndexUnreachableException(
-				message: 'The channel "' . $channel . '" could not be reached: ' . $e->getMessage(),
+				message: 'The channel "' . $handOver->channel . '" could not be reached: ' . $e->getMessage(),
 				code: 0,
 				previous: $e
 			);
 		}
+	}//end callGateway()
 
-		// The gateway returns its call log. Its object carries the status and the
-		// response the destination gave.
-		$status = 0;
-		if (is_object($response) === true && method_exists($response, 'getObject') === true) {
-			$log = $response->getObject();
-			$status = (int)($log['statusCode'] ?? ($log['response']['statusCode'] ?? 0));
-			$response = ($log['response']['body'] ?? '');
-		}
-
+	/**
+	 * The destination's answer, when its status and body acknowledge the
+	 * delivery.
+	 *
+	 * @param ChannelHandOver $handOver The hand-over.
+	 * @param mixed $response The gateway's call log.
+	 *
+	 * @return string The destination's answer, as it came back.
+	 *
+	 * @throws IndexUnreachableException When it answered an error status or nothing readable.
+	 */
+	private function acknowledgedAnswer(ChannelHandOver $handOver, mixed $response): string {
+		[$status, $response] = $this->statusAndBody(response: $response);
 		if ($status >= 300) {
 			throw new IndexUnreachableException(
-				message: 'The channel "' . $channel . '" answered HTTP ' . $status . ', so the delivery cannot be called acknowledged: ' . (string)$response
+				message: 'The channel "' . $handOver->channel . '" answered HTTP ' . $status
+					. ', so the delivery cannot be called acknowledged: ' . (string)$response
 			);
 		}
 
@@ -588,11 +646,27 @@ class NationalIndexService {
 			// acknowledged. Returning an empty string here would let the caller
 			// record it as done.
 			throw new IndexUnreachableException(
-				message: 'The channel "' . $channel . '" answered nothing, so the delivery cannot be called acknowledged.'
+				message: 'The channel "' . $handOver->channel . '" answered nothing, so the delivery cannot be called acknowledged.'
 			);
 		}
 
 		return $response;
+	}//end acknowledgedAnswer()
 
-	}//end handOver()
+	/**
+	 * The status and the body the destination gave. The gateway returns its
+	 * call log; its object carries both.
+	 *
+	 * @param mixed $response The gateway's call log.
+	 *
+	 * @return array{0: int, 1: mixed} The status (0 when unknown) and the body.
+	 */
+	private function statusAndBody(mixed $response): array {
+		if (is_object($response) === false || method_exists($response, 'getObject') === false) {
+			return [0, $response];
+		}
+
+		$log = $response->getObject();
+		return [(int)($log['statusCode'] ?? ($log['response']['statusCode'] ?? 0)), ($log['response']['body'] ?? '')];
+	}//end statusAndBody()
 }//end class

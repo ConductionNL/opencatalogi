@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Listener;
@@ -60,9 +65,9 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 			new BeforeTemplateRenderedEvent(true, new TemplateResponse('opencatalogi', 'index'))
 		);
 
-		// 15 register/schema keys (incl. the 3 WOO keys; no page or menu keys since
-		// the CMS moved to Portaliq) + default_directory_url.
-		$this->assertCount(16, $this->provided);
+		// 19 register/schema keys (incl. the 3 WOO and 4 service catalogue keys; no
+		// page or menu keys since the CMS moved to Portaliq) + default_directory_url.
+		$this->assertCount(20, $this->provided);
 		$this->assertArrayNotHasKey('page_schema', $this->provided);
 		$this->assertArrayNotHasKey('menu_schema', $this->provided);
 		$this->assertSame('42', $this->provided['catalog_register']);
@@ -70,6 +75,8 @@ class ProvideManifestConfigStateListenerTest extends TestCase {
 		$this->assertSame('42', $this->provided['woo_register']);
 		$this->assertSame('42', $this->provided['woo_batch_schema']);
 		$this->assertSame('42', $this->provided['woo_assessment_schema']);
+		$this->assertSame('42', $this->provided['service_catalogue_register']);
+		$this->assertSame('42', $this->provided['knowledge_article_schema']);
 		$this->assertArrayHasKey('default_directory_url', $this->provided);
 		$this->assertNotSame('', $this->provided['default_directory_url']);
 	}

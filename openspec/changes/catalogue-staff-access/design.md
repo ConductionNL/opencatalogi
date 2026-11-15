@@ -8,7 +8,7 @@
 | A `catalog` reference on every publication plus a cross-schema hierarchy in OpenRegister | Needs an OpenRegister change and a backfill, and breaks the many-catalogue membership a catalogue's filters allow. |
 | Conditional rules `{group, match}` per action on the covered schemas | Exists on openregister development, already used by the publication schema's public read. Chosen. |
 
-OpenCatalogi writes the rules through OpenRegister's schema service, never the mapper, and never evaluates access itself (ADR-022).
+OpenCatalogi writes the rules on the schema entity through OpenRegister's SchemaMapper (its schema service has no general update; pipelinq, procest and planninq write schema rules the same way), and never evaluates access itself (ADR-022).
 
 ## D2. The rule set per schema
 
@@ -24,7 +24,13 @@ A `create` rule with a `match` is evaluated by OpenRegister on the object being 
 
 ## D3. When it runs
 
-`CatalogAccessService::recompute(int $schemaId)` is called from the existing `CatalogSchemaEventListener` on catalogue save (pre-save normalises, post-save recomputes; no re-save of the catalogue itself, CAT-012) and on catalogue delete, for the union of old and new schemas. A repair step runs it once for every schema on upgrade.
+`CatalogAccessService::recompute(int $schemaId)` is called from `CatalogAccessListener` on catalogue save (`CatalogSchemaEventListener` normalises pre-save; the new listener recomputes post-save; no re-save of the catalogue itself, CAT-012) and on catalogue delete, for the union of old and new schemas. A repair step runs it once for every schema on upgrade.
+
+## D3a. Who may change it
+
+The catalog schema has no update rule, so any signed-in user can edit a catalogue. `CatalogAccessListener` therefore refuses a write that changes `staffAccess` unless the user is an administrator, on `ObjectCreatingEvent` / `ObjectUpdatingEvent`, before OpenRegister stores it (`stopPropagation` with the reason). A write without a session (setup, import, a background job) is the system's own and passes.
+
+While no covering catalogue is restricted the schema keeps the rules it has; the authorization from before the first restriction is kept in IAppConfig and written back when the last restriction is lifted.
 
 ## D4. Screen
 

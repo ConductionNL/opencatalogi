@@ -3,12 +3,15 @@
 /**
  * Unit tests for PublicationQueryService.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * Covers the WOO-536 Fase-5 refactor of `assemblePublicSearchResults`
  * (catalog-derived scope, dynamic schema discriminator, N4a
  * document-transitive visibility), the M2 fast-path added 2026-08-31
  * that resolves document→publication via the document's OWN
  * `_relations` (bug 1 fix), the pure helpers
- * (`isCatalogPubliclyAvailable`, `normalizeIds`, `stripEmptyValues`),
+ * (`isCatalogPubliclyAvailable`, `stripEmptyValues`),
  * and `findObjectLocation` (the constrained object-location query).
  *
  * The service is thin over OpenRegister — most branches boil down to
@@ -27,15 +30,13 @@
  * `PublicationQueryService::assemblePublicSearchResults()`.
  *
  * @spec openspec/specs/search/spec.md
- *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
  */
 
 declare(strict_types=1);
 
 namespace Unit\Service;
 
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
 use OCA\OpenRegister\Db\ObjectEntity;
 use OCA\OpenRegister\Service\ObjectService;
@@ -45,6 +46,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionClass;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 
 /**
  * Fake OpenRegister ObjectService double for `assemblePublicSearchResults`
@@ -100,8 +102,8 @@ class FakeLegacySearchObjectService {
 		}
 
 		$this->capturedCalls[] = [
-			'query'         => $query,
-			'_rbac'         => $_rbac,
+			'query' => $query,
+			'_rbac' => $_rbac,
 			'_multitenancy' => $_multitenancy,
 		];
 
@@ -120,13 +122,14 @@ class FakeLegacySearchObjectService {
 
 	public function find(
 		string $id,
-		array $_extend = [],
-		bool $files = false,
-		?int $register = null,
-		?int $schema = null,
+		?ObjectFindOptions $options = null,
 		bool $_rbac = true,
-		bool $_multitenancy = true,
+		bool $_multitenancy = true
 	): ?array {
+		$_extend = $options?->extend ?? [];
+		$files = $options?->files ?? false;
+		$register = $options?->register;
+		$schema = $options?->schema;
 		if ($this->scopeDepth === 0) {
 			$this->readsOutsideScope[] = 'find';
 		}
@@ -205,16 +208,29 @@ class FakeSchemaMapper {
 	public array $authorizationById = [];
 
 	public function find(int|string $id): object {
-		$slug = ($this->slugById[(int) $id] ?? "schema-{$id}");
-		$authorization = array_key_exists((int) $id, $this->authorizationById)
-			? $this->authorizationById[(int) $id]
+		$slug = ($this->slugById[(int)$id] ?? "schema-{$id}");
+		$authorization = array_key_exists((int)$id, $this->authorizationById)
+			? $this->authorizationById[(int)$id]
 			: ['read' => [['group' => 'public', 'match' => ['publicationDate' => ['$lte' => '$now']]]]];
-		return new class ((int) $id, $slug, $authorization) {
-			public function __construct(private int $id, private string $slug, private ?array $authorization) {}
-			public function getId(): int { return $this->id; }
-			public function getSlug(): string { return $this->slug; }
-			public function getTitle(): string { return ucfirst($this->slug); }
-			public function getAuthorization(): ?array { return $this->authorization; }
+		return new class((int)$id, $slug, $authorization) {
+			public function __construct(
+				private int $id,
+				private string $slug,
+				private ?array $authorization,
+			) {
+			}
+			public function getId(): int {
+				return $this->id;
+			}
+			public function getSlug(): string {
+				return $this->slug;
+			}
+			public function getTitle(): string {
+				return ucfirst($this->slug);
+			}
+			public function getAuthorization(): ?array {
+				return $this->authorization;
+			}
 		};
 	}
 }
@@ -308,14 +324,6 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame('minutes', $query['documentType']);
 		$this->assertSame('Gemeenteraad', $query['bodyName']);
 		$this->assertSame(['gte' => '2026-04-01', 'lte' => '2026-06-30'], $query['meetingDate']);
-	}
-
-	public function testNormalizeIdsAcceptsJsonStringAndArrayAndCastsToInt(): void {
-		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', ['[1,2]']));
-		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', ['["1","2"]']));
-		$this->assertSame([1, 2], $this->invokePrivate('normalizeIds', [[1, '2']]));
-		$this->assertSame([], $this->invokePrivate('normalizeIds', [null]));
-		$this->assertSame([], $this->invokePrivate('normalizeIds', ['not-json']));
 	}
 
 	public function testIsCatalogPubliclyAvailableAcceptsPublishedInPast(): void {
@@ -457,14 +465,14 @@ class PublicationQueryServiceTest extends TestCase {
 		// Note: _catalog=default-catalog (present in fixture) is the OC-level scope
 		// resolver; every other listed key MUST be stripped before reaching OR.
 		$this->service->assemblePublicSearchResults([
-			'_search'     => 'x',
-			'_schema'     => 999,
-			'_registers'  => [999],
+			'_search' => 'x',
+			'_schema' => 999,
+			'_registers' => [999],
 			'catalogSlug' => 'evil',
-			'fq'          => 'evil',
-			'_content'    => 'true',
-			'_catalog'    => 'default-catalog',
-			'_catalogi'   => ['a', 'b'],
+			'fq' => 'evil',
+			'_content' => 'true',
+			'_catalog' => 'default-catalog',
+			'_catalogi' => ['a', 'b'],
 		], $fake);
 
 		$captured = $fake->capturedCalls[0]['query'];
@@ -489,11 +497,11 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	private function callerScopeOverride(): array {
 		return [
-			'@self'     => ['schema' => 56, 'register' => 20, 'schemas' => [56], 'registers' => [20], 'owner' => 'alice'],
-			'schema'    => 56,
-			'register'  => 20,
+			'@self' => ['schema' => 56, 'register' => 20, 'schemas' => [56], 'registers' => [20], 'owner' => 'alice'],
+			'schema' => 56,
+			'register' => 20,
 			'_register' => 99,
-			'_schemas'  => [56],
+			'_schemas' => [56],
 		];
 	}
 
@@ -558,9 +566,9 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	public static function catalogRegisterShapes(): array {
 		return [
-			'one register'         => [[20], true],
-			'several registers'    => [[20, 21], false],
-			'no register'          => [[], false],
+			'one register' => [[20], true],
+			'several registers' => [[20, 21], false],
+			'no register' => [[], false],
 			'JSON-string, several' => ['[20,21]', false],
 		];
 	}
@@ -574,8 +582,8 @@ class PublicationQueryServiceTest extends TestCase {
 	 *
 	 * @dataProvider catalogRegisterShapes
 	 *
-	 * @param array<int, int>|string $registers     The catalog's registers.
-	 * @param bool                   $scalarSchema  Whether `_schema` is expected.
+	 * @param array<int, int>|string $registers The catalog's registers.
+	 * @param bool $scalarSchema Whether `_schema` is expected.
 	 *
 	 * @return void
 	 */
@@ -613,6 +621,75 @@ class PublicationQueryServiceTest extends TestCase {
 	}//end testCatalogSearchQueryKeepsTheOrderForASingleRegisterCatalog()
 
 	/**
+	 * A catalog holding the same id as string and int (`['19', 19]`) searches each schema
+	 * once and keeps the single-register path, so its rows are not returned twice.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryDeduplicatesTheCatalogScope(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => ['24', 24, 202], 'registers' => ['19', 19]],
+			queryParams: ['_order' => ['@self.created' => 'desc']],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame([24, 202], $query['_schemas']);
+		$this->assertSame(19, $query['_register']);
+		$this->assertSame(['@self.created' => 'desc'], $query['_order']);
+	}//end testCatalogSearchQueryDeduplicatesTheCatalogScope()
+
+	/**
+	 * The list route reads the catalog's ids the way the search route does: an id
+	 * that is not a positive int drops out, and it never becomes register 0.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryDropsAReferenceThatIsNotAnId(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [24, 'publication'], 'registers' => [19, 'register']],
+			queryParams: [],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame([24], $query['_schemas']);
+		$this->assertSame(19, $query['_register']);
+		$this->assertArrayNotHasKey('_registers', $query);
+	}//end testCatalogSearchQueryDropsAReferenceThatIsNotAnId()
+
+	/**
+	 * A JSON-encoded `_order` is decoded, and a multi-register catalog keeps `@self.<field>`
+	 * keys whose `_<field>` column exists in every table.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryKeepsUniversalSelfOrderKeysAcrossRegisters(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [24, 30], 'registers' => [19, 20]],
+			queryParams: ['_order' => '{"@self.created":"desc","title":"asc"}'],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertSame(['@self.created' => 'desc'], $query['_order']);
+	}//end testCatalogSearchQueryKeepsUniversalSelfOrderKeysAcrossRegisters()
+
+	/**
+	 * A multi-register catalog whose `_order` names only schema properties drops
+	 * the whole `_order`, rather than sending OpenRegister an empty one.
+	 *
+	 * @return void
+	 */
+	public function testCatalogSearchQueryDropsAnOrderWithNoUniversalFieldAcrossRegisters(): void {
+		$query = $this->service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [24, 30], 'registers' => [19, 20]],
+			queryParams: ['_order' => ['title' => 'asc']],
+			objectService: new FakeSearchObjectService()
+		);
+
+		$this->assertArrayNotHasKey('_order', $query);
+		$this->assertSame([19, 20], $query['_registers']);
+	}//end testCatalogSearchQueryDropsAnOrderWithNoUniversalFieldAcrossRegisters()
+
+	/**
 	 * WOO-581 review round 2 (f3): the rows of a relation result go through the
 	 * read-rule guard for an anonymous caller. A row of a schema without an
 	 * `authorization` block goes, a row without a numeric schema id goes (fail
@@ -624,7 +701,9 @@ class PublicationQueryServiceTest extends TestCase {
 	public function testRowGuardDropsRowsOfSchemasWithoutReadRulesForAnAnonymousCaller(): void {
 		$this->wireHappyPath(authorizationById: [56 => null]);
 		$entity = new class {
-			public function jsonSerialize(): array { return ['id' => 'doc-entity', '@self' => ['schema' => 3]]; }
+			public function jsonSerialize(): array {
+				return ['id' => 'doc-entity', '@self' => ['schema' => 3]];
+			}
 		};
 
 		$out = $this->service->applyReadRuleGuardToRows(result: [
@@ -881,8 +960,8 @@ class PublicationQueryServiceTest extends TestCase {
 		];
 		$documentRow = [
 			'@self' => [
-				'id'        => 'doc-uuid-1',
-				'schema'    => 2,
+				'id' => 'doc-uuid-1',
+				'schema' => 2,
 				'relations' => ['publication.slug' => 'my-report'],
 			],
 			'title' => 'My Report (PDF)',
@@ -930,7 +1009,7 @@ class PublicationQueryServiceTest extends TestCase {
 			'title' => 'Content Search Document',
 			// No id, and no `_relations` — exactly what createDocument() writes.
 			'publication' => [
-				'slug'  => 'content-search-publication',
+				'slug' => 'content-search-publication',
 				'title' => 'Content Search Publication',
 			],
 		];
@@ -962,8 +1041,8 @@ class PublicationQueryServiceTest extends TestCase {
 		];
 		$documentRow = [
 			'@self' => [
-				'id'        => 'doc-uuid-2',
-				'schema'    => 2,
+				'id' => 'doc-uuid-2',
+				'schema' => 2,
 				'relations' => ['publication' => 'pub-uuid-2'],
 			],
 			'title' => 'KB artikel (PDF)',
@@ -1014,14 +1093,14 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	public function testDocumentDroppedWhenUuidFastPathPublicationIsArchived(): void {
 		$archivedPublication = [
-			'@self'  => ['id' => 'pub-archived-1', 'slug' => 'shelved-report', 'schema' => 1],
-			'title'  => 'Archived report',
+			'@self' => ['id' => 'pub-archived-1', 'slug' => 'shelved-report', 'schema' => 1],
+			'title' => 'Archived report',
 			'status' => 'archived',
 		];
 		$documentRow = [
 			'@self' => [
-				'id'        => 'doc-uuid-archived',
-				'schema'    => 2,
+				'id' => 'doc-uuid-archived',
+				'schema' => 2,
 				'relations' => ['publication' => 'pub-archived-1'],
 			],
 			'title' => 'PDF pointing at archived pub',
@@ -1048,14 +1127,14 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	public function testDocumentDroppedWhenSlugFastPathPublicationIsArchived(): void {
 		$archivedPublication = [
-			'@self'  => ['id' => 'pub-archived-2', 'slug' => 'shelved-slug', 'schema' => 1],
-			'title'  => 'Archived legacy report',
+			'@self' => ['id' => 'pub-archived-2', 'slug' => 'shelved-slug', 'schema' => 1],
+			'title' => 'Archived legacy report',
 			'status' => 'archived',
 		];
 		$documentRow = [
 			'@self' => [
-				'id'        => 'doc-slug-archived',
-				'schema'    => 2,
+				'id' => 'doc-slug-archived',
+				'schema' => 2,
 				'relations' => ['publication.slug' => 'shelved-slug'],
 			],
 			'title' => 'Legacy PDF pointing at archived pub',
@@ -1089,8 +1168,8 @@ class PublicationQueryServiceTest extends TestCase {
 		for ($i = 1; $i <= 3; $i++) {
 			$documentRows[] = [
 				'@self' => [
-					'id'        => "doc-shared-{$i}",
-					'schema'    => 2,
+					'id' => "doc-shared-{$i}",
+					'schema' => 2,
 					'relations' => ['publication.slug' => 'shared-slug'],
 				],
 				'title' => "Legacy PDF #{$i}",
@@ -1141,13 +1220,17 @@ class PublicationQueryServiceTest extends TestCase {
 	 */
 	public function testFindObjectLocationLocatesViaObjectService(): void {
 		$this->container->method('get')->willReturnCallback(
-			fn(string $id) => $id === 'OCA\OpenRegister\Service\ObjectService' ? $this->objectService : null
+			fn (string $id) => $id === 'OCA\OpenRegister\Service\ObjectService' ? $this->objectService : null
 		);
 
 		$entity = $this->createMock(ObjectEntity::class);
 		$this->objectService->method('find')->willReturnCallback(
-			function (int|string $id, ?array $_extend, bool $files, $register, $schema) use ($entity) {
-				return ((int) $register === 21 && (int) $schema === 11) ? $entity : null;
+			function (int|string $id, ?ObjectFindOptions $options = null) use ($entity) {
+				$_extend = $options?->extend;
+				$files = $options?->files;
+				$register = $options?->register;
+				$schema = $options?->schema;
+				return ((int)$register === 21 && (int)$schema === 11) ? $entity : null;
 			}
 		);
 
@@ -1171,11 +1254,15 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$entity = $this->createMock(ObjectEntity::class);
 		$this->objectService->method('find')->willReturnCallback(
-			function (int|string $id, ?array $_extend, bool $files, $register, $schema) use ($entity) {
-				if ((int) $register === 1 && (int) $schema === 2) {
+			function (int|string $id, ?ObjectFindOptions $options = null) use ($entity) {
+				$_extend = $options?->extend;
+				$files = $options?->files;
+				$register = $options?->register;
+				$schema = $options?->schema;
+				if ((int)$register === 1 && (int)$schema === 2) {
 					throw new \OCP\AppFramework\Db\DoesNotExistException('missing table');
 				}
-				return ((int) $register === 1 && (int) $schema === 3) ? $entity : null;
+				return ((int)$register === 1 && (int)$schema === 3) ? $entity : null;
 			}
 		);
 
@@ -1204,7 +1291,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
 			$this->stringContains('no authorization.read rules'),
-			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
+			$this->callback(fn (array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
 		);
 
 		$this->service->assemblePublicSearchResults(['_search' => 'x', '_catalog' => 'default-catalog'], $fakeObjectService);
@@ -1264,7 +1351,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
 			$this->stringContains('no authorization.read rules'),
-			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
+			$this->callback(fn (array $ctx) => ($ctx['schemaId'] ?? null) === 2 && ($ctx['schema'] ?? null) === 'document')
 		);
 
 		$guarded = $this->service->applyCatalogReadRuleGuard(catalog: ['schemas' => [1, 2], 'registers' => [1]]);
@@ -1358,7 +1445,7 @@ class PublicationQueryServiceTest extends TestCase {
 
 		$this->logger->expects($this->atLeastOnce())->method('warning')->with(
 			$this->stringContains('no authorization.read rules'),
-			$this->callback(fn(array $ctx) => ($ctx['schemaId'] ?? null) === 2)
+			$this->callback(fn (array $ctx) => ($ctx['schemaId'] ?? null) === 2)
 		);
 
 		$this->assertSame([1], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
@@ -1423,16 +1510,234 @@ class PublicationQueryServiceTest extends TestCase {
 		$this->assertSame([1, 2], $this->service->applySchemaScopeReadRuleGuard(schemaIds: [1, 2]));
 	}//end testSchemaScopeGuardKeepsEverySchemaThatCarriesReadRules()
 
+	// -------------------------------------------------------------------------
+	// add-document-content-search (WOO-517) — the `_content` opt-in.
+	// SCH-PFTS-CONTENT-001 / -002 / -003 and the MODIFIED SCH-PFTS-002.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * SCH-PFTS-CONTENT-001 "default omits content search": without `_content`
+	 * the forwarded query carries no chunk-search flag and keeps the catalog's
+	 * publication-scoped schemas.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsOmitsContentSearchFlagByDefault(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+
+		$this->assertCount(1, $fake->capturedCalls);
+		$query = $fake->capturedCalls[0]['query'];
+		$this->assertArrayNotHasKey('_content_search', $query, 'no chunk-search fan-out without the opt-in');
+		$this->assertArrayNotHasKey('_content', $query);
+		$this->assertSame([1, 2], $query['_schemas']);
+		$this->assertSame('x', $query['_search']);
+	}//end testAssemblePublicSearchResultsOmitsContentSearchFlagByDefault()
+
+	/**
+	 * An explicit `_content=false` forwards exactly the query the default does.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsOmitsContentSearchFlagWhenExplicitlyFalse(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x', '_content' => 'false']), $fake);
+
+		$this->assertCount(2, $fake->capturedCalls);
+		$this->assertArrayNotHasKey('_content_search', $fake->capturedCalls[1]['query']);
+		$this->assertSame($fake->capturedCalls[0]['query'], $fake->capturedCalls[1]['query'], '_content=false must equal the baseline query');
+	}//end testAssemblePublicSearchResultsOmitsContentSearchFlagWhenExplicitlyFalse()
+
+	/**
+	 * A `_content` value that is not a boolean word reads as off.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsTreatsANonBooleanContentValueAsOff(): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x', '_content' => 'maybe']), $fake);
+
+		$this->assertArrayNotHasKey('_content_search', $fake->capturedCalls[0]['query']);
+		$this->assertArrayNotHasKey('_content', $fake->capturedCalls[0]['query']);
+	}//end testAssemblePublicSearchResultsTreatsANonBooleanContentValueAsOff()
+
+	/**
+	 * The `_content` spellings the request can carry for "on".
+	 *
+	 * @return array<string, array{0: mixed}>
+	 */
+	public static function contentOptInValues(): array {
+		return [
+			'string true' => ['true'],
+			'string 1' => ['1'],
+			'string on' => ['on'],
+			'string yes' => ['yes'],
+			'boolean true' => [true],
+		];
+	}//end contentOptInValues()
+
+	/**
+	 * SCH-PFTS-CONTENT-001 "opt-in cost is opt-in": `_content=true` forwards OR's
+	 * `_content_search` flag, strips OC's own `_content` key, and the read still
+	 * runs with schema RBAC on, multitenancy off and inside the anonymous scope —
+	 * the gate that keeps depublished documents out (SCH-PFTS-CONTENT-003).
+	 *
+	 * @param mixed $value The `_content` value.
+	 *
+	 * @return void
+	 *
+	 * @dataProvider contentOptInValues
+	 */
+	public function testAssemblePublicSearchResultsForwardsContentSearchFlagWhenTrue(mixed $value): void {
+		$fake = $this->wireHappyPath();
+
+		$this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x', '_content' => $value]), $fake);
+
+		$this->assertCount(1, $fake->capturedCalls);
+		$call = $fake->capturedCalls[0];
+		$this->assertTrue($call['query']['_content_search']);
+		$this->assertArrayNotHasKey('_content', $call['query'], 'OC\'s own flag name must not reach OR');
+		$this->assertSame('x', $call['query']['_search']);
+		$this->assertTrue($call['_rbac']);
+		$this->assertFalse($call['_multitenancy']);
+		$this->assertSame([], $fake->readsOutsideScope);
+	}//end testAssemblePublicSearchResultsForwardsContentSearchFlagWhenTrue()
+
+	/**
+	 * MODIFIED SCH-PFTS-002 / SCH-PFTS-CONTENT-002: a document OR surfaced through
+	 * its body text ships in exactly the shape of the same document surfaced
+	 * through its metadata — chunk fields OR might attach are not exposed.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsContentMatchedDocumentRowShapeMatchesMetadataMatch(): void {
+		$metadataRow = [
+			'@self' => ['id' => 'doc-1', 'schema' => 2, 'relations' => ['publication' => 'pub-1']],
+			'title' => 'Evaluatie.pdf',
+		];
+		$contentRow = $metadataRow + [
+			'_snippet' => '…lorem-ipsum-woo517-marker…',
+			'snippet' => 'marker',
+			'chunk' => ['id' => 9],
+			'chunk_id' => 9,
+			'chunkId' => 9,
+			'score' => 0.8,
+			'_score' => 0.8,
+		];
+		$fake = $this->wireHappyPath();
+		$fake->findResponses['pub-1'] = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'evaluatie', 'schema' => 1],
+			'title' => 'Evaluatie',
+		];
+		$fake->queuedResponses = [
+			['results' => [$metadataRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+			['results' => [$contentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$metadataOut = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'Evaluatie']), $fake);
+		$contentOut = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'marker', '_content' => 'true']), $fake);
+
+		$this->assertCount(1, $contentOut['results']);
+		$this->assertSame($metadataOut, $contentOut, 'a content match must be indistinguishable from a metadata match');
+		$row = $contentOut['results'][0];
+		$this->assertSame('document', $row['@self']['schema']);
+		$this->assertSame(['id' => 'pub-1', 'slug' => 'evaluatie', 'title' => 'Evaluatie'], $row['publication']);
+		foreach (['_snippet', 'snippet', 'chunk', 'chunk_id', 'chunkId', 'score', '_score'] as $chunkField) {
+			$this->assertArrayNotHasKey($chunkField, $row, "chunk field {$chunkField} must not reach the public envelope");
+		}
+	}//end testAssemblePublicSearchResultsContentMatchedDocumentRowShapeMatchesMetadataMatch()
+
+	/**
+	 * MODIFIED SCH-PFTS-002 "document matching both surfaces appears once".
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsDedupesDocumentMatchingBothSurfaces(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-both', 'schema' => 2, 'relations' => ['publication' => 'pub-1']],
+			'title' => 'lorem-ipsum-woo517-marker.pdf',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->findResponses['pub-1'] = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'evaluatie', 'schema' => 1],
+			'title' => 'Evaluatie',
+		];
+		$fake->queuedResponses = [
+			['results' => [$documentRow, $documentRow + ['_snippet' => 'marker']], 'total' => 2, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'marker', '_content' => 'true']), $fake);
+
+		$this->assertSame(['doc-both'], array_column(array_column($out['results'], '@self'), 'id'));
+		$this->assertSame(2, $out['total'], 'a dedup drop is not subtracted from OR\'s total');
+	}//end testAssemblePublicSearchResultsDedupesDocumentMatchingBothSurfaces()
+
+	/**
+	 * SCH-PFTS-CONTENT-003 "content match with depublished parent publication is
+	 * dropped": OR's RBAC hides the depublished publication, so neither the UUID
+	 * lookup nor the refinement finds it, and the content-matched document goes.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsDropsContentMatchedDocumentWithDepublishedParent(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-orphaned', 'schema' => 2, 'relations' => ['publication' => 'pub-depublished']],
+			'title' => 'Body text match',
+		];
+		$fake = $this->wireHappyPath();
+		// No findResponses entry: the anonymous read of the depublished publication finds nothing.
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'marker', '_content' => 'true']), $fake);
+
+		$this->assertSame([], $out['results']);
+		$this->assertSame(0, $out['total']);
+		$this->assertSame([], $fake->readsOutsideScope);
+	}//end testAssemblePublicSearchResultsDropsContentMatchedDocumentWithDepublishedParent()
+
+	/**
+	 * SCH-PFTS-CONTENT-003 for an archived document: a content match on a row in
+	 * the terminal-hidden `archived` state is dropped like a metadata match.
+	 *
+	 * @return void
+	 */
+	public function testAssemblePublicSearchResultsDropsContentMatchedArchivedDocument(): void {
+		$documentRow = [
+			'@self' => ['id' => 'doc-archived', 'schema' => 2, 'relations' => ['publication' => 'pub-1']],
+			'title' => 'Body text match',
+			'status' => 'archived',
+		];
+		$fake = $this->wireHappyPath();
+		$fake->findResponses['pub-1'] = [
+			'@self' => ['id' => 'pub-1', 'slug' => 'evaluatie', 'schema' => 1],
+			'title' => 'Evaluatie',
+		];
+		$fake->queuedResponses = [
+			['results' => [$documentRow], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$out = $this->service->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'marker', '_content' => 'true']), $fake);
+
+		$this->assertSame([], $out['results']);
+		$this->assertSame(0, $out['total']);
+	}//end testAssemblePublicSearchResultsDropsContentMatchedArchivedDocument()
+
 	private function wireHappyPath(array $authorizationById = [], array $registerSchemas = [], array $slugById = []): FakeSearchObjectService {
 		$fakeObjectService = new FakeSearchObjectService();
 
 		$catalog = [
-			'@self'     => ['slug' => 'default-catalog'],
-			'slug'      => 'default-catalog',
-			'listed'    => true,
+			'@self' => ['slug' => 'default-catalog'],
+			'slug' => 'default-catalog',
+			'listed' => true,
 			'published' => '2020-01-01T00:00:00+00:00',
 			'registers' => [1],
-			'schemas'   => [1, 2],
+			'schemas' => [1, 2],
 		];
 
 		$fakeCatalogiService = new FakeCatalogiService();
@@ -1445,9 +1750,9 @@ class PublicationQueryServiceTest extends TestCase {
 		// Config keys needed by the default-scope enumeration path; safe to set
 		// even for _catalog=<slug> tests since that path doesn't consult them.
 		$this->config->method('getValueString')->willReturnCallback(
-			fn(string $app, string $key, string $default = '') => match ($key) {
+			fn (string $app, string $key, string $default = '') => match ($key) {
 				'catalog_register' => '1',
-				'catalog_schema'   => '3',
+				'catalog_schema' => '3',
 				default => $default,
 			}
 		);
@@ -1456,15 +1761,23 @@ class PublicationQueryServiceTest extends TestCase {
 			function (string $key) use ($fakeCatalogiService, $fakeSchemaMapper, $fakeObjectService, $registerSchemas) {
 				return match ($key) {
 					'OCA\\OpenCatalogi\\Service\\CatalogiService' => $fakeCatalogiService,
-					'OCA\\OpenRegister\\Db\\SchemaMapper'         => $fakeSchemaMapper,
-					'OCA\\OpenRegister\\Service\\ObjectService'   => $fakeObjectService,
+					'OCA\\OpenRegister\\Db\\SchemaMapper' => $fakeSchemaMapper,
+					'OCA\\OpenRegister\\Service\\ObjectService' => $fakeObjectService,
 					'OCA\\OpenRegister\\Db\\RegisterMapper' => ($registerSchemas !== []
-						? new class ($registerSchemas) {
-							public function __construct(private array $map) {}
+						? new class($registerSchemas) {
+							public function __construct(
+								private array $map,
+							) {
+							}
 							public function find(int $id): object {
-								return new class (($this->map[$id] ?? [])) {
-									public function __construct(private array $schemas) {}
-									public function getSchemas(): array { return $this->schemas; }
+								return new class(($this->map[$id] ?? [])) {
+									public function __construct(
+										private array $schemas,
+									) {
+									}
+									public function getSchemas(): array {
+										return $this->schemas;
+									}
 								};
 							}
 						}
@@ -1621,7 +1934,7 @@ class PublicationQueryServiceTest extends TestCase {
 			}
 		};
 		$this->container->method('get')->willReturnCallback(
-			fn(string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
+			fn (string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
 		);
 
 		// Register 31 throws; register 32 yields 1114 and skips the unresolvable 9999.
@@ -1633,7 +1946,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * Wire container-resolved OR mappers from plain id maps.
 	 *
 	 * @param array<int, array<int, int>> $registerSchemas registerId => schema ids.
-	 * @param array<int, string>          $slugs           schemaId => slug.
+	 * @param array<int, string> $slugs schemaId => slug.
 	 *
 	 * @return void
 	 */
@@ -1642,7 +1955,9 @@ class PublicationQueryServiceTest extends TestCase {
 			/**
 			 * @param array<int, array<int, int>> $map Register id to schema ids.
 			 */
-			public function __construct(private array $map) {
+			public function __construct(
+				private array $map,
+			) {
 			}
 
 			public function find(int $id): object {
@@ -1650,7 +1965,9 @@ class PublicationQueryServiceTest extends TestCase {
 					/**
 					 * @param array<int, int> $schemas The schema ids.
 					 */
-					public function __construct(private array $schemas) {
+					public function __construct(
+						private array $schemas,
+					) {
 					}
 
 					/**
@@ -1667,12 +1984,16 @@ class PublicationQueryServiceTest extends TestCase {
 			/**
 			 * @param array<int, string> $slugs Schema id to slug.
 			 */
-			public function __construct(private array $slugs) {
+			public function __construct(
+				private array $slugs,
+			) {
 			}
 
 			public function find(int $id): object {
 				return new class(($this->slugs[$id] ?? null)) {
-					public function __construct(private ?string $slug) {
+					public function __construct(
+						private ?string $slug,
+					) {
 					}
 
 					public function getSlug(): ?string {
@@ -1683,11 +2004,10 @@ class PublicationQueryServiceTest extends TestCase {
 		};
 
 		$this->container->method('get')->willReturnCallback(
-			fn(string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
+			fn (string $id) => str_contains($id, 'RegisterMapper') ? $registerMapper : $schemaMapper
 		);
 
 	}//end wireMappers()
-
 
 	// -------------------------------------------------------------------------
 	// WOO-577 — pagination guards.
@@ -1785,7 +2105,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * @dataProvider provideEnvelopeShapes
 	 *
 	 * @param array $candidateRows Rows OR returns for the candidate call.
-	 * @param int   $orTotal       Global total OR reports.
+	 * @param int $orTotal Global total OR reports.
 	 */
 	public function testTotalIsNeverBelowTheNumberOfRowsShipped(array $candidateRows, int $orTotal): void {
 		$fake = $this->wireHappyPath();
@@ -1817,7 +2137,7 @@ class PublicationQueryServiceTest extends TestCase {
 		];
 
 		return [
-			'clean page'              => [[$pub], 42],
+			'clean page' => [[$pub], 42],
 			'every row dedups to one' => [[$pub, $pub, $pub], 10],
 			'or reports rows it does not return' => [[], 8],
 		];
@@ -1920,7 +2240,7 @@ class PublicationQueryServiceTest extends TestCase {
 	public static function provideLaterPageParams(): array {
 		return [
 			'explicit offset' => [['_offset' => 40, '_limit' => 10]],
-			'page two'        => [['_page' => 2, '_limit' => 10]],
+			'page two' => [['_page' => 2, '_limit' => 10]],
 			'page two, no limit' => [['_page' => 2]],
 			'offset without limit' => [['_offset' => 5]],
 		];
@@ -1959,8 +2279,8 @@ class PublicationQueryServiceTest extends TestCase {
 		return [
 			'no pagination params' => [[]],
 			'explicit offset zero' => [['_offset' => 0]],
-			'page one'             => [['_page' => 1]],
-			'page one with limit'  => [['_page' => 1, '_limit' => 10]],
+			'page one' => [['_page' => 1]],
+			'page one with limit' => [['_page' => 1, '_limit' => 10]],
 		];
 	}
 
@@ -1968,7 +2288,7 @@ class PublicationQueryServiceTest extends TestCase {
 	 * Invoke a private/protected method by name via reflection.
 	 *
 	 * @param string $method Method name.
-	 * @param array  $args   Positional arguments.
+	 * @param array $args Positional arguments.
 	 *
 	 * @return mixed
 	 */
@@ -1977,5 +2297,161 @@ class PublicationQueryServiceTest extends TestCase {
 		$m = $ref->getMethod($method);
 		$m->setAccessible(true);
 		return $m->invokeArgs($this->service, $args);
+	}
+	// -------------------------------------------------------------------------
+	// api-says-what-it-filtered — each filter records itself where it applies.
+	// -------------------------------------------------------------------------
+
+	/**
+	 * The service over this test's container, with a collector.
+	 *
+	 * @param AppliedFilters $filters The collector.
+	 *
+	 * @return PublicationQueryService The service.
+	 */
+	private function serviceWithFilters(AppliedFilters $filters): PublicationQueryService {
+		return new PublicationQueryService(
+			container: $this->container,
+			config: $this->config,
+			logger: $this->logger,
+			appliedFilters: $filters,
+		);
+	}
+
+	/**
+	 * The names recorded, in order.
+	 *
+	 * @param AppliedFilters $filters The collector.
+	 *
+	 * @return array<int, string> The names.
+	 */
+	private static function recordedNames(AppliedFilters $filters): array {
+		return array_column($filters->all(), 'name');
+	}
+
+	/**
+	 * Two archived publications dropped from the page are counted as archivedExcluded (REQ-ASF-001).
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testTheArchivedDropIsRecorded(): void {
+		$filters = new AppliedFilters();
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			[
+				'results' => [
+					['@self' => ['id' => 'a1', 'schema' => 1], 'status' => 'archived'],
+					['@self' => ['id' => 'live', 'schema' => 1], 'status' => 'published'],
+					['@self' => ['id' => 'a2', 'schema' => 1], 'status' => 'archived'],
+				],
+				'total' => 3,
+				'facets' => [],
+				'facetable' => [],
+			],
+		];
+
+		$out = $this->serviceWithFilters($filters)->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+
+		$this->assertSame(['live'], array_map(static fn (array $row): string => $row['@self']['id'], $out['results']));
+		$entries = array_column($filters->all(), null, 'name');
+		$this->assertSame(2, $entries['archivedExcluded']['value']);
+		$this->assertSame('Archived publications are never shown on a public list.', $entries['archivedExcluded']['reason']);
+	}
+
+	/**
+	 * A search with no archived rows and no caller scope keys claims only the
+	 * anonymous evaluation and the catalogue scope.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testAFilterThatDidNotApplyIsNotListed(): void {
+		$filters = new AppliedFilters();
+		$fake = $this->wireHappyPath();
+		$fake->queuedResponses = [
+			['results' => [['@self' => ['id' => 'live', 'schema' => 1], 'status' => 'published']], 'total' => 1, 'facets' => [], 'facetable' => []],
+		];
+
+		$this->serviceWithFilters($filters)->assemblePublicSearchResults($this->withDefaultCatalog(['_search' => 'x']), $fake);
+
+		$this->assertSame(['publicOnly', 'catalogScope'], self::recordedNames($filters));
+		$entries = array_column($filters->all(), null, 'name');
+		$this->assertTrue($entries['publicOnly']['value']);
+		// Without a RegisterMapper the scope falls back to the ids.
+		$this->assertSame(['schemas' => ['1', '2'], 'registers' => ['1']], $entries['catalogScope']['value']);
+	}
+
+	/**
+	 * A caller's scope keys on the search are named as callerScopeIgnored.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testTheSearchReportsTheStrippedCallerScope(): void {
+		$filters = new AppliedFilters();
+		$fake = $this->wireHappyPath();
+
+		$this->serviceWithFilters($filters)->assemblePublicSearchResults($this->withDefaultCatalog($this->callerScopeOverride()), $fake);
+
+		$entries = array_column($filters->all(), null, 'name');
+		$this->assertSame(
+			['register', 'schema', '_register', '_schemas', '@self.register', '@self.registers', '@self.schema', '@self.schemas'],
+			$entries['callerScopeIgnored']['value']
+		);
+	}
+
+	/**
+	 * On an OpenRegister without the anonymous scope, publicOnly is claimed only
+	 * for an anonymous caller, because a signed-in read is not public-only.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testWithoutTheAnonymousScopePublicOnlyFollowsTheCaller(): void {
+		$fake = new FakeLegacySearchObjectService();
+		$this->wireHappyPath();
+
+		$signedIn = $this->createMock(\OCP\IUserSession::class);
+		$signedIn->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$filters = new AppliedFilters();
+		(new PublicationQueryService(container: $this->container, userSession: $signedIn, config: $this->config, logger: $this->logger, appliedFilters: $filters))
+			->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+		$this->assertNotContains('publicOnly', self::recordedNames($filters));
+
+		$anonymous = $this->createMock(\OCP\IUserSession::class);
+		$anonymous->method('getUser')->willReturn(null);
+		$filters = new AppliedFilters();
+		(new PublicationQueryService(container: $this->container, userSession: $anonymous, config: $this->config, logger: $this->logger, appliedFilters: $filters))
+			->assemblePublicSearchResults($this->withDefaultCatalog(), $fake);
+		$this->assertContains('publicOnly', self::recordedNames($filters));
+	}
+
+	/**
+	 * The catalogue index query records its scope and the stripped caller keys,
+	 * and the anonymous read-rule guard records publicOnly; a signed-in guard does not.
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
+	 */
+	public function testTheCatalogueQueryAndTheGuardRecordTheirFilters(): void {
+		$filters = new AppliedFilters();
+		$this->container->method('get')->willThrowException(new \RuntimeException('no mappers'));
+		$service = $this->serviceWithFilters($filters);
+
+		$service->buildCatalogSearchQuery(
+			catalog: ['schemas' => [28, 29], 'registers' => [20]],
+			queryParams: ['_schemas' => [56], 'q' => 'x'],
+			objectService: new FakeSearchObjectService()
+		);
+		$this->assertSame(['callerScopeIgnored', 'catalogScope'], self::recordedNames($filters));
+		$this->assertSame(['schemas' => ['28', '29'], 'registers' => ['20']], $filters->all()[1]['value']);
+
+		$signedIn = $this->createMock(\OCP\IUserSession::class);
+		$signedIn->method('getUser')->willReturn($this->createMock(\OCP\IUser::class));
+		$signedInFilters = new AppliedFilters();
+		(new PublicationQueryService(container: $this->container, userSession: $signedIn, appliedFilters: $signedInFilters))
+			->applySchemaScopeReadRuleGuard(schemaIds: [28]);
+		$this->assertSame([], $signedInFilters->all());
+
+		$anonymousFilters = new AppliedFilters();
+		(new PublicationQueryService(container: $this->container, appliedFilters: $anonymousFilters))
+			->applySchemaScopeReadRuleGuard(schemaIds: []);
+		$this->assertSame(['publicOnly'], self::recordedNames($anonymousFilters));
 	}
 }

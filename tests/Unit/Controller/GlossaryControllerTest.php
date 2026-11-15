@@ -1,10 +1,16 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\GlossaryController;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\JSONResponse;
 use OCP\AppFramework\Http\Response;
@@ -15,6 +21,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use Unit\Support\ServerAwareRequest;
 
 /**
  * Unit tests for GlossaryController.
@@ -29,7 +36,7 @@ class GlossaryControllerTest extends TestCase {
 	private GlossaryController $controller;
 
 	protected function setUp(): void {
-		$this->request = $this->createMock(IRequest::class);
+		$this->request = $this->createMock(ServerAwareRequest::class);
 		$this->config = $this->createMock(IAppConfig::class);
 		$this->container = $this->createMock(ContainerInterface::class);
 		$this->appManager = $this->createMock(IAppManager::class);
@@ -42,8 +49,7 @@ class GlossaryControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->l10n
 		);
 	}
@@ -78,7 +84,7 @@ class GlossaryControllerTest extends TestCase {
 	 *
 	 * @param IAppConfig $config The (mocked) app config the double reads from.
 	 *
-	 * @return object A double exposing resolveRegisterId / resolveSchemaId.
+	 * @return object A double exposing lookupId.
 	 */
 	private function makeResolverDouble(IAppConfig $config): object {
 		return new class($config) {
@@ -87,11 +93,15 @@ class GlossaryControllerTest extends TestCase {
 			) {
 			}
 
-			public function resolveRegisterId(string $appId, string $key, ?string $default = null): string {
-				return $this->resolve($appId, $key);
-			}
+			public function lookupId(\OCA\OpenRegister\Service\ConfigLookup $lookup): string {
+				if (str_ends_with($lookup->configKey, '_register') === true) {
+					$appId = $lookup->appId;
+					$key = $lookup->configKey;
+					return $this->resolve($appId, $key);
+				}
 
-			public function resolveSchemaId(string $appId, string $key, ?string $default = null): string {
+				$appId = $lookup->appId;
+				$key = $lookup->configKey;
 				return $this->resolve($appId, $key);
 			}
 
@@ -207,12 +217,12 @@ class GlossaryControllerTest extends TestCase {
 				['opencatalogi', 'cors_allowed_origins', '*', '*'],
 			]);
 		$this->request->method('getParams')->willReturn([
-				'_schemas' => [56],
-				'_registers' => [99],
-				'_schema' => 56,
-				'schema' => 56,
-				'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
-			]);
+			'_schemas' => [56],
+			'_registers' => [99],
+			'_schema' => 56,
+			'schema' => 56,
+			'@self' => ['schemas' => [56], 'registers' => [99], 'owner' => 'alice'],
+		]);
 		$this->request->server = [];
 
 		$this->assertEquals(200, $this->controller->index()->getStatus());
@@ -290,8 +300,21 @@ class GlossaryControllerTest extends TestCase {
 		$this->assertEquals(503, $response->getStatus());
 	}
 
+	/**
+	 * Configure the glossary register (3) and schema (11).
+	 */
+	private function configureGlossary(): void {
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'glossary_schema', '', '11'],
+				['opencatalogi', 'glossary_register', '', '3'],
+				['opencatalogi', 'cors_allowed_origins', '*', '*'],
+			]);
+	}
+
 	public function testShowReturnsGlossaryTerm(): void {
 		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
 
 		$mockObjService->method('searchObjectsPaginated')
 			->willReturn([
@@ -306,8 +329,50 @@ class GlossaryControllerTest extends TestCase {
 		$this->assertEquals(200, $response->getStatus());
 	}
 
+	/**
+	 * The lookup must be scoped to the glossary register and schema.
+	 *
+	 * Unscoped, OpenRegister answers an `_ids` search from every magic table on the
+	 * instance, and this route is @PublicPage: an anonymous caller could read any
+	 * object whose schema declares no authorization block.
+	 */
+	public function testShowScopesTheLookupToTheGlossaryRegister(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
+
+		$mockObjService->expects($this->once())
+			->method('searchObjectsPaginated')
+			->with(
+				$this->callback(static fn (array $q): bool => ($q['@self']['register'] ?? null) === '3'
+					&& ($q['@self']['schema'] ?? null) === '11'
+					&& $q['_ids'] === ['an-object-in-another-register']),
+				true,
+				false
+			)
+			->willReturn(['results' => []]);
+
+		$this->request->server = [];
+
+		$response = $this->controller->show('an-object-in-another-register');
+
+		$this->assertEquals(404, $response->getStatus());
+	}
+
+	public function testShowReturns503WhenTheGlossaryIsNotConfigured(): void {
+		$mockObjService = $this->mockObjectService();
+		$this->config->method('getValueString')->willReturn('');
+
+		$mockObjService->expects($this->never())->method('searchObjectsPaginated');
+
+		$response = $this->controller->show('term-1');
+
+		$this->assertInstanceOf(JSONResponse::class, $response);
+		$this->assertEquals(503, $response->getStatus());
+	}
+
 	public function testShowReturns404WhenNotFound(): void {
 		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
 
 		$mockObjService->method('searchObjectsPaginated')
 			->willReturn(['results' => []]);
@@ -320,6 +385,7 @@ class GlossaryControllerTest extends TestCase {
 
 	public function testShowWithIntegerId(): void {
 		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
 
 		$mockObjService->method('searchObjectsPaginated')
 			->willReturn([
@@ -341,6 +407,7 @@ class GlossaryControllerTest extends TestCase {
 	 */
 	public function testShowAcceptsArrayShape(): void {
 		$mockObjService = $this->mockObjectService();
+		$this->configureGlossary();
 
 		$mockObjService->method('searchObjectsPaginated')
 			->willReturn([

@@ -32,7 +32,12 @@ namespace OCA\OpenCatalogi\Service\Publication;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SavePolicy;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -40,7 +45,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
  */
-class PlooiDeliveryService {
+class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 
 	/**
 	 * The publication properties this service writes.
@@ -81,7 +86,12 @@ class PlooiDeliveryService {
 		}
 
 		$objectService = $this->settingsService->getObjectService();
-		$entity = $objectService?->find(id: $uuid, register: $register, schema: $schema, _rbac: false, _multitenancy: false);
+		$entity = $objectService?->find(
+			id: $uuid,
+			options: new ObjectFindOptions(register: $register, schema: $schema),
+			_rbac: false,
+			_multitenancy: false
+		);
 		if ($entity === null) {
 			return null;
 		}
@@ -105,16 +115,16 @@ class PlooiDeliveryService {
 		unset($record['@self']);
 		$objectService->saveObject(
 			object: array_merge($record, $fields),
-			register: $register,
-			schema: $schema,
-			uuid: $uuid,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $register, schema: $schema),
+				uuid: $uuid,
+				policy: new SavePolicy(silent: true)
+			),
 			_rbac: false,
-			_multitenancy: false,
-			silent: true
+			_multitenancy: false
 		);
 
 		return $fields;
-
 	}//end deliver()
 
 	/**
@@ -160,7 +170,6 @@ class PlooiDeliveryService {
 		}
 
 		return false;
-
 	}//end isInPlooiCatalogue()
 
 	/**
@@ -187,7 +196,6 @@ class PlooiDeliveryService {
 		);
 
 		return ($result['results'] ?? []);
-
 	}//end plooiCatalogues()
 
 	/**
@@ -211,6 +219,5 @@ class PlooiDeliveryService {
 		$registers = array_map('strval', (array)($catalog['registers'] ?? []));
 		$schemas = array_map('strval', (array)($catalog['schemas'] ?? []));
 		return in_array($register, $registers, true) === true && in_array($schema, $schemas, true) === true;
-
 	}//end covers()
 }//end class

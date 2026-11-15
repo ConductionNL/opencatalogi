@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
@@ -77,6 +82,13 @@ class UiControllerTest extends TestCase {
 		$this->assertEquals('index', $response->getTemplateName());
 	}
 
+	public function testFederatedPublicationReturnsSpaTemplate(): void {
+		$response = $this->controller->federatedPublication();
+
+		$this->assertInstanceOf(TemplateResponse::class, $response);
+		$this->assertEquals('index', $response->getTemplateName());
+	}
+
 	public function testOrganizationsReturnsSpaTemplate(): void {
 		$response = $this->controller->organizations();
 
@@ -131,6 +143,7 @@ class UiControllerTest extends TestCase {
 			'publicationsIndex',
 			'publicationsPage',
 			'search',
+			'federatedPublication',
 			'organizations',
 			'themes',
 			'glossary',
@@ -155,6 +168,7 @@ class UiControllerTest extends TestCase {
 			'publicationsIndex',
 			'publicationsPage',
 			'search',
+			'federatedPublication',
 			'organizations',
 			'themes',
 			'glossary',

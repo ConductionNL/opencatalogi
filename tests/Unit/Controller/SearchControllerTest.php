@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
@@ -98,6 +103,8 @@ class SearchControllerTest extends TestCase {
 		$response = $this->controller->index();
 
 		$this->assertInstanceOf(JSONResponse::class, $response);
+		// Built without a collector, the controller fails closed to the `unknown` entry.
+		$expected['appliedFilters'] = [['name' => 'unknown', 'value' => null, 'reason' => 'not recorded']];
 		$this->assertSame($expected, $response->getData());
 		$this->assertSame(Http::STATUS_OK, $response->getStatus());
 	}//end testIndexReturnsAssembledSearchResultsForAnonymousCallers()
@@ -369,4 +376,61 @@ class SearchControllerTest extends TestCase {
 
 		$this->assertSame($expectedResponse, $response);
 	}//end testUsedWithReferencingObjects()
+	/**
+	 * Run the public search with a container that answers the caller's session.
+	 *
+	 * @param boolean $signedIn Whether the caller is signed in.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function searchAs(bool $signedIn): JSONResponse {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('isLoggedIn')->willReturn($signedIn);
+		$config = $this->createMock(\OCP\IAppConfig::class);
+		$config->method('getValueString')->willReturnArgument(2);
+		$objectService = new \stdClass();
+		$this->container->method('get')->willReturnCallback(
+			static fn (string $id) => match ($id) {
+				IUserSession::class => $session,
+				\OCP\IAppConfig::class => $config,
+				default => $objectService,
+			}
+		);
+		$this->request->method('getParams')->willReturn(['_search' => 'jaarverslag']);
+		$this->request->method('getHeader')->willReturn('');
+		$this->queryService->method('assemblePublicSearchResults')->willReturn(['results' => [], 'total' => 0]);
+
+		return $this->controller->index();
+	}//end searchAs()
+
+	/**
+	 * An anonymous search answer may be cached publicly (REQ-PAC-001).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-anonymous-answers-of-the-public-api-may-be-cached-req-pac-001
+	 *
+	 * @return void
+	 */
+	public function testAnAnonymousSearchAnswerIsPubliclyCacheable(): void {
+		$headers = $this->searchAs(signedIn: false)->getHeaders();
+
+		$this->assertSame('public, max-age=60, must-revalidate', $headers['Cache-Control']);
+		$this->assertArrayHasKey('ETag', $headers);
+		$this->assertSame('Origin, Accept, Accept-Language', $headers['Vary']);
+
+	}//end testAnAnonymousSearchAnswerIsPubliclyCacheable()
+
+	/**
+	 * A signed-in search answer stays private (REQ-PAC-002).
+	 *
+	 * @spec openspec/changes/operations-public-api-cache-headers/specs/public-api-caching/spec.md#requirement-answers-to-a-signed-in-user-stay-private-req-pac-002
+	 *
+	 * @return void
+	 */
+	public function testASignedInSearchAnswerStaysPrivate(): void {
+		$headers = $this->searchAs(signedIn: true)->getHeaders();
+
+		$this->assertSame('private, no-store', $headers['Cache-Control']);
+		$this->assertArrayNotHasKey('ETag', $headers);
+
+	}//end testASignedInSearchAnswerStaysPrivate()
 }//end class

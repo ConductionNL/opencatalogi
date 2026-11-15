@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
@@ -98,6 +102,16 @@ import SelectAttachmentsList from '../../components/SelectAttachmentsList.vue'
  *
  * @spec openspec/specs/file-management/spec.md
  */
+/**
+ * Whether a file is shared: it has an access or a download URL.
+ *
+ * @param {object} file The file.
+ * @return {boolean} Whether it is shared.
+ */
+function isShared(file) {
+	return Boolean(file.accessUrl || file.downloadUrl)
+}
+
 export default {
 	name: 'MassAttachmentModal',
 	components: {
@@ -148,17 +162,11 @@ export default {
 			const ids = Array.isArray(this.attachments) ? this.attachments : []
 			const filesData = objectStore.getRelatedData('publication', 'files')
 			const files = filesData?.results || []
-			if (this.operation === 'publish') {
-				// Only not shared
-				return ids.filter((id) => {
-					const f = files.find((x) => x.id === id)
-					return f && !f.accessUrl && !f.downloadUrl
-				})
-			}
-			// Depublish: only shared
+			// Publish acts on the files not shared yet, depublish on the shared ones.
+			const wantShared = this.operation !== 'publish'
 			return ids.filter((id) => {
 				const f = files.find((x) => x.id === id)
-				return f && (f.accessUrl || f.downloadUrl)
+				return f && isShared(f) === wantShared
 			})
 		},
 
@@ -226,37 +234,77 @@ export default {
 			this.loading = true
 
 			try {
-				// Use the store's mass attachments methods depending on operation
-				const ids = [...(this.filteredAttachmentIds || [])]
-				const { successful, failed } =
-					this.operation === 'publish'
-						? await objectStore.massPublishAttachments(ids)
-						: await objectStore.massDepublishAttachments(ids)
+				const { successful, failed } = await this.runOperation([
+					...(this.filteredAttachmentIds || []),
+				])
 
 				if (successful.length > 0) {
-					this.success = true
-					// Refresh publications using catalogStore
-					catalogStore.fetchPublications()
-
 					// Only auto-close if there are no failures
-					if (failed.length === 0) {
-						this.closeModalTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-					}
+					this.markSucceeded(failed.length === 0)
 				}
 
 				if (failed.length > 0) {
-					this.error = `${this.operation === 'publish' ? 'Failed to publish' : 'Failed to depublish'} ${failed.length} attachment${failed.length > 1 ? 's' : ''}`
+					this.error = this.failureMessage(failed.length)
 				}
 			} catch (error) {
 				this.success = false
-				this.error =
-					error.message
-					|| `An error occurred while ${this.operation === 'publish' ? 'publishing' : 'depublishing'} attachments`
+				this.error = this.errorMessage(error)
 			} finally {
 				this.loading = false
 			}
+		},
+
+		/**
+		 * Publish or depublish the attachments through the store.
+		 *
+		 * @param {Array<string>} ids The attachment ids.
+		 * @return {Promise<object>} The successful and failed ids.
+		 */
+		runOperation(ids) {
+			return this.operation === 'publish'
+				? objectStore.massPublishAttachments(ids)
+				: objectStore.massDepublishAttachments(ids)
+		},
+
+		/**
+		 * Show the success, refresh the publications, and close in two seconds when asked.
+		 *
+		 * @param {boolean} closeAfter Whether to close the dialog after the feedback.
+		 * @return {void}
+		 */
+		markSucceeded(closeAfter) {
+			this.success = true
+			// Refresh publications using catalogStore
+			catalogStore.fetchPublications()
+
+			if (closeAfter) {
+				this.closeModalTimeout = setTimeout(() => {
+					this.closeDialog()
+				}, 2000)
+			}
+		},
+
+		/**
+		 * What the store threw, or a message naming the operation when it said nothing.
+		 *
+		 * @param {Error} error The error.
+		 * @return {string} The message.
+		 */
+		errorMessage(error) {
+			return (
+				error.message
+				|| `An error occurred while ${this.operation === 'publish' ? 'publishing' : 'depublishing'} attachments`
+			)
+		},
+
+		/**
+		 * The message for attachments that failed.
+		 *
+		 * @param {number} count How many failed.
+		 * @return {string} The message.
+		 */
+		failureMessage(count) {
+			return `${this.operation === 'publish' ? 'Failed to publish' : 'Failed to depublish'} ${count} attachment${count > 1 ? 's' : ''}`
 		},
 	},
 }

@@ -20,13 +20,16 @@
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
+ *
+ * @spec openspec/changes/search/tasks.md
  */
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\PublicationQueryServiceInterface;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenCatalogi\Exception\MalformedSearchParameterException;
-use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Controller;
@@ -64,31 +67,35 @@ use RuntimeException;
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
 class SearchController extends Controller {
+	use AnswersCacheably;
+
 	/**
 	 * SearchController constructor.
 	 *
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param PublicationService $publicationService The publication service.
+	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IUserSession $userSession The user session.
 	 * @param IL10N $l10n The localization service.
-	 * @param PublicationQueryService $queryService Public search assembly helper (WOO-506).
+	 * @param PublicationQueryServiceInterface $queryService Public search assembly helper (WOO-506).
 	 * @param ContainerInterface $container DI container, to resolve OpenRegister's ObjectService.
 	 * @param IAppManager $appManager The app manager.
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IUserSession $userSession,
 		private readonly IL10N $l10n,
-		private readonly PublicationQueryService $queryService,
+		private readonly PublicationQueryServiceInterface $queryService,
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly LoggerInterface $logger,
+		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -135,8 +142,11 @@ class SearchController extends Controller {
 	 * @return JSONResponse JSON response containing the mixed publication/document result envelope.
 	 *
 	 * @spec openspec/changes/add-public-fulltext-search/tasks.md#task-3
+	 * @spec openspec/changes/search/tasks.md#task-2.2
 	 * @spec openspec/changes/add-document-content-search/tasks.md#task-3
 	 * @spec openspec/changes/woo-dossier-publication/specs/publications/spec.md#requirement-public-search-takes-the-portals-filter-names-req-wdp-002
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 *
 	 * @SuppressWarnings(PHPMD.StaticAccess) SearchQueryTranslator is a pure function over the query.
 	 */
@@ -151,47 +161,82 @@ class SearchController extends Controller {
 				queryParams: SearchQueryTranslator::translateSearchParams(params: $this->request->getParams()),
 				objectService: $objectService
 			);
+			$result['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
-			return new JSONResponse(data: $result, statusCode: Http::STATUS_OK);
+			// REQ-PAC-001/002: public cache headers for an anonymous caller only.
+			return $this->cacheableForCaller(response: new JSONResponse(data: $result, statusCode: Http::STATUS_OK));
 		} catch (MalformedSearchParameterException $e) {
-			// A range bound that is not a date or a number (REQ-SCF-002).
-			return new JSONResponse(
-				data: [
-					'error' => $this->l10n->t('%s must be a date, such as 2026-04-01, or a number.', [$e->getParameter()]),
-					'parameter' => $e->getParameter(),
-				],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+			return $this->malformedParameterAnswer(exception: $e);
 		} catch (RuntimeException $e) {
-			// OR isn't installed — this is a deploy issue, not a code bug. Callers
-			// (and operators) benefit from a 503 that distinguishes "backend not
-			// ready" from "backend crashed"; keep the generic 500 branch below for
-			// truly unexpected errors. Log-level `warning` because the app can't
-			// do its job right now but nothing is broken in this code path.
-			$this->logger->warning(
-				'[SearchController::index] OpenRegister not installed — public search unavailable',
-				['error' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				data: ['error' => $this->l10n->t('Search backend is not available.')],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			return $this->backendUnavailableAnswer(exception: $e);
 		} catch (\Exception $e) {
-			// Public endpoint — log exception details server-side only and return a
-			// generic error body to the caller; never leak raw $e->getMessage().
-			$this->logger->error(
-				'[SearchController::index] Failed to execute public search',
-				['error' => $e->getMessage()]
-			);
-
-			return new JSONResponse(
-				data: ['error' => $this->l10n->t('Internal server error')],
-				statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
-			);
+			return $this->searchFailedAnswer(exception: $e);
 		}//end try
 
 	}//end index()
+
+	/**
+	 * The 400 for a range bound that is not a date or a number (REQ-SCF-002).
+	 *
+	 * @param MalformedSearchParameterException $exception The refusal.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function malformedParameterAnswer(MalformedSearchParameterException $exception): JSONResponse {
+		return new JSONResponse(
+			data: [
+				'error' => $this->l10n->t('%s must be a date, such as 2026-04-01, or a number.', [$exception->getParameter()]),
+				'parameter' => $exception->getParameter(),
+			],
+			statusCode: Http::STATUS_BAD_REQUEST
+		);
+	}//end malformedParameterAnswer()
+
+	/**
+	 * The 503 when OpenRegister is not installed.
+	 *
+	 * This is a deploy issue, not a code bug. Callers (and operators) benefit
+	 * from a 503 that distinguishes "backend not ready" from "backend crashed";
+	 * the generic 500 stays for truly unexpected errors. Log-level `warning`
+	 * because the app can't do its job right now but nothing is broken in this
+	 * code path.
+	 *
+	 * @param RuntimeException $exception Why OpenRegister cannot be reached.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function backendUnavailableAnswer(RuntimeException $exception): JSONResponse {
+		$this->logger->warning(
+			'[SearchController::index] OpenRegister not installed — public search unavailable',
+			['error' => $exception->getMessage()]
+		);
+
+		return new JSONResponse(
+			data: ['error' => $this->l10n->t('Search backend is not available.')],
+			statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+		);
+	}//end backendUnavailableAnswer()
+
+	/**
+	 * The 500 for an unexpected failure. Public endpoint: the exception details
+	 * are logged server-side only and the caller gets a generic error body;
+	 * never leak the raw message.
+	 *
+	 * @param \Exception $exception The failure.
+	 *
+	 * @return JSONResponse The answer.
+	 */
+	private function searchFailedAnswer(\Exception $exception): JSONResponse {
+		$this->logger->error(
+			'[SearchController::index] Failed to execute public search',
+			['error' => $exception->getMessage()]
+		);
+
+		return new JSONResponse(
+			data: ['error' => $this->l10n->t('Internal server error')],
+			statusCode: Http::STATUS_INTERNAL_SERVER_ERROR
+		);
+	}//end searchFailedAnswer()
 
 	/**
 	 * Retrieve a specific publication by its ID.
@@ -204,6 +249,11 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::show() refuses an
+	 *   id outside the configured catalog scope (isObjectInCatalogScope()), and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
+	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-a-single-publication-by-id-from-local-or-federated-sources-fed-002
 	 */
 	#[NoAdminRequired]
@@ -213,7 +263,7 @@ class SearchController extends Controller {
 			return new JSONResponse(data: ['message' => $this->l10n->t('Not logged in')], statusCode: Http::STATUS_UNAUTHORIZED);
 		}
 
-		return $this->publicationService->show(id: $id);
+		return $this->cacheableForCaller(response: $this->publicationService->show(id: $id));
 	}//end show()
 
 	/**
@@ -226,6 +276,11 @@ class SearchController extends Controller {
 	 * @return JSONResponse JSON response containing the requested attachments.
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::attachments()
+	 *   refuses an id outside the catalog scope, lists shared files only, and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
 	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-publication-attachments-from-local-or-federated-sources-fed-005
 	 */
@@ -249,6 +304,11 @@ class SearchController extends Controller {
 	 * @return DataDownloadResponse|JSONResponse The download response.
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::download() refuses
+	 *   an id outside the catalog scope, drops restricted files (FileRestrictionGuard), and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
 	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-download-publication-files-from-local-or-federated-sources-fed-006
 	 */
@@ -274,6 +334,11 @@ class SearchController extends Controller {
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::uses() refuses an
+	 *   id outside the catalog scope and resolves related objects with RBAC on, and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
+	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-outgoing-relations-uses-with-federation-support-fed-003
 	 */
 	#[NoAdminRequired]
@@ -297,6 +362,11 @@ class SearchController extends Controller {
 	 * @return JSONResponse A JSON response containing the referenced objects.
 	 *
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
+	 *
+	 * @no-admin-idor-exempt requires a session user. PublicationService::used() refuses an
+	 *   id outside the catalog scope and resolves related objects with RBAC on, and
+	 *   the object is read with OpenRegister find() (RBAC on), so the caller gets only
+	 *   what its own read rule allows.
 	 *
 	 * @spec openspec/specs/federation/spec.md#requirement-retrieve-incoming-relations-used-by-with-federation-support-fed-004
 	 */

@@ -1,0 +1,459 @@
+[
+	{
+		"name": "props objects win",
+		"props": {
+			"objects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"store": {
+			"selectedAttachments": [
+				"a1"
+			],
+			"collections": {
+				"publicationAttachments": [
+					{
+						"id": "a1",
+						"title": "A1"
+					}
+				]
+			},
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "empty props array still wins",
+		"props": {
+			"objects": []
+		},
+		"store": {
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": []
+	},
+	{
+		"name": "props not an array ignored",
+		"props": {
+			"objects": {
+				"0": {
+					"id": "o1"
+				}
+			}
+		},
+		"store": {
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "null props, nothing selected",
+		"props": {
+			"objects": null
+		},
+		"store": {},
+		"getCollectionCalls": [],
+		"result": []
+	},
+	{
+		"name": "attachments from collections array",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a1",
+				3
+			],
+			"collections": {
+				"publicationAttachments": [
+					{
+						"id": "a1",
+						"title": "A1"
+					},
+					{
+						"id": "a2"
+					},
+					{
+						"id": 3
+					}
+				]
+			}
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "a1",
+				"title": "A1"
+			},
+			{
+				"id": 3
+			}
+		]
+	},
+	{
+		"name": "attachments from collections results",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a2"
+			],
+			"collections": {
+				"publicationAttachments": {
+					"results": [
+						{
+							"id": "a1",
+							"title": "A1"
+						},
+						{
+							"id": "a2"
+						}
+					]
+				}
+			}
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "a2"
+			}
+		]
+	},
+	{
+		"name": "attachments, none match, returns empty",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"zz"
+			],
+			"collections": {
+				"publicationAttachments": [
+					{
+						"id": "a1",
+						"title": "A1"
+					}
+				]
+			},
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": []
+	},
+	{
+		"name": "attachments via getCollection",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a1"
+			],
+			"getCollection": true,
+			"coll": {
+				"results": [
+					{
+						"id": "a1",
+						"title": "A1"
+					},
+					{
+						"id": "a2"
+					}
+				]
+			}
+		},
+		"getCollectionCalls": [
+			"publicationAttachments"
+		],
+		"result": [
+			{
+				"id": "a1",
+				"title": "A1"
+			}
+		]
+	},
+	{
+		"name": "collections without key uses getCollection",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a2"
+			],
+			"collections": {},
+			"getCollection": true,
+			"coll": [
+				{
+					"id": "a2"
+				}
+			]
+		},
+		"getCollectionCalls": [
+			"publicationAttachments"
+		],
+		"result": [
+			{
+				"id": "a2"
+			}
+		]
+	},
+	{
+		"name": "no collection source falls to objects",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a1"
+			],
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "empty collection falls to objects",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a1"
+			],
+			"collections": {
+				"publicationAttachments": []
+			},
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "collection results not array falls to objects",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a1"
+			],
+			"collections": {
+				"publicationAttachments": {
+					"results": "x"
+				}
+			},
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "collection object without results is not array",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a1"
+			],
+			"collections": {
+				"publicationAttachments": {
+					"foo": 1
+				}
+			},
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "selectedAttachments not array",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": "a1",
+			"collections": {
+				"publicationAttachments": [
+					{
+						"id": "a1",
+						"title": "A1"
+					}
+				]
+			},
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "selectedAttachments empty",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [],
+			"collections": {
+				"publicationAttachments": [
+					{
+						"id": "a1",
+						"title": "A1"
+					}
+				]
+			},
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "selectedObjects empty",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedObjects": []
+		},
+		"getCollectionCalls": [],
+		"result": []
+	},
+	{
+		"name": "selectedObjects not array",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedObjects": {
+				"o1": {
+					"id": "o1"
+				}
+			}
+		},
+		"getCollectionCalls": [],
+		"result": []
+	},
+	{
+		"name": "getCollection returns null",
+		"props": {
+			"objects": null
+		},
+		"store": {
+			"selectedAttachments": [
+				"a1"
+			],
+			"getCollection": true,
+			"coll": null,
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [
+			"publicationAttachments"
+		],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	},
+	{
+		"name": "undefined props",
+		"props": {},
+		"store": {
+			"selectedObjects": [
+				{
+					"id": "o1"
+				}
+			]
+		},
+		"getCollectionCalls": [],
+		"result": [
+			{
+				"id": "o1"
+			}
+		]
+	}
+]

@@ -30,6 +30,10 @@ namespace OCA\OpenCatalogi\Service;
 use DateTimeImmutable;
 use DateTimeZone;
 use Exception;
+use OCA\OpenCatalogi\Contract\PublicationUsage;
+use OCA\OpenCatalogi\Contract\UsageCounterServiceInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use Psr\Container\ContainerInterface;
@@ -42,21 +46,7 @@ use Psr\Log\LoggerInterface;
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  */
-class UsageCounterService {
-
-	/**
-	 * Counter kind: a public publication-detail view.
-	 *
-	 * @var string
-	 */
-	public const KIND_VIEW = 'view';
-
-	/**
-	 * Counter kind: a public publication file download.
-	 *
-	 * @var string
-	 */
-	public const KIND_DOWNLOAD = 'download';
+class UsageCounterService implements UsageCounterServiceInterface {
 
 	/**
 	 * IAppConfig key holding the OpenRegister register id for counter objects.
@@ -81,6 +71,16 @@ class UsageCounterService {
 	 * @var string
 	 */
 	private const CONFIG_CRAWLERS = 'usage_counter_crawlers';
+
+	/**
+	 * The series column each counted kind adds to.
+	 *
+	 * @var array<string, string>
+	 */
+	private const KIND_COLUMNS = [
+		self::KIND_VIEW => 'views',
+		self::KIND_DOWNLOAD => 'downloads',
+	];
 
 	/**
 	 * Shipped default known-crawler substrings (case-insensitive match on UA).
@@ -159,19 +159,27 @@ class UsageCounterService {
 	 */
 	public function isCrawler(?string $userAgent): bool {
 		$userAgent = trim((string)$userAgent);
-		if ($userAgent === '') {
-			return true;
-		}
+		return $userAgent === '' || $this->matchesCrawler(agent: strtolower($userAgent)) === true;
+	}//end isCrawler()
 
-		$needle = strtolower($userAgent);
+	/**
+	 * Whether a lower-cased user agent contains one of the crawler substrings.
+	 *
+	 * @param string $agent The trimmed, lower-cased user agent.
+	 *
+	 * @return boolean True when a non-empty crawler substring occurs in it.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function matchesCrawler(string $agent): bool {
 		foreach ($this->getCrawlerList() as $pattern) {
-			if ($pattern !== '' && str_contains($needle, $pattern) === true) {
+			if ($pattern !== '' && str_contains($agent, $pattern) === true) {
 				return true;
 			}
 		}
 
 		return false;
-	}//end isCrawler()
+	}//end matchesCrawler()
 
 	/**
 	 * Resolve the configured crawler substring list (shipped default + config).
@@ -209,92 +217,23 @@ class UsageCounterService {
 	 * The stored object contains ONLY publication reference, date, kind, and
 	 * count. No request-derived attribute is ever written (ANA-002).
 	 *
-	 * @param string $publicationId The publication UUID being counted.
-	 * @param string $kind KIND_VIEW or KIND_DOWNLOAD.
+	 * @param PublicationUsage $usage The publication, kind and catalog being counted.
 	 * @param string|null $userAgent Request UA, evaluated for crawler-skip only.
-	 * @param string|null $catalog Optional catalog slug for roll-up labelling.
 	 *
 	 * @return boolean True when a count was recorded; false when skipped/failed.
 	 *
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
-	public function increment(
-		string $publicationId,
-		string $kind,
-		?string $userAgent = null,
-		?string $catalog = null,
-	): bool {
+	public function increment(PublicationUsage $usage, ?string $userAgent = null): bool {
 		try {
-			if ($publicationId === '' || in_array($kind, [self::KIND_VIEW, self::KIND_DOWNLOAD], true) === false) {
-				return false;
-			}
-
-			// Best-effort bot filtering — evaluated in memory, UA discarded (ANA-003).
-			if ($this->isCrawler(userAgent: $userAgent) === true) {
-				return false;
-			}
-
-			$objectService = $this->getObjectService();
-			if ($objectService === null) {
-				return false;
-			}
-
-			$register = $this->getRegisterId();
-			$schema = $this->getSchemaId();
-			if ($register === null || $schema === null) {
-				$this->logger->info('[UsageCounterService] counter register/schema unconfigured; skipping count');
-				return false;
-			}
-
-			$today = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format('Y-m-d');
-			$existing = $this->findCounter(
-				objectService: $objectService,
-				register: $register,
-				schema: $schema,
-				publicationId: $publicationId,
-				date: $today,
-				kind: $kind
-			);
-
-			if ($existing !== null) {
-				$data = $this->normaliseCounter(row: $existing);
-				$data['count'] = ((int)($data['count'] ?? 0) + 1);
-				$objectService->saveObject(
-					object: $data,
-					register: $register,
-					schema: $schema,
-					uuid: (string)($data['id'] ?? $data['uuid'] ?? ''),
-					_rbac: false,
-					_multitenancy: false,
-				);
-				return true;
-			}
-
-			// No counter for today yet — create one. Catalog is an optional
-			// roll-up label only (no personal data); it mirrors the publication's
-			// own catalog and never carries request-derived attributes.
-			$objectService->saveObject(
-				object: [
-					'publication' => $publicationId,
-					'catalog' => ($catalog ?? ''),
-					'date' => $today,
-					'kind' => $kind,
-					'count' => 1,
-				],
-				register: $register,
-				schema: $schema,
-				_rbac: false,
-				_multitenancy: false,
-			);
-
-			return true;
+			return $this->record(usage: $usage, userAgent: $userAgent);
 		} catch (\Throwable $e) {
 			// ANA-001: a counting failure MUST be logged and swallowed, never
 			// propagated. The user-agent is deliberately NOT included (ANA-003).
 			$this->logger->warning(
 				'[UsageCounterService] count failed (swallowed)',
 				[
-					'kind' => $kind,
+					'kind' => $usage->kind,
 					'error' => $e->getMessage(),
 				]
 			);
@@ -304,38 +243,109 @@ class UsageCounterService {
 	}//end increment()
 
 	/**
+	 * Count one usage unless it is not countable, comes from a crawler, or has no counter store.
+	 *
+	 * @param PublicationUsage $usage The publication, kind and catalog being counted.
+	 * @param string|null $userAgent Request UA, evaluated for crawler-skip only.
+	 *
+	 * @return boolean True when a count was recorded.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function record(PublicationUsage $usage, ?string $userAgent): bool {
+		$count = new UsageCount(publicationId: $usage->publicationId, kind: $usage->kind);
+		$count->catalog = $usage->catalog;
+
+		// Best-effort bot filtering — evaluated in memory, UA discarded (ANA-003).
+		if ($count->isCountable() === false
+			|| $this->isCrawler(userAgent: $userAgent) === true
+			|| $this->bindCounterStore(count: $count) === false
+		) {
+			return false;
+		}
+
+		$this->saveCount(count: $count);
+		return true;
+	}//end record()
+
+	/**
+	 * Point a count at the counter store: the object service, register and schema.
+	 *
+	 * @param UsageCount $count The count.
+	 *
+	 * @return bool False when OpenRegister is missing or the counter register or schema is unconfigured.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function bindCounterStore(UsageCount $count): bool {
+		$count->objectService = $this->getObjectService();
+		if ($count->objectService === null) {
+			return false;
+		}
+
+		$register = $this->getRegisterId();
+		$schema = $this->getSchemaId();
+		if ($register === null || $schema === null) {
+			$this->logger->info('[UsageCounterService] counter register/schema unconfigured; skipping count');
+			return false;
+		}
+
+		$count->register = $register;
+		$count->schema = $schema;
+		return true;
+	}//end bindCounterStore()
+
+	/**
+	 * Add the count to today's counter, or create that counter with a count of 1.
+	 *
+	 * The catalog is an optional roll-up label only (no personal data); it
+	 * mirrors the publication's own catalog and never carries request-derived
+	 * attributes.
+	 *
+	 * @param UsageCount $count The count, bound to the counter store.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function saveCount(UsageCount $count): void {
+		$existing = $this->findCounter(count: $count);
+		if ($existing === null) {
+			$count->objectService->saveObject(
+				object: $count->firstCounter(),
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(register: $count->register, schema: $count->schema)),
+				_rbac: false,
+				_multitenancy: false
+			);
+			return;
+		}
+
+		$data = $this->normaliseCounter(row: $existing);
+		$data['count'] = ((int)($data['count'] ?? 0) + 1);
+		$count->objectService->saveObject(
+			object: $data,
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(register: $count->register, schema: $count->schema),
+				uuid: (string)($data['id'] ?? $data['uuid'] ?? '')
+			),
+			_rbac: false,
+			_multitenancy: false
+		);
+	}//end saveCount()
+
+	/**
 	 * Find today's counter object for a (publication, date, kind) tuple.
 	 *
-	 * @param \OCA\OpenRegister\Service\ObjectService $objectService OR object service.
-	 * @param string $register Counter register id.
-	 * @param string $schema Counter schema id.
-	 * @param string $publicationId Publication UUID.
-	 * @param string $date Day (Y-m-d).
-	 * @param string $kind Counter kind.
+	 * @param UsageCount $count The count, bound to the counter store.
 	 *
 	 * @return array<string, mixed>|object|null The counter, or null if absent.
 	 *
 	 * @spec exclude Internal query helper for increment()/aggregate(); the public
 	 *       counting + aggregation contract is covered by increment() and getPublicationStats().
 	 */
-	private function findCounter(
-		\OCA\OpenRegister\Service\ObjectService $objectService,
-		string $register,
-		string $schema,
-		string $publicationId,
-		string $date,
-		string $kind,
-	) {
-		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-				'publication' => $publicationId,
-				'date' => $date,
-				'kind' => $kind,
-			],
+	private function findCounter(UsageCount $count) {
+		$results = $count->objectService->searchObjects(
+			query: $count->counterQuery(),
 			_rbac: false,
 			_multitenancy: false,
 		);
@@ -359,31 +369,7 @@ class UsageCounterService {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function getCountersForPublication(string $publicationId, ?string $from = null, ?string $to = null): array {
-		$objectService = $this->getObjectService();
-		$register = $this->getRegisterId();
-		$schema = $this->getSchemaId();
-		if ($objectService === null || $register === null || $schema === null) {
-			return [];
-		}
-
-		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-				'publication' => $publicationId,
-			],
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
-		}
-
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
+		return $this->filterByRange(rows: $this->searchCounters(filter: ['publication' => $publicationId]), from: $from, to: $to);
 	}//end getCountersForPublication()
 
 	/**
@@ -398,31 +384,7 @@ class UsageCounterService {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function getCountersForCatalog(string $catalog, ?string $from = null, ?string $to = null): array {
-		$objectService = $this->getObjectService();
-		$register = $this->getRegisterId();
-		$schema = $this->getSchemaId();
-		if ($objectService === null || $register === null || $schema === null) {
-			return [];
-		}
-
-		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-				'catalog' => $catalog,
-			],
-			_rbac: false,
-			_multitenancy: false,
-		);
-
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
-		}
-
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
+		return $this->filterByRange(rows: $this->searchCounters(filter: ['catalog' => $catalog]), from: $from, to: $to);
 	}//end getCountersForCatalog()
 
 	/**
@@ -440,6 +402,19 @@ class UsageCounterService {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md#requirement-dashboard-usage-card-shows-publication-views-and-downloads-ana-009
 	 */
 	public function getCountersForInstance(?string $from = null, ?string $to = null): array {
+		return $this->filterByRange(rows: $this->searchCounters(filter: []), from: $from, to: $to);
+	}//end getCountersForInstance()
+
+	/**
+	 * Search every counter object on the configured register and schema.
+	 *
+	 * @param array<string, string> $filter The fields the counters must match, next to the register and schema.
+	 *
+	 * @return array<int, mixed> The counter objects, or none when OpenRegister or the configuration is missing.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function searchCounters(array $filter): array {
 		$objectService = $this->getObjectService();
 		$register = $this->getRegisterId();
 		$schema = $this->getSchemaId();
@@ -448,23 +423,17 @@ class UsageCounterService {
 		}
 
 		$results = $objectService->searchObjects(
-			query: [
-				'@self' => [
-					'register' => $register,
-					'schema' => $schema,
-				],
-			],
+			query: ['@self' => ['register' => $register, 'schema' => $schema]] + $filter,
 			_rbac: false,
 			_multitenancy: false,
 		);
 
-		$rows = [];
-		if (is_array($results) === true) {
-			$rows = $results;
+		if (is_array($results) === false) {
+			return [];
 		}
 
-		return $this->filterByRange(rows: $rows, from: $from, to: $to);
-	}//end getCountersForInstance()
+		return $results;
+	}//end searchCounters()
 
 	/**
 	 * Compute per-publication statistics: totals plus a daily timeseries.
@@ -527,13 +496,8 @@ class UsageCounterService {
 	 */
 	public function aggregateInstanceSeries(?string $from = null, ?string $to = null): array {
 		$utc = new DateTimeZone('UTC');
-		if ($to === null || $this->isDay(value: $to) === false) {
-			$to = (new DateTimeImmutable('today', $utc))->format('Y-m-d');
-		}
-
-		if ($from === null || $this->isDay(value: $from) === false) {
-			$from = (new DateTimeImmutable($to, $utc))->modify('-29 days')->format('Y-m-d');
-		}
+		$to = $this->dayOr(value: $to, fallback: (new DateTimeImmutable('today', $utc))->format('Y-m-d'));
+		$from = $this->dayOr(value: $from, fallback: (new DateTimeImmutable($to, $utc))->modify('-29 days')->format('Y-m-d'));
 
 		// One OR query: the unfiltered set yields the counting start, the
 		// windowed subset yields the series and totals.
@@ -541,16 +505,27 @@ class UsageCounterService {
 		$countingStart = $this->aggregateSeries(rows: $rows)['countingStart'];
 		$windowed = $this->aggregateSeries(rows: $this->filterByRange(rows: $rows, from: $from, to: $to));
 
-		return [
-			'views' => $windowed['views'],
-			'downloads' => $windowed['downloads'],
-			'series' => $windowed['series'],
-			'countingStart' => $countingStart,
-			'from' => $from,
-			'to' => $to,
-		];
-
+		return array_replace($windowed, ['countingStart' => $countingStart, 'from' => $from, 'to' => $to]);
 	}//end aggregateInstanceSeries()
+
+	/**
+	 * The value when it is a well-formed calendar day, otherwise the fallback.
+	 *
+	 * @param string|null $value The candidate day.
+	 * @param string $fallback The day to use instead.
+	 *
+	 * @return string The day.
+	 *
+	 * @spec exclude Input-shape guard for aggregateInstanceSeries(); the window
+	 *       contract is asserted through that method.
+	 */
+	private function dayOr(?string $value, string $fallback): string {
+		if ($value === null || $this->isDay(value: $value) === false) {
+			return $fallback;
+		}
+
+		return $value;
+	}//end dayOr()
 
 	/**
 	 * Whether a string is a well-formed calendar day (Y-m-d).
@@ -590,47 +565,68 @@ class UsageCounterService {
 	 * @spec openspec/specs/publication-usage-analytics/spec.md
 	 */
 	public function aggregateSeries(array $rows): array {
-		$byDate = [];
-		$views = 0;
-		$downloads = 0;
+		$byDate = $this->tally(rows: $rows, key: 'date');
 		$countingStart = null;
-
-		foreach ($rows as $row) {
-			$row = $this->normaliseCounter(row: $row);
-			$date = (string)($row['date'] ?? '');
-			$kind = (string)($row['kind'] ?? '');
-			$count = max(0, (int)($row['count'] ?? 0));
-			if ($date === '') {
-				continue;
-			}
-
-			if ($countingStart === null || $date < $countingStart) {
-				$countingStart = $date;
-			}
-
-			if (isset($byDate[$date]) === false) {
-				$byDate[$date] = ['date' => $date, 'views' => 0, 'downloads' => 0];
-			}
-
-			if ($kind === self::KIND_VIEW) {
-				$byDate[$date]['views'] += $count;
-				$views += $count;
-			} elseif ($kind === self::KIND_DOWNLOAD) {
-				$byDate[$date]['downloads'] += $count;
-				$downloads += $count;
-			}
-		}//end foreach
+		if ($byDate !== []) {
+			$countingStart = min(array_column($byDate, 'date'));
+		}
 
 		ksort($byDate);
 
 		return [
-			'views' => $views,
-			'downloads' => $downloads,
+			'views' => array_sum(array_column($byDate, 'views')),
+			'downloads' => array_sum(array_column($byDate, 'downloads')),
 			'series' => array_values($byDate),
 			'countingStart' => $countingStart,
 		];
 
 	}//end aggregateSeries()
+
+	/**
+	 * Sum the view and download counts of the rows per value of one field.
+	 *
+	 * Rows without a value for the field are skipped; a row of another kind
+	 * still opens its bucket. Negative and non-numeric counts count as 0.
+	 *
+	 * @param array<int, mixed> $rows Counter rows (arrays or ObjectEntity).
+	 * @param string $key The field to group by (`date`, `publication`).
+	 *
+	 * @return array<string, array<string, mixed>> One bucket per value, in first-seen order.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function tally(array $rows, string $key): array {
+		$buckets = [];
+		foreach ($rows as $row) {
+			$row = $this->normaliseCounter(row: $row);
+			$value = (string)($row[$key] ?? '');
+			if ($value !== '') {
+				$bucket = ($buckets[$value] ?? [$key => $value, 'views' => 0, 'downloads' => 0]);
+				$buckets[$value] = $this->addCount(bucket: $bucket, row: $row);
+			}
+		}
+
+		return $buckets;
+	}//end tally()
+
+	/**
+	 * Add a row's count to the bucket column of its kind; other kinds add nothing.
+	 *
+	 * @param array<string, mixed> $bucket The bucket with `views` and `downloads`.
+	 * @param array<string, mixed> $row The normalised counter row.
+	 *
+	 * @return array<string, mixed> The bucket.
+	 *
+	 * @spec openspec/specs/publication-usage-analytics/spec.md
+	 */
+	private function addCount(array $bucket, array $row): array {
+		$column = (self::KIND_COLUMNS[(string)($row['kind'] ?? '')] ?? null);
+		if ($column !== null) {
+			$bucket[$column] += max(0, (int)($row['count'] ?? 0));
+		}
+
+		return $bucket;
+	}//end addCount()
 
 	/**
 	 * Aggregate catalog counter rows into totals and top-N rankings.
@@ -647,33 +643,7 @@ class UsageCounterService {
 	 */
 	public function aggregateCatalog(array $rows, int $top = 10): array {
 		$top = max(1, $top);
-		$byPub = [];
-		$totalViews = 0;
-		$totalDownl = 0;
-
-		foreach ($rows as $row) {
-			$row = $this->normaliseCounter(row: $row);
-			$pub = (string)($row['publication'] ?? '');
-			$kind = (string)($row['kind'] ?? '');
-			$count = max(0, (int)($row['count'] ?? 0));
-			if ($pub === '') {
-				continue;
-			}
-
-			if (isset($byPub[$pub]) === false) {
-				$byPub[$pub] = ['publication' => $pub, 'views' => 0, 'downloads' => 0];
-			}
-
-			if ($kind === self::KIND_VIEW) {
-				$byPub[$pub]['views'] += $count;
-				$totalViews += $count;
-			} elseif ($kind === self::KIND_DOWNLOAD) {
-				$byPub[$pub]['downloads'] += $count;
-				$totalDownl += $count;
-			}
-		}//end foreach
-
-		$entries = array_values($byPub);
+		$entries = array_values($this->tally(rows: $rows, key: 'publication'));
 
 		$byViews = $entries;
 		usort($byViews, static fn (array $a, array $b): int => ($b['views'] <=> $a['views']));
@@ -682,8 +652,8 @@ class UsageCounterService {
 		usort($byDownloads, static fn (array $a, array $b): int => ($b['downloads'] <=> $a['downloads']));
 
 		return [
-			'views' => $totalViews,
-			'downloads' => $totalDownl,
+			'views' => array_sum(array_column($entries, 'views')),
+			'downloads' => array_sum(array_column($entries, 'downloads')),
 			'topViewed' => array_slice($byViews, 0, $top),
 			'topDownloaded' => array_slice($byDownloads, 0, $top),
 		];
@@ -706,24 +676,30 @@ class UsageCounterService {
 		$out = [];
 		foreach ($rows as $row) {
 			$row = $this->normaliseCounter(row: $row);
-			$date = (string)($row['date'] ?? '');
-			if ($date === '') {
-				continue;
+			if ($this->inDayRange(date: (string)($row['date'] ?? ''), range: [$from, $to]) === true) {
+				$out[] = $row;
 			}
-
-			if ($from !== null && $date < $from) {
-				continue;
-			}
-
-			if ($to !== null && $date > $to) {
-				continue;
-			}
-
-			$out[] = $row;
 		}
 
 		return $out;
 	}//end filterByRange()
+
+	/**
+	 * Whether a day lies within an inclusive range whose ends may be open.
+	 *
+	 * @param string $date The row's day; '' is never in range.
+	 * @param array{0: ?string, 1: ?string} $range The start and end day, null for an open end.
+	 *
+	 * @return boolean True when the day is set and inside the range.
+	 *
+	 * @spec exclude Pure date-range predicate for filterByRange(); the range contract is
+	 *       asserted through getPublicationStats()/getCatalogStats().
+	 */
+	private function inDayRange(string $date, array $range): bool {
+		return $date !== ''
+			&& ($range[0] === null || $date >= $range[0])
+			&& ($range[1] === null || $date <= $range[1]);
+	}//end inDayRange()
 
 	/**
 	 * Normalise an OR object (ObjectEntity or array) to a flat counter array.

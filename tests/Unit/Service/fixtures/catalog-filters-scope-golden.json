@@ -1,0 +1,624 @@
+{
+    "all catalogs": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    "r1",
+                    "r2",
+                    "r3"
+                ],
+                "schemas": [
+                    "s1",
+                    "s2"
+                ]
+            },
+            "availableRegisters": {
+                "0": "r1",
+                "1": "r2",
+                "3": "r3"
+            },
+            "availableSchemas": {
+                "0": "s1",
+                "3": "s2"
+            }
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "PublicationQueryService::applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            }
+        ]
+    },
+    "by slug": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    "r1",
+                    "r2",
+                    "r3"
+                ],
+                "schemas": [
+                    "s1",
+                    "s2"
+                ]
+            },
+            "availableRegisters": {
+                "0": "r1",
+                "1": "r2",
+                "3": "r3"
+            },
+            "availableSchemas": {
+                "0": "s1",
+                "3": "s2"
+            }
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        },
+                        "slug": "woo"
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "PublicationQueryService::applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            }
+        ]
+    },
+    "by number": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    "r1",
+                    "r2",
+                    "r3"
+                ],
+                "schemas": [
+                    "s1",
+                    "s2"
+                ]
+            },
+            "availableRegisters": {
+                "0": "r1",
+                "1": "r2",
+                "3": "r3"
+            },
+            "availableSchemas": {
+                "0": "s1",
+                "3": "s2"
+            }
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        },
+                        "slug": "5"
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "PublicationQueryService::applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            }
+        ]
+    },
+    "by uuid": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    "r1",
+                    "r2",
+                    "r3"
+                ],
+                "schemas": [
+                    "s1",
+                    "s2"
+                ]
+            },
+            "availableRegisters": {
+                "0": "r1",
+                "1": "r2",
+                "3": "r3"
+            },
+            "availableSchemas": {
+                "0": "s1",
+                "3": "s2"
+            }
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema",
+                            "uuid": "0d9e6f2c-3b1a-4c5d-8e7f-9a0b1c2d3e4f"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "PublicationQueryService::applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            }
+        ]
+    },
+    "by upper-case uuid": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    "r1",
+                    "r2",
+                    "r3"
+                ],
+                "schemas": [
+                    "s1",
+                    "s2"
+                ]
+            },
+            "availableRegisters": {
+                "0": "r1",
+                "1": "r2",
+                "3": "r3"
+            },
+            "availableSchemas": {
+                "0": "s1",
+                "3": "s2"
+            }
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema",
+                            "uuid": "0D9E6F2C-3B1A-4C5D-8E7F-9A0B1C2D3E4F"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "PublicationQueryService::applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            }
+        ]
+    },
+    "empty slug": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    "r1",
+                    "r2",
+                    "r3"
+                ],
+                "schemas": [
+                    "s1",
+                    "s2"
+                ]
+            },
+            "availableRegisters": {
+                "0": "r1",
+                "1": "r2",
+                "3": "r3"
+            },
+            "availableSchemas": {
+                "0": "s1",
+                "3": "s2"
+            }
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        },
+                        "slug": ""
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "PublicationQueryService::applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            }
+        ]
+    },
+    "no catalogs": {
+        "outcome": {
+            "result": {
+                "registers": [],
+                "schemas": []
+            },
+            "availableRegisters": [],
+            "availableSchemas": []
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "PublicationQueryService::applySchemaScopeReadRuleGuard": {
+                    "schemaIds": []
+                }
+            }
+        ]
+    },
+    "schema zero is configured": {
+        "outcome": {
+            "result": {
+                "registers": [
+                    "r1",
+                    "r2",
+                    "r3"
+                ],
+                "schemas": [
+                    "s1",
+                    "s2"
+                ]
+            },
+            "availableRegisters": {
+                "0": "r1",
+                "1": "r2",
+                "3": "r3"
+            },
+            "availableSchemas": {
+                "0": "s1",
+                "3": "s2"
+            }
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "0",
+                            "schema": "0"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            },
+            {
+                "PublicationQueryService::applySchemaScopeReadRuleGuard": {
+                    "schemaIds": {
+                        "0": "s1",
+                        "1": "s-private",
+                        "3": "s2"
+                    }
+                }
+            }
+        ]
+    },
+    "no catalog schema": {
+        "outcome": {
+            "result": {
+                "registers": [],
+                "schemas": []
+            },
+            "availableRegisters": [],
+            "availableSchemas": []
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "LoggerInterface::error": {
+                    "message": "Catalog schema or register not configured \u2014 refusing to derive a catalog scope from an unscoped search",
+                    "context": {
+                        "schema": "",
+                        "register": "catalog-register"
+                    }
+                }
+            }
+        ]
+    },
+    "no catalog register": {
+        "outcome": {
+            "result": {
+                "registers": [],
+                "schemas": []
+            },
+            "availableRegisters": [],
+            "availableSchemas": []
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "LoggerInterface::error": {
+                    "message": "Catalog schema or register not configured \u2014 refusing to derive a catalog scope from an unscoped search",
+                    "context": {
+                        "schema": "catalog-schema",
+                        "register": ""
+                    }
+                }
+            }
+        ]
+    },
+    "nothing configured": {
+        "outcome": {
+            "result": {
+                "registers": [],
+                "schemas": []
+            },
+            "availableRegisters": [],
+            "availableSchemas": []
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "LoggerInterface::error": {
+                    "message": "Catalog schema or register not configured \u2014 refusing to derive a catalog scope from an unscoped search",
+                    "context": {
+                        "schema": "",
+                        "register": ""
+                    }
+                }
+            }
+        ]
+    },
+    "search fails": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "search down",
+            "availableRegisters": [
+                "stale"
+            ],
+            "availableSchemas": [
+                "stale"
+            ]
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            },
+            {
+                "ObjectService::searchObjects": {
+                    "query": {
+                        "@self": {
+                            "register": "catalog-register",
+                            "schema": "catalog-schema"
+                        }
+                    },
+                    "_rbac": false,
+                    "_multitenancy": false
+                }
+            }
+        ]
+    },
+    "openregister absent": {
+        "outcome": {
+            "exception": "RuntimeException",
+            "message": "OpenRegister service is not available.",
+            "availableRegisters": [
+                "stale"
+            ],
+            "availableSchemas": [
+                "stale"
+            ]
+        },
+        "calls": [
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_schema"
+                }
+            },
+            {
+                "IAppConfig::getValueString": {
+                    "app": "opencatalogi",
+                    "key": "catalog_register"
+                }
+            }
+        ]
+    }
+}

@@ -1,4 +1,4 @@
-import type { Page } from '@playwright/test'
+import type { Locator, Page } from '@playwright/test'
 
 /*
  * SPDX-FileCopyrightText: 2026 OpenCatalogi Contributors
@@ -48,10 +48,39 @@ export const APP = '/index.php/apps/opencatalogi'
  *    overlay, so dismiss it explicitly.
  */
 export async function dismissOverlays(page: Page): Promise<void> {
-	// The non-gating setup wizard, when storage seeding did not take (a
-	// blocked-storage context, or a page opened without bootApp). Identified by
-	// the step markup CnSetupWizard renders inside CnWizardDialog rather than
-	// by a title, which is translated.
+	await dismissSetupWizard(page)
+	await dismissFirstRunWizard(page)
+	await dismissSupportDialog(page)
+	await dismissWalkthrough(page)
+}
+
+/**
+ * Close one overlay: click its close control when that is visible, press
+ * Escape otherwise, then wait for the overlay to hide.
+ *
+ * @param page The page.
+ * @param overlay The overlay.
+ * @param close The overlay's close control.
+ * @param timeout How long to wait for the overlay to hide, in ms.
+ */
+async function closeOverlay(page: Page, overlay: Locator, close: Locator, timeout: number): Promise<void> {
+	if (await close.isVisible().catch(() => false)) {
+		await close.click().catch(() => {})
+	} else {
+		await page.keyboard.press('Escape').catch(() => {})
+	}
+	await overlay.waitFor({ state: 'hidden', timeout }).catch(() => {})
+}
+
+/**
+ * The non-gating setup wizard, when storage seeding did not take (a
+ * blocked-storage context, or a page opened without bootApp). Identified by
+ * the step markup CnSetupWizard renders inside CnWizardDialog rather than
+ * by a title, which is translated.
+ *
+ * @param page The page.
+ */
+async function dismissSetupWizard(page: Page): Promise<void> {
 	const setupWizard = page
 		.locator('[role="dialog"]')
 		.filter({ has: page.locator('.cn-setup-step') })
@@ -60,30 +89,35 @@ export async function dismissOverlays(page: Page): Promise<void> {
 		const skip = setupWizard
 			.getByRole('button', { name: /cancel|close|skip|later|annuleren/i })
 			.first()
-		if (await skip.isVisible().catch(() => false)) {
-			await skip.click().catch(() => {})
-		} else {
-			await page.keyboard.press('Escape').catch(() => {})
-		}
-		await setupWizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
+		await closeOverlay(page, setupWizard, skip, 4000)
 	}
+}
 
+/**
+ * Nextcloud's own `#firstrunwizard`.
+ *
+ * @param page The page.
+ */
+async function dismissFirstRunWizard(page: Page): Promise<void> {
 	const wizard = page.locator('#firstrunwizard')
 	if (await wizard.isVisible().catch(() => false)) {
 		const close = wizard
 			.getByRole('button', { name: /close|got it|finish|skip/i })
 			.first()
-		if (await close.isVisible().catch(() => false)) {
-			await close.click().catch(() => {})
-		} else {
-			await page.keyboard.press('Escape').catch(() => {})
-		}
-		await wizard.waitFor({ state: 'hidden', timeout: 4000 }).catch(() => {})
+		await closeOverlay(page, wizard, close, 4000)
 	}
+}
 
-	// Loop rather than a single `if`: the dialog animates in, so a check that
-	// lands one frame early sees nothing and a close click one frame early is
-	// swallowed by the same enter transition.
+/**
+ * nc-vue's CnSupportDialog.
+ *
+ * Loop rather than a single `if`: the dialog animates in, so a check that
+ * lands one frame early sees nothing and a close click one frame early is
+ * swallowed by the same enter transition.
+ *
+ * @param page The page.
+ */
+async function dismissSupportDialog(page: Page): Promise<void> {
 	const support = page.locator('[data-testid-modal="cn-support-dialog"]').first()
 	for (let i = 0; i < 3 && (await support.isVisible().catch(() => false)); i++) {
 		const close = support
@@ -91,12 +125,7 @@ export async function dismissOverlays(page: Page): Promise<void> {
 				'.modal-container__close, [aria-label="Close"], button:has-text("Close")',
 			)
 			.first()
-		if (await close.isVisible().catch(() => false)) {
-			await close.click().catch(() => {})
-		} else {
-			await page.keyboard.press('Escape').catch(() => {})
-		}
-		await support.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {})
+		await closeOverlay(page, support, close, 3000)
 	}
 	// The mask outlives the dialog's own visibility by one transition; a click
 	// issued in that window is still intercepted. Wait for it to detach.
@@ -104,18 +133,20 @@ export async function dismissOverlays(page: Page): Promise<void> {
 		.locator('.cn-support-dialog.modal-mask')
 		.waitFor({ state: 'detached', timeout: 3000 })
 		.catch(() => {})
+}
 
+/**
+ * nc-vue's CnWalkthrough and its full-screen scrim.
+ *
+ * @param page The page.
+ */
+async function dismissWalkthrough(page: Page): Promise<void> {
 	const walkthrough = page.locator('.cn-walkthrough').first()
 	if (await walkthrough.isVisible().catch(() => false)) {
 		const skip = walkthrough
 			.getByRole('button', { name: /skip|close|finish|done|got it|later/i })
 			.first()
-		if (await skip.isVisible().catch(() => false)) {
-			await skip.click().catch(() => {})
-		} else {
-			await page.keyboard.press('Escape').catch(() => {})
-		}
-		await walkthrough.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {})
+		await closeOverlay(page, walkthrough, skip, 5000)
 	}
 }
 

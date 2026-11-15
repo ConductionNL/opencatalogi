@@ -29,9 +29,14 @@ declare(strict_types=1);
 namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\DepublicationController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
+use OCA\OpenCatalogi\Controller\RegisterAccess;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
+use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCP\App\IAppManager;
 use OCP\AppFramework\Http;
 use OCP\IAppConfig;
 use OCP\IL10N;
@@ -42,6 +47,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Unit tests for DepublicationController.
@@ -79,7 +86,7 @@ class DepublicationControllerTest extends TestCase {
 			static function (string $app, string $key, string $default = '') {
 				// The depublication register and schema are configured, so the
 				// resolver resolves; everything else keeps its default.
-				if ($key === 'publication_register' || $key === 'depublication_schema') {
+				if ($key === 'publication_register' || $key === 'depublication_schema' || $key === 'publication_schema') {
 					return '42';
 				}
 
@@ -104,14 +111,20 @@ class DepublicationControllerTest extends TestCase {
 			new \OCA\OpenCatalogi\Service\Publication\IndexUnreachableException('No integriq source is set for the channel.')
 		);
 
+		$service = new DepublicationService($indexService, $this->createMock(LoggerInterface::class));
+
 		$this->controller = new DepublicationController(
 			'opencatalogi',
 			$this->request,
 			$l10n,
 			$userSession,
-			new DepublicationService($indexService, $this->createMock(LoggerInterface::class)),
-			$this->container,
-			$this->objects
+			$service,
+			new PublicationTransitions(
+				new PublicationStateService(),
+				$service,
+				$this->container,
+				new RegisterAccess(new OpenRegisterLookup($this->container, $this->createMock(IAppManager::class)), $this->objects)
+			)
 		);
 
 	}//end setUp()
@@ -159,10 +172,14 @@ class DepublicationControllerTest extends TestCase {
 			/**
 			 * @param array<string, array<string, mixed>> $stored Objects by id.
 			 */
-			public function __construct(private array $stored) {
+			public function __construct(
+				private array $stored,
+			) {
 			}
 
-			public function find(string $id, string $register, string $schema): array {
+			public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+				$register = $options?->register;
+				$schema = $options?->schema;
 				if (array_key_exists($id, $this->stored) === false) {
 					throw new \RuntimeException('no such object: ' . $id);
 				}
@@ -172,11 +189,15 @@ class DepublicationControllerTest extends TestCase {
 
 			public function saveObject(
 				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
+				bool $_rbac = true,
+				bool $_multitenancy = true
 			): array {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
+				$uuid = $options->uuid ?? '';
+				$_unowned = $options->actor->unowned ?? false;
 				$id = ($uuid !== '' ? $uuid : 'stored-1');
 				$object['id'] = $id;
 				$this->stored[$id] = $object;
@@ -189,7 +210,7 @@ class DepublicationControllerTest extends TestCase {
 	}//end objectStore()
 
 	public function testTheDepublicationNamesEveryOutstandingChannel(): void {
-		$this->objects->method('getObjectService')->willReturn($this->objectStore());
+		$this->objects->method('getObjectService')->willReturn($this->objectStore(['p1' => $this->publicPublication()]));
 		$this->withParams(
 			[
 				'publication' => ['id' => 'p1'],
@@ -215,7 +236,7 @@ class DepublicationControllerTest extends TestCase {
 	 * which is what this endpoint used to return.
 	 */
 	public function testTheDepublicationIsStoredAndComesBackWithItsId(): void {
-		$this->objects->method('getObjectService')->willReturn($this->objectStore());
+		$this->objects->method('getObjectService')->willReturn($this->objectStore(['p1' => $this->publicPublication()]));
 		$this->withParams(
 			[
 				'publication' => ['id' => 'p1'],
@@ -326,5 +347,113 @@ class DepublicationControllerTest extends TestCase {
 		$this->assertSame([], $store->saved);
 
 	}//end testAnAcknowledgementWithoutItsParametersIsRefused()
+
+	/**
+	 * A publication that is public now.
+	 *
+	 * @return array<string, mixed> The stored properties.
+	 */
+	private function publicPublication(): array {
+		return ['title' => 'Besluit', 'publicationDate' => '2020-01-01T00:00:00+00:00'];
+
+	}//end publicPublication()
+
+	/**
+	 * The depublish action takes the publication itself off the public side.
+	 *
+	 * Task 5.4: before it, the action recorded who and why and sent the
+	 * withdrawals while the publication stayed public. The stored record now
+	 * carries a depublicationDate that has passed, which is what the public
+	 * read refuses on, and nothing else of the record changes.
+	 */
+	public function testDepublishSetsThePublicationsDepublicationDate(): void {
+		$store = $this->objectStore(['p1' => $this->publicPublication()]);
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(
+			[
+				'publication' => ['id' => 'p1', 'title' => 'Forged title'],
+				'reason' => 'Publicatiefout.',
+				'channels' => ['local-channel'],
+			]
+		);
+
+		$data = $this->controller->depublish()->getData();
+
+		$this->assertArrayHasKey('p1', $store->saved);
+		$saved = $store->saved['p1'];
+		$this->assertSame('Besluit', $saved['title']);
+		$this->assertSame('2020-01-01T00:00:00+00:00', $saved['publicationDate']);
+		$this->assertLessThanOrEqual(time(), strtotime($saved['depublicationDate']));
+		$this->assertSame('withdrawn', (new PublicationStateService())->stateOf($saved));
+		$this->assertSame('withdrawn', $data['publicationState']);
+		$this->assertSame($saved['depublicationDate'], $data['publicationDepublicationDate']);
+		$this->assertSame('p1', $data['publication']);
+
+	}//end testDepublishSetsThePublicationsDepublicationDate()
+
+	/**
+	 * A publication that is already withdrawn keeps the date it came down on.
+	 */
+	public function testAnAlreadyWithdrawnPublicationKeepsItsDate(): void {
+		$withdrawn = $this->publicPublication() + ['depublicationDate' => '2021-06-01T00:00:00+00:00'];
+		$store = $this->objectStore(['p1' => $withdrawn]);
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(['publication' => ['id' => 'p1'], 'reason' => 'Publicatiefout.']);
+
+		$data = $this->controller->depublish()->getData();
+
+		$this->assertArrayNotHasKey('p1', $store->saved);
+		$this->assertSame('2021-06-01T00:00:00+00:00', $data['publicationDepublicationDate']);
+		$this->assertSame('withdrawn', $data['publicationState']);
+
+	}//end testAnAlreadyWithdrawnPublicationKeepsItsDate()
+
+	/**
+	 * A publication that does not exist is not found, and nothing is sent or stored.
+	 */
+	public function testDepublishingAnUnknownPublicationIsNotFound(): void {
+		$store = $this->objectStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(['publication' => ['id' => 'nope'], 'reason' => 'Publicatiefout.', 'channels' => ['local-channel']]);
+
+		$response = $this->controller->depublish();
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame('publication-not-found', $response->getData()['error']);
+		$this->assertSame([], $store->saved);
+
+	}//end testDepublishingAnUnknownPublicationIsNotFound()
+
+	/**
+	 * A publication named without an id is refused before anything is read.
+	 */
+	public function testDepublishingWithoutAnIdIsRefused(): void {
+		$store = $this->objectStore();
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(['publication' => ['title' => 'Besluit'], 'reason' => 'Publicatiefout.']);
+
+		$response = $this->controller->depublish();
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('missing-publication', $response->getData()['error']);
+		$this->assertSame([], $store->saved);
+
+	}//end testDepublishingWithoutAnIdIsRefused()
+
+	/**
+	 * Without a reason the publication stays up: the refusal comes first.
+	 */
+	public function testWithoutAReasonThePublicationIsNotTakenDown(): void {
+		$store = $this->objectStore(['p1' => $this->publicPublication()]);
+		$this->objects->method('getObjectService')->willReturn($store);
+		$this->withParams(['publication' => ['id' => 'p1'], 'reason' => '   ']);
+
+		$response = $this->controller->depublish();
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('depublication-refused', $response->getData()['error']);
+		$this->assertSame([], $store->saved);
+
+	}//end testWithoutAReasonThePublicationIsNotTakenDown()
 
 }//end class

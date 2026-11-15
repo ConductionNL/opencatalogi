@@ -1,0 +1,2373 @@
+{
+    "daily due, mixed rows": {
+        "stats": {
+            "handled": 1,
+            "notices": 1,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-29T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "s1",
+                "lastRunAt": "2026-09-29T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "p1",
+                        "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                        "url": "https://example.org/p/p1",
+                        "publicationDate": "2026-09-29T08:00:00+00:00"
+                    },
+                    {
+                        "publication": "local",
+                        "title": "Publicatie local",
+                        "url": "https://example.org/p/local",
+                        "publicationDate": "2026-09-29T10:00:00+00:00"
+                    },
+                    {
+                        "publication": "plain-id",
+                        "title": "Plain",
+                        "url": "https://example.org/p/plain-id",
+                        "publicationDate": "2026-09-29T11:00:00+00:00"
+                    },
+                    {
+                        "publication": "late",
+                        "title": "Publicatie late",
+                        "url": "https://example.org/p/late",
+                        "publicationDate": "2026-09-30T04:00:00+00:00"
+                    },
+                    {
+                        "publication": "edge-until",
+                        "title": "Publicatie edge-until",
+                        "url": "https://example.org/p/edge-until",
+                        "publicationDate": "2026-09-30T05:30:00+00:00"
+                    }
+                ],
+                "count": 5
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "daily",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "p1",
+                            "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                            "url": "https://example.org/p/p1",
+                            "publicationDate": "2026-09-29T08:00:00+00:00"
+                        },
+                        {
+                            "publication": "local",
+                            "title": "Publicatie local",
+                            "url": "https://example.org/p/local",
+                            "publicationDate": "2026-09-29T10:00:00+00:00"
+                        },
+                        {
+                            "publication": "plain-id",
+                            "title": "Plain",
+                            "url": "https://example.org/p/plain-id",
+                            "publicationDate": "2026-09-29T11:00:00+00:00"
+                        },
+                        {
+                            "publication": "late",
+                            "title": "Publicatie late",
+                            "url": "https://example.org/p/late",
+                            "publicationDate": "2026-09-30T04:00:00+00:00"
+                        },
+                        {
+                            "publication": "edge-until",
+                            "title": "Publicatie edge-until",
+                            "url": "https://example.org/p/edge-until",
+                            "publicationDate": "2026-09-30T05:30:00+00:00"
+                        }
+                    ],
+                    "matchCount": 5,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "s1"
+                }
+            }
+        ]
+    },
+    "daily not due before seven": {
+        "stats": {
+            "handled": 0,
+            "notices": 0,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [],
+        "notices": [],
+        "saves": []
+    },
+    "daily already ran today": {
+        "stats": {
+            "handled": 0,
+            "notices": 0,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [],
+        "notices": [],
+        "saves": []
+    },
+    "no frequency means daily": {
+        "stats": {
+            "handled": 1,
+            "notices": 1,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-29T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "s1",
+                "lastRunAt": "2026-09-29T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "p1",
+                        "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                        "url": "https://example.org/p/p1",
+                        "publicationDate": "2026-09-29T08:00:00+00:00"
+                    },
+                    {
+                        "publication": "local",
+                        "title": "Publicatie local",
+                        "url": "https://example.org/p/local",
+                        "publicationDate": "2026-09-29T10:00:00+00:00"
+                    },
+                    {
+                        "publication": "plain-id",
+                        "title": "Plain",
+                        "url": "https://example.org/p/plain-id",
+                        "publicationDate": "2026-09-29T11:00:00+00:00"
+                    },
+                    {
+                        "publication": "late",
+                        "title": "Publicatie late",
+                        "url": "https://example.org/p/late",
+                        "publicationDate": "2026-09-30T04:00:00+00:00"
+                    },
+                    {
+                        "publication": "edge-until",
+                        "title": "Publicatie edge-until",
+                        "url": "https://example.org/p/edge-until",
+                        "publicationDate": "2026-09-30T05:30:00+00:00"
+                    }
+                ],
+                "count": 5
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "p1",
+                            "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                            "url": "https://example.org/p/p1",
+                            "publicationDate": "2026-09-29T08:00:00+00:00"
+                        },
+                        {
+                            "publication": "local",
+                            "title": "Publicatie local",
+                            "url": "https://example.org/p/local",
+                            "publicationDate": "2026-09-29T10:00:00+00:00"
+                        },
+                        {
+                            "publication": "plain-id",
+                            "title": "Plain",
+                            "url": "https://example.org/p/plain-id",
+                            "publicationDate": "2026-09-29T11:00:00+00:00"
+                        },
+                        {
+                            "publication": "late",
+                            "title": "Publicatie late",
+                            "url": "https://example.org/p/late",
+                            "publicationDate": "2026-09-30T04:00:00+00:00"
+                        },
+                        {
+                            "publication": "edge-until",
+                            "title": "Publicatie edge-until",
+                            "url": "https://example.org/p/edge-until",
+                            "publicationDate": "2026-09-30T05:30:00+00:00"
+                        }
+                    ],
+                    "matchCount": 5,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "s1"
+                }
+            }
+        ]
+    },
+    "weekly due on monday": {
+        "stats": {
+            "handled": 1,
+            "notices": 1,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-22T06:00:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "w",
+                "lastRunAt": "2026-09-22T08:00:00+02:00",
+                "batch": [
+                    {
+                        "publication": "before",
+                        "title": "Publicatie before",
+                        "url": "https://example.org/p/before",
+                        "publicationDate": "2026-09-28T09:00:00+00:00"
+                    },
+                    {
+                        "publication": "edge-from",
+                        "title": "Publicatie edge-from",
+                        "url": "https://example.org/p/edge-from",
+                        "publicationDate": "2026-09-29T05:05:00+00:00"
+                    },
+                    {
+                        "publication": "p1",
+                        "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                        "url": "https://example.org/p/p1",
+                        "publicationDate": "2026-09-29T08:00:00+00:00"
+                    },
+                    {
+                        "publication": "local",
+                        "title": "Publicatie local",
+                        "url": "https://example.org/p/local",
+                        "publicationDate": "2026-09-29T10:00:00+00:00"
+                    },
+                    {
+                        "publication": "plain-id",
+                        "title": "Plain",
+                        "url": "https://example.org/p/plain-id",
+                        "publicationDate": "2026-09-29T11:00:00+00:00"
+                    },
+                    {
+                        "publication": "late",
+                        "title": "Publicatie late",
+                        "url": "https://example.org/p/late",
+                        "publicationDate": "2026-09-30T04:00:00+00:00"
+                    },
+                    {
+                        "publication": "edge-until",
+                        "title": "Publicatie edge-until",
+                        "url": "https://example.org/p/edge-until",
+                        "publicationDate": "2026-09-30T05:30:00+00:00"
+                    }
+                ],
+                "count": 7
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht w",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "weekly",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "before",
+                            "title": "Publicatie before",
+                            "url": "https://example.org/p/before",
+                            "publicationDate": "2026-09-28T09:00:00+00:00"
+                        },
+                        {
+                            "publication": "edge-from",
+                            "title": "Publicatie edge-from",
+                            "url": "https://example.org/p/edge-from",
+                            "publicationDate": "2026-09-29T05:05:00+00:00"
+                        },
+                        {
+                            "publication": "p1",
+                            "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                            "url": "https://example.org/p/p1",
+                            "publicationDate": "2026-09-29T08:00:00+00:00"
+                        },
+                        {
+                            "publication": "local",
+                            "title": "Publicatie local",
+                            "url": "https://example.org/p/local",
+                            "publicationDate": "2026-09-29T10:00:00+00:00"
+                        },
+                        {
+                            "publication": "plain-id",
+                            "title": "Plain",
+                            "url": "https://example.org/p/plain-id",
+                            "publicationDate": "2026-09-29T11:00:00+00:00"
+                        },
+                        {
+                            "publication": "late",
+                            "title": "Publicatie late",
+                            "url": "https://example.org/p/late",
+                            "publicationDate": "2026-09-30T04:00:00+00:00"
+                        },
+                        {
+                            "publication": "edge-until",
+                            "title": "Publicatie edge-until",
+                            "url": "https://example.org/p/edge-until",
+                            "publicationDate": "2026-09-30T05:30:00+00:00"
+                        }
+                    ],
+                    "matchCount": 7,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "w"
+                }
+            }
+        ]
+    },
+    "weekly not due": {
+        "stats": {
+            "handled": 0,
+            "notices": 0,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [],
+        "notices": [],
+        "saves": []
+    },
+    "immediate, one notice each": {
+        "stats": {
+            "handled": 1,
+            "notices": 5,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-29T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-29T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "p1",
+                        "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                        "url": "https://example.org/p/p1",
+                        "publicationDate": "2026-09-29T08:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-29T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "local",
+                        "title": "Publicatie local",
+                        "url": "https://example.org/p/local",
+                        "publicationDate": "2026-09-29T10:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-29T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "plain-id",
+                        "title": "Plain",
+                        "url": "https://example.org/p/plain-id",
+                        "publicationDate": "2026-09-29T11:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-29T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "late",
+                        "title": "Publicatie late",
+                        "url": "https://example.org/p/late",
+                        "publicationDate": "2026-09-30T04:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-29T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "edge-until",
+                        "title": "Publicatie edge-until",
+                        "url": "https://example.org/p/edge-until",
+                        "publicationDate": "2026-09-30T05:30:00+00:00"
+                    }
+                ],
+                "count": 1
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-29T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "p1",
+                            "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                            "url": "https://example.org/p/p1",
+                            "publicationDate": "2026-09-29T08:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-29T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "local",
+                            "title": "Publicatie local",
+                            "url": "https://example.org/p/local",
+                            "publicationDate": "2026-09-29T10:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-29T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "plain-id",
+                            "title": "Plain",
+                            "url": "https://example.org/p/plain-id",
+                            "publicationDate": "2026-09-29T11:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-29T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "late",
+                            "title": "Publicatie late",
+                            "url": "https://example.org/p/late",
+                            "publicationDate": "2026-09-30T04:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "edge-until",
+                            "title": "Publicatie edge-until",
+                            "url": "https://example.org/p/edge-until",
+                            "publicationDate": "2026-09-30T05:30:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            }
+        ]
+    },
+    "digest of twenty-five": {
+        "stats": {
+            "handled": 1,
+            "notices": 1,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-28T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "d",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m06",
+                        "title": "Publicatie m06",
+                        "url": "https://example.org/p/m06",
+                        "publicationDate": "2026-09-29T00:00:00+00:00"
+                    },
+                    {
+                        "publication": "m05",
+                        "title": "Publicatie m05",
+                        "url": "https://example.org/p/m05",
+                        "publicationDate": "2026-09-29T01:00:00+00:00"
+                    },
+                    {
+                        "publication": "m04",
+                        "title": "Publicatie m04",
+                        "url": "https://example.org/p/m04",
+                        "publicationDate": "2026-09-29T02:00:00+00:00"
+                    },
+                    {
+                        "publication": "m03",
+                        "title": "Publicatie m03",
+                        "url": "https://example.org/p/m03",
+                        "publicationDate": "2026-09-29T03:00:00+00:00"
+                    },
+                    {
+                        "publication": "m02",
+                        "title": "Publicatie m02",
+                        "url": "https://example.org/p/m02",
+                        "publicationDate": "2026-09-29T04:00:00+00:00"
+                    },
+                    {
+                        "publication": "m01",
+                        "title": "Publicatie m01",
+                        "url": "https://example.org/p/m01",
+                        "publicationDate": "2026-09-29T05:00:00+00:00"
+                    },
+                    {
+                        "publication": "m25",
+                        "title": "Publicatie m25",
+                        "url": "https://example.org/p/m25",
+                        "publicationDate": "2026-09-29T05:00:00+00:00"
+                    },
+                    {
+                        "publication": "m24",
+                        "title": "Publicatie m24",
+                        "url": "https://example.org/p/m24",
+                        "publicationDate": "2026-09-29T06:00:00+00:00"
+                    },
+                    {
+                        "publication": "m23",
+                        "title": "Publicatie m23",
+                        "url": "https://example.org/p/m23",
+                        "publicationDate": "2026-09-29T07:00:00+00:00"
+                    },
+                    {
+                        "publication": "m22",
+                        "title": "Publicatie m22",
+                        "url": "https://example.org/p/m22",
+                        "publicationDate": "2026-09-29T08:00:00+00:00"
+                    },
+                    {
+                        "publication": "m21",
+                        "title": "Publicatie m21",
+                        "url": "https://example.org/p/m21",
+                        "publicationDate": "2026-09-29T09:00:00+00:00"
+                    },
+                    {
+                        "publication": "m20",
+                        "title": "Publicatie m20",
+                        "url": "https://example.org/p/m20",
+                        "publicationDate": "2026-09-29T10:00:00+00:00"
+                    },
+                    {
+                        "publication": "m19",
+                        "title": "Publicatie m19",
+                        "url": "https://example.org/p/m19",
+                        "publicationDate": "2026-09-29T11:00:00+00:00"
+                    },
+                    {
+                        "publication": "m18",
+                        "title": "Publicatie m18",
+                        "url": "https://example.org/p/m18",
+                        "publicationDate": "2026-09-29T12:00:00+00:00"
+                    },
+                    {
+                        "publication": "m17",
+                        "title": "Publicatie m17",
+                        "url": "https://example.org/p/m17",
+                        "publicationDate": "2026-09-29T13:00:00+00:00"
+                    },
+                    {
+                        "publication": "m16",
+                        "title": "Publicatie m16",
+                        "url": "https://example.org/p/m16",
+                        "publicationDate": "2026-09-29T14:00:00+00:00"
+                    },
+                    {
+                        "publication": "m15",
+                        "title": "Publicatie m15",
+                        "url": "https://example.org/p/m15",
+                        "publicationDate": "2026-09-29T15:00:00+00:00"
+                    },
+                    {
+                        "publication": "m14",
+                        "title": "Publicatie m14",
+                        "url": "https://example.org/p/m14",
+                        "publicationDate": "2026-09-29T16:00:00+00:00"
+                    },
+                    {
+                        "publication": "m13",
+                        "title": "Publicatie m13",
+                        "url": "https://example.org/p/m13",
+                        "publicationDate": "2026-09-29T17:00:00+00:00"
+                    },
+                    {
+                        "publication": "m12",
+                        "title": "Publicatie m12",
+                        "url": "https://example.org/p/m12",
+                        "publicationDate": "2026-09-29T18:00:00+00:00"
+                    }
+                ],
+                "count": 25
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht d",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "daily",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m06",
+                            "title": "Publicatie m06",
+                            "url": "https://example.org/p/m06",
+                            "publicationDate": "2026-09-29T00:00:00+00:00"
+                        },
+                        {
+                            "publication": "m05",
+                            "title": "Publicatie m05",
+                            "url": "https://example.org/p/m05",
+                            "publicationDate": "2026-09-29T01:00:00+00:00"
+                        },
+                        {
+                            "publication": "m04",
+                            "title": "Publicatie m04",
+                            "url": "https://example.org/p/m04",
+                            "publicationDate": "2026-09-29T02:00:00+00:00"
+                        },
+                        {
+                            "publication": "m03",
+                            "title": "Publicatie m03",
+                            "url": "https://example.org/p/m03",
+                            "publicationDate": "2026-09-29T03:00:00+00:00"
+                        },
+                        {
+                            "publication": "m02",
+                            "title": "Publicatie m02",
+                            "url": "https://example.org/p/m02",
+                            "publicationDate": "2026-09-29T04:00:00+00:00"
+                        },
+                        {
+                            "publication": "m01",
+                            "title": "Publicatie m01",
+                            "url": "https://example.org/p/m01",
+                            "publicationDate": "2026-09-29T05:00:00+00:00"
+                        },
+                        {
+                            "publication": "m25",
+                            "title": "Publicatie m25",
+                            "url": "https://example.org/p/m25",
+                            "publicationDate": "2026-09-29T05:00:00+00:00"
+                        },
+                        {
+                            "publication": "m24",
+                            "title": "Publicatie m24",
+                            "url": "https://example.org/p/m24",
+                            "publicationDate": "2026-09-29T06:00:00+00:00"
+                        },
+                        {
+                            "publication": "m23",
+                            "title": "Publicatie m23",
+                            "url": "https://example.org/p/m23",
+                            "publicationDate": "2026-09-29T07:00:00+00:00"
+                        },
+                        {
+                            "publication": "m22",
+                            "title": "Publicatie m22",
+                            "url": "https://example.org/p/m22",
+                            "publicationDate": "2026-09-29T08:00:00+00:00"
+                        },
+                        {
+                            "publication": "m21",
+                            "title": "Publicatie m21",
+                            "url": "https://example.org/p/m21",
+                            "publicationDate": "2026-09-29T09:00:00+00:00"
+                        },
+                        {
+                            "publication": "m20",
+                            "title": "Publicatie m20",
+                            "url": "https://example.org/p/m20",
+                            "publicationDate": "2026-09-29T10:00:00+00:00"
+                        },
+                        {
+                            "publication": "m19",
+                            "title": "Publicatie m19",
+                            "url": "https://example.org/p/m19",
+                            "publicationDate": "2026-09-29T11:00:00+00:00"
+                        },
+                        {
+                            "publication": "m18",
+                            "title": "Publicatie m18",
+                            "url": "https://example.org/p/m18",
+                            "publicationDate": "2026-09-29T12:00:00+00:00"
+                        },
+                        {
+                            "publication": "m17",
+                            "title": "Publicatie m17",
+                            "url": "https://example.org/p/m17",
+                            "publicationDate": "2026-09-29T13:00:00+00:00"
+                        },
+                        {
+                            "publication": "m16",
+                            "title": "Publicatie m16",
+                            "url": "https://example.org/p/m16",
+                            "publicationDate": "2026-09-29T14:00:00+00:00"
+                        },
+                        {
+                            "publication": "m15",
+                            "title": "Publicatie m15",
+                            "url": "https://example.org/p/m15",
+                            "publicationDate": "2026-09-29T15:00:00+00:00"
+                        },
+                        {
+                            "publication": "m14",
+                            "title": "Publicatie m14",
+                            "url": "https://example.org/p/m14",
+                            "publicationDate": "2026-09-29T16:00:00+00:00"
+                        },
+                        {
+                            "publication": "m13",
+                            "title": "Publicatie m13",
+                            "url": "https://example.org/p/m13",
+                            "publicationDate": "2026-09-29T17:00:00+00:00"
+                        },
+                        {
+                            "publication": "m12",
+                            "title": "Publicatie m12",
+                            "url": "https://example.org/p/m12",
+                            "publicationDate": "2026-09-29T18:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 25,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "d"
+                }
+            }
+        ]
+    },
+    "immediate of twenty-five": {
+        "stats": {
+            "handled": 1,
+            "notices": 25,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-28T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m06",
+                        "title": "Publicatie m06",
+                        "url": "https://example.org/p/m06",
+                        "publicationDate": "2026-09-29T00:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m05",
+                        "title": "Publicatie m05",
+                        "url": "https://example.org/p/m05",
+                        "publicationDate": "2026-09-29T01:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m04",
+                        "title": "Publicatie m04",
+                        "url": "https://example.org/p/m04",
+                        "publicationDate": "2026-09-29T02:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m03",
+                        "title": "Publicatie m03",
+                        "url": "https://example.org/p/m03",
+                        "publicationDate": "2026-09-29T03:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m02",
+                        "title": "Publicatie m02",
+                        "url": "https://example.org/p/m02",
+                        "publicationDate": "2026-09-29T04:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m01",
+                        "title": "Publicatie m01",
+                        "url": "https://example.org/p/m01",
+                        "publicationDate": "2026-09-29T05:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m25",
+                        "title": "Publicatie m25",
+                        "url": "https://example.org/p/m25",
+                        "publicationDate": "2026-09-29T05:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m24",
+                        "title": "Publicatie m24",
+                        "url": "https://example.org/p/m24",
+                        "publicationDate": "2026-09-29T06:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m23",
+                        "title": "Publicatie m23",
+                        "url": "https://example.org/p/m23",
+                        "publicationDate": "2026-09-29T07:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m22",
+                        "title": "Publicatie m22",
+                        "url": "https://example.org/p/m22",
+                        "publicationDate": "2026-09-29T08:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m21",
+                        "title": "Publicatie m21",
+                        "url": "https://example.org/p/m21",
+                        "publicationDate": "2026-09-29T09:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m20",
+                        "title": "Publicatie m20",
+                        "url": "https://example.org/p/m20",
+                        "publicationDate": "2026-09-29T10:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m19",
+                        "title": "Publicatie m19",
+                        "url": "https://example.org/p/m19",
+                        "publicationDate": "2026-09-29T11:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m18",
+                        "title": "Publicatie m18",
+                        "url": "https://example.org/p/m18",
+                        "publicationDate": "2026-09-29T12:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m17",
+                        "title": "Publicatie m17",
+                        "url": "https://example.org/p/m17",
+                        "publicationDate": "2026-09-29T13:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m16",
+                        "title": "Publicatie m16",
+                        "url": "https://example.org/p/m16",
+                        "publicationDate": "2026-09-29T14:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m15",
+                        "title": "Publicatie m15",
+                        "url": "https://example.org/p/m15",
+                        "publicationDate": "2026-09-29T15:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m14",
+                        "title": "Publicatie m14",
+                        "url": "https://example.org/p/m14",
+                        "publicationDate": "2026-09-29T16:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m13",
+                        "title": "Publicatie m13",
+                        "url": "https://example.org/p/m13",
+                        "publicationDate": "2026-09-29T17:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m12",
+                        "title": "Publicatie m12",
+                        "url": "https://example.org/p/m12",
+                        "publicationDate": "2026-09-29T18:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m11",
+                        "title": "Publicatie m11",
+                        "url": "https://example.org/p/m11",
+                        "publicationDate": "2026-09-29T19:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m10",
+                        "title": "Publicatie m10",
+                        "url": "https://example.org/p/m10",
+                        "publicationDate": "2026-09-29T20:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m09",
+                        "title": "Publicatie m09",
+                        "url": "https://example.org/p/m09",
+                        "publicationDate": "2026-09-29T21:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m08",
+                        "title": "Publicatie m08",
+                        "url": "https://example.org/p/m08",
+                        "publicationDate": "2026-09-29T22:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "i",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "m07",
+                        "title": "Publicatie m07",
+                        "url": "https://example.org/p/m07",
+                        "publicationDate": "2026-09-29T23:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m06",
+                            "title": "Publicatie m06",
+                            "url": "https://example.org/p/m06",
+                            "publicationDate": "2026-09-29T00:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m05",
+                            "title": "Publicatie m05",
+                            "url": "https://example.org/p/m05",
+                            "publicationDate": "2026-09-29T01:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m04",
+                            "title": "Publicatie m04",
+                            "url": "https://example.org/p/m04",
+                            "publicationDate": "2026-09-29T02:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m03",
+                            "title": "Publicatie m03",
+                            "url": "https://example.org/p/m03",
+                            "publicationDate": "2026-09-29T03:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m02",
+                            "title": "Publicatie m02",
+                            "url": "https://example.org/p/m02",
+                            "publicationDate": "2026-09-29T04:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m01",
+                            "title": "Publicatie m01",
+                            "url": "https://example.org/p/m01",
+                            "publicationDate": "2026-09-29T05:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m25",
+                            "title": "Publicatie m25",
+                            "url": "https://example.org/p/m25",
+                            "publicationDate": "2026-09-29T05:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m24",
+                            "title": "Publicatie m24",
+                            "url": "https://example.org/p/m24",
+                            "publicationDate": "2026-09-29T06:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m23",
+                            "title": "Publicatie m23",
+                            "url": "https://example.org/p/m23",
+                            "publicationDate": "2026-09-29T07:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m22",
+                            "title": "Publicatie m22",
+                            "url": "https://example.org/p/m22",
+                            "publicationDate": "2026-09-29T08:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m21",
+                            "title": "Publicatie m21",
+                            "url": "https://example.org/p/m21",
+                            "publicationDate": "2026-09-29T09:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m20",
+                            "title": "Publicatie m20",
+                            "url": "https://example.org/p/m20",
+                            "publicationDate": "2026-09-29T10:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m19",
+                            "title": "Publicatie m19",
+                            "url": "https://example.org/p/m19",
+                            "publicationDate": "2026-09-29T11:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m18",
+                            "title": "Publicatie m18",
+                            "url": "https://example.org/p/m18",
+                            "publicationDate": "2026-09-29T12:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m17",
+                            "title": "Publicatie m17",
+                            "url": "https://example.org/p/m17",
+                            "publicationDate": "2026-09-29T13:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m16",
+                            "title": "Publicatie m16",
+                            "url": "https://example.org/p/m16",
+                            "publicationDate": "2026-09-29T14:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m15",
+                            "title": "Publicatie m15",
+                            "url": "https://example.org/p/m15",
+                            "publicationDate": "2026-09-29T15:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m14",
+                            "title": "Publicatie m14",
+                            "url": "https://example.org/p/m14",
+                            "publicationDate": "2026-09-29T16:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m13",
+                            "title": "Publicatie m13",
+                            "url": "https://example.org/p/m13",
+                            "publicationDate": "2026-09-29T17:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m12",
+                            "title": "Publicatie m12",
+                            "url": "https://example.org/p/m12",
+                            "publicationDate": "2026-09-29T18:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m11",
+                            "title": "Publicatie m11",
+                            "url": "https://example.org/p/m11",
+                            "publicationDate": "2026-09-29T19:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m10",
+                            "title": "Publicatie m10",
+                            "url": "https://example.org/p/m10",
+                            "publicationDate": "2026-09-29T20:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m09",
+                            "title": "Publicatie m09",
+                            "url": "https://example.org/p/m09",
+                            "publicationDate": "2026-09-29T21:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m08",
+                            "title": "Publicatie m08",
+                            "url": "https://example.org/p/m08",
+                            "publicationDate": "2026-09-29T22:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht i",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "m07",
+                            "title": "Publicatie m07",
+                            "url": "https://example.org/p/m07",
+                            "publicationDate": "2026-09-29T23:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "i"
+                }
+            }
+        ]
+    },
+    "nothing found": {
+        "stats": {
+            "handled": 1,
+            "notices": 0,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-29T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "id": "s1"
+                }
+            }
+        ]
+    },
+    "saved period narrows": {
+        "stats": {
+            "handled": 1,
+            "notices": 1,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-28T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "s1",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "p1",
+                        "title": "Publicatie p1",
+                        "url": "https://example.org/p/p1",
+                        "publicationDate": "2026-09-29T09:00:00+00:00"
+                    },
+                    {
+                        "publication": "local",
+                        "title": "Publicatie local",
+                        "url": "https://example.org/p/local",
+                        "publicationDate": "2026-09-29T10:00:00+00:00"
+                    },
+                    {
+                        "publication": "plain-id",
+                        "title": "Plain",
+                        "url": "https://example.org/p/plain-id",
+                        "publicationDate": "2026-09-29T11:00:00+00:00"
+                    }
+                ],
+                "count": 3
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": {
+                            "periodFrom": "2026-09-29T08:30:00+00:00",
+                            "periodTo": "2026-09-29"
+                        },
+                        "catalog": ""
+                    },
+                    "frequency": "daily",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "p1",
+                            "title": "Publicatie p1",
+                            "url": "https://example.org/p/p1",
+                            "publicationDate": "2026-09-29T09:00:00+00:00"
+                        },
+                        {
+                            "publication": "local",
+                            "title": "Publicatie local",
+                            "url": "https://example.org/p/local",
+                            "publicationDate": "2026-09-29T10:00:00+00:00"
+                        },
+                        {
+                            "publication": "plain-id",
+                            "title": "Plain",
+                            "url": "https://example.org/p/plain-id",
+                            "publicationDate": "2026-09-29T11:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 3,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "s1"
+                }
+            }
+        ]
+    },
+    "saved period with bad dates": {
+        "stats": {
+            "handled": 1,
+            "notices": 1,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-28T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "s1",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "before",
+                        "title": "Publicatie before",
+                        "url": "https://example.org/p/before",
+                        "publicationDate": "2026-09-28T09:00:00+00:00"
+                    },
+                    {
+                        "publication": "edge-from",
+                        "title": "Publicatie edge-from",
+                        "url": "https://example.org/p/edge-from",
+                        "publicationDate": "2026-09-29T05:05:00+00:00"
+                    },
+                    {
+                        "publication": "p1",
+                        "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                        "url": "https://example.org/p/p1",
+                        "publicationDate": "2026-09-29T08:00:00+00:00"
+                    },
+                    {
+                        "publication": "local",
+                        "title": "Publicatie local",
+                        "url": "https://example.org/p/local",
+                        "publicationDate": "2026-09-29T10:00:00+00:00"
+                    },
+                    {
+                        "publication": "plain-id",
+                        "title": "Plain",
+                        "url": "https://example.org/p/plain-id",
+                        "publicationDate": "2026-09-29T11:00:00+00:00"
+                    },
+                    {
+                        "publication": "late",
+                        "title": "Publicatie late",
+                        "url": "https://example.org/p/late",
+                        "publicationDate": "2026-09-30T04:00:00+00:00"
+                    },
+                    {
+                        "publication": "edge-until",
+                        "title": "Publicatie edge-until",
+                        "url": "https://example.org/p/edge-until",
+                        "publicationDate": "2026-09-30T05:30:00+00:00"
+                    }
+                ],
+                "count": 7
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": {
+                            "periodFrom": "soon",
+                            "periodTo": "  "
+                        },
+                        "catalog": ""
+                    },
+                    "frequency": "daily",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "before",
+                            "title": "Publicatie before",
+                            "url": "https://example.org/p/before",
+                            "publicationDate": "2026-09-28T09:00:00+00:00"
+                        },
+                        {
+                            "publication": "edge-from",
+                            "title": "Publicatie edge-from",
+                            "url": "https://example.org/p/edge-from",
+                            "publicationDate": "2026-09-29T05:05:00+00:00"
+                        },
+                        {
+                            "publication": "p1",
+                            "title": "éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé",
+                            "url": "https://example.org/p/p1",
+                            "publicationDate": "2026-09-29T08:00:00+00:00"
+                        },
+                        {
+                            "publication": "local",
+                            "title": "Publicatie local",
+                            "url": "https://example.org/p/local",
+                            "publicationDate": "2026-09-29T10:00:00+00:00"
+                        },
+                        {
+                            "publication": "plain-id",
+                            "title": "Plain",
+                            "url": "https://example.org/p/plain-id",
+                            "publicationDate": "2026-09-29T11:00:00+00:00"
+                        },
+                        {
+                            "publication": "late",
+                            "title": "Publicatie late",
+                            "url": "https://example.org/p/late",
+                            "publicationDate": "2026-09-30T04:00:00+00:00"
+                        },
+                        {
+                            "publication": "edge-until",
+                            "title": "Publicatie edge-until",
+                            "url": "https://example.org/p/edge-until",
+                            "publicationDate": "2026-09-30T05:30:00+00:00"
+                        }
+                    ],
+                    "matchCount": 7,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "s1"
+                }
+            }
+        ]
+    },
+    "baseline, inactive, no id, bad last run": {
+        "stats": {
+            "handled": 1,
+            "notices": 1,
+            "baselined": 2,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-29T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "ok",
+                "lastRunAt": "2026-09-29T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "p1",
+                        "title": "Publicatie p1",
+                        "url": "https://example.org/p/p1",
+                        "publicationDate": "2026-09-29T09:00:00+00:00"
+                    }
+                ],
+                "count": 1
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht new",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "daily",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "id": "new"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht bad",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "id": "bad"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht ok",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": [],
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "p1",
+                            "title": "Publicatie p1",
+                            "url": "https://example.org/p/p1",
+                            "publicationDate": "2026-09-29T09:00:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "ok"
+                }
+            }
+        ]
+    },
+    "notice writer fails": {
+        "stats": {
+            "handled": 2,
+            "notices": 0,
+            "baselined": 0,
+            "failed": 2
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-29T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            },
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-29T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [],
+        "saves": []
+    },
+    "saved period boundaries": {
+        "stats": {
+            "handled": 1,
+            "notices": 2,
+            "baselined": 0,
+            "failed": 0
+        },
+        "searches": [
+            {
+                "_search": "windpark",
+                "publicationDate": {
+                    "gt": "2026-09-28T05:05:00+00:00",
+                    "lte": "2026-09-30T05:30:00+00:00"
+                },
+                "_limit": 100,
+                "_order": {
+                    "publicationDate": "asc"
+                }
+            }
+        ],
+        "notices": [
+            {
+                "saved": "s1",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "at-from",
+                        "title": "Publicatie at-from",
+                        "url": "https://example.org/p/at-from",
+                        "publicationDate": "2026-09-29T08:30:00+00:00"
+                    }
+                ],
+                "count": 1
+            },
+            {
+                "saved": "s1",
+                "lastRunAt": "2026-09-28T07:05:00+02:00",
+                "batch": [
+                    {
+                        "publication": "at-to",
+                        "title": "Publicatie at-to",
+                        "url": "https://example.org/p/at-to",
+                        "publicationDate": "2026-09-29T23:59:59+00:00"
+                    }
+                ],
+                "count": 1
+            }
+        ],
+        "saves": [
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": {
+                            "periodFrom": "2026-09-29T08:30:00+00:00",
+                            "periodTo": "2026-09-29T00:00:00+00:00"
+                        },
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-28T07:05:00+02:00",
+                    "lastMatches": [
+                        {
+                            "publication": "at-from",
+                            "title": "Publicatie at-from",
+                            "url": "https://example.org/p/at-from",
+                            "publicationDate": "2026-09-29T08:30:00+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "s1"
+                }
+            },
+            {
+                "schema": "savedSearch",
+                "data": {
+                    "title": "Zoekopdracht s1",
+                    "owner": "subject-1",
+                    "query": {
+                        "text": "windpark",
+                        "filters": {
+                            "periodFrom": "2026-09-29T08:30:00+00:00",
+                            "periodTo": "2026-09-29T00:00:00+00:00"
+                        },
+                        "catalog": ""
+                    },
+                    "frequency": "immediate",
+                    "lastRunAt": "2026-09-30T05:30:00+00:00",
+                    "lastMatches": [
+                        {
+                            "publication": "at-to",
+                            "title": "Publicatie at-to",
+                            "url": "https://example.org/p/at-to",
+                            "publicationDate": "2026-09-29T23:59:59+00:00"
+                        }
+                    ],
+                    "matchCount": 1,
+                    "lastNotifiedAt": "<stamp>",
+                    "id": "s1"
+                }
+            }
+        ]
+    }
+}

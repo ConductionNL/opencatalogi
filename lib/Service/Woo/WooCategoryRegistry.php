@@ -3,6 +3,9 @@
 /**
  * The set of Woo information categories a catalogue can publish under.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * The categories used to be two PHP constants: a list of 17 codes in
  * `WooCategory::ALL` and a map of 17 sitemap file names in
  * `SitemapService::INFO_CAT`. An eighteenth category therefore needed a code
@@ -30,9 +33,6 @@
  * @copyright 2026 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
  *
- * SPDX-License-Identifier: EUPL-1.2
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- *
  * @version GIT: <git_id>
  *
  * @link https://www.OpenCatalogi.nl
@@ -42,6 +42,7 @@
 
 namespace OCA\OpenCatalogi\Service\Woo;
 
+use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
 use OCA\OpenCatalogi\Service\TooiVocabularyService;
 use OCA\OpenCatalogi\Service\WooCategory;
@@ -52,7 +53,7 @@ use Psr\Log\LoggerInterface;
  *
  * @spec openspec/specs/woo-compliance/spec.md
  */
-class WooCategoryRegistry {
+class WooCategoryRegistry implements InformationCategoryRegistryInterface {
 
 	/**
 	 * The schema an operator adds a local information category to.
@@ -145,7 +146,6 @@ class WooCategoryRegistry {
 	 */
 	public static function sitemapFileFor(string $code): string {
 		return self::SITEMAP_PREFIX . $code . self::SITEMAP_SUFFIX;
-
 	}//end sitemapFileFor()
 
 	/**
@@ -175,7 +175,6 @@ class WooCategoryRegistry {
 		}
 
 		return $code;
-
 	}//end codeOf()
 
 	/**
@@ -187,8 +186,8 @@ class WooCategoryRegistry {
 	 * query that lists its publications.
 	 *
 	 * @return array<string, array<string, mixed>> The categories, each with `code`,
-	 *   `label`, `labelEn`, `tooiUri`, `tooiLabel`, `mapsTo`, `origin`,
-	 *   `sitemapFile` and `schemas`.
+	 *                                             `label`, `labelEn`, `tooiUri`, `tooiLabel`, `mapsTo`, `origin`,
+	 *                                             `sitemapFile` and `schemas`.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-the-information-categories-are-data-not-code-req-wic-001
 	 */
@@ -213,7 +212,6 @@ class WooCategoryRegistry {
 		$this->categories = $categories;
 
 		return $this->categories;
-
 	}//end all()
 
 	/**
@@ -231,7 +229,6 @@ class WooCategoryRegistry {
 		$this->all();
 
 		return $this->refused;
-
 	}//end rejected()
 
 	/**
@@ -250,7 +247,6 @@ class WooCategoryRegistry {
 		}
 
 		return $files;
-
 	}//end sitemapFiles()
 
 	/**
@@ -264,7 +260,6 @@ class WooCategoryRegistry {
 	 */
 	public function find(string $code): ?array {
 		return ($this->all()[$code] ?? null);
-
 	}//end find()
 
 	/**
@@ -283,7 +278,6 @@ class WooCategoryRegistry {
 		}
 
 		return $this->find(code: $code);
-
 	}//end findBySitemapFile()
 
 	/**
@@ -300,7 +294,6 @@ class WooCategoryRegistry {
 	 */
 	public function schemasFor(string $code): array {
 		return (array)($this->find(code: $code)['schemas'] ?? []);
-
 	}//end schemasFor()
 
 	/**
@@ -342,7 +335,6 @@ class WooCategoryRegistry {
 		}
 
 		return null;
-
 	}//end resolveForDocument()
 
 	/**
@@ -391,11 +383,7 @@ class WooCategoryRegistry {
 		}
 
 		return $records;
-
 	}//end bundled()
-
-
-
 
 	/**
 	 * The stored local information categories, or an empty list when there are none.
@@ -449,8 +437,6 @@ class WooCategoryRegistry {
 		}
 
 		return $rows;
-
 	}//end storedCategories()
-
 
 }//end class

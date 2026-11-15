@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Controller;
@@ -153,6 +158,24 @@ class SettingsControllerTest extends TestCase {
 		$this->assertInstanceOf(JSONResponse::class, $response);
 		$this->assertEquals(500, $response->getStatus());
 		$this->assertSame(['error' => 'Update failed'], $response->getData());
+	}
+
+	/**
+	 * A rejected value is the caller's error: 400 with the reason, not 500.
+	 *
+	 * @spec openspec/specs/admin-settings/spec.md#requirement-admin-settings-page-loads-and-saves-configuration-set-or-006
+	 */
+	public function testUpdateReturns400WhenAValueIsRejected(): void {
+		$this->request->method('getParams')
+			->willReturn(['ooapi_consumers' => ['alice']]);
+
+		$this->settingsService->method('updateSettings')
+			->willThrowException(new \InvalidArgumentException('Setting ooapi_consumers takes a single value, not a list or an object'));
+
+		$response = $this->controller->update();
+
+		$this->assertSame(400, $response->getStatus());
+		$this->assertSame(['error' => 'Setting ooapi_consumers takes a single value, not a list or an object'], $response->getData());
 	}
 
 	/**

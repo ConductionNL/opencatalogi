@@ -39,8 +39,8 @@ namespace OCA\OpenCatalogi\Service\Portal;
 
 use DateTimeImmutable;
 use DateTimeZone;
+use OCA\OpenCatalogi\Contract\SavedSearchMatcherInterface;
 use OCA\OpenCatalogi\Service\PublicationQueryService;
-use OCA\OpenCatalogi\Service\SearchQueryTranslator;
 use Psr\Log\LoggerInterface;
 use Throwable;
 
@@ -49,7 +49,7 @@ use Throwable;
  *
  * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-frequency-decides-when-and-how-the-resident-hears-req-ssa-003
  */
-class SavedSearchMatcher {
+class SavedSearchMatcher implements SavedSearchMatcherInterface {
 
 	/**
 	 * The most saved searches read per run.
@@ -60,11 +60,6 @@ class SavedSearchMatcher {
 	 * The most due saved searches handled per run.
 	 */
 	private const DUE_LIMIT = 200;
-
-	/**
-	 * The most rows asked of one search.
-	 */
-	private const SEARCH_LIMIT = 100;
 
 	/**
 	 * The most publications in one digest.
@@ -86,12 +81,12 @@ class SavedSearchMatcher {
 	/**
 	 * Constructor.
 	 *
-	 * @param PortalObjectStore       $store        Reads and writes as the system.
-	 * @param PublicSearchRunner      $search       The anonymous public search.
-	 * @param PublicationLinker       $linker       The public link to a publication.
+	 * @param PortalObjectStore $store Reads and writes as the system.
+	 * @param PublicSearchRunner $search The anonymous public search.
+	 * @param PublicationLinker $linker The public link to a publication.
 	 * @param PublicationQueryService $publications The public-ness rule.
-	 * @param SavedSearchNoticeWriter $notices      Writes the message to the resident.
-	 * @param LoggerInterface         $logger       The logger.
+	 * @param SavedSearchNoticeWriter $notices Writes the message to the resident.
+	 * @param LoggerInterface $logger The logger.
 	 */
 	public function __construct(
 		private readonly PortalObjectStore $store,
@@ -114,53 +109,88 @@ class SavedSearchMatcher {
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-frequency-decides-when-and-how-the-resident-hears-req-ssa-003
 	 */
 	public function run(DateTimeImmutable $now): array {
-		$stats = ['handled' => 0, 'notices' => 0, 'baselined' => 0, 'failed' => 0];
-		$nowUtc = $this->utc(moment: $now);
+		$run = new SavedSearchMatchRun();
+		$run->now = $now;
+		$run->nowUtc = $this->utc(moment: $now);
 
 		foreach ($this->store->findWhere(schema: SavedSearchService::SCHEMA, filters: [], limit: self::READ_LIMIT) as $saved) {
-			if (($saved['active'] ?? true) === false || is_string($saved['id'] ?? null) === false) {
+			if ($this->isActive(saved: $saved) === false) {
 				continue;
 			}
 
-			if ($stats['handled'] >= self::DUE_LIMIT) {
+			if ($run->handled >= self::DUE_LIMIT) {
 				break;
 			}
 
-			try {
-				$lastRunAt = $this->moment(value: ($saved['lastRunAt'] ?? null));
-				if ($lastRunAt === null) {
-					$saved['lastRunAt'] = $nowUtc;
-					$this->store->save(schema: SavedSearchService::SCHEMA, data: $saved, id: $saved['id']);
-					$stats['baselined']++;
-					continue;
-				}
+			$this->handleSafely(run: $run, saved: $saved);
+		}
 
-				if ($this->isDue(frequency: (string)($saved['frequency'] ?? 'daily'), lastRunAt: $lastRunAt, now: $now) === false) {
-					continue;
-				}
-
-				$stats['handled']++;
-				$matches = $this->matches(saved: $saved, from: $lastRunAt, until: $now);
-				$stats['notices'] += $this->notify(saved: $saved, matches: $matches, until: $nowUtc);
-			} catch (Throwable $e) {
-				$stats['failed']++;
-				$this->logger->warning(
-					'OpenCatalogi: a saved search was not handled; the next run tries again',
-					['savedSearch' => $saved['id'], 'reason' => $e->getMessage()]
-				);
-			}//end try
-		}//end foreach
-
-		return $stats;
-
+		return $run->stats();
 	}//end run()
+
+	/**
+	 * Whether a stored saved search is switched on and has an id.
+	 *
+	 * @param array<string, mixed> $saved The saved search.
+	 *
+	 * @return bool
+	 */
+	private function isActive(array $saved): bool {
+		return ($saved['active'] ?? true) !== false && is_string($saved['id'] ?? null) === true;
+	}//end isActive()
+
+	/**
+	 * Handle one saved search; a failure is counted and logged, and the next
+	 * run tries again.
+	 *
+	 * @param SavedSearchMatchRun $run The run.
+	 * @param array<string, mixed> $saved The saved search.
+	 *
+	 * @return void
+	 */
+	private function handleSafely(SavedSearchMatchRun $run, array $saved): void {
+		try {
+			$this->handle(run: $run, saved: $saved);
+		} catch (Throwable $e) {
+			$run->failed++;
+			$this->logger->warning(
+				'OpenCatalogi: a saved search was not handled; the next run tries again',
+				['savedSearch' => $saved['id'], 'reason' => $e->getMessage()]
+			);
+		}
+	}//end handleSafely()
+
+	/**
+	 * Give a new saved search its first last run, or notify a due one.
+	 *
+	 * @param SavedSearchMatchRun $run The run.
+	 * @param array<string, mixed> $saved The saved search.
+	 *
+	 * @return void
+	 */
+	private function handle(SavedSearchMatchRun $run, array $saved): void {
+		$lastRunAt = $this->moment(value: ($saved['lastRunAt'] ?? null));
+		if ($lastRunAt === null) {
+			$saved['lastRunAt'] = $run->nowUtc;
+			$this->store->save(schema: SavedSearchService::SCHEMA, data: $saved, id: $saved['id']);
+			$run->baselined++;
+			return;
+		}
+
+		if ($this->isDue(frequency: (string)($saved['frequency'] ?? 'daily'), lastRunAt: $lastRunAt, now: $run->now) === false) {
+			return;
+		}
+
+		$run->handled++;
+		$run->notices += $this->notify(saved: $saved, window: new SearchWindow(from: $lastRunAt, until: $run->now));
+	}//end handle()
 
 	/**
 	 * Whether a saved search is due at this moment.
 	 *
-	 * @param string            $frequency immediate, daily or weekly.
+	 * @param string $frequency immediate, daily or weekly.
 	 * @param DateTimeImmutable $lastRunAt Its last run.
-	 * @param DateTimeImmutable $now       The moment of the run.
+	 * @param DateTimeImmutable $now The moment of the run.
 	 *
 	 * @return bool
 	 *
@@ -177,7 +207,6 @@ class SavedSearchMatcher {
 		}
 
 		return $now >= $moment && $lastRunAt < $moment;
-
 	}//end isDue()
 
 	/**
@@ -185,91 +214,107 @@ class SavedSearchMatcher {
 	 * oldest first.
 	 *
 	 * @param array<string, mixed> $saved The saved search.
-	 * @param DateTimeImmutable    $from  The last run (exclusive).
-	 * @param DateTimeImmutable    $until The moment of the run (inclusive).
+	 * @param SearchWindow $window The run window.
 	 *
 	 * @return array<int, array{publication: string, title: string, url: string, publicationDate: string}>
 	 *
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-matching-finds-only-publications-the-resident-could-have-found-new-since-the-last-run-req-ssa-002
-	 *
-	 * @SuppressWarnings(PHPMD.StaticAccess) SearchQueryTranslator is a pure function over the query.
 	 */
-	private function matches(array $saved, DateTimeImmutable $from, DateTimeImmutable $until): array {
-		$params = SearchQueryTranslator::fromSavedQuery(query: (array)($saved['query'] ?? []));
-		$range = (array)($params['publicationDate'] ?? []);
-		unset($range['gte'], $range['lte']);
-		$params['publicationDate'] = array_merge($range, ['gt' => $this->utc(moment: $from), 'lte' => $this->utc(moment: $until)]);
-		$params['_limit'] = self::SEARCH_LIMIT;
-		$params['_order'] = ['publicationDate' => 'asc'];
-
-		$filters = (array)($saved['query']['filters'] ?? []);
-		$window = [
-			'from' => $from,
-			'until' => $until,
-			'periodFrom' => $this->moment(value: ($filters['periodFrom'] ?? null)),
-			'periodTo' => $this->moment(value: ($filters['periodTo'] ?? null))?->setTime(23, 59, 59),
-		];
+	private function matches(array $saved, SearchWindow $window): array {
+		$params = $window->searchParams(query: (array)($saved['query'] ?? []));
+		$window = $this->narrowedToPeriod(window: $window, filters: (array)($saved['query']['filters'] ?? []));
 
 		$found = [];
 		foreach ($this->search->search(params: $params) as $row) {
-			$self = (array)($row['@self'] ?? []);
-			$id = (string)($self['id'] ?? ($row['id'] ?? ''));
-			$date = $this->moment(value: ($row['publicationDate'] ?? null));
-			if ($id === '' || ($self['schema'] ?? null) !== PortalObjectStore::PUBLICATION_SCHEMA || $this->inWindow(date: $date, window: $window) === false
-				|| $this->publications->isObjectPublic(objectData: $row) === false
-			) {
-				continue;
+			if ($this->isNewPublicMatch(row: $row, window: $window) === true) {
+				$found[$this->rowId(row: $row)] = $this->noticeEntry(row: $row);
 			}
-
-			$found[$id] = [
-				'publication' => $id,
-				'title' => mb_substr((string)($row['title'] ?? ''), 0, 500),
-				'url' => $this->linker->url(id: $id),
-				'publicationDate' => $this->utc(moment: $date),
-			];
-		}//end foreach
+		}
 
 		$found = array_values($found);
 		usort($found, static fn (array $a, array $b): int => strcmp($a['publicationDate'], $b['publicationDate']));
 		return $found;
-
 	}//end matches()
 
 	/**
-	 * Whether a publication date lies in the run's window and the saved period.
+	 * The run window narrowed by the saved period, its end day included whole.
 	 *
-	 * @param DateTimeImmutable|null                $date   The publication date.
-	 * @param array<string, DateTimeImmutable|null> $window from, until (exclusive, inclusive), periodFrom, periodTo.
+	 * @param SearchWindow $window The run window.
+	 * @param array<string, mixed> $filters The saved query's filters.
+	 *
+	 * @return SearchWindow The narrowed window.
+	 */
+	private function narrowedToPeriod(SearchWindow $window, array $filters): SearchWindow {
+		return $window->narrowedTo(
+			periodFrom: $this->moment(value: ($filters['periodFrom'] ?? null)),
+			periodTo: $this->moment(value: ($filters['periodTo'] ?? null))?->setTime(23, 59, 59)
+		);
+	}//end narrowedToPeriod()
+
+	/**
+	 * Whether a search row is a publication with an id, dated in the window,
+	 * and public.
+	 *
+	 * @param array<string, mixed> $row The search row.
+	 * @param SearchWindow $window The narrowed window.
 	 *
 	 * @return bool
 	 */
-	private function inWindow(?DateTimeImmutable $date, array $window): bool {
-		if ($date === null || $date <= $window['from'] || $date > $window['until']) {
+	private function isNewPublicMatch(array $row, SearchWindow $window): bool {
+		$self = (array)($row['@self'] ?? []);
+		if ($this->rowId(row: $row) === '' || ($self['schema'] ?? null) !== PortalObjectStore::PUBLICATION_SCHEMA) {
 			return false;
 		}
 
-		if ($window['periodFrom'] !== null && $date < $window['periodFrom']) {
-			return false;
-		}
-
-		return $window['periodTo'] === null || $date <= $window['periodTo'];
-
-	}//end inWindow()
+		return $window->contains(date: $this->moment(value: ($row['publicationDate'] ?? null))) === true
+			&& $this->publications->isObjectPublic(objectData: $row) === true;
+	}//end isNewPublicMatch()
 
 	/**
-	 * Write each notice's message, then record it on the saved search, and
-	 * move `lastRunAt` in the save after the last message.
+	 * A search row's publication id: its `@self` id, else its own id.
 	 *
-	 * @param array<string, mixed>             $saved   The saved search.
-	 * @param array<int, array<string, mixed>> $matches The matches.
-	 * @param string                           $until   The end of the window, UTC.
+	 * @param array<string, mixed> $row The search row.
+	 *
+	 * @return string The id, or ''.
+	 */
+	private function rowId(array $row): string {
+		$self = (array)($row['@self'] ?? []);
+		return (string)($self['id'] ?? ($row['id'] ?? ''));
+	}//end rowId()
+
+	/**
+	 * One matched publication as a notice lists it.
+	 *
+	 * @param array<string, mixed> $row The matched search row.
+	 *
+	 * @return array{publication: string, title: string, url: string, publicationDate: string}
+	 */
+	private function noticeEntry(array $row): array {
+		$id = $this->rowId(row: $row);
+		return [
+			'publication' => $id,
+			'title' => mb_substr((string)($row['title'] ?? ''), 0, 500),
+			'url' => $this->linker->url(id: $id),
+			'publicationDate' => $this->utc(moment: $this->moment(value: ($row['publicationDate'] ?? null))),
+		];
+	}//end noticeEntry()
+
+	/**
+	 * Match a saved search in its window, write each notice's message, then
+	 * record it on the saved search, and move `lastRunAt` in the save after
+	 * the last message.
+	 *
+	 * @param array<string, mixed> $saved The saved search.
+	 * @param SearchWindow $window The run window.
 	 *
 	 * @return int How many notices were handed over.
 	 *
 	 * @spec openspec/changes/saved-searches-and-alerts/specs/saved-searches/spec.md#requirement-the-notice-reaches-the-resident-through-portaliq-and-a-crash-sends-late-not-never-req-ssa-004
 	 */
-	private function notify(array $saved, array $matches, string $until): int {
+	private function notify(array $saved, SearchWindow $window): int {
 		$id = (string)$saved['id'];
+		$until = $this->utc(moment: $window->until);
+		$matches = $this->matches(saved: $saved, window: $window);
 		if ($matches === []) {
 			$saved['lastRunAt'] = $until;
 			$this->store->save(schema: SavedSearchService::SCHEMA, data: $saved, id: $id);
@@ -299,7 +344,6 @@ class SavedSearchMatcher {
 		}
 
 		return count($batches);
-
 	}//end notify()
 
 	/**
@@ -317,7 +361,6 @@ class SavedSearchMatcher {
 
 		$this->lastStamp = $stamp;
 		return $stamp;
-
 	}//end stamp()
 
 	/**
@@ -329,7 +372,6 @@ class SavedSearchMatcher {
 	 */
 	private function utc(DateTimeImmutable $moment): string {
 		return $moment->setTimezone(new DateTimeZone('UTC'))->format(DATE_ATOM);
-
 	}//end utc()
 
 	/**

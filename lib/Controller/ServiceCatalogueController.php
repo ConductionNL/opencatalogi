@@ -34,12 +34,18 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CaseTypeCatalogueService;
+use OCA\OpenCatalogi\Contract\CaseTypeCatalogueServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Contract\ServiceCatalogueServiceInterface;
 use OCA\OpenCatalogi\Service\Catalogue\CatalogueUnreadableException;
 use OCA\OpenCatalogi\Service\Catalogue\ExternalCatalogueUnreachableException;
-use OCA\OpenCatalogi\Service\ServiceCatalogueService;
+use OCA\OpenCatalogi\Service\ObjectInPair;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\AppFramework\Controller;
+use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
@@ -48,10 +54,13 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IL10N;
 use OCP\IRequest;
-use Psr\Container\ContainerInterface;
 
 /**
  * Serves the published service catalogue and the case type catalogue.
+ *
+ * The case type schema's writes and its stored snapshot name group admin, which
+ * leaves out the delegated administrators the admin-setting check lets in. That
+ * check is the gate, so the import and the resynchronisation skip RBAC.
  *
  * @SuppressWarnings(PHPMD.CouplingBetweenObjects)
  *
@@ -61,6 +70,7 @@ class ServiceCatalogueController extends Controller {
 	use AnswersCrossOriginRequests;
 	use ReadsOpenRegisterResults;
 	use ResolvesRegisterConfiguration;
+	use SendsListCorsHeaders;
 
 	/**
 	 * Constructor.
@@ -68,13 +78,11 @@ class ServiceCatalogueController extends Controller {
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
 	 * @param IAppConfig $config App configuration.
-	 * @param ContainerInterface $container Server container.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localisation.
-	 * @param ServiceCatalogueService $catalogueService The catalogue reader.
-	 * @param CaseTypeCatalogueService $caseTypeService The case type importer.
-	 * @param string $corsMethods Allowed CORS methods.
-	 * @param string $corsAllowedHeaders Allowed CORS headers.
-	 * @param integer $corsMaxAge CORS max age.
+	 * @param ServiceCatalogueServiceInterface $catalogueService The catalogue reader.
+	 * @param CaseTypeCatalogueServiceInterface $caseTypeService The case type importer.
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
 	 *
 	 * @SuppressWarnings(PHPMD.ExcessiveParameterList)
 	 */
@@ -82,13 +90,11 @@ class ServiceCatalogueController extends Controller {
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly IL10N $l10n,
-		private readonly ServiceCatalogueService $catalogueService,
-		private readonly CaseTypeCatalogueService $caseTypeService,
-		private readonly string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		private readonly string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		private readonly int $corsMaxAge = 1728000,
+		private readonly ServiceCatalogueServiceInterface $catalogueService,
+		private readonly CaseTypeCatalogueServiceInterface $caseTypeService,
+		private readonly CorsSettings $cors = new CorsSettings(),
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -102,14 +108,7 @@ class ServiceCatalogueController extends Controller {
 	 * @return JSONResponse The response, with its headers.
 	 */
 	private function withCors(JSONResponse $response): JSONResponse {
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
-
+		return $this->withListPreflightHeaders(response: $response);
 	}//end withCors()
 
 	/**
@@ -124,15 +123,7 @@ class ServiceCatalogueController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
-
+		return $this->withListPreflightHeaders(response: new Response());
 	}//end preflightedCors()
 
 	/**
@@ -161,12 +152,13 @@ class ServiceCatalogueController extends Controller {
 	 * a reason, because an obligation that is hidden reads as an obligation
 	 * that does not exist.
 	 *
-	 * @return JSONResponse The catalogue, grouped.
+	 * @return JSONResponse The catalogue, grouped, and its entries again as `results`.
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
 	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-a-public-catalogue-lists-everything-that-can-be-requested-req-psc-101
+	 * @spec openspec/specs/service-catalogue-admin-screens/spec.md#requirement-an-administrator-lists-the-catalogue-entries-with-their-availability-sca-001
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
@@ -198,7 +190,10 @@ class ServiceCatalogueController extends Controller {
 			);
 		}
 
-		return $this->withCors(response: new JSONResponse($catalogue));
+		// `results` repeats the flat entry list under the key a list page reads.
+		return $this->withCors(
+			response: new JSONResponse(array_merge($catalogue, ['results' => $catalogue['entries']]))
+		);
 
 	}//end index()
 
@@ -274,8 +269,10 @@ class ServiceCatalogueController extends Controller {
 			$objectService = $this->catalogueService->getObjectService();
 			$found = $objectService->find(
 				id: $id,
-				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				options: new ObjectFindOptions(
+					register: $caseTypeConfig['register'],
+					schema: $caseTypeConfig['schema']
+				)
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return $this->withCors(
@@ -341,9 +338,11 @@ class ServiceCatalogueController extends Controller {
 			$objectService = $this->catalogueService->getObjectService();
 			$saved = $objectService->saveObject(
 				object: $definition,
-				extend: [],
-				register: $caseTypeConfig['register'],
-				schema: $caseTypeConfig['schema']
+				options: new ObjectSaveOptions(target: new ObjectFindTarget(
+						register: $caseTypeConfig['register'],
+						schema: $caseTypeConfig['schema']
+					)),
+				_rbac: false
 			);
 		} catch (CatalogueUnreadableException $e) {
 			return new JSONResponse(
@@ -353,7 +352,6 @@ class ServiceCatalogueController extends Controller {
 		}
 
 		return new JSONResponse($this->asArray(object: $saved), Http::STATUS_CREATED);
-
 	}//end importCaseType()
 
 	/**
@@ -367,45 +365,24 @@ class ServiceCatalogueController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function previewResync(string $id): JSONResponse {
-		try {
-			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
-			$objectService = $this->catalogueService->getObjectService();
-			$local = $this->asArray(
-				object: $objectService->find(
-					id: $id,
-					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema']
-				)
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(
-				data: ['error' => 'catalogue-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
+		$target = $this->resyncTarget(id: $id);
+		if ($target instanceof JSONResponse) {
+			return $target;
 		}
 
-		$source = ($local['source'] ?? []);
-		if (is_array($source) === false || ($source['sourceId'] ?? '') === '') {
+		if ($this->isImported(local: $target['local']) === false) {
 			return new JSONResponse(
 				data: ['error' => 'not-imported', 'message' => $this->l10n->t('This definition was not imported, so there is no source to compare it with.')],
 				statusCode: Http::STATUS_BAD_REQUEST
 			);
 		}
 
-		try {
-			$diff = $this->caseTypeService->diffAgainstSource(
-				local: $local,
-				sourceId: (string)$source['sourceId'],
-				externalId: (string)($source['externalId'] ?? '')
-			);
-		} catch (ExternalCatalogueUnreachableException $e) {
-			return $this->unreachableResponse(e: $e);
+		$diff = $this->sourceDiff(local: $target['local']);
+		if ($diff instanceof JSONResponse) {
+			return $diff;
 		}
 
 		return new JSONResponse($diff);
-
 	}//end previewResync()
 
 	/**
@@ -424,57 +401,114 @@ class ServiceCatalogueController extends Controller {
 			$accepted = [];
 		}
 
-		try {
-			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
-			$objectService = $this->catalogueService->getObjectService();
-			$local = $this->asArray(
-				object: $objectService->find(
-					id: $id,
-					register: $caseTypeConfig['register'],
-					schema: $caseTypeConfig['schema']
-				)
-			);
-		} catch (CatalogueUnreadableException $e) {
-			return new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
-		} catch (\Throwable $e) {
-			return $this->registerConfigErrorResponse(e: $e);
+		$target = $this->resyncTarget(id: $id);
+		if ($target instanceof JSONResponse) {
+			return $target;
 		}
 
-		$source = ($local['source'] ?? []);
-		if (is_array($source) === false || ($source['sourceId'] ?? '') === '') {
-			return new JSONResponse(
-				data: ['error' => 'not-imported'],
-				statusCode: Http::STATUS_BAD_REQUEST
-			);
+		if ($this->isImported(local: $target['local']) === false) {
+			return new JSONResponse(data: ['error' => 'not-imported'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
-		try {
-			$diff = $this->caseTypeService->diffAgainstSource(
-				local: $local,
-				sourceId: (string)$source['sourceId'],
-				externalId: (string)($source['externalId'] ?? '')
-			);
-		} catch (ExternalCatalogueUnreachableException $e) {
-			return $this->unreachableResponse(e: $e);
+		$diff = $this->sourceDiff(local: $target['local']);
+		if ($diff instanceof JSONResponse) {
+			return $diff;
 		}
 
 		$updated = $this->caseTypeService->applyResync(
-			local: $local,
+			local: $target['local'],
 			diff: $diff,
 			accepted: array_values(array_map('strval', $accepted))
 		);
 
-		$saved = $objectService->saveObject(
+		$saved = $target['objectService']->saveObject(
 			object: $updated,
-			extend: [],
-			register: $caseTypeConfig['register'],
-			schema: $caseTypeConfig['schema'],
-			uuid: $id
+			options: new ObjectSaveOptions(
+				target: new ObjectFindTarget(
+						register: $target['config']['register'],
+						schema: $target['config']['schema']
+					),
+				uuid: $id
+			),
+			_rbac: false
 		);
 
 		return new JSONResponse($this->asArray(object: $saved));
-
 	}//end applyResync()
+
+	/**
+	 * The stored case type definition a resynchronisation works on.
+	 *
+	 * Answers the configuration, the store and the definition, or the refusal when it cannot be read.
+	 *
+	 * @param string $id The local case type definition id.
+	 *
+	 * @return array{config: array<string, mixed>, objectService: object, local: array<string, mixed>}|JSONResponse
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
+	 */
+	private function resyncTarget(string $id): array|JSONResponse {
+		try {
+			$caseTypeConfig = $this->configurationFor(schemaKey: 'case_type_definition_schema');
+			$objectService = $this->catalogueService->getObjectService();
+			$local = $this->asArray(
+				object: ObjectInPair::require(
+					found: $objectService->find(
+						id: $id,
+						options: new ObjectFindOptions(
+							register: $caseTypeConfig['register'],
+							schema: $caseTypeConfig['schema']
+						),
+						_rbac: false
+					),
+					config: $caseTypeConfig
+				)
+			);
+		} catch (CatalogueUnreadableException $e) {
+			return new JSONResponse(data: ['error' => 'catalogue-unreadable'], statusCode: Http::STATUS_SERVICE_UNAVAILABLE);
+		} catch (DoesNotExistException $e) {
+			return new JSONResponse(data: ['error' => 'not-found'], statusCode: Http::STATUS_NOT_FOUND);
+		} catch (\Throwable $e) {
+			return $this->registerConfigErrorResponse(e: $e);
+		}
+
+		return ['config' => $caseTypeConfig, 'objectService' => $objectService, 'local' => $local];
+	}//end resyncTarget()
+
+	/**
+	 * Whether a definition was imported, so it has a source to resynchronise against.
+	 *
+	 * @param array<string, mixed> $local The local definition.
+	 *
+	 * @return bool True when it names a source id.
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
+	 */
+	private function isImported(array $local): bool {
+		$source = ($local['source'] ?? []);
+		return is_array($source) === true && ($source['sourceId'] ?? '') !== '';
+	}//end isImported()
+
+	/**
+	 * The difference between an imported definition and its source.
+	 *
+	 * @param array<string, mixed> $local The imported local definition.
+	 *
+	 * @return array<string, mixed>|JSONResponse The difference, or the 502 when the source cannot be reached.
+	 *
+	 * @spec openspec/changes/published-service-and-case-type-catalogue/specs/published-service-and-case-type-catalogue/spec.md#requirement-case-types-are-imported-from-a-published-external-catalogue-and-resynchronised-req-psc-103
+	 */
+	private function sourceDiff(array $local): array|JSONResponse {
+		try {
+			return $this->caseTypeService->diffAgainstSource(
+				local: $local,
+				sourceId: (string)$local['source']['sourceId'],
+				externalId: (string)($local['source']['externalId'] ?? '')
+			);
+		} catch (ExternalCatalogueUnreachableException $e) {
+			return $this->unreachableResponse(e: $e);
+		}
+	}//end sourceDiff()
 
 	/**
 	 * The unreachable answer for an external catalogue we could not ask.

@@ -82,14 +82,14 @@ class DecisionTableEvaluator {
 	 * @var array<string, string>
 	 */
 	private const TYPE_ALIASES = [
-		'int'       => 'number',
-		'integer'   => 'number',
-		'long'      => 'number',
-		'float'     => 'number',
-		'double'    => 'number',
-		'decimal'   => 'number',
-		'bool'      => 'boolean',
-		'datetime'  => 'date',
+		'int' => 'number',
+		'integer' => 'number',
+		'long' => 'number',
+		'float' => 'number',
+		'double' => 'number',
+		'decimal' => 'number',
+		'bool' => 'boolean',
+		'datetime' => 'date',
 		'timestamp' => 'date',
 	];
 
@@ -230,7 +230,7 @@ class DecisionTableEvaluator {
 	/**
 	 * Refuse an ANY table whose matching rules disagree.
 	 *
-	 * @param array<int, array<string, mixed>> $matchedRules   The matching rules.
+	 * @param array<int, array<string, mixed>> $matchedRules The matching rules.
 	 * @param array<int, array{name: string, type: string}> $declaredOutputs The declared outputs.
 	 * @param array<int, string> $matchedIds The matching rule ids, for the error.
 	 *
@@ -284,7 +284,6 @@ class DecisionTableEvaluator {
 		}
 
 		return $outputs;
-
 	}//end collectOutputs()
 
 	/**
@@ -308,7 +307,6 @@ class DecisionTableEvaluator {
 		}
 
 		return $matchedRules[0];
-
 	}//end selectWinner()
 
 	/**
@@ -325,10 +323,10 @@ class DecisionTableEvaluator {
 	 */
 	private function highestPriority(array $matchedRules): array {
 		$winner = $matchedRules[0];
-		$best = (int) ($winner['priority'] ?? 0);
+		$best = (int)($winner['priority'] ?? 0);
 
 		foreach ($matchedRules as $rule) {
-			$priority = (int) ($rule['priority'] ?? 0);
+			$priority = (int)($rule['priority'] ?? 0);
 			// STRICTLY greater, so an equal priority leaves the earlier rule in
 			// place and declaration order is the tie-break.
 			if ($priority > $best) {
@@ -338,7 +336,6 @@ class DecisionTableEvaluator {
 		}
 
 		return $winner;
-
 	}//end highestPriority()
 
 	/**

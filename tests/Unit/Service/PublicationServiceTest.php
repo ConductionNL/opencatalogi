@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+
 declare(strict_types=1);
 
 namespace Unit\Service;
@@ -20,6 +25,7 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 class PublicationServiceTest extends TestCase {
 	private IAppConfig|MockObject $config;
@@ -364,15 +370,111 @@ class PublicationServiceTest extends TestCase {
 			'registers' => ['reg-specific'],
 			'schemas' => ['sch-specific'],
 		]);
+		$catalog->setRegister('register-1');
+		$catalog->setSchema('schema-1');
 
 		// searchObjects returns all, but find returns the specific one
 		$objectService->method('searchObjects')->willReturn([]);
-		$objectService->method('find')->with('catalog-42')->willReturn($catalog);
+		$objectService->expects($this->once())->method('find')
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'catalog-42',
+				'_extend' => [],
+				'files' => false,
+				'register' => 'register-1',
+				'schema' => 'schema-1',
+			]))
+			->willReturn($catalog);
 
 		$result = $this->service->getCatalogFilters('catalog-42');
 
 		$this->assertSame(['reg-specific'], $result['registers']);
 		$this->assertSame(['sch-specific'], $result['schemas']);
+	}
+
+	/**
+	 * An object outside the catalog register or schema does not act as a catalog.
+	 *
+	 * @return array<string, array{0: string, 1: string}>
+	 */
+	public static function provideObjectsOutsideTheCatalogSchema(): array {
+		return [
+			'other schema' => ['register-1', 'schema-2'],
+			'other register' => ['register-2', 'schema-1'],
+			'other register and schema' => ['register-2', 'schema-2'],
+		];
+	}
+
+	/**
+	 * @dataProvider provideObjectsOutsideTheCatalogSchema
+	 */
+	public function testGetCatalogFiltersIgnoresAnObjectOutsideTheCatalogSchema(string $register, string $schema): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$other = $this->createSerializableObject([
+			'registers' => ['reg-other'],
+			'schemas' => ['sch-other'],
+		]);
+		$other->setRegister($register);
+		$other->setSchema($schema);
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn($other);
+
+		$result = $this->service->getCatalogFilters('not-a-catalog');
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $result);
+		$this->assertSame([], $this->service->getAvailableRegisters());
+		$this->assertSame([], $this->service->getAvailableSchemas());
+	}
+
+	public function testGetCatalogFiltersIsEmptyWhenTheCatalogIsNotFound(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn(null);
+
+		$this->assertSame(['registers' => [], 'schemas' => []], $this->service->getCatalogFilters('missing'));
+	}
+
+	public function testIndexWithAnObjectOutsideTheCatalogSchemaFindsNothing(): void {
+		$objectService = $this->createObjectServiceMock();
+		$this->mockObjectServiceAvailable($objectService);
+
+		$this->config->method('getValueString')
+			->willReturnMap([
+				['opencatalogi', 'catalog_schema', '', 'schema-1'],
+				['opencatalogi', 'catalog_register', '', 'register-1'],
+			]);
+
+		$other = $this->createSerializableObject([
+			'registers' => ['reg-other'],
+			'schemas' => ['sch-other'],
+		]);
+		$other->setRegister('register-9');
+		$other->setSchema('schema-9');
+
+		$objectService->method('searchObjects')->willReturn([]);
+		$objectService->method('find')->willReturn($other);
+		$objectService->expects($this->never())->method('searchObjectsPaginated');
+
+		$this->request->method('getParams')->willReturn([]);
+
+		$response = $this->service->index('not-a-catalog');
+		$this->assertSame(['results' => [], 'facets' => [], 'total' => 0], $response->getData());
 	}
 
 	public function testGetCatalogFiltersCachesResults(): void {
@@ -504,6 +606,8 @@ class PublicationServiceTest extends TestCase {
 			'registers' => ['reg-1'],
 			'schemas' => ['sch-1'],
 		]);
+		$catalog->setRegister('register-1');
+		$catalog->setSchema('schema-1');
 		$objectService->method('searchObjects')->willReturn([]);
 		$objectService->method('find')
 			->willReturn($catalog);
@@ -610,7 +714,10 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1', 'title' => 'Found Publication']);
 		$objectService->method('find')
-			->with('pub-1', [])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => [],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([]);
@@ -658,7 +765,10 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.files'])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => ['@self.files'],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -683,7 +793,10 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.metadata'])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => ['@self.metadata'],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -706,7 +819,10 @@ class PublicationServiceTest extends TestCase {
 		// After filtering, only @self.files should remain; 'other.field' is stripped
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.files'])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => ['@self.files'],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -835,6 +951,104 @@ class PublicationServiceTest extends TestCase {
 
 		$data = json_decode($response->render(), true);
 		$this->assertArrayHasKey('results', $data);
+	}
+
+	/**
+	 * A publication held here answers with its own attachments and no peer is asked.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsOfALocalPublicationStayLocal(): void {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$objectService->method('searchObjects')->willReturn([$this->createSerializableObject(['registers' => [1], 'schemas' => [1]])]);
+		$this->container->method('get')
+			->willReturnCallback(function (string $class) use ($objectService, $fileService, $queryService) {
+				return match ($class) {
+					'OCA\OpenRegister\Service\ObjectService' => $objectService,
+					'OCA\OpenRegister\Service\FileService' => $fileService,
+					\OCA\OpenCatalogi\Service\PublicationQueryService::class => $queryService,
+					default => null,
+				};
+			});
+		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+		$fileService->method('getFiles')->willReturn([['raw-file']]);
+		$fileService->method('formatFiles')->willReturn(['results' => [['name' => 'local.pdf']], 'total' => 1]);
+		$this->request->method('getParams')->willReturn([]);
+
+		$this->directoryService->expects($this->never())->method('getRemoteAttachments');
+
+		$response = $this->service->getFederatedAttachments('pub-1');
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(['results' => [['name' => 'local.pdf']], 'total' => 1], $response->getData());
+	}
+
+	/**
+	 * A publication not held here is read from the instance that holds it.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsOfARemotePublicationComeFromItsSource(): void {
+		$files = [
+			['id' => 'f1', 'downloadUrl' => 'https://peer.example.org/dav/f1', 'source' => ['instance' => 'https://peer.example.org']],
+			['id' => 'f2', 'downloadUrl' => 'https://peer.example.org/dav/f2', 'source' => ['instance' => 'https://peer.example.org']],
+		];
+		$this->directoryService->expects($this->once())
+			->method('getRemoteAttachments')
+			->with('remote-1', ['timeout' => 10, 'query_params' => ['timeout' => '10']])
+			->willReturn(['results' => $files, 'source' => ['peer.example.org' => 'https://peer.example.org/x']]);
+
+		$response = $this->service->getFederatedAttachments('remote-1', ['timeout' => '10']);
+
+		$this->assertSame(200, $response->getStatus());
+		$this->assertSame(
+			['results' => $files, 'total' => 2, 'page' => 1, 'pages' => 1, 'sources' => ['peer.example.org' => 'https://peer.example.org/x']],
+			$response->getData()
+		);
+	}
+
+	/**
+	 * Without a reachable source the answer is a 404 that says so.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsWithoutAReachableSourceAre404(): void {
+		$this->directoryService->method('getRemoteAttachments')->willReturn(null);
+
+		$response = $this->service->getFederatedAttachments('remote-1');
+
+		$this->assertSame(404, $response->getStatus());
+		$this->assertSame(['error' => 'Not Found: no reachable source holds this publication'], $response->getData());
+	}
+
+	/**
+	 * A failing peer lookup is a 404 too, not an error page.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsTreatAFailingLookupAsUnreachable(): void {
+		$this->directoryService->method('getRemoteAttachments')->willThrowException(new RuntimeException('directory down'));
+
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1')->getStatus());
+	}
+
+	/**
+	 * A peer asking with _aggregate=false gets the local answer and no fan-out.
+	 *
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
+	 */
+	public function testFederatedAttachmentsWithoutAggregationNeverAskPeers(): void {
+		$this->directoryService->expects($this->never())->method('getRemoteAttachments');
+
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1', ['_aggregate' => 'false'])->getStatus());
+		$this->assertSame(404, $this->service->getFederatedAttachments('remote-1', ['_aggregate' => '0'])->getStatus());
 	}
 
 	public function testAttachmentsReturns404OnDoesNotExist(): void {
@@ -1024,6 +1238,7 @@ class PublicationServiceTest extends TestCase {
 		$this->assertSame(0, $data['total']);
 		$this->assertSame(1, $data['page']);
 		$this->assertSame(1, $data['pages']);
+		$this->assertSame(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []], $data);
 	}
 
 	public function testUsesReturnsRelatedObjects(): void {
@@ -1135,6 +1350,7 @@ class PublicationServiceTest extends TestCase {
 		$data = json_decode($response->render(), true);
 		$this->assertSame([], $data['results']);
 		$this->assertSame(0, $data['total']);
+		$this->assertSame(['results' => [], 'total' => 0, 'page' => 1, 'pages' => 1, 'facets' => []], $data);
 	}
 
 	public function testUsedReturnsReferencingObjects(): void {
@@ -2778,7 +2994,10 @@ class PublicationServiceTest extends TestCase {
 
 		$objectEntity = $this->createSerializableObject(['id' => 'pub-1']);
 		$objectService->method('find')
-			->with('pub-1', ['@self.attachments'])
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'pub-1',
+				'_extend' => ['@self.attachments'],
+			]))
 			->willReturn($objectEntity);
 
 		$this->request->method('getParams')->willReturn([
@@ -3073,11 +3292,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			['_page' => 1],
-			'http://example.com/api',
-			true,  // includeCatalogs
-			true,  // reqDirFacets
-			true   // reqCatFacets
+			[
+				'requestParams' => ['_page' => 1],
+				'baseUrl' => 'http://example.com/api',
+				'includeCatalogs' => true,
+				'reqDirFacets' => true,
+				'reqCatFacets' => true,
+			]
 		);
 
 		$this->assertArrayHasKey('results', $result);
@@ -3116,11 +3337,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			false, // includeCatalogs
-			false, // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => false,
+				'reqDirFacets' => false,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('results', $result);
@@ -3167,11 +3390,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 2],
-			['_page' => 2],
-			'http://example.com/api',
-			true,  // includeCatalogs
-			false, // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => ['_page' => 2],
+				'baseUrl' => 'http://example.com/api',
+				'includeCatalogs' => true,
+				'reqDirFacets' => false,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('next', $result);
@@ -3212,11 +3437,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 0, '_page' => 1],
-			[],
-			'',
-			true,  // includeCatalogs
-			false, // reqDirFacets
-			true   // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => true,
+				'reqDirFacets' => false,
+				'reqCatFacets' => true,
+			]
 		);
 
 		$this->assertSame(0, $result['limit']);
@@ -3254,11 +3481,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			false, // includeCatalogs
-			true,  // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => false,
+				'reqDirFacets' => true,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('facets', $result);
@@ -3298,11 +3527,13 @@ class PublicationServiceTest extends TestCase {
 		$result = $method->invoke(
 			$this->service,
 			['_limit' => 10, '_page' => 1],
-			[],
-			'',
-			true,  // includeCatalogs
-			true,  // reqDirFacets
-			false  // reqCatFacets
+			[
+				'requestParams' => [],
+				'baseUrl' => '',
+				'includeCatalogs' => true,
+				'reqDirFacets' => true,
+				'reqCatFacets' => false,
+			]
 		);
 
 		$this->assertArrayHasKey('facets', $result);
@@ -3876,6 +4107,23 @@ class PublicationServiceTest extends TestCase {
 		$this->assertContains('B', $titles);
 	}
 
+	public function testApplyCumulativeOrderingKeepsEqualRowsInPlace(): void {
+		$method = new \ReflectionMethod(PublicationService::class, 'applyCumulativeOrdering');
+		$method->setAccessible(true);
+
+		$results = [
+			['title' => 'B', 'score' => 1],
+			['title' => 'A', 'score' => 1],
+			['title' => 'C', 'score' => 1],
+		];
+
+		$ordered = $method->invoke($this->service, $results, [
+			'_order' => ['score' => 'DESC'],
+		]);
+
+		$this->assertSame(['B', 'A', 'C'], array_column($ordered, 'title'));
+	}
+
 	// =======================================================================
 	// download — success path
 	// =======================================================================
@@ -3915,6 +4163,10 @@ class PublicationServiceTest extends TestCase {
 		$fixture->open($tmpFile, \ZipArchive::OVERWRITE);
 		$fixture->addFromString('Bijlagen/attachment1.txt', 'attachment content');
 		$fixture->close();
+
+		$sharedNode = $this->createMock(\OCP\Files\File::class);
+		$sharedNode->method('getName')->willReturn('attachment1.txt');
+		$fileService->method('getFiles')->willReturn([$sharedNode]);
 
 		$fileService->method('createObjectFilesZip')
 			->willReturn([
@@ -4001,6 +4253,103 @@ class PublicationServiceTest extends TestCase {
 		$this->assertInstanceOf(\OCP\AppFramework\Http\JSONResponse::class, $response);
 		$this->assertSame(500, $response->getStatus());
 		$this->assertFileDoesNotExist($tmpFile, 'The ZIP temp file must be cleaned up on the error path.');
+	}
+
+	// =======================================================================
+	// download — shared files only for anonymous callers
+	// =======================================================================
+
+	public function testDownloadGivesAnAnonymousCallerOnlySharedFiles(): void {
+		$entries = $this->downloadEntriesFor($this->service, ['shared.pdf']);
+
+		$this->assertContains('shared.pdf', $entries);
+		$this->assertContains('pub-1.pdf', $entries, 'The metadata PDF must stay in the download ZIP.');
+		$this->assertNotContains('unshared.pdf', $entries, 'An anonymous caller must not receive unshared files.');
+	}
+
+	public function testDownloadGivesASignedInCallerEveryReadableFile(): void {
+		$session = $this->createMock(IUserSession::class);
+		$session->method('getUser')->willReturn($this->createMock(IUser::class));
+
+		$entries = $this->downloadEntriesFor($this->serviceWithSession($session), ['shared.pdf']);
+
+		$this->assertContains('shared.pdf', $entries);
+		$this->assertContains('unshared.pdf', $entries);
+		$this->assertContains('pub-1.pdf', $entries);
+	}
+
+	public function testDownloadGivesAnAnonymousCallerOnlyTheMetadataWhenNoFileIsShared(): void {
+		$entries = $this->downloadEntriesFor($this->service, []);
+
+		$this->assertSame(['pub-1.pdf'], $entries);
+	}
+
+	/**
+	 * Run download() on an object whose files folder holds `shared.pdf` and
+	 * `unshared.pdf`, and return the entry names of the ZIP it hands back.
+	 *
+	 * @param PublicationService $service     The service under test.
+	 * @param list<string>       $sharedNames Names of the files that carry a share.
+	 *
+	 * @return list<string> Entry names of the returned archive.
+	 */
+	private function downloadEntriesFor(PublicationService $service, array $sharedNames): array {
+		$this->mockConfiguredCatalogScope();
+		$objectService = $this->createObjectServiceMock();
+		$fileService = $this->createFileServiceMock();
+		$this->appManager->method('getInstalledApps')->willReturn(['openregister']);
+
+		$queryService = $this->createMock(\OCA\OpenCatalogi\Service\PublicationQueryService::class);
+		$queryService->method('applySchemaScopeReadRuleGuard')->willReturnArgument(0);
+		$queryService->method('findObjectLocation')->willReturn(['register' => 1, 'schema' => 1]);
+		$objectService->method('searchObjects')->willReturn([$this->createSerializableObject(['registers' => [1], 'schemas' => [1]])]);
+		$objectService->method('find')->willReturn($this->createSerializableObject(['id' => 'pub-1']));
+
+		$this->container->method('get')
+			->willReturnCallback(fn (string $class) => match ($class) {
+				\OCA\OpenCatalogi\Service\PublicationQueryService::class => $queryService,
+				'OCA\OpenRegister\Service\ObjectService' => $objectService,
+				default => $fileService,
+			});
+
+		$sharedNodes = [];
+		foreach ($sharedNames as $sharedName) {
+			$node = $this->createMock(\OCP\Files\File::class);
+			$node->method('getName')->willReturn($sharedName);
+			$sharedNodes[] = $node;
+		}
+
+		$fileService->method('getFiles')
+			->willReturnCallback(fn ($object, ?bool $sharedFilesOnly = false): array => ($sharedFilesOnly === true) ? $sharedNodes : []);
+
+		$tmpFile = tempnam(sys_get_temp_dir(), 'test_zip_');
+		$fixture = new \ZipArchive();
+		$fixture->open($tmpFile, \ZipArchive::OVERWRITE);
+		$fixture->addFromString('shared.pdf', 'shared content');
+		$fixture->addFromString('unshared.pdf', 'unshared content');
+		$fixture->close();
+
+		$fileService->method('createObjectFilesZip')
+			->willReturn(['path' => $tmpFile, 'filename' => 'pub-1.zip', 'mimeType' => 'application/zip']);
+		$this->downloadService->method('createPublicationFile')
+			->willReturn(['filename' => 'pub-1.pdf', 'content' => '%PDF-1.4 metadata']);
+
+		$response = $service->download('pub-1');
+		$this->assertInstanceOf(DataDownloadResponse::class, $response);
+
+		$returnedPath = tempnam(sys_get_temp_dir(), 'returned_zip_');
+		file_put_contents($returnedPath, $response->render());
+		$returned = new \ZipArchive();
+		$this->assertTrue($returned->open($returnedPath) === true);
+		$entries = [];
+		for ($i = 0; $i < $returned->numFiles; $i++) {
+			$entries[] = $returned->getNameIndex($i);
+		}
+
+		$returned->close();
+		unlink($returnedPath);
+
+		return $entries;
 	}
 
 	// =======================================================================
@@ -4350,7 +4699,7 @@ class PublicationServiceTest extends TestCase {
 	 * query-service mock whose read-rule guard the test decides.
 	 *
 	 * @param MockObject $objectService The ObjectService mock.
-	 * @param \Closure   $guard         What applySchemaScopeReadRuleGuard() returns for its input.
+	 * @param \Closure $guard What applySchemaScopeReadRuleGuard() returns for its input.
 	 *
 	 * @return MockObject The query-service mock, for further expectations.
 	 */
@@ -4477,8 +4826,8 @@ class PublicationServiceTest extends TestCase {
 	 */
 	public static function federationListPaths(): array {
 		return [
-			'ultra-fast path'       => [[]],
-			'searchPublications()'  => [['_include_catalogs' => 'true']],
+			'ultra-fast path' => [[]],
+			'searchPublications()' => [['_include_catalogs' => 'true']],
 		];
 	}
 

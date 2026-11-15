@@ -25,6 +25,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for PortalObjectStore::writePortalMessage.
@@ -35,21 +36,26 @@ class PortalObjectStoreMessageTest extends TestCase {
 	 * A store over a fake ObjectService that records its saves and answers
 	 * with the given result.
 	 *
-	 * @param mixed                            $result The saveObject answer.
-	 * @param array<int, array<string, mixed>> $calls  The calls, filled in.
+	 * @param mixed $result The saveObject answer.
+	 * @param array<int, array<string, mixed>> $calls The calls, filled in.
 	 *
 	 * @return PortalObjectStore
 	 */
 	private function store(mixed $result, array &$calls): PortalObjectStore {
 		$service = new class($result, $calls) {
 			/**
-			 * @param mixed                            $result The answer.
-			 * @param array<int, array<string, mixed>> $calls  The calls.
+			 * @param mixed $result The answer.
+			 * @param array<int, array<string, mixed>> $calls The calls.
 			 */
-			public function __construct(private mixed $result, private array &$calls) {
+			public function __construct(
+				private mixed $result,
+				private array &$calls,
+			) {
 			}
 
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac, bool $_multitenancy): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->calls[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 				return $this->result;
 			}
@@ -61,10 +67,9 @@ class PortalObjectStoreMessageTest extends TestCase {
 		$apps->method('isInstalled')->willReturn(true);
 
 		return new PortalObjectStore(
-			container: $container,
+			openRegister: new \OCA\OpenCatalogi\Service\OpenRegisterLookup($container, $apps),
 			publications: new PublicationQueryService(container: $this->createMock(ContainerInterface::class)),
-			logger: new NullLogger(),
-			appManager: $apps
+			logger: new NullLogger()
 		);
 	}
 

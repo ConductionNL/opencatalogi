@@ -1,0 +1,139 @@
+{
+	"apiGroups": [
+		{
+			"label": "admin",
+			"value": "admin"
+		},
+		{
+			"label": "editors",
+			"value": "editors"
+		}
+	],
+	"cacheHit": {
+		"groups": [
+			{
+				"label": "admin",
+				"value": "admin"
+			},
+			{
+				"label": "editors",
+				"value": "editors"
+			}
+		],
+		"sameArray": true
+	},
+	"cacheExpired": [
+		{
+			"label": "other",
+			"value": "other"
+		}
+	],
+	"fallbackWhenEmpty": [
+		{
+			"label": "All Users",
+			"value": "all"
+		},
+		{
+			"label": "Administrators",
+			"value": "admin"
+		},
+		{
+			"label": "Functioneel-beheerder",
+			"value": "Functioneel-beheerder"
+		},
+		{
+			"label": "Gebruik-beheerder",
+			"value": "Gebruik-beheerder"
+		},
+		{
+			"label": "Gebruik-raadpleger",
+			"value": "Gebruik-raadpleger"
+		},
+		{
+			"label": "Organisatie-beheerder",
+			"value": "Organisatie-beheerder"
+		},
+		{
+			"label": "VNG-raadpleger",
+			"value": "VNG-raadpleger"
+		},
+		{
+			"label": "Editors",
+			"value": "editors"
+		},
+		{
+			"label": "Viewers",
+			"value": "viewers"
+		},
+		{
+			"label": "Staff",
+			"value": "staff"
+		},
+		{
+			"label": "Managers",
+			"value": "managers"
+		}
+	],
+	"fallbackIsCached": true,
+	"fallbackWhenFailing": [
+		{
+			"label": "All Users",
+			"value": "all"
+		},
+		{
+			"label": "Administrators",
+			"value": "admin"
+		},
+		{
+			"label": "Functioneel-beheerder",
+			"value": "Functioneel-beheerder"
+		},
+		{
+			"label": "Gebruik-beheerder",
+			"value": "Gebruik-beheerder"
+		},
+		{
+			"label": "Gebruik-raadpleger",
+			"value": "Gebruik-raadpleger"
+		},
+		{
+			"label": "Organisatie-beheerder",
+			"value": "Organisatie-beheerder"
+		},
+		{
+			"label": "VNG-raadpleger",
+			"value": "VNG-raadpleger"
+		},
+		{
+			"label": "Editors",
+			"value": "editors"
+		},
+		{
+			"label": "Viewers",
+			"value": "viewers"
+		},
+		{
+			"label": "Staff",
+			"value": "staff"
+		},
+		{
+			"label": "Managers",
+			"value": "managers"
+		}
+	],
+	"freshFallbackObjects": true,
+	"requests": [
+		[
+			"/index.php/ocs/v1.php/cloud/groups?format=json"
+		],
+		[
+			"/index.php/ocs/v1.php/cloud/groups?format=json"
+		],
+		[
+			"/index.php/ocs/v1.php/cloud/groups?format=json"
+		],
+		[
+			"/index.php/ocs/v1.php/cloud/groups?format=json"
+		]
+	]
+}

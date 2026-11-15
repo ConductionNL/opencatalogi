@@ -30,7 +30,10 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\PublicationService;
+use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
+use OCA\OpenCatalogi\Contract\WithheldFromPublicationInterface;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -43,25 +46,29 @@ use Psr\Log\LoggerInterface;
 
 /**
  * Controller for handling federation endpoints.
+ *
+ * @spec openspec/specs/federation/spec.md
  */
 class FederationController extends Controller {
 	/**
 	 * FederationController constructor.
 	 *
-	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
-	 * @param PublicationService $publicationService The publication service.
+	 * @param PublicationServiceInterface $publicationService The publication service.
 	 * @param IL10N $l10n The localization service.
 	 * @param LoggerInterface $logger PSR-3 logger.
+	 * @param WithheldFromPublicationInterface|null $withheld The public withheld list (REQ-WDW-003).
+	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
-		$appName,
 		IRequest $request,
-		private readonly PublicationService $publicationService,
+		private readonly PublicationServiceInterface $publicationService,
 		private readonly IL10N $l10n,
 		private readonly ?LoggerInterface $logger = null,
+		private readonly ?WithheldFromPublicationInterface $withheld = null,
+		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
-		parent::__construct(appName: $appName, request: $request);
+		parent::__construct(appName: AppIdentity::APP_ID, request: $request);
 
 	}//end __construct()
 
@@ -73,24 +80,16 @@ class FederationController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @SuppressWarnings(PHPMD.Superglobals)
+	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
 	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publications(): JSONResponse {
 		// Get all current query parameters.
 		$queryParams = $this->request->getParams();
-
-		// Build base URL for pagination links.
-		$protocol = 'http';
-		if (empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off') {
-			$protocol = 'https';
-		}
-
-		$host = ($_SERVER['HTTP_HOST'] ?? 'localhost');
-		$uri = ($_SERVER['REQUEST_URI'] ?? '/');
-		$baseUrl = $protocol . '://' . $host . strtok($uri, '?');
+		$baseUrl = $this->paginationBaseUrl();
 
 		try {
 			// Use the service method to get aggregated publications.
@@ -99,23 +98,54 @@ class FederationController extends Controller {
 				requestParams: $this->request->getParams(),
 				baseUrl: $baseUrl
 			);
+			$responseData['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
 			return new JSONResponse($responseData);
 		} catch (\Exception $e) {
-			$this->logger?->error(
-				'[FederationController::publications] Failed to retrieve publications',
-				[
-					'error' => $e->getMessage(),
-					'trace' => $e->getTraceAsString(),
-				]
-			);
-			return new JSONResponse(
-				data: ['error' => $this->l10n->t('Failed to retrieve publications')],
-				statusCode: 500
-			);
-		}//end try
+			return $this->publicationsFailed(exception: $e);
+		}
 
 	}//end publications()
+
+	/**
+	 * The base URL for pagination links: the request's scheme, host and path without its query.
+	 *
+	 * @return string The base URL.
+	 *
+	 * @SuppressWarnings(PHPMD.Superglobals)
+	 */
+	private function paginationBaseUrl(): string {
+		$protocol = 'http';
+		if (empty($_SERVER['HTTPS']) === false && $_SERVER['HTTPS'] !== 'off') {
+			$protocol = 'https';
+		}
+
+		$host = ($_SERVER['HTTP_HOST'] ?? 'localhost');
+		$uri = ($_SERVER['REQUEST_URI'] ?? '/');
+
+		return $protocol . '://' . $host . strtok($uri, '?');
+	}//end paginationBaseUrl()
+
+	/**
+	 * Log a failed aggregation and answer 500.
+	 *
+	 * @param \Exception $exception Why the aggregation failed.
+	 *
+	 * @return JSONResponse The 500 answer.
+	 */
+	private function publicationsFailed(\Exception $exception): JSONResponse {
+		$this->logger?->error(
+			'[FederationController::publications] Failed to retrieve publications',
+			[
+				'error' => $exception->getMessage(),
+				'trace' => $exception->getTraceAsString(),
+			]
+		);
+		return new JSONResponse(
+			data: ['error' => $this->l10n->t('Failed to retrieve publications')],
+			statusCode: 500
+		);
+	}//end publicationsFailed()
 
 	/**
 	 * Retrieve a specific publication by its ID.
@@ -136,6 +166,17 @@ class FederationController extends Controller {
 		try {
 			// Use the service method to get the publication with federation support.
 			$result = $this->publicationService->getFederatedPublication($id, $this->request->getParams());
+
+			// REQ-WDW-003: the same `withheld` list publications#show answers, for a
+			// publication of this instance whose catalogue opted in. A publication a peer
+			// answered (marked `federated`, carrying `sources`) is never described from this
+			// instance's catalogues: its register and schema ids are the peer's.
+			$isLocal = (($result['federated'] ?? false) !== true
+				&& is_array($result['data']) === true
+				&& array_key_exists('sources', $result['data']) === false);
+			if ($this->withheld !== null && $result['status'] === 200 && $isLocal === true) {
+				$result['data'] = $this->withheld->addForPublication(response: $result['data']);
+			}
 
 			return new JSONResponse($result['data'], $result['status']);
 		} catch (\Exception $e) {
@@ -249,11 +290,18 @@ class FederationController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
+	 * @no-admin-idor-exempt PublicationService::attachments() refuses an id outside the configured
+	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
+	 *   anonymous callers get public-group reads only) and lists shared files only (sharedFilesOnly).
+	 *   An id not held here is only answered with what the public federation endpoint of the
+	 *   instance that holds it returns (getFederatedAttachments()).
+	 *
 	 * @spec openspec/specs/federation/spec.md
+	 * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-attachments-of-a-remote-publication-are-listed-from-the-source-req-for-002
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function publicationAttachments(string $id): JSONResponse {
-		return $this->publicationService->attachments(id: $id);
+		return $this->publicationService->getFederatedAttachments(id: $id, queryParams: $this->request->getParams());
 	}//end publicationAttachments()
 
 	// Lower than the sibling reads: a download moves file bytes, so the cost of
@@ -269,6 +317,11 @@ class FederationController extends Controller {
 	 *
 	 * @NoCSRFRequired
 	 * @PublicPage
+	 *
+	 * @no-admin-idor-exempt PublicationService::download() refuses an id outside the configured
+	 *   catalog scope (isObjectInCatalogScope()), reads the object with OpenRegister find() (RBAC on,
+	 *   anonymous callers get public-group reads only) before any file is zipped, and OpenRegister's
+	 *   createObjectFilesZip() drops restricted files (FileRestrictionGuard).
 	 *
 	 * @spec openspec/specs/federation/spec.md
 	 */

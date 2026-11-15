@@ -20,6 +20,7 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\ListingsController;
 use OCA\OpenCatalogi\Service\DirectoryService;
+use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Http\Attribute\AuthorizedAdminSetting;
 use OCP\AppFramework\Http\JSONResponse;
@@ -32,6 +33,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use ReflectionMethod;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for ListingsController.
@@ -120,8 +122,7 @@ class ListingsControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->directoryService,
 			$this->l10n,
 			$this->userSession
@@ -706,7 +707,11 @@ class ListingsControllerTest extends TestCase {
 		$mockObjService = $this->mockObjectService();
 
 		$mockObjService->method('deleteObject')
-			->with(uuid: '123', register: '1', schema: '2')
+			->with(...LegacyObjectArgs::with(method: 'deleteObject', expected: [
+				'uuid' => '123',
+				'register' => '1',
+				'schema' => '2',
+			]))
 			->willReturn(true);
 
 		$response = $this->controller->destroy('123');
@@ -725,7 +730,11 @@ class ListingsControllerTest extends TestCase {
 		$mockObjService = $this->mockObjectService();
 
 		$mockObjService->method('deleteObject')
-			->with(uuid: 'nonexistent', register: '1', schema: '2')
+			->with(...LegacyObjectArgs::with(method: 'deleteObject', expected: [
+				'uuid' => 'nonexistent',
+				'register' => '1',
+				'schema' => '2',
+			]))
 			->willReturn(false);
 
 		$response = $this->controller->destroy('nonexistent');
@@ -935,8 +944,7 @@ class ListingsControllerTest extends TestCase {
 			'opencatalogi',
 			$this->request,
 			$this->config,
-			$this->container,
-			$this->appManager,
+			new OpenRegisterLookup($this->container, $this->appManager),
 			$this->directoryService,
 			$this->l10n,
 			$anonymousSession

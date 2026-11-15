@@ -116,11 +116,22 @@ class DcatVocabularyService {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md
 	 */
 	public function resolveHvdCategory(?string $value): ?array {
-		if ($value === null || trim($value) === '') {
+		$needle = self::needleOf(value: $value);
+		if ($needle === null) {
 			return null;
 		}
 
-		$needle = strtolower(trim($value));
+		return self::hvdCategoryOf(needle: $needle);
+	}//end resolveHvdCategory()
+
+	/**
+	 * The HVD category whose key, id, URI or alias is the needle.
+	 *
+	 * @param string $needle The trimmed, lowercased value.
+	 *
+	 * @return array{uri: string, label: string}|null
+	 */
+	private static function hvdCategoryOf(string $needle): ?array {
 		foreach (self::HVD_CATEGORIES as $key => $entry) {
 			$candidates = array_merge([$key, $entry['id'], strtolower(self::HVD_BASE . $entry['id'])], $entry['aliases']);
 			if (in_array($needle, $candidates, true) === true) {
@@ -129,7 +140,7 @@ class DcatVocabularyService {
 		}
 
 		return null;
-	}//end resolveHvdCategory()
+	}//end hvdCategoryOf()
 
 	/**
 	 * Resolve a source theme value to an EU MDR data-theme authority URI.
@@ -143,11 +154,22 @@ class DcatVocabularyService {
 	 * @spec openspec/specs/dcat-ap-harvest/spec.md
 	 */
 	public function resolveDataTheme(?string $value): ?string {
-		if ($value === null || trim($value) === '') {
+		$needle = self::needleOf(value: $value);
+		if ($needle === null) {
 			return null;
 		}
 
-		$needle = strtolower(trim($value));
+		return self::dataThemeOf(needle: $needle);
+	}//end resolveDataTheme()
+
+	/**
+	 * The data-theme URI whose code, URI or synonym is the needle.
+	 *
+	 * @param string $needle The trimmed, lowercased value.
+	 *
+	 * @return string|null
+	 */
+	private static function dataThemeOf(string $needle): ?string {
 		foreach (self::DATA_THEMES as $code => $aliases) {
 			$candidates = array_merge([strtolower($code), strtolower(self::DATA_THEME_BASE . $code)], $aliases);
 			if (in_array($needle, $candidates, true) === true) {
@@ -156,7 +178,22 @@ class DcatVocabularyService {
 		}
 
 		return null;
-	}//end resolveDataTheme()
+	}//end dataThemeOf()
+
+	/**
+	 * A declared value as the resolvers compare it: trimmed and lowercased, or null when blank.
+	 *
+	 * @param string|null $value The declared value.
+	 *
+	 * @return string|null
+	 */
+	private static function needleOf(?string $value): ?string {
+		if ($value === null || trim($value) === '') {
+			return null;
+		}
+
+		return strtolower(trim($value));
+	}//end needleOf()
 
 	/**
 	 * The bundled HVD-category value list (id → uri + label).

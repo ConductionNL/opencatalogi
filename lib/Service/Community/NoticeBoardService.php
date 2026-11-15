@@ -37,13 +37,14 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\NoticeBoardServiceInterface;
 
 /**
  * Notice boards, their notices, and the line between a notice and a publication.
  *
  * @spec openspec/changes/the-public-and-community-surface/specs/public-and-community-surface/spec.md#requirement-a-catalogue-carries-a-notice-board-req-pcs-104
  */
-class NoticeBoardService {
+class NoticeBoardService implements NoticeBoardServiceInterface {
 
 	/**
 	 * The schema slug a notice lives under.
@@ -87,7 +88,6 @@ class NoticeBoardService {
 		}
 
 		return $board;
-
 	}//end validateBoard()
 
 	/**
@@ -141,7 +141,6 @@ class NoticeBoardService {
 		}
 
 		return $notice;
-
 	}//end validateNotice()
 
 	/**
@@ -168,7 +167,6 @@ class NoticeBoardService {
 		}
 
 		return ($moment >= $start && $moment <= $end);
-
 	}//end isCurrent()
 
 	/**
@@ -189,7 +187,6 @@ class NoticeBoardService {
 		$schema = (string)($entry['@type'] ?? ($entry['schema'] ?? ($entry['recordType'] ?? '')));
 
 		return ($schema !== self::NOTICE_SCHEMA);
-
 	}//end belongsInSitemap()
 
 	/**

@@ -42,3 +42,21 @@ The main menu MUST present catalog-driven navigation items resolved from the cat
 - **WHEN** the main menu renders
 - **THEN** its navigation items MUST correspond to the catalogs
 
+### Requirement: First-use walkthrough (REQ-SHELL-005)
+
+The app MUST show the getting-started walkthrough on a user's first visit and
+MUST record that the user has seen it, so it does not open again. The footer
+MUST offer a menu item that replays the walkthrough on request.
+
+#### Scenario: walkthrough opens once
+
+- **GIVEN** a user who has not seen the walkthrough
+- **WHEN** they open the app for the first time
+- **THEN** the getting-started walkthrough MUST open
+- **AND** it MUST NOT open again on their next visit
+
+#### Scenario: walkthrough can be replayed
+
+- **GIVEN** a user who has seen the walkthrough
+- **WHEN** they choose the restart tutorial item in the footer menu
+- **THEN** the walkthrough MUST open again

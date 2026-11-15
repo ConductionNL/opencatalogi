@@ -1,0 +1,1048 @@
+[
+	{
+		"name": "fetched only",
+		"response": {
+			"fetched": [
+				"b",
+				"a"
+			]
+		},
+		"store": {},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a",
+					"b"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a",
+						"b"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a",
+					"b"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a",
+					"b"
+				]
+			},
+			"initialTags": [
+				"a",
+				"b"
+			],
+			"latestTags": [
+				"a",
+				"b"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "fetched not array",
+		"response": {
+			"fetched": {
+				"a": 1
+			}
+		},
+		"store": {},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": []
+			},
+			"initialTags": [],
+			"latestTags": [],
+			"newTags": []
+		}
+	},
+	{
+		"name": "json fails",
+		"response": {
+			"jsonThrows": true
+		},
+		"store": {},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": []
+			},
+			"initialTags": [],
+			"latestTags": [],
+			"newTags": []
+		}
+	},
+	{
+		"name": "fetch rejects",
+		"response": {
+			"fetchThrows": true
+		},
+		"store": {},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"console.error",
+				"Failed to fetch tags"
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"old"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"old"
+				]
+			},
+			"initialTags": [],
+			"latestTags": [
+				"old"
+			],
+			"newTags": [
+				"old"
+			]
+		}
+	},
+	{
+		"name": "attachments labels merged and deduped",
+		"response": {
+			"fetched": [
+				"b"
+			]
+		},
+		"store": {
+			"attachments": {
+				"results": [
+					{
+						"labels": [
+							"c",
+							"b"
+						]
+					},
+					{
+						"labels": "x"
+					},
+					null,
+					{}
+				]
+			}
+		},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"b",
+					"c"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"b",
+						"c"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"b",
+					"c"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"b",
+					"c"
+				]
+			},
+			"initialTags": [
+				"b",
+				"c"
+			],
+			"latestTags": [
+				"b",
+				"c"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "attachments results not array",
+		"response": {
+			"fetched": [
+				"a"
+			]
+		},
+		"store": {
+			"attachments": {
+				"results": {
+					"labels": [
+						"z"
+					]
+				}
+			}
+		},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a"
+				]
+			},
+			"initialTags": [
+				"a"
+			],
+			"latestTags": [
+				"a"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "getCollection throws for attachments",
+		"response": {
+			"fetched": [
+				"a"
+			]
+		},
+		"store": {
+			"throwOn": "publicationAttachments",
+			"stored": [
+				"s"
+			]
+		},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a",
+					"s"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a",
+						"s"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a",
+					"s"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a",
+					"s"
+				]
+			},
+			"initialTags": [
+				"a",
+				"s"
+			],
+			"latestTags": [
+				"a",
+				"s"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "stored tags merged",
+		"response": {
+			"fetched": []
+		},
+		"store": {
+			"stored": [
+				"q",
+				"a"
+			]
+		},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a",
+					"q"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a",
+						"q"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a",
+					"q"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a",
+					"q"
+				]
+			},
+			"initialTags": [
+				"a",
+				"q"
+			],
+			"latestTags": [
+				"a",
+				"q"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "stored tags not array",
+		"response": {
+			"fetched": [
+				"a"
+			]
+		},
+		"store": {
+			"stored": "q"
+		},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a"
+				]
+			},
+			"initialTags": [
+				"a"
+			],
+			"latestTags": [
+				"a"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "getCollection throws for tags",
+		"response": {
+			"fetched": [
+				"a"
+			]
+		},
+		"store": {
+			"throwOn": "tags",
+			"attachments": {
+				"results": [
+					{
+						"labels": [
+							"m"
+						]
+					}
+				]
+			}
+		},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a",
+					"m"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a",
+						"m"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a",
+					"m"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a",
+					"m"
+				]
+			},
+			"initialTags": [
+				"a",
+				"m"
+			],
+			"latestTags": [
+				"a",
+				"m"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "no getCollection",
+		"response": {
+			"fetched": [
+				"a"
+			]
+		},
+		"store": {
+			"noGetCollection": true
+		},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a"
+				]
+			},
+			"initialTags": [
+				"a"
+			],
+			"latestTags": [
+				"a"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "no label among tags",
+		"response": {
+			"fetched": [
+				"No label",
+				"a",
+				"Z"
+			]
+		},
+		"store": {},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"No label",
+					"Z",
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"No label",
+						"Z",
+						"a"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"Z",
+					"a"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"No label",
+					"Z",
+					"a"
+				]
+			},
+			"initialTags": [
+				"No label",
+				"Z",
+				"a"
+			],
+			"latestTags": [
+				"No label",
+				"Z",
+				"a"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "initial tags kept, new ones listed",
+		"response": {
+			"fetched": [
+				"a",
+				"b",
+				"c"
+			]
+		},
+		"store": {},
+		"initialTags": [
+			"a"
+		],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a",
+					"b",
+					"c"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a",
+						"b",
+						"c"
+					],
+					"newTags": [
+						"b",
+						"c"
+					]
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a",
+					"b",
+					"c"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a",
+					"b",
+					"c"
+				]
+			},
+			"initialTags": [
+				"a"
+			],
+			"latestTags": [
+				"a",
+				"b",
+				"c"
+			],
+			"newTags": [
+				"b",
+				"c"
+			]
+		}
+	},
+	{
+		"name": "setCollection throws",
+		"response": {
+			"fetched": [
+				"a"
+			]
+		},
+		"store": {
+			"setThrows": true
+		},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						"a"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					"a"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					"a"
+				]
+			},
+			"initialTags": [
+				"a"
+			],
+			"latestTags": [
+				"a"
+			],
+			"newTags": []
+		}
+	},
+	{
+		"name": "numbers sort as strings",
+		"response": {
+			"fetched": [
+				10,
+				9,
+				"a"
+			]
+		},
+		"store": {},
+		"initialTags": [],
+		"log": [
+			[
+				"fetch",
+				"/index.php/apps/openregister/api/tags",
+				{
+					"method": "get"
+				}
+			],
+			[
+				"getCollection",
+				"publicationAttachments"
+			],
+			[
+				"getCollection",
+				"tags"
+			],
+			[
+				"setCollection",
+				"tags",
+				[
+					10,
+					9,
+					"a"
+				]
+			],
+			[
+				"emit",
+				"upload-files:tags-fetched",
+				{
+					"tags": [
+						10,
+						9,
+						"a"
+					],
+					"newTags": []
+				}
+			]
+		],
+		"state": {
+			"tagsLoading": false,
+			"labelOptions": {
+				"options": [
+					"No label",
+					10,
+					9,
+					"a"
+				]
+			},
+			"labelOptionsEdit": {
+				"options": [
+					10,
+					9,
+					"a"
+				]
+			},
+			"initialTags": [
+				10,
+				9,
+				"a"
+			],
+			"latestTags": [
+				10,
+				9,
+				"a"
+			],
+			"newTags": []
+		}
+	}
+]

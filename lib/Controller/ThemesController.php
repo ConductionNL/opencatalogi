@@ -25,8 +25,9 @@
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\CallerScope;
-use OCP\App\IAppManager;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
+use OCA\OpenCatalogi\Service\AppliedFilters;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -35,9 +36,7 @@ use OCP\AppFramework\Http\Response;
 use OCP\IAppConfig;
 use OCP\IRequest;
 use Psr\Container\ContainerExceptionInterface;
-use Psr\Container\ContainerInterface;
 use Psr\Container\NotFoundExceptionInterface;
-use RuntimeException;
 
 /**
  * Controller for handling theme-related operations.
@@ -52,27 +51,7 @@ use RuntimeException;
  */
 class ThemesController extends Controller {
 	use ResolvesRegisterConfiguration;
-
-	/**
-	 * Allowed CORS methods.
-	 *
-	 * @var string
-	 */
-	private string $corsMethods;
-
-	/**
-	 * Allowed CORS headers.
-	 *
-	 * @var string
-	 */
-	private string $corsAllowedHeaders;
-
-	/**
-	 * CORS max age.
-	 *
-	 * @var integer
-	 */
-	private int $corsMaxAge;
+	use ListsConfiguredObjects;
 
 	/**
 	 * ThemesController constructor.
@@ -80,26 +59,19 @@ class ThemesController extends Controller {
 	 * @param string $appName The name of the app.
 	 * @param IRequest $request The request object.
 	 * @param IAppConfig $config App configuration interface.
-	 * @param ContainerInterface $container Server container for DI.
-	 * @param IAppManager $appManager App manager.
-	 * @param string $corsMethods Allowed CORS methods.
-	 * @param string $corsAllowedHeaders Allowed CORS headers.
-	 * @param integer $corsMaxAge CORS max age.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pair and OpenRegister's ObjectService.
+	 * @param CorsSettings $cors Allowed CORS methods, headers and max age.
+	 * @param AppliedFilters|null $appliedFilters The request's collector of applied filters (REQ-ASF-001).
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
 		private readonly IAppConfig $config,
-		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
-		string $corsMethods = 'PUT, POST, GET, DELETE, PATCH',
-		string $corsAllowedHeaders = 'Authorization, Content-Type, Accept',
-		int $corsMaxAge = 1728000,
+		private readonly OpenRegisterLookupInterface $registers,
+		private readonly CorsSettings $cors = new CorsSettings(),
+		private readonly ?AppliedFilters $appliedFilters = null,
 	) {
 		parent::__construct(appName: $appName, request: $request);
-		$this->corsMethods = $corsMethods;
-		$this->corsAllowedHeaders = $corsAllowedHeaders;
-		$this->corsMaxAge = $corsMaxAge;
 
 	}//end __construct()
 
@@ -111,11 +83,7 @@ class ThemesController extends Controller {
 	 * @throws ContainerExceptionInterface|NotFoundExceptionInterface
 	 */
 	private function getObjectService(): ?\OCA\OpenRegister\Service\ObjectService {
-		if (in_array(needle: 'openregister', haystack: $this->appManager->getInstalledApps()) === true) {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
-		}
-
-		throw new RuntimeException('OpenRegister service is not available.');
+		return $this->registers->installedObjectService();
 	}//end getObjectService()
 
 	/**
@@ -137,38 +105,6 @@ class ThemesController extends Controller {
 	}//end getThemeConfiguration()
 
 	/**
-	 * Resolve the Access-Control-Allow-Origin header value for the current request.
-	 *
-	 * Reads the configured allowlist from IAppConfig key 'cors_allowed_origins' (CSV).
-	 * Special value '*' (the default) means "any origin allowed" and emits a literal '*'
-	 * — the caller's Origin is NEVER echoed back unless it appears on the allowlist (#735).
-	 *
-	 * @return string The header value to use for Access-Control-Allow-Origin.
-	 */
-	private function resolveAllowedOrigin(): string {
-		$configured = trim($this->config->getValueString($this->appName, 'cors_allowed_origins', '*'));
-		if ($configured === '' || $configured === '*') {
-			return '*';
-		}
-
-		$allowlist = array_filter(
-			array_map('trim', explode(',', $configured)),
-			static fn (string $entry): bool => $entry !== ''
-		);
-
-		$callerOrigin = $this->request->getHeader('Origin');
-		if ($callerOrigin === '') {
-			$callerOrigin = ($this->request->server['HTTP_ORIGIN'] ?? '');
-		}
-
-		if ($callerOrigin !== '' && in_array($callerOrigin, $allowlist, true) === true) {
-			return $callerOrigin;
-		}
-
-		return ($allowlist[0] ?? '*');
-	}//end resolveAllowedOrigin()
-
-	/**
 	 * Implements a preflighted CORS response for OPTIONS requests.
 	 *
 	 * @return Response The CORS response.
@@ -180,15 +116,7 @@ class ThemesController extends Controller {
 	 */
 	#[AnonRateLimit(limit: 240, period: 60)]
 	public function preflightedCors(): Response {
-		// Create and configure the response.
-		$response = new Response();
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Max-Age', (string)$this->corsMaxAge);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-		$response->addHeader('Access-Control-Allow-Credentials', 'false');
-
-		return $response;
+		return $this->withListPreflightHeaders(response: new Response());
 	}//end preflightedCors()
 
 	/**
@@ -201,11 +129,10 @@ class ThemesController extends Controller {
 	 * @NoCSRFRequired
 	 * @PublicPage
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 * @SuppressWarnings(PHPMD.NPathComplexity)
+	 * @SuppressWarnings(PHPMD.StaticAccess) AppliedFilters::forResponse() is a pure fail-closed reader.
 	 *
 	 * @spec openspec/specs/content-management/spec.md
-	 * @SuppressWarnings(PHPMD.StaticAccess) CallerScope::strip() is a pure function over the query (WOO-581)
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md
 	 */
 	#[AnonRateLimit(limit: 120, period: 60)]
 	public function index(): JSONResponse {
@@ -216,80 +143,18 @@ class ThemesController extends Controller {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		// Get query parameters from request.
-		$queryParams = $this->request->getParams();
-
-		// Build search query.
-		$searchQuery = $queryParams;
-
-		// Clean up unwanted parameters.
-		unset($searchQuery['id'], $searchQuery['_route']);
-
-		// The configured scope below wins for the rows, but OR's facet path reads
-		// `@self.schemas ?? _schemas` first; drop every caller scope key (WOO-581).
-		$searchQuery = CallerScope::strip(query: $searchQuery);
-
-		// Add schema filter if configured.
-		if (empty($themeConfig['schema']) === false) {
-			$searchQuery['@self']['schema'] = $themeConfig['schema'];
-		}
-
-		// Add register filter if configured.
-		if (empty($themeConfig['register']) === false) {
-			$searchQuery['@self']['register'] = $themeConfig['register'];
-		}
-
-		// Use searchObjectsPaginated for better performance and pagination support.
-		// rbac=true enforces schema authorization; multi=false for public theme access.
 		$result = $this->getObjectService()->searchObjectsPaginated(
-			$searchQuery,
+			$this->scopedSearchQuery(objectConfig: $themeConfig, appliedFilters: $this->appliedFilters),
 			_rbac: true,
 			_multitenancy: false
 		);
 
-		// Visibility governed by RBAC on the search above (_rbac: true).
-		// Build paginated response structure.
-		$responseData = [
-			'results' => ($result['results'] ?? []),
-			'total' => ($result['total'] ?? 0),
-			'limit' => ($result['limit'] ?? 20),
-			'offset' => ($result['offset'] ?? 0),
-			'page' => ($result['page'] ?? 1),
-			'pages' => ($result['pages'] ?? 1),
-		];
+		// Visibility governed by RBAC on the search above (_rbac: true); rbac=true
+		// enforces schema authorization, multi=false allows public theme access.
+		$responseData = $this->paginatedResponseData(result: $result);
+		$responseData['appliedFilters'] = AppliedFilters::forResponse(appliedFilters: $this->appliedFilters);
 
-		// Add pagination links if present.
-		if (isset($result['next']) === true) {
-			$responseData['next'] = $result['next'];
-		}
-
-		if (isset($result['prev']) === true) {
-			$responseData['prev'] = $result['prev'];
-		}
-
-		// Add facets if present.
-		if (isset($result['facets']) === true) {
-			$facetsData = $result['facets'];
-			// Unwrap nested facets if needed.
-			if (isset($facetsData['facets']) === true && is_array($facetsData['facets']) === true) {
-				$facetsData = $facetsData['facets'];
-			}
-
-			$responseData['facets'] = $facetsData;
-		}
-
-		if (isset($result['facetable']) === true) {
-			$responseData['facetable'] = $result['facetable'];
-		}
-
-		// Add CORS headers for public API access.
-		$response = new JSONResponse($responseData);
-
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->publicJsonResponse(data: $responseData);
 	}//end index()
 
 	/**
@@ -329,10 +194,7 @@ class ThemesController extends Controller {
 		try {
 			$theme = $this->getObjectService()->find(
 				$id,
-				[],
-				false,
-				$themeConfig['register'],
-				$themeConfig['schema'],
+				new ObjectFindOptions(register: $themeConfig['register'], schema: $themeConfig['schema']),
 				_rbac: true,
 				_multitenancy: false
 			);
@@ -352,13 +214,6 @@ class ThemesController extends Controller {
 			$data = $theme->jsonSerialize();
 		}
 
-		// Add CORS headers for public API access (#735 — never reflect arbitrary Origin).
-		$response = new JSONResponse($data);
-
-		$response->addHeader('Access-Control-Allow-Origin', $this->resolveAllowedOrigin());
-		$response->addHeader('Access-Control-Allow-Methods', $this->corsMethods);
-		$response->addHeader('Access-Control-Allow-Headers', $this->corsAllowedHeaders);
-
-		return $response;
+		return $this->publicJsonResponse(data: $data);
 	}//end show()
 }//end class

@@ -1,0 +1,394 @@
+{
+    "container fails": {
+        "answer": false,
+        "calls": [
+            [
+                "warning",
+                "[UsageCounterService] count failed (swallowed)",
+                {
+                    "kind": "view",
+                    "error": "container down"
+                }
+            ]
+        ]
+    },
+    "crawler": {
+        "answer": false,
+        "calls": []
+    },
+    "empty publication id": {
+        "answer": false,
+        "calls": []
+    },
+    "existing counter as entity": {
+        "answer": true,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "id": "c-e",
+                    "count": 3,
+                    "kind": "view"
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                "c-e",
+                false,
+                false
+            ]
+        ]
+    },
+    "existing counter as plain object": {
+        "answer": true,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "id": "c-p",
+                    "count": 6
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                "c-p",
+                false,
+                false
+            ]
+        ]
+    },
+    "existing counter with id": {
+        "answer": true,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "id": "c-1",
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view",
+                    "count": 10
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                "c-1",
+                false,
+                false
+            ]
+        ]
+    },
+    "existing counter with uuid only": {
+        "answer": true,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "uuid": "u-1",
+                    "count": 5
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                "u-1",
+                false,
+                false
+            ]
+        ]
+    },
+    "existing counter without id or count": {
+        "answer": true,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "publication": "pub-1",
+                    "count": 1
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                "",
+                false,
+                false
+            ]
+        ]
+    },
+    "first download without catalog": {
+        "answer": true,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-2",
+                    "date": "<today>",
+                    "kind": "download"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "publication": "pub-2",
+                    "catalog": "",
+                    "date": "<today>",
+                    "kind": "download",
+                    "count": 1
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                null,
+                false,
+                false
+            ]
+        ]
+    },
+    "first view with catalog": {
+        "answer": true,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "publication": "pub-1",
+                    "catalog": "woo",
+                    "date": "<today>",
+                    "kind": "view",
+                    "count": 1
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                null,
+                false,
+                false
+            ]
+        ]
+    },
+    "no counter register": {
+        "answer": false,
+        "calls": [
+            [
+                "info",
+                "[UsageCounterService] counter register/schema unconfigured; skipping count",
+                []
+            ]
+        ]
+    },
+    "no counter schema": {
+        "answer": false,
+        "calls": [
+            [
+                "info",
+                "[UsageCounterService] counter register/schema unconfigured; skipping count",
+                []
+            ]
+        ]
+    },
+    "no user agent": {
+        "answer": false,
+        "calls": []
+    },
+    "openregister not installed": {
+        "answer": false,
+        "calls": []
+    },
+    "save fails": {
+        "answer": false,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "publication": "pub-1",
+                    "catalog": "woo",
+                    "date": "<today>",
+                    "kind": "view",
+                    "count": 1
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                null,
+                false,
+                false
+            ],
+            [
+                "warning",
+                "[UsageCounterService] count failed (swallowed)",
+                {
+                    "kind": "view",
+                    "error": "save down"
+                }
+            ]
+        ]
+    },
+    "search answers a count": {
+        "answer": true,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "saveObject",
+                {
+                    "publication": "pub-1",
+                    "catalog": "woo",
+                    "date": "<today>",
+                    "kind": "view",
+                    "count": 1
+                },
+                [],
+                "reg-9",
+                "schema-4",
+                null,
+                false,
+                false
+            ]
+        ]
+    },
+    "search fails": {
+        "answer": false,
+        "calls": [
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "reg-9",
+                        "schema": "schema-4"
+                    },
+                    "publication": "pub-1",
+                    "date": "<today>",
+                    "kind": "view"
+                },
+                false,
+                false
+            ],
+            [
+                "warning",
+                "[UsageCounterService] count failed (swallowed)",
+                {
+                    "kind": "view",
+                    "error": "search down"
+                }
+            ]
+        ]
+    },
+    "unknown kind": {
+        "answer": false,
+        "calls": []
+    }
+}

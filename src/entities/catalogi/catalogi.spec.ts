@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Test suite for Catalogi entity
  * @module Entities
  * @package
@@ -47,6 +51,7 @@ describe('Catalogi Store', () => {
 			slug: '',
 			hasWooSitemap: false,
 			hasOoapi: false,
+			showWithheld: false,
 		})
 
 		expect(catalogi).toBeInstanceOf(Catalogi)

@@ -1,0 +1,914 @@
+{
+    "replace two with two": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "old-1",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "old-2",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "returned"
+        ]
+    ],
+    "replace with nothing": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "delete",
+            "old-1",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "old-2",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "returned"
+        ]
+    ],
+    "nothing stored yet": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "returned"
+        ]
+    ],
+    "search answers no results key": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "returned"
+        ]
+    ],
+    "search answers entities": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "old-9",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "returned"
+        ]
+    ],
+    "saved as entity": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "returned"
+        ]
+    ],
+    "saved as entity, then fails": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "e-1",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "e-2",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "threw",
+            "RuntimeException",
+            "OpenRegister is down"
+        ]
+    ],
+    "first save fails": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "threw",
+            "RuntimeException",
+            "OpenRegister is down"
+        ]
+    ],
+    "second save fails": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "w-1",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "threw",
+            "RuntimeException",
+            "OpenRegister is down"
+        ]
+    ],
+    "third save fails": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "w-1",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "w-2",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "threw",
+            "RuntimeException",
+            "OpenRegister is down"
+        ]
+    ],
+    "rollback skips a missing id": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "error",
+            "WithheldDocuments: an entry of a failed replace came back without an id and could not be removed",
+            []
+        ],
+        [
+            "delete",
+            "w-2",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "threw",
+            "RuntimeException",
+            "OpenRegister is down"
+        ]
+    ],
+    "rollback delete fails": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "w-1",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "error",
+            "WithheldDocuments: an entry of a failed replace could not be removed",
+            {
+                "id": "w-1",
+                "exception": "delete of w-1 failed"
+            }
+        ],
+        [
+            "delete",
+            "w-2",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "threw",
+            "RuntimeException",
+            "OpenRegister is down"
+        ]
+    ],
+    "superseded delete fails": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 3,
+                "grounds": [
+                    {
+                        "code": "5.1.2.e",
+                        "article": "5.1",
+                        "label": "Privacy"
+                    }
+                ],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "save",
+            {
+                "publication": "pub-1",
+                "position": 1,
+                "grounds": [],
+                "source": "dossiq",
+                "recordedAt": "<now>"
+            },
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "old-1",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "delete",
+            "old-2",
+            "5",
+            "9",
+            false,
+            false
+        ],
+        [
+            "threw",
+            "RuntimeException",
+            "delete of old-2 failed"
+        ]
+    ],
+    "no openregister": [
+        [
+            "threw",
+            "RuntimeException",
+            "OpenRegister is not available, so the withheld documents cannot be written."
+        ]
+    ],
+    "schema not configured": [
+        [
+            "threw",
+            "RuntimeException",
+            "Register configuration is not set for publication_register / withheld_document_schema."
+        ]
+    ],
+    "register not configured": [
+        [
+            "threw",
+            "RuntimeException",
+            "Register configuration is not set for publication_register / withheld_document_schema."
+        ]
+    ],
+    "search fails": [
+        [
+            "search",
+            {
+                "@self": {
+                    "register": "5",
+                    "schema": "9"
+                },
+                "publication": "pub-1",
+                "_limit": 1000
+            },
+            false,
+            false
+        ],
+        [
+            "threw",
+            "RuntimeException",
+            "search down"
+        ]
+    ]
+}

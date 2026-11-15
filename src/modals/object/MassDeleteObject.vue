@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { catalogStore, navigationStore, objectStore } from '../../store/store.js'
 </script>
@@ -189,28 +193,40 @@ export default {
 				const { successful, failed } =
 					await objectStore.massDeleteObjects(objectsToProcess)
 
-				if (successful.length > 0) {
-					this.success = true
-					// Refresh publications using catalogStore
-					catalogStore.fetchPublications()
-
-					// Only auto-close if there are no failures
-					if (failed.length === 0) {
-						this.closeModalTimeout = setTimeout(() => {
-							this.closeDialog()
-						}, 2000)
-					}
-				}
-
-				if (failed.length > 0) {
-					this.error = `Failed to delete ${failed.length} object${failed.length > 1 ? 's' : ''}`
-				}
+				this.reportDeletion({ successful, failed })
 			} catch (error) {
 				this.success = false
 				this.error =
 					error.message || 'An error occurred while deleting objects'
 			} finally {
 				this.loading = false
+			}
+		},
+
+		/**
+		 * Show the outcome of a mass delete: on any success refresh the
+		 * publications and close after two seconds unless something failed;
+		 * name how many failed.
+		 *
+		 * @param {{successful: Array, failed: Array}} outcome - The results
+		 * @return {void}
+		 */
+		reportDeletion({ successful, failed }) {
+			if (successful.length > 0) {
+				this.success = true
+				// Refresh publications using catalogStore
+				catalogStore.fetchPublications()
+
+				// Only auto-close if there are no failures
+				if (failed.length === 0) {
+					this.closeModalTimeout = setTimeout(() => {
+						this.closeDialog()
+					}, 2000)
+				}
+			}
+
+			if (failed.length > 0) {
+				this.error = `Failed to delete ${failed.length} object${failed.length > 1 ? 's' : ''}`
 			}
 		},
 

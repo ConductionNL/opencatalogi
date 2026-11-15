@@ -1,0 +1,727 @@
+{
+    "every object type key": {
+        "answer": {
+            "catalog_source": "catalog-source",
+            "catalog_schema": "catalog-schema",
+            "catalog_register": "catalog-register",
+            "listing_source": "listing-source",
+            "listing_schema": "listing-schema",
+            "listing_register": "listing-register",
+            "organization_source": "organization-source",
+            "organization_schema": "organization-schema",
+            "organization_register": "organization-register",
+            "theme_source": "theme-source",
+            "theme_schema": "theme-schema",
+            "theme_register": "theme-register",
+            "glossary_source": "glossary-source",
+            "glossary_schema": "glossary-schema",
+            "glossary_register": "glossary-register",
+            "ooapi_courses_source": "ooapi_courses-source",
+            "ooapi_courses_schema": "ooapi_courses-schema",
+            "ooapi_courses_register": "ooapi_courses-register",
+            "ooapi_programs_source": "ooapi_programs-source",
+            "ooapi_programs_schema": "ooapi_programs-schema",
+            "ooapi_programs_register": "ooapi_programs-register",
+            "ooapi_offerings_source": "ooapi_offerings-source",
+            "ooapi_offerings_schema": "ooapi_offerings-schema",
+            "ooapi_offerings_register": "ooapi_offerings-register"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "catalog_source",
+                "catalog-source"
+            ],
+            [
+                "opencatalogi",
+                "catalog_schema",
+                "catalog-schema"
+            ],
+            [
+                "opencatalogi",
+                "catalog_register",
+                "catalog-register"
+            ],
+            [
+                "opencatalogi",
+                "listing_source",
+                "listing-source"
+            ],
+            [
+                "opencatalogi",
+                "listing_schema",
+                "listing-schema"
+            ],
+            [
+                "opencatalogi",
+                "listing_register",
+                "listing-register"
+            ],
+            [
+                "opencatalogi",
+                "organization_source",
+                "organization-source"
+            ],
+            [
+                "opencatalogi",
+                "organization_schema",
+                "organization-schema"
+            ],
+            [
+                "opencatalogi",
+                "organization_register",
+                "organization-register"
+            ],
+            [
+                "opencatalogi",
+                "theme_source",
+                "theme-source"
+            ],
+            [
+                "opencatalogi",
+                "theme_schema",
+                "theme-schema"
+            ],
+            [
+                "opencatalogi",
+                "theme_register",
+                "theme-register"
+            ],
+            [
+                "opencatalogi",
+                "glossary_source",
+                "glossary-source"
+            ],
+            [
+                "opencatalogi",
+                "glossary_schema",
+                "glossary-schema"
+            ],
+            [
+                "opencatalogi",
+                "glossary_register",
+                "glossary-register"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_courses_source",
+                "ooapi_courses-source"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_courses_schema",
+                "ooapi_courses-schema"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_courses_register",
+                "ooapi_courses-register"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_programs_source",
+                "ooapi_programs-source"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_programs_schema",
+                "ooapi_programs-schema"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_programs_register",
+                "ooapi_programs-register"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_offerings_source",
+                "ooapi_offerings-source"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_offerings_schema",
+                "ooapi_offerings-schema"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_offerings_register",
+                "ooapi_offerings-register"
+            ]
+        ]
+    },
+    "every instance key": {
+        "answer": {
+            "auto_publish_attachments": "true",
+            "auto_publish_objects": "false",
+            "use_old_style_publishing_view": "x",
+            "dcat_instance_title": "T",
+            "dcat_publisher_name": "P",
+            "dcat_publisher_uri": "https://p",
+            "dcat_default_license": "L",
+            "dcat_contact_point": "C",
+            "ooapi_consumers": "alice,bob",
+            "woo_index_registration_status": "registered",
+            "woo_index_registration_url": "https://u",
+            "woo_index_registration_at": "2026",
+            "woo_index_registration_answer": "a",
+            "public_api_cache_seconds": "120"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "auto_publish_attachments",
+                "true"
+            ],
+            [
+                "opencatalogi",
+                "auto_publish_objects",
+                "false"
+            ],
+            [
+                "opencatalogi",
+                "use_old_style_publishing_view",
+                "x"
+            ],
+            [
+                "opencatalogi",
+                "dcat_instance_title",
+                "T"
+            ],
+            [
+                "opencatalogi",
+                "dcat_publisher_name",
+                "P"
+            ],
+            [
+                "opencatalogi",
+                "dcat_publisher_uri",
+                "https://p"
+            ],
+            [
+                "opencatalogi",
+                "dcat_default_license",
+                "L"
+            ],
+            [
+                "opencatalogi",
+                "dcat_contact_point",
+                "C"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_consumers",
+                "alice,bob"
+            ],
+            [
+                "opencatalogi",
+                "woo_index_registration_status",
+                "registered"
+            ],
+            [
+                "opencatalogi",
+                "woo_index_registration_url",
+                "https://u"
+            ],
+            [
+                "opencatalogi",
+                "woo_index_registration_at",
+                "2026"
+            ],
+            [
+                "opencatalogi",
+                "woo_index_registration_answer",
+                "a"
+            ],
+            [
+                "opencatalogi",
+                "public_api_cache_seconds",
+                "120"
+            ]
+        ]
+    },
+    "unknown and injected keys": {
+        "answer": {
+            "catalog_register": "3"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "catalog_register",
+                "3"
+            ]
+        ]
+    },
+    "empty payload": {
+        "answer": [],
+        "written": []
+    },
+    "cache negative": {
+        "answer": {
+            "public_api_cache_seconds": "0"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "public_api_cache_seconds",
+                "0"
+            ]
+        ]
+    },
+    "cache above an hour": {
+        "answer": {
+            "public_api_cache_seconds": "3600"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "public_api_cache_seconds",
+                "3600"
+            ]
+        ]
+    },
+    "cache not a number": {
+        "answer": {
+            "public_api_cache_seconds": "0"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "public_api_cache_seconds",
+                "0"
+            ]
+        ]
+    },
+    "cache as float text": {
+        "answer": {
+            "public_api_cache_seconds": "30"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "public_api_cache_seconds",
+                "30"
+            ]
+        ]
+    },
+    "channel sources map": {
+        "answer": {
+            "channel_sources": "{\"plooi\":\"src-1\"}"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "channel_sources",
+                "{\"plooi\":\"src-1\"}"
+            ]
+        ]
+    },
+    "channel sources text": {
+        "answer": {
+            "channel_sources": "{\"plooi\":\"src-2\"}"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "channel_sources",
+                "{\"plooi\":\"src-2\"}"
+            ]
+        ]
+    },
+    "channel sources rubbish": {
+        "answer": {
+            "channel_sources": "{}"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "channel_sources",
+                "{}"
+            ]
+        ]
+    },
+    "settings with a failing config": {
+        "answer": {
+            "thrown": "RuntimeException",
+            "message": "Failed to update settings: config down"
+        },
+        "written": []
+    },
+    "publishing all true": {
+        "answer": {
+            "auto_publish_attachments": true,
+            "auto_publish_objects": true,
+            "use_old_style_publishing_view": true
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "auto_publish_attachments",
+                "true"
+            ],
+            [
+                "opencatalogi",
+                "auto_publish_objects",
+                "true"
+            ],
+            [
+                "opencatalogi",
+                "use_old_style_publishing_view",
+                "true"
+            ]
+        ]
+    },
+    "publishing other truthy values": {
+        "answer": {
+            "auto_publish_attachments": false,
+            "auto_publish_objects": false,
+            "use_old_style_publishing_view": false
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "auto_publish_attachments",
+                "false"
+            ],
+            [
+                "opencatalogi",
+                "auto_publish_objects",
+                "false"
+            ],
+            [
+                "opencatalogi",
+                "use_old_style_publishing_view",
+                "false"
+            ]
+        ]
+    },
+    "publishing false and null": {
+        "answer": {
+            "auto_publish_attachments": false,
+            "use_old_style_publishing_view": false
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "auto_publish_attachments",
+                "false"
+            ],
+            [
+                "opencatalogi",
+                "use_old_style_publishing_view",
+                "false"
+            ]
+        ]
+    },
+    "publishing unknown keys": {
+        "answer": [],
+        "written": []
+    },
+    "publishing with a failing config": {
+        "answer": {
+            "thrown": "RuntimeException",
+            "message": "Failed to update publishing options: config down"
+        },
+        "written": []
+    },
+    "cache as a list": {
+        "answer": {
+            "thrown": "InvalidArgumentException",
+            "message": "Setting public_api_cache_seconds takes a single value, not a list or an object"
+        },
+        "written": []
+    },
+    "a write the config drops": {
+        "answer": {
+            "catalog_schema": "",
+            "dcat_instance_title": ""
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "catalog_schema",
+                "4"
+            ],
+            [
+                "opencatalogi",
+                "dcat_instance_title",
+                "T"
+            ]
+        ]
+    },
+    "a publishing write the config drops": {
+        "answer": {
+            "auto_publish_objects": false
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "auto_publish_objects",
+                "true"
+            ]
+        ]
+    },
+    "every known config key": {
+        "answer": {
+            "catalog_source": "v78",
+            "catalog_schema": "v7",
+            "catalog_register": "v6",
+            "listing_source": "v82",
+            "listing_schema": "v32",
+            "listing_register": "v31",
+            "organization_source": "v48",
+            "organization_schema": "v47",
+            "organization_register": "v46",
+            "theme_source": "v89",
+            "theme_schema": "v90",
+            "theme_register": "v91",
+            "glossary_source": "v95",
+            "glossary_schema": "v96",
+            "glossary_register": "v97",
+            "ooapi_courses_source": "v113",
+            "ooapi_courses_schema": "v114",
+            "ooapi_courses_register": "v115",
+            "ooapi_programs_source": "v118",
+            "ooapi_programs_schema": "v119",
+            "ooapi_programs_register": "v120",
+            "ooapi_offerings_source": "v123",
+            "ooapi_offerings_schema": "v124",
+            "ooapi_offerings_register": "v125",
+            "auto_publish_attachments": "v2",
+            "auto_publish_objects": "v3",
+            "use_old_style_publishing_view": "v67",
+            "dcat_instance_title": "v18",
+            "dcat_publisher_name": "v19",
+            "dcat_publisher_uri": "v20",
+            "dcat_default_license": "v16",
+            "dcat_contact_point": "v15",
+            "ooapi_consumers": "v42",
+            "woo_index_registration_status": "v74",
+            "woo_index_registration_url": "v75",
+            "woo_index_registration_at": "v73",
+            "woo_index_registration_answer": "v72",
+            "channel_sources": "{}",
+            "public_api_cache_seconds": "0"
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "catalog_source",
+                "v78"
+            ],
+            [
+                "opencatalogi",
+                "catalog_schema",
+                "v7"
+            ],
+            [
+                "opencatalogi",
+                "catalog_register",
+                "v6"
+            ],
+            [
+                "opencatalogi",
+                "listing_source",
+                "v82"
+            ],
+            [
+                "opencatalogi",
+                "listing_schema",
+                "v32"
+            ],
+            [
+                "opencatalogi",
+                "listing_register",
+                "v31"
+            ],
+            [
+                "opencatalogi",
+                "organization_source",
+                "v48"
+            ],
+            [
+                "opencatalogi",
+                "organization_schema",
+                "v47"
+            ],
+            [
+                "opencatalogi",
+                "organization_register",
+                "v46"
+            ],
+            [
+                "opencatalogi",
+                "theme_source",
+                "v89"
+            ],
+            [
+                "opencatalogi",
+                "theme_schema",
+                "v90"
+            ],
+            [
+                "opencatalogi",
+                "theme_register",
+                "v91"
+            ],
+            [
+                "opencatalogi",
+                "glossary_source",
+                "v95"
+            ],
+            [
+                "opencatalogi",
+                "glossary_schema",
+                "v96"
+            ],
+            [
+                "opencatalogi",
+                "glossary_register",
+                "v97"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_courses_source",
+                "v113"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_courses_schema",
+                "v114"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_courses_register",
+                "v115"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_programs_source",
+                "v118"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_programs_schema",
+                "v119"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_programs_register",
+                "v120"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_offerings_source",
+                "v123"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_offerings_schema",
+                "v124"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_offerings_register",
+                "v125"
+            ],
+            [
+                "opencatalogi",
+                "auto_publish_attachments",
+                "v2"
+            ],
+            [
+                "opencatalogi",
+                "auto_publish_objects",
+                "v3"
+            ],
+            [
+                "opencatalogi",
+                "use_old_style_publishing_view",
+                "v67"
+            ],
+            [
+                "opencatalogi",
+                "dcat_instance_title",
+                "v18"
+            ],
+            [
+                "opencatalogi",
+                "dcat_publisher_name",
+                "v19"
+            ],
+            [
+                "opencatalogi",
+                "dcat_publisher_uri",
+                "v20"
+            ],
+            [
+                "opencatalogi",
+                "dcat_default_license",
+                "v16"
+            ],
+            [
+                "opencatalogi",
+                "dcat_contact_point",
+                "v15"
+            ],
+            [
+                "opencatalogi",
+                "ooapi_consumers",
+                "v42"
+            ],
+            [
+                "opencatalogi",
+                "woo_index_registration_status",
+                "v74"
+            ],
+            [
+                "opencatalogi",
+                "woo_index_registration_url",
+                "v75"
+            ],
+            [
+                "opencatalogi",
+                "woo_index_registration_at",
+                "v73"
+            ],
+            [
+                "opencatalogi",
+                "woo_index_registration_answer",
+                "v72"
+            ],
+            [
+                "opencatalogi",
+                "channel_sources",
+                "{}"
+            ],
+            [
+                "opencatalogi",
+                "public_api_cache_seconds",
+                "0"
+            ]
+        ]
+    },
+    "every known config key as a publishing option": {
+        "answer": {
+            "auto_publish_attachments": true,
+            "auto_publish_objects": true,
+            "use_old_style_publishing_view": true
+        },
+        "written": [
+            [
+                "opencatalogi",
+                "auto_publish_attachments",
+                "true"
+            ],
+            [
+                "opencatalogi",
+                "auto_publish_objects",
+                "true"
+            ],
+            [
+                "opencatalogi",
+                "use_old_style_publishing_view",
+                "true"
+            ]
+        ]
+    }
+}

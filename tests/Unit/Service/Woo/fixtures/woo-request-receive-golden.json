@@ -1,0 +1,274 @@
+{
+    "full input": {
+        "record": {
+            "reference": "WOO-2026-<random>",
+            "receivedAt": "2026-03-02T10:00:00+01:00",
+            "requestedInformation": "Alle besluiten over de brug",
+            "requesterName": "Jan",
+            "requesterEmail": "jan@example.org",
+            "requesterPhone": "0612345678",
+            "requesterAddress": "Straat 1",
+            "channel": "email",
+            "status": "received",
+            "termTimer": "",
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionCount": 0,
+            "extensionReason": "",
+            "batch": "",
+            "receivedBy": "officer"
+        },
+        "keys": [
+            "reference",
+            "receivedAt",
+            "requestedInformation",
+            "requesterName",
+            "requesterEmail",
+            "requesterPhone",
+            "requesterAddress",
+            "channel",
+            "status",
+            "termTimer",
+            "termBasis",
+            "extensionCount",
+            "extensionReason",
+            "batch",
+            "receivedBy"
+        ]
+    },
+    "minimal input, default channel": {
+        "record": {
+            "reference": "WOO-2026-<random>",
+            "receivedAt": "2026-12-31T23:59:59+00:00",
+            "requestedInformation": "x",
+            "requesterName": "",
+            "requesterEmail": "",
+            "requesterPhone": "",
+            "requesterAddress": "",
+            "channel": "web",
+            "status": "received",
+            "termTimer": "",
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionCount": 0,
+            "extensionReason": "",
+            "batch": "",
+            "receivedBy": ""
+        },
+        "keys": [
+            "reference",
+            "receivedAt",
+            "requestedInformation",
+            "requesterName",
+            "requesterEmail",
+            "requesterPhone",
+            "requesterAddress",
+            "channel",
+            "status",
+            "termTimer",
+            "termBasis",
+            "extensionCount",
+            "extensionReason",
+            "batch",
+            "receivedBy"
+        ]
+    },
+    "every channel: post": {
+        "record": {
+            "reference": "WOO-2026-<random>",
+            "receivedAt": "2026-01-01T00:00:00+00:00",
+            "requestedInformation": "x",
+            "requesterName": "",
+            "requesterEmail": "",
+            "requesterPhone": "",
+            "requesterAddress": "",
+            "channel": "post",
+            "status": "received",
+            "termTimer": "",
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionCount": 0,
+            "extensionReason": "",
+            "batch": "",
+            "receivedBy": "a"
+        },
+        "keys": [
+            "reference",
+            "receivedAt",
+            "requestedInformation",
+            "requesterName",
+            "requesterEmail",
+            "requesterPhone",
+            "requesterAddress",
+            "channel",
+            "status",
+            "termTimer",
+            "termBasis",
+            "extensionCount",
+            "extensionReason",
+            "batch",
+            "receivedBy"
+        ]
+    },
+    "every channel: counter": {
+        "record": {
+            "reference": "WOO-2026-<random>",
+            "receivedAt": "2026-01-01T00:00:00+00:00",
+            "requestedInformation": "x",
+            "requesterName": "",
+            "requesterEmail": "",
+            "requesterPhone": "",
+            "requesterAddress": "",
+            "channel": "counter",
+            "status": "received",
+            "termTimer": "",
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionCount": 0,
+            "extensionReason": "",
+            "batch": "",
+            "receivedBy": "a"
+        },
+        "keys": [
+            "reference",
+            "receivedAt",
+            "requestedInformation",
+            "requesterName",
+            "requesterEmail",
+            "requesterPhone",
+            "requesterAddress",
+            "channel",
+            "status",
+            "termTimer",
+            "termBasis",
+            "extensionCount",
+            "extensionReason",
+            "batch",
+            "receivedBy"
+        ]
+    },
+    "every channel: phone": {
+        "record": {
+            "reference": "WOO-2026-<random>",
+            "receivedAt": "2026-01-01T00:00:00+00:00",
+            "requestedInformation": "x",
+            "requesterName": "",
+            "requesterEmail": "",
+            "requesterPhone": "",
+            "requesterAddress": "",
+            "channel": "phone",
+            "status": "received",
+            "termTimer": "",
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionCount": 0,
+            "extensionReason": "",
+            "batch": "",
+            "receivedBy": "a"
+        },
+        "keys": [
+            "reference",
+            "receivedAt",
+            "requestedInformation",
+            "requesterName",
+            "requesterEmail",
+            "requesterPhone",
+            "requesterAddress",
+            "channel",
+            "status",
+            "termTimer",
+            "termBasis",
+            "extensionCount",
+            "extensionReason",
+            "batch",
+            "receivedBy"
+        ]
+    },
+    "every channel: web": {
+        "record": {
+            "reference": "WOO-2026-<random>",
+            "receivedAt": "2026-01-01T00:00:00+00:00",
+            "requestedInformation": "x",
+            "requesterName": "",
+            "requesterEmail": "",
+            "requesterPhone": "",
+            "requesterAddress": "",
+            "channel": "web",
+            "status": "received",
+            "termTimer": "",
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionCount": 0,
+            "extensionReason": "",
+            "batch": "",
+            "receivedBy": "a"
+        },
+        "keys": [
+            "reference",
+            "receivedAt",
+            "requestedInformation",
+            "requesterName",
+            "requesterEmail",
+            "requesterPhone",
+            "requesterAddress",
+            "channel",
+            "status",
+            "termTimer",
+            "termBasis",
+            "extensionCount",
+            "extensionReason",
+            "batch",
+            "receivedBy"
+        ]
+    },
+    "unknown channel": {
+        "refused": "DomainException",
+        "message": "The channel \"fax\" is not one of web, email, post, counter, phone. An unknown channel is refused rather than read as the nearest one, because the channel is what decides how the decision goes back out."
+    },
+    "channel case matters": {
+        "refused": "DomainException",
+        "message": "The channel \"Email\" is not one of web, email, post, counter, phone. An unknown channel is refused rather than read as the nearest one, because the channel is what decides how the decision goes back out."
+    },
+    "blank channel": {
+        "refused": "DomainException",
+        "message": "The channel \"\" is not one of web, email, post, counter, phone. An unknown channel is refused rather than read as the nearest one, because the channel is what decides how the decision goes back out."
+    },
+    "nothing asked": {
+        "refused": "DomainException",
+        "message": "A Woo request has to say what information is asked for. A request for nothing cannot be decided, and a term counted against it would be counted against nothing."
+    },
+    "no question at all": {
+        "refused": "DomainException",
+        "message": "A Woo request has to say what information is asked for. A request for nothing cannot be decided, and a term counted against it would be counted against nothing."
+    },
+    "numbers as strings": {
+        "record": {
+            "reference": "WOO-2026-<random>",
+            "receivedAt": "2026-06-30T12:00:00-05:00",
+            "requestedInformation": "42",
+            "requesterName": "",
+            "requesterEmail": "",
+            "requesterPhone": "612345678",
+            "requesterAddress": "",
+            "channel": "web",
+            "status": "received",
+            "termTimer": "",
+            "termBasis": "Woo art. 4.4 lid 1",
+            "extensionCount": 0,
+            "extensionReason": "",
+            "batch": "",
+            "receivedBy": "a"
+        },
+        "keys": [
+            "reference",
+            "receivedAt",
+            "requestedInformation",
+            "requesterName",
+            "requesterEmail",
+            "requesterPhone",
+            "requesterAddress",
+            "channel",
+            "status",
+            "termTimer",
+            "termBasis",
+            "extensionCount",
+            "extensionReason",
+            "batch",
+            "receivedBy"
+        ]
+    }
+}

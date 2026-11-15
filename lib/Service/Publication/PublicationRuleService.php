@@ -35,13 +35,15 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\Publication;
 
 use DateTimeImmutable;
+use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
+use OCA\OpenCatalogi\Service\WooCategory;
 
 /**
  * Decides what publishes and what an anonymous reader may read of it.
  *
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md
  */
-class PublicationRuleService {
+class PublicationRuleService implements PublicationRuleServiceInterface {
 
 	/**
 	 * The operators a condition may use.
@@ -65,8 +67,28 @@ class PublicationRuleService {
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-a-record-type-is-readable-without-an-account-with-the-visible-parts-chosen-req-pin-101
 	 */
 	public function validateRule(array $rule): array {
-		$errors = [];
+		$errors = array_merge(
+			$this->ruleErrors(rule: $rule),
+			$this->conditionsErrors(conditions: ($rule['conditions'] ?? []))
+		);
 
+		return [
+			'valid' => ($errors === []),
+			'errors' => $errors,
+		];
+
+	}//end validateRule()
+
+	/**
+	 * What a rule lacks: the record type it governs, the properties an
+	 * anonymous reader may read.
+	 *
+	 * @param array<string, mixed> $rule The publication rule.
+	 *
+	 * @return array<int, string> The errors.
+	 */
+	private function ruleErrors(array $rule): array {
+		$errors = [];
 		if (trim((string)($rule['recordType'] ?? '')) === '') {
 			$errors[] = 'A publication rule must name the record type it governs.';
 		}
@@ -76,28 +98,86 @@ class PublicationRuleService {
 			$errors[] = 'A publication rule must name the properties an anonymous reader may read, even if that is none.';
 		}
 
-		foreach (($rule['conditions'] ?? []) as $index => $condition) {
-			if (is_array($condition) === false) {
-				$errors[] = 'Condition ' . $index . ' cannot be read.';
-				continue;
-			}
-
-			if (trim((string)($condition['property'] ?? '')) === '') {
-				$errors[] = 'Condition ' . $index . ' names no property.';
-			}
-
-			$operator = (string)($condition['operator'] ?? '');
-			if (in_array($operator, self::OPERATORS, true) === false) {
-				$errors[] = 'Condition ' . $index . ' uses an operator this app does not know: "' . $operator . '".';
-			}
+		if (self::categoryOf(rule: $rule) === null) {
+			$errors[] = 'A publication rule must name, in wooCategory, one of the Woo information categories this app serves.';
 		}
 
-		return [
-			'valid' => ($errors === []),
-			'errors' => $errors,
-		];
+		return $errors;
+	}//end ruleErrors()
 
-	}//end validateRule()
+	/**
+	 * The Woo information category a rule files its records under, or null when it names none this app serves.
+	 *
+	 * @param array<string, mixed> $rule The publication rule.
+	 *
+	 * @return string|null The category code, such as `infocat004`.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 */
+	public static function categoryOf(array $rule): ?string {
+		$code = ($rule['wooCategory'] ?? null);
+		if (is_string($code) === false || array_key_exists($code, WooCategory::ALL) === false) {
+			return null;
+		}
+
+		return $code;
+	}//end categoryOf()
+
+	/**
+	 * How a preview names a rule's category: its Dutch name with the code, as in "Adviezen (infocat010)".
+	 *
+	 * @param string $code The category code.
+	 *
+	 * @return string The label.
+	 *
+	 * @spec openspec/changes/capability-rows-verify-scenarios/specs/woo-compliance/spec.md#requirement-a-publication-rule-names-the-information-category-its-records-are-filed-under-req-cvs-003
+	 */
+	public static function categoryLabel(string $code): string {
+		return WooCategory::ALL[$code]['nl'] . ' (' . $code . ')';
+	}//end categoryLabel()
+
+	/**
+	 * The errors of every condition, in order.
+	 *
+	 * @param mixed $conditions The rule's conditions.
+	 *
+	 * @return array<int, string> The errors.
+	 */
+	private function conditionsErrors(mixed $conditions): array {
+		$errors = [];
+		foreach ($conditions as $index => $condition) {
+			array_push($errors, ...$this->conditionErrors(index: $index, condition: $condition));
+		}
+
+		return $errors;
+	}//end conditionsErrors()
+
+	/**
+	 * The errors of one condition: unreadable, or naming no property or an
+	 * unknown operator.
+	 *
+	 * @param int|string $index The condition's position.
+	 * @param mixed $condition The condition.
+	 *
+	 * @return array<int, string> The errors.
+	 */
+	private function conditionErrors(int|string $index, mixed $condition): array {
+		if (is_array($condition) === false) {
+			return ['Condition ' . $index . ' cannot be read.'];
+		}
+
+		$errors = [];
+		if (trim((string)($condition['property'] ?? '')) === '') {
+			$errors[] = 'Condition ' . $index . ' names no property.';
+		}
+
+		$operator = (string)($condition['operator'] ?? '');
+		if (in_array($operator, self::OPERATORS, true) === false) {
+			$errors[] = 'Condition ' . $index . ' uses an operator this app does not know: "' . $operator . '".';
+		}
+
+		return $errors;
+	}//end conditionErrors()
 
 	/**
 	 * Whether one record meets one condition.
@@ -158,7 +238,6 @@ class PublicationRuleService {
 		}
 
 		return ($left > $right);
-
 	}//end compareDates()
 
 	/**
@@ -198,7 +277,6 @@ class PublicationRuleService {
 		}
 
 		return true;
-
 	}//end publishes()
 
 	/**
@@ -234,8 +312,13 @@ class PublicationRuleService {
 			$projected['publicationText'] = $publicationText;
 		}
 
-		return $projected;
+		// REQ-CVS-003: a record the rule publishes is filed under the rule's category.
+		$category = self::categoryOf(rule: $rule);
+		if ($category !== null) {
+			$projected['wooCategory'] = $category;
+		}
 
+		return $projected;
 	}//end projectForAnonymous()
 
 	/**
@@ -279,34 +362,65 @@ class PublicationRuleService {
 		$asSaved = $rule;
 		$asSaved['enabled'] = true;
 
+		return ['valid' => true, 'errors' => []] + $this->sampleOutcome(rule: $asSaved, sample: $sample);
+
+	}//end preview()
+
+	/**
+	 * What a rule publishes of a sample: the anonymous view of each record it
+	 * publishes, how many it does not, and every property it exposes.
+	 *
+	 * @param array<string, mixed> $rule The rule, as it would be saved.
+	 * @param array<int, array<string, mixed>> $sample A sample of existing records.
+	 *
+	 * @return array{
+	 *     wouldPublish: array<int, array<string, mixed>>,
+	 *     wouldNotPublish: integer,
+	 *     exposedProperties: array<int, string>,
+	 *     sampleSize: integer
+	 * }
+	 */
+	private function sampleOutcome(array $rule, array $sample): array {
 		$wouldPublish = [];
 		$wouldNot = 0;
-		$exposed = [];
-
 		foreach ($sample as $record) {
-			if ($this->publishes(record: $record, rule: $asSaved) === false) {
+			if ($this->publishes(record: $record, rule: $rule) === false) {
 				$wouldNot++;
 				continue;
 			}
 
-			$projected = $this->projectForAnonymous(record: $record, rule: $asSaved);
-			$wouldPublish[] = $projected;
+			$wouldPublish[] = $this->projectForAnonymous(record: $record, rule: $rule);
+		}
+
+		// REQ-CVS-003: each record is shown with the category it would be filed under.
+		$label = self::categoryLabel(code: (string)self::categoryOf(rule: $rule));
+
+		return [
+			'wouldPublish' => array_map(static fn (array $view): array => $view + ['wooCategoryLabel' => $label], $wouldPublish),
+			'wouldNotPublish' => $wouldNot,
+			'exposedProperties' => $this->exposedProperties(projections: $wouldPublish),
+			'sampleSize' => count($sample),
+		];
+	}//end sampleOutcome()
+
+	/**
+	 * Every property the anonymous views expose, once, sorted.
+	 *
+	 * @param array<int, array<string, mixed>> $projections The anonymous views.
+	 *
+	 * @return array<int, string> The properties.
+	 */
+	private function exposedProperties(array $projections): array {
+		$exposed = [];
+		foreach ($projections as $projected) {
 			$exposed = array_merge($exposed, array_keys($projected));
 		}
 
 		$exposed = array_values(array_unique($exposed));
 		sort($exposed);
 
-		return [
-			'valid' => true,
-			'errors' => [],
-			'wouldPublish' => $wouldPublish,
-			'wouldNotPublish' => $wouldNot,
-			'exposedProperties' => $exposed,
-			'sampleSize' => count($sample),
-		];
-
-	}//end preview()
+		return $exposed;
+	}//end exposedProperties()
 
 	/**
 	 * The anonymous view of a list of records, with anything unpublished removed.
@@ -351,7 +465,6 @@ class PublicationRuleService {
 		}
 
 		return $projected;
-
 	}//end projectList()
 
 	/**
@@ -410,6 +523,5 @@ class PublicationRuleService {
 		}
 
 		return $indexed;
-
 	}//end indexByRecordType()
 }//end class

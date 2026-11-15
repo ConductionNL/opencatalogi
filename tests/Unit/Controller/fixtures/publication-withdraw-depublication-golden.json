@@ -1,0 +1,437 @@
+{
+    "withdraw public": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "publication": "p1",
+                "reason": "Wrong annex attached",
+                "depublishedBy": "redacteur",
+                "depublishedAt": "<now>",
+                "withdrawals": [
+                    {
+                        "channel": "national-woo-index",
+                        "sentAt": "<now>",
+                        "acknowledgedAt": "2026-09-30T12:00:01+00:00",
+                        "answer": "ok"
+                    },
+                    {
+                        "channel": "plooi",
+                        "sentAt": "<now>",
+                        "answer": "not delivered: No integriq source is set for the channel."
+                    }
+                ]
+            },
+            "outstandingChannels": [
+                "plooi"
+            ],
+            "complete": false
+        },
+        "saves": [
+            {
+                "object": {
+                    "title": "Besluit",
+                    "publicationDate": "2026-09-01T09:00:00+00:00",
+                    "plooiStatus": "delivered",
+                    "depublicationDate": "<now>"
+                },
+                "schema": "publication_schema",
+                "uuid": "p1"
+            },
+            {
+                "object": {
+                    "publication": "p1",
+                    "reason": "Wrong annex attached",
+                    "depublishedBy": "redacteur",
+                    "depublishedAt": "<now>",
+                    "withdrawals": [
+                        {
+                            "channel": "national-woo-index",
+                            "sentAt": "<now>",
+                            "acknowledgedAt": "2026-09-30T12:00:01+00:00",
+                            "answer": "ok"
+                        },
+                        {
+                            "channel": "plooi",
+                            "sentAt": "<now>",
+                            "answer": "not delivered: No integriq source is set for the channel."
+                        }
+                    ]
+                },
+                "schema": "depublication_schema",
+                "uuid": null
+            }
+        ],
+        "sent": [
+            "national-woo-index",
+            "plooi"
+        ],
+        "unpublished": []
+    },
+    "withdraw scheduled": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "publication": "p1",
+                "reason": "Wrong annex attached",
+                "depublishedBy": "redacteur",
+                "depublishedAt": "<now>",
+                "withdrawals": []
+            },
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "saves": [
+            {
+                "object": {
+                    "publicationDate": "2099-09-01T09:00:00+00:00",
+                    "depublicationDate": "<now>"
+                },
+                "schema": "publication_schema",
+                "uuid": "p1"
+            },
+            {
+                "object": {
+                    "publication": "p1",
+                    "reason": "Wrong annex attached",
+                    "depublishedBy": "redacteur",
+                    "depublishedAt": "<now>",
+                    "withdrawals": []
+                },
+                "schema": "depublication_schema",
+                "uuid": null
+            }
+        ],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw draft": {
+        "status": 409,
+        "data": {
+            "error": "wrong-state",
+            "state": "draft"
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw withdrawn": {
+        "status": 409,
+        "data": {
+            "error": "wrong-state",
+            "state": "withdrawn"
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw without the update right": {
+        "status": 403,
+        "data": {
+            "error": "forbidden",
+            "message": "You may not change this publication."
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw unreadable": {
+        "status": 404,
+        "data": {
+            "error": "not-found"
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw anonymous": {
+        "status": 401,
+        "data": {
+            "error": "not-logged-in"
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw without a reason": {
+        "status": 400,
+        "data": {
+            "error": "reason-missing",
+            "message": "Say why it is being withdrawn."
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw with a forged actor": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "publication": "p1",
+                "reason": "Wrong annex attached",
+                "depublishedBy": "redacteur",
+                "depublishedAt": "<now>",
+                "withdrawals": [
+                    {
+                        "channel": "national-woo-index",
+                        "sentAt": "<now>",
+                        "acknowledgedAt": "2026-09-30T12:00:01+00:00",
+                        "answer": "ok"
+                    },
+                    {
+                        "channel": "plooi",
+                        "sentAt": "<now>",
+                        "answer": "not delivered: No integriq source is set for the channel."
+                    }
+                ]
+            },
+            "outstandingChannels": [
+                "plooi"
+            ],
+            "complete": false
+        },
+        "saves": [
+            {
+                "object": {
+                    "title": "Besluit",
+                    "publicationDate": "2026-09-01T09:00:00+00:00",
+                    "plooiStatus": "delivered",
+                    "depublicationDate": "<now>"
+                },
+                "schema": "publication_schema",
+                "uuid": "p1"
+            },
+            {
+                "object": {
+                    "publication": "p1",
+                    "reason": "Wrong annex attached",
+                    "depublishedBy": "redacteur",
+                    "depublishedAt": "<now>",
+                    "withdrawals": [
+                        {
+                            "channel": "national-woo-index",
+                            "sentAt": "<now>",
+                            "acknowledgedAt": "2026-09-30T12:00:01+00:00",
+                            "answer": "ok"
+                        },
+                        {
+                            "channel": "plooi",
+                            "sentAt": "<now>",
+                            "answer": "not delivered: No integriq source is set for the channel."
+                        }
+                    ]
+                },
+                "schema": "depublication_schema",
+                "uuid": null
+            }
+        ],
+        "sent": [
+            "national-woo-index",
+            "plooi"
+        ],
+        "unpublished": []
+    },
+    "withdraw, publication save refused": {
+        "status": 400,
+        "data": {
+            "error": "not-saved",
+            "message": "The save was refused."
+        },
+        "saves": [
+            {
+                "object": {
+                    "title": "Besluit",
+                    "publicationDate": "2026-09-01T09:00:00+00:00",
+                    "plooiStatus": "delivered",
+                    "depublicationDate": "<now>"
+                },
+                "schema": "publication_schema",
+                "uuid": "p1"
+            }
+        ],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw, depublication save refused": {
+        "status": 503,
+        "data": {
+            "state": "withdrawn",
+            "error": "depublication-unstored",
+            "message": "It was taken down, but the record of why could not be stored."
+        },
+        "saves": [
+            {
+                "object": {
+                    "title": "Besluit",
+                    "publicationDate": "2026-09-01T09:00:00+00:00",
+                    "plooiStatus": "delivered",
+                    "depublicationDate": "<now>"
+                },
+                "schema": "publication_schema",
+                "uuid": "p1"
+            },
+            {
+                "object": {
+                    "publication": "p1",
+                    "reason": "Wrong annex attached",
+                    "depublishedBy": "redacteur",
+                    "depublishedAt": "<now>",
+                    "withdrawals": [
+                        {
+                            "channel": "national-woo-index",
+                            "sentAt": "<now>",
+                            "acknowledgedAt": "2026-09-30T12:00:01+00:00",
+                            "answer": "ok"
+                        },
+                        {
+                            "channel": "plooi",
+                            "sentAt": "<now>",
+                            "answer": "not delivered: No integriq source is set for the channel."
+                        }
+                    ]
+                },
+                "schema": "depublication_schema",
+                "uuid": null
+            }
+        ],
+        "sent": [
+            "national-woo-index",
+            "plooi"
+        ],
+        "unpublished": []
+    },
+    "withdraw file": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "publication": "p1",
+                "reason": "Wrong annex attached",
+                "depublishedBy": "redacteur",
+                "depublishedAt": "<now>",
+                "withdrawals": [],
+                "file": "4711"
+            },
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "saves": [
+            {
+                "object": {
+                    "publication": "p1",
+                    "reason": "Wrong annex attached",
+                    "depublishedBy": "redacteur",
+                    "depublishedAt": "<now>",
+                    "withdrawals": [],
+                    "file": "4711"
+                },
+                "schema": "depublication_schema",
+                "uuid": null
+            }
+        ],
+        "sent": [],
+        "unpublished": [
+            4711
+        ]
+    },
+    "withdraw file without the update right": {
+        "status": 403,
+        "data": {
+            "error": "forbidden",
+            "message": "You may not change this publication."
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw file unreadable": {
+        "status": 404,
+        "data": {
+            "error": "not-found"
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw file anonymous": {
+        "status": 401,
+        "data": {
+            "error": "not-logged-in"
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw file without a reason": {
+        "status": 400,
+        "data": {
+            "error": "reason-missing",
+            "message": "Say why it is being withdrawn."
+        },
+        "saves": [],
+        "sent": [],
+        "unpublished": []
+    },
+    "withdraw file with a forged actor": {
+        "status": 200,
+        "data": {
+            "state": "withdrawn",
+            "depublication": {
+                "publication": "p1",
+                "reason": "Wrong annex attached",
+                "depublishedBy": "redacteur",
+                "depublishedAt": "<now>",
+                "withdrawals": [],
+                "file": "4711"
+            },
+            "outstandingChannels": [],
+            "complete": true
+        },
+        "saves": [
+            {
+                "object": {
+                    "publication": "p1",
+                    "reason": "Wrong annex attached",
+                    "depublishedBy": "redacteur",
+                    "depublishedAt": "<now>",
+                    "withdrawals": [],
+                    "file": "4711"
+                },
+                "schema": "depublication_schema",
+                "uuid": null
+            }
+        ],
+        "sent": [],
+        "unpublished": [
+            4711
+        ]
+    },
+    "withdraw file, depublication save refused": {
+        "status": 503,
+        "data": {
+            "state": "withdrawn",
+            "error": "depublication-unstored",
+            "message": "It was taken down, but the record of why could not be stored."
+        },
+        "saves": [
+            {
+                "object": {
+                    "publication": "p1",
+                    "reason": "Wrong annex attached",
+                    "depublishedBy": "redacteur",
+                    "depublishedAt": "<now>",
+                    "withdrawals": [],
+                    "file": "4711"
+                },
+                "schema": "depublication_schema",
+                "uuid": null
+            }
+        ],
+        "sent": [],
+        "unpublished": [
+            4711
+        ]
+    }
+}

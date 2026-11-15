@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { translate as t } from '@nextcloud/l10n'
 </script>
@@ -23,7 +27,7 @@ import { translate as t } from '@nextcloud/l10n'
 				countLabel=""
 				horizontal
 				clickable
-				@click="onEntryClick(entry)" />
+				@click="onEntryClick" />
 		</div>
 	</div>
 </template>
@@ -37,6 +41,13 @@ import { NcEmptyContent, NcLoadingIcon } from '@nextcloud/vue'
 // Icons
 import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
 
+/** The widget rows in order: row id and the summary count it shows. */
+const RETENTION_ROWS = [
+	['expiring', 'expiringSoon'],
+	['review', 'reviewRequired'],
+	['archived', 'archived'],
+]
+
 /**
  * RetentionWidget — dashboard widget showing retention review-queue counts.
  *
@@ -44,8 +55,8 @@ import ClockOutlineIcon from 'vue-material-design-icons/ClockOutline.vue'
  * expiring-soon / review-required / archived counts as CnStatsBlock KPI
  * entries (ADR-049 stats-block pattern — this widget is a registered
  * Nextcloud dashboard component, not a manifest-v2 `widgets[]` declaration,
- * so the blocks are composed directly). Each entry deep-links into the
- * publications listing pre-filtered to that retention status.
+ * so the blocks are composed directly). Each entry opens the retention
+ * review queue.
  *
  * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
  */
@@ -75,29 +86,16 @@ export default {
 	computed: {
 		/** @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007 */
 		entries() {
-			const rows = []
-			if (this.summary.expiringSoon > 0) {
-				rows.push({
-					id: 'expiring',
-					label: t('opencatalogi', 'Expiring soon'),
-					count: this.summary.expiringSoon,
-				})
+			const labels = {
+				expiring: t('opencatalogi', 'Expiring soon'),
+				review: t('opencatalogi', 'Retention review required'),
+				archived: t('opencatalogi', 'Archived'),
 			}
-			if (this.summary.reviewRequired > 0) {
-				rows.push({
-					id: 'review',
-					label: t('opencatalogi', 'Retention review required'),
-					count: this.summary.reviewRequired,
-				})
-			}
-			if (this.summary.archived > 0) {
-				rows.push({
-					id: 'archived',
-					label: t('opencatalogi', 'Archived'),
-					count: this.summary.archived,
-				})
-			}
-			return rows
+			return RETENTION_ROWS.map(([id, key]) => ({
+				id,
+				label: labels[id],
+				count: this.summary[key],
+			})).filter((row) => row.count > 0)
 		},
 	},
 
@@ -107,20 +105,14 @@ export default {
 
 	methods: {
 		/**
-		 * Open the publications listing pre-filtered to the chosen retention status.
+		 * Open the retention review queue.
 		 *
-		 * @param {object} entry - The clicked summary entry.
 		 * @return {void}
 		 *
 		 * @spec openspec/specs/publication-retention-lifecycle/spec.md#requirement-retention-review-queue-and-dashboard-widget-ret-007
 		 */
-		onEntryClick(entry) {
-			window.open(
-				generateUrl(
-					'/apps/opencatalogi/?retention=' + encodeURIComponent(entry.id),
-				),
-				'_self',
-			)
+		onEntryClick() {
+			window.open(generateUrl('/apps/opencatalogi/retention'), '_self')
 		},
 
 		/**

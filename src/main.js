@@ -13,16 +13,9 @@ import {
 	registerIcons,
 	registerTranslations,
 } from '@conduction/nextcloud-vue'
-// Font Awesome setup
-import { library } from '@fortawesome/fontawesome-svg-core'
-import { fab } from '@fortawesome/free-brands-svg-icons'
-import { far } from '@fortawesome/free-regular-svg-icons'
-import { fas } from '@fortawesome/free-solid-svg-icons'
-import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import VueMarkdownEditor from '@kangc/v-md-editor'
 import enUS from '@kangc/v-md-editor/lib/lang/en-US.js'
 import githubTheme from '@kangc/v-md-editor/lib/theme/github.js'
-import { loadState } from '@nextcloud/initial-state'
 import {
 	loadTranslations,
 	translatePlural as n,
@@ -35,6 +28,7 @@ import { createRouter, createWebHistory } from 'vue-router'
 import App from './App.vue'
 import AuditTrailWidget from './components/widgets/AuditTrailWidget.vue'
 import NationalAnnounceWidget from './components/widgets/NationalAnnounceWidget.vue'
+import PublicationAttachmentsWidget from './components/widgets/PublicationAttachmentsWidget.vue'
 import PublicationVisibilityWidget from './components/widgets/PublicationVisibilityWidget.vue'
 import ThemePreviewWidget from './components/widgets/ThemePreviewWidget.vue'
 import appIcons from './icons.js'
@@ -42,6 +36,7 @@ import bundledManifest from './manifest.json'
 import menuLayout from './menu-layout.json'
 import pinia from './pinia.js'
 import customComponents from './registry.js'
+import { resolveManifestSentinelsSync } from './services/manifestSentinels.js'
 import { translateActionLabels } from './services/translateActionLabels.js'
 
 // gridstack v12 sizes dashboard items with `width: var(--gs-column-width)`.
@@ -52,8 +47,6 @@ import 'gridstack/dist/gridstack.min.css'
 import '@conduction/nextcloud-vue/css/index.css'
 import '@kangc/v-md-editor/lib/style/base-editor.css'
 import '@kangc/v-md-editor/lib/theme/style/github.css'
-library.add(fas, fab, far)
-
 // The runtime public path is now set by webpack itself (`output.publicPath:
 // 'auto'` in webpack.config.js), which derives it from the loading script's own
 // URL. That covers ALL SEVEN entry points; the previous
@@ -104,6 +97,16 @@ registerDashboardWidget('publication-visibility', {
 	defaultContent: {},
 	displayName: 'Publication status',
 	icon: 'EyeOutline',
+	surfaces: ['detail-page'],
+})
+// The publication's attachments with Add attachment, which opens the app's
+// upload dialog (publication-attachment-upload-dialog, board OcBijlageToevoegen).
+registerDashboardWidget('publication-attachments', {
+	renderer: PublicationAttachmentsWidget,
+	form: null,
+	defaultContent: { maxDisplay: 100 },
+	displayName: 'Attachments',
+	icon: 'FolderOutline',
 	surfaces: ['detail-page'],
 })
 // `theme-preview` is registered with the local `ThemePreviewWidget` adapter,
@@ -209,73 +212,6 @@ const fragments = fragmentCtx
 	.sort()
 	.map((key) => fragmentCtx(key))
 const mergedManifest = buildManifest(bundledManifest, fragments, menuLayout)
-
-/**
- * Synchronously substitute every `@resolve:<key>` sentinel under
- * `pages[].config` with the matching IAppConfig value surfaced as
- * initial-state by UiController. This MUST run before the router and the
- * CnAppRoot `manifest` prop are built: the library's async `useAppManifest`
- * resolver only updates the manifest AFTER first paint, by which time
- * CnIndexPage has already registered its object-type from the (then still
- * unresolved) config and self-fetched the 404 `@resolve:...` URL. Resolving
- * up-front guarantees every page renders with real register/schema ids from
- * the very first mount. Unknown / unset keys are left untouched.
- *
- * @param {object} manifest The merged manifest.
- * @return {object} A new manifest with sentinels substituted in pages[].config.
- */
-function resolveManifestSentinelsSync(manifest) {
-	const SENTINEL = /^@resolve:([a-z][a-z0-9_-]*)$/
-	const cache = new Map()
-	const lookup = (key) => {
-		if (cache.has(key)) {
-			return cache.get(key)
-		}
-		let value = null
-		try {
-			const v = loadState('opencatalogi', key, null)
-			if (v !== undefined && v !== null && v !== '') {
-				value = v
-			}
-		} catch (e) {
-			value = null
-		}
-		cache.set(key, value)
-		return value
-	}
-	const substitute = (node) => {
-		if (Array.isArray(node)) {
-			return node.map(substitute)
-		}
-		if (node !== null && typeof node === 'object') {
-			const out = {}
-			for (const [k, v] of Object.entries(node)) {
-				out[k] = substitute(v)
-			}
-			return out
-		}
-		if (typeof node === 'string') {
-			const m = node.match(SENTINEL)
-			if (m) {
-				const resolved = lookup(m[1])
-				return resolved !== null ? resolved : node
-			}
-		}
-		return node
-	}
-	const pages = Array.isArray(manifest.pages) ? manifest.pages : []
-	return {
-		...manifest,
-		pages: pages.map((page) =>
-			page
-			&& typeof page === 'object'
-			&& page.config
-			&& typeof page.config === 'object'
-				? { ...page, config: substitute(page.config) }
-				: page,
-		),
-	}
-}
 
 /**
  * Translate each page's `config.notFoundRouteLabel`. CnPageRenderer spreads
@@ -395,7 +331,6 @@ app.mixin({ methods: { t, n } })
 app.use(VueMarkdownEditor)
 app.use(pinia)
 app.use(router)
-app.component('FontAwesomeIcon', FontAwesomeIcon)
 
 // ⚠️ Vue 2's `$mount('#content')` REPLACED the matched element; Vue 3's
 // `mount()` renders INSIDE it. `templates/index.php` emits

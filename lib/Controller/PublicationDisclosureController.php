@@ -40,9 +40,9 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
+use OCA\OpenCatalogi\Contract\NationalIndexServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedCollectionsServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
-use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
-use OCA\OpenCatalogi\Service\Publication\PublishedCollectionsService;
 use OCA\OpenCatalogi\Service\Publication\UnreadableRuleException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
@@ -62,14 +62,14 @@ class PublicationDisclosureController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param NationalIndexService $indexService The national channels.
-	 * @param PublishedCollectionsService $collectionsService The configured published set.
+	 * @param NationalIndexServiceInterface $indexService The national channels.
+	 * @param PublishedCollectionsServiceInterface $collectionsService The configured published set.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly NationalIndexService $indexService,
-		private readonly PublishedCollectionsService $collectionsService,
+		private readonly NationalIndexServiceInterface $indexService,
+		private readonly PublishedCollectionsServiceInterface $collectionsService,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -90,39 +90,59 @@ class PublicationDisclosureController extends Controller {
 		}
 
 		$notices = $this->indexService->composeNotices(decision: $decision);
-		$deliveries = [];
-		$unreachable = [];
 
+		return $this->announcementAnswer(notices: $notices, outcome: $this->deliverAll(notices: $notices));
+
+	}//end announce()
+
+	/**
+	 * Hand every notice to the gateway: what each destination answered, and
+	 * each channel that could not be reached with why.
+	 *
+	 * @param array<int, array<string, mixed>> $notices The composed notices.
+	 *
+	 * @return array<string, array<int, array<string, mixed>>> The `delivered` answers and the `unreachable` channels.
+	 */
+	private function deliverAll(array $notices): array {
+		$outcome = ['delivered' => [], 'unreachable' => []];
 		foreach ($notices as $notice) {
 			try {
-				$deliveries[] = $this->indexService->deliver(notice: $notice);
+				$outcome['delivered'][] = $this->indexService->deliver(notice: $notice);
 			} catch (IndexUnreachableException $e) {
-				$unreachable[] = [
+				$outcome['unreachable'][] = [
 					'channel' => (string)($notice['channel'] ?? ''),
 					'reason' => $e->getMessage(),
 				];
 			}
 		}
 
-		// The notices are returned whether or not they were delivered, and an
-		// undelivered channel is named. Answering 200 with only the deliveries
-		// would let an operator read a partial announcement as a complete one.
+		return $outcome;
+	}//end deliverAll()
+
+	/**
+	 * The answer to an announcement.
+	 *
+	 * The notices are returned whether or not they were delivered, and an
+	 * undelivered channel is named. Answering 200 with only the deliveries
+	 * would let an operator read a partial announcement as a complete one.
+	 *
+	 * @param array<int, array<string, mixed>> $notices The composed notices.
+	 * @param array<string, array<int, array<string, mixed>>> $outcome What the deliveries did: `delivered` and `unreachable`.
+	 *
+	 * @return JSONResponse 200 when every channel was reached, else 502.
+	 */
+	private function announcementAnswer(array $notices, array $outcome): JSONResponse {
+		$complete = ($outcome['unreachable'] === []);
 		$statusCode = Http::STATUS_BAD_GATEWAY;
-		if ($unreachable === []) {
+		if ($complete === true) {
 			$statusCode = Http::STATUS_OK;
 		}
 
 		return new JSONResponse(
-			data: [
-				'notices' => $notices,
-				'delivered' => $deliveries,
-				'unreachable' => $unreachable,
-				'complete' => ($unreachable === []),
-			],
+			data: ['notices' => $notices] + $outcome + ['complete' => $complete],
 			statusCode: $statusCode
 		);
-
-	}//end announce()
+	}//end announcementAnswer()
 
 	/**
 	 * Read or write which collections publish, and on what conditions.
@@ -168,7 +188,6 @@ class PublicationDisclosureController extends Controller {
 		}
 
 		return new JSONResponse(['saved' => true]);
-
 	}//end savePublishedCollections()
 
 }//end class

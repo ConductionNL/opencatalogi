@@ -53,6 +53,16 @@
                 "id": "k3kf8csm60254"
             }
         },
+        "lastSuccessAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the listing last synchronised successfully. A failed attempt does not change it."
+        },
+        "lastError": {
+            "type": "string",
+            "maxLength": 1000,
+            "description": "The error of the last attempt when it failed, without credentials or URL query strings. Empty after a successful sync."
+        },
         "default": {
             "type": "string",
             "x-stoplight": {

@@ -1,0 +1,303 @@
+{
+    "none": {
+        "limit": 20,
+        "offset": null,
+        "page": null,
+        "filters": [],
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "plain paging": {
+        "limit": 5,
+        "offset": 15,
+        "page": 2,
+        "filters": {
+            "limit": "5",
+            "offset": "15",
+            "page": "2"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "underscored paging": {
+        "limit": 7,
+        "offset": 3,
+        "page": 9,
+        "filters": {
+            "_limit": "7",
+            "_offset": "3",
+            "_page": "9"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "plain wins over underscored": {
+        "limit": 1,
+        "offset": 3,
+        "page": 5,
+        "filters": {
+            "limit": "1",
+            "_limit": "2",
+            "offset": "3",
+            "_offset": "4",
+            "page": "5",
+            "_page": "6"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "page without offset": {
+        "limit": 10,
+        "offset": 20,
+        "page": 3,
+        "filters": {
+            "page": "3",
+            "limit": "10"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "underscored page without offset": {
+        "limit": 20,
+        "offset": 60,
+        "page": 4,
+        "filters": {
+            "_page": "4"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "page zero": {
+        "limit": 20,
+        "offset": -20,
+        "page": 0,
+        "filters": {
+            "page": "0"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "offset zero with a page": {
+        "limit": 20,
+        "offset": 0,
+        "page": 7,
+        "filters": {
+            "offset": "0",
+            "page": "7"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "null offset falls back": {
+        "limit": 20,
+        "offset": 8,
+        "page": null,
+        "filters": {
+            "offset": null,
+            "_offset": "8"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "null page falls back": {
+        "limit": 3,
+        "offset": 3,
+        "page": 2,
+        "filters": {
+            "page": null,
+            "_page": "2",
+            "limit": "3"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "non-numeric values": {
+        "limit": 0,
+        "offset": 0,
+        "page": 0,
+        "filters": {
+            "limit": "abc",
+            "offset": "x",
+            "page": "y"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    },
+    "queries text": {
+        "limit": 20,
+        "offset": null,
+        "page": null,
+        "filters": {
+            "queries": "title"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [
+            "title"
+        ],
+        "ids": null
+    },
+    "underscored queries list": {
+        "limit": 20,
+        "offset": null,
+        "page": null,
+        "filters": {
+            "_queries": [
+                "a",
+                "b"
+            ]
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [
+            "a",
+            "b"
+        ],
+        "ids": null
+    },
+    "queries null falls back": {
+        "limit": 20,
+        "offset": null,
+        "page": null,
+        "filters": {
+            "queries": null,
+            "_queries": "c"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [
+            "c"
+        ],
+        "ids": null
+    },
+    "sort and the rest": {
+        "limit": 20,
+        "offset": null,
+        "page": null,
+        "filters": {
+            "order": {
+                "title": "asc"
+            },
+            "_order": {
+                "x": "desc"
+            },
+            "_search": "s",
+            "extend": "e",
+            "_extend": "f",
+            "fields": "g",
+            "_fields": "h",
+            "unset": "i",
+            "_unset": "j"
+        },
+        "sort": {
+            "title": "asc"
+        },
+        "search": "s",
+        "extend": "e",
+        "fields": "g",
+        "unset": "i",
+        "queries": [],
+        "ids": null
+    },
+    "underscored sort and the rest": {
+        "limit": 20,
+        "offset": null,
+        "page": null,
+        "filters": {
+            "_order": {
+                "x": "desc"
+            },
+            "_extend": "f",
+            "_fields": "h",
+            "_unset": "j"
+        },
+        "sort": {
+            "x": "desc"
+        },
+        "search": null,
+        "extend": "f",
+        "fields": "h",
+        "unset": "j",
+        "queries": [],
+        "ids": null
+    },
+    "id and route stripped": {
+        "limit": 20,
+        "offset": null,
+        "page": null,
+        "filters": {
+            "kind": "k"
+        },
+        "sort": [],
+        "search": null,
+        "extend": null,
+        "fields": null,
+        "unset": null,
+        "queries": [],
+        "ids": null
+    }
+}

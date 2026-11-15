@@ -31,9 +31,15 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Controller;
 
-use OCA\OpenCatalogi\Service\Publication\CommentPeriodService;
+use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
+use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\Publication\TermRollUnavailableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\SaveActor;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\AnonRateLimit;
@@ -44,7 +50,6 @@ use OCP\AppFramework\Http\JSONResponse;
 use OCP\IL10N;
 use OCP\IRequest;
 use OCP\IUserSession;
-use Psr\Container\ContainerInterface;
 
 /**
  * Opens comment periods and answers their public state.
@@ -62,18 +67,18 @@ class CommentPeriodController extends Controller {
 	 *
 	 * @param string $appName The app name.
 	 * @param IRequest $request The request.
-	 * @param ContainerInterface $container Server container.
+	 * @param OpenRegisterLookupInterface $registers Resolves the configured register pairs and OpenRegister's ObjectService.
 	 * @param IL10N $l10n Localisation.
 	 * @param IUserSession $userSession The current session.
-	 * @param CommentPeriodService $periods Opens periods and derives their state.
+	 * @param CommentPeriodServiceInterface $periods Opens periods and derives their state.
 	 */
 	public function __construct(
 		$appName,
 		IRequest $request,
-		private readonly ContainerInterface $container,
+		private readonly OpenRegisterLookupInterface $registers,
 		private readonly IL10N $l10n,
 		private readonly IUserSession $userSession,
-		private readonly CommentPeriodService $periods,
+		private readonly CommentPeriodServiceInterface $periods,
 	) {
 		parent::__construct(appName: $appName, request: $request);
 
@@ -103,7 +108,7 @@ class CommentPeriodController extends Controller {
 	 */
 	private function objects(): ?object {
 		try {
-			return $this->container->get('OCA\OpenRegister\Service\ObjectService');
+			return $this->registers->objectService();
 		} catch (\Throwable $e) {
 			return null;
 		}
@@ -119,25 +124,8 @@ class CommentPeriodController extends Controller {
 	 */
 	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
 	public function open(): JSONResponse {
-		$publication = trim((string)$this->request->getParam('publication', ''));
-		$user = $this->userSession->getUser();
-		$openedBy = '';
-		if ($user !== null) {
-			$openedBy = $user->getUID();
-		}
-
 		try {
-			$period = $this->periods->open(
-				publication: ['id' => $publication],
-				termDays: (int)$this->request->getParam('termDays', 0),
-				legalRemedy: trim((string)$this->request->getParam('legalRemedy', '')),
-				announcementUrl: trim((string)$this->request->getParam('announcementUrl', '')),
-				automaticWithdrawal: filter_var(
-					$this->request->getParam('automaticWithdrawal', false),
-					FILTER_VALIDATE_BOOLEAN
-				),
-				openedBy: $openedBy
-			);
+			$period = $this->periods->open(request: $this->openRequest(openedBy: $this->sessionUserId()));
 		} catch (\DomainException $e) {
 			return new JSONResponse(
 				data: ['error' => 'period-refused', 'message' => $e->getMessage()],
@@ -150,12 +138,62 @@ class CommentPeriodController extends Controller {
 			);
 		}
 
+		return $this->storePeriod(period: $period);
+	}//end open()
+
+	/**
+	 * The uid of the signed-in user, or empty when nobody is signed in.
+	 *
+	 * @return string The uid.
+	 *
+	 * @spec exclude pure session plumbing for open().
+	 */
+	private function sessionUserId(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return '';
+		}
+
+		return $user->getUID();
+	}//end sessionUserId()
+
+	/**
+	 * The period request read from the request parameters.
+	 *
+	 * @param string $openedBy The session user who opens the period.
+	 *
+	 * @return CommentPeriodRequest The request.
+	 *
+	 * @spec exclude pure request reading for open().
+	 */
+	private function openRequest(string $openedBy): CommentPeriodRequest {
+		return new CommentPeriodRequest(
+			publication: ['id' => trim((string)$this->request->getParam('publication', ''))],
+			termDays: (int)$this->request->getParam('termDays', 0),
+			legalRemedy: trim((string)$this->request->getParam('legalRemedy', '')),
+			announcementUrl: trim((string)$this->request->getParam('announcementUrl', '')),
+			automaticWithdrawal: filter_var(
+				$this->request->getParam('automaticWithdrawal', false),
+				FILTER_VALIDATE_BOOLEAN
+			),
+			openedBy: $openedBy
+		);
+
+	}//end openRequest()
+
+	/**
+	 * Store an opened period and answer it as created.
+	 *
+	 * @param array<string, mixed> $period The period to save.
+	 *
+	 * @return JSONResponse The stored period, or why it could not be stored.
+	 *
+	 * @spec exclude pure storage plumbing for open().
+	 */
+	private function storePeriod(array $period): JSONResponse {
 		$objectService = $this->objects();
 		if ($objectService === null) {
-			return new JSONResponse(
-				data: ['error' => 'register-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			return $this->registerUnreadableResponse();
 		}
 
 		try {
@@ -163,8 +201,10 @@ class CommentPeriodController extends Controller {
 			$saved = $this->asArray(
 				object: $objectService->saveObject(
 					object: $period,
-					register: $config['register'],
-					schema: $config['schema'],
+					options: new ObjectSaveOptions(
+						target: new ObjectFindTarget(register: $config['register'], schema: $config['schema']),
+						actor: new SaveActor(unowned: true)
+					),
 					_rbac: false,
 					_multitenancy: false
 				)
@@ -174,8 +214,7 @@ class CommentPeriodController extends Controller {
 		}
 
 		return new JSONResponse($saved, Http::STATUS_CREATED);
-
-	}//end open()
+	}//end storePeriod()
 
 	/**
 	 * Read a comment period: its state, its remedy, its form, its announcement.
@@ -196,34 +235,57 @@ class CommentPeriodController extends Controller {
 	public function show(string $id): JSONResponse {
 		$objectService = $this->objects();
 		if ($objectService === null) {
-			return new JSONResponse(
-				data: ['error' => 'register-unreadable'],
-				statusCode: Http::STATUS_SERVICE_UNAVAILABLE
-			);
+			return $this->registerUnreadableResponse();
 		}
 
 		try {
-			$config = $this->periodConfiguration();
+			$lookup = ['id' => $id] + $this->periodConfiguration();
 		} catch (\Throwable $e) {
 			return $this->registerConfigErrorResponse(e: $e);
 		}
 
-		try {
-			$period = $this->asArray(
-				object: $objectService->find(
-					id: $id,
-					register: $config['register'],
-					schema: $config['schema']
-				)
-			);
-		} catch (\Throwable $e) {
-			return new JSONResponse(data: ['error' => 'unknown-period'], statusCode: Http::STATUS_NOT_FOUND);
-		}
-
+		$period = $this->findPeriod(objectService: $objectService, lookup: $lookup);
 		if ($period === []) {
 			return new JSONResponse(data: ['error' => 'unknown-period'], statusCode: Http::STATUS_NOT_FOUND);
 		}
 
+		return $this->publicPeriodResponse(period: $period);
+	}//end show()
+
+	/**
+	 * Find a period, or none when the register does not have it.
+	 *
+	 * @param object $objectService The consumed OpenRegister ObjectService.
+	 * @param array<string, string> $lookup The period id, register and schema.
+	 *
+	 * @return array<string, mixed> The period, or an empty array.
+	 *
+	 * @spec exclude pure register reading for show().
+	 */
+	private function findPeriod(object $objectService, array $lookup): array {
+		try {
+			return $this->asArray(
+				object: $objectService->find(
+					id: $lookup['id'],
+					options: new ObjectFindOptions(register: $lookup['register'], schema: $lookup['schema'])
+				)
+			);
+		} catch (\Throwable $e) {
+			return [];
+		}
+
+	}//end findPeriod()
+
+	/**
+	 * Answer a period as a reader sees it.
+	 *
+	 * @param array<string, mixed> $period The stored period.
+	 *
+	 * @return JSONResponse The public view, or 503 when its dates cannot be read.
+	 *
+	 * @spec exclude pure response shaping for show().
+	 */
+	private function publicPeriodResponse(array $period): JSONResponse {
 		try {
 			return new JSONResponse($this->periods->publicView(period: $period));
 		} catch (\DomainException $e) {
@@ -236,5 +298,20 @@ class CommentPeriodController extends Controller {
 			);
 		}
 
-	}//end show()
+	}//end publicPeriodResponse()
+
+	/**
+	 * The answer when OpenRegister cannot be reached.
+	 *
+	 * @return JSONResponse 503 naming the unreadable register.
+	 *
+	 * @spec exclude pure response shaping.
+	 */
+	private function registerUnreadableResponse(): JSONResponse {
+		return new JSONResponse(
+			data: ['error' => 'register-unreadable'],
+			statusCode: Http::STATUS_SERVICE_UNAVAILABLE
+		);
+
+	}//end registerUnreadableResponse()
 }//end class

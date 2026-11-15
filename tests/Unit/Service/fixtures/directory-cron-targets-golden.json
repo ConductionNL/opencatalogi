@@ -1,0 +1,1206 @@
+{
+    "listings": {
+        "getKnownDirectoryUrls": {
+            "result": [
+                "https://a.example/apps/opencatalogi/api/directory",
+                "https://b.example/api/directory",
+                "https://alias.example:8443/api/directory",
+                "https://alias.example:9443/api/directory"
+            ],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 5,
+                "synced_directories": 4,
+                "failed_directories": 1,
+                "errors": [
+                    {
+                        "directory": "https://b.example/api/directory",
+                        "error": "cannot sync https://b.example/api/directory"
+                    }
+                ]
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://a.example/apps/opencatalogi/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://b.example/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://alias.example:8443/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://alias.example:9443/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 5,
+                            "synced_directories": 4,
+                            "failed_directories": 1,
+                            "errors": [
+                                {
+                                    "directory": "https://b.example/api/directory",
+                                    "error": "cannot sync https://b.example/api/directory"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "with aliases": {
+        "getKnownDirectoryUrls": {
+            "result": [
+                "https://a.example/apps/opencatalogi/api/directory",
+                "https://b.example/api/directory",
+                "https://alias.example:9443/api/directory"
+            ],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 4,
+                "synced_directories": 3,
+                "failed_directories": 1,
+                "errors": [
+                    {
+                        "directory": "https://b.example/api/directory",
+                        "error": "cannot sync https://b.example/api/directory"
+                    }
+                ]
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://a.example/apps/opencatalogi/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://b.example/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://alias.example:9443/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 4,
+                            "synced_directories": 3,
+                            "failed_directories": 1,
+                            "errors": [
+                                {
+                                    "directory": "https://b.example/api/directory",
+                                    "error": "cannot sync https://b.example/api/directory"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "alias without port": {
+        "getKnownDirectoryUrls": {
+            "result": [
+                "https://a.example/apps/opencatalogi/api/directory",
+                "https://b.example/api/directory"
+            ],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 3,
+                "synced_directories": 2,
+                "failed_directories": 1,
+                "errors": [
+                    {
+                        "directory": "https://b.example/api/directory",
+                        "error": "cannot sync https://b.example/api/directory"
+                    }
+                ]
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://a.example/apps/opencatalogi/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://b.example/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 3,
+                            "synced_directories": 2,
+                            "failed_directories": 1,
+                            "errors": [
+                                {
+                                    "directory": "https://b.example/api/directory",
+                                    "error": "cannot sync https://b.example/api/directory"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "no listings": {
+        "getKnownDirectoryUrls": {
+            "result": [],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 1,
+                "synced_directories": 1,
+                "failed_directories": 0,
+                "errors": []
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 1,
+                            "synced_directories": 1,
+                            "failed_directories": 0,
+                            "errors": []
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "default already known": {
+        "getKnownDirectoryUrls": {
+            "result": [
+                "https://a.example/apps/opencatalogi/api/directory",
+                "https://b.example/api/directory",
+                "https://alias.example:8443/api/directory",
+                "https://alias.example:9443/api/directory"
+            ],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 4,
+                "synced_directories": 3,
+                "failed_directories": 1,
+                "errors": [
+                    {
+                        "directory": "https://b.example/api/directory",
+                        "error": "cannot sync https://b.example/api/directory"
+                    }
+                ]
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://a.example/apps/opencatalogi/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://b.example/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://alias.example:8443/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://alias.example:9443/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 4,
+                            "synced_directories": 3,
+                            "failed_directories": 1,
+                            "errors": [
+                                {
+                                    "directory": "https://b.example/api/directory",
+                                    "error": "cannot sync https://b.example/api/directory"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "no listing schema": {
+        "getKnownDirectoryUrls": {
+            "result": [],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 1,
+                "synced_directories": 1,
+                "failed_directories": 0,
+                "errors": []
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 1,
+                            "synced_directories": 1,
+                            "failed_directories": 0,
+                            "errors": []
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "no listing register": {
+        "getKnownDirectoryUrls": {
+            "result": [],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 1,
+                "synced_directories": 1,
+                "failed_directories": 0,
+                "errors": []
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 1,
+                            "synced_directories": 1,
+                            "failed_directories": 0,
+                            "errors": []
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "search fails": {
+        "getKnownDirectoryUrls": {
+            "result": [],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 1,
+                "synced_directories": 1,
+                "failed_directories": 0,
+                "errors": []
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 1,
+                            "synced_directories": 1,
+                            "failed_directories": 0,
+                            "errors": []
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "openregister absent": {
+        "getKnownDirectoryUrls": {
+            "exception": "RuntimeException",
+            "message": "OpenRegister service is not available.",
+            "calls": []
+        },
+        "doCronSync": {
+            "exception": "RuntimeException",
+            "message": "OpenRegister service is not available.",
+            "calls": []
+        }
+    },
+    "every sync fails": {
+        "getKnownDirectoryUrls": {
+            "result": [
+                "https://a.example/apps/opencatalogi/api/directory",
+                "https://b.example/api/directory",
+                "https://alias.example:8443/api/directory",
+                "https://alias.example:9443/api/directory"
+            ],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 5,
+                "synced_directories": 0,
+                "failed_directories": 5,
+                "errors": [
+                    {
+                        "directory": "https://a.example/apps/opencatalogi/api/directory",
+                        "error": "cannot sync https://a.example/apps/opencatalogi/api/directory"
+                    },
+                    {
+                        "directory": "https://b.example/api/directory",
+                        "error": "cannot sync https://b.example/api/directory"
+                    },
+                    {
+                        "directory": "https://alias.example:8443/api/directory",
+                        "error": "cannot sync https://alias.example:8443/api/directory"
+                    },
+                    {
+                        "directory": "https://alias.example:9443/api/directory",
+                        "error": "cannot sync https://alias.example:9443/api/directory"
+                    },
+                    {
+                        "directory": "https://directory.example/api/directory",
+                        "error": "cannot sync https://directory.example/api/directory"
+                    }
+                ]
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://a.example/apps/opencatalogi/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://b.example/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://alias.example:8443/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://alias.example:9443/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                },
+                {
+                    "ConnectionReporter::reportDirectorySync": {
+                        "results": {
+                            "total_directories": 5,
+                            "synced_directories": 0,
+                            "failed_directories": 5,
+                            "errors": [
+                                {
+                                    "directory": "https://a.example/apps/opencatalogi/api/directory",
+                                    "error": "cannot sync https://a.example/apps/opencatalogi/api/directory"
+                                },
+                                {
+                                    "directory": "https://b.example/api/directory",
+                                    "error": "cannot sync https://b.example/api/directory"
+                                },
+                                {
+                                    "directory": "https://alias.example:8443/api/directory",
+                                    "error": "cannot sync https://alias.example:8443/api/directory"
+                                },
+                                {
+                                    "directory": "https://alias.example:9443/api/directory",
+                                    "error": "cannot sync https://alias.example:9443/api/directory"
+                                },
+                                {
+                                    "directory": "https://directory.example/api/directory",
+                                    "error": "cannot sync https://directory.example/api/directory"
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    },
+    "no reporter": {
+        "getKnownDirectoryUrls": {
+            "result": [
+                "https://b.example/api/directory"
+            ],
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                }
+            ]
+        },
+        "doCronSync": {
+            "result": {
+                "total_directories": 2,
+                "synced_directories": 1,
+                "failed_directories": 1,
+                "errors": [
+                    {
+                        "directory": "https://b.example/api/directory",
+                        "error": "cannot sync https://b.example/api/directory"
+                    }
+                ]
+            },
+            "calls": [
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_schema"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "listing_register"
+                    }
+                },
+                {
+                    "ObjectService::searchObjects": {
+                        "query": {
+                            "@self": {
+                                "register": "listing-register",
+                                "schema": "listing-schema"
+                            }
+                        },
+                        "_rbac": false
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "instance_aliases"
+                    }
+                },
+                {
+                    "IAppConfig::getValueString": {
+                        "key": "default_directory_url"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://b.example/api/directory"
+                    }
+                },
+                {
+                    "syncDirectory": {
+                        "directoryUrl": "https://directory.example/api/directory"
+                    }
+                }
+            ]
+        }
+    }
+}

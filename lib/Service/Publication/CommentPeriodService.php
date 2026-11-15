@@ -40,6 +40,8 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use DomainException;
+use OCA\OpenCatalogi\Contract\CommentPeriodRequest;
+use OCA\OpenCatalogi\Contract\CommentPeriodServiceInterface;
 use OCP\IAppConfig;
 use OCP\IURLGenerator;
 
@@ -48,7 +50,7 @@ use OCP\IURLGenerator;
  *
  * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-publication-can-carry-one-bounded-public-comment-period-req-pcp-001
  */
-class CommentPeriodService {
+class CommentPeriodService implements CommentPeriodServiceInterface {
 
 	/**
 	 * The two legal remedies a comment period can carry.
@@ -104,12 +106,7 @@ class CommentPeriodService {
 	/**
 	 * Open a comment period on a publication.
 	 *
-	 * @param array<string, mixed> $publication The publication going out for comment.
-	 * @param int $termDays How many days the period runs.
-	 * @param string $legalRemedy The remedy open to a reader, one of {@see REMEDIES}.
-	 * @param string $announcementUrl The official announcement of the period.
-	 * @param bool $automaticWithdrawal Whether the close withdraws the publication.
-	 * @param string $openedBy Who opened it.
+	 * @param CommentPeriodRequest $request The publication, term, remedy and announcement.
 	 * @param DateTimeInterface|null $start When it opens; defaults to now.
 	 *
 	 * @return array<string, mixed> The period to save.
@@ -119,44 +116,16 @@ class CommentPeriodService {
 	 *
 	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-publication-can-carry-one-bounded-public-comment-period-req-pcp-001
 	 */
-	public function open(
-		array $publication,
-		int $termDays,
-		string $legalRemedy,
-		string $announcementUrl,
-		bool $automaticWithdrawal,
-		string $openedBy,
-		?DateTimeInterface $start = null,
-	): array {
-		$publicationId = trim((string)($publication['id'] ?? ''));
-		if ($publicationId === '') {
-			throw new DomainException(
-				message: 'A comment period belongs to a publication, and none was named.'
-			);
-		}
-
-		if (in_array($legalRemedy, self::REMEDIES, true) === false) {
-			throw new DomainException(
-				message: 'The legal remedy "' . $legalRemedy . '" is not one of ' . implode(', ', self::REMEDIES)
-					. '. A reader told the wrong remedy loses a right, so an unknown one is refused.'
-			);
-		}
-
-		if ($termDays < 1) {
-			throw new DomainException(
-				message: 'A comment period runs for at least one day. A period of no days is a publication with no '
-					. 'comment period, which is a different thing and should be recorded as one.'
-			);
-		}
-
-		$announcement = $this->validateAnnouncement(url: $announcementUrl);
+	public function open(CommentPeriodRequest $request, ?DateTimeInterface $start = null): array {
+		$publicationId = $this->validatePublicationTerm(request: $request);
+		$announcement = $this->validateAnnouncement(url: $request->announcementUrl);
 
 		$startsAt = new DateTimeImmutable('now', new DateTimeZone('UTC'));
 		if ($start !== null) {
 			$startsAt = new DateTimeImmutable($start->format('Y-m-d\\TH:i:s.uP'));
 		}
 
-		$end = $this->roll->endDate(start: $startsAt, days: $termDays);
+		$end = $this->roll->endDate(start: $startsAt, days: $request->termDays);
 		if ($end['at'] <= $startsAt) {
 			// The engine cannot normally land here, and the constraint is
 			// asserted anyway: a period whose end is not after its start would
@@ -170,17 +139,67 @@ class CommentPeriodService {
 			'publication' => $publicationId,
 			'startDate' => $startsAt->format(DateTimeInterface::ATOM),
 			'endDate' => $end['at']->format(DateTimeInterface::ATOM),
-			'termDays' => $termDays,
-			'legalRemedy' => $legalRemedy,
-			'reactionFormUrl' => $this->reactionFormUrl(publicationId: $publicationId, legalRemedy: $legalRemedy),
+			'termDays' => $request->termDays,
+			'legalRemedy' => $request->legalRemedy,
+			'reactionFormUrl' => $this->reactionFormUrl(publicationId: $publicationId, legalRemedy: $request->legalRemedy),
 			'announcementUrl' => $announcement,
-			'automaticWithdrawal' => $automaticWithdrawal,
-			'openedBy' => $openedBy,
+			'automaticWithdrawal' => $request->automaticWithdrawal,
+			'openedBy' => $request->openedBy,
 		];
 
-		// Both carried only when the roll actually moved the date. A handler
-		// defending a period that closes on Tuesday has to be able to read that
-		// Monday was Tweede Paasdag.
+		return $this->withRollExplanation(period: $period, end: $end);
+	}//end open()
+
+	/**
+	 * Refuse a request that names no publication, an unknown remedy or a term of no days.
+	 *
+	 * @param CommentPeriodRequest $request The request.
+	 *
+	 * @return string The publication id.
+	 *
+	 * @throws DomainException On the first of the three that is missing or wrong.
+	 *
+	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-publication-can-carry-one-bounded-public-comment-period-req-pcp-001
+	 */
+	private function validatePublicationTerm(CommentPeriodRequest $request): string {
+		$publicationId = $request->publicationId();
+		if ($publicationId === '') {
+			throw new DomainException(
+				message: 'A comment period belongs to a publication, and none was named.'
+			);
+		}
+
+		if (in_array($request->legalRemedy, self::REMEDIES, true) === false) {
+			throw new DomainException(
+				message: 'The legal remedy "' . $request->legalRemedy . '" is not one of ' . implode(', ', self::REMEDIES)
+					. '. A reader told the wrong remedy loses a right, so an unknown one is refused.'
+			);
+		}
+
+		if ($request->termDays < 1) {
+			throw new DomainException(
+				message: 'A comment period runs for at least one day. A period of no days is a publication with no '
+					. 'comment period, which is a different thing and should be recorded as one.'
+			);
+		}
+
+		return $publicationId;
+	}//end validatePublicationTerm()
+
+	/**
+	 * Add the unrolled end date and the reason for the roll, when the roll moved the date.
+	 *
+	 * A handler defending a period that closes on Tuesday has to be able to read
+	 * that Monday was Tweede Paasdag.
+	 *
+	 * @param array<string, mixed> $period The period.
+	 * @param array{at: DateTimeImmutable, unrolledAt: ?DateTimeImmutable, rolledBy: ?string} $end The rolled end.
+	 *
+	 * @return array<string, mixed> The period.
+	 *
+	 * @spec openspec/specs/publication-comment-periods/spec.md#requirement-a-publication-can-carry-one-bounded-public-comment-period-req-pcp-001
+	 */
+	private function withRollExplanation(array $period, array $end): array {
 		if ($end['unrolledAt'] !== null) {
 			$period['unrolledEndDate'] = $end['unrolledAt']->format(DateTimeInterface::ATOM);
 		}
@@ -190,8 +209,7 @@ class CommentPeriodService {
 		}
 
 		return $period;
-
-	}//end open()
+	}//end withRollExplanation()
 
 	/**
 	 * The reaction form that belongs to a remedy.
@@ -253,9 +271,33 @@ class CommentPeriodService {
 			$moment = new DateTimeImmutable($now->format('Y-m-d\\TH:i:s.uP'));
 		}
 
+		[$start, $end] = $this->window(period: $period);
+		if ($moment < $start) {
+			return 'upcoming';
+		}
+
+		if ($moment > $end) {
+			return 'closed';
+		}
+
+		return 'open';
+	}//end state()
+
+	/**
+	 * The period's start and end.
+	 *
+	 * @param array<string, mixed> $period The period.
+	 *
+	 * @return array{0: DateTimeImmutable, 1: DateTimeImmutable} The start and the end.
+	 *
+	 * @throws DomainException When the period's dates cannot be read.
+	 */
+	private function window(array $period): array {
 		try {
-			$start = new DateTimeImmutable((string)($period['startDate'] ?? ''));
-			$end = new DateTimeImmutable((string)($period['endDate'] ?? ''));
+			return [
+				new DateTimeImmutable((string)($period['startDate'] ?? '')),
+				new DateTimeImmutable((string)($period['endDate'] ?? '')),
+			];
 		} catch (\Throwable $e) {
 			// Read as open it invites comment on a closed draft; read as closed
 			// it withholds a right that is owed. Neither default is worth
@@ -266,18 +308,7 @@ class CommentPeriodService {
 				previous: $e
 			);
 		}
-
-		if ($moment < $start) {
-			return 'upcoming';
-		}
-
-		if ($moment > $end) {
-			return 'closed';
-		}
-
-		return 'open';
-
-	}//end state()
+	}//end window()
 
 	/**
 	 * What the portal is told about a period: the three states, the remedy, the
@@ -373,18 +404,7 @@ class CommentPeriodService {
 			);
 		}
 
-		$host = (string)parse_url($trimmed, PHP_URL_HOST);
-		$scheme = strtolower((string)parse_url($trimmed, PHP_URL_SCHEME));
-		if ($scheme !== 'https' || $host === '') {
-			throw new DomainException(
-				message: 'The announcement has to be an absolute https url.'
-			);
-		}
-
-		$host = strtolower($host);
-		if ($host !== self::ANNOUNCEMENT_HOST
-			&& str_ends_with($host, '.' . self::ANNOUNCEMENT_HOST) === false
-		) {
+		if ($this->isAnnouncementHost(host: $this->httpsHost(url: $trimmed)) === false) {
 			throw new DomainException(
 				message: 'The announcement has to point at ' . self::ANNOUNCEMENT_HOST
 					. ', which is where an official announcement of a Dutch public body appears. A link to an '
@@ -393,6 +413,37 @@ class CommentPeriodService {
 		}
 
 		return $trimmed;
-
 	}//end validateAnnouncement()
+
+	/**
+	 * The lower-cased host of an absolute https url.
+	 *
+	 * @param string $url The trimmed announcement url.
+	 *
+	 * @return string The host.
+	 *
+	 * @throws DomainException When it is not an absolute https url.
+	 */
+	private function httpsHost(string $url): string {
+		$host = (string)parse_url($url, PHP_URL_HOST);
+		$scheme = strtolower((string)parse_url($url, PHP_URL_SCHEME));
+		if ($scheme !== 'https' || $host === '') {
+			throw new DomainException(
+				message: 'The announcement has to be an absolute https url.'
+			);
+		}
+
+		return strtolower($host);
+	}//end httpsHost()
+
+	/**
+	 * Whether a host is the official announcement host or one of its subdomains.
+	 *
+	 * @param string $host The lower-cased host.
+	 *
+	 * @return bool
+	 */
+	private function isAnnouncementHost(string $host): bool {
+		return $host === self::ANNOUNCEMENT_HOST || str_ends_with($host, '.' . self::ANNOUNCEMENT_HOST) === true;
+	}//end isAnnouncementHost()
 }//end class

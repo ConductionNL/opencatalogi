@@ -1,0 +1,243 @@
+{
+	"fetch: two groups": {
+		"type": "object",
+		"value": [
+			{
+				"label": "admin",
+				"value": "admin"
+			},
+			{
+				"label": "editors",
+				"value": "editors"
+			}
+		]
+	},
+	"fetch: empty group list": {
+		"type": "object",
+		"value": []
+	},
+	"fetch: groups null": {
+		"type": "object",
+		"value": []
+	},
+	"fetch: no ocs data": {
+		"type": "object",
+		"value": []
+	},
+	"fetch: no ocs": {
+		"type": "object",
+		"value": []
+	},
+	"fetch: data zero": {
+		"type": "object",
+		"value": []
+	},
+	"fetch: data empty string": {
+		"type": "object",
+		"value": []
+	},
+	"fetch: no data": {
+		"type": "object",
+		"value": []
+	},
+	"fetch: throws": {
+		"type": "object",
+		"value": []
+	},
+	"get: sequence": {
+		"type": "object",
+		"value": {
+			"steps": [
+				[
+					"a"
+				],
+				[
+					"a"
+				],
+				[
+					"b"
+				],
+				[
+					"all",
+					"admin",
+					"Functioneel-beheerder",
+					"Gebruik-beheerder",
+					"Gebruik-raadpleger",
+					"Organisatie-beheerder",
+					"VNG-raadpleger",
+					"editors",
+					"viewers",
+					"staff",
+					"managers"
+				],
+				[
+					"all",
+					"admin",
+					"Functioneel-beheerder",
+					"Gebruik-beheerder",
+					"Gebruik-raadpleger",
+					"Organisatie-beheerder",
+					"VNG-raadpleger",
+					"editors",
+					"viewers",
+					"staff",
+					"managers"
+				],
+				11
+			],
+			"calls": 4
+		}
+	},
+	"logged in: uid admin": {
+		"type": "boolean",
+		"value": true
+	},
+	"logged in: uid empty": {
+		"type": "string",
+		"value": ""
+	},
+	"logged in: uid missing": {
+		"type": "undefined",
+		"value": "(undefined)"
+	},
+	"logged in: no user, local nc_username": {
+		"type": "boolean",
+		"value": true
+	},
+	"logged in: no user, local opencatalogi_user": {
+		"type": "boolean",
+		"value": true
+	},
+	"logged in: no user, session nc_username": {
+		"type": "boolean",
+		"value": true
+	},
+	"logged in: no user, local empty string": {
+		"type": "boolean",
+		"value": false
+	},
+	"logged in: no user, nothing stored": {
+		"type": "boolean",
+		"value": false
+	},
+	"logged in: session lookup throws": {
+		"type": "boolean",
+		"value": false
+	},
+	"sync: null": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": null,
+			"lastAttemptAt": null,
+			"error": "",
+			"neverSucceeded": true
+		}
+	},
+	"sync: undefined": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": null,
+			"lastAttemptAt": null,
+			"error": "",
+			"neverSucceeded": true
+		}
+	},
+	"sync: empty": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": null,
+			"lastAttemptAt": null,
+			"error": "",
+			"neverSucceeded": true
+		}
+	},
+	"sync: healthy, same timestamps": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": "t2",
+			"lastAttemptAt": null,
+			"error": "",
+			"neverSucceeded": false
+		}
+	},
+	"sync: failed attempt after success": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": "t2",
+			"lastAttemptAt": "t3",
+			"error": "boom",
+			"neverSucceeded": false
+		}
+	},
+	"sync: failed attempt, error not a string": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": "t2",
+			"lastAttemptAt": "t3",
+			"error": "",
+			"neverSucceeded": false
+		}
+	},
+	"sync: never succeeded": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": null,
+			"lastAttemptAt": "t1",
+			"error": "down",
+			"neverSucceeded": true
+		}
+	},
+	"sync: success only": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": "t2",
+			"lastAttemptAt": null,
+			"error": "",
+			"neverSucceeded": false
+		}
+	},
+	"sync: empty strings": {
+		"type": "object",
+		"value": {
+			"lastSuccessAt": null,
+			"lastAttemptAt": null,
+			"error": "",
+			"neverSucceeded": true
+		}
+	},
+	"banners: read fails": {
+		"type": "object",
+		"value": []
+	},
+	"banners: no banners key": {
+		"type": "object",
+		"value": []
+	},
+	"banners: banners not a list": {
+		"type": "object",
+		"value": []
+	},
+	"banners: mixed": {
+		"type": "object",
+		"value": [
+			{
+				"id": "b3",
+				"body": "Hello",
+				"severity": "info",
+				"dismissable": true
+			},
+			{
+				"id": "7",
+				"body": "Numbered",
+				"severity": "warning",
+				"dismissable": false
+			},
+			{
+				"id": "b4",
+				"body": "Kept",
+				"severity": "info",
+				"dismissable": true
+			}
+		]
+	}
+}

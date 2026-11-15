@@ -1,0 +1,1 @@
+- No screen: a cross-app PHP call and an admin-only schema; the public read (REQ-WDW-003) renders in portaliq's publication page, not here.

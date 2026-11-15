@@ -1,0 +1,414 @@
+{
+    "catalogi as a string": {
+        "scope": {
+            "registers": [
+                1,
+                2,
+                3
+            ],
+            "schemas": [
+                10,
+                11,
+                12,
+                13
+            ]
+        },
+        "calls": [
+            [
+                "getObjectService"
+            ],
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "5",
+                        "schema": "6"
+                    },
+                    "listed": true
+                },
+                false,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "catalogi only bad entries": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "draft"
+            ],
+            [
+                "getCatalogBySlug",
+                "nope"
+            ]
+        ],
+        "log": []
+    },
+    "catalogi service missing": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [],
+        "log": [
+            [
+                "warning",
+                "WOO-536: CatalogiService unavailable",
+                {
+                    "error": "no OCA\\OpenCatalogi\\Service\\CatalogiService"
+                }
+            ]
+        ]
+    },
+    "catalogi skips bad entries": {
+        "scope": {
+            "registers": [
+                1,
+                2
+            ],
+            "schemas": [
+                10,
+                11
+            ]
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "nope"
+            ],
+            [
+                "getCatalogBySlug",
+                "draft"
+            ],
+            [
+                "getCatalogBySlug",
+                "later"
+            ],
+            [
+                "getCatalogBySlug",
+                "woo"
+            ],
+            [
+                "getCatalogBySlug",
+                "woo"
+            ]
+        ],
+        "log": []
+    },
+    "catalogi union": {
+        "scope": {
+            "registers": [
+                1,
+                2,
+                3
+            ],
+            "schemas": [
+                10,
+                11,
+                12,
+                13
+            ]
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "woo"
+            ],
+            [
+                "getCatalogBySlug",
+                "open"
+            ],
+            [
+                "getCatalogBySlug",
+                "mixed"
+            ]
+        ],
+        "log": []
+    },
+    "catalogi with a named scope": {
+        "scope": {
+            "registers": [
+                1,
+                2
+            ],
+            "schemas": [
+                10,
+                11
+            ]
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "named"
+            ],
+            [
+                "getCatalogBySlug",
+                "woo"
+            ]
+        ],
+        "log": []
+    },
+    "default union": {
+        "scope": {
+            "registers": [
+                1,
+                2,
+                3
+            ],
+            "schemas": [
+                10,
+                11,
+                12,
+                13
+            ]
+        },
+        "calls": [
+            [
+                "getObjectService"
+            ],
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "5",
+                        "schema": "6"
+                    },
+                    "listed": true
+                },
+                false,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "default without catalog config": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [
+            [
+                "getObjectService"
+            ]
+        ],
+        "log": [
+            [
+                "warning",
+                "WOO-536: catalog_register or catalog_schema app-config is not set \u2014 /api/search default scope will be empty",
+                {
+                    "catalog_register": "5",
+                    "catalog_schema": ""
+                }
+            ]
+        ]
+    },
+    "default without object service": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [
+            [
+                "getObjectService"
+            ]
+        ],
+        "log": []
+    },
+    "empty catalogi is the default": {
+        "scope": {
+            "registers": [
+                1,
+                2,
+                3
+            ],
+            "schemas": [
+                10,
+                11,
+                12,
+                13
+            ]
+        },
+        "calls": [
+            [
+                "getObjectService"
+            ],
+            [
+                "searchObjects",
+                {
+                    "@self": {
+                        "register": "5",
+                        "schema": "6"
+                    },
+                    "listed": true
+                },
+                false,
+                false
+            ]
+        ],
+        "log": []
+    },
+    "empty single falls to catalogi": {
+        "scope": {
+            "registers": [
+                1,
+                2
+            ],
+            "schemas": [
+                10,
+                11
+            ]
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "woo"
+            ]
+        ],
+        "log": []
+    },
+    "non-string single falls to catalogi": {
+        "scope": {
+            "registers": [
+                2,
+                3
+            ],
+            "schemas": [
+                11,
+                12
+            ]
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ]
+        ],
+        "log": []
+    },
+    "single bad date": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "bad-date"
+            ]
+        ],
+        "log": []
+    },
+    "single future catalog": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "later"
+            ]
+        ],
+        "log": []
+    },
+    "single mixed scope": {
+        "scope": {
+            "registers": [
+                3
+            ],
+            "schemas": [
+                12,
+                13
+            ]
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "mixed"
+            ]
+        ],
+        "log": []
+    },
+    "single named scope": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "named"
+            ]
+        ],
+        "log": []
+    },
+    "single published catalog": {
+        "scope": {
+            "registers": [
+                1,
+                2
+            ],
+            "schemas": [
+                10,
+                11
+            ]
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "woo"
+            ]
+        ],
+        "log": []
+    },
+    "single unknown catalog": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "nope"
+            ]
+        ],
+        "log": []
+    },
+    "single unpublished catalog": {
+        "scope": {
+            "registers": [],
+            "schemas": []
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "draft"
+            ]
+        ],
+        "log": []
+    },
+    "single wins over catalogi": {
+        "scope": {
+            "registers": [
+                2,
+                3
+            ],
+            "schemas": [
+                11,
+                12
+            ]
+        },
+        "calls": [
+            [
+                "getCatalogBySlug",
+                "open"
+            ]
+        ],
+        "log": []
+    }
+}
