@@ -47,6 +47,7 @@ use OCA\OpenCatalogi\Contract\PublicationServiceInterface;
 use OCA\OpenRegister\Exception\RegisterNotFoundException;
 use OCA\OpenRegister\Mcp\Attribute\McpTool;
 use OCA\OpenRegister\Exception\SchemaNotFoundException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\AppFramework\Db\DoesNotExistException;
 use OCP\AppFramework\Http\DataDownloadResponse;
@@ -552,8 +553,7 @@ class PublicationService implements PublicationServiceInterface {
 	private function findCatalogInScope(string|int $catalogId, array $scope): array {
 		$catalog = $this->getObjectService()->find(
 			id: $catalogId,
-			register: $scope['register'],
-			schema: $scope['schema']
+			options: new ObjectFindOptions(register: $scope['register'], schema: $scope['schema'])
 		);
 
 		if ($catalog === null
@@ -1155,7 +1155,7 @@ class PublicationService implements PublicationServiceInterface {
 			// Use positional parameters for compatibility with different ObjectService versions.
 			// find() enforces OpenRegister RBAC: anonymous callers only receive objects the
 			// public group may read (e.g. published publications via the $now conditional rule).
-			$object = $this->getObjectService()->find($id, $extend);
+			$object = $this->getObjectService()->find($id, new ObjectFindOptions(extend: $extend));
 
 			return new JSONResponse($object);
 		} catch (DoesNotExistException $exception) {
@@ -1231,7 +1231,7 @@ class PublicationService implements PublicationServiceInterface {
 
 		// Validate existence and enforce RBAC: find() denies objects the caller may not read
 		// (anonymous callers are limited to public-group reads).
-		$object = $objectService->find(id: $id, _extend: []);
+		$object = $objectService->find(id: $id);
 		if ($object === null) {
 			return new JSONResponse(['error' => 'Not Found'], 404);
 		}
@@ -1480,7 +1480,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			// Validate existence and enforce RBAC before serving any file content: find()
 			// denies objects the caller may not read (anonymous → public-group reads only).
-			$object = $objectService->find(id: $id, _extend: []);
+			$object = $objectService->find(id: $id);
 			if ($object === null) {
 				return new JSONResponse(['error' => 'Not Found'], 404);
 			}
@@ -1767,7 +1767,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			// The find() call enforces OpenRegister RBAC: an anonymous caller can only
 			// traverse the relation graph of objects the public group may read (C-3 / wave-7).
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 
 			// Object not found or not readable by the caller — return 404 before traversal.
 			if ($rootObject === null) {
@@ -1824,7 +1824,7 @@ class PublicationService implements PublicationServiceInterface {
 
 			// The find() call enforces OpenRegister RBAC: an anonymous caller can only
 			// traverse the relation graph of objects the public group may read (C-3 / wave-7).
-			$rootObject = $objectService->find(id: $id, _extend: []);
+			$rootObject = $objectService->find(id: $id);
 
 			// Object not found or not readable by the caller — return 404 before traversal.
 			if ($rootObject === null) {

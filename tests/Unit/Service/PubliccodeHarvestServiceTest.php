@@ -41,6 +41,8 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\PubliccodeHarvestService
@@ -105,12 +107,17 @@ class PubliccodeHarvestServiceTest extends TestCase {
 
 		$objects->method('find')->willReturnCallback(
 			function (int|string $id, ...$rest): ?ObjectEntity {
+				$rest = array_slice(LegacyObjectArgs::positional(method: 'find', args: [$id, ...$rest]), 1);
 				$this->calls[] = ['find', self::passedArguments(method: 'find', arguments: func_get_args())];
 				return ($this->store[(string)$id] ?? null);
 			}
 		);
 		$objects->method('saveObject')->willReturnCallback(
-			function (array|ObjectEntity $object, ?array $extend = [], mixed $register = null, mixed $schema = null, ?string $uuid = null, mixed ...$rest): ObjectEntity {
+			function (array|ObjectEntity $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true, mixed ...$rest): ObjectEntity {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register;
+				$schema = $options->target->schema;
+				$uuid = $options->uuid;
 				$arguments = self::passedArguments(method: 'saveObject', arguments: func_get_args());
 				$arguments['object'] = $object['slug'];
 				$this->calls[] = ['saveObject', $arguments];
@@ -143,7 +150,7 @@ class PubliccodeHarvestServiceTest extends TestCase {
 	 */
 	private static function passedArguments(string $method, array $arguments): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $index => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $index => $parameter) {
 			if (array_key_exists($index, $arguments) === false) {
 				break;
 			}

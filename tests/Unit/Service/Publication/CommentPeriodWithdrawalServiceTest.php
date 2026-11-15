@@ -37,6 +37,8 @@ use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * A duck-typed fake of the consumed OpenRegister ObjectService.
@@ -55,13 +57,14 @@ class PeriodFakeObjectService {
 
 	public function saveObject(
 		array $object,
-		?array $extend = [],
-		$register = null,
-		$schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
+		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$this->writes[] = ['schema' => $schema, 'object' => $object];
 		$id = (string)($uuid ?? ($object['id'] ?? 'dep-1'));
 		$object['id'] = $id;
@@ -486,6 +489,7 @@ class CommentPeriodWithdrawalServiceTest extends TestCase {
 			}
 
 			public function saveObject(array $object, mixed ...$rest): array {
+				$rest = LegacyObjectArgs::flatten(args: $rest);
 				return $object;
 			}
 		};
