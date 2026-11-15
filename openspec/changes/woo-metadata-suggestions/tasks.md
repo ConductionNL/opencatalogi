@@ -7,7 +7,8 @@
 ## 2. Rules floor
 
 - [x] 2.1 Add `WooMetadataSuggestionService::suggestFromRules()` for category, organisation and handling type, checked against `TooiVocabularyService` (REQ-WMS-001). Verify: `tests/Unit/Service/WooMetadataSuggestionServiceTest.php`, one case per field and one for an unresolvable value.
-- [ ] 2.2 Queue the rules floor when a publication is created (REQ-WMS-001). Verify: listener test on a real `ObjectCreatedEvent`.
+- [x] 2.2 Queue the rules floor when a publication is created (REQ-WMS-001). Verify: listener test on a real `ObjectCreatedEvent`.
+  > 15 Nov: `MetadataSuggestionListener` (on OpenRegister's `ObjectCreatedEvent`, registered in `ListenerRegistrar`) queues `SuggestPublicationMetadata` for a new object in the publication register, skipping suggestions and catalogues. The job reads the publication, its schema slug, the organisation of the catalogue listing its schema and the suggestions it already has, and stores each proposal as a pending `metadataSuggestion` through `MetadataSuggestionStore` (`metadata_suggestion_schema`, set by the settings import). OpenRegister records no origin on an object, so the handling-type rule has no input from this path yet. Tests: `MetadataSuggestionListenerTest` (3, real event), `SuggestPublicationMetadataTest` (2), `MetadataSuggestionStoreTest` (2).
 
 ## 3. Hermiq
 

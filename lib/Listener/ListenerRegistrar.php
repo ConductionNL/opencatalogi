@@ -58,6 +58,13 @@ class ListenerRegistrar {
 			event: ObjectCreatedEvent::class,
 			listener: ObjectCreatedEventListener::class
 		);
+
+		// Woo metadata suggestions (REQ-WMS-001): queue the rules floor for a new
+		// publication, so missing Woo metadata is proposed after the save.
+		$context->registerEventListener(
+			event: ObjectCreatedEvent::class,
+			listener: MetadataSuggestionListener::class
+		);
 		$context->registerEventListener(
 			event: ObjectUpdatedEvent::class,
 			listener: ObjectUpdatedEventListener::class

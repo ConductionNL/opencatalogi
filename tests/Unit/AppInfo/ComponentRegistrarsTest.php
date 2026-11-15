@@ -35,6 +35,7 @@ use OCA\OpenCatalogi\Listener\CatalogCacheEventListener;
 use OCA\OpenCatalogi\Listener\CatalogSchemaEventListener;
 use OCA\OpenCatalogi\Listener\CatalogScopePendingListener;
 use OCA\OpenCatalogi\Listener\ListenerRegistrar;
+use OCA\OpenCatalogi\Listener\MetadataSuggestionListener;
 use OCA\OpenCatalogi\Listener\ObjectCreatedEventListener;
 use OCA\OpenCatalogi\Listener\ObjectUpdatedEventListener;
 use OCA\OpenCatalogi\Listener\PlooiDeliveryListener;
@@ -112,6 +113,7 @@ class ComponentRegistrarsTest extends TestCase {
 		$this->assertSame(
 			[
 				[$e . 'ObjectCreatedEvent', ObjectCreatedEventListener::class],
+				[$e . 'ObjectCreatedEvent', MetadataSuggestionListener::class],
 				[$e . 'ObjectUpdatedEvent', ObjectUpdatedEventListener::class],
 				[$e . 'ObjectUpdatedEvent', PortalAccountRemovedListener::class],
 				[$e . 'ObjectUpdatedEvent', PlooiDeliveryListener::class],
