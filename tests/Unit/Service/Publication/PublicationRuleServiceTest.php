@@ -35,6 +35,7 @@ class PublicationRuleServiceTest extends TestCase {
 	private function rule(): array {
 		return [
 			'recordType' => 'besluit',
+			'wooCategory' => 'infocat002',
 			'enabled' => true,
 			'anonymousProperties' => ['title', 'publicationDate'],
 			'conditions' => [
@@ -44,6 +45,21 @@ class PublicationRuleServiceTest extends TestCase {
 		];
 
 	}//end rule()
+
+	/**
+	 * REQ-CVS-003: a record the rule publishes carries the rule's category, whatever the record says.
+	 */
+	public function testAPublishedRecordIsFiledUnderTheRulesCategory(): void {
+		$record = ['@type' => 'besluit', 'status' => 'definitief', 'title' => 'Kapvergunning', 'wooCategory' => 'infocat016'];
+
+		$view = $this->service->projectForAnonymous(record: $record, rule: $this->rule());
+
+		$this->assertSame('infocat002', $view['wooCategory']);
+		$this->assertSame(['title', 'publicationText', 'wooCategory'], array_keys($view));
+		$this->assertSame('infocat002', PublicationRuleService::categoryOf(rule: $this->rule()));
+		$this->assertNull(PublicationRuleService::categoryOf(rule: ['wooCategory' => 'infocat099']));
+		$this->assertSame('Adviezen (infocat010)', PublicationRuleService::categoryLabel(code: 'infocat010'));
+	}
 
 	public function testARecordOfAPublishedTypePublishesWithoutAnyonePickingIt(): void {
 		$record = ['@type' => 'besluit', 'status' => 'definitief', 'title' => 'Kapvergunning'];
@@ -125,7 +141,10 @@ class PublicationRuleServiceTest extends TestCase {
 		$this->assertTrue($preview['valid']);
 		$this->assertCount(1, $preview['wouldPublish']);
 		$this->assertSame(1, $preview['wouldNotPublish']);
-		$this->assertSame(['publicationDate', 'publicationText', 'title'], $preview['exposedProperties']);
+		$this->assertSame(['publicationDate', 'publicationText', 'title', 'wooCategory'], $preview['exposedProperties']);
+		// REQ-CVS-003: each record is shown with the category the rule files it under.
+		$this->assertSame('infocat002', $preview['wouldPublish'][0]['wooCategory']);
+		$this->assertSame('Overige besluiten van algemene strekking (infocat002)', $preview['wouldPublish'][0]['wooCategoryLabel']);
 
 	}//end testAPreviewShowsTheRecordsAndThePropertiesBeforeTheRuleIsSaved()
 

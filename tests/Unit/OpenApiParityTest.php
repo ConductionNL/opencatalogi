@@ -28,6 +28,7 @@ declare(strict_types=1);
 namespace Unit;
 
 use OCA\OpenCatalogi\Middleware\Support\StandardProtocolPaths;
+use OCA\OpenCatalogi\Service\AppliedFilters;
 use PHPUnit\Framework\TestCase;
 use ReflectionMethod;
 
@@ -434,4 +435,90 @@ class OpenApiParityTest extends TestCase {
 			$this->assertTrue(condition: StandardProtocolPaths::matches(path: self::SERVER_BASE.$path), message: $path.' is not a standard protocol path');
 		}
 	}//end testTheServerIsVersionedAndProtocolPathsKeepTheirBase()
+
+	/**
+	 * Every documented public list route of the four list controllers documents
+	 * `appliedFilters` on its 200 response, as the shared `AppliedFilters` component,
+	 * and that component names exactly the entries the collector can answer.
+	 *
+	 * The list routes are found the way AppliedFiltersResponseTest finds them: a GET
+	 * of PublicationsController, SearchController, ThemesController or
+	 * FederationController without `{id}` in its path, documented in `openapi.json`
+	 * or, for the federation list, in `openapi.standards.json`.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/api-says-what-it-filtered/specs/search/spec.md#requirement-the-openapi-document-describes-appliedfilters-on-every-list-response-req-asf-004
+	 */
+	public function testEveryListResponseDocumentsAppliedFilters(): void {
+		$documents = [$this->loadOpenApiDocument(), $this->loadOpenApiDocument(file: 'openapi.standards.json')];
+		foreach ($documents as $document) {
+			$schemas = ($document['components']['schemas'] ?? []);
+			$this->assertArrayHasKey(key: 'AppliedFilters', array: $schemas);
+			$entry = $schemas['AppliedFilters']['items'];
+			$this->assertSame(expected: 'array', actual: $schemas['AppliedFilters']['type']);
+			$this->assertSame(expected: ['name', 'value', 'reason'], actual: $entry['required']);
+			$this->assertSame(
+				expected: array_merge(AppliedFilters::NAMES, [AppliedFilters::UNKNOWN['name']]),
+				actual: $entry['properties']['name']['enum']
+			);
+		}
+
+		$checked = [];
+		foreach ($this->collectExpectedPublicRoutes() as $key => $route) {
+			[$controller] = explode('#', $route['route']);
+			[$verb, $path] = explode(' ', $key, 2);
+			if (in_array($controller, ['publications', 'search', 'themes', 'federation'], true) === false
+				|| $verb !== 'GET'
+				|| str_contains($path, '{id}') === true
+			) {
+				continue;
+			}
+
+			// The route is documented in one of the two documents; its refs resolve in that one.
+			$document = $documents[0];
+			if (isset($document['paths'][$path]) === false) {
+				$document = $documents[1];
+			}
+
+			$schema = ($document['paths'][$path]['get']['responses']['200']['content']['application/json']['schema'] ?? []);
+			$this->assertTrue(
+				condition: $this->documentsAppliedFilters(schema: $schema, schemas: ($document['components']['schemas'] ?? [])),
+				message: $key . ' does not document appliedFilters on its 200 response'
+			);
+			$checked[] = $key;
+		}//end foreach
+
+		sort($checked);
+		$this->assertSame(expected: ['GET /federation/publications', 'GET /search', 'GET /themes', 'GET /{catalogSlug}'], actual: $checked);
+	}//end testEveryListResponseDocumentsAppliedFilters()
+
+	/**
+	 * Whether a response schema, following `$ref` and `allOf`, has a required
+	 * `appliedFilters` property that is the `AppliedFilters` component.
+	 *
+	 * @param array<string, mixed> $schema  The schema.
+	 * @param array<string, mixed> $schemas The document's component schemas.
+	 *
+	 * @return bool
+	 */
+	private function documentsAppliedFilters(array $schema, array $schemas): bool {
+		if (isset($schema['$ref']) === true) {
+			$name = substr((string)$schema['$ref'], strlen('#/components/schemas/'));
+			return $this->documentsAppliedFilters(schema: ($schemas[$name] ?? []), schemas: $schemas);
+		}
+
+		$ref = ($schema['properties']['appliedFilters']['$ref'] ?? null);
+		if ($ref === '#/components/schemas/AppliedFilters' && in_array('appliedFilters', ($schema['required'] ?? []), true) === true) {
+			return true;
+		}
+
+		foreach (($schema['allOf'] ?? []) as $part) {
+			if ($this->documentsAppliedFilters(schema: $part, schemas: $schemas) === true) {
+				return true;
+			}
+		}
+
+		return false;
+	}//end documentsAppliedFilters()
 }//end class

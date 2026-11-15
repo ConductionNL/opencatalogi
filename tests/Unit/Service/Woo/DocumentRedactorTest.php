@@ -334,4 +334,109 @@ class DocumentRedactorTest extends TestCase {
 			$logged
 		);
 	}//end testFailuresAreLoggedWithoutTheirMessage()
+
+	/**
+	 * A writer that resolves the original and the redacted file of document c.
+	 *
+	 * @param string $redactedContent The bytes of the redacted file as it is now.
+	 *
+	 * @return void
+	 */
+	private function withRedactedFile(string $redactedContent): void {
+		$redacted = $this->file(id: 12, content: $redactedContent);
+		$this->writer = $this->createMock(BatchPublicationWriter::class);
+		$this->writer->method('resolve')->willReturnCallback(
+			fn (string $reference, string $owner): ?File => match ([$reference, $owner]) {
+				['doc-c', 'alice'] => $this->original,
+				['12', 'alice'] => $redacted,
+				default => null,
+			}
+		);
+	}//end withRedactedFile()
+
+	/**
+	 * REQ-WDA-004: a mechanically verified redaction nobody checked blocks the
+	 * publish and names the document; once a person checked it, it passes.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testAnUncheckedRedactionBlocksThePublish(): void {
+		$this->withRedactedFile(redactedContent: 'gelakt');
+		$listing = [
+			'assessment' => 'deels_openbaar',
+			'title' => 'Email thread with residents',
+			'original' => 'doc-c',
+			'document' => '12',
+			'redactionStatus' => DocumentRedactor::VERIFIED,
+			'redactionHash' => hash('sha256', 'gelakt'),
+			'redactionVerifiedBy' => '',
+		];
+
+		$refusal = null;
+		try {
+			$this->redactor()->assertPublishable(listings: [$listing], owner: 'alice');
+		} catch (\RuntimeException $e) {
+			$refusal = $e->getMessage();
+		}
+
+		$this->assertSame('Publishing is blocked, redaction not checked by a person: Email thread with residents', $refusal);
+
+		$listing['redactionVerifiedBy'] = 'bob';
+		$this->redactor()->assertPublishable(listings: [$listing], owner: 'alice');
+		$this->addToAssertionCount(1);
+	}//end testAnUncheckedRedactionBlocksThePublish()
+
+	/**
+	 * REQ-WDA-004: the batch lists an unchecked redaction with its reason, and
+	 * drops it once a person checked it.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testAnUncheckedRedactionIsListedAsUnpublishable(): void {
+		$assessment = ['assessment' => 'deels_openbaar', 'fileName' => 'c.pdf', 'redactionStatus' => DocumentRedactor::VERIFIED];
+
+		$this->assertSame(
+			[['fileName' => 'c.pdf', 'reason' => 'Redaction not checked by a person.']],
+			$this->redactor()->unredacted([$assessment])
+		);
+
+		$assessment['redactionVerifiedBy'] = 'bob';
+		$this->assertSame([], $this->redactor()->unredacted([$assessment]));
+	}//end testAnUncheckedRedactionIsListedAsUnpublishable()
+
+	/**
+	 * REQ-WDA-004: only a mechanically verified redaction whose file still
+	 * carries its hash can be marked verified by a person.
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	public function testOnlyAnIntactVerifiedRedactionCanBeMarkedVerified(): void {
+		$this->withRedactedFile(redactedContent: 'gelakt');
+		$assessment = [
+			'assessment' => 'deels_openbaar',
+			'documentReference' => 'doc-c',
+			'anonymizedDocument' => '12',
+			'anonymizedDocumentHash' => hash('sha256', 'gelakt'),
+			'redactionStatus' => DocumentRedactor::VERIFIED,
+		];
+		$redactor = $this->redactor();
+
+		$this->assertNull($redactor->verificationRefusal($assessment, null, 'alice'));
+		$this->assertSame(
+			'The redaction status is failed, not verified.',
+			$redactor->verificationRefusal(array_merge($assessment, ['redactionStatus' => DocumentRedactor::FAILED]), null, 'alice')
+		);
+		$this->assertSame(
+			'The redaction status is none, not verified.',
+			$redactor->verificationRefusal(array_merge($assessment, ['redactionStatus' => '']), null, 'alice')
+		);
+		$this->assertSame(
+			'Only a partly public document has a redaction to verify.',
+			$redactor->verificationRefusal(array_merge($assessment, ['assessment' => 'openbaar']), null, 'alice')
+		);
+		$this->assertSame(
+			'The redacted file no longer matches the version that was verified.',
+			$redactor->verificationRefusal(array_merge($assessment, ['anonymizedDocumentHash' => hash('sha256', 'anders')]), null, 'alice')
+		);
+	}//end testOnlyAnIntactVerifiedRedactionCanBeMarkedVerified()
 }//end class

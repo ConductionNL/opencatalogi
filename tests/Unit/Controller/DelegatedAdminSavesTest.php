@@ -38,6 +38,7 @@ use OCA\OpenCatalogi\Controller\DepublicationController;
 use OCA\OpenCatalogi\Controller\InspectionController;
 use OCA\OpenCatalogi\Controller\InspectionRecords;
 use OCA\OpenCatalogi\Controller\NoticeBoardController;
+use OCA\OpenCatalogi\Controller\PublicationTransitions;
 use OCA\OpenCatalogi\Controller\RegisterAccess;
 use OCA\OpenCatalogi\Controller\ServiceCatalogueController;
 use OCA\OpenCatalogi\Service\Community\AtomFeedService;
@@ -47,6 +48,7 @@ use OCA\OpenCatalogi\Service\Community\NoticeBoardService;
 use OCA\OpenCatalogi\Service\Community\StatusPageService;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
 use OCA\OpenCatalogi\Service\Publication\DepublicationService;
+use OCA\OpenCatalogi\Service\Publication\PublicationStateService;
 use OCA\OpenCatalogi\Service\Publication\IndexUnreachableException;
 use OCA\OpenCatalogi\Service\Publication\InspectionService;
 use OCA\OpenCatalogi\Service\Publication\NationalIndexService;
@@ -65,6 +67,9 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use ReflectionMethod;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Every admin-gated save, called by a delegated administrator.
@@ -81,6 +86,7 @@ use ReflectionMethod;
  * @uses \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses \OCA\OpenCatalogi\Controller\ForwardsRegisterAccess
  * @uses \OCA\OpenCatalogi\Controller\ReadsOpenRegisterResults
+ * @uses \OCA\OpenCatalogi\Controller\PublicationTransitions
  * @uses \OCA\OpenCatalogi\Controller\ReadsPublicationRegister
  * @uses \OCA\OpenCatalogi\Controller\RegisterAccess
  * @uses \OCA\OpenCatalogi\Controller\ResolvesRegisterConfiguration
@@ -106,6 +112,7 @@ class DelegatedAdminSavesTest extends TestCase {
 	private const SCHEMA_KEYS = [
 		'inspection_schema' => 'inspection',
 		'depublication_schema' => 'depublication',
+		'publication_schema' => 'publication',
 		'service_status_schema' => 'serviceStatus',
 		'notice_board_schema' => 'noticeBoard',
 		'notice_schema' => 'notice',
@@ -139,6 +146,10 @@ class DelegatedAdminSavesTest extends TestCase {
 			groups: $groups,
 			seed: [
 				'dep-1' => ['schema' => 'depublication', 'object' => self::DEPUBLICATION],
+				// Already withdrawn, so depublishing it saves only the depublication:
+				// the flows below count one save. Taking a public one down is
+				// DepublicationControllerTest's.
+				'pub-1' => ['schema' => 'publication', 'object' => ['title' => 'Besluit', 'publicationDate' => '2020-01-01T00:00:00+00:00', 'depublicationDate' => '2020-02-01T00:00:00+00:00']],
 				'ct-1' => ['schema' => 'caseTypeDefinition', 'object' => self::IMPORTED_CASE_TYPE],
 			]
 		);
@@ -274,13 +285,15 @@ class DelegatedAdminSavesTest extends TestCase {
 			->getMock();
 		$index->method('withdraw')->willThrowException(new IndexUnreachableException('No source.'));
 
+		$service = new DepublicationService($index, $this->createMock(LoggerInterface::class));
+
 		return new DepublicationController(
 			'opencatalogi',
 			$request,
 			$this->l10n(),
 			$this->session(),
-			new DepublicationService($index, $this->createMock(LoggerInterface::class)),
-			$this->registers()
+			$service,
+			new PublicationTransitions(new PublicationStateService(), $service, $this->createMock(ContainerInterface::class), $this->registers())
 		);
 	}//end depublication()
 
@@ -510,7 +523,7 @@ class DelegatedAdminSavesTest extends TestCase {
 		$this->storeFor(['gedelegeerden']);
 
 		$this->expectException(\RuntimeException::class);
-		$this->store->saveObject(object: [], register: 'publication', schema: $schema);
+		$this->store->saveObject(object: [], options: new ObjectSaveOptions(target: new ObjectFindTarget(register: 'publication', schema: $schema)));
 	}//end testTheShippedBlockRefusesThatCallerWhenRbacIsAsked()
 
 	/**
@@ -611,14 +624,15 @@ final class BlockEnforcingStore {
 	 */
 	public function saveObject(
 		array $object,
-		array $extend = [],
-		?string $register = null,
-		?string $schema = null,
-		?string $uuid = null,
+		ObjectSaveOptions $options = new ObjectSaveOptions(),
 		bool $_rbac = true,
-		bool $_multitenancy = true,
-		bool $_unowned = false,
+		bool $_multitenancy = true
 	): array {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
+		$_unowned = $options->actor->unowned ?? false;
 		$action = 'create';
 		if (isset($this->seed[(string)$uuid]) === true) {
 			$action = 'update';
@@ -642,7 +656,9 @@ final class BlockEnforcingStore {
 	 *
 	 * @SuppressWarnings(PHPMD.UnusedFormalParameter)
 	 */
-	public function find(string $id, ?string $register = null, ?string $schema = null, bool $_rbac = true): array {
+	public function find(string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): array {
+		$register = $options?->register;
+		$schema = $options?->schema;
 		$this->refuseUnlessGranted(schema: (string)$schema, action: 'read', rbac: $_rbac);
 
 		return $this->seed[$id]['object'] + ['id' => $id];

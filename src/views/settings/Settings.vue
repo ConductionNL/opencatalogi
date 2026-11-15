@@ -255,6 +255,8 @@
 
 				<DcatFeedValidation />
 
+				<PublishRightsLine />
+
 				<h3 class="woo-registration-heading">
 					{{ t('opencatalogi', 'National delivery channels') }}
 				</h3>
@@ -548,6 +550,7 @@ import Sync from 'vue-material-design-icons/Sync.vue'
 import DcatFeedValidation from './DcatFeedValidation.vue'
 import DonlHarvestStatus from './DonlHarvestStatus.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
+import PublishRightsLine from './PublishRightsLine.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
@@ -653,6 +656,7 @@ export default defineComponent({
 		CloseCircle,
 		MinusCircle,
 		InformationOutline,
+		PublishRightsLine,
 		WooIndexConnection,
 		DcatFeedValidation,
 		DonlHarvestStatus,

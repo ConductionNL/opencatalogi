@@ -32,6 +32,9 @@ namespace OCA\OpenCatalogi\Service\Woo;
 
 use OCA\OpenCatalogi\Service\Portal\PublicationLinker;
 use OCA\OpenCatalogi\Service\WooCategory;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindTarget;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 use OCP\App\IAppManager;
 use OCP\Files\File;
 use OCP\Files\IRootFolder;
@@ -108,6 +111,7 @@ class BatchPublicationWriter {
 				$listing['original'] = $document;
 				$listing['redactionStatus'] = (string)($assessment['redactionStatus'] ?? '');
 				$listing['redactionHash'] = (string)($assessment['anonymizedDocumentHash'] ?? '');
+				$listing['redactionVerifiedBy'] = (string)($assessment['redactionVerifiedBy'] ?? '');
 			}
 
 			$listings[] = $listing;
@@ -256,7 +260,12 @@ class BatchPublicationWriter {
 		$earlier = (string)($batch['wooPublication']['publication'] ?? '');
 		if ($earlier !== '') {
 			try {
-				$entity = $objects->find(id: $earlier, register: self::REGISTER, schema: self::SCHEMA, _rbac: false, _multitenancy: false);
+				$entity = $objects->find(
+					id: $earlier,
+					options: new ObjectFindOptions(register: self::REGISTER, schema: self::SCHEMA),
+					_rbac: false,
+					_multitenancy: false
+				);
 				if ($entity !== null) {
 					return ['id' => $earlier, 'entity' => $entity];
 				}
@@ -267,8 +276,7 @@ class BatchPublicationWriter {
 
 		$entity = $objects->saveObject(
 			object: $this->payload(batch: $batch, now: $now),
-			register: self::REGISTER,
-			schema: self::SCHEMA,
+			options: new ObjectSaveOptions(target: new ObjectFindTarget(register: self::REGISTER, schema: self::SCHEMA)),
 			_rbac: false,
 			_multitenancy: false
 		);
