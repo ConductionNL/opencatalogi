@@ -26,10 +26,12 @@ namespace Unit\Controller;
 
 use OCA\OpenCatalogi\Controller\RequestRecords;
 use OCA\OpenCatalogi\Controller\WooRequestController;
+use OCA\OpenCatalogi\Middleware\WooRequestHandoverMiddleware;
 use OCA\OpenCatalogi\Service\Woo\DossiqWooForward;
 use OCA\OpenCatalogi\Service\Woo\StatutoryTerm;
 use OCA\OpenCatalogi\Service\Woo\TermEngineUnavailableException;
 use OCA\OpenCatalogi\Service\Woo\TermRefusedException;
+use OCA\OpenCatalogi\Service\Woo\WooHandoverState;
 use OCA\OpenCatalogi\Service\Woo\WooRequestService;
 use OCA\OpenCatalogi\Service\Woo\WooRequestStore;
 use OCP\App\IAppManager;
@@ -931,6 +933,143 @@ class WooRequestControllerTest extends TestCase {
 			$this->assertSame('Alle adviezen', $seen['answers']['requestedInformation'], $outcome);
 		}
 	}//end testReceiveForwardsToDossiqAndMintsNothing()
+
+	/**
+	 * Call a route the way Nextcloud's dispatcher does: the hand-over middleware first.
+	 *
+	 * @param WooHandoverState $state The hand-over state.
+	 * @param string $method The route method.
+	 * @param array<string, mixed> $args Its arguments.
+	 *
+	 * @return \OCP\AppFramework\Http\Response The answer.
+	 */
+	private function dispatch(WooHandoverState $state, string $method, array $args = []): \OCP\AppFramework\Http\Response {
+		$l10n = $this->createMock(IL10N::class);
+		$l10n->method('t')->willReturnArgument(0);
+		$middleware = new WooRequestHandoverMiddleware(state: $state, l10n: $l10n);
+		try {
+			$middleware->beforeController($this->controller, $method);
+			return $this->controller->{$method}(...$args);
+		} catch (\Exception $e) {
+			return $middleware->afterException($this->controller, $method, $e);
+		}
+	}//end dispatch()
+
+	/**
+	 * The hand-over state with dossiq installed or not, and the requests read-only or not.
+	 *
+	 * @param bool $dossiq Whether dossiq is installed.
+	 * @param bool $readOnly Whether the requests are read-only here.
+	 *
+	 * @return WooHandoverState
+	 */
+	private function handover(bool $dossiq, bool $readOnly): WooHandoverState {
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isEnabledForAnyone')->with('dossiq')->willReturn($dossiq);
+		$config = $this->createMock(IAppConfig::class);
+		$config->method('getValueString')->willReturnCallback(
+			static fn (string $app, string $key, string $default = ''): string => ($key === 'woo_requests_read_only' && $readOnly === true ? '1' : $default)
+		);
+
+		return new WooHandoverState(config: $config, appManager: $apps);
+	}//end handover()
+
+	/**
+	 * The seven request routes with their arguments.
+	 *
+	 * @return array<string, array<string, string>>
+	 */
+	private static function everyRoute(): array {
+		return [
+			'receive' => [],
+			'termsReport' => [],
+			'show' => ['requestId' => 'req-1'],
+			'extend' => ['requestId' => 'req-1'],
+			'pause' => ['requestId' => 'req-1'],
+			'resume' => ['requestId' => 'req-1'],
+			'attachBatch' => ['requestId' => 'req-1'],
+		];
+	}//end everyRoute()
+
+	/**
+	 * Without dossiq every request route answers 404, stores nothing and touches no term (REQ-WHD-005).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-5.1
+	 */
+	public function testEveryRequestRouteIs404WithoutDossiq(): void {
+		$this->params(['rationale' => 'r', 'reason' => 'r', 'batch' => 'b-1', 'requestedInformation' => 'x']);
+		$this->storedRequest(['status' => 'received']);
+		$this->terms->expects(self::never())->method(self::anything());
+		$state = $this->handover(dossiq: false, readOnly: false);
+
+		foreach (self::everyRoute() as $route => $args) {
+			$response = $this->dispatch(state: $state, method: $route, args: $args);
+			$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus(), $route);
+			$this->assertSame(
+				['error' => 'dossiq-not-installed', 'message' => 'Woo requests are handled by dossiq, which is not installed.'],
+				$response->getData(),
+				$route
+			);
+		}
+
+		$this->assertSame(['req-1'], array_keys($this->objects->objects));
+		$this->assertSame('received', $this->objects->objects['req-1']['status']);
+	}//end testEveryRequestRouteIs404WithoutDossiq()
+
+	/**
+	 * Read-only, the four change routes answer 410 naming dossiq; reading still works (REQ-WHD-004).
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-4.1
+	 */
+	public function testWriteRoutesAnswer410WhenReadOnly(): void {
+		$this->params(['rationale' => 'r', 'reason' => 'r', 'batch' => 'b-1']);
+		$this->storedRequest();
+		$this->terms->expects(self::never())->method('extendOnce');
+		$this->terms->expects(self::never())->method('pause');
+		$this->terms->expects(self::never())->method('resume');
+		$state = $this->handover(dossiq: true, readOnly: true);
+
+		foreach (WooRequestHandoverMiddleware::WRITE_METHODS as $route) {
+			$response = $this->dispatch(state: $state, method: $route, args: ['requestId' => 'req-1']);
+			$this->assertSame(Http::STATUS_GONE, $response->getStatus(), $route);
+			$this->assertSame(
+				['error' => 'handled-by-dossiq', 'message' => 'This Woo request has moved to dossiq and can no longer be changed here.'],
+				$response->getData(),
+				$route
+			);
+		}
+
+		$this->assertSame(Http::STATUS_OK, $this->dispatch(state: $state, method: 'show', args: ['requestId' => 'req-1'])->getStatus());
+		$this->assertSame(Http::STATUS_OK, $this->dispatch(state: $state, method: 'termsReport')->getStatus());
+		$this->assertArrayNotHasKey('batch', $this->objects->objects['req-1']);
+	}//end testWriteRoutesAnswer410WhenReadOnly()
+
+	/**
+	 * With dossiq and requests still writable, the routes run as before; another controller is never stopped.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-4.1
+	 */
+	public function testTheMiddlewareLetsWritableRequestsAndOtherControllersThrough(): void {
+		$this->storedRequest();
+		$this->params(['batch' => 'b-1']);
+		$state = $this->handover(dossiq: true, readOnly: false);
+
+		$this->assertSame(Http::STATUS_OK, $this->dispatch(state: $state, method: 'attachBatch', args: ['requestId' => 'req-1'])->getStatus());
+
+		$l10n = $this->createMock(IL10N::class);
+		$middleware = new WooRequestHandoverMiddleware(state: $this->handover(dossiq: false, readOnly: true), l10n: $l10n);
+		$middleware->beforeController(new \stdClass(), 'extend');
+
+		$other = new \RuntimeException('something else');
+		$this->expectExceptionObject($other);
+		$middleware->afterException($this->controller, 'show', $other);
+	}//end testTheMiddlewareLetsWritableRequestsAndOtherControllersThrough()
 
 	/**
 	 * A session as alice.

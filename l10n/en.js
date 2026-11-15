@@ -1610,7 +1610,15 @@ OC.L10N.register(
         "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.": "The groups whose members see this catalogue's unpublished publications. Used only when access is restricted.",
         "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.": "The groups whose members see, create, edit and delete this catalogue's publications. Used only when access is restricted.",
         "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.": "Which staff see and edit this catalogue's publications. OpenRegister enforces it through the rules OpenCatalogi writes on the schemas the catalogue covers. Only an administrator may change it.",
-        "Planning (does not publish)": "Planning (does not publish)"
+        "Planning (does not publish)": "Planning (does not publish)",
+        "Woo requests": "Woo requests",
+        "Woo requests are handled by dossiq, which is not installed.": "Woo requests are handled by dossiq, which is not installed.",
+        "Install dossiq from the app store": "Install dossiq from the app store",
+        "The Woo requests stored here have not been handed to dossiq yet.": "The Woo requests stored here have not been handed to dossiq yet.",
+        "Woo requests not yet moved to dossiq: {count}": "Woo requests not yet moved to dossiq: {count}",
+        "Of those, dossiq could not move: {count}": "Of those, dossiq could not move: {count}",
+        "Counted on {date}": "Counted on {date}",
+        "Every Woo request has moved to dossiq; the requests stored here are read-only.": "Every Woo request has moved to dossiq; the requests stored here are read-only."
     },
     "nplurals=2; plural=(n != 1);"
 )

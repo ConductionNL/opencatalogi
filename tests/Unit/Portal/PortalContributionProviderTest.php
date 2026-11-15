@@ -308,18 +308,29 @@ class PortalContributionProviderTest extends TestCase {
 	}//end testReceiveWooRequestForwardsToDossiq()
 
 	/**
-	 * Without dossiq the request still goes to OpenCatalogi's own intake.
+	 * Without dossiq OpenCatalogi takes no Woo request: its own intake is not called (REQ-WHD-005).
 	 *
 	 * @return void
+	 *
+	 * @spec openspec/changes/woo-request-intake-hands-over-to-dossiq/tasks.md#task-5.1
 	 */
-	public function testWithoutDossiqTheOwnIntakeStillReceives(): void {
+	public function testWithoutDossiqTheIntakeIsUnavailable(): void {
 		$own = $this->createMock(InformationRequestIntakeInterface::class);
-		$own->expects(self::once())->method('receive')->with(['requestedInformation' => 'x'], '')->willReturn(['outcome' => 'armed']);
+		$own->expects(self::never())->method(self::anything());
 
 		$provider = new PortalContributionProvider(wooRequests: $own, dossiqForward: $this->dossiqForward(enabled: false, intake: null));
 
-		$this->assertSame(['outcome' => 'armed'], $provider->receiveWooRequest(['requestedInformation' => 'x']));
-	}//end testWithoutDossiqTheOwnIntakeStillReceives()
+		$this->assertSame(
+			[
+				'outcome' => 'unavailable',
+				'requestId' => '',
+				'reference' => '',
+				'dueAt' => '',
+				'message' => 'Woo requests are handled by dossiq, which is not installed.',
+			],
+			$provider->receiveWooRequest(['requestedInformation' => 'x'])
+		);
+	}//end testWithoutDossiqTheIntakeIsUnavailable()
 
 	/**
 	 * A forward over a container holding the given dossiq intake.
