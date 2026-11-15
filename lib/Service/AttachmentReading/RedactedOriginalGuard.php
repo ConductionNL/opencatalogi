@@ -24,7 +24,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\AttachmentReading;
 
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCA\OpenCatalogi\Service\WooService;
 use OCP\IAppConfig;
@@ -50,11 +50,11 @@ class RedactedOriginalGuard {
 	 * Constructor.
 	 *
 	 * @param IAppConfig         $config       Where the Woo register and assessment schema are configured.
-	 * @param OpenRegisterLookup $openRegister OpenRegister's object service.
+	 * @param OpenRegisterLookupInterface $openRegister OpenRegister's object service.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 	) {
 
 	}//end __construct()

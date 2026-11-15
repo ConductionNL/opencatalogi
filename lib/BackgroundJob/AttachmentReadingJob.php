@@ -107,7 +107,6 @@ class AttachmentReadingJob extends QueuedJob {
 	 *
 	 * @param ITimeFactory $time Time factory.
 	 * @param ContainerInterface $container Resolves OpenRegister's extraction and filinq's fallback.
-	 * @param IAppManager $appManager Whether filinq is enabled.
 	 * @param IRootFolder $rootFolder The file's MIME type.
 	 * @param AttachmentReadingStore $store Records the state.
 	 * @param LoggerInterface $logger Logger.
@@ -116,7 +115,6 @@ class AttachmentReadingJob extends QueuedJob {
 	public function __construct(
 		ITimeFactory $time,
 		private readonly ContainerInterface $container,
-		private readonly IAppManager $appManager,
 		private readonly IRootFolder $rootFolder,
 		private readonly AttachmentReadingStore $store,
 		private readonly LoggerInterface $logger,
@@ -136,17 +134,13 @@ class AttachmentReadingJob extends QueuedJob {
 	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
 	 */
 	protected function run($argument): void {
-		if (is_array($argument) === false) {
+		$subject = $this->subject(argument: $argument);
+		if ($subject === null) {
 			return;
 		}
 
-		$fileId = (int)($argument['fileId'] ?? 0);
-		$publication = (string)($argument['publication'] ?? '');
-		if ($fileId <= 0 || $publication === '') {
-			return;
-		}
-
-		[$state, $reason] = $this->read(fileId: $fileId, force: (($argument['force'] ?? false) === true));
+		[$fileId, $publication, $force] = $subject;
+		[$state, $reason] = $this->read(fileId: $fileId, force: $force);
 
 		try {
 			$this->store->record(fileId: $fileId, publicationId: $publication, state: $state, reason: $reason);
@@ -158,6 +152,31 @@ class AttachmentReadingJob extends QueuedJob {
 		}
 
 	}//end run()
+
+	/**
+	 * The file, publication and force flag a queued argument names, or null
+	 * when it names no file or no publication.
+	 *
+	 * @param mixed $argument `{fileId, publication, force}`.
+	 *
+	 * @return array{0: int, 1: string, 2: bool}|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function subject(mixed $argument): ?array {
+		if (is_array($argument) === false) {
+			return null;
+		}
+
+		$fileId = (int)($argument['fileId'] ?? 0);
+		$publication = (string)($argument['publication'] ?? '');
+		if ($fileId <= 0 || $publication === '') {
+			return null;
+		}
+
+		return [$fileId, $publication, (($argument['force'] ?? false) === true)];
+
+	}//end subject()
 
 	/**
 	 * The reading state of one file, and its reason.
@@ -173,17 +192,9 @@ class AttachmentReadingJob extends QueuedJob {
 		// Only the published bytes are read (design D3): the original of a
 		// redacted document never reaches the text index. Fails closed: a
 		// guard that cannot check reads nothing.
-		$redacted = false;
-		if ($this->redactions !== null) {
-			$redacted = $this->redactions->isRedactedOriginal(fileId: $fileId);
-		}
-
-		if ($redacted === true) {
-			return [self::STATE_NONE, self::REDACTED_ORIGINAL];
-		}
-
-		if ($redacted === null) {
-			return [self::STATE_FAILED, 'Whether this is the original of a redacted document could not be checked'];
+		$refusal = $this->redactionRefusal(fileId: $fileId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$extractor = $this->textExtractor();
@@ -203,6 +214,34 @@ class AttachmentReadingJob extends QueuedJob {
 		return $this->readScan(fileId: $fileId, extractor: $extractor, force: $force);
 
 	}//end read()
+
+	/**
+	 * The state of a file that must not be read because it is the original of
+	 * a redacted document, or because that cannot be checked; null to read it.
+	 *
+	 * @param int $fileId The file.
+	 *
+	 * @return array{0: string, 1: string}|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function redactionRefusal(int $fileId): ?array {
+		$redacted = false;
+		if ($this->redactions !== null) {
+			$redacted = $this->redactions->isRedactedOriginal(fileId: $fileId);
+		}
+
+		if ($redacted === true) {
+			return [self::STATE_NONE, self::REDACTED_ORIGINAL];
+		}
+
+		if ($redacted === null) {
+			return [self::STATE_FAILED, 'Whether this is the original of a redacted document could not be checked'];
+		}
+
+		return null;
+
+	}//end redactionRefusal()
 
 	/**
 	 * The state for the fallback's answer.
@@ -285,13 +324,9 @@ class AttachmentReadingJob extends QueuedJob {
 	 * @return array{0: string, 1: string} The state and the reason.
 	 */
 	private function readScan(int $fileId, object $extractor, bool $force): array {
-		$mimeType = $this->mimeType(fileId: $fileId);
-		if ($mimeType === null) {
-			return [self::STATE_FAILED, 'The file cannot be found'];
-		}
-
-		if ($mimeType !== 'application/pdf' && str_starts_with($mimeType, 'image/') === false) {
-			return [self::STATE_NONE, 'No text found'];
+		$refusal = $this->typeRefusal(fileId: $fileId);
+		if ($refusal !== null) {
+			return $refusal;
 		}
 
 		$fallback = $this->ocrFallback();
@@ -309,6 +344,30 @@ class AttachmentReadingJob extends QueuedJob {
 		return $this->fromOcrAnswer(answer: $answer);
 
 	}//end readScan()
+
+	/**
+	 * The state of a file OCR does not read: one that cannot be found, or
+	 * one that is neither a PDF nor an image; null when OCR may read it.
+	 *
+	 * @param int $fileId The file.
+	 *
+	 * @return array{0: string, 1: string}|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function typeRefusal(int $fileId): ?array {
+		$mimeType = $this->mimeType(fileId: $fileId);
+		if ($mimeType === null) {
+			return [self::STATE_FAILED, 'The file cannot be found'];
+		}
+
+		if ($mimeType !== 'application/pdf' && str_starts_with($mimeType, 'image/') === false) {
+			return [self::STATE_NONE, 'No text found'];
+		}
+
+		return null;
+
+	}//end typeRefusal()
 
 	/**
 	 * OpenRegister's TextExtractionService, or null when it cannot be resolved.
@@ -337,11 +396,7 @@ class AttachmentReadingJob extends QueuedJob {
 	 */
 	private function ocrFallback(): ?object {
 		try {
-			if ($this->appManager->isEnabledForUser(self::OCR_APP) === false) {
-				return null;
-			}
-
-			if (class_exists(self::OCR_FALLBACK_CLASS) === false) {
+			if ($this->ocrInstalled() === false) {
 				return null;
 			}
 
@@ -358,6 +413,25 @@ class AttachmentReadingJob extends QueuedJob {
 		return $fallback;
 
 	}//end ocrFallback()
+
+	/**
+	 * Whether filinq is enabled and its OCR fallback class exists.
+	 *
+	 * @return bool
+	 *
+	 * @throws \Psr\Container\ContainerExceptionInterface When the app manager cannot be resolved.
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function ocrInstalled(): bool {
+		$apps = $this->container->get(IAppManager::class);
+		if ($apps->isEnabledForUser(self::OCR_APP) === false) {
+			return false;
+		}
+
+		return class_exists(self::OCR_FALLBACK_CLASS);
+
+	}//end ocrInstalled()
 
 	/**
 	 * The file's MIME type, or null when the file cannot be found.

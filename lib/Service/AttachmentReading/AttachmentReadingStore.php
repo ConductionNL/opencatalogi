@@ -25,7 +25,7 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Service\AttachmentReading;
 
 use DateTimeImmutable;
-use OCA\OpenCatalogi\Service\OpenRegisterLookup;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCA\OpenCatalogi\Service\ReadsObjectProperties;
 use OCP\IAppConfig;
 use RuntimeException;
@@ -49,11 +49,11 @@ class AttachmentReadingStore {
 	 * Constructor.
 	 *
 	 * @param IAppConfig $config Holds the register and schema ids.
-	 * @param OpenRegisterLookup $openRegister OpenRegister's ObjectService.
+	 * @param OpenRegisterLookupInterface $openRegister OpenRegister's ObjectService.
 	 */
 	public function __construct(
 		private readonly IAppConfig $config,
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 	) {
 
 	}//end __construct()
@@ -92,7 +92,7 @@ class AttachmentReadingStore {
 			object: $object,
 			register: $register,
 			schema: $schema,
-			uuid: $this->existingId(objects: $objects, target: [$register, $schema], fileId: $fileId),
+			uuid: $this->existingId(objects: $objects, fileId: $fileId),
 			_rbac: false,
 			_multitenancy: false
 		);
@@ -103,12 +103,12 @@ class AttachmentReadingStore {
 	 * The id of the object already recorded for the file, or null.
 	 *
 	 * @param object $objects OpenRegister's ObjectService.
-	 * @param array{0: string, 1: string} $target The register and the schema.
 	 * @param int $fileId The Nextcloud file id.
 	 *
 	 * @return string|null The id.
 	 */
-	private function existingId(object $objects, array $target, int $fileId): ?string {
+	private function existingId(object $objects, int $fileId): ?string {
+		$target = $this->target();
 		$result = $objects->searchObjectsPaginated(
 			query: ['@self' => ['register' => $target[0], 'schema' => $target[1]], 'fileId' => $fileId, '_limit' => 10],
 			_rbac: false,

@@ -107,9 +107,16 @@ class AttachmentReadingJobTest extends TestCase {
 	 * @return AttachmentReadingJob
 	 */
 	private function job(): AttachmentReadingJob {
+		$apps = $this->createMock(IAppManager::class);
+		$apps->method('isEnabledForUser')->willReturnCallback(fn (string $app): bool => $app === 'filinq' && $this->filinqEnabled);
+
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
-			function (string $id): object {
+			function (string $id) use ($apps): object {
+				if ($id === IAppManager::class) {
+					return $apps;
+				}
+
 				if ($id === AttachmentReadingJob::TEXT_EXTRACTION_CLASS) {
 					return $this->extractor;
 				}
@@ -121,9 +128,6 @@ class AttachmentReadingJobTest extends TestCase {
 				throw new RuntimeException('not registered: ' . $id);
 			}
 		);
-
-		$apps = $this->createMock(IAppManager::class);
-		$apps->method('isEnabledForUser')->willReturnCallback(fn (string $app): bool => $app === 'filinq' && $this->filinqEnabled);
 
 		$file = $this->createMock(File::class);
 		$file->method('getMimeType')->willReturnCallback(fn (): string => $this->mimeType);
@@ -140,7 +144,6 @@ class AttachmentReadingJobTest extends TestCase {
 		return new AttachmentReadingJob(
 			$this->createMock(ITimeFactory::class),
 			$container,
-			$apps,
 			$root,
 			$store,
 			new NullLogger(),

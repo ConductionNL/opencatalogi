@@ -101,9 +101,11 @@ class AttachmentReadingCallersTest extends TestCase {
 		$objects = $this->createMock(ObjectService::class);
 		$objects->method('find')->willReturn(new ObjectEntity());
 
+		$queue = $this->queue();
 		$container = $this->createMock(ContainerInterface::class);
 		$container->method('get')->willReturnCallback(
 			static fn (string $id): object => match ($id) {
+				AttachmentReadingQueue::class => $queue,
 				'OCA\OpenRegister\Service\FileService' => $fileService,
 				'OCA\OpenRegister\Files\Db\FileMapper' => $fileMapper,
 				default => $objects,
@@ -112,7 +114,7 @@ class AttachmentReadingCallersTest extends TestCase {
 		$apps = $this->createMock(IAppManager::class);
 		$apps->method('getInstalledApps')->willReturn(['openregister']);
 
-		$service = new EventService($container, $apps, $this->createMock(SettingsService::class), new NullLogger(), $this->queue());
+		$service = new EventService($container, $apps, $this->createMock(SettingsService::class), new NullLogger());
 		$publish = new ReflectionMethod(EventService::class, 'publishObjectAttachments');
 		$result = $publish->invoke($service, ['@self' => ['uuid' => 'pub-uuid', 'id' => 9]]);
 

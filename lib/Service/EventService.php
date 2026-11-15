@@ -82,14 +82,12 @@ class EventService implements EventServiceInterface {
 	 * @param IAppManager $appManager App manager interface.
 	 * @param SettingsService $settingsService Settings service for configuration access.
 	 * @param LoggerInterface $logger PSR-3 logger.
-	 * @param AttachmentReadingQueue|null $readingQueue Queues the reading of each attachment this shares.
 	 */
 	public function __construct(
 		private readonly ContainerInterface $container,
 		private readonly IAppManager $appManager,
 		private readonly SettingsService $settingsService,
 		private readonly LoggerInterface $logger,
-		private readonly ?AttachmentReadingQueue $readingQueue=null,
 	) {
 
 	}//end __construct()
@@ -616,13 +614,37 @@ class EventService implements EventServiceInterface {
 		$error = $this->shareFileError(fileService: $share['fileService'], file: $share['file']);
 		if ($error === null) {
 			$result['published']++;
-			$this->readingQueue?->queue(fileId: (int)($share['file']['fileid'] ?? 0), publicationId: (string)($share['publication'] ?? ''));
+			$this->readingQueue()?->queue(fileId: (int)($share['file']['fileid'] ?? 0), publicationId: (string)($share['publication'] ?? ''));
 			return $result;
 		}
 
 		$result['errors'][] = $error;
 		return $result;
 	}//end withSharedFile()
+
+	/**
+	 * The queue that reads each shared attachment, or null when it cannot be resolved.
+	 *
+	 * Resolved from the container on use rather than injected, so this
+	 * service's constructor keeps its four collaborators.
+	 *
+	 * @return AttachmentReadingQueue|null
+	 *
+	 * @spec openspec/changes/scanned-attachments-become-searchable/specs/search/spec.md#requirement-a-published-scan-is-read-by-ocr-so-search-finds-its-words-req-socr-001
+	 */
+	private function readingQueue(): ?AttachmentReadingQueue {
+		try {
+			$queue = $this->container->get(AttachmentReadingQueue::class);
+		} catch (\Throwable $e) {
+			return null;
+		}
+
+		if ($queue instanceof AttachmentReadingQueue) {
+			return $queue;
+		}
+
+		return null;
+	}//end readingQueue()
 
 	/**
 	 * Create the share link of one file, and say why when that failed.
