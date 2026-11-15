@@ -22,6 +22,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
 use Unit\Support\ServerAwareRequest;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for ThemesController.
@@ -355,7 +356,15 @@ class ThemesControllerTest extends TestCase {
 		// the identifier in any register on the instance, and this route is @PublicPage.
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('theme-1', [], false, '2', '10', true, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 'theme-1',
+					'_extend' => [],
+					'files' => false,
+					'register' => '2',
+					'schema' => '10',
+					'_rbac' => true,
+					'_multitenancy' => false,
+				]))
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -382,7 +391,15 @@ class ThemesControllerTest extends TestCase {
 
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with(5, [], false, '2', '10', true, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 5,
+					'_extend' => [],
+					'files' => false,
+					'register' => '2',
+					'schema' => '10',
+					'_rbac' => true,
+					'_multitenancy' => false,
+				]))
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -409,7 +426,15 @@ class ThemesControllerTest extends TestCase {
 
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('uuid-abc-123', [], false, '2', '10', true, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 'uuid-abc-123',
+					'_extend' => [],
+					'files' => false,
+					'register' => '2',
+					'schema' => '10',
+					'_rbac' => true,
+					'_multitenancy' => false,
+				]))
 			->willReturn($mockEntity);
 
 		$this->request->server = [];
@@ -441,7 +466,15 @@ class ThemesControllerTest extends TestCase {
 		// lives in another register and raises DoesNotExistException.
 		$mockObjService->expects($this->once())
 			->method('find')
-			->with('an-object-in-another-register', [], false, '2', '10', true, false)
+			->with(...LegacyObjectArgs::with(method: 'find', expected: [
+					'id' => 'an-object-in-another-register',
+					'_extend' => [],
+					'files' => false,
+					'register' => '2',
+					'schema' => '10',
+					'_rbac' => true,
+					'_multitenancy' => false,
+				]))
 			->willThrowException(new DoesNotExistException('not found'));
 
 		$this->request->server = [];
