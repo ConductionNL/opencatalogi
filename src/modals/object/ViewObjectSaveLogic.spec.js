@@ -10,6 +10,8 @@
 
 import ViewObject from './ViewObject.vue'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'csrf-token' }))
+
 jest.mock('@toast-ui/editor/dist/toastui-editor.css', () => ({}))
 
 const mockDispatched = []
@@ -207,7 +209,7 @@ describe('ViewObject saveObject', () => {
 		expect(log).toEqual([
 			['fetch', '/index.php/apps/openregister/api/objects/7/9', {
 				method: 'POST',
-				headers: { 'Content-Type': 'application/json' },
+				headers: { 'Content-Type': 'application/json', requesttoken: 'csrf-token' },
 				body: JSON.stringify({ a: 1 }),
 			}],
 			['setActiveObject', 'publication', { ...saved, '@self': { ...saved['@self'], schema: { id: 9, title: 'S' } } }],
@@ -303,8 +305,8 @@ describe('ViewObject file actions', () => {
 		const ctx = filesCtx()
 		await ctx.deleteSelectedFiles()
 		expect(log).toEqual([
-			['fetch', '/nc/apps/openregister/api/objects/r/s/o1/files/1', { method: 'DELETE' }],
-			['fetch', '/nc/apps/openregister/api/objects/r/s/o1/files/2', { method: 'DELETE' }],
+			['fetch', '/nc/apps/openregister/api/objects/r/s/o1/files/1', { method: 'DELETE', headers: { requesttoken: 'csrf-token' } }],
+			['fetch', '/nc/apps/openregister/api/objects/r/s/o1/files/2', { method: 'DELETE', headers: { requesttoken: 'csrf-token' } }],
 			'refreshFiles',
 			'fetchPublications',
 		])
@@ -349,7 +351,7 @@ describe('ViewObject file actions', () => {
 			return { ok: true }
 		})
 		await ctx.runFileAction({ id: 2 }, action)
-		expect(log).toEqual([['fetch', url, { method }, [5, 2]], 'refreshFiles', 'fetchPublications'])
+		expect(log).toEqual([['fetch', url, { method, headers: { requesttoken: 'csrf-token' } }, [5, 2]], 'refreshFiles', 'fetchPublications'])
 		expect(ctx[list]).toEqual([5])
 		expect(mockDispatched).toEqual(action === 'delete' ? [{ register: 'r', schema: 's', id: 'o1' }] : [])
 	})

@@ -1,7 +1,7 @@
 {
     "guard drops the woo schema": {
         "status": 200,
-        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <sitemap />\n</sitemapindex>\n",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" />\n",
         "calls": [
             [
                 "searchObjectsPaginated",
@@ -75,7 +75,7 @@
     },
     "no rows": {
         "status": 200,
-        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\">\n  <sitemap />\n</sitemapindex>\n",
+        "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\" />\n",
         "calls": [
             [
                 "searchObjectsPaginated",
