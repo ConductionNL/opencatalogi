@@ -14,8 +14,8 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 ## 3. OpenAPI
 
-- [ ] 3.1 Add the `AppliedFilters` component and reference it from every list response in `openapi.json` (REQ-ASF-004). Verify: `tests/Unit/OpenApiParityTest.php::testEveryListResponseDocumentsAppliedFilters` (fails today).
-- [ ] 3.2 Document the names and what each means in `docs/` for integrators. Verify: a grep for U+2014 on the doc returns nothing.
+- [x] 3.1 Add the `AppliedFilters` component and reference it from every list response in `openapi.json` (REQ-ASF-004). Verify: `tests/Unit/OpenApiParityTest.php::testEveryListResponseDocumentsAppliedFilters` (fails today).
+- [x] 3.2 Document the names and what each means in `docs/` for integrators. Verify: a grep for U+2014 on the doc returns nothing.
 
 ## 4. Integrator-only marker (gated on D10; skip unless row 13.26 is kept)
 

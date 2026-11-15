@@ -35,6 +35,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * @covers \OCA\OpenCatalogi\Service\EventService
@@ -108,7 +109,9 @@ final class EventServiceAutoPublishingTest extends TestCase {
 	 */
 	private function objectServiceFinding(ObjectEntity $entity): ObjectService&MockObject {
 		$objects = $this->createMock(ObjectService::class);
-		$objects->expects($this->once())->method('find')->with('obj-uuid')->willReturn($entity);
+		$objects->expects($this->once())->method('find')->with(...LegacyObjectArgs::with(method: 'find', expected: [
+				'id' => 'obj-uuid',
+			]))->willReturn($entity);
 		return $objects;
 	}//end objectServiceFinding()
 
