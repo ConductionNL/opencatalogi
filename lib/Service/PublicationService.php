@@ -454,36 +454,68 @@ class PublicationService implements PublicationServiceInterface {
 
 		// Return cached result if available.
 		if (isset($this->cachedCatalogFilters[$cacheKey]) === true) {
-			// Restore class properties from cache.
-			$cached = $this->cachedCatalogFilters[$cacheKey];
-			$this->availableRegisters = $cached['availableRegisters'];
-			$this->availableSchemas = $cached['availableSchemas'];
-			return $cached['result'];
+			return $this->restoreCachedCatalogFilters(cacheKey: $cacheKey);
 		}
 
 		// FAIL CLOSED on an unconfigured catalog scope. See resolveCatalogScope().
 		$scope = $this->resolveCatalogScope();
 		if ($scope === null) {
-			$this->availableRegisters = [];
-			$this->availableSchemas = [];
-			return [
-				'registers' => [],
-				'schemas' => [],
-			];
+			return $this->emptyCatalogFilters();
 		}
 
-		// Setup the config array for searchObjects.
-		$query = [
-			'@self' => [
-				'register' => $scope['register'],
-				'schema' => $scope['schema'],
-			],
+		$this->assignCatalogFilters(catalogs: $this->catalogsForFilters(scope: $scope, catalogId: $catalogId));
+
+		return $this->cacheCatalogFilters(cacheKey: $cacheKey);
+	}//end getCatalogFilters()
+
+	/**
+	 * Restore the class properties from a cached catalog filter result and return it.
+	 *
+	 * @param string $cacheKey The cache key of the catalog filters.
+	 *
+	 * @return array<string, array<string>> The cached registers and schemas.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function restoreCachedCatalogFilters(string $cacheKey): array {
+		$cached = $this->cachedCatalogFilters[$cacheKey];
+		$this->availableRegisters = $cached['availableRegisters'];
+		$this->availableSchemas   = $cached['availableSchemas'];
+		return $cached['result'];
+
+	}//end restoreCachedCatalogFilters()
+
+	/**
+	 * The catalog filters of an unconfigured catalog scope: nothing is available.
+	 *
+	 * @return array<string, array<string>> Empty registers and schemas.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function emptyCatalogFilters(): array {
+		$this->availableRegisters = [];
+		$this->availableSchemas   = [];
+		return [
+			'registers' => [],
+			'schemas' => [],
 		];
 
-		// Get all catalogs using searchObjects. Its declared return type is
-		// `array|int` — it yields an int when the query asks for a count. This query
-		// does not, but narrow explicitly so a count-shaped result can never reach
-		// the foreach below as a non-iterable.
+	}//end emptyCatalogFilters()
+
+	/**
+	 * The catalogs the filters are collected from: all catalogs in the scope, or the one asked for.
+	 *
+	 * @param array               $scope     The configured catalog register and schema.
+	 * @param string|integer|null $catalogId Optional ID of a specific catalog.
+	 *
+	 * @return array The catalogs.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function catalogsForFilters(array $scope, null|string|int $catalogId): array {
+		$query = ['@self' => ['register' => $scope['register'], 'schema' => $scope['schema']]];
+
+		// The searchObjects() call is declared `array|int` (an int for a count query); narrow it.
 		$catalogs = $this->getObjectService()->searchObjects($query);
 		if (is_array($catalogs) === false) {
 			$catalogs = [];
@@ -493,18 +525,42 @@ class PublicationService implements PublicationServiceInterface {
 			$catalogs = $this->findCatalogInScope(catalogId: $catalogId, scope: $scope);
 		}
 
-		// Remove duplicate values and assign to class properties.
+		return $catalogs;
+
+	}//end catalogsForFilters()
+
+	/**
+	 * Assign the unique registers and schemas of the catalogs to the class properties.
+	 *
+	 * @param array $catalogs The catalogs.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function assignCatalogFilters(array $catalogs): void {
 		$this->availableRegisters = $this->collectUnique(catalogs: $catalogs, property: 'registers');
-		$this->availableSchemas = $this->guardSchemaScope(
+		$this->availableSchemas   = $this->guardSchemaScope(
 			schemas: $this->collectUnique(catalogs: $catalogs, property: 'schemas')
 		);
 
+	}//end assignCatalogFilters()
+
+	/**
+	 * Cache the current registers and schemas under a key and return them.
+	 *
+	 * @param string $cacheKey The cache key of the catalog filters.
+	 *
+	 * @return array<string, array<string>> The registers and schemas.
+	 *
+	 * @spec openspec/specs/publications/spec.md
+	 */
+	private function cacheCatalogFilters(string $cacheKey): array {
 		$result = [
 			'registers' => array_values($this->availableRegisters),
 			'schemas' => array_values($this->availableSchemas),
 		];
 
-		// Cache the result and class properties.
 		$this->cachedCatalogFilters[$cacheKey] = [
 			'result' => $result,
 			'availableRegisters' => $this->availableRegisters,
@@ -512,7 +568,8 @@ class PublicationService implements PublicationServiceInterface {
 		];
 
 		return $result;
-	}//end getCatalogFilters()
+
+	}//end cacheCatalogFilters()
 
 	/**
 	 * Find one catalog, but only when it lives in the configured catalog register and schema.
@@ -1273,34 +1330,33 @@ class PublicationService implements PublicationServiceInterface {
 		reach: 'user',
 	)]
 	public function searchCatalogPublications(string $catalog, string $query, int $limit=20): array {
-		if (trim($catalog) === '') {
-			return $this->mcpError(
-				code: 'invalid_arguments',
-				message: 'Required argument "catalog" is missing or empty. For a search without a catalog, use opencatalogi.publication.search.'
-			);
-		}
-
-		if (trim($query) === '') {
-			return $this->mcpError(code: 'invalid_arguments', message: 'Required argument "query" is missing or empty.');
-		}
-
-		if ($limit < 1 || $limit > self::MCP_SEARCH_LIMIT_MAX) {
-			return $this->mcpError(
-				code: 'invalid_arguments',
-				message: 'Invalid limit '.$limit.'. Must be between 1 and '.self::MCP_SEARCH_LIMIT_MAX.'.'
-			);
+		$invalid = $this->catalogSearchArgumentsError(catalog: $catalog, query: $query, limit: $limit);
+		if ($invalid !== null) {
+			return $invalid;
 		}
 
 		try {
-			$found = $this->searchPublications(
-				catalogId: trim($catalog),
-				ids: null,
-				customParams: ['_search' => trim($query), '_limit' => $limit, '_page' => 1]
-			);
+			$params = ['_search' => trim($query), '_limit' => $limit, '_page' => 1];
+			$found  = $this->searchPublications(catalogId: trim($catalog), ids: null, customParams: $params);
 		} catch (InvalidArgumentException $exception) {
 			return $this->mcpError(code: 'invalid_arguments', message: $exception->getMessage());
 		}
 
+		return $this->catalogSearchAnswer(found: $found, limit: $limit);
+
+	}//end searchCatalogPublications()
+
+	/**
+	 * The answer of a catalog search: at most `limit` results and the total.
+	 *
+	 * @param array $found The searchPublications() result.
+	 * @param int   $limit The most publications to return.
+	 *
+	 * @return array<string, mixed> `results` and `total`.
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
+	 */
+	private function catalogSearchAnswer(array $found, int $limit): array {
 		$results = array_slice(array_values($found['results'] ?? []), 0, $limit);
 
 		return [
@@ -1308,7 +1364,7 @@ class PublicationService implements PublicationServiceInterface {
 			'total'   => (int) ($found['total'] ?? count($results)),
 		];
 
-	}//end searchCatalogPublications()
+	}//end catalogSearchAnswer()
 
 	/**
 	 * List the Nextcloud files attached to a publication, for an agent
@@ -1343,17 +1399,7 @@ class PublicationService implements PublicationServiceInterface {
 		$response = $this->attachments(id: trim($id));
 		$data     = $response->getData();
 		if ($response->getStatus() >= 400) {
-			$code = 'error';
-			if ($response->getStatus() === 404) {
-				$code = 'not_found';
-			}
-
-			$message = 'The files of this publication could not be listed.';
-			if (is_array($data) === true && is_string($data['error'] ?? null) === true) {
-				$message = $data['error'];
-			}
-
-			return $this->mcpError(code: $code, message: $message);
+			return $this->attachmentsError(status: $response->getStatus(), data: $data);
 		}
 
 		if (is_array($data) === false) {
@@ -1363,6 +1409,60 @@ class PublicationService implements PublicationServiceInterface {
 		return $data;
 
 	}//end listPublicationFiles()
+
+	/**
+	 * The error answer for invalid catalog search arguments, or null when they are valid.
+	 *
+	 * @param string $catalog The catalog id, uuid or slug.
+	 * @param string $query   The search term.
+	 * @param int    $limit   The requested number of publications.
+	 *
+	 * @return array{error: array{code: string, message: string}}|null
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-catalog-scoped-search-survives-as-a-curated-service-tool-req-004
+	 */
+	private function catalogSearchArgumentsError(string $catalog, string $query, int $limit): ?array {
+		$message = null;
+		if (trim($catalog) === '') {
+			$message = 'Required argument "catalog" is missing or empty. For a search without a catalog, use opencatalogi.publication.search.';
+		} else if (trim($query) === '') {
+			$message = 'Required argument "query" is missing or empty.';
+		} else if ($limit < 1 || $limit > self::MCP_SEARCH_LIMIT_MAX) {
+			$message = 'Invalid limit '.$limit.'. Must be between 1 and '.self::MCP_SEARCH_LIMIT_MAX.'.';
+		}
+
+		if ($message === null) {
+			return null;
+		}
+
+		return $this->mcpError(code: 'invalid_arguments', message: $message);
+
+	}//end catalogSearchArgumentsError()
+
+	/**
+	 * The error answer of a failed attachment listing.
+	 *
+	 * @param int   $status The HTTP status the listing answered.
+	 * @param mixed $data   The listing's body.
+	 *
+	 * @return array{error: array{code: string, message: string}}
+	 *
+	 * @spec openspec/changes/opencatalogi-mcp-adoption/specs/mcp-tool-surface/spec.md#requirement-the-publication-file-attachment-list-survives-as-a-curated-service-tool-req-005
+	 */
+	private function attachmentsError(int $status, mixed $data): array {
+		$code = 'error';
+		if ($status === 404) {
+			$code = 'not_found';
+		}
+
+		$message = 'The files of this publication could not be listed.';
+		if (is_array($data) === true && is_string($data['error'] ?? null) === true) {
+			$message = $data['error'];
+		}
+
+		return $this->mcpError(code: $code, message: $message);
+
+	}//end attachmentsError()
 
 	/**
 	 * The structured error answer of an agent tool.
