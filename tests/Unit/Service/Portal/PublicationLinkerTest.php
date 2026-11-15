@@ -79,4 +79,14 @@ class PublicationLinkerTest extends TestCase {
 			$this->linker(values: ['publication_url_catalog' => 'woo'], portaliq: false)->url(id: 'pub-1')
 		);
 	}
+
+	/**
+	 * A blank catalogue setting falls back to the `publication` catalogue.
+	 */
+	public function testABlankCatalogueFallsBackToPublication(): void {
+		$this->assertSame(
+			'http://localhost:8080/index.php/apps/opencatalogi/api/publication/pub%2F1',
+			$this->linker(values: ['publication_url_catalog' => '  ', 'publication_url_template' => 'https://x/no-placeholder'], portaliq: false)->url(id: 'pub/1')
+		);
+	}
 }

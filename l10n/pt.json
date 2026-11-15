@@ -26,6 +26,7 @@
         "Cards": "Cartões",
         "Catalog not found": "Catálogo não encontrado",
         "Catalogs": "Catálogos",
+        "catalogs": "catálogos",
         "Check server logs for more details.": "Verifique os registos do servidor para mais detalhes.",
         "Choose sorting": "Escolher ordenação",
         "Clear": "Limpar",
@@ -238,6 +239,7 @@
         "Attachment successfully published": "Anexo publicado com sucesso",
         "Attachment successfully updated": "Anexo atualizado com sucesso",
         "Attachments": "Anexos",
+        "attachments": "anexos",
         "Attachments are loading": "Os anexos estão a carregar",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Os anexos serão publicados com a data e hora atuais. Se algum anexo tiver uma data de despublicação definida, esta será removida para os tornar totalmente publicados.",
         "Auto publish attachments": "Publicar anexos automaticamente",
@@ -720,7 +722,8 @@
         "Add a register and a schema to the catalog to list its publications here.": "Adicione um registo e um esquema ao catálogo para listar aqui as suas publicações.",
         "Open catalog": "Abrir catálogo",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Crie o seu primeiro catálogo. É o contentor onde ficarão as suas publicações. Escolha o registo Publication e o esquema Publication, para que o catálogo liste as publicações que adicionar.",
-        "Manage your publications and their status": "Faça a gestão das suas publicações e do respetivo estado"
+        "Manage your publications and their status": "Faça a gestão das suas publicações e do respetivo estado",
+        "Open at the source": "Abrir na origem"
     },
     "plurals": {}
 }

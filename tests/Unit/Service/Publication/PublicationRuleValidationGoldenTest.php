@@ -40,15 +40,20 @@ class PublicationRuleValidationGoldenTest extends TestCase {
 	public static function rules(): array {
 		$noType = 'A publication rule must name the record type it governs.';
 		$noProperties = 'A publication rule must name the properties an anonymous reader may read, even if that is none.';
+		$noCategory = 'A publication rule must name, in wooCategory, one of the Woo information categories this app serves.';
 		return [
-			'valid' => [['recordType' => 'besluit', 'anonymousProperties' => ['title'], 'conditions' => [['property' => 'status', 'operator' => 'equals']]], []],
-			'empty' => [[], [$noType, $noProperties]],
-			'blank type' => [['recordType' => '  ', 'anonymousProperties' => ['title']], [$noType]],
-			'empty properties' => [['recordType' => 'besluit', 'anonymousProperties' => []], [$noProperties]],
-			'properties not a list' => [['recordType' => 'besluit', 'anonymousProperties' => 'title'], [$noProperties]],
+			'valid' => [['recordType' => 'besluit', 'wooCategory' => 'infocat002', 'anonymousProperties' => ['title'], 'conditions' => [['property' => 'status', 'operator' => 'equals']]], []],
+			'empty' => [[], [$noType, $noProperties, $noCategory]],
+			'blank type' => [['recordType' => '  ', 'wooCategory' => 'infocat002', 'anonymousProperties' => ['title']], [$noType]],
+			'empty properties' => [['recordType' => 'besluit', 'wooCategory' => 'infocat002', 'anonymousProperties' => []], [$noProperties]],
+			'properties not a list' => [['recordType' => 'besluit', 'wooCategory' => 'infocat002', 'anonymousProperties' => 'title'], [$noProperties]],
+			'no category' => [['recordType' => 'besluit', 'anonymousProperties' => ['title']], [$noCategory]],
+			'a category this app does not serve' => [['recordType' => 'besluit', 'wooCategory' => 'infocat099', 'anonymousProperties' => ['title']], [$noCategory]],
+			'a category that is no string' => [['recordType' => 'besluit', 'wooCategory' => ['infocat002'], 'anonymousProperties' => ['title']], [$noCategory]],
 			'every condition fault' => [
 				[
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [
 						'x' => 'not a condition',

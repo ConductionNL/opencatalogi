@@ -26,6 +26,7 @@
         "Cards": "Cártaí",
         "Catalog not found": "Catalóg gan aimsiú",
         "Catalogs": "Catalóga",
+        "catalogs": "catalóga",
         "Check server logs for more details.": "Seiceáil logaí an fhreastalaí le haghaidh tuilleadh sonraí.",
         "Choose sorting": "Roghnaigh sórtáil",
         "Clear": "Glan",
@@ -238,6 +239,7 @@
         "Attachment successfully published": "Foilsíodh an t-iatán go rathúil",
         "Attachment successfully updated": "Nuashonraíodh an t-iatán go rathúil",
         "Attachments": "Iatáin",
+        "attachments": "iatáin",
         "Attachments are loading": "Tá na hiatáin á luchtú",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Foilseofar na hiatáin leis an dáta agus an t-am reatha. Má tá dáta dífhoilsithe socraithe ag aon iatán, bainfear é chun iad a fhoilsiú go hiomlán.",
         "Auto publish attachments": "Foilsigh iatáin go huathoibríoch",
@@ -720,7 +722,8 @@
         "Add a register and a schema to the catalog to list its publications here.": "Cuir clár agus scéimre leis an gcatalóg chun a foilseacháin a liostú anseo.",
         "Open catalog": "Oscail an catalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Cruthaigh do chéad chatalóg. Is é an coimeádán ina mbeidh do chuid foilseachán. Roghnaigh an clár Publication agus an scéimre Publication, ionas go liostóidh an catalóg na foilseacháin a chuireann tú leis.",
-        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas"
+        "Manage your publications and their status": "Bainistigh do chuid foilseachán agus a stádas",
+        "Open at the source": "Oscail ag an bhfoinse"
     },
     "plurals": {}
 }

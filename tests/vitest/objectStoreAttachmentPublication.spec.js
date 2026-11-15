@@ -11,6 +11,8 @@
 import { createPinia, setActivePinia } from 'pinia'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+vi.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'test-request-token' }))
+
 vi.mock('@conduction/nextcloud-vue', () => {
 	const plugin = () => ({})
 	return {
@@ -76,7 +78,7 @@ describe.each([
 		expect(calls).toEqual([
 			['setLoading', `${path}_file_42`, true],
 			['setError', `${path}_file_42`, null],
-			['fetch', `/index.php/apps/openregister/api/objects/7/9/p1/files/42/${path}`, { method: 'POST' }],
+			['fetch', `/index.php/apps/openregister/api/objects/7/9/p1/files/42/${path}`, { method: 'POST', headers: { requesttoken: 'test-request-token' } }],
 			['refresh'],
 			['setLoading', `${path}_file_42`, false],
 		])

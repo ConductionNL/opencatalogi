@@ -1,12 +1,12 @@
 {
-  "measured_at": "2026-11-11T15:41:03Z",
-  "commit": "9e70d5fec2197b95efcd12820533172e7dfea8b8",
+  "measured_at": "2026-11-12T09:59:45Z",
+  "commit": "3f50f70d1a6af4f7f0b444d85fa62e1257f4e057",
   "tool_version": "estimator sha256:391d6ca5ea39; lizard 1.24.3; jscpd 4.0.5; profile five-star",
   "tolerance": 0.01,
-  "overall": 4.88,
+  "overall": 4.89,
   "overall_range": [
-    4.88,
-    4.91
+    4.89,
+    4.92
   ],
   "properties": {
     "volume": null,

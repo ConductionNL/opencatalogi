@@ -1,4 +1,8 @@
 <!--
+  - SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
+<!--
 	UNREACHABLE COMPONENT — no visual baseline is possible.
 
 	Nothing imports this file: `src/registry.js` is the only place page
@@ -238,6 +242,7 @@ import { catalogStore, navigationStore, objectStore } from '../../store/store.js
 </template>
 
 <script>
+import { getRequestToken } from '@nextcloud/auth'
 import {
 	NcActionButton,
 	NcActionCaption,
@@ -346,6 +351,7 @@ export default {
 				`/index.php/apps/openregister/api/objects/${publication['@self'].register}/${publication['@self'].schema}/${publication.id}/${mode}`,
 				{
 					method: 'POST',
+					headers: { requesttoken: getRequestToken() },
 				},
 			).then((response) => {
 				catalogStore.fetchPublications()

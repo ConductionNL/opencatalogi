@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Карткі",
         "Catalog not found": "Каталог не знойдзены",
         "Catalogs": "Каталогі",
+        "catalogs": "каталогі",
         "Check server logs for more details.": "Праверце журналы сервера для атрымання падрабязнасцей.",
         "Choose sorting": "Выберыце сартаванне",
         "Clear": "Ачысціць",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Дадатак паспяхова апублікаваны",
         "Attachment successfully updated": "Дадатак паспяхова абноўлены",
         "Attachments": "Дадаткі",
+        "attachments": "дадаткі",
         "Attachments are loading": "Дадаткі загружаюцца",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Дадаткі будуць апублікаваны з бягучай датай і часам. Калі ў нейкіх дадаткаў усталявана дата зняцця з публікацыі, яна будзе выдалена, каб яны сталі цалкам апублікаванымі.",
         "Auto publish attachments": "Аўтаматычна публікаваць дадаткі",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Дадайце ў каталог рэестр і схему, каб тут паказваліся яго публікацыі.",
         "Open catalog": "Адкрыць каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Стварыце свой першы каталог. Гэта кантэйнер, у якім будуць вашы публікацыі. Выберыце рэестр Publication і схему Publication, каб каталог паказваў публікацыі, якія вы дадаеце.",
-        "Manage your publications and their status": "Кіруйце сваімі публікацыямі і іх статусам"
+        "Manage your publications and their status": "Кіруйце сваімі публікацыямі і іх статусам",
+        "Open at the source": "Адкрыць у крыніцы"
     },
     "nplurals=2; plural=(n != 1);"
 )

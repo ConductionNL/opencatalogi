@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Карти",
         "Catalog not found": "Каталогът не е намерен",
         "Catalogs": "Каталози",
+        "catalogs": "каталози",
         "Check server logs for more details.": "Проверете журналите на сървъра за повече подробности.",
         "Choose sorting": "Изберете подреждане",
         "Clear": "Изчистване",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Прикаченият файл е публикуван успешно",
         "Attachment successfully updated": "Прикаченият файл е актуализиран успешно",
         "Attachments": "Прикачени файлове",
+        "attachments": "прикачени файлове",
         "Attachments are loading": "Прикачените файлове се зареждат",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Прикачените файлове ще бъдат публикувани с текущата дата и час. Ако някои прикачени файлове имат зададена дата на депубликуване, тя ще бъде премахната, за да бъдат напълно публикувани.",
         "Auto publish attachments": "Автоматично публикуване на прикачени файлове",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Добавете регистър и схема към каталога, за да се показват публикациите му тук.",
         "Open catalog": "Отвори каталога",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Създайте първия си каталог. Това е контейнерът, в който ще бъдат публикациите ви. Изберете регистъра Publication и схемата Publication, за да показва каталогът публикациите, които добавяте.",
-        "Manage your publications and their status": "Управлявайте публикациите си и техния статус"
+        "Manage your publications and their status": "Управлявайте публикациите си и техния статус",
+        "Open at the source": "Отваряне при източника"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Named handlers for the Retention review page.
  *
  * CnIndexPage calls a row action with `{ actionId, item }`, a bulk action with

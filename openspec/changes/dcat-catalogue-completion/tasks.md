@@ -19,7 +19,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 
 - [ ] 3.1 Route the dataset and catalogue IRIs with content negotiation (REQ-DCC-003). Verify: `tests/Unit/Controller/DcatDereferenceTest.php::testADatasetIriAnswersTurtle` (fails today), `::testHtmlRedirectsToThePublicPage`, `::testADraftIriIs404`.
 - [ ] 3.2 Add the SPARQL library (record its name, version and licence in the PR body; `composer audit` clean), the graph cache with invalidation on publication and catalogue events, and `GET`/`POST /api/sparql` with its CORS preflight (REQ-DCC-003). Verify: `tests/Unit/Controller/SparqlEndpointTest.php::testASelectQueryListsTheDatasetsOfATheme` (fails today), `::testAnUpdateIsRefused`, `::testServiceAndLoadAreRefused`, `::testTheRowCapIsSaid`; `tests/Unit/OpenApiParityTest.php` stays green with the route documented.
-- [ ] 3.3 Live: run the scenario query against the dev instance and paste the answer in the PR body (REQ-DCC-003). Verify: the pasted answer.
+- [ ] 3.3 Live: run the scenario query against the dev instance and paste the answer in the PR body (REQ-DCC-003). Verify: the pasted answer. (live pass, decision 139)
 
 ## 4. Docs
 
@@ -33,3 +33,10 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 - [ ] 5.4 One PR with `--base development`; merge development in, never rebase; no `Co-Authored-By` on any commit.
 
 Done when merged on `development` with CI green. Rows 8.5, 8.6 and 8.8 become `production` only once a store release ships it.
+
+## 6. The feeds switch on per catalogue
+
+- [ ] 6.1 Declare `hasDcat` (boolean, default false) on the `catalog` schema in `lib/Settings/publication_register.json` and bump its version, so a stored value survives the hard validation (DCAT-001, DCAT-002; rows `od-dcat`, `od-dcat-catalogue`, `od-dcat-formats`).
+- [ ] 6.2 Add the DCAT switch to `src/modals/catalog/CatalogModal.vue` next to `hasOoapi`, so an administrator enables the per-catalogue feed and the instance document lists it (DCAT-010). Verify: an e2e test that enables it and reads `GET /api/catalogs/{slug}/dcat` and `GET /api/dcat`.
+- [ ] 6.3 Show the result of Validate DCAT feed in the admin DCAT settings, per catalogue, with every DCAT-AP-NL mandatory property it checks and what data.overheid.nl would reject (DCAT-010, DCAT-NPF-001; rows `od-dcat-validate`, `od-donl`).
+

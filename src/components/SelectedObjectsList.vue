@@ -1,3 +1,7 @@
+<!--
+  - SPDX-FileCopyrightText: 2025 Conduction B.V. <info@conduction.nl>
+  - SPDX-License-Identifier: EUPL-1.2
+-->
 <script setup>
 import { resolveSelectedObjects } from '../services/selectedObjects.js'
 import { objectStore } from '../store/store.js'

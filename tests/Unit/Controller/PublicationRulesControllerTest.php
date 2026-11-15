@@ -95,6 +95,7 @@ class PublicationRulesControllerTest extends TestCase {
 			[
 				'rule' => [
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'equals', 'value' => 'definitief']],
 				],
@@ -107,7 +108,7 @@ class PublicationRulesControllerTest extends TestCase {
 		$data = $this->controller->previewRule()->getData();
 
 		$this->assertTrue($data['valid']);
-		$this->assertSame(['title'], $data['exposedProperties']);
+		$this->assertSame(['title', 'wooCategory'], $data['exposedProperties']);
 		$this->assertArrayNotHasKey('bsn', $data['wouldPublish'][0]);
 
 	}//end testThePreviewNamesTheExposedPropertiesAndNotOnlyACount()
@@ -117,6 +118,7 @@ class PublicationRulesControllerTest extends TestCase {
 			[
 				'rule' => [
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
 				],
@@ -190,6 +192,7 @@ class PublicationRulesControllerTest extends TestCase {
 				'rules' => [
 					[
 						'recordType' => 'besluit',
+						'wooCategory' => 'infocat002',
 						'enabled' => true,
 						'anonymousProperties' => ['title'],
 						'conditions' => [['property' => 'status', 'operator' => 'sortOfLike', 'value' => 'x']],
@@ -213,7 +216,7 @@ class PublicationRulesControllerTest extends TestCase {
 					['@type' => 'besluit', 'status' => 'definitief', 'title' => 'Dorpsstraat', 'bsn' => 'Zeldzaamwoord'],
 				],
 				'rules' => [
-					['recordType' => 'besluit', 'enabled' => true, 'anonymousProperties' => ['title']],
+					['recordType' => 'besluit', 'wooCategory' => 'infocat002', 'enabled' => true, 'anonymousProperties' => ['title']],
 				],
 				'q' => 'Zeldzaamwoord',
 			]
@@ -230,12 +233,13 @@ class PublicationRulesControllerTest extends TestCase {
 			[
 				'rule' => [
 					'recordType' => 'besluit',
+					'wooCategory' => 'infocat002',
 					'anonymousProperties' => ['title'],
 					'conditions' => [],
 				],
 				'sample' => ['not a record', 7, ['@type' => 'besluit', 'title' => 'Een']],
 				'records' => ['not a record', ['@type' => 'besluit', 'title' => 'Dorpsstraat']],
-				'rules' => ['not a rule', ['recordType' => 'besluit', 'enabled' => true, 'anonymousProperties' => ['title']]],
+				'rules' => ['not a rule', ['recordType' => 'besluit', 'wooCategory' => 'infocat002', 'enabled' => true, 'anonymousProperties' => ['title']]],
 				'q' => 'Dorpsstraat',
 			]
 		);
@@ -243,7 +247,10 @@ class PublicationRulesControllerTest extends TestCase {
 		$preview = $this->controller->previewRule()->getData();
 		$search = $this->controller->publicSearch()->getData();
 
-		$this->assertSame([['title' => 'Een']], $preview['wouldPublish']);
+		$this->assertSame(
+			[['title' => 'Een', 'wooCategory' => 'infocat002', 'wooCategoryLabel' => 'Overige besluiten van algemene strekking (infocat002)']],
+			$preview['wouldPublish']
+		);
 		$this->assertSame(1, $search['total']);
 		$this->assertSame('Dorpsstraat', $search['results'][0]['title']);
 

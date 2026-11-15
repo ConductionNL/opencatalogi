@@ -26,6 +26,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\DecisionPublicationValidatorInterface;
 use OCA\OpenCatalogi\Contract\PublicationRuleServiceInterface;
+use OCA\OpenCatalogi\Contract\PublishedRecordViewInterface;
 
 /**
  * Previews a publication rule, searches what the rules make public, and
@@ -40,12 +41,14 @@ class PublicationRuleChecks {
 	 *
 	 * @param PublicationRuleServiceInterface $ruleService The publication rules.
 	 * @param DecisionPublicationValidatorInterface $decisionValidator Checks a decision before it is published.
+	 * @param PublishedRecordViewInterface|null $publishedRecords The stored records the published collections make public.
 	 *
 	 * @spec exclude pure framework plumbing: constructor dependency injection.
 	 */
 	public function __construct(
 		private readonly PublicationRuleServiceInterface $ruleService,
 		private readonly DecisionPublicationValidatorInterface $decisionValidator,
+		private readonly ?PublishedRecordViewInterface $publishedRecords = null,
 	) {
 
 	}//end __construct()
@@ -87,6 +90,34 @@ class PublicationRuleChecks {
 		);
 
 	}//end searchPublic()
+
+	/**
+	 * Search posted records under posted rules, or, with no records posted, the stored records.
+	 *
+	 * The stored records are those of every configured published collection.
+	 * Without the stored-record view nothing is stored to search, so that
+	 * answer is empty.
+	 *
+	 * @param array{records: array|null, rules: array, terms: string} $query The records (null for the stored ones), rules and search terms.
+	 *
+	 * @return array<int, array<string, mixed>> The matching anonymous views.
+	 *
+	 * @throws \OCA\OpenCatalogi\Service\Publication\UnreadableRuleException When a rule, the configuration or a condition cannot be read.
+	 *
+	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-the-public-searches-published-information-in-plain-words-req-pin-111
+	 */
+	public function search(array $query): array {
+		if ($query['records'] !== null) {
+			return $this->searchPublic(query: $query);
+		}
+
+		if ($this->publishedRecords === null) {
+			return [];
+		}
+
+		return $this->publishedRecords->searchStored(terms: $query['terms']);
+
+	}//end search()
 
 	/**
 	 * Validate a decision for publication.

@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Chartas",
         "Catalog not found": "Catalog betg chattà",
         "Catalogs": "Catalogs",
+        "catalogs": "catalogs",
         "Check server logs for more details.": "Controllai ils protocols dal server per dapli detagls.",
         "Choose sorting": "Tscherner la zavraziun",
         "Clear": "Stizzar",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Agiunta publitgada cun success",
         "Attachment successfully updated": "Agiunta actualisada cun success",
         "Attachments": "Agiuntas",
+        "attachments": "agiuntas",
         "Attachments are loading": "Las agiuntas vegnan chargiadas",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Las agiuntas vegnan publitgadas cun la data e l'ura actuala. Sche agiuntas han ina data da spubblicaziun fixada, vegn quella allontanada per las render publitgadas dal tut.",
         "Auto publish attachments": "Publitgar automaticamain las agiuntas",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Agiunta in register ed in schema al catalog per mussar qua sias publicaziuns.",
         "Open catalog": "Avrir il catalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creescha tes emprim catalog. El è il container, en il qual vegnan a star tias publicaziuns. Tscherna il register Publication ed il schema Publication, uschia ch'il catalog mussa las publicaziuns che ti agiuntas.",
-        "Manage your publications and their status": "Administrai Vossas publicaziuns e lur status"
+        "Manage your publications and their status": "Administrai Vossas publicaziuns e lur status",
+        "Open at the source": "Avrir tar la funtauna"
     },
     "nplurals=2; plural=(n != 1);"
 )
