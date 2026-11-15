@@ -42,6 +42,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Unit tests for NoticeBoardController.
@@ -122,12 +123,14 @@ class NoticeBoardControllerTest extends TestCase {
 
 			public function saveObject(
 				array $object,
-				array $extend = [],
-				string $register = '',
-				string $schema = '',
-				string $uuid = '',
+				ObjectSaveOptions $options = new ObjectSaveOptions(),
 				bool $_rbac = true,
+				bool $_multitenancy = true
 			): array {
+				$extend = $options->extend ?? [];
+				$register = $options->target->register ?? '';
+				$schema = $options->target->schema ?? '';
+				$uuid = $options->uuid ?? '';
 				$id = ($uuid !== '' ? $uuid : 'notice-1');
 				$object['id'] = $id;
 				$this->stored[$id] = $object;

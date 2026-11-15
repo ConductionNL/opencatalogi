@@ -31,6 +31,7 @@ use OCP\IAppConfig;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * A result that answers jsonSerialize, as an OpenRegister entity does.
@@ -71,6 +72,7 @@ class WooRequestShapedObjectService {
 	public array $lastSave = [];
 
 	public function find(string $id, mixed ...$rest): mixed {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		if ($this->findThrows === true) {
 			throw new RuntimeException('not found');
 		}
@@ -79,6 +81,7 @@ class WooRequestShapedObjectService {
 	}//end find()
 
 	public function saveObject(array $object, mixed ...$rest): mixed {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		$this->lastSave = $rest;
 
 		return $this->answer;

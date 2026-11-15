@@ -35,6 +35,7 @@ use OCP\Migration\IOutput;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectDeletion;
 
 /**
  * Golden test for CleanupOrphanDirectoryListings.
@@ -288,7 +289,10 @@ class CleanupOrphanDirectoryListingsGoldenTest extends TestCase {
 			) {
 			}
 
-			public function deleteObject(string $uuid, string $register, string $schema, bool $_rbac, bool $_multitenancy): bool {
+			public function deleteObject(ObjectDeletion $deletion, bool $_rbac = true, bool $_multitenancy = true, bool $_retentionSweep = false): bool {
+				$uuid = $deletion->uuid;
+				$register = $deletion->target->register;
+				$schema = $deletion->target->schema;
 				if ($uuid === 'boom') {
 					throw new \RuntimeException('locked row ' . $uuid);
 				}
