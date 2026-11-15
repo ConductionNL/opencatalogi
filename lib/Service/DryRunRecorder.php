@@ -26,6 +26,7 @@ use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\AppIdentity;
+use OCA\OpenCatalogi\Contract\OpenRegisterLookupInterface;
 use OCP\IAppConfig;
 use OCP\IUserSession;
 use Throwable;
@@ -48,14 +49,14 @@ class DryRunRecorder {
 	/**
 	 * Constructor.
 	 *
-	 * @param OutboundGate       $gate         Whether a channel may send.
-	 * @param OpenRegisterLookup $openRegister Reaches OpenRegister's object service.
-	 * @param IAppConfig         $config       The publication register the record is stored in.
-	 * @param IUserSession       $userSession  Who made the hand-over.
+	 * @param OutboundGate                $gate         Whether a channel may send.
+	 * @param OpenRegisterLookupInterface $openRegister Reaches OpenRegister's object service.
+	 * @param IAppConfig                  $config       The publication register the record is stored in.
+	 * @param IUserSession                $userSession  Who made the hand-over.
 	 */
 	public function __construct(
 		private readonly OutboundGate $gate,
-		private readonly OpenRegisterLookup $openRegister,
+		private readonly OpenRegisterLookupInterface $openRegister,
 		private readonly IAppConfig $config,
 		private readonly IUserSession $userSession,
 	) {
