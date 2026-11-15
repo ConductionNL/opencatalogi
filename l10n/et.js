@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Ava kataloog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Loo oma esimene kataloog. See on konteiner, kus sinu väljaanded asuvad. Vali register Publication ja skeem Publication, et kataloog näitaks väljaandeid, mida sa lisad.",
         "Manage your publications and their status": "Hallake oma väljaandeid ja nende olekut",
+        "Open at the source": "Ava allikas",
         "Feed consumers": "Voo tarbijad",
         "Contact": "Kontakt",
         "Generate key": "Loo võti",

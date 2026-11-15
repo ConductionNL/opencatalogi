@@ -32,6 +32,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Unit tests for CatalogiService.
@@ -656,8 +657,9 @@ class CatalogiServiceTest extends TestCase {
 		$finds = [];
 		$objectService->method('find')->willReturnCallback(
 			static function (...$args) use (&$finds, $catalogEntity) {
+				$args = LegacyObjectArgs::positional(method: 'find', args: $args);
 				$named = [];
-				foreach ((new \ReflectionMethod(ObjectService::class, 'find'))->getParameters() as $i => $param) {
+				foreach (LegacyObjectArgs::parameters(ObjectService::class, 'find') as $i => $param) {
 					$named[$param->getName()] = ($args[$param->getName()] ?? $args[$i] ?? null);
 				}
 
@@ -1675,7 +1677,9 @@ class CatalogiServiceTest extends TestCase {
 			->with(['title' => 'C', 'registers' => [21], 'schemas' => ['7']]);
 
 		$objectService = $this->createMock(ObjectService::class);
-		$objectService->expects($this->once())->method('saveObject')->with($entity);
+		$objectService->expects($this->once())->method('saveObject')->with(...LegacyObjectArgs::with(method: 'saveObject', expected: [
+				'object' => $entity,
+			]));
 
 		$this->injectAll($registerMapper, $schemaMapper, $objectService);
 

@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Opna skrá",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Búðu til fyrstu skrána þína. Hún er ílátið sem útgáfurnar þínar verða í. Veldu skráninguna Publication og skemað Publication svo skráin birti útgáfurnar sem þú bætir við.",
         "Manage your publications and their status": "Stjórnaðu útgáfum þínum og stöðu þeirra",
+        "Open at the source": "Opna hjá upprunanum",
         "Feed consumers": "Notendur straums",
         "Contact": "Tengiliður",
         "Generate key": "Búa til lykil",

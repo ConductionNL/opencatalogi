@@ -3,8 +3,9 @@
  * SPDX-License-Identifier: EUPL-1.2
  *
  * Where a click on a federation search result leads. A local result routes to
- * PublicationDetail inside the app; a federated result opens the publication
- * on its authoritative peer in a new tab.
+ * PublicationDetail inside the app; a federated result routes to
+ * FederatedPublication inside the app, which reads it from its source and
+ * links to the source's own page.
  */
 
 /**
@@ -126,23 +127,48 @@ export function peerOrigin(result) {
 }
 
 /**
- * The URL that opens a federated result on its peer: the publication detail
- * when both the catalog slug and the publication id are known, else the
- * peer's app root (a guessed slug would 404 on a peer with another default).
+ * The URL of a remote publication's own page on its source instance: the
+ * source app's history-mode publication route when both the catalog slug and
+ * the publication id are known, else the source app's root (a guessed slug
+ * would 404 on a source with another default). Never a hash route.
  *
- * @param {object} result The search result.
- * @param {{catalogSlug: string|null, publicationId: (string|number|undefined)}} link The resolved slug and id.
- * @return {string|null} The URL, or null when the peer has no usable host.
+ * @param {object} publication The remote publication (its `@self.uri` or `@self.directory` names the source).
+ * @param {string|null} catalogSlug The publication's catalog slug on the source, when known.
+ * @return {string|null} The URL, or null when the source has no usable host.
+ * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-the-page-links-correctly-to-the-source-req-for-003
  */
-function peerTarget(result, link) {
-	const origin = peerOrigin(result)
+export function sourceUrl(publication, catalogSlug) {
+	const origin = peerOrigin(publication)
 	if (!origin) {
 		return null
 	}
-	const peerRoot = `${origin}/index.php/apps/opencatalogi`
-	return link.catalogSlug && link.publicationId
-		? `${peerRoot}/#/publications/${encodeURIComponent(link.catalogSlug)}/${encodeURIComponent(link.publicationId)}`
-		: `${peerRoot}/`
+	const sourceRoot = `${origin}/index.php/apps/opencatalogi`
+	const publicationId = publication?.id || publication?.['@self']?.id
+	return catalogSlug && publicationId
+		? `${sourceRoot}/publications/${encodeURIComponent(catalogSlug)}/${encodeURIComponent(publicationId)}`
+		: `${sourceRoot}/`
+}
+
+/**
+ * The in-app route to a federated result: FederatedPublication by id, with the
+ * catalog slug as `catalog` when it is known so the page can link to the
+ * source's own page.
+ *
+ * @param {{catalogSlug: string|null, publicationId: (string|number|undefined)}} link The resolved slug and id.
+ * @return {{route: object}|null} The route to push, or nothing without an id.
+ */
+function federatedTarget(link) {
+	if (!link.publicationId) {
+		return null
+	}
+	const route = {
+		name: 'FederatedPublication',
+		params: { id: String(link.publicationId) },
+	}
+	if (link.catalogSlug) {
+		route.query = { catalog: String(link.catalogSlug) }
+	}
+	return { route }
 }
 
 /**
@@ -171,12 +197,12 @@ function localTarget(link) {
 /**
  * What a click on a search result does. Local results carry
  * `@self.directory === 'local'`; any other non-empty directory is a federated
- * peer.
+ * peer. Both stay inside the app: no new tab opens.
  *
  * @param {object|null} result The search result.
  * @param {() => (Array<object>|{results: Array<object>}|null)} getCatalogs Returns the local catalog collection.
- * @return {{open: string}|{route: object}|null} A URL to open in a new tab, a route to push, or nothing.
- * @spec exclude presentation-only click-through
+ * @return {{route: object}|null} A route to push, or nothing.
+ * @spec openspec/changes/federation-open-remote-publication/specs/federation/spec.md#requirement-a-federated-result-opens-inside-the-app-req-for-001
  */
 export function resultClickTarget(result, getCatalogs) {
 	const rawDirectory = result?.['@self']?.directory
@@ -187,6 +213,5 @@ export function resultClickTarget(result, getCatalogs) {
 	if (!rawDirectory || rawDirectory === 'local') {
 		return localTarget(link)
 	}
-	const url = peerTarget(result, link)
-	return url ? { open: url } : null
+	return federatedTarget(link)
 }

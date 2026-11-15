@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Åbn katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Opret dit første katalog. Det er beholderen, som dine publikationer skal ligge i. Vælg registret Publication og skemaet Publication, så kataloget viser de publikationer, du tilføjer.",
         "Manage your publications and their status": "Administrer dine publikationer og deres status",
+        "Open at the source": "Åbn ved kilden",
         "Feed consumers": "Feedmodtagere",
         "Contact": "Kontakt",
         "Generate key": "Opret nøgle",

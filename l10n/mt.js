@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Iftaħ il-katalgu",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Oħloq l-ewwel katalgu tiegħek. Huwa l-kontenitur fejn se jkunu l-pubblikazzjonijiet tiegħek. Agħżel ir-reġistru Publication u l-iskema Publication, biex il-katalgu juri l-pubblikazzjonijiet li żżid.",
         "Manage your publications and their status": "Immaniġġja l-pubblikazzjonijiet tiegħek u l-istatus tagħhom",
+        "Open at the source": "Iftaħ fis-sors",
         "Feed consumers": "Konsumaturi tal-feed",
         "Contact": "Kuntatt",
         "Generate key": "Iġġenera ċavetta",

@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Otvoriť katalóg",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Vytvorte svoj prvý katalóg. Je to kontajner, v ktorom budú vaše publikácie. Vyberte register Publication a schému Publication, aby katalóg zobrazoval publikácie, ktoré pridáte.",
         "Manage your publications and their status": "Spravujte svoje publikácie a ich stav",
+        "Open at the source": "Otvoriť pri zdroji",
         "Feed consumers": "Odberatelia kanála",
         "Contact": "Kontakt",
         "Generate key": "Vygenerovať kľúč",

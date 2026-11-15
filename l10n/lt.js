@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Atverti katalogą",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Sukurkite pirmąjį katalogą. Tai talpykla, kurioje bus jūsų publikacijos. Pasirinkite registrą Publication ir schemą Publication, kad katalogas rodytų jūsų pridedamas publikacijas.",
         "Manage your publications and their status": "Tvarkykite savo leidinius ir jų būseną",
+        "Open at the source": "Atidaryti šaltinyje",
         "Feed consumers": "Srauto naudotojai",
         "Contact": "Kontaktai",
         "Generate key": "Sukurti raktą",

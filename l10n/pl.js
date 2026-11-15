@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Otwórz katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Utwórz swój pierwszy katalog. To kontener, w którym będą twoje publikacje. Wybierz rejestr Publication i schemat Publication, aby katalog wyświetlał dodawane przez ciebie publikacje.",
         "Manage your publications and their status": "Zarządzaj swoimi publikacjami i ich statusem",
+        "Open at the source": "Otwórz u źródła",
         "Feed consumers": "Odbiorcy kanału",
         "Contact": "Kontakt",
         "Generate key": "Wygeneruj klucz",

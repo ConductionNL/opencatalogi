@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Deschide catalogul",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Creați primul dumneavoastră catalog. Este containerul în care vor sta publicațiile dumneavoastră. Alegeți registrul Publication și schema Publication, astfel încât catalogul să afișeze publicațiile pe care le adăugați.",
         "Manage your publications and their status": "Gestionați publicațiile dvs. și starea acestora",
+        "Open at the source": "Deschide la sursă",
         "Feed consumers": "Consumatori ai fluxului",
         "Contact": "Contact",
         "Generate key": "Generează cheie",

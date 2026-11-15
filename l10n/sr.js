@@ -724,6 +724,7 @@ OC.L10N.register(
         "Open catalog": "Отвори каталог",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Направите свој први каталог. То је контејнер у којем ће бити ваше објаве. Изаберите регистар Publication и схему Publication како би каталог приказивао објаве које додате.",
         "Manage your publications and their status": "Управљајте својим публикацијама и њиховим статусом",
+        "Open at the source": "Отвори на извору",
         "Feed consumers": "Корисници фида",
         "Contact": "Контакт",
         "Generate key": "Генериши кључ",
