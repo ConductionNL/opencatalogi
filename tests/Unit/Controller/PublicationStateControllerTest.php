@@ -100,6 +100,13 @@ class PublicationStateControllerTest extends TestCase {
 				$this->unpublished[] = $filePath;
 				return new \stdClass();
 			}
+
+			public array $published = [];
+
+			public function publishFile(object $object, string|int $file): object {
+				$this->published[] = $file;
+				return new \stdClass();
+			}
 		};
 
 		$this->fileMapper = new class {
@@ -647,6 +654,114 @@ class PublicationStateControllerTest extends TestCase {
 
 		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->withdrawFile('p1', '4711')->getStatus());
 		$this->assertSame([], $this->fileService->unpublished);
+	}
+
+	/** REQ-ATT-104: republishing needs a reason, shares the file again, reopens its window and records why. */
+	public function testRepublishFileNeedsAReasonAndReopensTheWindow(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$start = new \DateTime('2026-09-01T09:00:00+00:00');
+		$this->fileMapper->records[4711] = new class($start) {
+			public function __construct(private \DateTime $start) {
+			}
+
+			public function getPublished(): \DateTime {
+				return $this->start;
+			}
+		};
+
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+		$response = $this->controller->republishFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_OK, $response->getStatus(), json_encode($response->getData()));
+		$this->assertSame([4711], $this->fileService->published);
+		[$fileId, $window] = $this->fileMapper->windows[0];
+		$this->assertSame(4711, $fileId);
+		$this->assertSame($start, $window->published);
+		$this->assertNull($window->depublished);
+		$this->assertCount(1, $this->saves);
+		$this->assertSame('depublication_schema', $this->saves[0]['schema']);
+		$this->assertFalse($this->saves[0]['rbac']);
+		$this->assertTrue($this->saves[0]['object']['republished']);
+		$this->assertSame('4711', $this->saves[0]['object']['file']);
+		$this->assertSame('Woonadres is weggelakt', $this->saves[0]['object']['reason']);
+		$this->assertSame('redacteur', $this->saves[0]['object']['depublishedBy']);
+		$this->assertSame(['id' => 'p1'], $this->saves[0]['object']['publication']);
+	}
+
+	/** REQ-ATT-104: without a reason nothing is shared or reopened. */
+	public function testRepublishFileWithoutAReasonChangesNothing(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => '  ']);
+
+		$response = $this->controller->republishFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_BAD_REQUEST, $response->getStatus());
+		$this->assertSame('reason-missing', $response->getData()['error']);
+		$this->assertSame([], $this->fileService->published);
+		$this->assertSame([], $this->fileMapper->windows);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-ATT-104: only a user who may update the publication puts a file back. */
+	public function testRepublishFileWithoutRightsIsRefused(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(false);
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+
+		$this->assertSame(Http::STATUS_FORBIDDEN, $this->controller->republishFile('p1', '4711')->getStatus());
+		$this->assertSame([], $this->fileService->published);
+		$this->assertSame([], $this->fileMapper->windows);
+		$this->user = null;
+		$this->assertSame(Http::STATUS_UNAUTHORIZED, $this->controller->republishFile('p1', '4711')->getStatus());
+	}
+
+	/** REQ-ATT-104: a file the file service cannot find on this publication keeps its window, and nothing is recorded. */
+	public function testRepublishingAFileNotOnThePublicationChangesNothing(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+		$this->fileService = new class {
+			public function publishFile(object $object, string|int $file): object {
+				throw new \RuntimeException('File not found on this object');
+			}
+		};
+
+		$response = $this->controller->republishFile('p1', '9999');
+
+		$this->assertSame(Http::STATUS_NOT_FOUND, $response->getStatus());
+		$this->assertSame('file-not-republished', $response->getData()['error']);
+		$this->assertSame([], $this->fileMapper->windows);
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-ATT-104: a window that cannot be reopened is reported and not recorded. */
+	public function testAWindowThatCannotReopenIsReported(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00'];
+		$this->rights->method('mayUpdate')->willReturn(true);
+		$this->withParams(['reason' => 'Woonadres is weggelakt']);
+		$this->fileMapper->failure = new \RuntimeException('database is down');
+
+		$response = $this->controller->republishFile('p1', '4711');
+
+		$this->assertSame(Http::STATUS_INTERNAL_SERVER_ERROR, $response->getStatus());
+		$this->assertSame(['error' => 'file-window-not-reopened', 'message' => 'database is down'], $response->getData());
+		$this->assertSame([], $this->saves);
+	}
+
+	/** REQ-ATT-104: the republish route is a POST beside the withdraw route, with a numeric file id. */
+	public function testTheRepublishRouteIsAPost(): void {
+		$routes = require __DIR__ . '/../../../appinfo/routes.php';
+		$found = array_values(array_filter(
+			$routes['routes'],
+			static fn (array $route): bool => $route['name'] === 'publicationState#republishFile' && str_starts_with($route['url'], '/api/v1/') === false
+		));
+
+		$this->assertCount(1, $found);
+		$this->assertSame('/api/publications/{id}/files/{fileId}/republish', $found[0]['url']);
+		$this->assertSame('POST', $found[0]['verb']);
+		$this->assertSame(['fileId' => '\d+'], $found[0]['requirements']);
 	}
 
 	/** Every write refuses a caller without a session. */

@@ -13,6 +13,8 @@ import { flushPromises, mount } from '@vue/test-utils'
 import MergeObject from './MergeObject.vue'
 import { navigationStore } from '../../store/store.js'
 
+jest.mock('@nextcloud/auth', () => ({ getRequestToken: () => 'csrf-token' }))
+
 jest.mock('@nextcloud/axios', () => ({
 	__esModule: true,
 	default: { get: jest.fn(), post: jest.fn() },
