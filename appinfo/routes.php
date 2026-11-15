@@ -70,6 +70,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'woo#createBatch', 'url' => '/api/woo/batches', 'verb' => 'POST'],
 		['name' => 'woo#getBatch', 'url' => '/api/woo/batches/{batchId}', 'verb' => 'GET'],
 		['name' => 'woo#updateAssessment', 'url' => '/api/woo/batches/{batchId}/documents/{docId}', 'verb' => 'PUT'],
+		['name' => 'woo#verifyRedaction', 'url' => '/api/woo/batches/{batchId}/documents/{docId}/verify-redaction', 'verb' => 'POST'],
 		['name' => 'woo#markReadyForReview', 'url' => '/api/woo/batches/{batchId}/ready-for-review', 'verb' => 'POST'],
 		['name' => 'woo#inventarislijst', 'url' => '/api/woo/batches/{batchId}/inventarislijst', 'verb' => 'GET'],
 		['name' => 'woo#publishBatch', 'url' => '/api/woo/batches/{batchId}/publish', 'verb' => 'POST'],
@@ -94,6 +95,8 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publiccodeHarvest#run', 'url' => '/api/settings/publiccode-harvest/run', 'verb' => 'POST'],
 		// Woo-index registration and the root robots.txt rules (woo-index-harvester-connection).
 		['name' => 'wooRegistration#show', 'url' => '/api/woo/registration', 'verb' => 'GET'],
+		// The publishers group in the admin settings (operations-publish-rights, REQ-OPR-004).
+		['name' => 'publishRights#show', 'url' => '/api/settings/publish-rights', 'verb' => 'GET'],
 		['name' => 'wooRegistration#request', 'url' => '/api/woo/registration', 'verb' => 'POST'],
 		['name' => 'wooRegistration#confirm', 'url' => '/api/woo/registration/confirm', 'verb' => 'POST'],
 		// The public and community surface: the admin surfaces.
@@ -113,6 +116,7 @@ return \OCA\OpenCatalogi\Middleware\Support\ApiPathAliases::withVersionedAliases
 		['name' => 'publicationState#publish', 'url' => '/api/publications/{id}/publish', 'verb' => 'POST'],
 		['name' => 'publicationState#withdraw', 'url' => '/api/publications/{id}/withdraw', 'verb' => 'POST'],
 		['name' => 'publicationState#withdrawFile', 'url' => '/api/publications/{id}/files/{fileId}/withdraw', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
+		['name' => 'publicationState#republishFile', 'url' => '/api/publications/{id}/files/{fileId}/republish', 'verb' => 'POST', 'requirements' => ['fileId' => '\d+']],
 		['name' => 'publicationDisclosure#announce', 'url' => '/api/publications/announce', 'verb' => 'POST'],
 		['name' => 'publicationDisclosure#publishedCollections', 'url' => '/api/published-collections', 'verb' => 'GET'],
 		['name' => 'publicationDisclosure#savePublishedCollections', 'url' => '/api/published-collections', 'verb' => 'POST'],
