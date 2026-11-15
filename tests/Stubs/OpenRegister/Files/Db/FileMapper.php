@@ -9,6 +9,9 @@
  * @author    Conduction Development Team <info@conduction.nl>
  * @copyright 2024 Conduction B.V.
  * @license   EUPL-1.2 https://joinup.ec.europa.eu/collection/eupl/eupl-text-eupl-12
+ *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);
@@ -55,5 +58,28 @@ class FileMapper {
 	public function getFilesForObject(ObjectEntity $object): array {
 		return [];
 	}//end getFilesForObject()
+
+	/**
+	 * Stub for findByFileIds: the metadata rows of the files, keyed by file id.
+	 *
+	 * @param array<int> $fileIds The file ids.
+	 *
+	 * @return array<int, mixed>
+	 */
+	public function findByFileIds(array $fileIds): array {
+		return [];
+	}//end findByFileIds()
+
+	/**
+	 * Stub for setPublicationWindowForFile.
+	 *
+	 * @param integer           $fileId The file id.
+	 * @param PublicationWindow $window The window.
+	 *
+	 * @return mixed
+	 */
+	public function setPublicationWindowForFile(int $fileId, PublicationWindow $window): mixed {
+		return null;
+	}//end setPublicationWindowForFile()
 
 }//end class

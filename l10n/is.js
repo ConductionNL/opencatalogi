@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Spjöld",
         "Catalog not found": "Skrá fannst ekki",
         "Catalogs": "Skrár",
+        "catalogs": "skrár",
         "Check server logs for more details.": "Athugaðu annála netþjóns fyrir frekari upplýsingar.",
         "Choose sorting": "Veldu röðun",
         "Clear": "Hreinsa",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Viðhengi birt með góðum árangri",
         "Attachment successfully updated": "Viðhengi uppfært með góðum árangri",
         "Attachments": "Viðhengi",
+        "attachments": "viðhengi",
         "Attachments are loading": "Verið er að hlaða viðhengjum",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Viðhengi verða birt með núverandi dagsetningu og tíma. Ef einhver viðhengi eru með afturköllunardagsetningu verður hún fjarlægð til að gera þau að fullu birt.",
         "Auto publish attachments": "Birta viðhengi sjálfkrafa",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Bættu skráningu og skema við skrána til að birta útgáfur hennar hér.",
         "Open catalog": "Opna skrá",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Búðu til fyrstu skrána þína. Hún er ílátið sem útgáfurnar þínar verða í. Veldu skráninguna Publication og skemað Publication svo skráin birti útgáfurnar sem þú bætir við.",
-        "Manage your publications and their status": "Stjórnaðu útgáfum þínum og stöðu þeirra"
+        "Manage your publications and their status": "Stjórnaðu útgáfum þínum og stöðu þeirra",
+        "Open at the source": "Opna hjá upprunanum"
     },
     "nplurals=2; plural=(n != 1);"
 )

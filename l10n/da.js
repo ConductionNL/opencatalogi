@@ -27,6 +27,7 @@ OC.L10N.register(
         "Cards": "Kort",
         "Catalog not found": "Katalog ikke fundet",
         "Catalogs": "Kataloger",
+        "catalogs": "kataloger",
         "Check server logs for more details.": "Kontrollér serverlogfilerne for flere detaljer.",
         "Choose sorting": "Vælg sortering",
         "Clear": "Ryd",
@@ -239,6 +240,7 @@ OC.L10N.register(
         "Attachment successfully published": "Vedhæftning blev publiceret",
         "Attachment successfully updated": "Vedhæftning blev opdateret",
         "Attachments": "Vedhæftninger",
+        "attachments": "vedhæftninger",
         "Attachments are loading": "Vedhæftninger indlæses",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Vedhæftninger publiceres med den aktuelle dato og tid. Hvis nogle vedhæftninger har en afpubliceringsdato angivet, fjernes den, så de bliver fuldt publiceret.",
         "Auto publish attachments": "Auto-publicér vedhæftninger",
@@ -721,7 +723,8 @@ OC.L10N.register(
         "Add a register and a schema to the catalog to list its publications here.": "Tilføj et register og et skema til kataloget for at vise dets publikationer her.",
         "Open catalog": "Åbn katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Opret dit første katalog. Det er beholderen, som dine publikationer skal ligge i. Vælg registret Publication og skemaet Publication, så kataloget viser de publikationer, du tilføjer.",
-        "Manage your publications and their status": "Administrer dine publikationer og deres status"
+        "Manage your publications and their status": "Administrer dine publikationer og deres status",
+        "Open at the source": "Åbn ved kilden"
     },
     "nplurals=2; plural=(n != 1);"
 )

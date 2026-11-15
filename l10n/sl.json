@@ -26,6 +26,7 @@
         "Cards": "Kartice",
         "Catalog not found": "Kataloga ni mogoče najti",
         "Catalogs": "Katalogi",
+        "catalogs": "katalogi",
         "Check server logs for more details.": "Za več podrobnosti preverite strežniške dnevnike.",
         "Choose sorting": "Izberite razvrščanje",
         "Clear": "Počisti",
@@ -238,6 +239,7 @@
         "Attachment successfully published": "Priponka je bila uspešno objavljena",
         "Attachment successfully updated": "Priponka je bila uspešno posodobljena",
         "Attachments": "Priponke",
+        "attachments": "priponke",
         "Attachments are loading": "Priponke se nalagajo",
         "Attachments will be published with the current date and time. If any attachments have a depublication date set, it will be removed to make them fully published.": "Priponke bodo objavljene s trenutnim datumom in časom. Če imajo katere priponke nastavljen datum odjave, bo ta odstranjen, da bodo v celoti objavljene.",
         "Auto publish attachments": "Samodejno objavi priponke",
@@ -720,7 +722,8 @@
         "Add a register and a schema to the catalog to list its publications here.": "Katalogu dodajte register in shemo, da bodo tukaj prikazane njegove objave.",
         "Open catalog": "Odpri katalog",
         "Create your first catalog. It's the container your publications will live in. Choose the Publication register and the Publication schema, so the catalog lists the publications you add.": "Ustvarite svoj prvi katalog. To je vsebnik, v katerem bodo vaše objave. Izberite register Publication in shemo Publication, da bo katalog prikazoval objave, ki jih dodate.",
-        "Manage your publications and their status": "Upravljajte svoje publikacije in njihovo stanje"
+        "Manage your publications and their status": "Upravljajte svoje publikacije in njihovo stanje",
+        "Open at the source": "Odpri pri viru"
     },
     "plurals": {}
 }

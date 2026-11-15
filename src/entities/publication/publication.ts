@@ -1,3 +1,7 @@
+/**
+ * SPDX-FileCopyrightText: 2024 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import type { ZodSafeParseResult } from 'zod'
 import type { TCatalogi } from '../'

@@ -4,6 +4,9 @@
  * The public `withheld` list of a publication: generic (decision 182), for
  * any publication a catalogue holds; the Woo decision is the first user.
  *
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ *
  * A catalogue that opted in (`showWithheld`, REQ-PDP-004) shows on a public
  * publication which of its documents were withheld from publication and on
  * which grounds: one entry per withheld assessment of the publication batch
@@ -27,9 +30,6 @@
  * @link https://conduction.nl
  *
  * @spec openspec/changes/woo-decision-shows-what-was-withheld/specs/publications/spec.md#requirement-the-public-read-of-a-woo-decision-names-what-was-withheld-and-why-req-wdw-003
- *
- * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
- * SPDX-License-Identifier: EUPL-1.2
  */
 
 declare(strict_types=1);

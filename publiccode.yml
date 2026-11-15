@@ -5,6 +5,7 @@ url: "https://github.com/ConductionNL/opencatalogi"
 softwareVersion: "0.7.34"
 releaseDate: "2026-05-26"
 developmentStatus: stable
+softwareType: addon
 
 platforms:
   - nextcloud
@@ -59,3 +60,7 @@ dependsOn:
   open:
     - name: OpenRegister
       versionMin: "0.1.0"
+
+# Common Ground layer (nl.vng profile), as a standard supports entry.
+supports:
+  - id: https://commonground.nl/cms/view/54476261/5-lagen-model#service

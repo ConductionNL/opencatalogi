@@ -91,6 +91,7 @@ use RuntimeException;
  * @uses   \OCA\OpenCatalogi\Controller\CorsSettings
  * @uses   \OCA\OpenCatalogi\Service\CallerScope
  * @uses   \OCA\OpenCatalogi\Service\ReadsObjectProperties
+ * @uses   \OCA\OpenCatalogi\Service\ObjectInPair
  */
 class RegisterPlumbingGoldenTest extends TestCase {
 

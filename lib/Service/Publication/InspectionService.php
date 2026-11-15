@@ -33,7 +33,6 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Service\Publication;
 
-use DateInterval;
 use DateTimeImmutable;
 use DateTimeInterface;
 use DateTimeZone;
@@ -46,6 +45,19 @@ use OCA\OpenCatalogi\Contract\InspectionServiceInterface;
  * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
  */
 class InspectionService implements InspectionServiceInterface {
+
+	/**
+	 * Constructor.
+	 *
+	 * @param TermRoll $roll Rolls the end date off a non-working day, through OpenRegister.
+	 *
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
+	 */
+	public function __construct(
+		private readonly TermRoll $roll,
+	) {
+
+	}//end __construct()
 
 	/**
 	 * Open an inspection on a record, for the term its type declares.
@@ -63,8 +75,10 @@ class InspectionService implements InspectionServiceInterface {
 	 * @return array<string, mixed> The inspection to save.
 	 *
 	 * @throws DomainException When the type declares no term, or no document was chosen.
+	 * @throws TermRollUnavailableException When the end date cannot be rolled off a non-working day.
 	 *
 	 * @spec openspec/changes/publication-inspection-and-the-national-indexes/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-documents-go-on-public-inspection-for-exactly-the-statutory-period-req-pin-103
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
 	 */
 	public function open(
 		array $record,
@@ -76,19 +90,44 @@ class InspectionService implements InspectionServiceInterface {
 		$termDays = $this->termDays(recordType: $recordType);
 		$chosen = $this->chosenDocuments(documents: $documents);
 		$startsAt = $this->windowStart(start: $start);
+		$end = $this->roll->endDate(start: $startsAt, days: $termDays);
 
-		return [
+		$inspection = [
 			'record' => (string)($record['id'] ?? ''),
 			'recordType' => (string)($recordType['slug'] ?? ($recordType['recordType'] ?? '')),
 			'documents' => $chosen,
 			'startDate' => $startsAt->format(DateTimeInterface::ATOM),
-			'endDate' => $startsAt->add(new DateInterval('P' . $termDays . 'D'))->format(DateTimeInterface::ATOM),
+			'endDate' => $end['at']->format(DateTimeInterface::ATOM),
 			'termDays' => $termDays,
 			'token' => bin2hex(random_bytes(16)),
 			'openedBy' => $openedBy,
 		];
 
+		return $this->withRoll(inspection: $inspection, end: $end);
+
 	}//end open()
+
+	/**
+	 * Add where the end date landed before the roll, and why it moved, when the roll moved it.
+	 *
+	 * @param array<string, mixed> $inspection The inspection.
+	 * @param array{at: DateTimeImmutable, unrolledAt: ?DateTimeImmutable, rolledBy: ?string} $end The rolled end.
+	 *
+	 * @return array<string, mixed> The inspection.
+	 *
+	 * @spec openspec/changes/inspection-period-rolls-on-the-calendar/specs/publication-inspection-and-the-national-indexes/spec.md#requirement-an-inspection-period-ends-on-a-working-day-req-ipr-001
+	 */
+	private function withRoll(array $inspection, array $end): array {
+		if ($end['unrolledAt'] !== null) {
+			$inspection['unrolledEndDate'] = $end['unrolledAt']->format(DateTimeInterface::ATOM);
+		}
+
+		if ($end['rolledBy'] !== null) {
+			$inspection['rolledBy'] = $end['rolledBy'];
+		}
+
+		return $inspection;
+	}//end withRoll()
 
 	/**
 	 * The inspection term the record type declares.

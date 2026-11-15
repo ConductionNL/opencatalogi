@@ -1,4 +1,8 @@
 /**
+ * SPDX-FileCopyrightText: 2026 Conduction B.V. <info@conduction.nl>
+ * SPDX-License-Identifier: EUPL-1.2
+ */
+/**
  * Named row-action handlers for the Products and services page.
  *
  * CnIndexPage resolves a manifest action's `handler` string against the

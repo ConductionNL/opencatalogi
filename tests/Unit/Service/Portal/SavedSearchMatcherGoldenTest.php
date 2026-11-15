@@ -42,6 +42,7 @@ use RuntimeException;
  * @covers \OCA\OpenCatalogi\Service\Portal\SearchWindow
  * @uses \OCA\OpenCatalogi\Service\PublicationQueryService
  * @uses \OCA\OpenCatalogi\Service\SearchQueryTranslator
+ * @uses   \OCA\OpenCatalogi\Service\Portal\SavedSearchMatchRun
  */
 class SavedSearchMatcherGoldenTest extends TestCase {
 

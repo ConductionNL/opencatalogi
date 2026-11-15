@@ -33,6 +33,7 @@ use PHPUnit\Framework\TestCase;
  *
  * @covers \OCA\OpenCatalogi\Service\CatalogScopeSlugResolver
  * @uses   \OCA\OpenCatalogi\Service\CatalogScopeLookups
+ * @uses   \OCA\OpenCatalogi\Service\SchemaSlugIndex
  */
 class CatalogScopeResolveGoldenTest extends TestCase {
 

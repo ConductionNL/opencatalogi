@@ -38,6 +38,7 @@ namespace OCA\OpenCatalogi\Controller;
 
 use OCA\OpenCatalogi\Contract\InformationCategoryRegistryInterface;
 use OCA\OpenCatalogi\Contract\TransparencyWorkflowServiceInterface;
+use OCA\OpenCatalogi\Service\Woo\RedactionNotVerifiableException;
 use OCA\OpenCatalogi\Settings\OpenCatalogiAdmin;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
@@ -272,6 +273,34 @@ class WooController extends Controller {
 	}//end updateAssessment()
 
 	/**
+	 * Record that the officer checked the redacted version of a partly public document.
+	 *
+	 * Admin-only, the same right as updateAssessment(). Answers 409 with the
+	 * reason when the redaction is not mechanically verified or its file
+	 * changed, and stores nothing then.
+	 *
+	 * @param string $batchId The batch uuid.
+	 * @param string $docId The document-assessment object uuid.
+	 *
+	 * @return JSONResponse The updated assessment, or the refusal.
+	 *
+	 * @NoCSRFRequired
+	 *
+	 * @spec openspec/changes/woo-document-assessment-screen/specs/woo-transparency/spec.md#requirement-a-person-marks-a-redaction-verified-before-it-can-be-published-req-wda-004
+	 */
+	#[AuthorizedAdminSetting(settings: OpenCatalogiAdmin::class)]
+	public function verifyRedaction(string $batchId, string $docId): JSONResponse {
+		try {
+			return new JSONResponse($this->wooService->verifyRedaction(batchId: $batchId, assessmentId: $docId));
+		} catch (RedactionNotVerifiableException $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_CONFLICT);
+		} catch (\Throwable $e) {
+			return new JSONResponse(data: ['error' => $e->getMessage()], statusCode: Http::STATUS_BAD_REQUEST);
+		}
+
+	}//end verifyRedaction()
+
+	/**
 	 * Mark a batch ready for review (only when all documents are assessed).
 	 *
 	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). This opens
@@ -297,11 +326,11 @@ class WooController extends Controller {
 	}//end markReadyForReview()
 
 	/**
-	 * Generate the inventarislijst for a batch and return it as a CSV download.
+	 * Generate the inventarislijst for a batch and return it as a download.
 	 *
-	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). CSV is
-	 * UTF-8 with BOM; HTML (archival PDF/A source) is available via the `format`
-	 * query parameter.
+	 * Admin-only (no @NoAdminRequired → NC SecurityMiddleware default). A read-only
+	 * GET reached through a plain link, so it carries no CSRF token. CSV (UTF-8
+	 * with BOM) by default; `format=pdf` returns PDF/A and `format=html` its source.
 	 *
 	 * @param string $batchId The batch uuid.
 	 *
@@ -316,6 +345,11 @@ class WooController extends Controller {
 		try {
 			$rows = $this->wooService->buildInventarislijst($batchId);
 			$format = (string)$this->request->getParam('format', 'csv');
+			if ($format === 'pdf') {
+				$pdf = $this->wooService->renderInventarislijstPdf($batchId, $rows);
+				return new DataDownloadResponse($pdf, 'inventarislijst.pdf', 'application/pdf');
+			}
+
 			if ($format === 'html') {
 				$html = $this->wooService->renderInventarislijstHtml($batchId, $rows);
 				return new DataDownloadResponse($html, 'inventarislijst.html', 'text/html');

@@ -39,6 +39,7 @@ use RuntimeException;
  *
  * @covers \OCA\OpenCatalogi\Service\Connection\ConnectionReporter
  * @uses \OCA\OpenCatalogi\Service\Connection\ConnectionObservations
+ * @uses   \OCA\OpenCatalogi\Service\Connection\StatusReport
  */
 class ConnectionReporterTest extends TestCase {
 
