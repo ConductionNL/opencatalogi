@@ -41,6 +41,7 @@ use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for EventService::shouldAutoPublishObject() and publishObjectAttachments().
@@ -268,6 +269,7 @@ class EventPublicationGateGoldenTest extends TestCase {
 		);
 		$objectService->method('find')->willReturnCallback(
 			function (...$args): ?ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'find', args: $args);
 				$this->record(call: ObjectService::class . '::find', args: $args);
 				if ($args[0] === 'no-entity') {
 					return null;

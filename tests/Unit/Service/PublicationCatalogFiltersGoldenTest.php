@@ -44,6 +44,7 @@ use OCP\IUserSession;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for PublicationService::getCatalogFilters().
@@ -154,7 +155,7 @@ class PublicationCatalogFiltersGoldenTest extends TestCase {
 	 */
 	private function record(string $method, array $args): void {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}
@@ -217,6 +218,7 @@ class PublicationCatalogFiltersGoldenTest extends TestCase {
 		);
 		$objectService->method('find')->willReturnCallback(
 			function (...$args): ?ObjectEntity {
+				$args = LegacyObjectArgs::positional(method: 'find', args: $args);
 				$this->record(method: 'find', args: $args);
 				if ($args[0] === 'missing') {
 					throw new \RuntimeException('not found');

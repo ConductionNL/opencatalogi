@@ -25,6 +25,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\NullLogger;
 use RuntimeException;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Tests for PortalObjectStore::writePortalMessage.
@@ -52,7 +53,9 @@ class PortalObjectStoreMessageTest extends TestCase {
 			) {
 			}
 
-			public function saveObject(array $object, string $register, string $schema, bool $_rbac, bool $_multitenancy): mixed {
+			public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+				$register = $options->target->register;
+				$schema = $options->target->schema;
 				$this->calls[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 				return $this->result;
 			}
