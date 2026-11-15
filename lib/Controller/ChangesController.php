@@ -129,12 +129,12 @@ class ChangesController extends Controller {
 			// reader never reaches a schema without read rules.
 			$catalog = $this->queryService->applyCatalogReadRuleGuard(catalog: $catalog);
 
-			$cursor = $this->request->getParam('cursor');
-			if (is_string($cursor) === false) {
-				$cursor = null;
-			}
-
-			$answer = $this->changes->changesSince(catalog: $catalog, catalogSlug: $catalogSlug, since: $since, cursor: $cursor);
+			$answer = $this->changes->changesSince(
+				catalog: $catalog,
+				catalogSlug: $catalogSlug,
+				since: $since,
+				cursor: self::stringOrNull(value: $this->request->getParam('cursor'))
+			);
 
 			return $this->withCors(response: new JSONResponse($answer, Http::STATUS_OK));
 		} catch (MalformedChangesParameterException $e) {
@@ -157,6 +157,23 @@ class ChangesController extends Controller {
 		}//end try
 
 	}//end changes()
+
+	/**
+	 * A request parameter as a string, or null when it is absent or not a string.
+	 *
+	 * @param mixed $value The parameter value.
+	 *
+	 * @return string|null
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function stringOrNull(mixed $value): ?string {
+		if (is_string($value) === false) {
+			return null;
+		}
+
+		return $value;
+	}//end stringOrNull()
 
 	/**
 	 * Add the read-only CORS headers.

@@ -106,23 +106,48 @@ class ChangesService {
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
 	 */
 	public function parseSince(mixed $since): DateTimeImmutable {
-		if (is_string($since) === false || preg_match(self::ISO_8601, trim($since)) !== 1) {
+		$moment = self::strictMoment(value: $since);
+		if ($moment === null) {
 			throw new MalformedChangesParameterException(parameter: 'since');
 		}
 
-		try {
-			$moment = new DateTimeImmutable(trim($since), new DateTimeZone('UTC'));
-		} catch (\Exception $e) {
-			throw new MalformedChangesParameterException(parameter: 'since');
-		}
-
-		$errors = DateTimeImmutable::getLastErrors();
-		if ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0)) {
-			throw new MalformedChangesParameterException(parameter: 'since');
-		}
-
-		return $moment->setTimezone(new DateTimeZone('UTC'));
+		return $moment;
 	}//end parseSince()
+
+	/**
+	 * A strict ISO 8601 moment in UTC, or null when the value is not one.
+	 *
+	 * @param mixed $value The value as the caller sent it.
+	 *
+	 * @return DateTimeImmutable|null The moment, in UTC, or null.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function strictMoment(mixed $value): ?DateTimeImmutable {
+		if (is_string($value) === false || preg_match(self::ISO_8601, trim($value)) !== 1) {
+			return null;
+		}
+
+		$moment = self::moment(value: trim($value));
+		if ($moment === null || self::parsedWithWarnings() === true) {
+			return null;
+		}
+
+		return $moment;
+	}//end strictMoment()
+
+	/**
+	 * Whether the last date parse reported a warning or an error, such as a day that does not exist.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function parsedWithWarnings(): bool {
+		$errors = DateTimeImmutable::getLastErrors();
+
+		return $errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0);
+	}//end parsedWithWarnings()
 
 	/**
 	 * What changed and what was withdrawn in a catalogue since a moment.
@@ -146,13 +171,7 @@ class ChangesService {
 	 */
 	public function changesSince(array $catalog, string $catalogSlug, DateTimeImmutable $since, ?string $cursor = null): array {
 		$window = $this->window(cursor: $cursor);
-		$objectService = $this->openRegister->installedObjectService();
-		if (method_exists($objectService, 'runAsAnonymous') === false) {
-			// Fail closed: without the anonymous scope a signed-in caller would see
-			// drafts and restricted publications here.
-			throw new RuntimeException('OpenRegister has no anonymous evaluation scope.');
-		}
-
+		$objectService = $this->anonymousObjectService();
 		$scope = CatalogScopeIds::forCatalog(catalog: $catalog);
 		$page = $objectService->runAsAnonymous(
 			fn (): array => $this->changedPage(
@@ -178,6 +197,26 @@ class ChangesService {
 	}//end changesSince()
 
 	/**
+	 * OpenRegister's object service, provided it can evaluate a read as an anonymous caller.
+	 *
+	 * @return object The object service.
+	 *
+	 * @throws RuntimeException When OpenRegister, or its anonymous scope, is not available.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private function anonymousObjectService(): object {
+		$objectService = $this->openRegister->installedObjectService();
+		if (method_exists($objectService, 'runAsAnonymous') === false) {
+			// Fail closed: without the anonymous scope a signed-in caller would see
+			// drafts and restricted publications here.
+			throw new RuntimeException('OpenRegister has no anonymous evaluation scope.');
+		}
+
+		return $objectService;
+	}//end anonymousObjectService()
+
+	/**
 	 * The moment the read is pinned to, and the page, from the cursor or fresh.
 	 *
 	 * @param string|null $cursor The cursor, or null for the first page.
@@ -194,23 +233,50 @@ class ChangesService {
 			];
 		}
 
-		$decoded = json_decode((string)base64_decode(strtr($cursor, '-_', '+/'), true), true);
-		if (is_array($decoded) === false
-			|| is_int($decoded['page'] ?? null) === false
-			|| $decoded['page'] < 2
-			|| is_string($decoded['until'] ?? null) === false
-		) {
-			throw new MalformedChangesParameterException(parameter: 'cursor');
-		}
-
-		try {
-			$until = $this->parseSince(since: $decoded['until']);
-		} catch (MalformedChangesParameterException $e) {
+		$decoded = self::decodedCursor(cursor: $cursor);
+		$until   = self::strictMoment(value: $decoded['until']);
+		if ($until === null) {
 			throw new MalformedChangesParameterException(parameter: 'cursor');
 		}
 
 		return ['until' => $until, 'page' => $decoded['page']];
 	}//end window()
+
+	/**
+	 * The page and moment a cursor this read issued carries.
+	 *
+	 * @param string $cursor The cursor as the caller sent it.
+	 *
+	 * @return array{until: string, page: int}
+	 *
+	 * @throws MalformedChangesParameterException When the cursor cannot be read.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function decodedCursor(string $cursor): array {
+		$decoded = json_decode((string)base64_decode(strtr($cursor, '-_', '+/'), true), true);
+		if (is_array($decoded) === false
+			|| self::isFollowingPage(page: ($decoded['page'] ?? null)) === false
+			|| is_string($decoded['until'] ?? null) === false
+		) {
+			throw new MalformedChangesParameterException(parameter: 'cursor');
+		}
+
+		return $decoded;
+	}//end decodedCursor()
+
+	/**
+	 * Whether a cursor's page is a page after the first.
+	 *
+	 * @param mixed $page The page the cursor carries.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function isFollowingPage(mixed $page): bool {
+		return is_int($page) === true && $page >= 2;
+	}//end isFollowingPage()
 
 	/**
 	 * One page of publications changed in the window, as DCAT dataset nodes.
@@ -226,10 +292,44 @@ class ChangesService {
 	 * @return array{changed: array<int, array<string, mixed>>, hasMore: bool}
 	 */
 	private function changedPage(object $objectService, array $catalog, array $scope, array $window): array {
-		if ($scope['registers'] === [] || $scope['schemas'] === []) {
+		if (self::isEmptyScope(scope: $scope) === true) {
 			return ['changed' => [], 'hasMore' => false];
 		}
 
+		$query  = self::changedQuery(scope: $scope, window: $window);
+		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		$rows   = self::changedRows(result: $result, window: $window);
+
+		return [
+			'changed' => $this->dcat->mapDatasets(catalog: $catalog, catalogSlug: (string)$catalog['slug'], publications: $rows),
+			'hasMore' => self::hasMore(result: $result, page: $window['page']),
+		];
+	}//end changedPage()
+
+	/**
+	 * Whether a catalog scope names no register or no schema, so it matches nothing.
+	 *
+	 * @param array{registers: array<int, int|string>, schemas: array<int, int|string>} $scope The catalog's scope.
+	 *
+	 * @return bool
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function isEmptyScope(array $scope): bool {
+		return $scope['registers'] === [] || $scope['schemas'] === [];
+	}//end isEmptyScope()
+
+	/**
+	 * The search for one page of publications in a scope updated inside a window, oldest first.
+	 *
+	 * @param array{registers: array<int, int|string>, schemas: array<int, int|string>} $scope  The catalog's scope.
+	 * @param array{since: DateTimeImmutable, until: DateTimeImmutable, page: int}       $window The window and page.
+	 *
+	 * @return array<string, mixed> The search query.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function changedQuery(array $scope, array $window): array {
 		$query = [
 			'_limit' => self::PAGE_SIZE,
 			'_page' => $window['page'],
@@ -241,10 +341,21 @@ class ChangesService {
 				],
 			],
 		];
-		$query = CallerScope::writeScope(query: $query, registers: $scope['registers'], schemas: $scope['schemas']);
 
-		$result = $objectService->searchObjectsPaginated(query: $query, _rbac: true, _multitenancy: false, deleted: false);
+		return CallerScope::writeScope(query: $query, registers: $scope['registers'], schemas: $scope['schemas']);
+	}//end changedQuery()
 
+	/**
+	 * The rows of a search that changed inside the window, ordered by update moment and then id.
+	 *
+	 * @param array<string, mixed>                                                 $result The search result.
+	 * @param array{since: DateTimeImmutable, until: DateTimeImmutable, page: int} $window The window.
+	 *
+	 * @return array<int, array<string, mixed>> The rows.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function changedRows(array $result, array $window): array {
 		$rows = array_values(
 			array_filter(
 				array_map(self::toArray(...), (array)($result['results'] ?? [])),
@@ -253,11 +364,8 @@ class ChangesService {
 		);
 		usort($rows, self::compareChanged(...));
 
-		return [
-			'changed' => $this->dcat->mapDatasets(catalog: $catalog, catalogSlug: (string)$catalog['slug'], publications: $rows),
-			'hasMore' => self::hasMore(result: $result, page: $window['page']),
-		];
-	}//end changedPage()
+		return $rows;
+	}//end changedRows()
 
 	/**
 	 * Whether a row's last change falls inside the window.
@@ -330,7 +438,7 @@ class ChangesService {
 	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
 	 */
 	private function withdrawnSince(object $objectService, array $scope, DateTimeImmutable $since): array {
-		if ($scope['registers'] === [] || $scope['schemas'] === []) {
+		if (self::isEmptyScope(scope: $scope) === true) {
 			return [];
 		}
 
@@ -341,6 +449,20 @@ class ChangesService {
 
 		$inCatalog = $this->publicationsInScope(objectService: $objectService, scope: $scope, ids: array_keys($latest));
 
+		return self::withdrawnEntries(latest: $latest, inCatalog: $inCatalog);
+	}//end withdrawnSince()
+
+	/**
+	 * The withdrawal entries of the depublished publications that are in the catalog, oldest first.
+	 *
+	 * @param array<string, DateTimeImmutable> $latest    The latest depublication per publication id.
+	 * @param array<string, true>              $inCatalog The publication ids in the catalog's scope.
+	 *
+	 * @return array<int, array{id: string, withdrawnAt: string}>
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
+	 */
+	private static function withdrawnEntries(array $latest, array $inCatalog): array {
 		$withdrawn = [];
 		foreach ($latest as $id => $moment) {
 			if (isset($inCatalog[$id]) === true) {
@@ -354,7 +476,7 @@ class ChangesService {
 		);
 
 		return $withdrawn;
-	}//end withdrawnSince()
+	}//end withdrawnEntries()
 
 	/**
 	 * The latest depublication moment per publication, at or after the moment.
@@ -384,21 +506,54 @@ class ChangesService {
 			deleted: false
 		);
 
+		return self::latestDepublications(records: (array)($result['results'] ?? []), since: $since);
+	}//end depublishedSince()
+
+	/**
+	 * The latest depublication moment per publication, of whole-publication depublications since a moment.
+	 *
+	 * @param array<int, mixed> $records The depublication records.
+	 * @param DateTimeImmutable $since   The moment to look from.
+	 *
+	 * @return array<string, DateTimeImmutable> Publication id => latest depublication moment.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
+	 */
+	private static function latestDepublications(array $records, DateTimeImmutable $since): array {
 		$latest = [];
-		foreach (array_map(self::toArray(...), (array)($result['results'] ?? [])) as $record) {
+		foreach (array_map(self::toArray(...), $records) as $record) {
 			$publication = trim((string)($record['publication'] ?? ''));
-			$moment = self::moment(value: ($record['depublishedAt'] ?? null));
-			if ($publication === '' || $moment === null || $moment < $since || trim((string)($record['file'] ?? '')) !== '') {
+			$moment      = self::depublicationMoment(record: $record, since: $since);
+			if ($publication === '' || $moment === null) {
 				continue;
 			}
 
-			if (isset($latest[$publication]) === false || $moment > $latest[$publication]) {
-				$latest[$publication] = $moment;
-			}
+			$latest[$publication] = max($moment, ($latest[$publication] ?? $moment));
 		}
 
 		return $latest;
-	}//end depublishedSince()
+	}//end latestDepublications()
+
+	/**
+	 * The moment a record depublished its whole publication since a moment, or null.
+	 *
+	 * A record that names a file depublished that file only, not the publication.
+	 *
+	 * @param array<string, mixed> $record The depublication record.
+	 * @param DateTimeImmutable    $since  The moment to look from.
+	 *
+	 * @return DateTimeImmutable|null
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-withdrawn-record-is-reported-not-shown-oai-007
+	 */
+	private static function depublicationMoment(array $record, DateTimeImmutable $since): ?DateTimeImmutable {
+		$moment = self::moment(value: ($record['depublishedAt'] ?? null));
+		if ($moment === null || $moment < $since || trim((string)($record['file'] ?? '')) !== '') {
+			return null;
+		}
+
+		return $moment;
+	}//end depublicationMoment()
 
 	/**
 	 * Which of the given publications are stored in the catalogue's scope.
@@ -441,16 +596,27 @@ class ChangesService {
 			return null;
 		}
 
-		$cursor = rtrim(
+		return $this->urls->linkToRouteAbsolute(
+			'opencatalogi.changes.changes',
+			['catalogSlug' => $catalogSlug, 'since' => self::iso(moment: $since), 'cursor' => self::nextCursor(window: $window)]
+		);
+	}//end nextUrl()
+
+	/**
+	 * The cursor of the page after a window's page, pinned to the window's upper bound.
+	 *
+	 * @param array{until: DateTimeImmutable, page: int} $window The current window.
+	 *
+	 * @return string The url-safe cursor.
+	 *
+	 * @spec openspec/changes/oai-pmh-endpoint/specs/oai-pmh-endpoint/spec.md#requirement-a-re-user-asks-what-changed-since-a-moment-oai-006
+	 */
+	private static function nextCursor(array $window): string {
+		return rtrim(
 			strtr(base64_encode((string)json_encode(['until' => self::iso(moment: $window['until']), 'page' => ($window['page'] + 1)])), '+/', '-_'),
 			'='
 		);
-
-		return $this->urls->linkToRouteAbsolute(
-			'opencatalogi.changes.changes',
-			['catalogSlug' => $catalogSlug, 'since' => self::iso(moment: $since), 'cursor' => $cursor]
-		);
-	}//end nextUrl()
+	}//end nextCursor()
 
 	/**
 	 * A row's last change, or null when it has none.
