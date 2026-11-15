@@ -78,6 +78,12 @@ class ListenerRegistrar {
 			listener: PlooiDeliveryListener::class
 		);
 
+		// A harvested publication its source ended is taken down (capability-rows-close-gaps 2.8).
+		$context->registerEventListener(
+			event: ObjectUpdatedEvent::class,
+			listener: SourceAbsenceListener::class
+		);
+
 		// Queue a readiness check when a catalogue is switched on for Woo (REQ-WIH-004).
 		$context->registerEventListener(
 			event: ObjectCreatedEvent::class,

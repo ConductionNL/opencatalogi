@@ -253,6 +253,17 @@ class PublicationStateControllerTest extends TestCase {
 		$this->assertSame(['state' => 'public', 'canPublish' => true], $response->getData());
 	}
 
+	/** capability-rows-close-gaps 2.8: a publication its source no longer carries is flagged for the editor. */
+	public function testVisibilityFlagsAPublicationItsSourceDropped(): void {
+		$this->publication = ['id' => 'p1', 'publicationDate' => '2026-09-01T09:00:00+00:00', 'absentAtSource' => true, 'sourceAbsentSince' => '2026-11-14T03:00:00+00:00'];
+		$response = $this->controller->visibility('p1');
+		$this->assertSame(Http::STATUS_OK, $response->getStatus());
+		$this->assertSame(
+			['state' => 'public', 'canPublish' => true, 'sourceAbsence' => ['since' => '2026-11-14T03:00:00+00:00', 'endedAt' => null]],
+			$response->getData()
+		);
+	}
+
 	/** REQ-OPR-002: an editor outside the publishers group is told it cannot publish. */
 	public function testVisibilityTellsAnEditorItCannotPublish(): void {
 		$this->publication = ['id' => 'p1'];

@@ -10,6 +10,13 @@
 			{{ stateLabel }}
 		</p>
 
+		<NcNoteCard
+			v-if="sourceAbsenceNote"
+			type="warning"
+			data-testid="publication-source-absence">
+			{{ sourceAbsenceNote }}
+		</NcNoteCard>
+
 		<div class="publication-visibility__actions">
 			<NcButton
 				v-if="actions.publishNow"
@@ -67,6 +74,20 @@ import {
 import { injectedObjectContext } from './objectContext.js'
 
 /**
+ * A moment from the server, as the reader's locale writes a date and time.
+ *
+ * @param {string} value An ISO 8601 moment.
+ * @return {string} The formatted moment, or the value itself when it is not a date.
+ */
+function formatMoment(value) {
+	const date = new Date(value)
+	if (Number.isNaN(date.getTime())) {
+		return value
+	}
+	return date.toLocaleString()
+}
+
+/**
  * The withdraw endpoint's path: one document's, or the whole publication's.
  *
  * @param {{fileId: string}} answer What the dialog collected.
@@ -105,6 +126,7 @@ export default {
 		return {
 			state: '',
 			canPublish: false,
+			sourceAbsence: null,
 			documents: [],
 			busy: false,
 			dialogOpen: false,
@@ -127,6 +149,39 @@ export default {
 		/** @spec exclude presentational widget adapter; derives the object id. */
 		resolvedObjectId() {
 			return this.objectId || this.ctx.objectId || this.content.objectId || ''
+		},
+
+		/**
+		 * What the editor is told when the source this publication was harvested
+		 * from no longer carries it: taken down when the source ended it, or kept
+		 * until the editor acts.
+		 *
+		 * @return {string} The note, or an empty string when its source still carries it.
+		 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
+		 */
+		sourceAbsenceNote() {
+			const absence = this.sourceAbsence
+			if (!absence) {
+				return ''
+			}
+			if (absence.endedAt) {
+				return this.t(
+					'opencatalogi',
+					'Its source no longer carries this publication and ended it on {date}, so it was taken down.',
+					{ date: formatMoment(absence.endedAt) },
+				)
+			}
+			if (absence.since) {
+				return this.t(
+					'opencatalogi',
+					'Its source no longer carries this publication (since {date}). It stays as it is until you withdraw it.',
+					{ date: formatMoment(absence.since) },
+				)
+			}
+			return this.t(
+				'opencatalogi',
+				'Its source no longer carries this publication. It stays as it is until you withdraw it.',
+			)
 		},
 
 		/** @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001 */
@@ -195,9 +250,11 @@ export default {
 				const { data } = await axios.get(this.url('visibility'))
 				this.state = data.state || ''
 				this.canPublish = data.canPublish === true
+				this.sourceAbsence = data.sourceAbsence || null
 			} catch {
 				this.state = ''
 				this.canPublish = false
+				this.sourceAbsence = null
 			}
 
 			try {

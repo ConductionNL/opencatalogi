@@ -36,6 +36,7 @@ namespace OCA\OpenCatalogi\Controller;
 use OCA\OpenCatalogi\Contract\PublicationStateServiceInterface;
 use OCA\OpenCatalogi\Service\Publication\PublicationRights;
 use OCA\OpenCatalogi\Service\Publication\PublishRight;
+use OCA\OpenCatalogi\Service\Publication\SourceAbsence;
 use OCP\AppFramework\Controller;
 use OCP\AppFramework\Http;
 use OCP\AppFramework\Http\Attribute\NoAdminRequired;
@@ -80,10 +81,11 @@ class PublicationStateController extends Controller {
 	 *
 	 * @param string $id The publication id.
 	 *
-	 * @return JSONResponse `{state, canPublish}`, or 404 when the caller cannot read it.
+	 * @return JSONResponse `{state, canPublish}`, plus `sourceAbsence` when its source no longer carries it; 404 when the caller cannot read it.
 	 *
 	 * @spec openspec/specs/publications/spec.md#requirement-the-server-tells-the-page-whether-a-publication-is-public-req-ppw-001
 	 * @spec openspec/changes/operations-publish-rights/specs/publications/spec.md#requirement-the-screen-offers-publish-actions-only-to-publishers-req-opr-002
+	 * @spec openspec/changes/capability-rows-close-gaps/tasks.md
 	 */
 	#[NoAdminRequired]
 	public function visibility(string $id): JSONResponse {
@@ -102,12 +104,20 @@ class PublicationStateController extends Controller {
 			return $this->notFound();
 		}
 
-		return new JSONResponse(
-			[
-				'state' => $this->registers->stateOf(publication: $this->asArray(object: $publication)),
-				'canPublish' => $this->rights->mayPublish(),
-			]
-		);
+		$properties = $this->asArray(object: $publication);
+		$answer = [
+			'state' => $this->registers->stateOf(publication: $properties),
+			'canPublish' => $this->rights->mayPublish(),
+		];
+
+		// A harvested publication its source no longer carries is flagged for
+		// the editor (capability-rows-close-gaps 2.8). Absent for every other one.
+		$absence = (new SourceAbsence())->summary(publication: $properties);
+		if ($absence !== null) {
+			$answer['sourceAbsence'] = $absence;
+		}
+
+		return new JSONResponse($answer);
 	}//end visibility()
 
 	/**
