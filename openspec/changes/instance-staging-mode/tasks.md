@@ -17,6 +17,7 @@ Read `openspec/woo-build-rules.md` first. For OpenRegister doubles copy `environ
 - [x] 2.3 Add a test that greps `lib/` for `new Client(`, `IClientService` and the gateway delivery event names, and fails on a site outside the six gated methods and the inbound readers it lists by name (REQ-STG-002). Verify: `tests/Unit/Service/OutboundGateCoverageTest.php::testNoUngatedOutboundSiteExists`.
   - Built: `OutboundGateCoverageTest` reads `lib/` for `new Client(`, `IClientService` and `GatewayDeliveryRequestedEvent`; every file found is gated (`BroadcastService`, `NationalIndexService`, the announcement in `DirectoryService`, each hold asserted) or a named reader (`DirectoryService` fetches, `StandardsVersionService`, `WooReadinessService`), and a new file fails.
 - [ ] 2.4 Add a Dry runs page listing `dryRunDelivery` records (REQ-STG-002). Verify: `tests/e2e/instance-staging-mode.spec.ts` "the officer reviews what would have gone out".
+  - Built, code part: the Dry runs page and its menu entry as manifest configuration (`src/manifest.d/instance-staging-mode.json`): an index over `dryRunDelivery` in the publication register, newest first, with channel, time, user and reason, read only, a row opens the payload. `check:manifest` passes. Open: the e2e spec "the officer reviews what would have gone out" (needs a browser).
 
 ## 3. Public surface
 
