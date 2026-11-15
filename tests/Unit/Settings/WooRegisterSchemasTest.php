@@ -83,6 +83,8 @@ class WooRegisterSchemasTest extends TestCase {
 		'documentReference',
 		'fileName',
 		'fileType',
+		// The caller's type when it differs from the bytes' (REQ-PFF-001).
+		'fileTypeClaimed',
 		'assessment',
 		'weigeringsgronden',
 		'redactionInstructions',

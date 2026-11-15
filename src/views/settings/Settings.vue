@@ -251,6 +251,8 @@
 
 				<WooIndexConnection />
 
+				<PublishRightsLine />
+
 				<h3 class="woo-registration-heading">
 					{{ t('opencatalogi', 'National delivery channels') }}
 				</h3>
@@ -542,6 +544,7 @@ import MinusCircle from 'vue-material-design-icons/MinusCircle.vue'
 import Refresh from 'vue-material-design-icons/Refresh.vue'
 import Sync from 'vue-material-design-icons/Sync.vue'
 import PubliccodeHarvest from './PubliccodeHarvest.vue'
+import PublishRightsLine from './PublishRightsLine.vue'
 import WooIndexConnection from './WooIndexConnection.vue'
 import { remediationHintFor } from './remediationHints.js'
 import {
@@ -647,6 +650,7 @@ export default defineComponent({
 		CloseCircle,
 		MinusCircle,
 		InformationOutline,
+		PublishRightsLine,
 		WooIndexConnection,
 		PubliccodeHarvest,
 	},
