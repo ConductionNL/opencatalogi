@@ -221,15 +221,28 @@ export default {
 				this.busy = false
 				return
 			}
-			if (data.status === 'failed') {
-				this.showError(data.error || this.t('opencatalogi', 'The text assistant could not write a suggestion.'))
-				return
-			}
-			if (this.polls >= MAX_POLLS) {
-				this.showError(this.t('opencatalogi', 'The text assistant is taking too long. Try again later.'))
+			const error = this.pollError(data)
+			if (error !== null) {
+				this.showError(error)
 				return
 			}
 			this.schedulePoll()
+		},
+
+		/**
+		 * The error a poll answer ends with: the task failed, or it took too many polls.
+		 *
+		 * @param {{status: string, error?: string}} data The answer.
+		 * @return {string|null} The error, or null to poll again.
+		 */
+		pollError(data) {
+			if (data.status === 'failed') {
+				return data.error || this.t('opencatalogi', 'The text assistant could not write a suggestion.')
+			}
+			if (this.polls >= MAX_POLLS) {
+				return this.t('opencatalogi', 'The text assistant is taking too long. Try again later.')
+			}
+			return null
 		},
 
 		/**
@@ -245,14 +258,23 @@ export default {
 					level: this.level,
 					fromTaskId: this.taskId,
 				})
-				this.suggestion = ''
-				this.taskId = null
-				this.busy = false
-				this.messageType = 'success'
-				this.message = this.t('opencatalogi', 'The plain language summary is saved.')
+				this.accepted()
 			} catch (error) {
 				this.fail(error)
 			}
+		},
+
+		/**
+		 * Clear the suggestion after it was stored and say so.
+		 *
+		 * @return {void}
+		 */
+		accepted() {
+			this.suggestion = ''
+			this.taskId = null
+			this.busy = false
+			this.messageType = 'success'
+			this.message = this.t('opencatalogi', 'The plain language summary is saved.')
 		},
 
 		/**

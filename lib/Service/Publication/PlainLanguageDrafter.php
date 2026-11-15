@@ -122,14 +122,7 @@ class PlainLanguageDrafter {
 	 */
 	public function draft(string $publicationId): array {
 		$publication = $this->asArray(object: $this->writable(publicationId: $publicationId));
-
-		if ($this->isAvailable() === false) {
-			throw new PlainSummaryRefusal(
-				reason: 'no-provider',
-				status: 409,
-				message: $this->l10n->t('No text assistant is installed. You can write the plain language summary yourself.')
-			);
-		}
+		$this->assertAvailable();
 
 		$task = new Task(
 			taskTypeId: self::TASK_TYPE,
@@ -139,6 +132,44 @@ class PlainLanguageDrafter {
 			customId: self::CUSTOM_ID_PREFIX . $publicationId . ':' . $this->providerId()
 		);
 
+		$this->schedule(task: $task);
+
+		return ['taskId' => (int)$task->getId()];
+
+	}//end draft()
+
+	/**
+	 * Refuse a draft while no text assistant is installed.
+	 *
+	 * @return void
+	 *
+	 * @throws PlainSummaryRefusal 409 without a provider.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function assertAvailable(): void {
+		if ($this->isAvailable() === false) {
+			throw new PlainSummaryRefusal(
+				reason: 'no-provider',
+				status: 409,
+				message: $this->l10n->t('No text assistant is installed. You can write the plain language summary yourself.')
+			);
+		}
+
+	}//end assertAvailable()
+
+	/**
+	 * Hand the draft task to the task processing manager.
+	 *
+	 * @param Task $task The draft task.
+	 *
+	 * @return void
+	 *
+	 * @throws PlainSummaryRefusal 502 when the provider does not take it.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function schedule(Task $task): void {
 		try {
 			$this->tasks->scheduleTask(task: $task);
 		} catch (\Throwable $e) {
@@ -150,9 +181,7 @@ class PlainLanguageDrafter {
 			);
 		}
 
-		return ['taskId' => (int)$task->getId()];
-
-	}//end draft()
+	}//end schedule()
 
 	/**
 	 * The state of a draft: still running, its text, or why it failed.
@@ -175,6 +204,20 @@ class PlainLanguageDrafter {
 			throw new PlainSummaryRefusal(reason: 'task-not-found', status: 404);
 		}
 
+		return $this->statusOf(task: $task);
+
+	}//end poll()
+
+	/**
+	 * A draft task's answer to the poll: its text, its failure, or that it is still going.
+	 *
+	 * @param Task $task The draft task.
+	 *
+	 * @return array<string, mixed> `status`, with `text` or `error`.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function statusOf(Task $task): array {
 		return match ($task->getStatus()) {
 			Task::STATUS_SUCCESSFUL => $this->finished(task: $task),
 			Task::STATUS_FAILED, Task::STATUS_CANCELLED => [
@@ -185,7 +228,7 @@ class PlainLanguageDrafter {
 			default => ['status' => 'scheduled'],
 		};
 
-	}//end poll()
+	}//end statusOf()
 
 	/**
 	 * Store the plain summary the officer accepted, with its provenance.
@@ -210,47 +253,70 @@ class PlainLanguageDrafter {
 		$text = trim($text);
 		$this->assertAcceptable(text: $text, level: $level);
 
-		$provenance = $this->provenance->acceptedNow(generatedBy: 'person');
-		if ($fromTaskId !== null) {
-			$task = $this->ownTask(publicationId: $publicationId, taskId: $fromTaskId);
-			if ($task !== null && $task->getStatus() === Task::STATUS_SUCCESSFUL) {
-				$provenance = $this->provenance->acceptedNow(generatedBy: 'ai', provider: $this->providerOf(task: $task));
-			}
-		}
-
-		$record = $this->asArray(object: $publication);
+		$provenance = $this->acceptedProvenance(publicationId: $publicationId, fromTaskId: $fromTaskId);
+		$record = array_merge($this->asArray(object: $publication), ['plainSummary' => $text, 'plainSummaryLevel' => $level]);
 		unset($record['id'], $record['@self']);
-		$record['plainSummary'] = $text;
-		$record['plainSummaryLevel'] = $level;
 
 		$this->provenance->expect(text: $text, provenance: $provenance);
 		try {
-			$configuration = $this->publicationRegister();
-			$this->openRegister->objectService()->saveObject(
-				object: $record,
-				register: $configuration['register'],
-				schema: $configuration['schema'],
-				uuid: $publicationId,
-				_rbac: true
-			);
-		} catch (\Throwable $e) {
-			$this->logger->warning('[PlainLanguageDrafter] The plain summary could not be stored: ' . $e->getMessage());
-			throw new PlainSummaryRefusal(
-				reason: 'not-stored',
-				status: 503,
-				message: $this->l10n->t('The plain language summary could not be stored.')
-			);
+			$this->save(publicationId: $publicationId, record: $record);
 		} finally {
 			$this->provenance->forget(text: $text);
 		}
 
-		return [
-			'plainSummary' => $text,
-			'plainSummaryLevel' => $level,
-			'plainSummaryProvenance' => $provenance,
-		];
+		return ['plainSummary' => $text, 'plainSummaryLevel' => $level, 'plainSummaryProvenance' => $provenance];
 
 	}//end accept()
+
+	/**
+	 * The provenance an accept stores: `ai` with its provider when it names this
+	 * caller's finished draft of this publication, else `person`.
+	 *
+	 * @param string $publicationId The publication.
+	 * @param int|null $fromTaskId The draft task the text came from, if any.
+	 *
+	 * @return array<string, mixed> The provenance.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function acceptedProvenance(string $publicationId, ?int $fromTaskId): array {
+		$task = null;
+		if ($fromTaskId !== null) {
+			$task = $this->ownTask(publicationId: $publicationId, taskId: $fromTaskId);
+		}
+
+		if ($task === null || $task->getStatus() !== Task::STATUS_SUCCESSFUL) {
+			return $this->provenance->acceptedNow(generatedBy: 'person');
+		}
+
+		return $this->provenance->acceptedNow(generatedBy: 'ai', provider: $this->providerOf(task: $task));
+
+	}//end acceptedProvenance()
+
+	/**
+	 * Store the publication with its accepted plain summary, as the caller.
+	 *
+	 * @param string $publicationId The publication.
+	 * @param array<string, mixed> $record The publication record to store.
+	 *
+	 * @return void
+	 *
+	 * @throws PlainSummaryRefusal 503 when it could not be stored.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function save(string $publicationId, array $record): void {
+		try {
+			$target = $this->publicationRegister();
+			$objects = $this->openRegister->objectService();
+			$objects->saveObject(object: $record, register: $target['register'], schema: $target['schema'], uuid: $publicationId, _rbac: true);
+		} catch (\Throwable $e) {
+			$this->logger->warning('[PlainLanguageDrafter] The plain summary could not be stored: ' . $e->getMessage());
+			$message = $this->l10n->t('The plain language summary could not be stored.');
+			throw new PlainSummaryRefusal(reason: 'not-stored', status: 503, message: $message);
+		}
+
+	}//end save()
 
 	/**
 	 * Refuse an empty or too long text, or a level outside the list.
@@ -264,19 +330,13 @@ class PlainLanguageDrafter {
 	 */
 	private function assertAcceptable(string $text, string $level): void {
 		if ($text === '' || mb_strlen($text) > self::MAX_LENGTH) {
-			throw new PlainSummaryRefusal(
-				reason: 'invalid-text',
-				status: 400,
-				message: $this->l10n->t('A plain language summary has between 1 and 1500 characters.')
-			);
+			$message = $this->l10n->t('A plain language summary has between 1 and 1500 characters.');
+			throw new PlainSummaryRefusal(reason: 'invalid-text', status: 400, message: $message);
 		}
 
 		if (in_array($level, PlainSummaryCheck::LEVELS, true) === false) {
-			throw new PlainSummaryRefusal(
-				reason: 'invalid-level',
-				status: 400,
-				message: $this->l10n->t('A plain language summary needs its reading level (plainSummaryLevel): A2, B1 or B2.')
-			);
+			$message = $this->l10n->t('A plain language summary needs its reading level (plainSummaryLevel): A2, B1 or B2.');
+			throw new PlainSummaryRefusal(reason: 'invalid-level', status: 400, message: $message);
 		}
 
 	}//end assertAcceptable()
@@ -295,30 +355,7 @@ class PlainLanguageDrafter {
 			throw new PlainSummaryRefusal(reason: 'not-logged-in', status: 401);
 		}
 
-		try {
-			$configuration = $this->publicationRegister();
-			$publication = $this->openRegister->objectService()->find(
-				id: $publicationId,
-				register: $configuration['register'],
-				schema: $configuration['schema'],
-				_rbac: true
-			);
-		} catch (\Throwable $e) {
-			// Not there, or not readable by this caller: both answer 404, so
-			// an id nobody may read does not confirm that it exists.
-			$class = get_class($e);
-			if (str_ends_with($class, 'DoesNotExistException') === true || str_ends_with($class, 'NotAuthorizedException') === true) {
-				throw new PlainSummaryRefusal(reason: 'not-found', status: 404);
-			}
-
-			$this->logger->warning('[PlainLanguageDrafter] The publication could not be read: ' . $e->getMessage());
-			throw new PlainSummaryRefusal(reason: 'register-unavailable', status: 503);
-		}
-
-		if (is_object($publication) === false) {
-			throw new PlainSummaryRefusal(reason: 'not-found', status: 404);
-		}
-
+		$publication = $this->findPublication(publicationId: $publicationId);
 		if ($this->rights->mayUpdate(publication: $publication) === false) {
 			throw new PlainSummaryRefusal(
 				reason: 'forbidden',
@@ -330,6 +367,57 @@ class PlainLanguageDrafter {
 		return $publication;
 
 	}//end writable()
+
+	/**
+	 * Read the publication as the caller.
+	 *
+	 * @param string $publicationId The publication.
+	 *
+	 * @return object The publication.
+	 *
+	 * @throws PlainSummaryRefusal 404 when it is not there or not readable, 503 when the register is unavailable.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function findPublication(string $publicationId): object {
+		try {
+			$target = $this->publicationRegister();
+			$objects = $this->openRegister->objectService();
+			$publication = $objects->find(id: $publicationId, register: $target['register'], schema: $target['schema'], _rbac: true);
+		} catch (\Throwable $e) {
+			throw $this->readRefusal(exception: $e);
+		}
+
+		if (is_object($publication) === false) {
+			throw new PlainSummaryRefusal(reason: 'not-found', status: 404);
+		}
+
+		return $publication;
+
+	}//end findPublication()
+
+	/**
+	 * The refusal for a publication that could not be read.
+	 *
+	 * Not there, or not readable by this caller: both answer 404, so an id
+	 * nobody may read does not confirm that it exists.
+	 *
+	 * @param \Throwable $exception What the read threw.
+	 *
+	 * @return PlainSummaryRefusal 404, or 503 when the register itself failed.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function readRefusal(\Throwable $exception): PlainSummaryRefusal {
+		$class = get_class($exception);
+		if (str_ends_with($class, 'DoesNotExistException') === true || str_ends_with($class, 'NotAuthorizedException') === true) {
+			return new PlainSummaryRefusal(reason: 'not-found', status: 404);
+		}
+
+		$this->logger->warning('[PlainLanguageDrafter] The publication could not be read: ' . $exception->getMessage());
+		return new PlainSummaryRefusal(reason: 'register-unavailable', status: 503);
+
+	}//end readRefusal()
 
 	/**
 	 * The task, when it is this caller's draft of this publication.
@@ -346,17 +434,30 @@ class PlainLanguageDrafter {
 			return null;
 		}
 
-		$prefix = self::CUSTOM_ID_PREFIX . $publicationId . ':';
-		if ($task->getTaskTypeId() !== self::TASK_TYPE
-			|| str_starts_with((string)$task->getCustomId(), $prefix) === false
-			|| $task->getUserId() !== $this->userId()
-		) {
+		if ($this->isOwnDraft(task: $task, publicationId: $publicationId) === false) {
 			return null;
 		}
 
 		return $task;
 
 	}//end ownTask()
+
+	/**
+	 * Whether a task is a plain summary draft of this publication by this caller.
+	 *
+	 * @param Task $task The task.
+	 * @param string $publicationId The publication.
+	 *
+	 * @return bool True when it is.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function isOwnDraft(Task $task, string $publicationId): bool {
+		return $task->getTaskTypeId() === self::TASK_TYPE
+			&& str_starts_with((string)$task->getCustomId(), self::CUSTOM_ID_PREFIX . $publicationId . ':') === true
+			&& $task->getUserId() === $this->userId();
+
+	}//end isOwnDraft()
 
 	/**
 	 * The answer for a finished draft.

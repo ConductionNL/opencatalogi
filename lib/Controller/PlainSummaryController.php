@@ -141,20 +141,33 @@ class PlainSummaryController extends Controller {
 			return new JSONResponse(data: ['error' => 'invalid-text'], statusCode: Http::STATUS_BAD_REQUEST);
 		}
 
-		$taskId = null;
-		if (is_int($fromTaskId) === true || (is_string($fromTaskId) === true && ctype_digit($fromTaskId) === true)) {
-			$taskId = (int)$fromTaskId;
-		}
-
 		try {
 			return new JSONResponse(
-				$this->drafter->accept(publicationId: $id, text: $text, level: $level, fromTaskId: $taskId)
+				$this->drafter->accept(publicationId: $id, text: $text, level: $level, fromTaskId: $this->taskIdOf(value: $fromTaskId))
 			);
 		} catch (PlainSummaryRefusal $refusal) {
 			return $this->refused(refusal: $refusal);
 		}
 
 	}//end accept()
+
+	/**
+	 * The draft task id the accept names: a whole number, or null for none.
+	 *
+	 * @param mixed $value The `fromTaskId` parameter.
+	 *
+	 * @return int|null The task id, or null when absent or not a whole number.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function taskIdOf(mixed $value): ?int {
+		if (is_int($value) === true || (is_string($value) === true && ctype_digit($value) === true)) {
+			return (int)$value;
+		}
+
+		return null;
+
+	}//end taskIdOf()
 
 	/**
 	 * The answer for a refusal.

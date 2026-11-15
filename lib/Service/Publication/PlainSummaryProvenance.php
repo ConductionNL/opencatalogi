@@ -73,14 +73,9 @@ class PlainSummaryProvenance {
 	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
 	 */
 	public function acceptedNow(string $generatedBy, ?string $provider = null): array {
-		$user = $this->userSession->getUser();
-		$acceptedBy = 'system';
-		if ($user !== null) {
-			$acceptedBy = $user->getUID();
-		}
-
+		$acceptedBy = $this->acceptingUser();
 		$provenance = ['generatedBy' => $generatedBy];
-		if ($generatedBy === 'ai' && $provider !== null && $provider !== '') {
+		if ($generatedBy === 'ai' && (string)$provider !== '') {
 			$provenance['provider'] = $provider;
 		}
 
@@ -90,6 +85,23 @@ class PlainSummaryProvenance {
 		return $provenance;
 
 	}//end acceptedNow()
+
+	/**
+	 * Who accepts: the logged-in user, or `system` without one.
+	 *
+	 * @return string The accepting user id.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-drafted-plain-summary-is-a-suggestion-an-officer-accepts-req-ppl-002
+	 */
+	private function acceptingUser(): string {
+		$user = $this->userSession->getUser();
+		if ($user === null) {
+			return 'system';
+		}
+
+		return $user->getUID();
+
+	}//end acceptingUser()
 
 	/**
 	 * Hold the provenance for the save that stores this text.

@@ -109,34 +109,70 @@ class PlainSummaryCheck implements IEventListener {
 	 */
 	private function check(ObjectCreatingEvent|ObjectUpdatingEvent $event, ObjectEntity $new, ?ObjectEntity $old): void {
 		$data = ($new->getObject() ?? []);
-		$stored = [];
-		if ($old !== null) {
-			$stored = ($old->getObject() ?? []);
-		}
-
+		$stored = ($old?->getObject() ?? []);
 		if ($this->carriesPlainSummary(data: $data) === false && $this->carriesPlainSummary(data: $stored) === false) {
 			return;
 		}
 
 		$text = $this->text(data: $data);
-		$modified = [];
-		if ($text !== '') {
-			if (array_key_exists('plainSummaryLevel', $data) === false) {
-				$modified['plainSummaryLevel'] = self::DEFAULT_LEVEL;
-			} else if (in_array($data['plainSummaryLevel'], self::LEVELS, true) === false) {
-				$this->refuse(event: $event);
-				return;
-			}
+		$modified = $this->levelFix(text: $text, data: $data);
+		if ($modified === null) {
+			$this->refuse(event: $event);
+			return;
 		}
 
-		$modified['plainSummaryProvenance'] = $this->provenanceOf(text: $text, data: $data, stored: $stored);
+		$modified['plainSummaryProvenance'] = $this->provenanceOf(text: $text, stored: $stored);
+		$this->modify(event: $event, data: $data, modified: $modified);
+
+	}//end check()
+
+	/**
+	 * The level this save needs: the default for a summary without one, nothing
+	 * when the level is valid or there is no summary, null for an unknown level.
+	 *
+	 * @param string $text The summary this save writes.
+	 * @param array<string, mixed> $data The object as it would be written.
+	 *
+	 * @return array<string, string>|null The level to add, or null to refuse the save.
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 */
+	private function levelFix(string $text, array $data): ?array {
+		if ($text === '') {
+			return [];
+		}
+
+		if (array_key_exists('plainSummaryLevel', $data) === false) {
+			return ['plainSummaryLevel' => self::DEFAULT_LEVEL];
+		}
+
+		if (in_array($data['plainSummaryLevel'], self::LEVELS, true) === false) {
+			return null;
+		}
+
+		return [];
+
+	}//end levelFix()
+
+	/**
+	 * Write the modified fields onto the event, unless they change nothing.
+	 *
+	 * @param ObjectCreatingEvent|ObjectUpdatingEvent $event The pre-save event.
+	 * @param array<string, mixed> $data The object as it would be written.
+	 * @param array<string, mixed> $modified The level and provenance this save stores.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/changes/publication-plain-language-and-translation/specs/publications/spec.md#requirement-a-publication-carries-a-plain-language-summary-with-its-level-req-ppl-001
+	 */
+	private function modify(ObjectCreatingEvent|ObjectUpdatingEvent $event, array $data, array $modified): void {
 		if (($data['plainSummaryProvenance'] ?? null) === $modified['plainSummaryProvenance'] && count($modified) === 1) {
 			return;
 		}
 
 		$event->setModifiedData(array_merge($event->getModifiedData(), $modified));
 
-	}//end check()
+	}//end modify()
 
 	/**
 	 * The provenance this save stores.
@@ -145,29 +181,38 @@ class PlainSummaryCheck implements IEventListener {
 	 * when the text changed, else what is stored: a caller never writes it.
 	 *
 	 * @param string $text The summary this save writes.
-	 * @param array<string, mixed> $data The object as it would be written.
 	 * @param array<string, mixed> $stored The object as stored.
 	 *
 	 * @return array<string, mixed>|null The provenance, or null without a summary.
 	 */
-	private function provenanceOf(string $text, array $data, array $stored): ?array {
+	private function provenanceOf(string $text, array $stored): ?array {
 		if ($text === '') {
 			return null;
 		}
 
-		$accepted = $this->provenance->take(text: $text);
-		if ($accepted !== null) {
-			return $accepted;
-		}
-
-		$storedProvenance = ($stored['plainSummaryProvenance'] ?? null);
-		if ($text === $this->text(data: $stored) && is_array($storedProvenance) === true) {
-			return $storedProvenance;
-		}
-
-		return $this->provenance->acceptedNow(generatedBy: 'person');
+		return ($this->provenance->take(text: $text)
+			?? $this->storedProvenance(text: $text, stored: $stored)
+			?? $this->provenance->acceptedNow(generatedBy: 'person'));
 
 	}//end provenanceOf()
+
+	/**
+	 * The stored provenance, while the text it belongs to is unchanged.
+	 *
+	 * @param string $text The summary this save writes.
+	 * @param array<string, mixed> $stored The object as stored.
+	 *
+	 * @return array<string, mixed>|null The stored provenance, or null when the text changed.
+	 */
+	private function storedProvenance(string $text, array $stored): ?array {
+		$storedProvenance = ($stored['plainSummaryProvenance'] ?? null);
+		if ($text !== $this->text(data: $stored) || is_array($storedProvenance) === false) {
+			return null;
+		}
+
+		return $storedProvenance;
+
+	}//end storedProvenance()
 
 	/**
 	 * Whether an object carries any of the plain summary fields.
