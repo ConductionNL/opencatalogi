@@ -88,6 +88,7 @@ class DirectorySyncDirectoryTest extends TestCase {
 			'broadcastService' => $this->broadcastService,
 			'request' => $this->request,
 			'connectionReporter' => null,
+			'dryRuns' => null,
 			'uniqueDirectories' => [self::PEER, 'https://other.example.org/api/directory'],
 			'cachedUniqueDirs' => null,
 			'cacheTimestamp' => 0,

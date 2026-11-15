@@ -157,6 +157,7 @@ class DirectoryService implements DirectoryServiceInterface {
 	 * @param IRequest $request Request interface for accessing HTTP headers
 	 * @param LoggerInterface|null $logger PSR-3 logger for the SSRF-allowance warning
 	 * @param ConnectionReporter|null $connectionReporter Tells integriq what a sync met, or nothing when absent.
+	 * @param DryRunRecorder|null $dryRuns Holds the announcement to a peer as a dry run in staging (REQ-STG-002).
 	 *
 	 * @spec openspec/changes/adopt-connection-registry/specs/app-connections/spec.md#requirement-req-oc-conn-003-opencatalogi-reports-what-a-sync-a-broadcast-and-a-readiness-check-met
 	 */
@@ -176,6 +177,8 @@ class DirectoryService implements DirectoryServiceInterface {
 		// The integriq connection report (adopt-connection-registry). Nullable
 		// and last for the same reason as the logger above.
 		private readonly ?ConnectionReporter $connectionReporter = null,
+		// Holds the announcement to a peer in staging (instance-staging-mode REQ-STG-002).
+		private readonly ?DryRunRecorder $dryRuns = null,
 	) {
 		$this->appName = 'opencatalogi';
 		$this->client = new Client([]);
@@ -785,6 +788,12 @@ class DirectoryService implements DirectoryServiceInterface {
 			$this->urlGenerator->linkToRoute('opencatalogi.directory.index')
 		);
 		if ($this->isLocalUrl(url: $ourDirectoryUrl) === true || $this->isSystemBroadcast() === true) {
+			return;
+		}
+
+		// In staging the announcement is kept as a dry run and the peer is not told.
+		$announcement = ['directoryUrl' => $directoryUrl, 'ourDirectoryUrl' => $ourDirectoryUrl];
+		if ($this->dryRuns?->hold(channel: 'directory-announce', payload: $announcement) !== null) {
 			return;
 		}
 

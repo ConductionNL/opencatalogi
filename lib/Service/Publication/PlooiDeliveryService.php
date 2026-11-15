@@ -34,6 +34,7 @@ use DateTimeInterface;
 use DateTimeZone;
 use OCA\OpenCatalogi\Contract\PlooiDeliveryServiceInterface;
 use OCA\OpenCatalogi\Service\SettingsService;
+use OCA\OpenCatalogi\Service\DryRunRecorder;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -56,11 +57,15 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 	 * @param SettingsService $settingsService Settings, for the catalog register and schema and the object service.
 	 * @param NationalIndexService $indexService The national channels.
 	 * @param LoggerInterface $logger Logger.
+	 * @param DryRunRecorder|null $dryRuns Holds the delivery as a dry run in staging (REQ-STG-002).
 	 */
 	public function __construct(
 		private readonly SettingsService $settingsService,
 		private readonly NationalIndexService $indexService,
 		private readonly LoggerInterface $logger,
+		// Holds the delivery in staging (instance-staging-mode REQ-STG-002).
+		// Nullable and last, so every existing construction site keeps working.
+		private readonly ?DryRunRecorder $dryRuns = null,
 	) {
 
 	}//end __construct()
@@ -72,7 +77,7 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 	 * @param string $register Its register id.
 	 * @param string $schema Its schema id.
 	 *
-	 * @return array<string, string>|null The PLOOI fields stored, or null when no catalogue asks for PLOOI.
+	 * @return array<string, mixed>|null The PLOOI fields stored, the dry run in staging (nothing stored), or null when no catalogue asks for PLOOI.
 	 *
 	 * @spec openspec/specs/woo-compliance/spec.md#requirement-a-publication-that-turns-public-is-delivered-to-plooi-when-the-catalogue-asks-for-it-req-wnd-003
 	 */
@@ -88,6 +93,13 @@ class PlooiDeliveryService implements PlooiDeliveryServiceInterface {
 		}
 
 		$publication = $entity->jsonSerialize();
+		// In staging the document is kept as a dry run, and the publication is left as it is:
+		// no plooiStatus and no plooiDeliveredAt claim a delivery that never happened.
+		$held = $this->dryRuns?->hold(channel: 'plooi', payload: $this->document(publication: $publication, uuid: $uuid));
+		if ($held !== null) {
+			return $held;
+		}
+
 		$now = (new DateTimeImmutable('now', new DateTimeZone('UTC')))->format(DateTimeInterface::ATOM);
 		$fields = ['plooiDeliveredAt' => $now];
 
