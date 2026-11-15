@@ -24,6 +24,10 @@ declare(strict_types=1);
 namespace OCA\OpenCatalogi\Tests\Unit\Repair;
 
 use OCA\OpenCatalogi\Repair\HandRecordsToSystem;
+use OCA\OpenRegister\Db\ObjectEntity;
+use OCA\OpenRegister\Db\Register;
+use OCA\OpenRegister\Db\Schema;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -73,22 +77,30 @@ final class HandRecordsToSystemTest extends TestCase {
 				return ['results' => [['@self' => ['id' => 'u-editor']], ['@self' => ['id' => 'u-none']], ['id' => 'u-system']]];
 			}
 
-			public function find(string $id, mixed $register = null, mixed $schema = null, bool $_rbac = true, bool $_multitenancy = true, bool $_render = true, bool $_audit = true): object {
-				$owner = ['u-editor' => 'editor', 'u-none' => null, 'u-system' => '__system__'][$id];
-				return new class ($id, $owner) {
-					public function __construct(public readonly string $uuid, private readonly ?string $owner) {
-					}
-
-					public function getOwner(): ?string {
-						return $this->owner;
-					}
-				};
+			public function find(int|string $id, ?ObjectFindOptions $options = null, bool $_rbac = true, bool $_multitenancy = true): ObjectEntity {
+				$this->test->assertSame(
+					['reg', 'dep', false, false, false, false],
+					[$options?->register?->getSlug(), $options?->schema?->getSlug(), $options?->render, $options?->audit, $_rbac, $_multitenancy]
+				);
+				$object = new ObjectEntity();
+				$object->setUuid($id);
+				$object->setOwner(['u-editor' => 'editor', 'u-none' => null, 'u-system' => '__system__'][$id]);
+				return $object;
 			}
 		};
 
-		$mapper = new class {
-			public function find(string $id): string {
-				return 'entity-' . $id;
+		$registers = new class {
+			public function find(string $id): Register {
+				$register = new Register();
+				$register->setSlug($id);
+				return $register;
+			}
+		};
+		$schemas = new class {
+			public function find(string $id): Schema {
+				$schema = new Schema();
+				$schema->setSlug($id);
+				return $schema;
 			}
 		};
 
@@ -96,7 +108,8 @@ final class HandRecordsToSystemTest extends TestCase {
 		$container->method('get')->willReturnCallback(static fn (string $id): object => match ($id) {
 			'OCA\OpenRegister\Service\ObjectService' => $objects,
 			'OCA\OpenRegister\Service\Rbac\ObjectOwnershipServiceInterface' => $ownership,
-			default => $mapper,
+			'OCA\OpenRegister\Db\RegisterMapper' => $registers,
+			default => $schemas,
 		});
 
 		return new HandRecordsToSystem(appManager: $apps, config: $appConfig, container: $container);
@@ -126,7 +139,7 @@ final class HandRecordsToSystemTest extends TestCase {
 	 * @return array The outcome.
 	 */
 	public function release(object $record): array {
-		$this->released[$record->object->uuid] = $this->inSystem;
+		$this->released[$record->object->getUuid()] = $this->inSystem;
 		return ['changed' => $record->object->getOwner() !== '__system__'];
 	}//end release()
 

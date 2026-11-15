@@ -28,6 +28,7 @@ declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Repair;
 
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectFindOptions;
 use OCP\App\IAppManager;
 use OCP\IAppConfig;
 use OCP\Migration\IOutput;
@@ -181,12 +182,9 @@ class HandRecordsToSystem implements IRepairStep {
 
 		$object = $services['objects']->find(
 			id: $uuid,
-			register: $tables[0],
-			schema: $tables[1],
+			options: new ObjectFindOptions(register: $tables[0], schema: $tables[1], render: false, audit: false),
 			_rbac: false,
-			_multitenancy: false,
-			_render: false,
-			_audit: false
+			_multitenancy: false
 		);
 		if ($object === null || in_array($object->getOwner(), [null, ''], true) === true) {
 			return 0;
@@ -252,6 +250,7 @@ class HandRecordsToSystem implements IRepairStep {
 		if (method_exists($services['ownership'], 'releaseToSystem') === false
 			|| method_exists($services['objects'], 'runAsSystem') === false
 			|| class_exists('OCA\OpenRegister\Service\Rbac\OwnedRecord') === false
+			|| class_exists(ObjectFindOptions::class) === false
 		) {
 			$output->info('This OpenRegister cannot hand records to the system yet; nothing was changed');
 			return null;
