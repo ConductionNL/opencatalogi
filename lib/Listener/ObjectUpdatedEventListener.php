@@ -87,8 +87,6 @@ class ObjectUpdatedEventListener implements IEventListener {
 	 *
 	 * @return void
 	 *
-	 * @SuppressWarnings(PHPMD.CyclomaticComplexity)
-	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 * @spec openspec/changes/migrate-activity-to-activity-leaf/tasks.md#task-4
 	 */
@@ -103,37 +101,7 @@ class ObjectUpdatedEventListener implements IEventListener {
 		$this->stampRetentionDefaults(event: $event);
 
 		try {
-			// Check if any auto-publishing features are enabled.
-			$publishingOptions = $this->settingsService->getPublishingOptions();
-
-			// Skip if no auto-publishing features are enabled.
-			if ($publishingOptions['auto_publish_objects'] === false
-				&& $publishingOptions['auto_publish_attachments'] === false
-			) {
-				return;
-			}
-
-			// Get the updated object from the event.
-			$newObjectEntity = $event->getNewObject();
-			$oldObjectEntity = $event->getOldObject();
-
-			// Convert ObjectEntity to array format expected by EventService.
-			$newObjectData = $this->convertObjectEntityToArray(objectEntity: $newObjectEntity);
-
-			// Check if this update should trigger auto-publishing logic.
-			if ($this->shouldProcessUpdate(
-				newObjectData: $newObjectData,
-				oldObjectEntity: $oldObjectEntity,
-				publishingOptions: $publishingOptions
-			) === false
-			) {
-				return;
-			}
-
-			// Process the object update event through EventService.
-			$result = $this->eventService->handleObjectUpdateEvents([$newObjectData]);
-
-			$this->logAutoPublishOutcome(result: $result, about: ['event' => 'update', 'objectId' => ($newObjectData['@self']['id'] ?? 'unknown')]);
+			$this->autoPublish(event: $event);
 		} catch (\Throwable $e) {
 			// Log unexpected errors and continue gracefully. \Throwable, not
 			// \Exception: a missing class or type error is a PHP Error, and an
@@ -145,6 +113,39 @@ class ObjectUpdatedEventListener implements IEventListener {
 		}//end try
 
 	}//end handle()
+
+	/**
+	 * Hand the updated object to the EventService when an auto-publishing option applies.
+	 *
+	 * @param ObjectUpdatedEvent $event The OR object update event.
+	 *
+	 * @return void
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function autoPublish(ObjectUpdatedEvent $event): void {
+		$publishingOptions = $this->settingsService->getPublishingOptions();
+
+		// Skip if no auto-publishing features are enabled.
+		if ($publishingOptions['auto_publish_objects'] === false
+			&& $publishingOptions['auto_publish_attachments'] === false
+		) {
+			return;
+		}
+
+		// Convert ObjectEntity to array format expected by EventService.
+		$newObjectData = $this->convertObjectEntityToArray(objectEntity: $event->getNewObject());
+		if ($this->isObjectPublished(objectData: $newObjectData) === false
+			|| $this->appliesToUpdate(event: $event, publishingOptions: $publishingOptions) === false
+		) {
+			return;
+		}
+
+		$result = $this->eventService->handleObjectUpdateEvents([$newObjectData]);
+
+		$this->logAutoPublishOutcome(result: $result, about: ['event' => 'update', 'objectId' => ($newObjectData['@self']['id'] ?? 'unknown')]);
+
+	}//end autoPublish()
 
 	/**
 	 * Stamp retention defaults when an object first becomes published (RET-004).
@@ -163,15 +164,8 @@ class ObjectUpdatedEventListener implements IEventListener {
 	 */
 	private function stampRetentionDefaults(ObjectUpdatedEvent $event): void {
 		try {
-			$oldObjectEntity = $event->getOldObject();
 			$newObjectData = $this->convertObjectEntityToArray(objectEntity: $event->getNewObject());
-
-			$wasPublished = false;
-			if ($oldObjectEntity !== null) {
-				$wasPublished = $this->isObjectEntityPublished(objectEntity: $oldObjectEntity);
-			}
-
-			if ($wasPublished === false && $this->isObjectPublished(objectData: $newObjectData) === true) {
+			if ($this->wasPublished(event: $event) === false && $this->isObjectPublished(objectData: $newObjectData) === true) {
 				$this->retentionService->applyDefaultsAtPublication(objectData: $newObjectData);
 			}
 		} catch (\Throwable $e) {
@@ -184,49 +178,47 @@ class ObjectUpdatedEventListener implements IEventListener {
 	}//end stampRetentionDefaults()
 
 	/**
-	 * Determine if an object update should trigger auto-publishing logic.
+	 * Whether an update of a published object triggers auto-publishing.
 	 *
-	 * @param array $newObjectData The updated object data.
-	 * @param \OCA\OpenRegister\Db\ObjectEntity|null $oldObjectEntity The original object entity.
-	 * @param array $publishingOptions The publishing configuration.
+	 * With auto-publish attachments on, every update of a published object
+	 * does; with only auto-publish objects on, only the one that published it.
+	 *
+	 * @param ObjectUpdatedEvent $event The OR object update event.
+	 * @param array<string, mixed> $publishingOptions The publishing configuration.
 	 *
 	 * @return boolean True if the update should be processed, false otherwise.
 	 *
 	 * @spec openspec/specs/auto-publishing/spec.md
 	 */
-	private function shouldProcessUpdate(
-		array $newObjectData,
-		?\OCA\OpenRegister\Db\ObjectEntity $oldObjectEntity,
-		array $publishingOptions,
-	): bool {
-		// If auto-publish attachments is enabled, always process for published objects.
+	private function appliesToUpdate(ObjectUpdatedEvent $event, array $publishingOptions): bool {
 		if ($publishingOptions['auto_publish_attachments'] === true) {
-			$isNewObjectPublished = $this->isObjectPublished(objectData: $newObjectData);
-			if ($isNewObjectPublished === true) {
-				return true;
-			}
+			return true;
 		}
 
-		// If auto-publish objects is not enabled, no further processing needed.
 		if ($publishingOptions['auto_publish_objects'] === false) {
 			return false;
 		}
 
-		// Check if publication status changed from unpublished to published.
-		$wasPublished = false;
-		if ($oldObjectEntity !== null) {
-			$wasPublished = $this->isObjectEntityPublished(objectEntity: $oldObjectEntity);
+		return $this->wasPublished(event: $event) === false;
+	}//end appliesToUpdate()
+
+	/**
+	 * Whether the object was published before this update.
+	 *
+	 * @param ObjectUpdatedEvent $event The OR object update event.
+	 *
+	 * @return boolean False when there is no old object.
+	 *
+	 * @spec openspec/specs/auto-publishing/spec.md
+	 */
+	private function wasPublished(ObjectUpdatedEvent $event): bool {
+		$oldObjectEntity = $event->getOldObject();
+		if ($oldObjectEntity === null) {
+			return false;
 		}
 
-		$isPublished = $this->isObjectPublished(objectData: $newObjectData);
-
-		// Process if object became published.
-		if ($wasPublished === false && $isPublished === true) {
-			return true;
-		}
-
-		return false;
-	}//end shouldProcessUpdate()
+		return $this->isObjectEntityPublished(objectEntity: $oldObjectEntity);
+	}//end wasPublished()
 
 	/**
 	 * Check if an ObjectEntity is currently published.
