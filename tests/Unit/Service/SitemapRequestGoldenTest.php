@@ -29,6 +29,7 @@
  * @uses \OCA\OpenCatalogi\Service\SitemapDocumentMapper
  * @uses \OCA\OpenCatalogi\Service\SitemapDocumentFields
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Service\FileFacts
  * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\SitemapIndexBuilder
  * @uses \OCA\OpenCatalogi\Http\XMLResponse
@@ -38,6 +39,8 @@
 declare(strict_types=1);
 
 namespace Unit\Service;
+
+require_once __DIR__ . '/Support/FileFactsByExtension.php';
 
 use OCA\OpenCatalogi\Http\XMLResponse;
 use OCA\OpenCatalogi\Service\InstanceSettings;
@@ -230,7 +233,7 @@ class SitemapRequestGoldenTest extends TestCase {
 			new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)),
 			$settingsService,
 			new InstanceSettings($this->createMock(IURLGenerator::class), $this->createMock(IAppConfig::class)),
-			new TooiVocabularyService(),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($this->createMock(ContainerInterface::class), $this->createMock(IAppManager::class)), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$this->createMock(PublicationQueryService::class),
 			$categories
 		);

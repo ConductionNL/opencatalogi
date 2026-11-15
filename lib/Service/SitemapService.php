@@ -82,12 +82,6 @@ class SitemapService implements SitemapServiceInterface {
 	 */
 	private const CONFIG_MAX_PER_PAGE = 'sitemap_max_per_page';
 
-	/**
-	 * The DiWoo document mapper; it caches organisation lookups for the request.
-	 *
-	 * @var SitemapDocumentMapper
-	 */
-	private readonly SitemapDocumentMapper $documentMapper;
 
 	/**
 	 * Constructor for SitemapService.
@@ -95,7 +89,7 @@ class SitemapService implements SitemapServiceInterface {
 	 * @param OpenRegisterLookup $openRegister The guarded OpenRegister services
 	 * @param SettingsService $settingsService The settings service
 	 * @param InstanceSettings $instance The base URL and app configuration (operator-tunable page size)
-	 * @param TooiVocabularyService $tooiVocabulary The TOOI value-list resolver
+	 * @param SitemapDocumentMapper $documentMapper Maps a file of a publication to its DiWoo document
 	 * @param PublicationQueryService $queryService The SCH-PFTS-CAT-002 read-rule guard
 	 * @param WooCategoryRegistry $categories The information categories, bundled plus local
 	 */
@@ -103,16 +97,10 @@ class SitemapService implements SitemapServiceInterface {
 		private readonly OpenRegisterLookup $openRegister,
 		private readonly SettingsService $settingsService,
 		private readonly InstanceSettings $instance,
-		private readonly TooiVocabularyService $tooiVocabulary,
+		private readonly SitemapDocumentMapper $documentMapper,
 		private readonly PublicationQueryService $queryService,
 		private readonly WooCategoryRegistry $categories,
 	) {
-		$this->documentMapper = new SitemapDocumentMapper(
-			tooiVocabulary: $this->tooiVocabulary,
-			categories: $this->categories,
-			openRegister: $this->openRegister,
-			instance: $this->instance
-		);
 	}//end __construct()
 
 	/**

@@ -821,6 +821,13 @@ OC.L10N.register(
         "Unnamed Object": "Unnamed Object",
         "Unpublished": "Unpublished",
         "unreachable": "unreachable",
+        "Only members of the group %s may publish or withdraw a publication.": "Only members of the group %s may publish or withdraw a publication.",
+        "Publish rights": "Publish rights",
+        "Only members of the group {group} and administrators may publish and withdraw publications.": "Only members of the group {group} and administrators may publish and withdraw publications.",
+        "The group does not exist yet. Create it in user management, or run the app's repair step.": "The group does not exist yet. Create it in user management, or run the app's repair step.",
+        "Members: {count}": "Members: {count}",
+        "The group has no members yet, so only administrators can publish.": "The group has no members yet, so only administrators can publish.",
+        "The publish rights could not be read.": "The publish rights could not be read.",
         "Untitled": "Untitled",
         "Put back": "Put back",
         "This record puts the document back on purpose rather than taking it down; the reason says why.": "This record puts the document back on purpose rather than taking it down; the reason says why.",
@@ -1617,7 +1624,8 @@ OC.L10N.register(
         "The day the content loses legal effect. Leave it empty when it has no end.": "The day the content loses legal effect. Leave it empty when it has no end.",
         "Planning (does not publish)": "Planning (does not publish)",
         "The batch was not published: %s": "The batch was not published: %s",
-        "The batch was not published. Its publication is missing: %s": "The batch was not published. Its publication is missing: %s"
+        "The batch was not published. Its publication is missing: %s": "The batch was not published. Its publication is missing: %s",
+        "Open at the source": "Open at the source"
     },
     "nplurals=2; plural=(n != 1);"
 )

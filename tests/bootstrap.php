@@ -153,6 +153,10 @@ if (interface_exists('OCA\\OpenRegister\\AppHost\\IMetricsProvider') === false) 
 	require_once __DIR__ . '/Stubs/AppHost/IMetricsProvider.php';
 }
 
+if (interface_exists('OCA\\OpenRegister\\AppHost\\IHealthCheckProvider') === false) {
+	require_once __DIR__ . '/Stubs/AppHost/IHealthCheckProvider.php';
+}
+
 // Integriq's connection-registry events (adopt-connection-registry).
 // ConnectionReporter sends them by string class name behind class_exists
 // (ADR-041), so OpenCatalogi stays installable without integriq. The stubs

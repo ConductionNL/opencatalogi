@@ -30,6 +30,7 @@
  * @uses \OCA\OpenCatalogi\Service\SitemapDocumentMapper
  * @uses \OCA\OpenCatalogi\Service\SitemapDocumentFields
  * @uses \OCA\OpenCatalogi\Service\OpenRegisterLookup
+ * @uses \OCA\OpenCatalogi\Service\FileFacts
  * @uses \OCA\OpenCatalogi\Service\InstanceSettings
  * @uses \OCA\OpenCatalogi\Service\SitemapIndexBuilder
  * @uses \OCA\OpenCatalogi\Http\XMLResponse
@@ -42,6 +43,8 @@
 declare(strict_types=1);
 
 namespace OCA\OpenCatalogi\Tests\Unit\Service;
+
+require_once __DIR__ . '/Support/FileFactsByExtension.php';
 
 use OCA\OpenCatalogi\Service\InstanceSettings;
 use OCA\OpenCatalogi\Service\OpenRegisterLookup;
@@ -244,7 +247,7 @@ class DiwooValidationGoldenTest extends TestCase {
 			new OpenRegisterLookup($container, $apps),
 			$settings,
 			new InstanceSettings($urls, $config),
-			new TooiVocabularyService(),
+			new \OCA\OpenCatalogi\Service\SitemapDocumentMapper(new TooiVocabularyService(), $categories, new OpenRegisterLookup($container, $apps), \OCA\OpenCatalogi\Tests\Unit\Service\Support\FileFactsByExtension::make($this)),
 			$queryService,
 			$categories
 		);

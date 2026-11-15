@@ -9,10 +9,6 @@
                     "diwoo:publisher": {
                         "#text": ""
                     },
-                    "diwoo:format": {
-                        "@resource": "http://publications.europa.eu/resource/authority/file-type/XML",
-                        "#text": "xml"
-                    },
                     "diwoo:language": {
                         "#text": "Nederlands",
                         "@resource": "http://publications.europa.eu/resource/authority/language/NLD"
@@ -42,6 +38,11 @@
                 "documentLoc": "earlier",
                 "axis": "kept",
                 "reason": "appended to"
+            },
+            {
+                "documentLoc": "",
+                "axis": "format",
+                "reason": "type-unlisted"
             },
             {
                 "documentLoc": "",
