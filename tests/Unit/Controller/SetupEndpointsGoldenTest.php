@@ -49,6 +49,7 @@ use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use Psr\Log\LoggerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
 
 /**
  * Golden test for the setup endpoints.
@@ -226,6 +227,7 @@ class SetupEndpointsGoldenTest extends TestCase {
 		);
 		$objects->method('saveObject')->willReturnCallback(
 			function (...$args) use ($fail): mixed {
+				$args = LegacyObjectArgs::positional(method: 'saveObject', args: $args);
 				$this->log[] = ['save' => self::passedArguments(method: 'saveObject', args: $args)];
 				if (in_array('save', $fail, true) === true) {
 					throw new RuntimeException('save broke');
@@ -415,7 +417,7 @@ class SetupEndpointsGoldenTest extends TestCase {
 	 */
 	private static function passedArguments(string $method, array $args): array {
 		$named = [];
-		foreach ((new \ReflectionMethod(ObjectService::class, $method))->getParameters() as $position => $parameter) {
+		foreach (LegacyObjectArgs::parameters(ObjectService::class, $method) as $position => $parameter) {
 			if (array_key_exists($position, $args) === false) {
 				continue;
 			}

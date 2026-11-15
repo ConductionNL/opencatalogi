@@ -1576,7 +1576,8 @@ OC.L10N.register(
         "Batch lifecycle status, moved only through the declared transitions: submit (in_progress to ready_for_review), approve (ready_for_review to approved, behind the batchReview approval chain), reject (ready_for_review back to in_progress, with a reason) and publish (approved to published).": "Levenscyclusstatus van de batch, alleen gewijzigd via de vastgelegde overgangen: indienen (in_progress naar ready_for_review), goedkeuren (ready_for_review naar approved, na de goedkeuringsketen batchReview), afwijzen (ready_for_review terug naar in_progress, met een reden) en publiceren (approved naar published).",
         "Every rejection of the batch in review, oldest first: the reviewer's reason, who rejected it and when.": "Elke afwijzing van de batch in beoordeling, oudste eerst: de reden van de beoordelaar, wie afwees en wanneer.",
         "The reason of the most recent rejection, as the author's notification names it.": "De reden van de meest recente afwijzing, zoals de melding aan de auteur die noemt.",
-        "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy).": "De gebruiker die als volgende iets met de batch moet doen. Een afwijzing wijst de batch terug toe aan de auteur (createdBy)."
+        "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy).": "De gebruiker die als volgende iets met de batch moet doen. Een afwijzing wijst de batch terug toe aan de auteur (createdBy).",
+        "Open at the source": "Openen bij de bron"
     },
     "nplurals=2; plural=(n != 1);"
 )

@@ -30,6 +30,8 @@ use OCP\IL10N;
 use PHPUnit\Framework\TestCase;
 use Psr\Container\ContainerInterface;
 use RuntimeException;
+use OCA\OpenCatalogi\Tests\Support\LegacyObjectArgs;
+use OCA\OpenRegister\Kernel\Contracts\Value\ObjectSaveOptions;
 
 /**
  * Double of OpenRegister's ObjectService for the publication lookup.
@@ -49,6 +51,7 @@ class WriterFakeObjectService {
 	public array $finds = [];
 
 	public function find(string $id, mixed ...$rest): mixed {
+		$rest = LegacyObjectArgs::flatten(args: $rest);
 		$this->finds[] = $id;
 		if ($this->findThrows !== null) {
 			throw $this->findThrows;
@@ -57,7 +60,11 @@ class WriterFakeObjectService {
 		return $this->found;
 	}//end find()
 
-	public function saveObject(array $object, ?array $extend = [], $register = null, $schema = null, ?string $uuid = null, bool $_rbac = true, bool $_multitenancy = true): mixed {
+	public function saveObject(array $object, ObjectSaveOptions $options = new ObjectSaveOptions(), bool $_rbac = true, bool $_multitenancy = true): mixed {
+		$extend = $options->extend ?? [];
+		$register = $options->target->register;
+		$schema = $options->target->schema;
+		$uuid = $options->uuid;
 		$this->saves[] = ['object' => $object, 'register' => $register, 'schema' => $schema, 'rbac' => $_rbac, 'multitenancy' => $_multitenancy];
 		return $this->saved;
 	}//end saveObject()

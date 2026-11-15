@@ -1621,7 +1621,8 @@ OC.L10N.register(
         "Batch lifecycle status, moved only through the declared transitions: submit (in_progress to ready_for_review), approve (ready_for_review to approved, behind the batchReview approval chain), reject (ready_for_review back to in_progress, with a reason) and publish (approved to published).": "Batch lifecycle status, moved only through the declared transitions: submit (in_progress to ready_for_review), approve (ready_for_review to approved, behind the batchReview approval chain), reject (ready_for_review back to in_progress, with a reason) and publish (approved to published).",
         "Every rejection of the batch in review, oldest first: the reviewer's reason, who rejected it and when.": "Every rejection of the batch in review, oldest first: the reviewer's reason, who rejected it and when.",
         "The reason of the most recent rejection, as the author's notification names it.": "The reason of the most recent rejection, as the author's notification names it.",
-        "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy).": "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy)."
+        "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy).": "The user who has to act on the batch next. A rejection assigns the batch back to its author (createdBy).",
+        "Open at the source": "Open at the source"
     },
     "nplurals=2; plural=(n != 1);"
 )
